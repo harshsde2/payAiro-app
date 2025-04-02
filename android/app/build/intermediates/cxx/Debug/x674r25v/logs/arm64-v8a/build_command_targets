@@ -1,7 +1,0 @@
-/Users/cbnits-19/Library/Android/sdk/cmake/3.22.1/bin/ninja \
-  -C \
-  /Users/cbnits-19/Documents/payAiro/payAiro/android/app/.cxx/Debug/x674r25v/arm64-v8a \
-  appmodules \
-  react_codegen_rnscreens \
-  react_codegen_rnsvg \
-  react_codegen_safeareacontext

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="gcm_defaultSenderId" translatable="false">919335823855</string>
-    <string name="google_api_key" translatable="false">AIzaSyCqP35wwX4YqF5l5DB82DL5kzh9fDGJ2CE</string>
-    <string name="google_app_id" translatable="false">1:919335823855:android:118a99c704c2a428a26e1a</string>
-    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyCqP35wwX4YqF5l5DB82DL5kzh9fDGJ2CE</string>
-    <string name="google_storage_bucket" translatable="false">payairo-6d931.firebasestorage.app</string>
-    <string name="project_id" translatable="false">payairo-6d931</string>
-</resources>
