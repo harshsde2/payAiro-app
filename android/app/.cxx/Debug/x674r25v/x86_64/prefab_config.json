@@ -1,0 +1,10 @@
+{
+  "enabled": true,
+  "prefabPath": "/Users/cbnits-19/.gradle/caches/modules-2/files-2.1/com.google.prefab/cli/2.1.0/aa32fec809c44fa531f01dcfb739b5b3304d3050/cli-2.1.0-all.jar",
+  "packages": [
+    "/Users/cbnits-19/.gradle/caches/8.10.2/transforms/bfeaa5fb94176ff9f2fd0c3e0778a544/transformed/react-android-0.76.3-debug/prefab",
+    "/Users/cbnits-19/Documents/payAiro/payAiro/node_modules/@shopify/react-native-skia/android/build/intermediates/prefab_package/debug/prefab",
+    "/Users/cbnits-19/.gradle/caches/8.10.2/transforms/31c8cafa6819c5ba9fa0bd19502f5d94/transformed/hermes-android-0.76.3-debug/prefab",
+    "/Users/cbnits-19/.gradle/caches/8.10.2/transforms/ee4713c89dc69faa668500deaee892a4/transformed/fbjni-0.6.0/prefab"
+  ]
+}

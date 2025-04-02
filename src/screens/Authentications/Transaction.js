@@ -1,0 +1,276 @@
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  KeyboardAvoidingView,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
+import Container from '../../HOC/Container';
+import BottomNavigation from '../../components/BottomNavigation';
+import HeaderTitle from '../../components/HeaderTitle';
+import Fonts from '../../constants/Fonts';
+import TransactionCard from '../../components/TransactionCard';
+import RequestPayCard from '../../components/RequestPayCard';
+import {SCREENS} from '../../constants/SCREENS';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
+import useDispatchAction from '../../hooks/useDispatchAction';
+import {
+  setActiveTab,
+  setErrorMsg,
+  setPendingRequest,
+  setSuccessMsg,
+} from '../../redux/slices/authenticationSlice';
+import {
+  cancelMerchent,
+  cancelUser,
+  getContactPay,
+  getCryptoTx,
+  getMechentPay,
+  getPayAeroTx,
+  getPayRequest,
+} from '../../services/Services';
+import useSelectorAction from '../../hooks/useSelectorAction';
+
+export default function Transaction() {
+  const {walletData, tokens, isCrypto} = useSelectorAction();
+  const navigation = useNavigation();
+  const isFocused = useIsFocused();
+
+  const [txLists, setTxLists] = useState([]);
+  const [merchentLists, setMerchentLists] = useState([]);
+  const [contactsLists, setContactsLists] = useState([]);
+  const [requestLists, setRequestLists] = useState([]);
+  const [activeTab, setActiveTabState] = useState('1');
+  const [activeTab2, setActiveTab2State] = useState('1');
+  const [web3TxLists, setweb3TxLists] = useState([]);
+  const [txListsWeb3, settxListsWeb3] = useState([]);
+
+  // Dispatch action when screen is focused
+  useEffect(() => {
+    if (isFocused) {
+      useDispatchAction(setActiveTab('2'));
+    }
+  }, [isFocused]);
+
+  // Fetch data on component mount
+  useEffect(() => {
+    getMerchentRequest();
+    getContactRequests();
+    getTxLists();
+    getCryptoTxs();
+  }, []);
+  console.log(isCrypto);
+  // Handle tab switching
+  useEffect(() => {
+    if (activeTab === '1') {
+      setRequestLists(merchentLists);
+    } else if (activeTab === '2') {
+      setRequestLists(contactsLists);
+    }
+  }, [activeTab, merchentLists, contactsLists]);
+
+  useEffect(() => {
+    if (activeTab2 === '1') {
+      settxListsWeb3(txLists);
+    } else if (activeTab2 === '2') {
+      settxListsWeb3(web3TxLists);
+    }
+  }, [activeTab2, txLists, web3TxLists]);
+  const getTxLists = async () => {
+    const data = await getPayAeroTx(tokens?.access);
+    console.log(data, 'Transaction Data');
+    setTxLists(
+      [
+        ...data?.data?.merchantTransactions,
+        ...data?.data?.userToUserTransactions,
+      ].filter(i => i?.status === 'success') ?? [],
+    );
+  };
+
+  const getCryptoTxs = async () => {
+    const data = await getCryptoTx(tokens?.access);
+    console.log(data?.data, 'datatatas');
+    setweb3TxLists(
+      [...data?.data?.nft_transactions, ...data?.data?.trades] ?? [],
+    );
+  };
+
+  const getMerchentRequest = async () => {
+    const data = await getPayRequest(tokens?.access);
+
+    const merchant_transactions =
+      data?.data?.merchant_transactions?.transactions?.map(i => {
+        return {...i, type: 'merchant_transactions'};
+      });
+
+    const received_pending_requests =
+      data?.data?.user_to_user_requests?.received_pending_requests?.map(i => {
+        return {...i, type: 'received_pending_requests'};
+      });
+
+    const sent_pending_requests =
+      data?.data?.user_to_user_requests?.sent_pending_requests?.map(i => {
+        return {...i, type: 'sent_pending_requests'};
+      });
+    console.log(
+      [
+        ...merchant_transactions,
+        ...received_pending_requests,
+        ...sent_pending_requests,
+      ],
+      'merchant_transactions',
+    );
+    console.log(data?.data, 'data?.data?.total_pending_requests');
+    setMerchentLists([
+      ...merchant_transactions,
+      ...received_pending_requests,
+      ...sent_pending_requests,
+    ]);
+    useDispatchAction(
+      setPendingRequest(
+        merchant_transactions?.length + received_pending_requests?.length ?? 0,
+      ),
+    );
+  };
+
+  const getContactRequests = async () => {
+    const data = await getContactPay(tokens?.access);
+    console.log(data?.data, 'Contact Data');
+    setContactsLists(data?.data?.received_pending_requests ?? []);
+  };
+
+  const handleTabSwitch = tab => {
+    setActiveTabState(tab);
+  };
+  const handleTabSwitch2 = tab => {
+    setActiveTab2State(tab);
+  };
+
+  const handleCancel = async item => {
+    let data;
+    const formData = new FormData();
+    if (item?.project_name) {
+      formData.append('order_id', item?.order_id);
+      data = await cancelMerchent(formData, tokens?.access);
+      console.log(data, 'cancelPayment');
+      if (data && data?.status) {
+        useDispatchAction(setSuccessMsg(data?.data?.message));
+        getMerchentRequest();
+      } else {
+        useDispatchAction(setErrorMsg('Failed to cancel a payment'));
+      }
+    } else {
+      data = await cancelUser(
+        item?.request_details?.request_id,
+        tokens?.access,
+      );
+      if (data && data?.status) {
+        useDispatchAction(setSuccessMsg('Payment request has been cancelled.'));
+        getMerchentRequest();
+      } else {
+        useDispatchAction(setErrorMsg('Failed to cancel a payment'));
+      }
+    }
+  };
+  return (
+    <Container>
+      <BottomNavigation />
+
+      <KeyboardAvoidingView
+        style={{flex: 1}}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{flexGrow: 1}}>
+          <HeaderTitle title={'Transactions'} />
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: '#fff',
+              borderTopEndRadius: 32,
+              borderTopStartRadius: 32,
+              padding: 20,
+              marginTop: 20,
+            }}>
+            {/* Payment Requests */}
+            {isCrypto && merchentLists?.length > 0 && (
+              <Text
+                style={{
+                  color: '#1D1D1D',
+                  fontFamily: Fonts.bold,
+                  fontSize: 20,
+                  marginBottom: 15,
+                }}>
+                Payment Request
+              </Text>
+            )}
+            {isCrypto &&
+              merchentLists?.length > 0 &&
+              merchentLists?.map((i, k) => (
+                <RequestPayCard
+                  item={i}
+                  key={k}
+                  amount={i?.request_details?.amount}
+                  reqId={i?.request_uuid}
+                  isSentRequest={i?.recipient_details}
+                  onPress={() =>
+                    navigation.navigate(SCREENS.ScanPay, {
+                      type: 'request',
+                      sender: i,
+                    })
+                  }
+                  onCancel={() => handleCancel(i)}
+                />
+              ))}
+
+            {/* Recent Transactions */}
+
+            <Text
+              style={{
+                color: '#1D1D1D',
+                fontFamily: Fonts.bold,
+                fontSize: 20,
+                marginVertical: 15,
+              }}>
+              Recent Transactions
+            </Text>
+            {isCrypto &&
+              txLists &&
+              txLists.length > 0 &&
+              txLists
+                ?.sort(
+                  (a, b) => new Date(b.created_at) - new Date(a.created_at),
+                )
+                .map((item, key) => (
+                  <View key={key}>
+                    <TransactionCard
+                      item={item}
+                      isMerchent={item?.order_id}
+                      isCrypto={item?.order_id}
+                    />
+                  </View>
+                ))}
+            {!isCrypto && web3TxLists.length > 0 ? (
+              web3TxLists
+                ?.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                ?.map((i, k) => (
+                  <TransactionCard isCrypto={true} item={i} key={k} />
+                ))
+            ) : (
+              <Text
+                style={{
+                  fontFamily: Fonts.bold,
+                  color: '#fff',
+                  textAlign: 'center',
+                  marginTop: 100,
+                }}>
+                No Transaction Found
+              </Text>
+            )}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </Container>
+  );
+}

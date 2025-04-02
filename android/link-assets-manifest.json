@@ -1,0 +1,145 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "assets/fonts/Neue Plak Black.ttf",
+      "sha1": "82da207e8a66151802085c851530157cfbe810d4"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Bold.ttf",
+      "sha1": "fdb4d3170df349fca72a5141583dd13b14751dfd"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Condensed Black.ttf",
+      "sha1": "44d99843920c886cb6ca3f0531f53a73d35c315c"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Condensed Bold.ttf",
+      "sha1": "9e43b74ca219f2523d7ca11eceafba22cf0ae018"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Condensed ExtraBlack.ttf",
+      "sha1": "03ff0c4d2c9f7c9f65b798648c484e8d80b94dc5"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Condensed Light.ttf",
+      "sha1": "0ed7b942f715d7aaa05f161719da2f8608c70d06"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Condensed Regular.ttf",
+      "sha1": "dbdf475ba3e061b9feb5a46db452a58a437bdab1"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Condensed SemiBold.ttf",
+      "sha1": "6742fa0d4e091ad09375b1161aa376b5253e76c7"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Condensed Thin.ttf",
+      "sha1": "dc92c78363e1fca45a4676ac752a613f661cd503"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Condensed UltraLight.ttf",
+      "sha1": "81d9f647be7d77bc6bb82405e0baa18fc9a26075"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Extended Black.ttf",
+      "sha1": "9fe48fd28e899c34b84b38a726c17193142e0530"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Extended Bold.ttf",
+      "sha1": "2a0794807b558424c330ca30490855ff5695b334"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Extended ExtraBlack.ttf",
+      "sha1": "770149e26f148016ce48c9807c0c95ae5287f1a9"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Extended Light.ttf",
+      "sha1": "5e383a58a85ef52962f932094b1fc3bde4d5e71f"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Extended Regular.ttf",
+      "sha1": "46ed8ba1e88ee21b47d2acd1dfc70f83d3caffa9"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Extended SemiBold.ttf",
+      "sha1": "066b615b3a0ceb12dadc35ee3c28bc64faea9b94"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Extended Thin.ttf",
+      "sha1": "bfc3d4767e42f632673748d659efe03c2511fc31"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Extended UltraLight.ttf",
+      "sha1": "13b78fb034f0117113fe43e5d5e81c28785324dc"
+    },
+    {
+      "path": "assets/fonts/Neue Plak ExtraBlack.ttf",
+      "sha1": "62c7607f8058679f3f250f5524d6b02928c65334"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Light.ttf",
+      "sha1": "16e2c8c5075bfd5b41a14fb184d968fa6bf9e8f3"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Regular.ttf",
+      "sha1": "71cfe47e699456d6c12fa4d676fd999f25382d6b"
+    },
+    {
+      "path": "assets/fonts/Neue Plak SemiBold.ttf",
+      "sha1": "1dc9b86c9bd215f4ad1c8b1009532a8e94c1f56f"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Text Black Italic.ttf",
+      "sha1": "c2675fe2b283deaac36869b047773fa4646ddebe"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Text Black.ttf",
+      "sha1": "b3efd5229273aea9a8fea8047d0adb975cced5ee"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Text Bold Italic.ttf",
+      "sha1": "f1805b4986eb47087594e14223dcebd76c7678d8"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Text Bold.ttf",
+      "sha1": "79d7f4bcfdf4c61453a4c7b6f66f0c69ed8a40d8"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Text Italic.ttf",
+      "sha1": "9b5b4a50d00cf5f3a20c6608216cc7c37e010a61"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Text Light Italic.ttf",
+      "sha1": "141adb6f7c2c2095cf46c7c046e67016ab5cf118"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Text Light.ttf",
+      "sha1": "1ab76c98dadb5ce4c4215d8b8e146f8174d0c60e"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Text SemiBold Italic.ttf",
+      "sha1": "0433305d83ca10f66f912080da968db1792c9b77"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Text SemiBold.ttf",
+      "sha1": "1fbc58e734d8e114e5457e8a3850d6ec324aeb2d"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Text Thin Italic.ttf",
+      "sha1": "4254cc5288d58b36791fa5f455f19511dd05b895"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Text Thin.ttf",
+      "sha1": "1fae1067b38447ca5185347ac8b0e04c1e8c6308"
+    },
+    {
+      "path": "assets/fonts/Neue Plak Thin.ttf",
+      "sha1": "85f6d9b1e7aa1b21965cd2f4b02bd07389155183"
+    },
+    {
+      "path": "assets/fonts/Neue Plak UltraLight.ttf",
+      "sha1": "50cf314dc225d4762e3b14f0cb18f7a505c4ca3f"
+    }
+  ]
+}

@@ -1,0 +1,115 @@
+import {createSlice} from '@reduxjs/toolkit';
+import {SVGEthrum, SVGPolly} from '../../constants/images';
+
+const authenticationSlice = createSlice({
+  name: 'authenticationSlice',
+  initialState: {
+    isLogin: false,
+    activeTab: '1',
+    userData: null,
+    tokens: null,
+    walletData: null,
+    pendingRequest: 0,
+    networkLists: [],
+    selectedCrypto: null,
+    calculatedBalance: 0,
+    isCrypto: true,
+    errorMsg: null,
+    successMsg: null,
+    defaultValue: null,
+    fcmToken: null,
+    biometricAvailable: false,
+    showAppLock: false,
+    activeTabCrypto: '1',
+    bankBalance: null,
+    bankLists: [],
+    guide: false,
+  },
+
+  reducers: {
+    setLogin: (state, action) => {
+      state.isLogin = action.payload;
+    },
+    setActiveTab: (state, action) => {
+      state.activeTab = action.payload;
+    },
+    setBankLists: (state, action) => {
+      state.bankLists = action.payload;
+    },
+    setActiveTabCrypto: (state, action) => {
+      state.activeTabCrypto = action.payload;
+    },
+    setUserData: (state, action) => {
+      state.userData = action.payload;
+    },
+    setTokens: (state, action) => {
+      state.tokens = action.payload;
+    },
+    setWalletData: (state, action) => {
+      state.walletData = action.payload;
+    },
+    setPendingRequest: (state, action) => {
+      state.pendingRequest = action.payload;
+    },
+    setNetworkLists: (state, action) => {
+      state.networkLists = action.payload;
+    },
+    setSeletedCrypto: (state, action) => {
+      state.selectedCrypto = action.payload;
+    },
+    setCalculatedBalance: (state, action) => {
+      state.calculatedBalance = action.payload;
+    },
+    setisCrypto: (state, action) => {
+      state.isCrypto = action.payload;
+    },
+    setErrorMsg: (state, action) => {
+      state.errorMsg = action.payload;
+    },
+    setSuccessMsg: (state, action) => {
+      state.successMsg = action.payload;
+    },
+    setDefaultValue: (state, action) => {
+      state.defaultValue = action.payload;
+    },
+    setFcmToken: (state, action) => {
+      state.fcmToken = action.payload;
+    },
+    setBiometricAvailable: (state, action) => {
+      state.biometricAvailable = action.payload;
+    },
+    setShowApplock: (state, action) => {
+      state.showAppLock = action.payload;
+    },
+    setBankbalances: (state, action) => {
+      state.bankBalance = action.payload;
+    },
+    setGuides: (state, action) => {
+      state.guide = action.payload;
+    },
+  },
+});
+export const {
+  setLogin,
+  setActiveTab,
+  setUserData,
+  setTokens,
+  setWalletData,
+  setPendingRequest,
+  setNetworkLists,
+  setSeletedCrypto,
+  setCalculatedBalance,
+  setisCrypto,
+  setErrorMsg,
+  setSuccessMsg,
+  setDefaultValue,
+  setFcmToken,
+  setBiometricAvailable,
+  setShowApplock,
+  setActiveTabCrypto,
+  setBankbalances,
+  setBankLists,
+  setGuides,
+} = authenticationSlice.actions;
+
+export default authenticationSlice.reducer;

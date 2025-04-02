@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>payAiro</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	  <key>NSCameraUsageDescription</key>
+  <string>Allow to access camera</string>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<!-- Include this only if you are planning to use the microphone for video recording -->
+<key>NSMicrophoneUsageDescription</key>
+<string>Your message to user when the microsphone is accessed for the first time</string>
+	  <key>NSPhotoLibraryUsageDescription</key>
+  <string>Allow to access media</string>
+  <key>NSPhotoLibraryAddUsageDescription</key>
+  <string>Allow to access media</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string/>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Neue Plak Black.ttf</string>
+		<string>Neue Plak Bold.ttf</string>
+		<string>Neue Plak Condensed Black.ttf</string>
+		<string>Neue Plak Condensed Bold.ttf</string>
+		<string>Neue Plak Condensed ExtraBlack.ttf</string>
+		<string>Neue Plak Condensed Light.ttf</string>
+		<string>Neue Plak Condensed Regular.ttf</string>
+		<string>Neue Plak Condensed SemiBold.ttf</string>
+		<string>Neue Plak Condensed Thin.ttf</string>
+		<string>Neue Plak Condensed UltraLight.ttf</string>
+		<string>Neue Plak Extended Black.ttf</string>
+		<string>Neue Plak Extended Bold.ttf</string>
+		<string>Neue Plak Extended ExtraBlack.ttf</string>
+		<string>Neue Plak Extended Light.ttf</string>
+		<string>Neue Plak Extended Regular.ttf</string>
+		<string>Neue Plak Extended SemiBold.ttf</string>
+		<string>Neue Plak Extended Thin.ttf</string>
+		<string>Neue Plak Extended UltraLight.ttf</string>
+		<string>Neue Plak ExtraBlack.ttf</string>
+		<string>Neue Plak Light.ttf</string>
+		<string>Neue Plak Regular.ttf</string>
+		<string>Neue Plak SemiBold.ttf</string>
+		<string>Neue Plak Text Black Italic.ttf</string>
+		<string>Neue Plak Text Black.ttf</string>
+		<string>Neue Plak Text Bold Italic.ttf</string>
+		<string>Neue Plak Text Bold.ttf</string>
+		<string>Neue Plak Text Italic.ttf</string>
+		<string>Neue Plak Text Light Italic.ttf</string>
+		<string>Neue Plak Text Light.ttf</string>
+		<string>Neue Plak Text SemiBold Italic.ttf</string>
+		<string>Neue Plak Text SemiBold.ttf</string>
+		<string>Neue Plak Text Thin Italic.ttf</string>
+		<string>Neue Plak Text Thin.ttf</string>
+		<string>Neue Plak Thin.ttf</string>
+		<string>Neue Plak UltraLight.ttf</string>
+	</array>
+</dict>
+</plist>
