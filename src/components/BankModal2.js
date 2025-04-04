@@ -135,6 +135,7 @@ const BankModal2 = ({isVisible, onClose, onCancel}) => {
                 onPress={() => {
                   handleOpenLink();
                 }}
+                key={k}
                 style={{
                   borderRadius: 40,
                   borderWidth: 1,

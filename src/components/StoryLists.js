@@ -68,7 +68,7 @@ export default function StoryLists({data, isVisble3}) {
       <FlatList
         data={data}
         horizontal
-        keyExtractor={item => item?.email}
+        keyExtractor={(item, index) => `contact-${item?._id || item?.username || item?.email || index}`}
         renderItem={({item}) => (
           <CircleItem
             item={item}

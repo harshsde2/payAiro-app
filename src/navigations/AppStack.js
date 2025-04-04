@@ -64,6 +64,7 @@ import ChooseCurrency from '../screens/Crypto/ChooseCurrency';
 import WithdrawScreen from '../screens/Crypto/WithdrawScreen';
 import IntraAccountTransfer from '../screens/Dashboard/IntraAccountTransfer';
 import DetailsCryptoScreen from '../screens/Crypto/DetailsCryptoScreen';
+
 const Stack = createNativeStackNavigator();
 
 export default function AppStack() {

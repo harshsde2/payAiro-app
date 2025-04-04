@@ -1,5 +1,5 @@
-import {useIsFocused, useNavigation} from '@react-navigation/native';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
@@ -13,7 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {SvgXml} from 'react-native-svg';
+import { SvgXml } from 'react-native-svg';
 import Container from '../../HOC/Container';
 import BalanceModal from '../../components/BalanceModal';
 import BottomNavigation from '../../components/BottomNavigation';
@@ -23,7 +23,7 @@ import Rewards from '../../components/Rewards';
 import StoryLists from '../../components/StoryLists';
 import TransactionCard from '../../components/TransactionCard';
 import Fonts from '../../constants/Fonts';
-import {SCREENS} from '../../constants/SCREENS';
+import { SCREENS } from '../../constants/SCREENS';
 import * as Progress from 'react-native-progress';
 import {
   SVGAdd,
@@ -105,7 +105,7 @@ import SelectionModal from '../../components/SelectionModal';
 import LineChartCustom from '../../components/LineChartCustom';
 import SelectionModal2 from '../../components/SelectionModal2';
 import BiometricModal from '../../components/BiometricModal';
-import {useSelector} from 'react-redux';
+import { useSelector } from 'react-redux';
 import BankModal from '../../components/BankModal';
 import BankModal2 from '../../components/BankModal2';
 import {
@@ -116,12 +116,13 @@ import {
   open,
 } from 'react-native-plaid-link-sdk';
 
-import {BASE_URL} from '../../constants/mockData';
+import { BASE_URL } from '../../constants/mockData';
 import KYCModal from '../../components/KYCModal';
-import {get} from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import CustomModal from '../../components/CustomModal';
 import GenericButton from '../../components/GenericButton';
 import GuideModal from '../../components/GuideModal';
+import GhostSlide from '../../animations/animations-components/GhostSlide';
 export default function Dashboard(props) {
   const translateY = useRef(new Animated.Value(0)).current;
   const translateX = useRef(new Animated.Value(100)).current;
@@ -147,7 +148,7 @@ export default function Dashboard(props) {
   const [isVisible4, setisVisible4] = useState(false);
   const [web3TxLists, setweb3TxLists] = useState([]);
   const [mxTx, setmxTx] = useState([]);
-  const data = [{value: 50}, {value: 80}, {value: 90}, {value: 70}];
+  const data = [{ value: 50 }, { value: 80 }, { value: 90 }, { value: 70 }];
   const [kycStep, setkycStep] = useState(false);
   const [isShow, setisShow] = useState(true);
   const [isShowKYC, setisShowKYC] = useState(false);
@@ -169,6 +170,9 @@ export default function Dashboard(props) {
   const [alloCationLists, setalloCationLists] = useState([]);
   const [totalDisbursablePending, settotalDisbursablePending] = useState(0);
   const [isGuideVisible, setisGuideVisible] = useState(false);
+
+  // for animation
+  const [ghostSlideVisible, setGhostSlideVisible] = useState(false);
 
   useEffect(() => {
     getGuideStatus();
@@ -234,7 +238,9 @@ export default function Dashboard(props) {
       setisShow(true);
     }, 2000);
   };
+
   const MemoizedPieChart = React.memo(CustomPieChart);
+
   useEffect(() => {
     fetch(`${BASE_URL}kyc/link-token/`, {
       method: 'GET',
@@ -351,8 +357,7 @@ export default function Dashboard(props) {
       const registerBankData = await registerBankResponse.json();
       if (!registerBankResponse.ok) {
         throw new Error(
-          `Register bank error: ${
-            registerBankData?.message || 'Unknown error'
+          `Register bank error: ${registerBankData?.message || 'Unknown error'
           }`,
         );
       }
@@ -415,46 +420,7 @@ export default function Dashboard(props) {
       setshowPin(true);
     }
   };
-  useEffect(() => {
-    Animated.sequence([
-      Animated.timing(translateY, {
-        toValue: -1400, // Move up by 50 pixels
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 0, // Move back to the original position
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
 
-    Animated.sequence([
-      Animated.timing(translateX, {
-        toValue: 1000, // Move up by 50 pixels
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateX, {
-        toValue: 0, // Move back to the original position
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    Animated.sequence([
-      Animated.timing(translateY2, {
-        toValue: 10, // Move up by 50 pixels
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY2, {
-        toValue: 100, // Move back to the original position
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
 
   useEffect(() => {
     handlePin();
@@ -462,38 +428,38 @@ export default function Dashboard(props) {
   const symbol = selectedCrypto?.image?.includes('btc')
     ? 'BTC'
     : selectedCrypto?.image?.includes('eth')
-    ? 'ETH'
-    : selectedCrypto?.image?.includes('matic')
-    ? 'MATIC'
-    : 'XRP';
+      ? 'ETH'
+      : selectedCrypto?.image?.includes('matic')
+        ? 'MATIC'
+        : 'XRP';
 
   const balanceAssets = selectedCrypto?.image?.includes('btc')
     ? Number(
-        networkLists[0]?.balance_in_tether +
-          networkLists[0]?.btc_in_eth +
-          networkLists[0]?.btc_in_matic +
-          networkLists[0]?.btc_in_xrp,
-      )
+      networkLists[0]?.balance_in_tether +
+      networkLists[0]?.btc_in_eth +
+      networkLists[0]?.btc_in_matic +
+      networkLists[0]?.btc_in_xrp,
+    )
     : selectedCrypto?.image?.includes('eth')
-    ? Number(
+      ? Number(
         networkLists[1]?.balance +
-          Number(networkLists[1]?.eth_in_btc) +
-          networkLists[1]?.eth_in_eth +
-          networkLists[1]?.eth_in_matic,
+        Number(networkLists[1]?.eth_in_btc) +
+        networkLists[1]?.eth_in_eth +
+        networkLists[1]?.eth_in_matic,
       ).toFixed(3)
-    : selectedCrypto?.image?.includes('matic')
-    ? Number(
-        networkLists[2]?.balance +
+      : selectedCrypto?.image?.includes('matic')
+        ? Number(
+          networkLists[2]?.balance +
           networkLists[2]?.matic_in_btc +
           networkLists[2]?.matic_in_eth +
           networkLists[2]?.matic_in_xrp,
-      )
-    : Number(
-        networkLists[3]?.balance +
+        )
+        : Number(
+          networkLists[3]?.balance +
           networkLists[3]?.xrp_in_btc +
           networkLists[3]?.xrp_in_eth +
           networkLists[3]?.xrp_in_matic,
-      );
+        );
 
   const getWallets = async () => {
     const data = await getWallet(tokens?.access);
@@ -545,54 +511,59 @@ export default function Dashboard(props) {
 
     setmxTx(data?.data?.transactions ?? []);
   };
+
+  const toggleGhostSlide = () => setGhostSlideVisible(prev => !prev);
+
   const handleSwitch = () => {
-    setshow(false);
+
+    toggleGhostSlide()
+    // setshow(false);
 
     useDispatchAction(
       setCalculatedBalance(selectedCrypto?.balance_in_tether ?? 0),
     );
     useDispatchAction(setisCrypto(!isCrypto));
-    setshow(true);
+    // setshow(true);
     // getCryptoTxs();
 
-    Animated.sequence([
-      Animated.timing(translateY, {
-        toValue: -1400, // Move up by 50 pixels
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 0, // Move back to the original position
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    // Animated.sequence([
+    //   Animated.timing(translateY, {
+    //     toValue: -1400, // Move up by 50 pixels
+    //     duration: 600,
+    //     useNativeDriver: true,
+    //   }),
+    //   Animated.timing(translateY, {
+    //     toValue: 0, // Move back to the original position
+    //     duration: 600,
+    //     useNativeDriver: true,
+    //   }),
+    // ]).start();
 
-    Animated.sequence([
-      Animated.timing(translateX, {
-        toValue: 1000, // Move up by 50 pixels
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateX, {
-        toValue: 0, // Move back to the original position
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    // Animated.sequence([
+    //   Animated.timing(translateX, {
+    //     toValue: 1000, // Move up by 50 pixels
+    //     duration: 600,
+    //     useNativeDriver: true,
+    //   }),
+    //   Animated.timing(translateX, {
+    //     toValue: 0, // Move back to the original position
+    //     duration: 600,
+    //     useNativeDriver: true,
+    //   }),
+    // ]).start();
 
-    Animated.sequence([
-      Animated.timing(translateY2, {
-        toValue: 10, // Move up by 50 pixels
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY2, {
-        toValue: 100, // Move back to the original position
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    // Animated.sequence([
+    //   Animated.timing(translateY2, {
+    //     toValue: 10, // Move up by 50 pixels
+    //     duration: 600,
+    //     useNativeDriver: true,
+    //   }),
+    //   Animated.timing(translateY2, {
+    //     toValue: 100, // Move back to the original position
+    //     duration: 600,
+    //     useNativeDriver: true,
+    //   }),
+    // ]).start();
   };
   useEffect(() => {
     getkycStep();
@@ -775,8 +746,10 @@ export default function Dashboard(props) {
           setErrorMsg(data?.data?.error ?? 'Something went wrong'),
         );
       }
-    } catch (error) {}
+    } catch (error) { }
   };
+
+
   return (
     <Container bgColor={'rgba(226, 241, 227, 0.2)'}>
       {/* {isShow && (
@@ -800,7 +773,7 @@ export default function Dashboard(props) {
           onClose={() => setisBankModalVisible(false)}
         />
       )}
-      <Animated.View
+      {/* <Animated.View
         style={[
           {transform: [{translateY}], opacity}, // Add opacity here
           {
@@ -815,7 +788,66 @@ export default function Dashboard(props) {
           },
         ]}>
         {!showPin && <BottomNavigation isVer={true} />}
-      </Animated.View>
+      </Animated.View> */}
+      {/* <View style={{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 10,
+        backgroundColor: 'black',
+        width: '92%',
+        alignSelf: 'center',
+        marginTop: 100,
+      }}>
+        <Text style={{
+          color: 'white',
+          fontSize: 16,
+          fontWeight: 'bold',
+        }}>Ghost Slide Effect</Text>
+        <TouchableOpacity
+
+          onPress={toggleGhostSlide}
+        >
+          <Text style={{
+            color: 'white',
+            fontSize: 16,
+            fontWeight: 'bold',
+          }}>{ghostSlideVisible ? 'Hide' : 'Show'}</Text>
+        </TouchableOpacity>
+      </View> */}
+      <View style={{
+
+        position: 'absolute',
+        bottom: 20,
+        zIndex: 9999,
+        width: '92%',
+        alignSelf: 'center',
+      }}>
+        <GhostSlide
+          visible={ghostSlideVisible}
+          direction="custom"
+          duration={2500}
+          distance={1000}
+          customX={0}
+          customY={-400}
+          ghostOpacity={1}
+          onAnimationComplete={() => console.log('Ghost slide completed')}
+        >
+          <View style={{
+            padding: 10,
+            backgroundColor: 'black',
+            borderRadius: 20,
+            position: 'absolute',
+            bottom: 20,
+            zIndex: 9999,
+            width: '92%',
+            alignSelf: 'center',
+          }}>
+
+            <BottomNavigation isVer={true} />
+          </View>
+        </GhostSlide>
+      </View>
       <BalanceModal
         isVisible={isVisible}
         onClose={() => setisVisible(false)}
@@ -840,7 +872,7 @@ export default function Dashboard(props) {
         onClose={() => setisGuideVisible(false)}
       />
       <KeyboardAvoidingView
-        style={{flex: 1}}
+        style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -851,7 +883,7 @@ export default function Dashboard(props) {
               colors={['#B1FF84', '#000']}
             />
           }
-          contentContainerStyle={{flexGrow: 1}}>
+          contentContainerStyle={{ flexGrow: 1 }}>
           <Header name={walletData?.name} />
           {isShowKYC && (
             <View
@@ -879,7 +911,7 @@ export default function Dashboard(props) {
                   }}>
                   Your Second level KYC verification is pending.{' '}
                   <TouchableOpacity onPress={kycHandleUrl}>
-                    <Text style={{color: 'white', fontFamily: Fonts.bold}}>
+                    <Text style={{ color: 'white', fontFamily: Fonts.bold }}>
                       {' '}
                       Verify Now!
                     </Text>
@@ -888,11 +920,11 @@ export default function Dashboard(props) {
               </View>
               <SvgXml
                 xml={SVGSliders}
-                style={{marginTop: 15, width: '80%', alignSelf: 'center'}}
+                style={{ marginTop: 15, width: '80%', alignSelf: 'center' }}
               />
             </View>
           )}
-          <View style={{backgroundColor: 'rgba(249, 249, 249, 1)'}}>
+          <View style={{ backgroundColor: 'rgba(249, 249, 249, 1)' }}>
             <View
               style={{
                 backgroundColor: 'rgba(224, 239, 225, 1)',
@@ -909,13 +941,13 @@ export default function Dashboard(props) {
                   paddingVertical: 15,
                   paddingHorizontal: 25,
                 }}>
-                <Text style={{fontFamily: Fonts.semibold, color: '#000'}}>
+                <Text style={{ fontFamily: Fonts.semibold, color: '#000' }}>
                   {!isCrypto ? 'SECURITY' : 'PAYAIRO'} ACCOUNT
                 </Text>
                 {isCrypto ? (
                   <Animated.View
                     style={[
-                      {transform: [{translateY: translateY}], opacity: opacity}, // Add opacity here
+                      { transform: [{ translateY: translateY }], opacity: opacity }, // Add opacity here
                     ]}>
                     <TouchableOpacity
                       disabled={true}
@@ -957,7 +989,7 @@ export default function Dashboard(props) {
                 ) : (
                   <Animated.View
                     style={[
-                      {transform: [{translateY: translateY}], opacity: opacity}, // Add opacity here
+                      { transform: [{ translateY: translateY }], opacity: opacity }, // Add opacity here
                     ]}>
                     <TouchableOpacity
                       disabled={true}
@@ -1009,7 +1041,7 @@ export default function Dashboard(props) {
                 ]}>
                 <Animated.View
                   style={{
-                    transform: [{translateY: translateY}],
+                    transform: [{ translateY: translateY }],
                     opacity: opacity,
                     width: '100%',
                   }}>
@@ -1020,7 +1052,7 @@ export default function Dashboard(props) {
                       alignItems: 'center',
                     }}>
                     {show && (
-                      <View style={{padding: 10, width: '80%'}}>
+                      <View style={{ padding: 10, width: '80%' }}>
                         <Text
                           style={{
                             fontFamily: Fonts.semibold,
@@ -1039,9 +1071,9 @@ export default function Dashboard(props) {
                           {!isCrypto
                             ? Number(totalDisbursable).toFixed(5)
                             : '$' +
-                              Number(
-                                bankbalance?.bank_account?.usd ?? 0,
-                              ).toFixed(2)}{' '}
+                            Number(
+                              bankbalance?.bank_account?.usd ?? 0,
+                            ).toFixed(2)}{' '}
                         </Text>
                         {!isCrypto && (
                           <Text
@@ -1054,7 +1086,7 @@ export default function Dashboard(props) {
                             (
                             {!isCrypto &&
                               'Pending ' +
-                                Number(totalDisbursablePending).toFixed(5)}
+                              Number(totalDisbursablePending).toFixed(5)}
                             )
                           </Text>
                         )}
@@ -1080,7 +1112,7 @@ export default function Dashboard(props) {
                     )}
                     <SvgXml
                       xml={isCrypto ? SVGLogo3 : SVGLogo2}
-                      style={{marginLeft: -100}}
+                      style={{ marginLeft: -100 }}
                       onPress={() => handleSwitch()}
                     />
                   </View>
@@ -1116,7 +1148,7 @@ export default function Dashboard(props) {
               />
               <SvgXml
                 xml={!isCrypto ? SVGHolding : SVGAdd}
-                style={{marginBottom: 20}}
+                style={{ marginBottom: 20 }}
                 onPress={() => {
                   if (!isCrypto) {
                     navigation.navigate('CryptoDashboard');
@@ -1145,7 +1177,7 @@ export default function Dashboard(props) {
               <View>
                 <Animated.View
                   style={[
-                    {transform: [{translateX: translateX}], opacity: opacity1}, // Add opacity here
+                    { transform: [{ translateX: translateX }], opacity: opacity1 }, // Add opacity here
                   ]}>
                   <Text
                     style={{
@@ -1182,7 +1214,7 @@ export default function Dashboard(props) {
                         marginVertical: 15,
                       }}>
                       {renderButtonGraph()}
-                      <View style={{width: '90%', alignSelf: 'center'}}>
+                      <View style={{ width: '90%', alignSelf: 'center' }}>
                         {/* <MemoizedPieChart
                           alloCationLists={useMemo(
                             () => alloCationLists,
@@ -1234,8 +1266,8 @@ export default function Dashboard(props) {
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{paddingHorizontal: 10}}
-                  style={{marginVertical: 10}}>
+                  contentContainerStyle={{ paddingHorizontal: 10 }}
+                  style={{ marginVertical: 10 }}>
                   <View
                     style={{
                       backgroundColor: 'rgba(248, 248, 248, 1)',
@@ -1246,7 +1278,7 @@ export default function Dashboard(props) {
                       width: 170,
                     }}>
                     <SvgXml xml={SVGBit} />
-                    <View style={{marginLeft: 15}}>
+                    <View style={{ marginLeft: 15 }}>
                       <Text
                         style={{
                           color: 'black',
@@ -1265,7 +1297,7 @@ export default function Dashboard(props) {
                           padding: 5,
                           width: '80%',
                         }}
-                        tStyle={{color: 'white', fontSize: 10}}
+                        tStyle={{ color: 'white', fontSize: 10 }}
                       />
                     </View>
                   </View>
@@ -1280,7 +1312,7 @@ export default function Dashboard(props) {
                       marginLeft: 10,
                     }}>
                     <SvgXml xml={SVGSecurities} />
-                    <View style={{marginLeft: 15}}>
+                    <View style={{ marginLeft: 15 }}>
                       <Text
                         style={{
                           color: 'black',
@@ -1299,7 +1331,7 @@ export default function Dashboard(props) {
                           padding: 5,
                           width: '80%',
                         }}
-                        tStyle={{color: 'white', fontSize: 10}}
+                        tStyle={{ color: 'white', fontSize: 10 }}
                       />
                     </View>
                   </View>
@@ -1314,7 +1346,7 @@ export default function Dashboard(props) {
                       marginLeft: 10,
                     }}>
                     <SvgXml xml={SVGSecurities} />
-                    <View style={{marginLeft: 15}}>
+                    <View style={{ marginLeft: 15 }}>
                       <Text
                         style={{
                           color: 'black',
@@ -1333,7 +1365,7 @@ export default function Dashboard(props) {
                           padding: 5,
                           width: '80%',
                         }}
-                        tStyle={{color: 'white', fontSize: 10}}
+                        tStyle={{ color: 'white', fontSize: 10 }}
                       />
                     </View>
                   </View>
@@ -1355,8 +1387,8 @@ export default function Dashboard(props) {
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{paddingHorizontal: 10}}
-                  style={{marginVertical: 10}}>
+                  contentContainerStyle={{ paddingHorizontal: 10 }}
+                  style={{ marginVertical: 10 }}>
                   {bankLists &&
                     bankLists?.map((item, index) => (
                       <View
@@ -1439,10 +1471,10 @@ export default function Dashboard(props) {
                             {item?.balances?.available
                               ? item?.balances?.available
                               : item?.account_type === 'rothIra'
-                              ? bankbalance?.roth_ira_account?.usd
-                              : item?.account_type === 'traditionalIra'
-                              ? bankbalance?.traditional_ira_account?.usd
-                              : bankbalance?.bank_account?.usd}
+                                ? bankbalance?.roth_ira_account?.usd
+                                : item?.account_type === 'traditionalIra'
+                                  ? bankbalance?.traditional_ira_account?.usd
+                                  : bankbalance?.bank_account?.usd}
                           </Text>
 
                           <Text
@@ -1452,10 +1484,10 @@ export default function Dashboard(props) {
                                 bankbalance: item?.balances?.available
                                   ? item?.balances?.available
                                   : item?.account_type === 'rothIra'
-                                  ? bankbalance?.roth_ira_account?.usd
-                                  : item?.account_type === 'traditionalIra'
-                                  ? bankbalance?.traditional_ira_account?.usd
-                                  : bankbalance?.bank_account?.usd,
+                                    ? bankbalance?.roth_ira_account?.usd
+                                    : item?.account_type === 'traditionalIra'
+                                      ? bankbalance?.traditional_ira_account?.usd
+                                      : bankbalance?.bank_account?.usd,
                               })
                             }
                             style={{
@@ -1574,14 +1606,14 @@ export default function Dashboard(props) {
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{paddingHorizontal: 10}}
-                  style={{marginVertical: 10}}>
+                  contentContainerStyle={{ paddingHorizontal: 10 }}
+                  style={{ marginVertical: 10 }}>
                   <SvgXml
                     xml={SVGBANK2}
                     onPress={() => navigation.navigate('SelectBankScreen')}
-                    style={{marginRight: 10}}
+                    style={{ marginRight: 10 }}
                   />
-                  <SvgXml xml={SVGDebit} style={{marginRight: 10}} />
+                  <SvgXml xml={SVGDebit} style={{ marginRight: 10 }} />
                   <SvgXml xml={SVGCredit} />
                 </ScrollView>
                 <View
@@ -1620,10 +1652,10 @@ export default function Dashboard(props) {
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{paddingHorizontal: 10}}
-                  style={{marginVertical: 10}}>
-                  <SvgXml xml={SVGRecharge} style={{marginRight: 10}} />
-                  <SvgXml xml={SVGBilPay} style={{marginRight: 10}} />
+                  contentContainerStyle={{ paddingHorizontal: 10 }}
+                  style={{ marginVertical: 10 }}>
+                  <SvgXml xml={SVGRecharge} style={{ marginRight: 10 }} />
+                  <SvgXml xml={SVGBilPay} style={{ marginRight: 10 }} />
                   <SvgXml xml={SVGBilPay} />
                 </ScrollView>
               </>
@@ -1635,7 +1667,7 @@ export default function Dashboard(props) {
                 paddingBottom: 10,
               }}>
               {(txLists && txLists.length > 0) ||
-              (web3TxLists && web3TxLists.length > 0) ? (
+                (web3TxLists && web3TxLists.length > 0) ? (
                 <Text
                   style={{
                     color: '#1D1D1D',
@@ -1680,7 +1712,7 @@ export default function Dashboard(props) {
             </View>
             {isCrypto && (
               <>
-                <View style={{marginHorizontal: 25, marginTop: 20}}>
+                <View style={{ marginHorizontal: 25, marginTop: 20 }}>
                   <Text
                     style={{
                       color: '#1D1D1D',
@@ -1693,7 +1725,7 @@ export default function Dashboard(props) {
                 </View>
                 <Animated.View
                   style={[
-                    {transform: [{translateY: translateY}], opacity: opacity}, // Add opacity here
+                    { transform: [{ translateY: translateY }], opacity: opacity }, // Add opacity here
                   ]}>
                   <View
                     style={{
@@ -1732,10 +1764,10 @@ export default function Dashboard(props) {
                         }}>
                         Others Services
                       </Text>
-                      <View style={{marginBottom: 130, marginHorizontal: 20}}>
+                      <View style={{ marginBottom: 130, marginHorizontal: 20 }}>
                         <SvgXml
                           xml={SVGBamkAdd}
-                          style={{marginVertical: 10}}
+                          style={{ marginVertical: 10 }}
                           onPress={() => handleRothBank()}
                         />
                         <SvgXml

@@ -2,6 +2,7 @@ import {View, Text, AppState, Linking, Platform, Alert} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import AuthStack from './src/navigations/AuthStack';
+import AppStack from './src/navigations/AppStack';
 import {
   getBiometric,
   getGuide,
@@ -21,54 +22,54 @@ import {
   setWalletData,
 } from './src/redux/slices/authenticationSlice';
 import {useSelector} from 'react-redux';
-import AppStack from './src/navigations/AppStack';
 import {getMechentPay, getWallet} from './src/services/Services';
 import ErrorToast from './src/components/ErrorToast';
 import SplashScreen from './src/screens/Authentications/SplashScreen';
 import notifee, {AndroidStyle} from '@notifee/react-native';
 import messaging from '@react-native-firebase/messaging';
 import ReactNativeBiometrics from 'react-native-biometrics';
+
 export default function App() {
+  // -------------------- Redux State --------------------
   const {isLogin, tokens, errorMsg, successMsg, biometricAvailable} =
     useSelector(state => state.authenticationSlice);
+    
+  // -------------------- Local State --------------------
   const [appState, setAppState] = useState(AppState.currentState);
+  const [isFetching, setisFetching] = useState(true);
+  const [lastBackgroundTime, setLastBackgroundTime] = useState(null);
+  const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
+  
+  // Initialize biometrics library
   const rnBiometrics = new ReactNativeBiometrics({
     allowDeviceCredentials: true,
   });
-  const [isFetching, setisFetching] = useState(true);
+
+  // -------------------- App Initialization --------------------
+  // Fetch initial data when app loads
   useEffect(() => {
     getInitialData();
   }, []);
 
-  const [lastBackgroundTime, setLastBackgroundTime] = useState(null);
-  const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
-  const authenticateWithBiometrics = async val => {
-    try {
-      const {success} = await rnBiometrics.simplePrompt({
-        promptMessage: 'Verify With PayAiro',
-      });
+  // Get all necessary data from storage and set in Redux
+  const getInitialData = async () => {
+    const token = await getToken();
+    const wallet = await getWalletDataAuth();
+    const biometric = await getBiometric();
+    
+    if (token && wallet) {
+      useDispatchAction(setTokens(token));
+      useDispatchAction(setWalletData(wallet));
+      getMerchentRequest(token);
+      useDispatchAction(setLogin(true));
+      useDispatchAction(setBiometricAvailable(biometric));
+    }
+    
+    setisFetching(false);
+  };
 
-      if (success) {
-        // console.log('Biometric authentication successful', typeof success);
-        let newVal = success;
-        // onCfm();
-        // Proceed with secure action after successful authentication
-      } else {
-        authenticateWithBiometrics();
-      }
-    } catch (error) {
-      authenticateWithBiometrics();
-    }
-  };
-  const openSettings = () => {
-    if (Platform.OS === 'ios') {
-      Linking.openURL('app-settings:');
-    } else if (Platform.OS === 'android') {
-      Linking.openSettings();
-    } else {
-      // setErrorMessage('Biometric settings not supported on this platform.');
-    }
-  };
+  // -------------------- Biometric Authentication --------------------
+  // Handle biometric authentication when app comes to foreground
   useEffect(() => {
     if (isLogin && biometricAvailable) {
       const handleAppStateChange = nextAppState => {
@@ -79,8 +80,8 @@ export default function App() {
           // App has come to the foreground
           if (lastBackgroundTime) {
             const timeElapsed = new Date().getTime() - lastBackgroundTime;
+            // Show biometrics if app was in background for more than 1 minute
             if (timeElapsed > 60000) {
-              // Show biometrics if app was in background for more than 1 minute
               authenticateWithBiometrics();
             }
           }
@@ -120,20 +121,54 @@ export default function App() {
     }
   }, [appState, lastBackgroundTime, isLogin, biometricAvailable]);
 
+  // Function to handle biometric authentication
+  const authenticateWithBiometrics = async val => {
+    try {
+      const {success} = await rnBiometrics.simplePrompt({
+        promptMessage: 'Verify With PayAiro',
+      });
+
+      if (success) {
+        // Biometric authentication successful
+        let newVal = success;
+        // onCfm(); // Uncomment if needed
+        // Proceed with secure action after successful authentication
+      } else {
+        authenticateWithBiometrics();
+      }
+    } catch (error) {
+      authenticateWithBiometrics();
+    }
+  };
+
+  // Open device settings for biometric configuration
+  const openSettings = () => {
+    if (Platform.OS === 'ios') {
+      Linking.openURL('app-settings:');
+    } else if (Platform.OS === 'android') {
+      Linking.openSettings();
+    } else {
+      // setErrorMessage('Biometric settings not supported on this platform.');
+    }
+  };
+
+  // -------------------- Push Notifications --------------------
+  // Set up notification listener when component mounts
   useEffect(() => {
     const unsubscribe = messaging().onMessage(async remoteMessage => {
-      // Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
       onDisplayNotification(remoteMessage);
     });
+    
     requestPermission();
+    
     return unsubscribe;
   }, []);
 
+  // Request notification permissions and get FCM token
   React.useEffect(() => {
     getFCMToken();
 
     const unsubscribe = messaging().onMessage(async remoteMessage => {
-      // console.log('Foreground message received:', remoteMessage);
       onDisplayNotification(remoteMessage);
     });
 
@@ -142,6 +177,7 @@ export default function App() {
     return unsubscribe;
   }, []);
 
+  // Request notification permissions
   const requestPermission = async () => {
     const authorizationStatus = await messaging().requestPermission();
     if (authorizationStatus === messaging.AuthorizationStatus.AUTHORIZED) {
@@ -152,14 +188,13 @@ export default function App() {
     await notifee.requestPermission();
   };
 
+  // Display a notification
   const onDisplayNotification = async remoteMessage => {
     const channelId = await notifee.createChannel({
       id: 'default',
       name: 'PayAiro Channel',
       sound: 'default',
     });
-
-    // console.log(channelId, 'chanellId');
 
     await notifee.displayNotification({
       title: remoteMessage?.notification?.title,
@@ -176,36 +211,30 @@ export default function App() {
     });
   };
 
+  // Get FCM token for push notifications
   const getFCMToken = async () => {
     await messaging().registerDeviceForRemoteMessages();
     const token = await messaging().getToken();
-    // console.log('FCM Token:', token);
+    
     if (token) {
       useDispatchAction(setFcmToken(token));
     }
   };
 
+  // -------------------- API Requests --------------------
+  // Get merchant payment requests
   const getMerchentRequest = async token => {
     const data = await getMechentPay(token?.access);
     useDispatchAction(setPendingRequest(data?.data?.total_pending_requests));
   };
 
-  const getInitialData = async () => {
-    const token = await getToken();
-    const wallet = await getWalletDataAuth();
-    const biometric = await getBiometric();
-    if (token && wallet) {
-      useDispatchAction(setTokens(token));
-      useDispatchAction(setWalletData(wallet));
-      getMerchentRequest(token);
-      useDispatchAction(setLogin(true));
-      useDispatchAction(setBiometricAvailable(biometric));
-    }
-    setisFetching(false);
-  };
+  // -------------------- Render Logic --------------------
+  // Show splash screen while initializing
   if (isFetching) {
     return <SplashScreen />;
   }
+  
+  // Render main app navigation
   return (
     <NavigationContainer>
       {errorMsg || successMsg ? <ErrorToast /> : null}

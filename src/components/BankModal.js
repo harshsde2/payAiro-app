@@ -56,6 +56,7 @@ const BankModal = ({isVisible, onClose, onCancel}) => {
                   navigation.navigate(i.route);
                   onClose();
                 }}
+                key={k}
                 style={{
                   borderRadius: 40,
                   borderWidth: 1,
