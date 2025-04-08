@@ -4,7 +4,7 @@ import {Platform, SafeAreaView, StatusBar, View} from 'react-native';
 export default function Container({translucent, children, bgColor, isWhite}) {
   return (
     <>
-      {Platform.OS === 'ios' ? (
+      {/* {Platform.OS === 'ios' ? ( */}
         <SafeAreaView
           style={{
             flex: 0,
@@ -12,7 +12,7 @@ export default function Container({translucent, children, bgColor, isWhite}) {
             backgroundColor: !bgColor ? '#fff' : bgColor,
           }}
         />
-      ) : null}
+      {/* ) : null} */}
 
       <StatusBar
         animated={true}

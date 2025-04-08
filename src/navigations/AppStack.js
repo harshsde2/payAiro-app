@@ -64,6 +64,8 @@ import ChooseCurrency from '../screens/Crypto/ChooseCurrency';
 import WithdrawScreen from '../screens/Crypto/WithdrawScreen';
 import IntraAccountTransfer from '../screens/Dashboard/IntraAccountTransfer';
 import DetailsCryptoScreen from '../screens/Crypto/DetailsCryptoScreen';
+import DashboardRefactored from '../screens/Dashboard/DashboardRefactored';
+import NewDashboard from '../screens/Dashboard/NewDashboard';
 
 const Stack = createNativeStackNavigator();
 
@@ -80,6 +82,16 @@ export default function AppStack() {
         options={{headerShown: false}}
         name="Dashboard"
         component={Dashboard}
+      />
+      <Stack.Screen
+        options={{headerShown: false}}
+        name="NewDashboard"
+        component={NewDashboard}
+      />
+      <Stack.Screen
+        options={{headerShown: false}}
+        name="DashboardRefactored"
+        component={DashboardRefactored}
       />
       <Stack.Screen
         options={{headerShown: false}}

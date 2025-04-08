@@ -1,6 +1,6 @@
-import {View, Text, AppState, Linking, Platform, Alert} from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {NavigationContainer} from '@react-navigation/native';
+import { View, Text, AppState, Linking, Platform, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
 import AuthStack from './src/navigations/AuthStack';
 import AppStack from './src/navigations/AppStack';
 import {
@@ -21,25 +21,28 @@ import {
   setUserData,
   setWalletData,
 } from './src/redux/slices/authenticationSlice';
-import {useSelector} from 'react-redux';
-import {getMechentPay, getWallet} from './src/services/Services';
+import { useSelector } from 'react-redux';
+import { getMechentPay, getWallet } from './src/services/Services';
 import ErrorToast from './src/components/ErrorToast';
 import SplashScreen from './src/screens/Authentications/SplashScreen';
-import notifee, {AndroidStyle} from '@notifee/react-native';
+import notifee, { AndroidStyle } from '@notifee/react-native';
 import messaging from '@react-native-firebase/messaging';
 import ReactNativeBiometrics from 'react-native-biometrics';
+import { QueryProvider } from './src/query/index';
+import { setItem, STORAGE_KEYS } from './src/storage/mmkv';
+import { ThemeProvider } from './src/styles';
 
 export default function App() {
   // -------------------- Redux State --------------------
-  const {isLogin, tokens, errorMsg, successMsg, biometricAvailable} =
+  const { isLogin, tokens, errorMsg, successMsg, biometricAvailable } =
     useSelector(state => state.authenticationSlice);
-    
+
   // -------------------- Local State --------------------
   const [appState, setAppState] = useState(AppState.currentState);
   const [isFetching, setisFetching] = useState(true);
   const [lastBackgroundTime, setLastBackgroundTime] = useState(null);
   const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
-  
+
   // Initialize biometrics library
   const rnBiometrics = new ReactNativeBiometrics({
     allowDeviceCredentials: true,
@@ -56,15 +59,18 @@ export default function App() {
     const token = await getToken();
     const wallet = await getWalletDataAuth();
     const biometric = await getBiometric();
-    
+
     if (token && wallet) {
+      // Store token in MMKV for React Query
+      setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(token));
+
       useDispatchAction(setTokens(token));
       useDispatchAction(setWalletData(wallet));
       getMerchentRequest(token);
       useDispatchAction(setLogin(true));
       useDispatchAction(setBiometricAvailable(biometric));
     }
-    
+
     setisFetching(false);
   };
 
@@ -124,7 +130,7 @@ export default function App() {
   // Function to handle biometric authentication
   const authenticateWithBiometrics = async val => {
     try {
-      const {success} = await rnBiometrics.simplePrompt({
+      const { success } = await rnBiometrics.simplePrompt({
         promptMessage: 'Verify With PayAiro',
       });
 
@@ -158,9 +164,9 @@ export default function App() {
     const unsubscribe = messaging().onMessage(async remoteMessage => {
       onDisplayNotification(remoteMessage);
     });
-    
+
     requestPermission();
-    
+
     return unsubscribe;
   }, []);
 
@@ -215,7 +221,7 @@ export default function App() {
   const getFCMToken = async () => {
     await messaging().registerDeviceForRemoteMessages();
     const token = await messaging().getToken();
-    
+
     if (token) {
       useDispatchAction(setFcmToken(token));
     }
@@ -233,12 +239,16 @@ export default function App() {
   if (isFetching) {
     return <SplashScreen />;
   }
-  
+
   // Render main app navigation
   return (
-    <NavigationContainer>
-      {errorMsg || successMsg ? <ErrorToast /> : null}
-      {!isLogin ? <AuthStack /> : <AppStack />}
-    </NavigationContainer>
+    <ThemeProvider>
+      <QueryProvider>
+        <NavigationContainer>
+          {errorMsg || successMsg ? <ErrorToast /> : null}
+          {!isLogin ? <AuthStack /> : <AppStack />}
+        </NavigationContainer>
+      </QueryProvider>
+    </ThemeProvider>
   );
 }
