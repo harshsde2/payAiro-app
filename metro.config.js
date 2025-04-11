@@ -1,5 +1,6 @@
 const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
 const {wrapWithReanimatedMetroConfig} = require('react-native-reanimated/metro-config');
+const path = require('path');
 
 /**
  * Metro configuration
@@ -7,7 +8,13 @@ const {wrapWithReanimatedMetroConfig} = require('react-native-reanimated/metro-c
  *
  * @type {import('metro-config').MetroConfig}
  */
-const config = {};
+const config = {
+  resolver: {
+    extraNodeModules: {
+      '@tsx-components': path.resolve(__dirname, 'src/tsx-components'),
+    },
+  },
+};
 
 // Wrap the merged config with Reanimated's Metro config
 module.exports = wrapWithReanimatedMetroConfig(

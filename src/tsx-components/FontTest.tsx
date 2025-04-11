@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useTheme } from '../styles/ThemeContext';
+import CustomText from './CustomText';
 
 /**
  * A component to test and showcase the app's typography
@@ -22,28 +23,29 @@ const FontTest: React.FC = () => {
     caption: { ...theme.typography.textStyles.caption } as any,
   };
   
+  const styles = createStyles(theme);
   return (
     <ScrollView style={styles.container}>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Font Families</Text>
+        <CustomText style={styles.sectionTitle}>Font Families</CustomText>
         
         <View style={styles.fontCard}>
-          <Text style={styles.fontName}>Nexa Heavy (Headings)</Text>
-          <Text style={styles.nexaHeavy}>ABCDEFGHIJKLMNOPQRSTUVWXYZ</Text>
-          <Text style={styles.nexaHeavy}>abcdefghijklmnopqrstuvwxyz</Text>
-          <Text style={styles.nexaHeavy}>1234567890</Text>
+          <CustomText style={styles.fontName}>Nexa Heavy (Headings)</CustomText>
+          <CustomText style={styles.nexaHeavy}>ABCDEFGHIJKLMNOPQRSTUVWXYZ</CustomText>
+          <CustomText style={styles.nexaHeavy}>abcdefghijklmnopqrstuvwxyz</CustomText>
+          <CustomText style={styles.nexaHeavy}>1234567890</CustomText>
         </View>
         
         <View style={styles.fontCard}>
-          <Text style={styles.fontName}>Montserrat (Body & Subheadings)</Text>
-          <Text style={styles.montserratRegular}>ABCDEFGHIJKLMNOPQRSTUVWXYZ</Text>
-          <Text style={styles.montserratRegular}>abcdefghijklmnopqrstuvwxyz</Text>
-          <Text style={styles.montserratRegular}>1234567890</Text>
+          <CustomText style={styles.fontName}>Montserrat (Body & Subheadings)</CustomText>
+          <CustomText style={styles.montserratRegular}>ABCDEFGHIJKLMNOPQRSTUVWXYZ</CustomText>
+          <CustomText style={styles.montserratRegular}>abcdefghijklmnopqrstuvwxyz</CustomText>
+          <CustomText style={styles.montserratRegular}>1234567890</CustomText>
         </View>
       </View>
       
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Typography Styles</Text>
+        <CustomText style={styles.sectionTitle}>Typography Styles</CustomText>
         
         <Text style={typedStyles.h1}>Heading 1</Text>
         <Text style={typedStyles.h2}>Heading 2</Text>
@@ -69,7 +71,7 @@ const FontTest: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
@@ -88,7 +90,7 @@ const styles = StyleSheet.create({
   fontCard: {
     marginBottom: 20,
     padding: 15,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background.primary,
     borderRadius: 8,
   },
   fontName: {

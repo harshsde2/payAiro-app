@@ -1,70 +1,1311 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useCallback, useEffect, useState, useRef, useMemo, Suspense, lazy } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, Pressable, ActivityIndicator, useWindowDimensions, Button } from 'react-native';
 import ThemeUsageExample from '../../styles/ThemeUsageExample';
-import { DashboardHeader } from '../../tsx-components';
-import FontTest from '../../tsx-components/FontTest';
+// Import from the module alias utility
+import { DashboardHeader, CryptoCard, FontTest, Card, CustomText } from '../../utils/moduleAlias';
 import { ScreenContainer } from '../../HOC';
 import { useTheme } from '../../styles/ThemeContext';
+import { useSelector } from 'react-redux';
+import { SVGLoggo, SVGUSD, SVGDownArrow3, SVGSecurities, SVGReceive, SVGHolding, SVGAdd, SVGSend, SVGNewBank, SVGBilPay, SVGRecharge, SVGDebit, SVGCredit, SVGBANK2, SVGDebitAdd, SVGBamkAdd, SVGDebitCardAdd, SVGVoucher, SVGRef } from '../../constants/images';
+import useDispatchAction from '../../hooks/useDispatchAction';
+import { setisCrypto, setCalculatedBalance, setWalletData, setBankLists, setBankbalances, setErrorMsg, setSuccessMsg } from '../../redux/slices/authenticationSlice';
+import FlipSlideExample from 'animations/examples/FlipSlideExample';
+import BottomNavigation from 'components/BottomNavigation';
+import GhostSlide from 'animations/animations-components/GhostSlide';
+import { addbankAccountRoth, createPin, getBalance, getBalanceCrypto, getBankDetails, getBanksAllAccount, getContacts, getCryptoTx, getPayAeroTx, getPinFromSev, getWallet, uploadKYC } from 'services/Services';
+import { SvgXml } from 'react-native-svg';
+import { SCREENS } from 'constants/SCREENS';
+import { useNavigation } from '@react-navigation/native';
+import AssetsCards from 'components/AssetsCards';
+import Fonts from 'constants/Fonts';
+import { open } from 'react-native-plaid-link-sdk';
+import { create } from 'react-native-plaid-link-sdk';
+import { dismissLink, LinkIOSPresentationStyle } from 'react-native-plaid-link-sdk';
+import { LinkLogLevel } from 'react-native-plaid-link-sdk';
+import { BASE_URL } from 'constants/mockData';
+import StoryLists from 'components/StoryLists';
+import TransactionCard from 'components/TransactionCard';
+import Rewards from 'components/Rewards';
+import { getPin, setPin } from 'services/Auth';
+import PincodeScreen from 'screens/Authentications/PincodeScreen';
+import { SectionHeader } from 'tsx-components';
+import DashboardSection from 'tsx-components/DashboardSection';
+import CryptoCardSkeleton from 'tsx-components/CryptoCardSkeleton';
+
+// Lazy load non-critical components
+const LazyBankModal = lazy(() => import('components/BankModal'));
+const LazyBankModal2 = lazy(() => import('components/BankModal2'));
+const LazySelectionModal = lazy(() => import('components/SelectionModal'));
+const LazyBalanceModal = lazy(() => import('components/BalanceModal'));
+const LazySelectionModal2 = lazy(() => import('components/SelectionModal2'));
+const LazyGuideModal = lazy(() => import('components/GuideModal'));
+
+// API call utility with automatic retries, caching, and error handling
+const useApiCall = <T,>(apiFunction: (token: string) => Promise<any>, options = { retries: 1, cacheTime: 5 * 60 * 1000 }) => {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const cacheRef = useRef<{ data: T | null, timestamp: number }>({ data: null, timestamp: 0 });
+
+  const execute = useCallback(async (token: string, forceRefresh = false) => {
+    // Use cached data if available and not expired
+    const now = Date.now();
+    if (!forceRefresh &&
+      cacheRef.current.data &&
+      now - cacheRef.current.timestamp < options.cacheTime) {
+      setData(cacheRef.current.data);
+      return cacheRef.current.data;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    let attempts = 0;
+    let result = null;
+
+    while (attempts <= options.retries) {
+      try {
+        const response = await apiFunction(token);
+        result = response?.data;
+
+        // Update cache
+        cacheRef.current = {
+          data: result,
+          timestamp: Date.now()
+        };
+
+        setData(result);
+        setLoading(false);
+        return result;
+      } catch (err) {
+        attempts++;
+
+        // If we've exhausted retries, set the error
+        if (attempts > options.retries) {
+          const error = err instanceof Error ? err : new Error('Unknown error occurred');
+          setError(error);
+          setLoading(false);
+          console.error(`API call failed after ${options.retries} retries:`, error);
+          return null;
+        }
+
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempts - 1)));
+      }
+    }
+
+    return null;
+  }, [apiFunction, options.cacheTime, options.retries]);
+
+  return { data, loading, error, execute, clearCache: () => { cacheRef.current = { data: null, timestamp: 0 } } };
+};
+
+// Loading fallback component
+const LoadingFallback = () => {
+  const { theme } = useTheme();
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <ActivityIndicator size="large" color={theme.colors.palette.green700} />
+    </View>
+  );
+};
+
+// Skeleton components for loading states
+const SkeletonCard = () => {
+  const { theme } = useTheme();
+  return (
+    <View style={{
+      backgroundColor: 'rgba(247, 247, 247, 1)',
+      padding: 10,
+      width: 200,
+      borderRadius: 15,
+      marginRight: 10,
+      height: 120,
+    }}>
+      <View style={{ width: '70%', height: 20, backgroundColor: theme.colors.palette.grey200, borderRadius: 4, marginBottom: 10 }} />
+      <View style={{ width: '90%', height: 12, backgroundColor: theme.colors.palette.grey200, borderRadius: 4, marginBottom: 15 }} />
+      <View style={{ width: '50%', height: 12, backgroundColor: theme.colors.palette.grey200, borderRadius: 4, marginBottom: 15 }} />
+      <View style={{ width: '40%', height: 20, backgroundColor: theme.colors.palette.grey200, borderRadius: 4 }} />
+    </View>
+  );
+};
+
+const SkeletonTransactionCard = () => {
+  const { theme } = useTheme();
+  return (
+    <View style={{
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.palette.grey200,
+    }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: theme.colors.palette.grey200, marginRight: 10 }} />
+        <View>
+          <View style={{ width: 120, height: 16, backgroundColor: theme.colors.palette.grey200, borderRadius: 4, marginBottom: 8 }} />
+          <View style={{ width: 80, height: 12, backgroundColor: theme.colors.palette.grey200, borderRadius: 4 }} />
+        </View>
+      </View>
+      <View style={{ width: 70, height: 20, backgroundColor: theme.colors.palette.grey200, borderRadius: 4 }} />
+    </View>
+  );
+};
+
+// Memoized components for better performance
+const MemoizedStoryLists = React.memo(StoryLists);
+const MemoizedTransactionCard = React.memo(TransactionCard);
+const MemoizedRewards = React.memo(Rewards);
+const MemoizedDashboardSection = React.memo(DashboardSection);
+
+// Separate crypto view components to improve re-rendering
+interface CryptoFinanceSectionProps {
+  navigation: any;
+}
+
+const CryptoFinanceSection = React.memo(({ navigation }: CryptoFinanceSectionProps) => {
+  const { theme } = useTheme();
+
+  return (
+    <View>
+      <MemoizedDashboardSection
+        title='Finance'
+        actionText='see all'
+        onActionPress={() => { }}
+      >
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{}}
+          style={{ marginVertical: 10 }}>
+          <SvgXml
+            xml={SVGBANK2}
+            onPress={() => navigation.navigate('SelectBankScreen')}
+            style={{ marginRight: 10 }}
+          />
+          <SvgXml xml={SVGDebit} style={{ marginRight: 10 }} />
+          <SvgXml xml={SVGCredit} />
+        </ScrollView>
+      </MemoizedDashboardSection>
+      <MemoizedDashboardSection
+        title='Utilities'
+        actionText='see all'
+        onActionPress={() => { }}
+      >
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{}}
+          style={{ marginVertical: 10 }}>
+          <SvgXml xml={SVGRecharge} style={{ marginRight: 10 }} />
+          <SvgXml xml={SVGBilPay} style={{ marginRight: 10 }} />
+          <SvgXml xml={SVGBilPay} />
+        </ScrollView>
+      </MemoizedDashboardSection>
+    </View>
+  );
+});
+
+// No props needed for this component
+const CryptoRewardsSection = React.memo(() => (
+  <MemoizedDashboardSection title='Offer & Rewards' actionText='see all' onActionPress={() => { }}>
+    <View style={[]}>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginRight: 10,
+        }}>
+        <MemoizedRewards item={{}} />
+        <MemoizedRewards
+          item={{
+            name: 'Vouchers',
+            icon: SVGVoucher,
+            route: 'VouchersScreens',
+            bgColor: '#f1edfe',
+          }}
+        />
+        <MemoizedRewards
+          item={{
+            name: 'Referrals',
+            icon: SVGRef,
+            route: 'VouchersScreens',
+            bgColor: 'rgba(95, 255, 0, 0.09)',
+          }}
+        />
+      </View>
+    </View>
+  </MemoizedDashboardSection>
+));
+
+interface CryptoOtherServicesSectionProps {
+  handleRothBank: () => Promise<void>;
+  setisCardModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
+  navigation: any;
+}
+
+const CryptoOtherServicesSection = React.memo(
+  ({ handleRothBank, setisCardModalVisible, navigation }: CryptoOtherServicesSectionProps) => (
+    <MemoizedDashboardSection
+      title='Others Services'
+      actionText='see all'
+      onActionPress={() => { }}
+    >
+      <View style={{ marginBottom: 130, marginRight: 20 }}>
+        <SvgXml
+          xml={SVGBamkAdd}
+          style={{ marginVertical: 10 }}
+          onPress={() => handleRothBank()}
+        />
+        <SvgXml
+          xml={SVGDebitCardAdd}
+          onPress={() => setisCardModalVisible(true)}
+        />
+        <Pressable
+          onPress={() =>
+            navigation.navigate('IntraAccountTransfer')
+          }
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            marginVertical: 10,
+          }}>
+          <SvgXml xml={SVGDebitAdd} />
+          <Text
+            style={{
+              color: 'black',
+              fontFamily: Fonts.semibold,
+              marginLeft: 10,
+            }}>
+            Intra account transfer
+          </Text>
+        </Pressable>
+      </View>
+    </MemoizedDashboardSection>
+  )
+);
 
 const NewDashboard = () => {
+  // Get data from Redux store
+  const {
+    isCrypto,
+    selectedCrypto,
+    bankBalance,
+    walletData,
+    tokens,
+    bankLists,
+  } = useSelector((state: any) => state.authenticationSlice);
+
+  const { height: screenHeight } = useWindowDimensions();
+  const navigation = useNavigation<any>();
+
   const { theme, toggleTheme } = useTheme();
   const [userName, setUserName] = useState('Daniel Hamilton');
   const [showFontTest, setShowFontTest] = useState(false);
-  
+  const [ghostSlideVisible, setGhostSlideVisible] = useState(false);
+  const [isVisible, setisVisible] = useState(false);
+  const [linkToken, setLinkToken] = useState(null);
+  const [contactLists, setcontactLists] = useState<any[]>([]);
+  const [txLists, settxLists] = useState<any[]>([]);
+  const [web3TxLists, setweb3TxLists] = useState<any[]>([]);
+  const [isCardModalVisible, setisCardModalVisible] = useState(false);
+  const [showPin, setshowPin] = useState(false);
+  const [isConfirm, setisConfirm] = useState(false);
+  const [pinTxt, setpinTxt] = useState('Create your pin');
+  const [isBankModalVisible, setisBankModalVisible] = useState(false);
+  const [isVisible2, setisVisible2] = useState(false);
+  const [isShowWeeks, setisShowWeeks] = useState(false);
+  const [timeframe, settimeframe] = useState('Week');
+  const [isGuideVisible, setisGuideVisible] = useState(false);
+  const [isShowKYC, setisShowKYC] = useState(false);
+  const [alloCationLists, setalloCationLists] = useState([]);
+  const [totalDisbursable, settotalDisbursable] = useState(0);
+  const [totalDisbursablePending, settotalDisbursablePending] = useState(0);
+
+  // Create API hooks with automatic retries and caching
+  const cryptoBalanceApi = useApiCall(getBalanceCrypto);
+  const bankBalanceApi = useApiCall(getBalance);
+  const walletApi = useApiCall(getWallet);
+  const bankDetailsApi = useApiCall(getBankDetails);
+  const bankAccountsApi = useApiCall(getBanksAllAccount);
+  const contactsApi = useApiCall(getContacts);
+  const txListsApi = useApiCall(getPayAeroTx);
+  const cryptoTxApi = useApiCall(getCryptoTx);
+  const kycApi = useApiCall(uploadKYC);
+
+  useEffect(() => {
+    // Group all data fetch operations
+    const fetchInitialData = async () => {
+      if (!tokens?.access) {
+        console.error("No access token available");
+        return;
+      }
+
+      try {
+        console.log("Fetching initial dashboard data");
+
+        // Create an array of promises with descriptive catch handlers
+        const promises = [
+          fetchKycStatus().catch(err => console.error("KYC status fetch failed:", err)),
+          fetchCryptoBalance().catch(err => console.error("Crypto balance fetch failed:", err)),
+          fetchBankBalance().catch(err => console.error("Bank balance fetch failed:", err)),
+          fetchBankAccounts().catch(err => console.error("Bank accounts fetch failed:", err)),
+          fetchContacts().catch(err => console.error("Contacts fetch failed:", err)),
+          fetchTransactions().catch(err => console.error("Transactions fetch failed:", err)),
+          fetchCryptoTransactions().catch(err => console.error("Crypto transactions fetch failed:", err)),
+          fetchWalletData().catch(err => console.error("Wallet data fetch failed:", err)),
+        ];
+
+        // Execute all promises in parallel
+        await Promise.allSettled(promises);
+        console.log("All initial data fetch operations completed");
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+      }
+    };
+
+    fetchInitialData();
+  }, [tokens?.access]);
+
+  // Separate effect for Plaid token which changes independently
+  useEffect(() => {
+    const fetchLinkToken = async () => {
+      if (!tokens?.access) return;
+
+      try {
+        const response = await fetch(`${BASE_URL}kyc/link-token/`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${tokens?.access}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        const data = await response.json();
+        setLinkToken(data?.data?.link_token);
+      } catch (err) {
+        console.error('Error fetching link token:', err);
+      }
+    };
+
+    fetchLinkToken();
+  }, [tokens?.access]);
+
+  // Define interfaces for better type safety
+  interface CryptoAsset {
+    assetType: string;
+    disbursable: number;
+    pending: number;
+    name?: string;
+    symbol?: string;
+  }
+
+  // Optimized API call functions
+  const fetchCryptoBalance = async () => {
+    try {
+      const response = await cryptoBalanceApi.execute(tokens?.access);
+      const cryptoAssets = response?.data;
+
+      if (!cryptoAssets) return;
+
+      // Filter non-USD assets in one pass
+      const nonUsdAssets = cryptoAssets.filter((asset: CryptoAsset) =>
+        asset?.assetType !== 'usd'
+      );
+
+      setalloCationLists(nonUsdAssets);
+
+      // Calculate totals in a single reduce operation for better performance
+      const totals = nonUsdAssets.reduce((acc: { disbursable: number, pending: number }, asset: CryptoAsset) => {
+        return {
+          disbursable: acc.disbursable + (asset?.disbursable || 0),
+          pending: acc.pending + (asset?.pending || 0)
+        };
+      }, { disbursable: 0, pending: 0 });
+
+      settotalDisbursable(Number(totals.disbursable));
+      settotalDisbursablePending(Number(totals.pending));
+    } catch (error) {
+      console.error('Error fetching crypto balance:', error);
+    }
+  };
+
+  const fetchKycStatus = async () => {
+    try {
+      const data = await kycApi.execute(tokens?.access);
+      if (data?.status === 400 || !data?.status) {
+        setisShowKYC(data?.title === 'Identity suspended');
+      } else {
+        setisShowKYC(true);
+      }
+    } catch (error) {
+      console.error('Error checking KYC status:', error);
+      setisShowKYC(false);
+    }
+  };
+
+  const fetchWalletData = async () => {
+    try {
+      const data = await walletApi.execute(tokens?.access);
+      if (!data) return;
+
+      useDispatchAction(setWalletData(data));
+    } catch (error) {
+      console.error('Error fetching wallet data:', error);
+    }
+  };
+
+  const fetchBankBalance = async () => {
+    try {
+      const data = await bankBalanceApi.execute(tokens?.access);
+      if (!data) return;
+
+      useDispatchAction(setBankbalances(data));
+    } catch (error) {
+      console.error('Error fetching bank balance:', error);
+    }
+  };
+
+  const fetchBankAccounts = async () => {
+    try {
+      // Get both data sources in parallel using optimized API calls
+      const [bankDetailsResponse, bankAccountsResponse] = await Promise.all([
+        bankDetailsApi.execute(tokens?.access),
+        bankAccountsApi.execute(tokens?.access)
+      ]);
+
+      if (!bankAccountsResponse) return;
+
+      // Extract all bank accounts
+      const payAiroBankAccounts = [
+        ...(bankAccountsResponse?.bank_accounts || []),
+        ...(bankAccountsResponse?.traditional_ira_accounts || []),
+        ...(bankAccountsResponse?.roth_ira_accounts || [])
+      ];
+
+      // Combine with bank details accounts if available
+      const combinedAccounts = [
+        ...(bankDetailsResponse?.accounts || []),
+        ...payAiroBankAccounts
+      ];
+
+      useDispatchAction(setBankLists(combinedAccounts));
+    } catch (error) {
+      console.error('Error fetching bank accounts:', error);
+    }
+  };
+
+  const fetchTransactions = async () => {
+    try {
+      console.log("Fetching PayAiro transactions...");
+      const response = await getPayAeroTx(tokens?.access);
+      console.log("PayAiro transactions response:", response);
+
+      // Extract transactions data correctly based on response format
+      let transactionsData = null;
+
+      if (response?.data?.merchantTransactions || response?.data?.userToUserTransactions) {
+        // Format: { data: { merchantTransactions: [], userToUserTransactions: [] } }
+        transactionsData = {
+          merchantTransactions: response.data.merchantTransactions || [],
+          userToUserTransactions: response.data.userToUserTransactions || []
+        };
+      } else if (response?.merchantTransactions || response?.userToUserTransactions) {
+        // Format: { merchantTransactions: [], userToUserTransactions: [] }
+        transactionsData = {
+          merchantTransactions: response.merchantTransactions || [],
+          userToUserTransactions: response.userToUserTransactions || []
+        };
+      } else if (response?.data?.data) {
+        // Format: { data: { data: { merchantTransactions: [], userToUserTransactions: [] } } }
+        transactionsData = {
+          merchantTransactions: response.data.data.merchantTransactions || [],
+          userToUserTransactions: response.data.data.userToUserTransactions || []
+        };
+      }
+
+      if (!transactionsData) {
+        console.error("Could not find valid transactions data in response:", response);
+        return;
+      }
+
+      console.log("Extracted transactions data:", transactionsData);
+
+      // Create a merged and filtered list in one operation
+      const successfulTransactions = [
+        ...transactionsData.merchantTransactions,
+        ...transactionsData.userToUserTransactions
+      ].filter(tx => tx?.status === 'success');
+
+      console.log(`Found ${successfulTransactions.length} successful transactions`);
+      settxLists(successfulTransactions);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    }
+  };
+
+  const fetchCryptoTransactions = async () => {
+    try {
+      console.log("Fetching crypto transactions...");
+      const response = await getCryptoTx(tokens?.access);
+      console.log("Crypto transactions response:", response);
+
+      // Extract crypto transactions data correctly based on response format
+      let cryptoData = null;
+
+      if (response?.data?.nft_transactions || response?.data?.trades) {
+        // Format: { data: { nft_transactions: [], trades: [] } }
+        cryptoData = {
+          nft_transactions: response.data.nft_transactions || [],
+          trades: response.data.trades || []
+        };
+      } else if (response?.nft_transactions || response?.trades) {
+        // Format: { nft_transactions: [], trades: [] }
+        cryptoData = {
+          nft_transactions: response.nft_transactions || [],
+          trades: response.trades || []
+        };
+      } else if (response?.data?.data) {
+        // Format: { data: { data: { nft_transactions: [], trades: [] } } }
+        cryptoData = {
+          nft_transactions: response.data.data.nft_transactions || [],
+          trades: response.data.data.trades || []
+        };
+      }
+
+      if (!cryptoData) {
+        console.error("Could not find valid crypto transactions data in response:", response);
+        return;
+      }
+
+      console.log("Extracted crypto transactions data:", cryptoData);
+
+      // Safely combine NFT transactions and trades
+      const allTransactions = [
+        ...cryptoData.nft_transactions,
+        ...cryptoData.trades
+      ];
+
+      console.log(`Found ${allTransactions.length} crypto transactions`);
+      setweb3TxLists(allTransactions);
+    } catch (error) {
+      console.error('Error fetching crypto transactions:', error);
+    }
+  };
+
+  const fetchContacts = async () => {
+    try {
+      console.log("Starting fetchContacts with token:", tokens?.access?.substring(0, 10) + "...");
+
+      // Direct API call to get contacts
+      const response = await getContacts(tokens?.access);
+      console.log("Raw contacts API response:", response);
+
+      // Check different possible response formats
+      let contactsData = null;
+
+      if (response?.data?.data) {
+        // Format: { data: { data: [...contacts] } }
+        contactsData = response.data.data;
+      } else if (Array.isArray(response?.data)) {
+        // Format: { data: [...contacts] }
+        contactsData = response.data;
+      } else if (Array.isArray(response)) {
+        // Format: [...contacts]
+        contactsData = response;
+      }
+
+      if (!contactsData || !Array.isArray(contactsData)) {
+        console.error("Could not find valid contacts data in response:", response);
+        return;
+      }
+
+      console.log("Extracted contacts data:", contactsData);
+
+      // Check the object structure to identify the correct field names
+      const sampleContact = contactsData[0];
+      console.log("Sample contact object:", sampleContact);
+
+      // Determine which field name is used for pending requests
+      const pendingRequestsField = sampleContact?.pending_requests
+        ? 'pending_requests'
+        : sampleContact?.pendingRequests
+          ? 'pendingRequests'
+          : null;
+
+      if (!pendingRequestsField) {
+        console.warn("Could not determine pending requests field, using data as is");
+        setcontactLists(contactsData);
+        return;
+      }
+
+      console.log(`Using '${pendingRequestsField}' as the pending requests field`);
+
+      // Function to get earliest timestamp - adapted to work with variable field names
+      const getEarliestTimestamp = (contact: any) => {
+        const requests = contact[pendingRequestsField];
+        if (!requests || !Array.isArray(requests) || requests.length === 0) return null;
+
+        // Check if timestamp or created_at is used
+        const timestampField = requests[0]?.timestamp
+          ? 'timestamp'
+          : requests[0]?.created_at
+            ? 'created_at'
+            : null;
+
+        if (!timestampField) return null;
+
+        try {
+          return new Date(
+            Math.min(...requests.map(request => new Date(request[timestampField]).getTime()))
+          );
+        } catch (err) {
+          console.error("Error processing timestamps:", err);
+          return null;
+        }
+      };
+
+      // Sort contacts by timestamp
+      const sortedContacts = [...contactsData].sort((a, b) => {
+        const timestampA = getEarliestTimestamp(a);
+        const timestampB = getEarliestTimestamp(b);
+
+        if (timestampA === null && timestampB === null) return 0;
+        if (timestampA === null) return 1;
+        if (timestampB === null) return -1;
+        return timestampA.getTime() - timestampB.getTime();
+      });
+
+      console.log("Final sorted contacts:", sortedContacts);
+      setcontactLists(sortedContacts);
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+    }
+  };
+
+  const handleRothBank = async () => {
+    try {
+      const data = await addbankAccountRoth(tokens?.access);
+      // console.log(data?.data, 'royjir');
+      if (data && data?.data && !data?.data?.error) {
+        useDispatchAction(setSuccessMsg('Bank Account Created Successfully'));
+        fetchBankAccounts();
+      } else {
+        useDispatchAction(
+          setErrorMsg(data?.data?.error ?? 'Something went wrong'),
+        );
+      }
+    } catch (error) { }
+  };
+
+  const onSuccess = useCallback(async (publicToken: any) => {
+    try {
+      // Parse the metadataJson string
+      const metadata = publicToken?.metadata;
+      const metadataJson = metadata?.metadataJson
+        ? JSON.parse(metadata.metadataJson)
+        : null;
+
+      if (!metadataJson) {
+        console.error('Invalid metadataJson structure');
+        return;
+      }
+
+      const accountId = metadataJson?.account_id;
+
+      // Process all API calls in sequence with proper error handling
+      // 1. Exchange for access token
+      const exchangeResponse = await fetch(`${BASE_URL}kyc/exchange-token/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tokens?.access}`,
+        },
+        body: JSON.stringify({
+          public_token: publicToken.publicToken,
+        }),
+      });
+
+      const exchangeData = await exchangeResponse.json();
+      if (!exchangeResponse.ok) {
+        throw new Error(
+          `Exchange token error: ${exchangeData?.message || 'Unknown error'}`,
+        );
+      }
+
+      const accessToken = exchangeData?.data?.access_token;
+      if (!accessToken) {
+        throw new Error('Missing access token in exchange response');
+      }
+
+      // 2. Get processor token
+      const processorResponse = await fetch(`${BASE_URL}kyc/processor-token/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tokens?.access}`,
+        },
+        body: JSON.stringify({
+          access_token: accessToken,
+          account_id: accountId,
+        }),
+      });
+
+      const processorData = await processorResponse.json();
+      if (!processorResponse.ok) {
+        throw new Error(
+          `Processor token error: ${processorData?.message || 'Unknown error'}`,
+        );
+      }
+
+      const processorToken = processorData?.data?.processor_token;
+      if (!processorToken) {
+        throw new Error('Missing processor token in processor response');
+      }
+
+      // 3. Register bank
+      const registerBankResponse = await fetch(
+        `${BASE_URL}kyc/register-bank/`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${tokens?.access}`,
+          },
+          body: JSON.stringify({
+            processor_token: processorToken,
+            identityId: exchangeData?.data?.identityId,
+            type: 'financial',
+            accountNumberLast4: metadataJson?.account_id?.slice(-4),
+          }),
+        },
+      );
+
+      if (!registerBankResponse.ok) {
+        const registerBankData = await registerBankResponse.json();
+        throw new Error(
+          `Register bank error: ${registerBankData?.message || 'Unknown error'}`
+        );
+      }
+
+      // 4. Success - refresh bank accounts
+      await fetchBankAccounts();
+      useDispatchAction(setSuccessMsg('Bank account added successfully'));
+    } catch (error) {
+      console.error('Error in Plaid success handler:', error);
+      useDispatchAction(setErrorMsg(error instanceof Error ? error.message : 'Failed to add bank account'));
+    }
+  }, [tokens?.access]); // Only depend on the access token
+
+  // Handling open links
+  const handleOpenLink = useCallback(() => {
+    if (!linkToken) return;
+
+    const config = {
+      token: linkToken,
+      onSuccess,
+      onExit: (linkExit: any) => {
+        dismissLink();
+      },
+      iOSPresentationStyle: LinkIOSPresentationStyle.MODAL,
+      logLevel: LinkLogLevel.ERROR,
+    };
+
+    create(config);
+    open(config);
+  }, [linkToken, onSuccess]);
+
+  console.log("bankBalance?.bank_account?.usd =>", bankBalance?.bank_account?.usd)
+  // Handle view switch with proper memo dependencies
+  const handleSwitchView = useCallback(() => {
+    console.log("asasas")
+    setGhostSlideVisible(!ghostSlideVisible)
+    const newCryptoState = !isCrypto;
+    useDispatchAction(setCalculatedBalance(selectedCrypto?.balance_in_tether ?? 0));
+    useDispatchAction(setisCrypto(newCryptoState));
+  }, [isCrypto, selectedCrypto?.balance_in_tether,ghostSlideVisible]);
+
+  // Memoize contact see all navigation
+  const onContactSeeALl = useCallback(() => {
+    navigation.navigate('ContactScreen', {
+      isVisble3: isCrypto,
+    });
+  }, [navigation, isCrypto]);
+
   // Example custom theme handling
   const styles = createStyles(theme);
 
+  // Memoize expensive calculations and derived state
+  const sortedTxLists = useMemo(() => {
+    if (!txLists) return [];
+    return [...txLists].sort(
+      (a, b) => (new Date(b.created_at) as any) - (new Date(a.created_at) as any)
+    ).slice(0, 5);
+  }, [txLists]);
+
+  const sortedWeb3TxLists = useMemo(() => {
+    if (!web3TxLists) return [];
+    return [...web3TxLists].sort(
+      (a, b) => (new Date(b.timestamp) as any) - (new Date(a.timestamp) as any)
+    ).slice(0, 5);
+  }, [web3TxLists]);
+
+  // Memoize banking data processing
+  const processedBankAccounts = useMemo(() => {
+    if (!bankLists) return [];
+
+    return bankLists.map((item: any) => ({
+      ...item,
+      displayName: item?.bank_name ?? item?.name,
+      accountType: item?.account_type ?? 'Personal',
+      address: item?.bank_address ?? item?.official_name,
+      accountNumber: item?.account_number ?? item?.account_id,
+      balance: item?.balances?.available
+        ? item?.balances?.available
+        : item?.account_type === 'rothIra'
+          ? bankBalance?.roth_ira_account?.usd
+          : item?.account_type === 'traditionalIra'
+            ? bankBalance?.traditional_ira_account?.usd
+            : bankBalance?.bank_account?.usd
+    }));
+  }, [bankLists, bankBalance]);
+
   return (
-    <ScreenContainer>
-      <DashboardHeader 
-        name={userName}
-      />
-      
-      {/* <ScrollView style={styles.content}>
-        <Text style={styles.title}>Dashboard</Text>
-        
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Your Balance</Text>
-          <Text style={styles.balanceText}>$12,345.67</Text>
-          
-          <View style={styles.actionsRow}>
-            <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionButtonText}>Send</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionButtonText}>Receive</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionButtonText}>Scan</Text>
-            </TouchableOpacity>
+    <ScreenContainer
+      // scrollable
+      style={{
+        paddingHorizontal: 0
+      }}
+      avoidKeyboard
+
+    >
+      {/* Modals with Suspense for lazy loading */}
+      <Suspense fallback={<LoadingFallback />}>
+        {isCardModalVisible && (
+          <LazyBankModal
+            isVisible={isCardModalVisible}
+            onClose={() => setisCardModalVisible(false)}
+            onCancel={() => { }}
+          />
+        )}
+
+        {isBankModalVisible && (
+          <LazyBankModal2
+            isVisible={isBankModalVisible}
+            onClose={() => setisBankModalVisible(false)}
+            onCancel={() => { }}
+          />
+        )}
+
+        {isVisible && (
+          <LazyBalanceModal
+            isVisible={isVisible}
+            onClose={() => setisVisible(false)}
+            onSelected={() => {
+              setisVisible(false);
+              navigation.navigate(SCREENS.Receive);
+            }}
+          />
+        )}
+
+        {isVisible2 && (
+          <LazySelectionModal
+            isVisible={isVisible2}
+            onClose={() => setisVisible2(false)}
+            onSelected={() => { }}
+            data={[]}
+            type={'bank'}
+          />
+        )}
+
+        {isShowWeeks && (
+          <LazySelectionModal2
+            isVisible={isShowWeeks}
+            onClose={() => setisShowWeeks(false)}
+            timeframe={timeframe}
+            settimeframe={settimeframe}
+          />
+        )}
+
+        {isGuideVisible && (
+          <LazyGuideModal
+            isVisible={isGuideVisible}
+            onClose={() => setisGuideVisible(false)}
+            onConfirm={() => { }}
+          />
+        )}
+      </Suspense>
+
+
+      <View style={{
+        zIndex: 9999,
+        width: '92%',
+        alignSelf: 'center',
+        backgroundColor: 'black',
+        borderRadius: 20,
+        position: 'absolute',
+        bottom:20,
+      }}>
+        <GhostSlide
+          visible={ghostSlideVisible}
+          direction="custom"
+          duration={2500}
+          distance={1000}
+          customX={0}
+          customY={-400}
+          ghostOpacity={1}
+          onAnimationComplete={() => console.log('Ghost slide completed')}
+        >
+          <View style={{
+            padding: 10,
+            backgroundColor: 'black',
+            borderRadius: 20,
+            position: 'absolute',
+            bottom: 20,
+            zIndex: 9999,
+            width: '92%',
+            alignSelf: 'center',
+          }}>
+
+          <BottomNavigation isVer={true} />
           </View>
+        </GhostSlide>
+      </View>
+
+      <ScrollView>
+      <DashboardHeader
+        name={userName}
+        style={{
+          marginBottom: theme.spacing.spacing.md,
+          marginHorizontal: 15
+        }}
+      />
+
+      <View style={{ marginHorizontal: 15 }}>
+        {/* Use a consistent height container to prevent layout shifts */}
+        <View style={{ minHeight: 220 }}>
+          {!bankBalance?.bank_account?.usd ? (
+            <CryptoCardSkeleton
+              shimmerColor="rgba(255, 255, 255, 0.6)"
+              baseColor="rgba(255, 255, 255, 0.2)"
+              speed={1000}
+              visible={true}
+            />
+          ) : (
+            
+            <CryptoCard
+              isCrypto={isCrypto}
+              onSwitchView={()=>{
+                // handleSwitchView();
+                setGhostSlideVisible(!ghostSlideVisible)
+                // console.log("onSwitchView")
+              }}
+              headerTitle={'Payairo Account'}
+              balance={isCrypto ?
+                (bankBalance?.bank_account?.usd ?? 0) :
+                Number(totalDisbursable || 0)}
+              currencySymbol="USD"
+              currencyIcon={SVGUSD}
+              identifierType={"Payairo ID:"}
+              identifier={walletData?.username || "Username"}
+              pendingAmount={!isCrypto ? totalDisbursablePending : 0}
+              onCopy={() => console.log("Copy identifier")}
+              onWithdraw={() => console.log("Withdraw pressed")}
+              logoSvg={isCrypto ? SVGSecurities : SVGLoggo}
+            />
+          )}
         </View>
-        
-        <View style={styles.buttonRow}>
-          <TouchableOpacity 
-            style={styles.themeToggleButton} 
-            onPress={toggleTheme}
-          >
-            <Text style={styles.themeToggleText}>
-              Toggle Theme ({theme.mode})
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.fontTestButton} 
-            onPress={() => setShowFontTest(!showFontTest)}
-          >
-            <Text style={styles.themeToggleText}>
-              {showFontTest ? 'Hide' : 'Show'} Font Test
-            </Text>
-          </TouchableOpacity>
+
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginVertical: 20,
+          }}>
+          <SvgXml
+            xml={SVGSend}
+            onPress={() => {
+              navigation.navigate(
+                !isCrypto ? SCREENS.SendToken : SCREENS.Send,
+                {
+                  requested: false,
+                },
+              );
+            }}
+          />
+          <SvgXml
+            xml={SVGReceive}
+            onPress={() =>
+              navigation.navigate(
+                !isCrypto ? SCREENS.ReceiveToken : SCREENS.Receive,
+              )
+            }
+          />
+          <SvgXml
+            xml={!isCrypto ? SVGHolding : SVGAdd}
+            style={{ marginBottom: 20 }}
+            onPress={() => {
+              if (!isCrypto) {
+                navigation.navigate('CryptoDashboard');
+              } else {
+                setisVisible(true);
+              }
+            }}
+          />
         </View>
-        
-        {showFontTest && <FontTest />}
-      </ScrollView> */}
-    </ScreenContainer>
+      </View>
+      <Card
+        style={{ backgroundColor: theme.colors.palette.white, borderWidth: 0 }}
+        padding={10}
+
+        borderRadius={theme.spacing.spacing[10]}
+      >
+        <View style={{ width: '100%', padding: 5, }}>
+          <MemoizedDashboardSection
+            title='Your Accounts'
+            actionText='see all'
+            onActionPress={() => { }}
+          >
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{}}
+              style={{ marginRight: 10 }}>
+              {walletApi.loading || bankDetailsApi.loading ? (
+                // Show skeleton loading UI
+                <>
+                  <SkeletonCard />
+                  <SkeletonCard />
+                  <SkeletonCard />
+                </>
+              ) : (
+                processedBankAccounts.map((item: any, index: number) => (
+                  <View
+                    key={index}
+                    style={{
+                      backgroundColor: 'rgba(247, 247, 247, 1)',
+                      padding: 10,
+                      width: 200,
+                      borderRadius: 15,
+                      marginRight: 10,
+                    }}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'flex-start',
+                        alignItems: 'center',
+                        width: '90%',
+                      }}>
+                      <SvgXml xml={SVGUSD} width={25} height={25} />
+                      <Text
+                        style={{
+                          fontFamily: Fonts.semibold,
+                          color: '#000',
+                          fontSize: 16,
+                          marginLeft: 8,
+                        }}>
+                        {item.displayName}
+                        <Text
+                          style={{
+                            color: 'rgba(44, 106, 63, 1)',
+                            fontSize: 10,
+                            textTransform: 'uppercase',
+                          }}>
+                          {' '}({item.accountType})
+                        </Text>
+                      </Text>
+                    </View>
+                    <Text
+                      numberOfLines={1}
+                      style={{
+                        color: 'rgba(106, 106, 106, 1)',
+                        fontSize: 10,
+                        fontFamily: Fonts.bold,
+                        marginLeft: 5,
+                        marginTop: 2,
+                      }}>
+                      {item.address}
+                    </Text>
+
+                    <Text
+                      numberOfLines={1}
+                      style={{
+                        color: 'black',
+                        fontSize: 10,
+                        fontFamily: Fonts.bold,
+                        marginLeft: 5,
+                        marginTop: 5,
+                      }}>
+                      Account No: {item.accountNumber}{' '}
+                    </Text>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        width: '100%',
+                      }}>
+                      <Text
+                        numberOfLines={1}
+                        style={{
+                          color: 'rgba(44, 106, 63, 1)',
+                          fontSize: 16,
+                          fontFamily: Fonts.bold,
+                          marginLeft: 5,
+                          marginTop: 5,
+                          width: '60%',
+                        }}>
+                        $ {item.balance}
+                      </Text>
+
+                      <Text
+                        onPress={() =>
+                          navigation.navigate('BankDetails', {
+                            item: item,
+                            bankbalance: item.balance,
+                          })
+                        }
+                        style={{
+                          color: 'rgba(106, 106, 106, 1)',
+                          fontSize: 10,
+                          fontFamily: Fonts.regular,
+                          marginLeft: 5,
+                          marginTop: 5,
+                          textDecorationLine: 'underline',
+                        }}>
+                        View Details
+                      </Text>
+                    </View>
+                  </View>
+                ))
+              )}
+              <SvgXml xml={SVGNewBank} onPress={handleOpenLink} />
+            </ScrollView>
+          </MemoizedDashboardSection>
+          <MemoizedDashboardSection
+            title='Pay Airo Contacts'
+            actionText='see all'
+            onActionPress={onContactSeeALl}
+          >
+            {contactsApi.loading ? (
+              // Skeleton loading for contacts
+              <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginVertical: 15 }}>
+                {[1, 2, 3, 4].map((_, index) => (
+                  <View key={index} style={{ alignItems: 'center' }}>
+                    <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: theme.colors.palette.grey200 }} />
+                    <View style={{ width: 40, height: 12, backgroundColor: theme.colors.palette.grey200, borderRadius: 4, marginTop: 8 }} />
+                  </View>
+                ))}
+              </View>
+            ) : contactLists.length > 0 ? (
+              <MemoizedStoryLists data={contactLists} isVisble3={isCrypto} />
+            ) : (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('AddContact')}
+                style={{
+                  backgroundColor: 'rgba(44, 106, 63, 1)',
+                  paddingBottom: 10,
+                  paddingTop: 7,
+                  paddingHorizontal: 10,
+                  borderRadius: 30,
+                  alignSelf: 'center',
+                  marginTop: 20,
+                }}>
+                <Text
+                  style={{
+                    color: 'white',
+                    fontSize: 12,
+                    fontFamily: Fonts.semibold,
+                  }}>
+                  + Add People
+                </Text>
+              </TouchableOpacity>
+            )}
+          </MemoizedDashboardSection>
+          {isCrypto && <CryptoFinanceSection navigation={navigation} />}
+          <MemoizedDashboardSection title='Recent Transactions' actionText='see all' onActionPress={() => { }}>
+            {txListsApi.loading || cryptoTxApi.loading ? (
+              // Skeleton loading for transactions
+              <>
+                <SkeletonTransactionCard />
+                <SkeletonTransactionCard />
+                <SkeletonTransactionCard />
+              </>
+            ) : (
+              <>
+                {txLists && isCrypto && sortedTxLists.length > 0 ? (
+                  sortedTxLists.map((item: any, key: any) => (
+                    <View key={key}>
+                      <MemoizedTransactionCard
+                        item={item}
+                        key={key}
+                        isMerchent={item?.order_id}
+                        isCrypto={item?.order_id}
+                      />
+                    </View>
+                  ))
+                ) : (
+                  <></>
+                )}
+                {web3TxLists &&
+                  !isCrypto &&
+                  sortedWeb3TxLists.length > 0 &&
+                  sortedWeb3TxLists.map((item: any, key: any) => (
+                    <View key={key}>
+                      <MemoizedTransactionCard isCrypto={true} item={item} key={key} isMerchent={item?.order_id} />
+                    </View>
+                  ))}
+              </>
+            )}
+          </MemoizedDashboardSection>
+          {isCrypto && <CryptoRewardsSection />}
+          {isCrypto && (
+            <CryptoOtherServicesSection
+              handleRothBank={handleRothBank}
+              setisCardModalVisible={setisCardModalVisible}
+              navigation={navigation}
+            />
+          )}
+        </View>
+      </Card>
+      </ScrollView>
+      {showPin && (
+        <PincodeScreen
+          pinTxt={pinTxt}
+          onPress={async (e: any, f: any) => {
+            setshowPin(false);
+
+            if (!f) {
+              if (e !== isConfirm) {
+                useDispatchAction(setErrorMsg('Pin not matched , Try Again'));
+                setpinTxt('Confirm your pin');
+                setshowPin(true);
+                return;
+              }
+              const formData = new FormData();
+              formData.append('tpin', e);
+              const data = await createPin(formData, tokens?.access);
+              if (data && data?.status) {
+                setPin(e);
+                useDispatchAction(
+                  setSuccessMsg('Transaction Pin created successfully'),
+                );
+              } else {
+                useDispatchAction(setErrorMsg('Something Went Wrong'));
+              }
+            } else {
+              setisConfirm(e);
+              setpinTxt('Confirm your pin');
+              setshowPin(f);
+            }
+          }}
+          isNotDecimals={null}
+        />
+      )}
+    </ScreenContainer >
   );
 };
 
@@ -72,7 +1313,7 @@ const NewDashboard = () => {
 const createStyles = (theme: any) => StyleSheet.create({
   content: {
     flex: 1,
-    padding: theme.spacing.spacing.md,
+    // padding: theme.spacing.spacing.md,
   },
   title: {
     fontFamily: theme.typography.fontFamily.nexaHeavy,
@@ -151,4 +1392,5 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
 });
 
-export default NewDashboard;
+// Export memoized component for better performance
+export default React.memo(NewDashboard);

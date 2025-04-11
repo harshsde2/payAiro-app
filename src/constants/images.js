@@ -50,6 +50,19 @@ export const SVGVoucher = `<svg width="32" height="32" viewBox="0 0 32 32" fill=
 <path d="M19.3734 9.78418L11.4395 22.2149H12.6529L20.5697 9.78418H19.3734Z" fill="white"/>
 </svg>
 `;
+
+export const PayAiro_White_logo = `<svg width="54" height="60" viewBox="0 0 54 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M16.7572 37.8388L0 59.0825V0L16.595 37.8388H16.7572Z" fill="white"/>
+<path d="M53.9986 18.9194C53.9986 24.1628 51.8905 28.8656 48.4309 32.3251C46.1066 34.6495 43.1335 36.3793 39.8361 37.2441L5.78125 0.0540554V0C5.99747 0 6.26775 0 6.48397 0H35.0793C45.5119 0 53.9986 8.48669 53.9986 18.9194Z" fill="white"/>
+<path d="M34.9198 37.8388H16.595L0 0L19.3518 20.8654L34.9198 37.8388Z" fill="#A9A8A8"/>
+</svg>`
+
+export const PayAiro_Green_logo = `<svg width="54" height="60" viewBox="0 0 54 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M16.7572 37.8388L0 59.0825V0L16.595 37.8388H16.7572Z" fill="#2C6A3E"/>
+<path d="M53.9986 18.9194C53.9986 24.1628 51.8905 28.8656 48.4309 32.3251C46.1066 34.6495 43.1335 36.3793 39.8361 37.2441L5.78125 0.0540554V0C5.99747 0 6.26775 0 6.48397 0H35.0793C45.5119 0 53.9986 8.48669 53.9986 18.9194Z" fill="#2C6A3E"/>
+<path d="M34.9198 37.8388H16.595L0 0L19.3518 20.8654L34.9198 37.8388Z" fill="#468349"/>
+</svg>
+`
 export const SVGSend = `<svg width="76" height="81" viewBox="0 0 76 81" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g filter="url(#filter0_i_4411_15680)">
 <rect width="76" height="56" rx="28" fill="#E2F1E3"/>

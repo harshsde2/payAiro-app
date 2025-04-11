@@ -3,5 +3,10 @@ module.exports = {
     ios: {},
     android: {},
   },
-  assets: ['./assets/fonts'],
+  assets: ['./assets/fonts/'],
+  resolver: {
+    extraNodeModules: {
+      '@tsx-components': './src/tsx-components',
+    },
+  },
 };

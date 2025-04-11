@@ -13,6 +13,7 @@ export const getInitialTranslateX = (
   distance: number,
   customX: number = 0
 ): number => {
+  'worklet';
   if (direction === 'custom') return customX;
   return direction === 'left' ? -distance : direction === 'right' ? distance : 0;
 };
@@ -29,6 +30,7 @@ export const getInitialTranslateY = (
   distance: number,
   customY: number = 0
 ): number => {
+  'worklet';
   if (direction === 'custom') return customY;
   return direction === 'up' ? -distance : direction === 'down' ? distance : 0;
 };
@@ -39,6 +41,7 @@ export const getInitialTranslateY = (
  * @returns Animation configuration object
  */
 export const getAnimationConfig = (duration: number) => {
+  'worklet';
   return {
     duration,
     easing: Easing.bezier(0.25, 0.1, 0.25, 1),
@@ -50,9 +53,11 @@ export const getAnimationConfig = (duration: number) => {
  * @returns Spring animation configuration object
  */
 export const getPopSpringConfig = () => {
+  'worklet';
   return {
     damping: 8,
-    stiffness: 100,
+    stiffness: 40,
     mass: 0.5,
+    
   };
 }; 

@@ -100,7 +100,7 @@ export const styles = StyleSheet.create({
   },
   circleContainer: {
     alignItems: 'center',
-    marginHorizontal: 10,
+    marginRight: 10,
   },
   circle: {
     width: 60,

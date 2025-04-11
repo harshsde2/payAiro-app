@@ -1,26 +1,39 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import React from 'react';
 import { SvgXml } from 'react-native-svg';
 import { SVGLoggo, SVGNotification, SVGProfile } from '../constants/images';
 import { useNavigation } from '@react-navigation/native';
 import { SCREENS } from '../constants/SCREENS';
 import { useTheme } from '../styles/ThemeContext';
+import { useSelector } from 'react-redux';
 
 interface DashboardHeaderProps {
   name?: string;
+  style?: ViewStyle;
 }
 
-const DashboardHeader: React.FC<DashboardHeaderProps> = ({ name }) => {
+const DashboardHeader: React.FC<DashboardHeaderProps> = ({
+  name,
+  style
+}) => {
+  // Navigation hook
   const navigation = useNavigation();
+
+  // Theme hook
   const { theme } = useTheme();
-  
+
+  // Redux store
+  const {
+    walletData,
+  } = useSelector((state: any) => state.authenticationSlice);
+
   // Create styles with theme
   const styles = createStyles(theme);
-  
-  console.log('Theme spacing:', theme.spacing);
-  
+
+  // console.log('Theme spacing:', theme.spacing);
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <View style={styles.leftSection}>
         <SvgXml xml={SVGLoggo} />
         <View style={styles.textContainer}>
@@ -28,7 +41,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ name }) => {
             Welcome Back,
           </Text>
           <Text style={styles.nameText}>
-            {name ?? ' Daniel Hamilton'}
+            {walletData?.name || ""}
           </Text>
         </View>
       </View>

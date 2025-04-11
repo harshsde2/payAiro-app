@@ -38,6 +38,10 @@ export interface GhostSlideProps extends SlideProps {
 export interface FadeWrapperProps extends BaseAnimationProps {
   visible?: boolean;
   onComplete?: () => void;
+  fadeInOut?: boolean;
+  fadeOutDuration?: number;
+  fadeInDuration?: number;
+  onFadeOutComplete?: () => void;
 }
 
 // Props for ExpandableComp component
@@ -49,4 +53,6 @@ export interface ExpandableCompProps extends BaseAnimationProps {
   backgroundColor?: string;
   borderRadius?: number;
   parentLayout?: { width: number; height: number } | null;
+  onPress?: () => void;
+  style?: StyleProp<ViewStyle>;
 } 

@@ -123,6 +123,7 @@ import CustomModal from '../../components/CustomModal';
 import GenericButton from '../../components/GenericButton';
 import GuideModal from '../../components/GuideModal';
 import GhostSlide from '../../animations/animations-components/GhostSlide';
+
 export default function Dashboard(props) {
   const translateY = useRef(new Animated.Value(0)).current;
   const translateX = useRef(new Animated.Value(100)).current;
@@ -140,13 +141,13 @@ export default function Dashboard(props) {
   const [balance, setbalance] = useState('');
   const [txLists, settxLists] = useState([]);
   const [contactLists, setcontactLists] = useState([]);
+  const [web3TxLists, setweb3TxLists] = useState([]);
   const [isVisible, setisVisible] = useState(false);
   const [isVisible2, setisVisible2] = useState(false);
   const [isVisble3, setisVisble3] = useState(isCrypto);
   const [show, setshow] = useState(true);
   const [showPin, setshowPin] = useState(false);
   const [isVisible4, setisVisible4] = useState(false);
-  const [web3TxLists, setweb3TxLists] = useState([]);
   const [mxTx, setmxTx] = useState([]);
   const data = [{ value: 50 }, { value: 80 }, { value: 90 }, { value: 70 }];
   const [kycStep, setkycStep] = useState(false);
@@ -196,6 +197,7 @@ export default function Dashboard(props) {
 
   const [linkToken, setLinkToken] = useState(null);
   const [bankLists, setbankLists] = useState([]);
+
   const handleBalance = async () => {
     const data = await getBalanceCrypto(tokens?.access);
     // console.log(data?.data?.data, 'cryptoBalance');
@@ -385,6 +387,7 @@ export default function Dashboard(props) {
       open(config);
     }
   };
+  
   const getBank = async () => {
     try {
       const data = await getBankDetails(tokens?.access);
@@ -486,6 +489,7 @@ export default function Dashboard(props) {
 
     setbalance(data?.data?.wallet_balance ?? 0);
   };
+
   const getContactLists = async () => {
     const data = await getContacts(tokens?.access);
     const newData = data?.data.sort((a, b) => {
@@ -500,12 +504,15 @@ export default function Dashboard(props) {
 
     setcontactLists(newData ?? []);
   };
+
+
   const getEarliestTimestamp = requests => {
     if (requests.length === 0) return null;
     return new Date(
       Math.min(...requests.map(request => new Date(request.timestamp))),
     );
   };
+
   const getMerTx = async () => {
     const data = await getMerchentTx(tokens?.access);
 
@@ -692,6 +699,7 @@ export default function Dashboard(props) {
     outputRange: [0.2, 1], // Opacity changes from 0.5 to 1
     extrapolate: 'clamp', // Ensures values don't go beyond the range
   });
+  
   const getTxLists = async () => {
     const data = await getPayAeroTx(tokens?.access);
     console.log(data?.data, 'data?.data');
@@ -848,6 +856,7 @@ export default function Dashboard(props) {
           </View>
         </GhostSlide>
       </View>
+
       <BalanceModal
         isVisible={isVisible}
         onClose={() => setisVisible(false)}

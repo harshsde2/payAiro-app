@@ -73,7 +73,7 @@ export default function AppStack() {
   return (
     <Stack.Navigator
       headerMode="none"
-      initialRouteName="Dashboard"
+      initialRouteName="NewDashboard"
       // lazy={true}
       screenOptions={{
         headerShown: false,

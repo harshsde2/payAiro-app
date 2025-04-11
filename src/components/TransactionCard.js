@@ -19,7 +19,7 @@ import moment from 'moment';
 import useSelectorAction from '../hooks/useSelectorAction';
 import {useNavigation} from '@react-navigation/native';
 
-export default function TransactionCard({item, key, isCrypto, isMerchent}) {
+export default function TransactionCard({item, isCrypto, isMerchent}) {
   const {walletData} = useSelectorAction();
   const navigation = useNavigation();
   return (
@@ -79,7 +79,6 @@ export default function TransactionCard({item, key, isCrypto, isMerchent}) {
             });
           }
         }}
-        key={key}
         style={{
           flexDirection: 'row',
           justifyContent: 'space-between',
