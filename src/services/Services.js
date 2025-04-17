@@ -69,8 +69,11 @@ export const cancelUser = async (id, token) =>
 
 export const sendCrypto = async (payload, token) =>
   postReq2(`wallet/sendcrypto/`, payload, token, true);
+
 export const addFcm = async (payload, token) =>
   postReq2(`auth/store-token/`, payload, token, true);
+
+export const logoutCall = async token => postReq2(`auth/logout/`, {}, token);
 
 export const createPin = async (payload, token) =>
   postReq2(`auth/create-pin/`, payload, token, true);
@@ -131,3 +134,11 @@ export const calculateAmount = async (payload, token) =>
 
 export const cryptoTransfer = async (payload, token) =>
   postReq2(`auth/crypto-transfer/`, payload, token, false);
+
+export const assetsBalance = async (payload, token) =>
+  postReq2(`auth/all-chain-bankaccount-balance/`, payload, token, false);
+
+export const getAllReward = async token => getReq2('auth/my-rewards/', token);
+
+export const redeemReward = async (payload, value, token) =>
+  patchReq2(`auth/reward-redeem/${value}/`, payload, token);

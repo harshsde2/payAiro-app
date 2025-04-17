@@ -1,10 +1,7 @@
 import {useIsFocused, useNavigation} from '@react-navigation/native';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
-  Alert,
   Animated,
-  FlatList,
-  Image,
   KeyboardAvoidingView,
   Pressable,
   RefreshControl,
@@ -13,23 +10,36 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import {
+  LinkIOSPresentationStyle,
+  LinkLogLevel,
+  create,
+  dismissLink,
+  open,
+} from 'react-native-plaid-link-sdk';
 import {SvgXml} from 'react-native-svg';
+import {useSelector} from 'react-redux';
 import Container from '../../HOC/Container';
+import AssetsCards from '../../components/AssetsCards';
 import BalanceModal from '../../components/BalanceModal';
+import BankModal from '../../components/BankModal';
+import BankModal2 from '../../components/BankModal2';
+import BiometricModal from '../../components/BiometricModal';
 import BottomNavigation from '../../components/BottomNavigation';
+import CustomPieChart from '../../components/CustomPieChart';
 import Header from '../../components/Header';
-import QRModal from '../../components/QRModal';
+import LineChartCustom from '../../components/LineChartCustom';
 import Rewards from '../../components/Rewards';
+import SelectionModal from '../../components/SelectionModal';
+import SelectionModal2 from '../../components/SelectionModal2';
 import StoryLists from '../../components/StoryLists';
 import TransactionCard from '../../components/TransactionCard';
 import Fonts from '../../constants/Fonts';
 import {SCREENS} from '../../constants/SCREENS';
-import * as Progress from 'react-native-progress';
 import {
   SVGAdd,
   SVGBANK2,
   SVGBamkAdd,
-  SVGBankImg,
   SVGBilPay,
   SVGBit,
   SVGCopy3,
@@ -37,10 +47,7 @@ import {
   SVGDebit,
   SVGDebitAdd,
   SVGDebitCardAdd,
-  SVGDownArrow,
-  SVGDownArrow2,
   SVGDownArrow3,
-  SVGGuide1,
   SVGHolding,
   SVGKYC2,
   SVGLogo2,
@@ -53,40 +60,28 @@ import {
   SVGSend,
   SVGSliders,
   SVGUSD,
-  SVGUSDT,
   SVGVoucher,
 } from '../../constants/images';
 import useDispatchAction from '../../hooks/useDispatchAction';
-import useSelectorAction from '../../hooks/useSelectorAction';
 import {
   setActiveTab,
   setBankLists,
   setBankbalances,
-  setBiometricAvailable,
   setCalculatedBalance,
   setErrorMsg,
   setGuides,
-  setNetworkLists,
-  setSeletedCrypto,
   setSuccessMsg,
   setWalletData,
   setisCrypto,
 } from '../../redux/slices/authenticationSlice';
-import {
-  getGuide,
-  getKYCAccpted,
-  getPin,
-  setKYCAcceopted,
-  setPin,
-  setWalletDataAuth,
-} from '../../services/Auth';
+import {getGuide, getKYCAccpted, getPin, setPin} from '../../services/Auth';
 import {
   addbankAccountRoth,
   createPin,
+  getAllReward,
   getBalance,
   getBalanceCrypto,
   getBankDetails,
-  getBanks,
   getBanksAllAccount,
   getContacts,
   getCryptoTx,
@@ -96,32 +91,15 @@ import {
   getPinFromSev,
   getWallet,
   getWalletBalance,
+  redeemReward,
   uploadKYC,
 } from '../../services/Services';
 import PincodeScreen from '../Authentications/PincodeScreen';
-import AssetsCards from '../../components/AssetsCards';
-import CustomPieChart from '../../components/CustomPieChart';
-import SelectionModal from '../../components/SelectionModal';
-import LineChartCustom from '../../components/LineChartCustom';
-import SelectionModal2 from '../../components/SelectionModal2';
-import BiometricModal from '../../components/BiometricModal';
-import {useSelector} from 'react-redux';
-import BankModal from '../../components/BankModal';
-import BankModal2 from '../../components/BankModal2';
-import {
-  LinkIOSPresentationStyle,
-  LinkLogLevel,
-  create,
-  dismissLink,
-  open,
-} from 'react-native-plaid-link-sdk';
 
-import {BASE_URL} from '../../constants/mockData';
-import KYCModal from '../../components/KYCModal';
-import {get} from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
-import CustomModal from '../../components/CustomModal';
 import GenericButton from '../../components/GenericButton';
 import GuideModal from '../../components/GuideModal';
+import RewardModal from '../../components/RewardModal';
+import {BASE_URL} from '../../constants/mockData';
 export default function Dashboard(props) {
   const translateY = useRef(new Animated.Value(0)).current;
   const translateX = useRef(new Animated.Value(100)).current;
@@ -169,11 +147,12 @@ export default function Dashboard(props) {
   const [alloCationLists, setalloCationLists] = useState([]);
   const [totalDisbursablePending, settotalDisbursablePending] = useState(0);
   const [isGuideVisible, setisGuideVisible] = useState(false);
+  const [isRewardModalVisible, setisRewardModalVisible] = useState(false);
 
   useEffect(() => {
     getGuideStatus();
-    // setKYCAcceopted(n ull);
     if (isFoucused) {
+      handleReward();
       useDispatchAction(setActiveTab('1'));
     }
   }, [isFoucused]);
@@ -192,6 +171,25 @@ export default function Dashboard(props) {
 
   const [linkToken, setLinkToken] = useState(null);
   const [bankLists, setbankLists] = useState([]);
+
+  const handleReward = async () => {
+    try {
+      const data = await getAllReward(tokens?.access);
+      console.log(data, 'datatatatatat');
+      if (data && data?.data?.length > 0) {
+        setisRewardModalVisible(!data?.data[0]?.redeem);
+        const redeem = await redeemReward(
+          {redeem: true},
+          data?.data[0]?.id,
+          tokens?.access,
+        );
+        console.log(redeem, 'redeem===>>>>');
+      }
+    } catch (error) {
+      console.log(error, '=====>>>');
+      setisRewardModalVisible(false);
+    }
+  };
   const handleBalance = async () => {
     const data = await getBalanceCrypto(tokens?.access);
     // console.log(data?.data?.data, 'cryptoBalance');
@@ -459,53 +457,15 @@ export default function Dashboard(props) {
   useEffect(() => {
     handlePin();
   }, []);
-  const symbol = selectedCrypto?.image?.includes('btc')
-    ? 'BTC'
-    : selectedCrypto?.image?.includes('eth')
-    ? 'ETH'
-    : selectedCrypto?.image?.includes('matic')
-    ? 'MATIC'
-    : 'XRP';
-
-  const balanceAssets = selectedCrypto?.image?.includes('btc')
-    ? Number(
-        networkLists[0]?.balance_in_tether +
-          networkLists[0]?.btc_in_eth +
-          networkLists[0]?.btc_in_matic +
-          networkLists[0]?.btc_in_xrp,
-      )
-    : selectedCrypto?.image?.includes('eth')
-    ? Number(
-        networkLists[1]?.balance +
-          Number(networkLists[1]?.eth_in_btc) +
-          networkLists[1]?.eth_in_eth +
-          networkLists[1]?.eth_in_matic,
-      ).toFixed(3)
-    : selectedCrypto?.image?.includes('matic')
-    ? Number(
-        networkLists[2]?.balance +
-          networkLists[2]?.matic_in_btc +
-          networkLists[2]?.matic_in_eth +
-          networkLists[2]?.matic_in_xrp,
-      )
-    : Number(
-        networkLists[3]?.balance +
-          networkLists[3]?.xrp_in_btc +
-          networkLists[3]?.xrp_in_eth +
-          networkLists[3]?.xrp_in_matic,
-      );
 
   const getWallets = async () => {
     const data = await getWallet(tokens?.access);
-    // useDispatchAction(setSeletedCrypto(data?.data?.eth));
-
     let arr = [
       data?.data?.btc,
       data?.data?.eth,
       data?.data?.matic,
       data?.data?.xrp,
     ];
-    // setWalletDataAuth(data?.data);
     useDispatchAction(setWalletData(data?.data));
   };
   const getCryptoTxs = async () => {
@@ -684,7 +644,7 @@ export default function Dashboard(props) {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={() => {
             setisShowWeeks(true);
           }}
@@ -706,7 +666,7 @@ export default function Dashboard(props) {
             }}>
             {timeframe} <SvgXml xml={SVGDownArrow2} />
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     );
   };
@@ -728,7 +688,7 @@ export default function Dashboard(props) {
       [
         ...data?.data?.merchantTransactions,
         ...data?.data?.userToUserTransactions,
-      ].filter(i => i?.status === 'success') ?? [],
+      ].filter(i => i?.status === 'success' || i?.status === 'completed') ?? [],
     );
   };
 
@@ -798,6 +758,13 @@ export default function Dashboard(props) {
         <BankModal2
           isVisible={isBankModalVisible}
           onClose={() => setisBankModalVisible(false)}
+        />
+      )}
+
+      {isRewardModalVisible && (
+        <RewardModal
+          isVisible={isRewardModalVisible}
+          onClose={() => setisRewardModalVisible(false)}
         />
       )}
       <Animated.View
@@ -1183,12 +1150,10 @@ export default function Dashboard(props) {
                       }}>
                       {renderButtonGraph()}
                       <View style={{width: '90%', alignSelf: 'center'}}>
-                        {/* <MemoizedPieChart
-                          alloCationLists={useMemo(
-                            () => alloCationLists,
-                            [alloCationLists],
-                          )}
-                        /> */}
+                        <CustomPieChart
+                          alloCationLists={alloCationLists}
+                          isTx={false}
+                        />
                       </View>
 
                       <View
@@ -1632,7 +1597,7 @@ export default function Dashboard(props) {
               style={{
                 marginHorizontal: 25,
                 marginTop: 20,
-                paddingBottom: 10,
+                paddingBottom: isCrypto ? 10 : 160,
               }}>
               {(txLists && txLists.length > 0) ||
               (web3TxLists && web3TxLists.length > 0) ? (
@@ -1656,8 +1621,8 @@ export default function Dashboard(props) {
                     <View key={key}>
                       <TransactionCard
                         item={item}
-                        isMerchent={item?.order_id}
-                        isCrypto={item?.order_id}
+                        isMerchent={item?.order_id ? true : false}
+                        isCrypto={item?.order_id ? true : false}
                       />
                     </View>
                   ))
@@ -1668,9 +1633,11 @@ export default function Dashboard(props) {
                 !isCrypto &&
                 web3TxLists.length > 0 &&
                 web3TxLists
-                  ?.sort(
-                    (a, b) => new Date(b.timestamp) - new Date(a.timestamp),
-                  )
+                  ?.sort((a, b) => {
+                    const dateA = new Date(a.created_at || a.timestamp);
+                    const dateB = new Date(b.created_at || b.timestamp);
+                    return dateB - dateA; // descending order
+                  })
                   ?.slice(0, 5)
                   .map((item, key) => (
                     <View key={key}>
