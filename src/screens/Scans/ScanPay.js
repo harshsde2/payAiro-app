@@ -36,6 +36,7 @@ import Loader from '../../components/Loader';
 import FullScreenModal from '../../components/FullScreenModal';
 import SelectionNetwork from '../../components/SelectionNetwork';
 import SelectionTokens from '../../components/SelectedTokens';
+import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 
 export default function ScanPay(props) {
   const {type, sender, bank} = props?.route?.params;
@@ -93,7 +94,7 @@ export default function ScanPay(props) {
       data = await confirmPaymentQR(formData, tokens?.access);
       if (data && data.status) {
         useDispatchAction(setSuccessMsg('Payment Successfully'));
-        navigation.navigate('Dashboard');
+        navigation.navigate(NAVIGATION_SCREENS.NEW_DASHBOARD);
       } else {
         useDispatchAction(
           setErrorMsg('Did Not have enough amount or some error happens'),

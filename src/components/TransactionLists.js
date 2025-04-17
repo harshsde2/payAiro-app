@@ -26,7 +26,7 @@ import {SCREENS} from '../constants/SCREENS';
 const TransactionList = ({items = [], isVisble3}) => {
   const {walletData} = useSelectorAction();
   const navigation = useNavigation();
-  console.log(items, 'items');
+  // console.log(items, 'items');
   const renderItem = ({item}) => {
     if (item?.data?.content) {
       return (
@@ -222,7 +222,13 @@ const TransactionList = ({items = [], isVisble3}) => {
             : items?.filter(i => i?.type !== 'nft_transaction')
         }
         renderItem={renderItem}
-        keyExtractor={item => item?.data?.id}
+        keyExtractor={(item, index) => {
+          // Try to extract a unique identifier from the item in different possible formats
+          return item?.data?.id || 
+                 item?.data?.transaction_id || 
+                 item?.data?.timestamp?.toString() || 
+                 `transaction-${index}`;
+        }}
         contentContainerStyle={styles.listContainer}
         style={{flex: 1}}
       />

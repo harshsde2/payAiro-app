@@ -2,7 +2,6 @@ import React, { ReactNode } from 'react';
 import { 
   View, 
   StyleSheet, 
-  SafeAreaView, 
   StatusBar, 
   ScrollView, 
   KeyboardAvoidingView, 
@@ -11,6 +10,7 @@ import {
   StyleProp
 } from 'react-native';
 import { useTheme } from '../styles/ThemeContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface ScreenContainerProps {
   children: ReactNode;

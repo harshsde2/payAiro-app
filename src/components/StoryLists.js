@@ -9,12 +9,13 @@ import {
 } from 'react-native';
 import Fonts from '../constants/Fonts';
 import {useNavigation} from '@react-navigation/native';
+import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 
 const CircleItem = ({item, navigation, isVisble3}) => (
   <TouchableOpacity
     style={styles.circleContainer}
     onPress={() =>
-      navigation.navigate('ContactTx', {
+      navigation.navigate(NAVIGATION_SCREENS.CONTACT_TX, {
         item: item ?? null,
         isVisble3,
       })

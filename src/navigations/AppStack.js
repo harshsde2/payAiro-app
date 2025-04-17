@@ -66,6 +66,7 @@ import IntraAccountTransfer from '../screens/Dashboard/IntraAccountTransfer';
 import DetailsCryptoScreen from '../screens/Crypto/DetailsCryptoScreen';
 import DashboardRefactored from '../screens/Dashboard/DashboardRefactored';
 import NewDashboard from '../screens/Dashboard/NewDashboard';
+import { NAVIGATION_SCREENS } from './navigationConstants';
 
 const Stack = createNativeStackNavigator();
 
@@ -73,292 +74,293 @@ export default function AppStack() {
   return (
     <Stack.Navigator
       headerMode="none"
-      initialRouteName="NewDashboard"
-      // lazy={true}
+      initialRouteName={NAVIGATION_SCREENS.NEW_DASHBOARD}
       screenOptions={{
         headerShown: false,
       }}>
       <Stack.Screen
         options={{headerShown: false}}
-        name="Dashboard"
+        name={NAVIGATION_SCREENS.DASHBOARD}
         component={Dashboard}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="NewDashboard"
+        name={NAVIGATION_SCREENS.NEW_DASHBOARD}
         component={NewDashboard}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="DashboardRefactored"
+        name={NAVIGATION_SCREENS.DASHBOARD_REFACTORED}
         component={DashboardRefactored}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Transaction"
+        name={NAVIGATION_SCREENS.TRANSACTION}
         component={Transaction}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="TransactionSuccess"
+        name={NAVIGATION_SCREENS.TRANSACTION_SUCCESS}
         component={TransactionSuccess}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="TransactionDetails"
+        name={NAVIGATION_SCREENS.TRANSACTION_DETAILS}
         component={TransactionDetails}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Scans"
+        name={NAVIGATION_SCREENS.SCANS}
         component={Scans}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="ScanPay"
+        name={NAVIGATION_SCREENS.SCAN_PAY}
         component={ScanPay}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Send"
+        name={NAVIGATION_SCREENS.SEND}
         component={Send}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Receive"
+        name={NAVIGATION_SCREENS.RECEIVE}
         component={Receive}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Rewards"
+        name={NAVIGATION_SCREENS.REWARDS}
         component={Rewards}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="SettingScreen"
+        name={NAVIGATION_SCREENS.SETTING_SCREEN}
         component={SettingScreen}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Notification"
+        name={NAVIGATION_SCREENS.NOTIFICATION}
         component={Notification}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Personal"
+        name={NAVIGATION_SCREENS.PERSONAL}
         component={Personal}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="AddCard"
+        name={NAVIGATION_SCREENS.ADD_CARD}
         component={AddCard}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Widhdraw"
+        name={NAVIGATION_SCREENS.WITHDRAW}
         component={Widhdraw}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="RequestMoney"
+        name={NAVIGATION_SCREENS.REQUEST_MONEY}
         component={RequestMoney}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="SendToken"
+        name={NAVIGATION_SCREENS.SEND_TOKEN}
         component={SendToken}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="SendReceipt"
+        name={NAVIGATION_SCREENS.SEND_RECEIPT}
         component={SendReceipt}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="ReceiveToken"
+        name={NAVIGATION_SCREENS.RECEIVE_TOKEN}
         component={ReceiveToken}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Address2"
+        name={NAVIGATION_SCREENS.ADDRESS2}
         component={Address2}
       />
-
       <Stack.Screen
         options={{headerShown: false}}
-        name="IDProof2"
+        name={NAVIGATION_SCREENS.ID_PROOF2}
         component={IDProof2}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Scratch"
+        name={NAVIGATION_SCREENS.SCRATCH}
         component={Scratch}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="ScratchCard"
+        name={NAVIGATION_SCREENS.SCRATCH_CARD}
         component={ScratchCard}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="AddContact"
+        name={NAVIGATION_SCREENS.ADD_CONTACT}
         component={AddContact}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="ContactScreen"
+        name={NAVIGATION_SCREENS.CONTACT_SCREEN}
         component={ContactScreen}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Signature2"
+        name={NAVIGATION_SCREENS.SIGNATURE2}
         component={Signature2}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Dob2"
+        name={NAVIGATION_SCREENS.DOB2}
         component={Dob2}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Security"
+        name={NAVIGATION_SCREENS.SECURITY}
         component={Security}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="ContactTx"
+        name={NAVIGATION_SCREENS.CONTACT_TX}
         component={ContactTx}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Settings2"
+        name={NAVIGATION_SCREENS.SETTINGS2}
         component={Settings2}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="TXViewDetails"
+        name={NAVIGATION_SCREENS.TX_VIEW_DETAILS}
         component={TXViewDetails}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Statement"
+        name={NAVIGATION_SCREENS.STATEMENT}
         component={Statement}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="StatementDetails"
+        name={NAVIGATION_SCREENS.STATEMENT_DETAILS}
         component={StatementDetails}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="BankDetails"
+        name={NAVIGATION_SCREENS.BANK_DETAILS}
         component={BankDetails}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="ChangePinScreen"
+        name={NAVIGATION_SCREENS.CHANGE_PIN_SCREEN}
         component={ChangePinScreen}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="AlertScreen"
+        name={NAVIGATION_SCREENS.ALERT_SCREEN}
         component={AlertScreen}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="ChatScreen"
+        name={NAVIGATION_SCREENS.CHAT_SCREEN}
         component={ChatScreen}
       />
-
       <Stack.Screen
         options={{headerShown: false}}
-        name="AchScreen"
+        name={NAVIGATION_SCREENS.ACH_SCREEN}
         component={AchScreen}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="AddCreditCard"
+        name={NAVIGATION_SCREENS.ADD_CREDIT_CARD}
         component={AddCreditCard}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="DeviceManagement"
+        name={NAVIGATION_SCREENS.DEVICE_MANAGEMENT}
         component={DeviceManagement}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="ScratchDetails"
+        name={NAVIGATION_SCREENS.SCRATCH_DETAILS}
         component={ScratchDetails}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="VouchersScreens"
+        name={NAVIGATION_SCREENS.VOUCHERS_SCREENS}
         component={VouchersScreens}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="SelectBankScreen"
+        name={NAVIGATION_SCREENS.SELECT_BANK_SCREEN}
         component={SelectBankScreen}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="CryptoDashboard"
+        name={NAVIGATION_SCREENS.CRYPTO_DASHBOARD}
         component={CryptoDashboard}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="CryptoScreen"
+        name={NAVIGATION_SCREENS.CRYPTO_SCREEN}
         component={CryptoScreen}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="StocksScreen"
+        name={NAVIGATION_SCREENS.STOCKS_SCREEN}
         component={StocksScreen}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="HoldingsScreen"
+        name={NAVIGATION_SCREENS.HOLDINGS_SCREEN}
         component={HoldingsScreen}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Sell"
+        name={NAVIGATION_SCREENS.SELL}
         component={Sell}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="DepositScreen"
+        name={NAVIGATION_SCREENS.DEPOSIT_SCREEN}
         component={DepositScreen}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="InAppKYCBrowser"
+        name={NAVIGATION_SCREENS.IN_APP_KYC_BROWSER}
         component={InAppKYCBrowser}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="DepositScreen2"
+        name={NAVIGATION_SCREENS.DEPOSIT_SCREEN2}
         component={DepositScreen2}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="ChooseCurrency"
+        name={NAVIGATION_SCREENS.CHOOSE_CURRENCY}
         component={ChooseCurrency}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="WithdrawScreen"
+        name={NAVIGATION_SCREENS.WITHDRAW_SCREEN}
         component={WithdrawScreen}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="IntraAccountTransfer"
+        name={NAVIGATION_SCREENS.INTRA_ACCOUNT_TRANSFER}
         component={IntraAccountTransfer}
       />
-      <Stack.Screen options={{headerShown: false}} name="Buy" component={Buy} />
+      <Stack.Screen 
+        options={{headerShown: false}} 
+        name={NAVIGATION_SCREENS.BUY} 
+        component={Buy} 
+      />
       <Stack.Screen
         options={{headerShown: false}}
-        name="DetailsCryptoScreen"
+        name={NAVIGATION_SCREENS.DETAILS_CRYPTO_SCREEN}
         component={DetailsCryptoScreen}
       />
     </Stack.Navigator>

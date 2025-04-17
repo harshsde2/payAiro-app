@@ -29,7 +29,7 @@ export default function TransactionCard({item, isCrypto, isMerchent}) {
         onPress={() => {
           console.log(item, 'clg');
           if (isMerchent) {
-            navigation.navigate('TransactionSuccess', {
+            navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_SUCCESS, {
               transactionDetails: [
                 {'Order Id': item?.order_id},
                 {'Sender ID': item?.sender_wallet},

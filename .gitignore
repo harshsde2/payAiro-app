@@ -72,3 +72,7 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+android/app/.cxx/tools/debug/arm64-v8a/compile_commands.json
+android/app/.cxx/tools/debug/armeabi-v7a/compile_commands.json
+android/app/.cxx/tools/debug/x86/compile_commands.json
+android/app/.cxx/tools/debug/x86_64/compile_commands.json

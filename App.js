@@ -31,6 +31,7 @@ import ReactNativeBiometrics from 'react-native-biometrics';
 import { QueryProvider } from './src/query/index';
 import { setItem, STORAGE_KEYS } from './src/storage/mmkv';
 import { ThemeProvider } from './src/styles';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export default function App() {
   // -------------------- Redux State --------------------
@@ -242,13 +243,15 @@ export default function App() {
 
   // Render main app navigation
   return (
-    <ThemeProvider>
-      <QueryProvider>
-        <NavigationContainer>
-          {errorMsg || successMsg ? <ErrorToast /> : null}
-          {!isLogin ? <AuthStack /> : <AppStack />}
-        </NavigationContainer>
-      </QueryProvider>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <QueryProvider>
+          <NavigationContainer>
+            {errorMsg || successMsg ? <ErrorToast /> : null}
+            {!isLogin ? <AuthStack /> : <AppStack />}
+          </NavigationContainer>
+        </QueryProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

@@ -27,6 +27,7 @@ import {
   setWalletDataAuth,
 } from '../../services/Auth';
 import {useDispatch} from 'react-redux';
+import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 
 export default function Dob2(props) {
   // const {payload4} = props.route.params;
@@ -59,7 +60,7 @@ export default function Dob2(props) {
     console.log(datas, 'datats');
     if (datas) {
       useDispatchAction(setSuccessMsg('KYC Submitted Successfully'));
-      navigation.navigate('Dashboard');
+      navigation.navigate(NAVIGATION_SCREENS.NEW_DASHBOARD);
     } else {
       useDispatchAction(setErrorMsg('Something went wrong'));
     }

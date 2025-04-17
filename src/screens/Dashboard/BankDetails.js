@@ -1,14 +1,23 @@
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   ScrollView,
   View,
-  Text,
   StyleSheet,
   KeyboardAvoidingView,
   TouchableOpacity,
+  Platform,
+  BackHandler,
 } from 'react-native';
-import Container from '../../HOC/Container';
+import { SvgXml } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native';
+
+// Components
+import { ScreenContainer } from '../../HOC';
 import HeaderTitle from '../../components/HeaderTitle';
+import WalletCard from '../../components/WalletCard';
+import CustomText from '../../tsx-components/CustomText';
+
+// Constants & Styles
 import {
   SVGBankCard,
   SVGCCard,
@@ -17,137 +26,158 @@ import {
   SVGLoan,
   SVGSlider,
 } from '../../constants/images';
-import {SvgXml} from 'react-native-svg';
-import Fonts from '../../constants/Fonts';
-import {FINANCE_LISTS} from '../../constants/constant';
-import WalletCard from '../../components/WalletCard';
-import {useNavigation} from '@react-navigation/native';
+import { FINANCE_LISTS } from '../../constants/constant';
+import { useTheme } from '../../styles/ThemeContext';
 
 const BankDetails = props => {
-  const {item, bankbalance} = props.route.params;
+  const { item, bankbalance } = props.route.params;
   const navigation = useNavigation();
+  const { theme } = useTheme();
+  
+  // Handle back navigation
+  const handleGoBack = useCallback(() => {
+    try {
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        console.log('Cannot go back, no screens in history');
+        BackHandler.exitApp();
+      }
+    } catch (err) {
+      console.log('Navigation error:', err);
+    }
+  }, [navigation]);
+  
+  // Handle hardware back button
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        handleGoBack();
+        return true;
+      }
+    );
+
+    return () => backHandler.remove();
+  }, [handleGoBack]);
+
+  // Handle finance item press
+  const handleFinanceItemPress = useCallback((route, params = {}) => {
+    if (route) {
+      navigation.navigate(route, {
+        requested: false,
+        ...params,
+      });
+    }
+  }, [navigation]);
+
   return (
-    <Container>
+    <ScreenContainer padding={0} backgroundColor={theme.colors.palette.green50}>
       <KeyboardAvoidingView
-        style={{flex: 1}}
+        style={styles(theme).container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
           nestedScrollEnabled={true}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{flexGrow: 1}}>
-          <HeaderTitle title={'Finance'} leftIcon={SVGLeftArrow} />
-          {/* <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.scrollView}>
-            <View style={{width: '70%'}}>
-            </View>
-            <SvgXml xml={SVGCCard} style={{marginHorizontal: 10}} />
-            <SvgXml xml={SVGCard3} style={{marginHorizontal: 10}} />
-          </ScrollView> */}
+          contentContainerStyle={styles(theme).scrollContent}>
+          <HeaderTitle 
+            title="Finance"
+            leftIcon={SVGLeftArrow} 
+            isBack={true}
+            onPressLeft={handleGoBack}
+          />
+          
           <WalletCard data={item} bankbalance={bankbalance} />
 
           <SvgXml
             xml={SVGSlider}
-            style={{alignSelf: 'center', marginBottom: 20}}
+            style={styles(theme).sliderIcon}
           />
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: '#fff',
-              borderTopEndRadius: 32,
-              borderTopStartRadius: 32,
-              padding: 20,
-              //   marginTop: 20,
-              height: 400,
-            }}>
+          
+          <View style={styles(theme).financeContainer}>
             <ScrollView>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'flex-start',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                }}>
-                {FINANCE_LISTS.map((i, k) => (
+              <View style={styles(theme).financeItemsContainer}>
+                {FINANCE_LISTS.map((financeItem, index) => (
                   <TouchableOpacity
-                    onPress={() => {
-                      if (i.route)
-                        navigation.navigate(i.route, {
-                          requested: false,
-                        });
-                    }}
-                    style={{
-                      width: '30%',
-                      marginHorizontal: 5,
-                      marginVertical: 10,
-                    }}>
-                    <View
-                      style={{
-                        backgroundColor: 'rgba(226, 241, 227, 0.2)',
-                        borderRadius: 20,
-                        padding: 30,
-                        borderWidth: 1,
-                        borderColor: 'rgba(226, 241, 227, 1)',
-                      }}>
-                      <SvgXml xml={i?.icon} style={{alignSelf: 'center'}} />
+                    key={`finance-item-${index}`}
+                    onPress={() => handleFinanceItemPress(financeItem.route)}
+                    style={styles(theme).financeItemWrapper}>
+                    <View style={styles(theme).financeIconContainer}>
+                      <SvgXml xml={financeItem?.icon} style={styles(theme).financeIcon} />
                     </View>
-                    <Text
-                      style={{
-                        color: 'rgba(106, 106, 106, 1)',
-                        fontFamily: Fonts.regular,
-                        textAlign: 'center',
-                        marginTop: 5,
-                      }}>
-                      {i.name}
-                    </Text>
+                    <CustomText
+                      variant="body2"
+                      color={theme.colors.text.secondary}
+                      style={styles(theme).financeItemText}>
+                      {financeItem.name}
+                    </CustomText>
                   </TouchableOpacity>
                 ))}
+                {/* Add invisible placeholders to maintain grid in last row */}
+                {FINANCE_LISTS.length % 3 === 1 && (
+                  <>
+                    <View style={[styles(theme).financeItemWrapper, styles(theme).emptyItem]} />
+                    <View style={[styles(theme).financeItemWrapper, styles(theme).emptyItem]} />
+                  </>
+                )}
+                {FINANCE_LISTS.length % 3 === 2 && (
+                  <View style={[styles(theme).financeItemWrapper, styles(theme).emptyItem]} />
+                )}
               </View>
             </ScrollView>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </Container>
+    </ScreenContainer>
   );
 };
 
-const styles = StyleSheet.create({
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
+const styles = (theme) => StyleSheet.create({
+  container: {
+    flex: 1,
   },
-  scrollView: {
-    marginVertical: 10,
-    // flex: 1,
+  scrollContent: {
+    flexGrow: 1,
   },
-  card: {
-    width: 300,
-    height: 150,
-    backgroundColor: 'green',
-    borderRadius: 10,
-    padding: 15,
-    marginRight: 10,
+  sliderIcon: {
+    alignSelf: 'center', 
+    margin: theme.spacing.spacing.md,
   },
-  cardTitle: {
-    color: '#fff',
-    fontSize: 16,
+  financeContainer: {
+    flex: 1,
+    backgroundColor: theme.colors.palette.white,
+    borderTopEndRadius: 32,
+    borderTopStartRadius: 32,
+    padding: theme.spacing.layout.screenPadding,
+    height: 400,
   },
-  cardSubtitle: {
-    color: '#fff',
-    fontSize: 14,
-    marginBottom: 10,
-  },
-  amount: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  options: {
+  financeItemsContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginTop: 10,
+    alignItems: 'flex-start',
+  },
+  financeItemWrapper: {
+    width: '31%',
+    marginBottom: theme.spacing.spacing.md,
+  },
+  financeIconContainer: {
+    backgroundColor: theme.colors.palette.green100 + '33', // 20% opacity
+    borderRadius: 20,
+    padding: theme.spacing.spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.palette.green100,
+  },
+  financeIcon: {
+    alignSelf: 'center',
+  },
+  financeItemText: {
+    textAlign: 'center',
+    marginTop: theme.spacing.spacing.xs,
+  },
+  emptyItem: {
+    opacity: 0,
+    height: 0,
   },
 });
 

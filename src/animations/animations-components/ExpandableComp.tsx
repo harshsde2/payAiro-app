@@ -109,7 +109,7 @@ const ExpandableComp = forwardRef<ExpandableCompRef, ExpandableCompProps>(({
     return interpolate(
       progress.value,
       [0, 1],
-      [0, (-(containerHeight - initialHeight) / 2) - ((position?.top || 0) + 20)]
+      [0, (-(containerHeight - initialHeight) / 2) - ((position?.top || 0) + 35)]
     )
   })
 

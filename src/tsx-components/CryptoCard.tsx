@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, TouchableOpacity, StyleSheet, Image, LayoutChangeEvent, LayoutRectangle } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Image, LayoutChangeEvent, LayoutRectangle, Clipboard, Alert, Platform, ToastAndroid } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import { useTheme } from '../styles/ThemeContext';
 import Card from './Card';
 import CustomText from './CustomText';
-import { colors, fontFamily, fontSize } from 'styles';
+import { colors, fontFamily, fontSize, fontWeight } from 'styles';
 import { PayAiro_Green_logo, PayAiro_White_logo, SVGCopy2, SVGCopy3, SVGDownArrow3, SVGLogo2, SVGLogo3 } from 'constants/images';
 import { Text } from 'react-native-gesture-handler';
 import useDispatchAction from 'hooks/useDispatchAction';
@@ -20,7 +20,7 @@ import GhostSlide from 'animations/animations-components/GhostSlide';
 export const ANIMATION_CONSTANTS = {
   EXPANDABLE_CARD: {
     WIDTH: 80,
-    HEIGHT: 160,
+    HEIGHT: 190,
     POSITION: {
       top: 15,
       right: 30,
@@ -150,10 +150,12 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
   };
 
   const handleSwitch = () => {
+    
+    if (isAnimating) return; // Prevent multiple clicks during animation
+
     onSwitchView()
     setGhostSlideVisible(!ghostSlideVisible)
     setGhostCryptoCardSlide(!ghostCryptoCardSlide)
-    if (isAnimating) return; // Prevent multiple clicks during animation
 
     console.log("calling from handleSwitch ")
 
@@ -169,7 +171,9 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
     if (isCrypto) {
       // Switching from PayAiro to Crypto
       switchToCrypto();
-      useDispatchAction(setisCrypto(!isCrypto));
+      setTimeout(()=>{
+        useDispatchAction(setisCrypto(!isCrypto));
+      },ANIMATION_CONSTANTS.EXPANDABLE_CARD.DURATION)
 
     } else {
 
@@ -248,6 +252,17 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
     }, ANIMATION_CONSTANTS.CURRENCY_DROPDOWN.DURATION);
   };
 
+  const copyToClipboard = (e: string) => {
+    Clipboard.setString(e);
+
+    // Display a success message
+    if (Platform.OS === 'android') {
+      ToastAndroid.show('Wallet Address Copied', ToastAndroid.SHORT);
+    } else if (Platform.OS === 'ios') {
+      Alert.alert('Text copied to clipboard!');
+    }
+  };
+
   // Render helpers
   const renderHeaderSection = () => (
     <View style={[
@@ -263,7 +278,7 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
     ]}>
       <View style={{ flex: 1, justifyContent: 'flex-start' }}>
         <FlipSlide
-          visible={!isCrypto}
+          visible={!slideUpVisible}
           topText={ACCOUNTS.PAYAIRO.headerName}
           bottomText={ACCOUNTS.CRYPTO.headerName}
           flipDuration={ANIMATION_CONSTANTS.TEXT_FLIP.DURATION}
@@ -335,7 +350,7 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
     <View style={[styles.leftContent, { padding: theme.spacing.spacing.sm }]}>
       <CustomText
         variant="subtitle2"
-        color={slideUpVisible ? theme.colors.palette.white : theme.colors.text.primary}
+        color={isCrypto ? theme.colors.palette.white : theme.colors.text.primary}
         style={[styles.balanceTitle, { marginBottom: theme.spacing.spacing.sm }]}
         fontFamily={theme.typography.fontFamily.montserrat}
         fontWeight={'regular'}
@@ -367,7 +382,7 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
           {/* Combined balance display to ensure no spacing issues */}
           <CustomText
             variant={wholePartFontSize}
-            color={slideUpVisible ? theme.colors.palette.white : theme.colors.text.primary}
+            color={isCrypto ? theme.colors.palette.white : theme.colors.text.primary}
             style={[
               styles.balanceAmount,
               isManyDigits && { fontSize: digits > 9 ? 20 : 24 }
@@ -375,11 +390,11 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
             numberOfLines={1}
             adjustsFontSizeToFit={true}
           >
-            {`${wholePart}.${decimalPart}`}
+            {isCrypto ? `$${wholePart}.${decimalPart}` : `${wholePart}.${decimalPart}`}
           </CustomText>
         </View>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={[
             styles.withdrawButton,
             isManyDigits && styles.withdrawButtonCompact
@@ -392,18 +407,18 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
           ]}>
             Withdraw
           </CustomText>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     );
   };
 
   const renderPendingAmount = () => (
     <CustomText
-      color="red"
+      color={(pendingAmount !== undefined && !isCrypto) ?  "red" : theme.colors.palette.green700}
       variant="caption"
       style={[styles.pendingAmount, { marginBottom: theme.spacing.spacing.lg }]}
     >
-      {pendingAmount !== undefined && !isCrypto && `(Pending ${pendingAmount?.toFixed(5)})`}
+      {`(Pending ${pendingAmount?.toFixed(5)})`}
     </CustomText>
   );
 
@@ -411,28 +426,41 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
     identifierType && (
       <>
         <CustomText
-          variant="subtitle2"
-          color={slideUpVisible ? theme.colors.palette.white : theme.colors.text.primary}
+          color={isCrypto ? theme.colors.palette.white : theme.colors.text.primary}
           fontFamily={theme.typography.fontFamily.montserrat}
-          fontWeight={'regular'}
+          style={{
+            fontSize: theme.typography.fontSize.sm,
+            fontFamily: theme.typography.fontFamily.montserrat,
+            fontWeight: "400"
+          }}
         >
           {identifierType}
         </CustomText>
 
         <View style={styles.identifierRow}>
           <CustomText
-            variant="body2"
-            color={slideUpVisible ? theme.colors.palette.white : theme.colors.text.primary}
+            // variant="body2"
+            color={isCrypto ? theme.colors.palette.white : theme.colors.text.primary}
             numberOfLines={1}
-            style={styles.identifier}
+            style={[styles.identifier,{
+              fontSize: theme.typography.fontSize.xs,
+              fontWeight: "300"
+            }]}
           >
             {identifier}
           </CustomText>
 
           {onCopy && (
-            <TouchableOpacity onPress={onCopy}>
+            <TouchableOpacity 
+              onPress={() => {
+                if (identifier) {
+                  copyToClipboard(identifier);
+                  // onCopy();
+                }
+              }}
+            >
               <SvgXml
-                xml={slideUpVisible ? SVGCopy3 : SVGCopy2}
+                xml={isCrypto ? SVGCopy3 : SVGCopy2}
                 width={18}
                 height={18}
               />
@@ -462,14 +490,22 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
               style={{ margin: 10 }}
               width={ANIMATION_CONSTANTS.LOGO_SIZE.WIDTH}
               height={ANIMATION_CONSTANTS.LOGO_SIZE.HEIGHT}
-              onPress={isAnimating ? undefined : handleSwitch}
+              onPress={()=>{ 
+                if(!isAnimating){
+                  handleSwitch()
+                }
+              }}
             // opacity={isAnimating ? 0.7 : 1}
             />
           ) : (
             <SvgXml
               xml={PayAiro_White_logo}
               style={{ margin: 10 }}
-              onPress={isAnimating ? undefined : handleSwitch}
+              onPress={()=>{ 
+                if(!isAnimating){
+                  handleSwitch()
+                }
+              }}
             // opacity={isAnimating ? 0.7 : 1}
             />
           )}
@@ -656,7 +692,8 @@ const createStyles = (theme: any) => StyleSheet.create({
     alignItems: 'center',
   },
   identifier: {
-    width: '80%',
+    // width: '80%',
+    marginRight:20
   },
 
   // Logo styles

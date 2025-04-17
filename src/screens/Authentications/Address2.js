@@ -74,7 +74,7 @@ export default function Address2() {
     dispatch(setLogin(true));
 
     setTimeout(() => {
-      navigation.replace('Dashboard');
+      navigation.replace(NAVIGATION_SCREENS.NEW_DASHBOARD);
     }, 1000);
     useDispatchAction(setSuccessMsg('Logged In Successfully'));
   };

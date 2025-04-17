@@ -15,83 +15,92 @@ import Dob from '../screens/Authentications/Dob';
 import SuccesScreen from '../screens/Authentications/SuccesScreen';
 import SelfieScreen from '../screens/Authentications/SelfieScreen';
 import Biometcric from '../screens/Dashboard/Biometcric';
+import { NAVIGATION_SCREENS } from './navigationConstants';
 
 const Stack = createNativeStackNavigator();
 export default function AuthStack() {
   return (
     <Stack.Navigator
       headerMode="none"
-      initialRouteName="Login"
+      initialRouteName={NAVIGATION_SCREENS.LOGIN}
       screenOptions={{
         headerShown: false,
       }}>
       <Stack.Screen
         options={{headerShown: false}}
-        name="Login"
+        name={NAVIGATION_SCREENS.LOGIN}
         component={Login}
       />
-      <Stack.Screen options={{headerShown: false}} name="OTP" component={OTP} />
+      <Stack.Screen 
+        options={{headerShown: false}} 
+        name={NAVIGATION_SCREENS.OTP} 
+        component={OTP} 
+      />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Invite"
+        name={NAVIGATION_SCREENS.INVITE}
         component={Invite}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Address"
+        name={NAVIGATION_SCREENS.ADDRESS}
         component={Address}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Name"
+        name={NAVIGATION_SCREENS.NAME}
         component={Name}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="IDProof"
+        name={NAVIGATION_SCREENS.ID_PROOF}
         component={IDProof}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Signature"
+        name={NAVIGATION_SCREENS.SIGNATURE}
         component={Signature}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="DebitCard"
+        name={NAVIGATION_SCREENS.DEBIT_CARD}
         component={DebitCard}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Legal"
+        name={NAVIGATION_SCREENS.LEGAL}
         component={Legal}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="PayTag"
+        name={NAVIGATION_SCREENS.PAY_TAG}
         component={PayTag}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Pincode"
+        name={NAVIGATION_SCREENS.PINCODE}
         component={Pincode}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="SuccesScreen"
+        name={NAVIGATION_SCREENS.SUCCESS_SCREEN}
         component={SuccesScreen}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="SelfieScreen"
+        name={NAVIGATION_SCREENS.SELFIE_SCREEN}
         component={SelfieScreen}
       />
       <Stack.Screen
         options={{headerShown: false}}
-        name="Biometcric"
+        name={NAVIGATION_SCREENS.BIOMETRIC}
         component={Biometcric}
       />
-      <Stack.Screen options={{headerShown: false}} name="Dob" component={Dob} />
+      <Stack.Screen 
+        options={{headerShown: false}} 
+        name={NAVIGATION_SCREENS.DOB} 
+        component={Dob} 
+      />
     </Stack.Navigator>
   );
 }

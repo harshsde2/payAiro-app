@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useState, useRef, useMemo, Suspense, lazy } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, Pressable, ActivityIndicator, useWindowDimensions, Button } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, Pressable, ActivityIndicator, useWindowDimensions, Button, Modal } from 'react-native';
 import ThemeUsageExample from '../../styles/ThemeUsageExample';
 // Import from the module alias utility
 import { DashboardHeader, CryptoCard, FontTest, Card, CustomText } from '../../utils/moduleAlias';
 import { ScreenContainer } from '../../HOC';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSelector } from 'react-redux';
-import { SVGLoggo, SVGUSD, SVGDownArrow3, SVGSecurities, SVGReceive, SVGHolding, SVGAdd, SVGSend, SVGNewBank, SVGBilPay, SVGRecharge, SVGDebit, SVGCredit, SVGBANK2, SVGDebitAdd, SVGBamkAdd, SVGDebitCardAdd, SVGVoucher, SVGRef } from '../../constants/images';
+import { SVGLoggo, SVGUSD, SVGDownArrow3, SVGSecurities, SVGReceive, SVGHolding, SVGAdd, SVGSend, SVGNewBank, SVGBilPay, SVGRecharge, SVGDebit, SVGCredit, SVGBANK2, SVGDebitAdd, SVGBamkAdd, SVGDebitCardAdd, SVGVoucher, SVGRef, SVGKYC2, SVGSliders, SVG_hide_eye, SVGBit, SVGDownArrow2 } from '../../constants/images';
 import useDispatchAction from '../../hooks/useDispatchAction';
 import { setisCrypto, setCalculatedBalance, setWalletData, setBankLists, setBankbalances, setErrorMsg, setSuccessMsg } from '../../redux/slices/authenticationSlice';
 import FlipSlideExample from 'animations/examples/FlipSlideExample';
@@ -31,6 +31,11 @@ import PincodeScreen from 'screens/Authentications/PincodeScreen';
 import { SectionHeader } from 'tsx-components';
 import DashboardSection from 'tsx-components/DashboardSection';
 import CryptoCardSkeleton from 'tsx-components/CryptoCardSkeleton';
+import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
+import BalanceModal from 'components/BalanceModal';
+import GenericButton from 'components/GenericButton';
+import LineChartCustom from 'components/LineChartCustom';
+const CustomPieChart = require('../../components/CustomPieChart').default;
 
 // Lazy load non-critical components
 const LazyBankModal = lazy(() => import('components/BankModal'));
@@ -39,6 +44,10 @@ const LazySelectionModal = lazy(() => import('components/SelectionModal'));
 const LazyBalanceModal = lazy(() => import('components/BalanceModal'));
 const LazySelectionModal2 = lazy(() => import('components/SelectionModal2'));
 const LazyGuideModal = lazy(() => import('components/GuideModal'));
+
+// Variables
+
+const BANK_TYPE = 'FDIC Insured';
 
 // API call utility with automatic retries, caching, and error handling
 const useApiCall = <T,>(apiFunction: (token: string) => Promise<any>, options = { retries: 1, cacheTime: 5 * 60 * 1000 }) => {
@@ -117,7 +126,7 @@ const SkeletonCard = () => {
     <View style={{
       backgroundColor: 'rgba(247, 247, 247, 1)',
       padding: 10,
-      width: 200,
+      width: 300,
       borderRadius: 15,
       marginRight: 10,
       height: 120,
@@ -181,7 +190,7 @@ const CryptoFinanceSection = React.memo(({ navigation }: CryptoFinanceSectionPro
           style={{ marginVertical: 10 }}>
           <SvgXml
             xml={SVGBANK2}
-            onPress={() => navigation.navigate('SelectBankScreen')}
+            onPress={() => navigation.navigate(NAVIGATION_SCREENS.SELECT_BANK_SCREEN)}
             style={{ marginRight: 10 }}
           />
           <SvgXml xml={SVGDebit} style={{ marginRight: 10 }} />
@@ -325,6 +334,8 @@ const NewDashboard = () => {
   const [totalDisbursable, settotalDisbursable] = useState(0);
   const [totalDisbursablePending, settotalDisbursablePending] = useState(0);
 
+  const [selectedGraph, setselectedGraph] = useState('Assets');
+
   // Create API hooks with automatic retries and caching
   const cryptoBalanceApi = useApiCall(getBalanceCrypto);
   const bankBalanceApi = useApiCall(getBalance);
@@ -336,6 +347,12 @@ const NewDashboard = () => {
   const cryptoTxApi = useApiCall(getCryptoTx);
   const kycApi = useApiCall(uploadKYC);
 
+  // Add this near other hooks at the top level of your NewDashboard component
+  const memoizedAllocationLists = useMemo(
+    () => alloCationLists,
+    [alloCationLists],
+  );
+
   useEffect(() => {
     // Group all data fetch operations
     const fetchInitialData = async () => {
@@ -345,7 +362,7 @@ const NewDashboard = () => {
       }
 
       try {
-        console.log("Fetching initial dashboard data");
+        // console.log("Fetching initial dashboard data");
 
         // Create an array of promises with descriptive catch handlers
         const promises = [
@@ -361,7 +378,7 @@ const NewDashboard = () => {
 
         // Execute all promises in parallel
         await Promise.allSettled(promises);
-        console.log("All initial data fetch operations completed");
+        // console.log("All initial data fetch operations completed");
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       }
@@ -402,6 +419,95 @@ const NewDashboard = () => {
     symbol?: string;
   }
 
+  // 
+  const renderButtonGraph = () => {
+    return (
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+          }}>
+          <TouchableOpacity
+            onPress={() => setselectedGraph('pnl')}
+            style={{
+              backgroundColor:
+                selectedGraph === 'pnl'
+                  ? 'rgba(44, 106, 63, 1)'
+                  : 'rgba(255, 255, 255, 0.1)',
+              // padding: 10,
+              paddingBottom: 10,
+              paddingTop: 7,
+              width: '33%',
+              borderRadius: 30,
+            }}>
+            <Text
+              style={{
+                color: selectedGraph === 'pnl' ? '#fff' : '#fff',
+                fontFamily: Fonts.bold,
+                textAlign: 'center',
+                fontSize: 12,
+              }}>
+              PnL(%)
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setselectedGraph('Assets')}
+            style={{
+              backgroundColor:
+                selectedGraph === 'Assets' ? 'rgba(44, 106, 63, 1)' : '#000',
+              // padding: 10,
+              paddingBottom: 10,
+              paddingTop: 7,
+              width: '33%',
+              borderRadius: 30,
+              marginLeft: 15,
+            }}>
+            <Text
+              style={{
+                color: selectedGraph === 'Assets' ? '#fff' : '#fff',
+                fontFamily: Fonts.bold,
+                textAlign: 'center',
+                fontSize: 12,
+              }}>
+              Assets
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* <TouchableOpacity
+          onPress={() => {
+            setisShowWeeks(true);
+          }}
+          style={{
+            backgroundColor:theme.colors.palette.green700,
+            // padding: 10,
+            paddingBottom: 10,
+            paddingTop: 7,
+            width: '27%',
+            borderRadius: 30,
+          }}>
+          <Text
+            style={{
+              color: 'black',
+              fontFamily: Fonts.bold,
+              textAlign: 'center',
+              fontSize: 12,
+              textTransform: 'capitalize',
+            }}>
+            {timeframe} <SvgXml xml={SVGDownArrow2} />
+          </Text>
+        </TouchableOpacity> */}
+      </View>
+    );
+  };
   // Optimized API call functions
   const fetchCryptoBalance = async () => {
     try {
@@ -435,9 +541,17 @@ const NewDashboard = () => {
   const fetchKycStatus = async () => {
     try {
       const data = await kycApi.execute(tokens?.access);
+      console.log("data =>", data)
       if (data?.status === 400 || !data?.status) {
-        setisShowKYC(data?.title === 'Identity suspended');
+        // console.log("fetchKycStatus if")
+        if (data?.title) {
+          setisShowKYC(data?.title === 'Identity suspended');
+        } else {
+          setisShowKYC(true);
+        }
       } else {
+        // console.log("fetchKycStatus esle")
+
         setisShowKYC(true);
       }
     } catch (error) {
@@ -465,6 +579,25 @@ const NewDashboard = () => {
       useDispatchAction(setBankbalances(data));
     } catch (error) {
       console.error('Error fetching bank balance:', error);
+    }
+  };
+
+  const kycHandleUrl = async () => {
+    const data = await uploadKYC(tokens?.access);
+    // console.log(data, 'kycHandle');
+    if (data?.data?.status === 400) {
+      if (data?.data?.title === 'Identity suspended') {
+        useDispatchAction(
+          setErrorMsg('Operation is forbidden. Custodial account is suspended'),
+        );
+        // navigation.navigate('InAppKYCBrowser', {
+        //   url: 'https://docv.alloy.co/02797998-719f-407b-bf98-ed852e3540b3',
+        // });
+      }
+    } else {
+      navigation.navigate('InAppKYCBrowser', {
+        url: data?.data?.url,
+      });
     }
   };
 
@@ -499,9 +632,9 @@ const NewDashboard = () => {
 
   const fetchTransactions = async () => {
     try {
-      console.log("Fetching PayAiro transactions...");
+      // console.log("Fetching PayAiro transactions...");
       const response = await getPayAeroTx(tokens?.access);
-      console.log("PayAiro transactions response:", response);
+      // console.log("PayAiro transactions response:", response);
 
       // Extract transactions data correctly based on response format
       let transactionsData = null;
@@ -531,7 +664,7 @@ const NewDashboard = () => {
         return;
       }
 
-      console.log("Extracted transactions data:", transactionsData);
+      // console.log("Extracted transactions data:", transactionsData);
 
       // Create a merged and filtered list in one operation
       const successfulTransactions = [
@@ -539,7 +672,7 @@ const NewDashboard = () => {
         ...transactionsData.userToUserTransactions
       ].filter(tx => tx?.status === 'success');
 
-      console.log(`Found ${successfulTransactions.length} successful transactions`);
+      // console.log(`Found ${successfulTransactions.length} successful transactions`);
       settxLists(successfulTransactions);
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -548,9 +681,9 @@ const NewDashboard = () => {
 
   const fetchCryptoTransactions = async () => {
     try {
-      console.log("Fetching crypto transactions...");
+      // console.log("Fetching crypto transactions...");
       const response = await getCryptoTx(tokens?.access);
-      console.log("Crypto transactions response:", response);
+      // console.log("Crypto transactions response:", response);
 
       // Extract crypto transactions data correctly based on response format
       let cryptoData = null;
@@ -580,7 +713,7 @@ const NewDashboard = () => {
         return;
       }
 
-      console.log("Extracted crypto transactions data:", cryptoData);
+      // console.log("Extracted crypto transactions data:", cryptoData);
 
       // Safely combine NFT transactions and trades
       const allTransactions = [
@@ -588,7 +721,7 @@ const NewDashboard = () => {
         ...cryptoData.trades
       ];
 
-      console.log(`Found ${allTransactions.length} crypto transactions`);
+      // console.log(`Found ${allTransactions.length} crypto transactions`);
       setweb3TxLists(allTransactions);
     } catch (error) {
       console.error('Error fetching crypto transactions:', error);
@@ -597,11 +730,11 @@ const NewDashboard = () => {
 
   const fetchContacts = async () => {
     try {
-      console.log("Starting fetchContacts with token:", tokens?.access?.substring(0, 10) + "...");
+      // console.log("Starting fetchContacts with token:", tokens?.access?.substring(0, 10) + "...");
 
       // Direct API call to get contacts
       const response = await getContacts(tokens?.access);
-      console.log("Raw contacts API response:", response);
+      // console.log("Raw contacts API response:", response);
 
       // Check different possible response formats
       let contactsData = null;
@@ -622,11 +755,11 @@ const NewDashboard = () => {
         return;
       }
 
-      console.log("Extracted contacts data:", contactsData);
+      // console.log("Extracted contacts data:", contactsData);
 
       // Check the object structure to identify the correct field names
       const sampleContact = contactsData[0];
-      console.log("Sample contact object:", sampleContact);
+      // console.log("Sample contact object:", sampleContact);
 
       // Determine which field name is used for pending requests
       const pendingRequestsField = sampleContact?.pending_requests
@@ -641,7 +774,7 @@ const NewDashboard = () => {
         return;
       }
 
-      console.log(`Using '${pendingRequestsField}' as the pending requests field`);
+      // console.log(`Using '${pendingRequestsField}' as the pending requests field`);
 
       // Function to get earliest timestamp - adapted to work with variable field names
       const getEarliestTimestamp = (contact: any) => {
@@ -678,7 +811,7 @@ const NewDashboard = () => {
         return timestampA.getTime() - timestampB.getTime();
       });
 
-      console.log("Final sorted contacts:", sortedContacts);
+      // console.log("Final sorted contacts:", sortedContacts);
       setcontactLists(sortedContacts);
     } catch (error) {
       console.error('Error fetching contacts:', error);
@@ -799,6 +932,8 @@ const NewDashboard = () => {
     }
   }, [tokens?.access]); // Only depend on the access token
 
+  // console.log("bankBalance?.bank_account?.usd =>", bankBalance?.bank_account?.usd)
+
   // Handling open links
   const handleOpenLink = useCallback(() => {
     if (!linkToken) return;
@@ -817,19 +952,19 @@ const NewDashboard = () => {
     open(config);
   }, [linkToken, onSuccess]);
 
-  console.log("bankBalance?.bank_account?.usd =>", bankBalance?.bank_account?.usd)
+  // console.log("bankBalance?.bank_account?.usd =>", bankBalance?.bank_account?.usd)
   // Handle view switch with proper memo dependencies
   const handleSwitchView = useCallback(() => {
-    console.log("asasas")
+    // console.log("asasas")
     setGhostSlideVisible(!ghostSlideVisible)
     const newCryptoState = !isCrypto;
     useDispatchAction(setCalculatedBalance(selectedCrypto?.balance_in_tether ?? 0));
     useDispatchAction(setisCrypto(newCryptoState));
-  }, [isCrypto, selectedCrypto?.balance_in_tether,ghostSlideVisible]);
+  }, [isCrypto, selectedCrypto?.balance_in_tether, ghostSlideVisible]);
 
   // Memoize contact see all navigation
   const onContactSeeALl = useCallback(() => {
-    navigation.navigate('ContactScreen', {
+    navigation.navigate(NAVIGATION_SCREENS.CONTACT_SCREEN, {
       isVisble3: isCrypto,
     });
   }, [navigation, isCrypto]);
@@ -871,82 +1006,176 @@ const NewDashboard = () => {
             : bankBalance?.bank_account?.usd
     }));
   }, [bankLists, bankBalance]);
+  
+
+  // const MemoizedPieChart = React.memo(CustomPieChart);
+
 
   return (
     <ScreenContainer
-      // scrollable
       style={{
         paddingHorizontal: 0
       }}
-      avoidKeyboard
-
     >
-      {/* Modals with Suspense for lazy loading */}
-      <Suspense fallback={<LoadingFallback />}>
+      {/* Modal container with high z-index */}
+      <View style={{
+        position: 'absolute',
+        // top: 0,
+        // left: 0,
+        // right: 0,
+        // bottom: 0,
+        zIndex: 9999,
+        elevation: 9999,
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
         {isCardModalVisible && (
-          <LazyBankModal
-            isVisible={isCardModalVisible}
-            onClose={() => setisCardModalVisible(false)}
-            onCancel={() => { }}
-          />
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={isCardModalVisible}
+            onRequestClose={() => setisCardModalVisible(false)}
+          >
+            <View style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              // backgroundColor: 'rgba(0,0,0,0.5)'
+            }}>
+              <LazyBankModal
+                isVisible={isCardModalVisible}
+                onClose={() => setisCardModalVisible(false)}
+                onCancel={() => { }}
+              />
+            </View>
+          </Modal>
         )}
 
         {isBankModalVisible && (
-          <LazyBankModal2
-            isVisible={isBankModalVisible}
-            onClose={() => setisBankModalVisible(false)}
-            onCancel={() => { }}
-          />
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={isBankModalVisible}
+            onRequestClose={() => setisBankModalVisible(false)}
+          >
+            <View style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              // backgroundColor: 'rgba(0,0,0,0.5)'
+            }}>
+              <LazyBankModal2
+                isVisible={isBankModalVisible}
+                onClose={() => setisBankModalVisible(false)}
+                onCancel={() => { }}
+              />
+            </View>
+          </Modal>
         )}
 
         {isVisible && (
-          <LazyBalanceModal
-            isVisible={isVisible}
-            onClose={() => setisVisible(false)}
-            onSelected={() => {
-              setisVisible(false);
-              navigation.navigate(SCREENS.Receive);
-            }}
-          />
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={isVisible}
+            onRequestClose={() => setisVisible(false)}
+          >
+            <View style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              // backgroundColor: 'rgba(0,0,0,0.5)'
+            }}>
+              <BalanceModal
+                isVisible={isVisible}
+                onClose={() => setisVisible(false)}
+                onSelected={() => {
+                  setisVisible(false);
+                  navigation.navigate(SCREENS.Receive);
+                }}
+              />
+            </View>
+          </Modal>
         )}
 
         {isVisible2 && (
-          <LazySelectionModal
-            isVisible={isVisible2}
-            onClose={() => setisVisible2(false)}
-            onSelected={() => { }}
-            data={[]}
-            type={'bank'}
-          />
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={isVisible2}
+            onRequestClose={() => setisVisible2(false)}
+          >
+            <View style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              // backgroundColor: 'rgba(0,0,0,0.5)'
+            }}>
+              <LazySelectionModal
+                isVisible={isVisible2}
+                onClose={() => setisVisible2(false)}
+                onSelected={() => { }}
+                data={[]}
+                type={'bank'}
+              />
+            </View>
+          </Modal>
         )}
 
         {isShowWeeks && (
-          <LazySelectionModal2
-            isVisible={isShowWeeks}
-            onClose={() => setisShowWeeks(false)}
-            timeframe={timeframe}
-            settimeframe={settimeframe}
-          />
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={isShowWeeks}
+            onRequestClose={() => setisShowWeeks(false)}
+          >
+            <View style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              // backgroundColor: 'rgba(0,0,0,0.5)'
+            }}>
+              <LazySelectionModal2
+                isVisible={isShowWeeks}
+                onClose={() => setisShowWeeks(false)}
+                timeframe={timeframe}
+                settimeframe={settimeframe}
+              />
+            </View>
+          </Modal>
         )}
 
         {isGuideVisible && (
-          <LazyGuideModal
-            isVisible={isGuideVisible}
-            onClose={() => setisGuideVisible(false)}
-            onConfirm={() => { }}
-          />
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={isGuideVisible}
+            onRequestClose={() => setisGuideVisible(false)}
+          >
+            <View style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              // backgroundColor: 'rgba(0,0,0,0.5)'
+            }}>
+              <LazyGuideModal
+                isVisible={isGuideVisible}
+                onClose={() => setisGuideVisible(false)}
+                onConfirm={() => { }}
+              />
+            </View>
+          </Modal>
         )}
-      </Suspense>
-
+      </View>
 
       <View style={{
-        zIndex: 9999,
+        zIndex: 100,
         width: '92%',
         alignSelf: 'center',
         backgroundColor: 'black',
         borderRadius: 20,
         position: 'absolute',
-        bottom:20,
+        bottom: 20,
       }}>
         <GhostSlide
           visible={ghostSlideVisible}
@@ -964,347 +1193,628 @@ const NewDashboard = () => {
             borderRadius: 20,
             position: 'absolute',
             bottom: 20,
-            zIndex: 9999,
+            zIndex: 100,
             width: '92%',
             alignSelf: 'center',
           }}>
-
-          <BottomNavigation isVer={true} />
+            <BottomNavigation isVer={true} />
           </View>
         </GhostSlide>
       </View>
 
       <ScrollView>
-      <DashboardHeader
-        name={userName}
-        style={{
-          marginBottom: theme.spacing.spacing.md,
-          marginHorizontal: 15
-        }}
-      />
-
-      <View style={{ marginHorizontal: 15 }}>
-        {/* Use a consistent height container to prevent layout shifts */}
-        <View style={{ minHeight: 220 }}>
-          {!bankBalance?.bank_account?.usd ? (
-            <CryptoCardSkeleton
-              shimmerColor="rgba(255, 255, 255, 0.6)"
-              baseColor="rgba(255, 255, 255, 0.2)"
-              speed={1000}
-              visible={true}
-            />
-          ) : (
-            
-            <CryptoCard
-              isCrypto={isCrypto}
-              onSwitchView={()=>{
-                // handleSwitchView();
-                setGhostSlideVisible(!ghostSlideVisible)
-                // console.log("onSwitchView")
-              }}
-              headerTitle={'Payairo Account'}
-              balance={isCrypto ?
-                (bankBalance?.bank_account?.usd ?? 0) :
-                Number(totalDisbursable || 0)}
-              currencySymbol="USD"
-              currencyIcon={SVGUSD}
-              identifierType={"Payairo ID:"}
-              identifier={walletData?.username || "Username"}
-              pendingAmount={!isCrypto ? totalDisbursablePending : 0}
-              onCopy={() => console.log("Copy identifier")}
-              onWithdraw={() => console.log("Withdraw pressed")}
-              logoSvg={isCrypto ? SVGSecurities : SVGLoggo}
-            />
-          )}
-        </View>
-
-        <View
+        <DashboardHeader
+          name={userName}
           style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginVertical: 20,
-          }}>
-          <SvgXml
-            xml={SVGSend}
-            onPress={() => {
-              navigation.navigate(
-                !isCrypto ? SCREENS.SendToken : SCREENS.Send,
-                {
-                  requested: false,
-                },
-              );
-            }}
-          />
-          <SvgXml
-            xml={SVGReceive}
-            onPress={() =>
-              navigation.navigate(
-                !isCrypto ? SCREENS.ReceiveToken : SCREENS.Receive,
-              )
-            }
-          />
-          <SvgXml
-            xml={!isCrypto ? SVGHolding : SVGAdd}
-            style={{ marginBottom: 20 }}
-            onPress={() => {
-              if (!isCrypto) {
-                navigation.navigate('CryptoDashboard');
-              } else {
-                setisVisible(true);
+            marginBottom: theme.spacing.spacing.md,
+            marginHorizontal: 15
+          }}
+        />
+        {isShowKYC && (
+          <View
+            style={{
+              backgroundColor: '#000',
+              width: '95%',
+              padding: 15,
+              borderRadius: 15,
+              alignSelf: 'center',
+              marginBottom: 10,
+            }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'flex-start',
+                alignItems: 'flex-start',
+              }}>
+              <SvgXml xml={SVGKYC2} />
+              <Text
+                style={{
+                  color: 'rgba(177, 177, 177, 1)',
+                  fontFamily: Fonts.semibold,
+                  fontSize: 14,
+                  marginLeft: 10,
+                }}>
+                Your Second level KYC verification is pending.{' '}
+                <TouchableOpacity onPress={kycHandleUrl}>
+                  <Text style={{ color: 'white', fontFamily: Fonts.bold }}>
+                    {' '}
+                    Verify Now!
+                  </Text>
+                </TouchableOpacity>
+              </Text>
+            </View>
+            <SvgXml
+              xml={SVGSliders}
+              style={{ marginTop: 15, width: '80%', alignSelf: 'center' }}
+            />
+          </View>
+        )}
+        <View style={{ marginHorizontal: 15 }}>
+          {/* Use a consistent height container to prevent layout shifts */}
+          <View style={{ minHeight: 220 }}>
+            {(bankBalance?.bank_account?.usd == undefined) ? (
+              <CryptoCardSkeleton
+                shimmerColor="rgba(255, 255, 255, 0.6)"
+                baseColor="rgba(255, 255, 255, 0.2)"
+                speed={1000}
+                visible={true}
+              />
+            ) : (
+
+              <CryptoCard
+                isCrypto={isCrypto}
+                onSwitchView={() => {
+                  // handleSwitchView();
+                  setGhostSlideVisible(!ghostSlideVisible)
+                  // console.log("onSwitchView")
+                }}
+                headerTitle={'Payairo Account'}
+                balance={isCrypto ?
+                  (bankBalance?.bank_account?.usd ?? 0) :
+                  Number(totalDisbursable || 0)}
+                currencySymbol="USD"
+                currencyIcon={SVGUSD}
+                identifierType={"Payairo ID:"}
+                identifier={walletData?.username || "Username"}
+                pendingAmount={!isCrypto ? totalDisbursablePending : 0}
+                onCopy={() => console.log("Copy identifier")}
+                onWithdraw={() => console.log("Withdraw pressed")}
+                logoSvg={isCrypto ? SVGSecurities : SVGLoggo}
+              />
+            )}
+          </View>
+
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginVertical: 20,
+            }}>
+            <SvgXml
+              xml={SVGSend}
+              onPress={() => {
+                navigation.navigate(
+                  !isCrypto ? NAVIGATION_SCREENS.SEND_TOKEN : NAVIGATION_SCREENS.SEND,
+                  {
+                    requested: false,
+                  },
+                );
+              }}
+            />
+            <SvgXml
+              xml={SVGReceive}
+              onPress={() =>
+                navigation.navigate(
+                  !isCrypto ? NAVIGATION_SCREENS.RECEIVE_TOKEN : NAVIGATION_SCREENS.RECEIVE,
+                )
               }
-            }}
-          />
+            />
+            <SvgXml
+              xml={!isCrypto ? SVGHolding : SVGAdd}
+              style={{ marginBottom: 20 }}
+              onPress={() => {
+                if (!isCrypto) {
+                  navigation.navigate('CryptoDashboard');
+                } else {
+                  setisVisible(true);
+                }
+              }}
+            />
+          </View>
         </View>
-      </View>
-      <Card
-        style={{ backgroundColor: theme.colors.palette.white, borderWidth: 0 }}
-        padding={10}
-
-        borderRadius={theme.spacing.spacing[10]}
-      >
-        <View style={{ width: '100%', padding: 5, }}>
-          <MemoizedDashboardSection
-            title='Your Accounts'
-            actionText='see all'
-            onActionPress={() => { }}
-          >
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{}}
-              style={{ marginRight: 10 }}>
-              {walletApi.loading || bankDetailsApi.loading ? (
-                // Show skeleton loading UI
-                <>
-                  <SkeletonCard />
-                  <SkeletonCard />
-                  <SkeletonCard />
-                </>
-              ) : (
-                processedBankAccounts.map((item: any, index: number) => (
-                  <View
-                    key={index}
-                    style={{
-                      backgroundColor: 'rgba(247, 247, 247, 1)',
-                      padding: 10,
-                      width: 200,
-                      borderRadius: 15,
-                      marginRight: 10,
-                    }}>
+        <Card
+          style={{ backgroundColor: theme.colors.palette.white, borderWidth: 0 }}
+          padding={10}
+          borderRadius={theme.spacing.spacing[10]}
+        >
+          <View style={{ width: '100%', padding: 5, }}>
+            <MemoizedDashboardSection
+              title='Your Accounts'
+              actionText='see all'
+              onActionPress={() => { }}
+            >
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{}}
+                style={{ marginRight: 10 }}>
+                {walletApi.loading || bankDetailsApi.loading ? (
+                  // Show skeleton loading UI
+                  <>
+                    <SkeletonCard />
+                    <SkeletonCard />
+                    <SkeletonCard />
+                  </>
+                ) : (
+                  processedBankAccounts.map((item: any, index: number) => (
                     <View
+                      key={index}
                       style={{
-                        flexDirection: 'row',
-                        justifyContent: 'flex-start',
-                        alignItems: 'center',
-                        width: '90%',
+                        backgroundColor: theme.colors.palette.grey100,
+                        padding: 10,
+                        width: 250,
+                        borderRadius: 15,
+                        marginRight: 10,
                       }}>
-                      <SvgXml xml={SVGUSD} width={25} height={25} />
-                      <Text
+                      <View
                         style={{
-                          fontFamily: Fonts.semibold,
-                          color: '#000',
-                          fontSize: 16,
-                          marginLeft: 8,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                          width: '90%',
+                          marginBottom: 10,
                         }}>
-                        {item.displayName}
-                        <Text
+                        <SvgXml xml={SVGUSD} width={35} height={35} />
+                        <View style={{ flex: 1, }}>
+
+                          <CustomText
+                            variant={'subtitle2'}
+                            fontWeight={'bold'}
+
+                            fontFamily={theme.typography.fontFamily.nexaHeavy}
+                            style={{
+                              marginLeft: 5,
+                              marginTop: 2,
+                            }}
+                          >
+                            {item.displayName}
+                          </CustomText>
+                          <CustomText
+
+                            color={theme.colors.palette.grey600}
+                            fontFamily={theme.typography.fontFamily.nexaHeavy}
+                            style={{
+                              marginLeft: 5,
+                              marginTop: 2,
+                              fontSize: 14,
+                              fontWeight: "400"
+                            }}
+                          >
+                            {`${BANK_TYPE}`}
+                          </CustomText>
+                        </View>
+                        {/* <Text
                           style={{
-                            color: 'rgba(44, 106, 63, 1)',
-                            fontSize: 10,
-                            textTransform: 'uppercase',
+                            fontFamily: Fonts.semibold,
+                            color: '#000',
+                            fontSize: 16,
+                            marginLeft: 8,
                           }}>
-                          {' '}({item.accountType})
-                        </Text>
-                      </Text>
-                    </View>
-                    <Text
-                      numberOfLines={1}
-                      style={{
-                        color: 'rgba(106, 106, 106, 1)',
-                        fontSize: 10,
-                        fontFamily: Fonts.bold,
-                        marginLeft: 5,
-                        marginTop: 2,
-                      }}>
-                      {item.address}
-                    </Text>
-
-                    <Text
-                      numberOfLines={1}
-                      style={{
-                        color: 'black',
-                        fontSize: 10,
-                        fontFamily: Fonts.bold,
-                        marginLeft: 5,
-                        marginTop: 5,
-                      }}>
-                      Account No: {item.accountNumber}{' '}
-                    </Text>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        width: '100%',
-                      }}>
-                      <Text
+                          {item.displayName}
+                          <Text
+                            style={{
+                              color: 'rgba(44, 106, 63, 1)',
+                              fontSize: 10,
+                              textTransform: 'uppercase',
+                            }}>
+                            {' '}({item.accountType})
+                          </Text>
+                        </Text> */}
+                      </View>
+                      {/* <CustomText
+                          // variant={'subtitle1'}
+                          // fontWeight={'medium'}
+                          color={theme.colors.palette.grey600}
+                          fontFamily={theme.typography.fontFamily.nexaHeavy}
+                          style={{
+                            marginLeft: 5,
+                            marginTop: 2,
+                            fontSize:14,
+                            fontWeight:"400"
+                          }}
+                        >
+                          {item.address}
+                        </CustomText> */}
+                      {/* <Text
                         numberOfLines={1}
-                        style={{
-                          color: 'rgba(44, 106, 63, 1)',
-                          fontSize: 16,
-                          fontFamily: Fonts.bold,
-                          marginLeft: 5,
-                          marginTop: 5,
-                          width: '60%',
-                        }}>
-                        $ {item.balance}
-                      </Text>
-
-                      <Text
-                        onPress={() =>
-                          navigation.navigate('BankDetails', {
-                            item: item,
-                            bankbalance: item.balance,
-                          })
-                        }
                         style={{
                           color: 'rgba(106, 106, 106, 1)',
                           fontSize: 10,
-                          fontFamily: Fonts.regular,
+                          fontFamily: Fonts.bold,
                           marginLeft: 5,
-                          marginTop: 5,
-                          textDecorationLine: 'underline',
+                          marginTop: 2,
                         }}>
-                        View Details
-                      </Text>
-                    </View>
-                  </View>
-                ))
-              )}
-              <SvgXml xml={SVGNewBank} onPress={handleOpenLink} />
-            </ScrollView>
-          </MemoizedDashboardSection>
-          <MemoizedDashboardSection
-            title='Pay Airo Contacts'
-            actionText='see all'
-            onActionPress={onContactSeeALl}
-          >
-            {contactsApi.loading ? (
-              // Skeleton loading for contacts
-              <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginVertical: 15 }}>
-                {[1, 2, 3, 4].map((_, index) => (
-                  <View key={index} style={{ alignItems: 'center' }}>
-                    <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: theme.colors.palette.grey200 }} />
-                    <View style={{ width: 40, height: 12, backgroundColor: theme.colors.palette.grey200, borderRadius: 4, marginTop: 8 }} />
-                  </View>
-                ))}
-              </View>
-            ) : contactLists.length > 0 ? (
-              <MemoizedStoryLists data={contactLists} isVisble3={isCrypto} />
-            ) : (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('AddContact')}
-                style={{
-                  backgroundColor: 'rgba(44, 106, 63, 1)',
-                  paddingBottom: 10,
-                  paddingTop: 7,
-                  paddingHorizontal: 10,
-                  borderRadius: 30,
-                  alignSelf: 'center',
-                  marginTop: 20,
-                }}>
-                <Text
-                  style={{
-                    color: 'white',
-                    fontSize: 12,
-                    fontFamily: Fonts.semibold,
-                  }}>
-                  + Add People
-                </Text>
-              </TouchableOpacity>
-            )}
-          </MemoizedDashboardSection>
-          {isCrypto && <CryptoFinanceSection navigation={navigation} />}
-          <MemoizedDashboardSection title='Recent Transactions' actionText='see all' onActionPress={() => { }}>
-            {txListsApi.loading || cryptoTxApi.loading ? (
-              // Skeleton loading for transactions
-              <>
-                <SkeletonTransactionCard />
-                <SkeletonTransactionCard />
-                <SkeletonTransactionCard />
-              </>
-            ) : (
-              <>
-                {txLists && isCrypto && sortedTxLists.length > 0 ? (
-                  sortedTxLists.map((item: any, key: any) => (
-                    <View key={key}>
-                      <MemoizedTransactionCard
-                        item={item}
-                        key={key}
-                        isMerchent={item?.order_id}
-                        isCrypto={item?.order_id}
-                      />
+                        {item.address}
+                        
+                      </Text> */}
+
+                      <CustomText
+
+                        color={theme.colors.palette.grey600}
+                        fontFamily={theme.typography.fontFamily.nexaHeavy}
+                        style={{
+                          marginLeft: 5,
+                          marginTop: 2,
+                          fontSize: 12,
+                          fontWeight: "400"
+                        }}
+                      >
+                        {`Total Available Balance`}
+                      </CustomText>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          width: '100%',
+                        }}>
+                        <View style={{ flexDirection: 'row', marginTop: 5, alignItems: 'center', flex: 1 }}>
+                          <Text
+                            numberOfLines={1}
+                            style={{
+                              color: 'rgba(44, 106, 63, 1)',
+                              fontSize: 16,
+                              fontFamily: Fonts.bold,
+                              marginLeft: 5,
+                              // marginTop: 5,
+                              // width: '60%',
+
+                            }}>
+                            $ {item.balance}
+                          </Text>
+                          <SvgXml style={{ marginLeft: 10, top: 1 }} xml={SVG_hide_eye} width={15} height={15} />
+                        </View>
+
+                        <Text
+                          onPress={() =>
+                            navigation.navigate(NAVIGATION_SCREENS.BANK_DETAILS, {
+                              item: item,
+                              bankbalance: item.balance,
+                            })
+                          }
+                          style={{
+                            color: 'rgba(106, 106, 106, 1)',
+                            fontSize: 10,
+                            fontFamily: Fonts.regular,
+                            marginLeft: 5,
+                            marginTop: 5,
+                            textDecorationLine: 'underline',
+                          }}>
+                          View Details
+                        </Text>
+                      </View>
                     </View>
                   ))
-                ) : (
-                  <></>
                 )}
-                {web3TxLists &&
-                  !isCrypto &&
-                  sortedWeb3TxLists.length > 0 &&
-                  sortedWeb3TxLists.map((item: any, key: any) => (
-                    <View key={key}>
-                      <MemoizedTransactionCard isCrypto={true} item={item} key={key} isMerchent={item?.order_id} />
+                <SvgXml width={250} height={115} xml={SVGNewBank} onPress={handleOpenLink} />
+              </ScrollView>
+            </MemoizedDashboardSection>
+            <MemoizedDashboardSection
+              title='Pay Airo Contacts'
+              actionText='see all'
+              onActionPress={onContactSeeALl}
+            >
+              {contactsApi.loading ? (
+                // Skeleton loading for contacts
+                <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginVertical: 15 }}>
+                  {[1, 2, 3, 4].map((_, index) => (
+                    <View key={index} style={{ alignItems: 'center' }}>
+                      <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: theme.colors.palette.grey200 }} />
+                      <View style={{ width: 40, height: 12, backgroundColor: theme.colors.palette.grey200, borderRadius: 4, marginTop: 8 }} />
                     </View>
                   ))}
-              </>
-            )}
-          </MemoizedDashboardSection>
-          {isCrypto && <CryptoRewardsSection />}
-          {isCrypto && (
-            <CryptoOtherServicesSection
-              handleRothBank={handleRothBank}
-              setisCardModalVisible={setisCardModalVisible}
-              navigation={navigation}
-            />
-          )}
-        </View>
-      </Card>
-      </ScrollView>
-      {showPin && (
-        <PincodeScreen
-          pinTxt={pinTxt}
-          onPress={async (e: any, f: any) => {
-            setshowPin(false);
+                </View>
+              ) : contactLists.length > 0 ? (
+                <MemoizedStoryLists data={contactLists} isVisble3={isCrypto} />
+              ) : (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate(NAVIGATION_SCREENS.ADD_CONTACT)}
+                  style={{
+                    backgroundColor: 'rgba(44, 106, 63, 1)',
+                    paddingBottom: 10,
+                    paddingTop: 7,
+                    paddingHorizontal: 10,
+                    borderRadius: 30,
+                    alignSelf: 'center',
+                    marginTop: 20,
+                  }}>
+                  <Text
+                    style={{
+                      color: 'white',
+                      fontSize: 12,
+                      fontFamily: Fonts.semibold,
+                    }}>
+                    + Add People
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </MemoizedDashboardSection>
+            {isCrypto && <CryptoFinanceSection navigation={navigation} />}
+            {!isCrypto &&
+              <MemoizedDashboardSection
+                title='PnL & Assets Allocation'
+                // actionText='see all'
+                // onActionPress={onContactSeeALl}
+              >
+                <View style={{ width: '100%' }}>
+                  <View>
+                    {selectedGraph !== 'Assets' && (
+                      <>
+                        <View
+                          style={{
+                            width: '100%',
+                            alignSelf: 'center',
+                            marginTop: 30,
+                            marginBottom: 20,
+                          }}>
+                          {renderButtonGraph()}
+                        </View>
+                        <LineChartCustom isNoBg={true} />
+                      </>
+                    )}
+                    {selectedGraph === 'Assets' && (
+                      <View
+                        style={{
+                          backgroundColor: '#000',
+                          padding: 20,
+                          borderRadius: 20,
+                          width: '100%',
+                          alignSelf: 'center',
+                          marginVertical: 15,
+                        }}>
+                        {renderButtonGraph()}
+                        <View style={{ width: '100%', alignSelf: 'center' }}>
+                          <CustomPieChart
+                            allocationLists={memoizedAllocationLists}
+                          />
+                        </View>
 
-            if (!f) {
-              if (e !== isConfirm) {
-                useDispatchAction(setErrorMsg('Pin not matched , Try Again'));
-                setpinTxt('Confirm your pin');
-                setshowPin(true);
-                return;
-              }
-              const formData = new FormData();
-              formData.append('tpin', e);
-              const data = await createPin(formData, tokens?.access);
-              if (data && data?.status) {
-                setPin(e);
-                useDispatchAction(
-                  setSuccessMsg('Transaction Pin created successfully'),
-                );
-              } else {
-                useDispatchAction(setErrorMsg('Something Went Wrong'));
-              }
-            } else {
-              setisConfirm(e);
-              setpinTxt('Confirm your pin');
-              setshowPin(f);
+                        <View
+                          style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            padding: 20,
+                            borderRadius: 20,
+                          }}>
+                          <Text
+                            style={{
+                              color: 'white',
+                              fontFamily: Fonts.bold,
+                              marginBottom: 10,
+                              fontSize: 16,
+                            }}>
+                            Assets Allocation
+                          </Text>
+                          {alloCationLists &&
+                            alloCationLists.length > 0 &&
+                            alloCationLists.map((item, key) => (
+                              <View key={key}>
+                                <AssetsCards
+                                  item={item}
+                                  isSelected={false}
+                                  onPress={() => { }}
+                                  type="display"
+                                />
+                              </View>
+                            ))}
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </MemoizedDashboardSection>
             }
-          }}
-          isNotDecimals={null}
-        />
-      )}
+            {!isCrypto &&
+              <MemoizedDashboardSection
+                title='Explore Securities'
+                // actionText=''
+                onActionPress={() => { }}
+              >
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                >
+                  <View
+                    style={{
+                      backgroundColor: 'rgba(248, 248, 248, 1)',
+                      borderRadius: 15,
+                      padding: 15,
+                      flexDirection: 'row',
+                      justifyContent: 'flex-start',
+                      width: 170,
+                    }}>
+                    <SvgXml xml={SVGBit} />
+                    <View style={{ marginLeft: 15 }}>
+                      <Text
+                        style={{
+                          color: 'black',
+                          fontFamily: Fonts.semibold,
+                          textAlign: 'left',
+                          marginLeft: 15,
+                          marginBottom: 10,
+                        }}>
+                        Crypto
+                      </Text>
+                      <GenericButton
+                        title={'Explore '}
+                        onPress={() => navigation.navigate('CryptoScreen')}
+                        cStyle={{
+                          backgroundColor: '#000',
+                          padding: 5,
+                          width: '80%',
+                        }}
+                        tStyle={{ color: 'white', fontSize: 10 }}
+                        disabled={false}
+                        icon={null}
+                      />
+                    </View>
+                  </View>
+                  <View
+                    style={{
+                      backgroundColor: 'rgba(248, 248, 248, 1)',
+                      borderRadius: 15,
+                      padding: 15,
+                      flexDirection: 'row',
+                      justifyContent: 'flex-start',
+                      width: 170,
+                      marginLeft: 10,
+                    }}>
+                    <SvgXml xml={SVGSecurities} />
+                    <View style={{ marginLeft: 15 }}>
+                      <Text
+                        style={{
+                          color: 'black',
+                          fontFamily: Fonts.semibold,
+                          textAlign: 'left',
+                          marginLeft: 8,
+                          marginBottom: 10,
+                        }}>
+                        Stocks
+                      </Text>
+                      <GenericButton
+                        onPress={() => navigation.navigate('StocksScreen')}
+                        title={'Explore '}
+                        cStyle={{
+                          backgroundColor: '#000',
+                          padding: 5,
+                          width: '80%',
+                        }}
+                        tStyle={{ color: 'white', fontSize: 10 }}
+                        disabled={false}
+                        icon={null}
+                      />
+                    </View>
+                  </View>
+                  <View
+                    style={{
+                      backgroundColor: 'rgba(248, 248, 248, 1)',
+                      borderRadius: 15,
+                      padding: 15,
+                      flexDirection: 'row',
+                      justifyContent: 'flex-start',
+                      width: 170,
+                      marginLeft: 10,
+                    }}>
+                    <SvgXml xml={SVGSecurities} />
+                    <View style={{ marginLeft: 15 }}>
+                      <Text
+                        style={{
+                          color: 'black',
+                          fontFamily: Fonts.semibold,
+                          textAlign: 'left',
+                          marginLeft: 8,
+                          marginBottom: 10,
+                        }}>
+                        Stocks
+                      </Text>
+                      <GenericButton
+                        onPress={() => navigation.navigate('StocksScreen')}
+                        title={'Explore '}
+                        cStyle={{
+                          backgroundColor: '#000',
+                          padding: 5,
+                          width: '80%',
+                        }}
+                        tStyle={{ color: 'white', fontSize: 10 }}
+                        disabled={false}
+                        icon={null}
+                      />
+                    </View>
+                  </View>
+                </ScrollView>
+
+              </MemoizedDashboardSection>}
+            <MemoizedDashboardSection title='Recent Transactions' onActionPress={() => { }}>
+              {txListsApi.loading || cryptoTxApi.loading ? (
+                // Skeleton loading for transactions
+                <>
+                  <SkeletonTransactionCard />
+                  <SkeletonTransactionCard />
+                  <SkeletonTransactionCard />
+                </>
+              ) : (
+                <>
+                  {txLists && isCrypto && sortedTxLists.length > 0 ? (
+                    sortedTxLists.map((item: any, key: any) => (
+                      <View key={key}>
+                        <MemoizedTransactionCard
+                          item={item}
+                          key={key}
+                          isMerchent={item?.order_id}
+                          isCrypto={item?.order_id}
+                        />
+                      </View>
+                    ))
+                  ) : (
+                    <></>
+                  )}
+                  {web3TxLists &&
+                    !isCrypto &&
+                    sortedWeb3TxLists.length > 0 &&
+                    sortedWeb3TxLists.map((item: any, key: any) => (
+                      <View key={key}>
+                        <MemoizedTransactionCard isCrypto={true} item={item} key={key} isMerchent={item?.order_id} />
+                      </View>
+                    ))}
+                </>
+              )}
+            </MemoizedDashboardSection>
+            {isCrypto && <CryptoRewardsSection />}
+            {isCrypto && (
+              <CryptoOtherServicesSection
+                handleRothBank={handleRothBank}
+                setisCardModalVisible={setisCardModalVisible}
+                navigation={navigation}
+              />
+            )}
+          </View>
+        </Card>
+      </ScrollView>
+      {
+        showPin && (
+          <PincodeScreen
+            pinTxt={pinTxt}
+            onPress={async (e: any, f: any) => {
+              setshowPin(false);
+
+              if (!f) {
+                if (e !== isConfirm) {
+                  useDispatchAction(setErrorMsg('Pin not matched , Try Again'));
+                  setpinTxt('Confirm your pin');
+                  setshowPin(true);
+                  return;
+                }
+                const formData = new FormData();
+                formData.append('tpin', e);
+                const data = await createPin(formData, tokens?.access);
+                if (data && data?.status) {
+                  setPin(e);
+                  useDispatchAction(
+                    setSuccessMsg('Transaction Pin created successfully'),
+                  );
+                } else {
+                  useDispatchAction(setErrorMsg('Something Went Wrong'));
+                }
+              } else {
+                setisConfirm(e);
+                setpinTxt('Confirm your pin');
+                setshowPin(f);
+              }
+            }}
+            isNotDecimals={null}
+          />
+        )
+      }
     </ScreenContainer >
   );
 };

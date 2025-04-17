@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { SCREENS } from '../constants/SCREENS';
 import { useTheme } from '../styles/ThemeContext';
 import { useSelector } from 'react-redux';
+import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 
 interface DashboardHeaderProps {
   name?: string;
@@ -47,7 +48,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       </View>
       <SvgXml
         xml={SVGNotification}
-        onPress={() => navigation.navigate(SCREENS.Notification as never)}
+        onPress={() => navigation.navigate(NAVIGATION_SCREENS.NOTIFICATION as never)}
       />
     </View>
   );

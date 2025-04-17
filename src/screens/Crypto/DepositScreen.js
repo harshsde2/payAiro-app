@@ -14,6 +14,7 @@ import useSelectorAction from '../../hooks/useSelectorAction';
 import useDispatchAction from '../../hooks/useDispatchAction';
 import {setErrorMsg} from '../../redux/slices/authenticationSlice';
 import {useNavigation} from '@react-navigation/native';
+import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 
 export default function DepositScreen() {
   const {tokens} = useSelectorAction();
@@ -61,7 +62,7 @@ export default function DepositScreen() {
             ),
           );
           setTimeout(() => {
-            navigation.navigate('Dashboard', {
+            navigation.navigate(NAVIGATION_SCREENS.NEW_DASHBOARD, {
               item,
             });
           }, 2000);
@@ -70,12 +71,12 @@ export default function DepositScreen() {
             setErrorMsg('Please verify your level 2 KYC From Dashboard'),
           );
           setTimeout(() => {
-            navigation.navigate('Dashboard');
+            navigation.navigate(NAVIGATION_SCREENS.NEW_DASHBOARD);
           }, 2000);
         }
       } else {
         console.log(data?.data?.address, 'address==>>>');
-        navigation.navigate('DepositScreen2', {
+        navigation.navigate(NAVIGATION_SCREENS.DEPOSIT_SCREEN2, {
           address: data?.data?.address,
           item,
         });
@@ -85,7 +86,7 @@ export default function DepositScreen() {
         setErrorMsg('Please verify your level 2 KYC From Dashboard'),
       );
       setTimeout(() => {
-        navigation.navigate('Dashboard');
+        navigation.navigate(NAVIGATION_SCREENS.NEW_DASHBOARD);
       }, 2000);
     }
   };
@@ -138,7 +139,7 @@ export default function DepositScreen() {
                   fontSize: 12,
                   fontFamily: Fonts.regular,
                 }}>
-                Min. deposit >0.000006 {i?.tokens[0]?.symbol}
+                Min. deposit {`>`} 0.000006 {i?.tokens[0]?.symbol}
               </Text>
               <View
                 style={{

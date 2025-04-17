@@ -140,7 +140,7 @@ export default function SendReceipt(props) {
             title={'Done'}
             cStyle={{marginTop: 280}}
             onPress={() => {
-              navigation.navigate(SCREENS.Dashboard);
+              navigation.navigate(NAVIGATION_SCREENS.NEW_DASHBOARD);
             }}
           />
         </View>

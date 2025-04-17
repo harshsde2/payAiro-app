@@ -108,7 +108,7 @@ export const textStyles = {
   },
   button: {
     fontFamily: fontFamily.subheadingFont,
-    fontSize: fontSize.base,
+    fontSize: fontSize.sm,
     fontWeight: fontWeight.semiBold,
     lineHeight: lineHeight.base,
   },

@@ -1,3 +1,5 @@
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+
 export const SCREENS = {
   LOGIN: 'Login',
   OTP: 'OTP',
@@ -11,7 +13,7 @@ export const SCREENS = {
   Dob: 'Dob',
   PayTag: 'PayTag',
   Pincode: 'Pincode',
-  Dashboard: 'Dashboard',
+  Dashboard: NAVIGATION_SCREENS.NEW_DASHBOARD,
   Transaction: 'Transaction',
   TransactionSuccess: 'TransactionSuccess',
   TransactionDetails: 'TransactionDetails',
