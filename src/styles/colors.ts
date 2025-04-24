@@ -16,6 +16,9 @@ export const greenPalette = {
   green800: '#275435',
   green900: '#21462E',
   green950: '#0E2515',
+  blue500:'#3499E0',
+  orange500:'#FF7D20',
+  red500:'#FF3A20',
 };
 
 // Base colors

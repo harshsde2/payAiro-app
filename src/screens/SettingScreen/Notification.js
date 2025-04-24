@@ -34,6 +34,8 @@ export default function Notification() {
   const [notifications, setNotifications] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const styles = customStyles(theme);
   
   // Handle back action
   const handleGoBack = useCallback(() => {
@@ -117,13 +119,13 @@ export default function Notification() {
     <TouchableOpacity
       onPress={onPress}
       style={[
-        styles(theme).tabButton,
-        isActive && styles(theme).activeTabButton,
+        styles.tabButton,
+        isActive && styles.activeTabButton,
       ]}>
       <CustomText
         variant="button"
         color={isActive ? theme.colors.text.inverse : theme.colors.palette.green700}
-        style={styles(theme).tabText}>
+        style={styles.tabText}>
         {label}
       </CustomText>
     </TouchableOpacity>
@@ -133,7 +135,7 @@ export default function Notification() {
   const renderContent = () => {
     if (isLoading) {
       return (
-        <View style={styles(theme).centerContainer}>
+        <View style={styles.centerContainer}>
           <CustomText variant="body1" color={theme.colors.text.secondary}>
             Loading notifications...
           </CustomText>
@@ -143,12 +145,12 @@ export default function Notification() {
     
     if (error) {
       return (
-        <View style={styles(theme).centerContainer}>
+        <View style={styles.centerContainer}>
           <CustomText variant="body1" color={theme.colors.error}>
             {error}
           </CustomText>
           <TouchableOpacity
-            style={styles(theme).retryButton}
+            style={styles.retryButton}
             onPress={fetchNotifications}>
             <CustomText variant="button" color={theme.colors.text.inverse}>
               Retry
@@ -160,7 +162,7 @@ export default function Notification() {
     
     if (notifications.length === 0) {
       return (
-        <View style={styles(theme).centerContainer}>
+        <View style={styles.centerContainer}>
           <CustomText variant="body1" color={theme.colors.text.secondary}>
             No notifications available
           </CustomText>
@@ -171,8 +173,8 @@ export default function Notification() {
     // Using ScrollView instead of FlatList
     return (
       <ScrollView
-        style={styles(theme).scrollView}
-        contentContainerStyle={styles(theme).scrollViewContent}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}>
         {notifications.map((item, index) => (
           <View key={`notification-${item?.id || index}`}>
@@ -184,7 +186,7 @@ export default function Notification() {
   };
   
   return (
-    <ScreenContainer padding={0} backgroundColor={theme.colors.palette.green50} style={styles(theme).safeArea}>
+    <ScreenContainer padding={0} backgroundColor={theme.colors.palette.green50} style={styles.safeArea}>
       <HeaderTitle
         title="Notification"
         leftIcon={SVGLeftArrow}
@@ -192,8 +194,8 @@ export default function Notification() {
         onPressLeft={handleGoBack}
         />
       
-      <View style={styles(theme).container}>
-        <View style={styles(theme).tabContainer}>
+      <View style={styles.container}>
+        <View style={styles.tabContainer}>
           {TAB_OPTIONS.map((tab) => (
             <TabButton
               key={tab.id}
@@ -209,7 +211,7 @@ export default function Notification() {
   );
 }
 
-const styles = (theme) => StyleSheet.create({
+const customStyles = (theme) => StyleSheet.create({
   safeArea: {
     flex: 1,
     // backgroundColor: colors.green100,

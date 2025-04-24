@@ -5,6 +5,33 @@
 // Base unit for spacing (in pixels)
 const baseUnit = 4;
 
+export type SpacingTypes = {
+  none: number;
+  xxs: number;
+  xs: number;
+  sm: number;
+  md: number;
+  lg: number;
+  xl: number;
+  xxl: number;
+  xxxl: number;
+  0: number,
+  1: number, // 4
+  2: number, // 8
+  3: number, // 12
+  4: number, // 16
+  5: number, // 20
+  6: number, // 24
+  8: number, // 32
+  10: number, // 40
+  12: number, // 48
+  16: number, // 64
+  20: number, // 80
+  24: number, // 96
+  32: number, // 128
+  
+};
+
 // Spacing scale based on baseUnit
 export const spacing = {
   // Named values
@@ -26,6 +53,7 @@ export const spacing = {
   4: baseUnit * 4, // 16
   5: baseUnit * 5, // 20
   6: baseUnit * 6, // 24
+  7: baseUnit * 7, // 28
   8: baseUnit * 8, // 32
   10: baseUnit * 10, // 40
   12: baseUnit * 12, // 48

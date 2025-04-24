@@ -127,8 +127,6 @@ const CryptoCardSkeleton: React.FC<CryptoCardSkeletonProps> = memo(({
             </View>
             
             <ShimmerBox style={styles.identifierLabel} />
-            <ShimmerBox style={styles.identifierLabel} />
-            <ShimmerBox style={styles.identifierLabel} />
             
             <View style={styles.identifierRow}>
               <ShimmerBox style={styles.identifier} />

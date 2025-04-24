@@ -44,7 +44,7 @@ export default function ScanPay(props) {
   const [amount, setAmount] = useState('0'); // State to store the input value
   const navigation = useNavigation();
   const [spin, setspin] = useState(false);
-  console.log(sender, 'newSender!!!!');
+  // console.log(sender, 'newSender!!!!');
   const [pinvisible, setpinvisible] = useState(''); // State to store the input value
   const [isVisibleBank, setisVisibleBank] = useState(false); // State to store the input value
   const [bankSelected, setbankSelected] = useState(null); // State to store the input value
@@ -314,6 +314,7 @@ export default function ScanPay(props) {
         <PincodeScreen
           isNotDecimals={true}
           onPress={async e => {
+            console.log("aagya ")
             if (e.length === 4) {
               const data = await getPin();
               console.log(data, 'pins');

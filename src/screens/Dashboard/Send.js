@@ -5,11 +5,11 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import Container from '../../HOC/Container';
 import Fonts from '../../constants/Fonts';
 import TextInputField from '../../components/TextInputField';
-import {SvgXml} from 'react-native-svg';
+import { SvgXml } from 'react-native-svg';
 import {
   SVGBank,
   SVGDowArrow2,
@@ -20,34 +20,40 @@ import {
   SVGUpArrow,
 } from '../../constants/images';
 import GenericButton from '../../components/GenericButton';
-import {SCREENS} from '../../constants/SCREENS';
-import {useNavigation} from '@react-navigation/native';
+import { SCREENS } from '../../constants/SCREENS';
+import { useNavigation } from '@react-navigation/native';
 import useSelectorAction from '../../hooks/useSelectorAction';
-import {checkUser} from '../../services/Services';
+import { checkUser } from '../../services/Services';
 import useDispatchAction from '../../hooks/useDispatchAction';
-import {setErrorMsg} from '../../redux/slices/authenticationSlice';
+import { setErrorMsg } from '../../redux/slices/authenticationSlice';
 
 export default function Send(props) {
-  const {requested, type} = props.route.params;
+  const { requested, type, sender: senderDetails } = props.route.params;
 
-  const {walletData, tokens} = useSelectorAction();
+
+  console.log('requested =>', requested)
+  console.log('type =>', type)
+  console.log('senderDetails =>', senderDetails)
+
+  const { walletData, tokens } = useSelectorAction();
   const navigation = useNavigation();
   const [sender, setsender] = useState(props.route.params?.sender ?? '');
   const [isVisible, setisVisible] = useState();
   const [text, settext] = useState(' Vay via Bank');
-  const {bankLists, bankBalance} = useSelectorAction();
-  const {biometricAvailable} = useSelectorAction();
+  const { bankLists, bankBalance } = useSelectorAction();
+  const { biometricAvailable } = useSelectorAction();
   const [selectedBank, setselectedBank] = useState(bankLists[0]);
   const [isDropdown, setisDropdown] = useState(false);
 
+  console.log("send screen is rendering")
   return (
     <Container>
       <KeyboardAvoidingView
-        style={{flex: 1}}
+        style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{flexGrow: 1}}>
+          contentContainerStyle={{ flexGrow: 1 }}>
           <Text
             style={{
               fontFamily: Fonts.semibold,
@@ -79,6 +85,7 @@ export default function Send(props) {
                 isIcon={true}
                 value={sender}
                 onChange={setsender}
+                
               />
               {/* 
               <TextInputField
@@ -111,7 +118,9 @@ export default function Send(props) {
                     borderRadius: 15,
                     marginVBottom: 30,
                   }}>
-                  <View
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => setisDropdown(state => !state)}
                     style={{
                       flexDirection: 'row',
                       justifyContent: 'space-between',
@@ -126,7 +135,7 @@ export default function Send(props) {
                         //   padding: 20,
                       }}>
                       <SvgXml xml={SVGUSD} width={40} height={40} />
-                      <View style={{marginHorizontal: 10}}>
+                      <View style={{ marginHorizontal: 10 }}>
                         <Text
                           style={{
                             color: 'black',
@@ -145,19 +154,20 @@ export default function Send(props) {
                           {selectedBank?.balances?.available
                             ? selectedBank?.balances?.available
                             : selectedBank?.account_type === 'rothIra'
-                            ? bankBalance?.roth_ira_account?.usd
-                            : selectedBank?.account_type === 'traditionalIra'
-                            ? bankBalance?.traditional_ira_account?.usd
-                            : bankBalance?.bank_account?.usd}
+                              ? bankBalance?.roth_ira_account?.usd
+                              : selectedBank?.account_type === 'traditionalIra'
+                                ? bankBalance?.traditional_ira_account?.usd
+                                : bankBalance?.bank_account?.usd}
                         </Text>
                       </View>
                     </View>
                     <TouchableOpacity
-                      style={{width: '40%', alignItems: 'flex-end'}}
-                      onPress={() => setisDropdown(state => !state)}>
+                      style={{ width: '40%', alignItems: 'flex-end' }}
+                      disabled
+                    >
                       <SvgXml xml={isDropdown ? SVGUpArrow : SVGDowArrow2} />
                     </TouchableOpacity>
-                  </View>
+                  </TouchableOpacity>
                   {isDropdown &&
                     bankLists &&
                     bankLists?.length > 0 &&
@@ -176,7 +186,7 @@ export default function Send(props) {
                           //   padding: 20,
                         }}>
                         <SvgXml xml={SVGUSD} width={40} height={40} />
-                        <View style={{marginHorizontal: 10}}>
+                        <View style={{ marginHorizontal: 10 }}>
                           <Text
                             style={{
                               color: 'black',
@@ -205,10 +215,10 @@ export default function Send(props) {
                             {item?.balances?.available
                               ? item?.balances?.available
                               : item?.account_type === 'rothIra'
-                              ? bankBalance?.roth_ira_account?.usd
-                              : item?.account_type === 'traditionalIra'
-                              ? bankBalance?.traditional_ira_account?.usd
-                              : bankBalance?.bank_account?.usd}
+                                ? bankBalance?.roth_ira_account?.usd
+                                : item?.account_type === 'traditionalIra'
+                                  ? bankBalance?.traditional_ira_account?.usd
+                                  : bankBalance?.bank_account?.usd}
                           </Text>
                         </View>
                       </TouchableOpacity>
@@ -218,19 +228,19 @@ export default function Send(props) {
             )}
             <GenericButton
               title={'Next'}
-              cStyle={{marginTop: type === 'requested' ? 400 : 300}}
+              cStyle={{ marginTop: type === 'requested' ? 400 : 300 }}
               onPress={async () => {
                 const formData = new FormData();
-                formData.append('identifier', sender);
+                formData.append('identifier', sender.trim());
                 const data = await checkUser(formData, tokens?.access);
-                console.log(data.status, 'datatatas');
+                console.log(data, 'datatatas');
                 if (data && data?.status) {
                   navigation.navigate(SCREENS.ScanPay, {
                     type:
                       requested || type === 'requested'
                         ? 'requested'
                         : 'receive',
-                    sender,
+                    sender:sender.trim(),
                     bank: selectedBank,
                   });
                 } else {

@@ -20,7 +20,7 @@ import GhostSlide from 'animations/animations-components/GhostSlide';
 export const ANIMATION_CONSTANTS = {
   EXPANDABLE_CARD: {
     WIDTH: 80,
-    HEIGHT: 190,
+    HEIGHT: 165,
     POSITION: {
       top: 15,
       right: 30,
@@ -269,7 +269,7 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
       styles.header,
       {
         paddingHorizontal: theme.spacing.spacing.md,
-        marginVertical: theme.spacing.spacing.md,
+        marginVertical: theme.spacing.spacing.sm,
         justifyContent: 'space-between',
         width: '100%',
         flexDirection: 'row',
@@ -416,7 +416,7 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
     <CustomText
       color={(pendingAmount !== undefined && !isCrypto) ?  "red" : theme.colors.palette.green700}
       variant="caption"
-      style={[styles.pendingAmount, { marginBottom: theme.spacing.spacing.lg }]}
+      style={[styles.pendingAmount, { marginBottom: theme.spacing.spacing.md }]}
     >
       {`(Pending ${pendingAmount?.toFixed(5)})`}
     </CustomText>
@@ -563,7 +563,7 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
         initialWidth={ANIMATION_CONSTANTS.EXPANDABLE_CARD.WIDTH}
         initialHeight={ANIMATION_CONSTANTS.EXPANDABLE_CARD.HEIGHT}
         backgroundColor={theme.colors.palette.white}
-        borderRadius={theme.spacing.spacing[8]}
+        borderRadius={theme.spacing.spacing[7]}
         parentLayout={parentLayout}
         position={ANIMATION_CONSTANTS.EXPANDABLE_CARD.POSITION}
         duration={ANIMATION_CONSTANTS.EXPANDABLE_CARD.DURATION}
@@ -624,8 +624,9 @@ const createStyles = (theme: any) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: theme?.spacing?.spacing?.sm,
+    // paddingVertical: theme?.spacing?.spacing?.sm,
     width: '100%',
+    // backgroundColor:'red'
   },
   contentContainer: {
     flex: 1,
@@ -665,6 +666,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     marginBottom: theme?.spacing?.spacing?.xs,
     paddingRight: 10, // Ensure space from logo
     width: '100%', // Take full width
+    // backgroundColor:'blue'
   },
   balanceContainer: {
     flexDirection: 'row',

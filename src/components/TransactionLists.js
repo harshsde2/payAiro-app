@@ -62,6 +62,7 @@ const TransactionList = ({items = [], isVisble3}) => {
         </View>
       );
     }
+    
     return (
       <Pressable
         onPress={() => {}}
@@ -231,6 +232,7 @@ const TransactionList = ({items = [], isVisble3}) => {
         }}
         contentContainerStyle={styles.listContainer}
         style={{flex: 1}}
+        removeClippedSubviews={false}
       />
     </View>
   );

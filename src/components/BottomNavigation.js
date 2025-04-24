@@ -21,6 +21,7 @@ import {setActiveTab} from '../redux/slices/authenticationSlice';
 import {useSelector} from 'react-redux';
 import Fonts from '../constants/Fonts';
 import {askCameraPremission, checkCameraPremission} from '../helper/Permission';
+import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 
 export default function BottomNavigation({isVer}) {
   const navigation = useNavigation();
@@ -32,25 +33,25 @@ export default function BottomNavigation({isVer}) {
   const handleTabSwitch = name => {
     let activeTabs = 1;
     switch (name) {
-      case 'Dashboard':
+      case NAVIGATION_SCREENS.NEW_DASHBOARD:
         activeTabs = 1;
         break;
-      case 'Transaction':
+      case NAVIGATION_SCREENS.TRANSACTION:
         activeTabs = 2;
         break;
-      case 'Scans':
+      case NAVIGATION_SCREENS.SCANS:
         activeTabs = 3;
         break;
-      case 'Rewards':
+      case NAVIGATION_SCREENS.REWARDS:
         activeTabs = 4;
         break;
-      case 'SettingScreen':
+      case NAVIGATION_SCREENS.SETTING_SCREEN:
         activeTabs = 5;
         break;
     }
     useDispatchAction(setActiveTab(activeTabs.toString()));
 
-    if (name === 'Scans') {
+    if (name === NAVIGATION_SCREENS.SCANS) {
       checkCam(name);
       return;
     }
@@ -101,7 +102,7 @@ export default function BottomNavigation({isVer}) {
           alignItems: 'center',
         }}>
         {/* Dashboard Tab */}
-        <TouchableOpacity onPress={() => handleTabSwitch('Dashboard')}>
+        <TouchableOpacity onPress={() => handleTabSwitch(NAVIGATION_SCREENS.NEW_DASHBOARD)}>
           <SvgXml
             xml={SVGHomeInctive}
             style={{opacity: activeTab === '1' ? 1 : 0.6}}
@@ -165,7 +166,7 @@ export default function BottomNavigation({isVer}) {
         </TouchableOpacity>
 
         {/* Setting Tab */}
-        <TouchableOpacity onPress={() => handleTabSwitch('SettingScreen')}>
+        <TouchableOpacity onPress={() => handleTabSwitch(NAVIGATION_SCREENS.SETTING_SCREEN)}>
           <SvgXml
             xml={SVGSettingIncative}
             style={{opacity: activeTab === '5' ? 1 : 0.6}}

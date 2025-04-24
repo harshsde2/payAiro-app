@@ -1,18 +1,18 @@
 import React, { useCallback, useEffect, useState, useRef, useMemo, Suspense, lazy } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, Pressable, ActivityIndicator, useWindowDimensions, Button, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, Pressable, ActivityIndicator, useWindowDimensions, Button, Modal, TextInput, RefreshControl } from 'react-native';
 import ThemeUsageExample from '../../styles/ThemeUsageExample';
 // Import from the module alias utility
 import { DashboardHeader, CryptoCard, FontTest, Card, CustomText } from '../../utils/moduleAlias';
 import { ScreenContainer } from '../../HOC';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSelector } from 'react-redux';
-import { SVGLoggo, SVGUSD, SVGDownArrow3, SVGSecurities, SVGReceive, SVGHolding, SVGAdd, SVGSend, SVGNewBank, SVGBilPay, SVGRecharge, SVGDebit, SVGCredit, SVGBANK2, SVGDebitAdd, SVGBamkAdd, SVGDebitCardAdd, SVGVoucher, SVGRef, SVGKYC2, SVGSliders, SVG_hide_eye, SVGBit, SVGDownArrow2 } from '../../constants/images';
+import { SVGLoggo, SVGUSD, SVGDownArrow3, SVGSecurities, SVGReceive, SVGHolding, SVGAdd, SVGSend, SVGNewBank, SVGBilPay, SVGRecharge, SVGDebit, SVGCredit, SVGBANK2, SVGDebitAdd, SVGBamkAdd, SVGDebitCardAdd, SVGVoucher, SVGRef, SVGKYC2, SVGSliders, SVG_hide_eye, SVGBit, SVGDownArrow2, SVG_eye_on, SVG_eye_off, SVG_backspace, SVG_done } from '../../constants/images';
 import useDispatchAction from '../../hooks/useDispatchAction';
 import { setisCrypto, setCalculatedBalance, setWalletData, setBankLists, setBankbalances, setErrorMsg, setSuccessMsg } from '../../redux/slices/authenticationSlice';
 import FlipSlideExample from 'animations/examples/FlipSlideExample';
 import BottomNavigation from 'components/BottomNavigation';
 import GhostSlide from 'animations/animations-components/GhostSlide';
-import { addbankAccountRoth, createPin, getBalance, getBalanceCrypto, getBankDetails, getBanksAllAccount, getContacts, getCryptoTx, getPayAeroTx, getPinFromSev, getWallet, uploadKYC } from 'services/Services';
+import { addbankAccountRoth, createPin, getBalance, getBalanceCrypto, getBankDetails, getBanksAllAccount, getContacts, getCryptoTx, getPayAeroTx, getPinFromSev, getWallet, uploadKYC, checkUser } from 'services/Services';
 import { SvgXml } from 'react-native-svg';
 import { SCREENS } from 'constants/SCREENS';
 import { useNavigation } from '@react-navigation/native';
@@ -26,7 +26,7 @@ import { BASE_URL } from 'constants/mockData';
 import StoryLists from 'components/StoryLists';
 import TransactionCard from 'components/TransactionCard';
 import Rewards from 'components/Rewards';
-import { getPin, setPin } from 'services/Auth';
+import { getPin, setPin, } from 'services/Auth';
 import PincodeScreen from 'screens/Authentications/PincodeScreen';
 import { SectionHeader } from 'tsx-components';
 import DashboardSection from 'tsx-components/DashboardSection';
@@ -333,6 +333,13 @@ const NewDashboard = () => {
   const [alloCationLists, setalloCationLists] = useState([]);
   const [totalDisbursable, settotalDisbursable] = useState(0);
   const [totalDisbursablePending, settotalDisbursablePending] = useState(0);
+  const [hiddenBalances, setHiddenBalances] = useState<Record<string, boolean>>({});
+  const [isPinModalVisible, setIsPinModalVisible] = useState(false);
+  const [currentAccountForPin, setCurrentAccountForPin] = useState<string | null>(null);
+  const [pinForShowBalance, setPinForShowBalance] = useState('');
+  const [isVerifyingPin, setIsVerifyingPin] = useState(false);
+  const [pinAmount, setPinAmount] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   const [selectedGraph, setselectedGraph] = useState('Assets');
 
@@ -356,8 +363,8 @@ const NewDashboard = () => {
   useEffect(() => {
     // Group all data fetch operations
     const fetchInitialData = async () => {
-      if (!tokens?.access) {
-        console.error("No access token available");
+      if (!tokens && !tokens?.access) {
+        // console.error("No access token available");
         return;
       }
 
@@ -385,6 +392,7 @@ const NewDashboard = () => {
     };
 
     fetchInitialData();
+    handlePin();
   }, [tokens?.access]);
 
   // Separate effect for Plaid token which changes independently
@@ -1006,10 +1014,156 @@ const NewDashboard = () => {
             : bankBalance?.bank_account?.usd
     }));
   }, [bankLists, bankBalance]);
-  
+
 
   // const MemoizedPieChart = React.memo(CustomPieChart);
 
+  // Enhanced toggle that triggers PIN verification
+  const toggleBalanceVisibility = (accountId: string) => {
+    // If balance is already visible, just hide it without PIN validation
+    if (!hiddenBalances[accountId]) {
+      setHiddenBalances(prev => ({
+        ...prev,
+        [accountId]: true
+      }));
+      return;
+    }
+
+    // If balance is hidden, we need PIN verification to show it
+    setCurrentAccountForPin(accountId);
+    setPinForShowBalance('');
+    setIsPinModalVisible(true);
+  };
+
+  // Verify PIN and show balance if correct
+  const verifyPinAndShowBalance = async () => {
+    if (!currentAccountForPin || pinForShowBalance.length < 4) return;
+
+      console.log("step 1 ")
+
+    setIsVerifyingPin(true);
+
+    console.log('step 2')
+    
+    try {
+      console.log('step 3',pinForShowBalance)
+      const formData = new FormData();
+      formData.append('tpin', pinForShowBalance);
+      formData.append('identifier', walletData?.username || '');
+
+      console.log('step 4')
+      // Use checkUser API to verify the PIN
+      const response = await checkUser(formData, tokens?.access);
+
+      console.log(response,"response")
+
+      if (response && response.status) {
+        // PIN is correct, refresh bank balance data
+        await bankBalanceApi.execute(tokens?.access, true);
+
+        // Update the visibility state for this specific account
+        setHiddenBalances(prev => ({
+          ...prev,
+          [currentAccountForPin]: false
+        }));
+
+        // Close the modal
+        setIsPinModalVisible(false);
+        setCurrentAccountForPin(null);
+        setPinForShowBalance('');
+      } else {
+        // PIN is incorrect
+        useDispatchAction(setErrorMsg('Invalid PIN. Please try again.'));
+      }
+    } catch (error) {
+      console.error('Error verifying PIN:', error);
+      useDispatchAction(setErrorMsg('Failed to verify PIN. Please try again.'));
+    } finally {
+      setIsVerifyingPin(false);
+    }
+  };
+
+  // Initialize all balances as hidden on first load
+  useEffect(() => {
+    if (bankLists && bankLists.length > 0) {
+      const initialHiddenState: Record<string, boolean> = {};
+
+      bankLists.forEach((item: any) => {
+        const accountId = item?.account_number ?? item?.account_id;
+        if (accountId) {
+          initialHiddenState[accountId] = true;
+        }
+      });
+
+      setHiddenBalances(initialHiddenState);
+    }
+  }, [bankLists]);
+
+  // Add these PIN input handlers
+  const handlePinDigit = (digit: string) => {
+    if (pinForShowBalance.length < 4) {
+      setPinForShowBalance(prev => prev + digit);
+    }
+  };
+
+  const handlePinBackspace = () => {
+    setPinForShowBalance(prev => prev.slice(0, -1));
+  };
+
+  const handlePin = async () => {
+
+    if(!tokens?.access) return
+    try {
+      // First check if pins are available locally
+      const pins = await getPin();
+      
+      if (pins) {
+        // If pins are available locally, use them
+        setshowPin(false);
+        return;
+      }
+      
+      // If pins are not available locally, fetch from server
+      const data = await getPinFromSev(tokens?.access);
+      
+      if (data && data?.status) {
+        await setPin(data?.data?.tpin);
+        setshowPin(false);
+      } else {
+        console.log("No valid pin data received from server");
+        setshowPin(true);
+      }
+    } catch (error) {
+      console.error("Error retrieving pin:", error);
+      setshowPin(true);
+    }
+  };
+
+  // Add refresh function to reload all data
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    
+    try {
+      // Group all data fetch operations
+      const promises = [
+        fetchKycStatus().catch(err => console.error("KYC status fetch failed:", err)),
+        fetchCryptoBalance().catch(err => console.error("Crypto balance fetch failed:", err)),
+        fetchBankBalance().catch(err => console.error("Bank balance fetch failed:", err)),
+        fetchBankAccounts().catch(err => console.error("Bank accounts fetch failed:", err)),
+        fetchContacts().catch(err => console.error("Contacts fetch failed:", err)),
+        fetchTransactions().catch(err => console.error("Transactions fetch failed:", err)),
+        fetchCryptoTransactions().catch(err => console.error("Crypto transactions fetch failed:", err)),
+        fetchWalletData().catch(err => console.error("Wallet data fetch failed:", err)),
+      ];
+
+      // Execute all promises in parallel
+      await Promise.allSettled(promises);
+    } catch (error) {
+      console.error('Error refreshing dashboard data:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [tokens?.access]);
 
   return (
     <ScreenContainer
@@ -1166,43 +1320,347 @@ const NewDashboard = () => {
             </View>
           </Modal>
         )}
-      </View>
 
-      <View style={{
-        zIndex: 100,
-        width: '92%',
-        alignSelf: 'center',
-        backgroundColor: 'black',
-        borderRadius: 20,
-        position: 'absolute',
-        bottom: 20,
-      }}>
-        <GhostSlide
-          visible={ghostSlideVisible}
-          direction="custom"
-          duration={2500}
-          distance={1000}
-          customX={0}
-          customY={-400}
-          ghostOpacity={1}
-          onAnimationComplete={() => console.log('Ghost slide completed')}
-        >
-          <View style={{
-            padding: 10,
-            backgroundColor: 'black',
-            borderRadius: 20,
-            position: 'absolute',
-            bottom: 20,
-            zIndex: 100,
-            width: '92%',
-            alignSelf: 'center',
-          }}>
-            <BottomNavigation isVer={true} />
-          </View>
-        </GhostSlide>
-      </View>
+        {/* PIN Verification Modal */}
+        {isPinModalVisible && (
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={isPinModalVisible}
+            onRequestClose={() => setIsPinModalVisible(false)}
+          >
+            <View style={{
+              flex: 1,
+              backgroundColor: '#FFFFFF'
+            }}>
+              {/* Header with bank name and logo */}
+              <View style={{
+                backgroundColor: theme.colors.palette.green700,
+                paddingVertical: 5,
+                paddingHorizontal: 20,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <View>
+                  <Text style={{
+                    color: '#FFFFFF',
+                    fontSize: 16,
+                    fontFamily: theme.typography.fontFamily.montserratBold,
+                    // fontWeight:theme.typography.fontWeight.bold
+                  }}>
+                    PayAiro App
+                  </Text>
+                  <Text style={{
+                    color: '#FFFFFF',
+                    fontSize: 14,
+                    fontFamily: theme.typography.fontFamily.montserrat,
+                    marginTop: 3
+                  }}>
+                    {currentAccountForPin ? `****${currentAccountForPin.slice(-4)}` : 'Account'}
+                  </Text>
+                </View>
+                <SvgXml
+                  xml={SVGLoggo}
+                  width={55}
+                  height={55}
+                />
+              </View>
 
-      <ScrollView>
+              <View style={{
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingBottom: 20
+              }}>
+                {/* PIN Entry Area */}
+                <View style={{
+                  alignItems: 'center',
+                  width: '100%',
+                  paddingTop: 60,
+                  paddingHorizontal: 30
+                }}>
+                  <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginBottom: 50
+                  }}>
+                    <Text style={{
+                      fontSize: 16,
+                      color: theme.colors.palette.green700,
+                      fontFamily: theme.typography.fontFamily.nexaHeavy,
+                      marginRight: 10
+                    }}>
+                      ENTER PAYAIRO PIN
+                    </Text>
+                    <SvgXml
+                      xml={SVG_eye_on}
+                      width={22}
+                      height={22}
+                    />
+                    <Text style={{
+                      fontSize: 14,
+                      color: theme.colors.palette.green700,
+                      fontFamily: theme.typography.fontFamily.nexaHeavy,
+                      fontWeight:'400',
+                      marginLeft: 5
+                    }}>
+                      SHOW
+                    </Text>
+                  </View>
+
+                  <View style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    width: '80%'
+                  }}>
+                    {[0, 1, 2, 3].map(index => (
+                      <View key={index} style={{
+                        width: '22%',
+                        height: 35,
+                        alignItems: 'center',
+                        justifyContent: 'flex-end'
+                      }}>
+                        <Text style={{
+                          fontSize: 40,
+                          color: theme.colors.palette.green700,
+                          position: 'absolute',
+                          top: -15,
+                          opacity: pinForShowBalance.length > index ? 1 : 0,
+                          fontFamily: Fonts.bold
+                        }}>
+                          *
+                        </Text>
+                        <View style={{
+                          position: 'absolute',
+                          bottom: 0,
+                          width: '100%',
+                          height: 2,
+                          backgroundColor: pinForShowBalance.length > index ? theme.colors.palette.green700 : '#CCCCCC',
+                        }} />
+                      </View>
+                    ))}
+                  </View>
+                </View>
+
+                {/* Custom Keypad */}
+                <View style={{
+                  width: '90%',
+                  backgroundColor: '#F8F8F8',
+                  borderRadius: 10,
+                  paddingVertical: 20,
+                  paddingHorizontal: 20
+                }}>
+                  {/* Row 1-3 */}
+                  <View style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    marginBottom: 30
+                  }}>
+                    {[1, 2, 3].map(num => (
+                      <TouchableOpacity
+                        key={num}
+                        style={{
+                          width: 70,
+                          height: 70,
+                          justifyContent: 'center',
+                          alignItems: 'center'
+                        }}
+                        onPress={() => handlePinDigit(num.toString())}
+                      >
+                        <Text style={{
+                          fontSize: 30,
+                          color: theme.colors.palette.green700,
+                          fontFamily: Fonts.bold
+                        }}>
+                          {num}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  {/* Row 4-6 */}
+                  <View style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    marginBottom: 30
+                  }}>
+                    {[4, 5, 6].map(num => (
+                      <TouchableOpacity
+                        key={num}
+                        style={{
+                          width: 70,
+                          height: 70,
+                          justifyContent: 'center',
+                          alignItems: 'center'
+                        }}
+                        onPress={() => handlePinDigit(num.toString())}
+                      >
+                        <Text style={{
+                          fontSize: 30,
+                          color: theme.colors.palette.green700,
+                          fontFamily: Fonts.bold
+                        }}>
+                          {num}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  {/* Row 7-9 */}
+                  <View style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    marginBottom: 30
+                  }}>
+                    {[7, 8, 9].map(num => (
+                      <TouchableOpacity
+                        key={num}
+                        style={{
+                          width: 70,
+                          height: 70,
+                          justifyContent: 'center',
+                          alignItems: 'center'
+                        }}
+                        onPress={() => handlePinDigit(num.toString())}
+                      >
+                        <Text style={{
+                          fontSize: 30,
+                          color: theme.colors.palette.green700,
+                          fontFamily: Fonts.bold
+                        }}>
+                          {num}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  {/* Row X-0-Check */}
+                  <View style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                    <TouchableOpacity
+                      style={{
+                        width: 70,
+                        height: 70,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}
+                      onPress={handlePinBackspace}
+                    >
+                      <SvgXml
+                        fill={'#fff'}
+                        xml={SVG_backspace}
+                        width={35}
+                        height={35}
+                      />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={{
+                        width: 70,
+                        height: 70,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}
+                      onPress={() => handlePinDigit('0')}
+                    >
+                      <Text style={{
+                        fontSize: 30,
+                        color: theme.colors.palette.green700,
+                        fontFamily: Fonts.bold
+                      }}>
+                        0
+                      </Text>
+                    </TouchableOpacity>
+
+                    <View style={{
+                      width: 70,
+                      height: 70,
+                      borderRadius: 35,
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}>
+                      <TouchableOpacity
+                        style={{
+                          width: 60,
+                          height: 60,
+                          backgroundColor: pinForShowBalance.length === 4 ? theme.colors.palette.green700 : theme.colors.palette.green300,
+                          borderRadius: 35,
+                          justifyContent: 'center',
+                          alignItems: 'center'
+                        }}
+                        onPress={verifyPinAndShowBalance}
+                        disabled={pinForShowBalance.length !== 4 || isVerifyingPin}
+                      >
+                        {isVerifyingPin ? (
+                          <ActivityIndicator color="#FFF" size="small" />
+                        ) : (
+                          <SvgXml
+                            fill={'#fff'}
+                            xml={SVG_done}
+                            width={35}
+                            height={35}
+                          />
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        )}
+      </View>
+      {
+        isCrypto &&
+        <View style={{
+          zIndex: 100,
+          width: '92%',
+          alignSelf: 'center',
+          backgroundColor: 'black',
+          borderRadius: 20,
+          position: 'absolute',
+          bottom: 20,
+        }}>
+          <GhostSlide
+            visible={isCrypto}
+            direction="custom"
+            duration={2500}
+            distance={1000}
+            customX={0}
+            customY={-400}
+            ghostOpacity={1}
+            onAnimationComplete={() => console.log('Ghost slide completed')}
+          >
+            <View style={{
+              padding: 10,
+              backgroundColor: 'black',
+              borderRadius: 20,
+              position: 'absolute',
+              bottom: 20,
+              zIndex: 100,
+              width: '92%',
+              alignSelf: 'center',
+            }}>
+              <BottomNavigation isVer={true} />
+            </View>
+          </GhostSlide>
+        </View>
+      }
+
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[theme.colors.palette.green700]}
+            tintColor={theme.colors.palette.green700}
+          />
+        }
+      >
         <DashboardHeader
           name={userName}
           style={{
@@ -1467,13 +1925,18 @@ const NewDashboard = () => {
                               fontSize: 16,
                               fontFamily: Fonts.bold,
                               marginLeft: 5,
-                              // marginTop: 5,
-                              // width: '60%',
-
                             }}>
-                            $ {item.balance}
+                            {hiddenBalances[item.accountNumber] ? '••••••' : `$${item.balance}`}
                           </Text>
-                          <SvgXml style={{ marginLeft: 10, top: 1 }} xml={SVG_hide_eye} width={15} height={15} />
+                          {!hiddenBalances[item.accountNumber] ? (
+                            <TouchableOpacity style={{padding:10}} onPress={() => toggleBalanceVisibility(item.accountNumber)}>
+                              <SvgXml style={{ marginLeft: 10, top: 1 }} xml={SVG_eye_on} width={15} height={15} />
+                            </TouchableOpacity>
+                          ) : (
+                            <TouchableOpacity style={{padding:10}} onPress={() => toggleBalanceVisibility(item.accountNumber)}>
+                              <SvgXml style={{ marginLeft: 10, top: 1 }} xml={SVG_eye_off} width={15} height={15} />
+                            </TouchableOpacity>
+                          )}
                         </View>
 
                         <Text
@@ -1544,8 +2007,8 @@ const NewDashboard = () => {
             {!isCrypto &&
               <MemoizedDashboardSection
                 title='PnL & Assets Allocation'
-                // actionText='see all'
-                // onActionPress={onContactSeeALl}
+              // actionText='see all'
+              // onActionPress={onContactSeeALl}
               >
                 <View style={{ width: '100%' }}>
                   <View>

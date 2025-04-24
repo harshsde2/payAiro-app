@@ -107,6 +107,7 @@ export default function TextInputField({
               value={value}
               keyboardType={keyboardType ?? 'default'}
               autoCapitalize="none"
+              autoCorrect={false}
             />
           )}
 

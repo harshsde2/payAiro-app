@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,25 +7,26 @@ import {
   ScrollView,
   StyleSheet,
   Image,
+  Platform,
+  InteractionManager,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import { SvgXml } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native';
+
+// Components
 import BottomNavigation from '../../components/BottomNavigation';
 import Container from '../../HOC/Container';
-import {SvgXml} from 'react-native-svg';
-import {
-  SVGLog,
-  SVGLoggo,
-  SVGLogo2,
-  SVGPro,
-  SVGProfile,
-  SVGRefer,
-  SVGRightIcon,
-} from '../../constants/images';
-import Fonts from '../../constants/Fonts';
-import {SETTINGS_LISTS} from '../../constants/constant';
-import {useNavigation} from '@react-navigation/native';
 import LogoutModal from '../../components/LogoutModal';
+
+// Constants & Hooks
+import Fonts from '../../constants/Fonts';
+import { SETTINGS_LISTS } from '../../constants/constant';
+import { SVGRefer, SVGRightIcon } from '../../constants/images';
 import useDispatchAction from '../../hooks/useDispatchAction';
+import useSelectorAction from '../../hooks/useSelectorAction';
+
+// Services & Actions
+import { getKYC } from '../../services/Services';
 import {
   setLogin,
   setTokens,
@@ -38,49 +40,77 @@ import {
   setUser,
   setWalletDataAuth,
 } from '../../services/Auth';
-import useSelectorAction from '../../hooks/useSelectorAction';
-import {getKYC} from '../../services/Services';
 
 export default function SettingScreen() {
-  const {tokens} = useSelectorAction();
   const navigation = useNavigation();
-  const [isVisible, setisVisible] = useState(false);
-  const {walletData} = useSelectorAction();
-  const [kycStep, setkycStep] = useState('');
+  const [isVisible, setIsVisible] = useState(false);
+  const { tokens, walletData } = useSelectorAction();
+  const [kycStep, setKycStep] = useState('');
+
   useEffect(() => {
-    getkycStep();
+    fetchKycStep();
   }, []);
 
-  const getkycStep = async () => {
-    const kycData = await getKYC(tokens?.access);
-    if (kycData?.data?.step_count) {
-      setkycStep(kycData?.data);
+  const fetchKycStep = async () => {
+    try {
+      const kycData = await getKYC(tokens?.access);
+      if (kycData?.data?.step_count) {
+        setKycStep(kycData?.data);
+      }
+    } catch (error) {
+      console.log('Error fetching KYC data:', error);
     }
   };
+
+  const handleLogout = async () => {
+    console.log("handleLogout in")
+    useDispatchAction(setUserData(null));
+    console.log("handleLogout 2")
+    useDispatchAction(setTokens(null));
+    console.log("handleLogout 3")
+    useDispatchAction(setWalletData(null));
+    console.log("handleLogout 4")
+    // await setUser(null);
+    console.log("handleLogout 5")
+    setWalletDataAuth(null);
+    console.log("handleLogout 6")
+    // setIsVisible(false);
+    console.log("handleLogout 7")
+    console.log("handleLogout 8")
+    setPin(null);
+    console.log("handleLogout 9")
+    setKYCAcceopted(null);
+    console.log("handleLogout 10")
+    // Wait until all interactions complete before updating navigation logic
+    // Delay the navigation stack switch to prevent crash
+  setTimeout(() => {
+    useDispatchAction(setLogin(false));
+    console.log("handleLogout 9");
+  }, 100); // even 50ms may work
+
+  };
+
   return (
     <Container>
       <BottomNavigation />
       <LogoutModal
         isVisible={isVisible}
-        onCancel={() => setisVisible(false)}
-        onClose={async () => {
-          useDispatchAction(setUserData(null));
-          useDispatchAction(setTokens(null));
-          useDispatchAction(setWalletData(null));
-          await setUser(null);
-          setWalletDataAuth(null);
-          setisVisible(false);
-          useDispatchAction(setLogin(false));
-          setPin(null);
-          setKYCAcceopted(null);
+        onCancel={() => setIsVisible(false)}
+        // onClose={handleLogout}
+        onClose={() => {
+          setIsVisible(false);
+          setTimeout(() => {
+            handleLogout();
+          }, 300);
         }}
+        
       />
       <KeyboardAvoidingView
-        style={{flex: 1}}
+        style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{flexGrow: 1}}>
+          contentContainerStyle={{ flexGrow: 1 }}>
           <View
             style={{
               flexDirection: 'row',
@@ -92,7 +122,7 @@ export default function SettingScreen() {
             <View
               style={[
                 styles.circle,
-                {backgroundColor: 'rgba(255, 172, 37, 1)'},
+                { backgroundColor: 'rgba(255, 172, 37, 1)' },
               ]}>
               {kycStep?.selfimage ? (
                 <Image
@@ -104,7 +134,7 @@ export default function SettingScreen() {
                   style={styles.image}
                 />
               ) : (
-                <Text style={{...styles.initials, color: '#000'}}>
+                <Text style={{ ...styles.initials, color: '#000' }}>
                   {walletData?.name?.charAt(0)?.toUpperCase()}
                 </Text>
               )}
@@ -138,16 +168,16 @@ export default function SettingScreen() {
               }}>
               My Account
             </Text>
-            {SETTINGS_LISTS.map((i, k) => (
+            {SETTINGS_LISTS.map((item, index) => (
               <TouchableOpacity
-                disabled={i.isDisvled}
+                key={`setting-${index}`}
+                disabled={item.isDisvled}
                 onPress={() => {
-                  if (i.name === 'Logout') {
-                    setisVisible(true);
+                  if (item.name === 'Logout') {
+                    setIsVisible(true);
                     return;
                   }
-
-                  navigation.navigate(i.route);
+                  navigation.navigate(item.route);
                 }}
                 style={{
                   borderRadius: 40,
@@ -159,7 +189,7 @@ export default function SettingScreen() {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   marginVertical: 5,
-                  marginBottom: i.name === 'Logout' ? 100 : 5,
+                  marginBottom: item.name === 'Logout' ? 100 : 5,
                 }}>
                 <View
                   style={{
@@ -168,7 +198,7 @@ export default function SettingScreen() {
                     alignItems: 'center',
                     margin: 5,
                   }}>
-                  <SvgXml xml={i.icon} />
+                  <SvgXml xml={item.icon} />
                   <Text
                     style={{
                       color: 'rgba(29, 29, 29, 1)',
@@ -176,10 +206,10 @@ export default function SettingScreen() {
                       fontSize: 16,
                       fontFamily: Fonts.regular,
                     }}>
-                    {i?.name}
+                    {item.name}
                   </Text>
                 </View>
-                {i?.name === 'KYC' ? (
+                {item.name === 'KYC' && (
                   <Text
                     style={{
                       textAlign: 'right',
@@ -189,14 +219,14 @@ export default function SettingScreen() {
                     }}>
                     {kycStep === '4' ? 'Verified' : 'Pending'}
                   </Text>
-                ) : null}
-                <SvgXml xml={SVGRightIcon} style={{marginRight: 20}} />
+                )}
+                <SvgXml xml={SVGRightIcon} style={{ marginRight: 20 }} />
               </TouchableOpacity>
             ))}
 
             <SvgXml
               xml={SVGRefer}
-              style={{marginBottom: 130, alignSelf: 'center'}}
+              style={{ marginBottom: 130, alignSelf: 'center' }}
             />
           </View>
         </ScrollView>
@@ -205,7 +235,7 @@ export default function SettingScreen() {
   );
 }
 
-export const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   circle: {
     width: 60,
     height: 60,

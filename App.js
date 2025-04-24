@@ -241,6 +241,7 @@ export default function App() {
     return <SplashScreen />;
   }
 
+  console.log("isLogin =>",isLogin)
   // Render main app navigation
   return (
     <SafeAreaProvider>

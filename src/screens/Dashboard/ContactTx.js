@@ -25,6 +25,11 @@ import { SvgXml } from 'react-native-svg';
 import { ScreenContainer } from '../../HOC';
 import { useTheme } from '../../styles/ThemeContext';
 import TransactionList from '../../components/TransactionLists';
+import CustomChatComponent from '../../tsx-components/CustomChatComponent';
+import MinimalChatComponent from '../../tsx-components/MinimalChatComponent';
+import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
+import ChatComponent from 'tsx-components/chat-components/ChatComponent';
+import ChatContainer from 'tsx-components/chat-components/ChatContainer';
 
 // Transaction status components
 const PendingTransaction = ({ amount, date }) => (
@@ -126,49 +131,101 @@ const DropdownMenu = ({ onSelectItem }) => (
   </View>
 );
 
+
+
+// Let's try a simple placeholder component first to verify the component area is rendering
+const PlaceholderChatComponent = ({ onTestPress }) => (
+  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f0f0' }}>
+    <Text style={{ fontSize: 16, marginBottom: 20 }}>Chat Component Placeholder</Text>
+    <TouchableOpacity 
+      onPress={onTestPress}
+      style={{
+        padding: 15,
+        backgroundColor: '#2C6A3F',
+        borderRadius: 8
+      }}
+    >
+      <Text style={{ color: 'white' }}>Test Button</Text>
+    </TouchableOpacity>
+  </View>
+);
+
 const ContactTx = ({ route }) => {
   const { item = {}, isVisble3 = false } = route.params || {};
   const navigation = useNavigation();
   const isFocused = useIsFocused();
-  const { tokens } = useSelectorAction();
+  const { tokens, userData, walletData } = useSelectorAction();
   const { theme } = useTheme();
   
   // States
-  const [messageText, setMessageText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-  const [userTx, setUserTx] = useState([]);
+  const [contactData, setContactData] = useState(item);
   
-  // Memoized components
-  const MemoizedTransactionList = React.memo(TransactionList);
+  // Ensure we have complete contact data
+  // useEffect(() => {
+  //   // Ensure the contact data is complete
+  //   if (item && Object.keys(item).length > 0) {
+  //     // Make a copy to avoid reference issues
+  //     const enhancedContact = { ...item };
+      
+  //     // Ensure contact has required fields
+  //     if (!enhancedContact.email && enhancedContact.username) {
+  //       console.log('Adding inferred email to contact data');
+  //       // Create a placeholder email if none exists (for message identification)
+  //       enhancedContact.email = `${enhancedContact.username}@example.com`;
+  //     }
+      
+  //     setContactData(enhancedContact);
+  //   }
+  // }, [item]);
   
-  // Handle back action - simplified version
-  const handleBackPress = useCallback(() => {
-    // First, disable any ongoing operations
-    if (isLoading) {
-      return true; // Prevent back action if already loading
-    }
-    
-    // Set a flag to prevent double-navigation
-    setIsLoading(true);
-    
-    // Immediate cleanup - clear any ongoing timers
-    const cleanup = () => {
-      // Reset data before unmounting to avoid updates on unmounted component
-      setUserTx([]);
-      setIsDropdownVisible(false);
+  // Ensure user data is also complete for proper message identification
+  const getUserData = useMemo(() => {
+    const user = {
+      email: userData?.email || '',
+      username: userData?.username || ''
     };
     
-    cleanup();
+    // Add email if missing but username exists
+    if (!user.email && user.username) {
+      user.email = `${user.username}@myapp.com`;
+    }
     
-    // Defer the navigation to next tick
-    requestAnimationFrame(() => {
-      // Safe navigation
+    return user;
+  }, [userData]);
+
+  // Handle back action - simplified version
+  const handleBackPress = useCallback(() => {
+    // Prevent back action if already loading
+    if (isLoading) {
+      return true;
+    }
+    try {
+      // Use immediate navigation for clean exit
       navigation.goBack();
-    });
+    } catch (error) {
+      console.log('Navigation error:', error);
+      // Force navigation as fallback
+      navigation.reset({
+        index: 0,
+        routes: [{ name: NAVIGATION_SCREENS.NEW_DASHBOARD }],
+      });
+    }
     
     return true;
   }, [navigation, isLoading]);
+  
+  // Use a proper back handler
+  useEffect(() => {
+    // Add back press listener when component mounts
+    BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+    
+    // Return cleanup function
+    return () => {
+      BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
+    };
+  }, [handleBackPress]);
   
   // Use a wrapper for safe SVG rendering
   const SafeSvgBackButton = ({ onPress }) => {
@@ -184,83 +241,6 @@ const ContactTx = ({ route }) => {
     );
   };
   
-  // Fetch messages when screen is focused
-  useEffect(() => {
-    let isMounted = true;
-    let intervalId = null;
-    
-    const fetchData = async () => {
-      if (isFocused && isMounted) {
-        await getContactLists();
-        
-        // Set up interval for message fetching - clear any existing interval first
-        if (intervalId) {
-          clearInterval(intervalId);
-        }
-        
-        intervalId = setInterval(() => {
-          if (isFocused && isMounted) {
-            getContactLists();
-          }
-        }, 5000);
-      }
-    };
-    
-    fetchData();
-    
-    // Cleanup function
-    return () => {
-      isMounted = false;
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [isFocused]);
-  
-  // Get contact messages
-  const getContactLists = async () => {
-    if (!item?.username || !tokens?.access || isLoading) return;
-    
-    try {
-      setIsLoading(true);
-      const data = await getContactListsForAll(
-        'username',
-        item?.username,
-        tokens?.access,
-      );
-      
-      if (data?.data?.interactions) {
-        setUserTx(data.data.interactions);
-      }
-    } catch (error) {
-      console.log('Error fetching contact messages:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  // Send message function
-  const sendMess = async () => {
-    if (!messageText.trim() || !item?.username || !tokens?.access) return;
-    
-    try {
-      setIsLoading(true);
-      await sendMessage(
-        {
-          recipient_user: item?.username,
-          content: messageText,
-        },
-        tokens?.access,
-      );
-      setMessageText('');
-      await getContactLists();
-    } catch (error) {
-      console.log('Error sending message:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
   // Get display name safely
   const getDisplayName = () => {
     try {
@@ -270,6 +250,8 @@ const ContactTx = ({ route }) => {
     }
   };
   
+  // console.log("item =>",JSON.stringify(item,null,2));
+
   // Get user identifier
   const getUserIdentifier = () => {
     try {
@@ -289,9 +271,7 @@ const ContactTx = ({ route }) => {
       alert('Help Selected');
     }
   };
-  
-  // Memoize transaction items to prevent unnecessary re-renders
-  const memoizedTxItems = useMemo(() => userTx ?? [], [userTx]);
+ 
   
   return (
     <ScreenContainer padding={0} backgroundColor={theme.colors.palette.white}>
@@ -302,8 +282,8 @@ const ContactTx = ({ route }) => {
           
           <View style={styles.profileSection}>
             <View style={styles.avatarContainer}>
-              {item?.image ? (
-                <Image source={{ uri: item.image }} style={styles.avatar} />
+              {contactData?.image ? (
+                <Image source={{ uri: contactData.image }} style={styles.avatar} />
               ) : (
                 <View style={styles.avatarFallback}>
                   <Text style={styles.avatarText}>
@@ -333,86 +313,61 @@ const ContactTx = ({ route }) => {
         )}
       </View>
       
-      {/* Main content with KeyboardAvoidingView */}
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoidView}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
-        {/* Transaction list */}
-        <View style={styles.transactionListContainer}>
-          {isLoading && userTx.length === 0 ? (
-            <View style={styles.centerContent}>
-              <ActivityIndicator size="large" color={theme.colors.palette.green700} />
-            </View>
-          ) : (
-            <MemoizedTransactionList
-              items={memoizedTxItems}
-              isVisble3={isVisble3}
-            />
-          )}
-        </View>
-        
-        {/* Bottom action bar */}
-        <View style={styles.bottomActions}>
-          <View style={styles.actionButtons}>
-            {isVisble3 && (
-              <TouchableOpacity 
-                style={styles.requestButton}
-                activeOpacity={0.8}
-                onPress={() => {
-                  navigation.navigate(
-                    isVisble3 ? SCREENS.Send : SCREENS.SendToken,
-                    {
-                      sender: getUserIdentifier(),
-                      type: 'requested',
-                    },
-                  );
-                }}
-              >
-                <Text style={[styles.requestButtonText,{ fontFamily : theme.typography.fontFamily.montserrat}]}>Request</Text>
-              </TouchableOpacity>
-            )}
-            
+      {/* Main content with custom chat UI */}
+      <View style={styles.chatContainer}>
+        {isFocused && tokens?.access ? (
+          <ChatContainer
+            contactData={contactData}
+            getUserData={getUserData}
+          />
+        ) : (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={theme.colors.palette.green700} />
+          </View>
+        )}
+      </View>
+      
+      {/* Bottom action bar */}
+      {/* <View style={styles.bottomActions}>
+        <View style={styles.actionButtons}>
+          {isVisble3 && (
             <TouchableOpacity 
-              style={[
-                styles.payButton,
-                !isVisble3 && { flex: 1 } // Full width if Request button is not shown
-              ]}
+              style={styles.requestButton}
               activeOpacity={0.8}
               onPress={() => {
                 navigation.navigate(
                   isVisble3 ? SCREENS.Send : SCREENS.SendToken,
                   {
                     sender: getUserIdentifier(),
-                    type: 'receive',
+                    type: 'requested',
                   },
                 );
               }}
             >
-              <Text style={[styles.payButtonText,{fontFamily:theme.typography.fontFamily.montserrat}]}>Pay</Text>
+              <Text style={[styles.requestButtonText,{ fontFamily : theme.typography.fontFamily.montserrat}]}>Request</Text>
             </TouchableOpacity>
-          </View>
+          )}
           
-          {/* Message input */}
-          <View style={styles.messageInputContainer}>
-            <TextInput
-              style={styles.messageInput}
-              placeholder="Message..."
-              placeholderTextColor="rgba(106, 106, 106, 0.7)"
-              value={messageText}
-              onChangeText={setMessageText}
-            />
-            <TouchableOpacity 
-              style={styles.sendButton}
-              disabled={!messageText.trim() || isLoading}
-              onPress={sendMess}
-            >
-              <SvgXml xml={SVGSend2} />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity 
+            style={[
+              styles.payButton,
+              !isVisble3 && { flex: 1 } // Full width if Request button is not shown
+            ]}
+            activeOpacity={0.8}
+            onPress={() => {
+              navigation.navigate(
+                isVisble3 ? SCREENS.Send : SCREENS.SendToken,
+                {
+                  sender: getUserIdentifier(),
+                  type: 'receive',
+                },
+              );
+            }}
+          >
+            <Text style={[styles.payButtonText,{fontFamily:theme.typography.fontFamily.montserrat}]}>Pay</Text>
+          </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
+      </View> */}
     </ScreenContainer>
   );
 };
@@ -423,10 +378,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    // backgroundColor: '#FFFFFF',
   },
   headerContainer: {
-    backgroundColor: '#F5F5F5',
+    // backgroundColor: '',
     paddingTop: Platform.OS === 'ios' ? 44 : 0,
     position: 'relative',
     zIndex: 10,
@@ -608,6 +563,266 @@ const styles = StyleSheet.create({
     color: '#333',
     fontWeight: 'bold',
   },
+  chatContainer: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
 });
 
 export default ContactTx;
+
+
+const messageData = {
+  "status": true,
+  "message": "OK",
+  "data": {
+      "contact": {
+          "mobileno": "",
+          "email": "",
+          "wallet_address": "0x40C0c3132baAbE39e3002De9aA786088D86a5469",
+          "nickname": "rishabh",
+          "username": "rishabpay12"
+      },
+      "interactions": [
+          {
+              "type": "crypto_transaction",
+              "timestamp": "2025-04-21T06:42:16.027599Z",
+              "data": {
+                  "sender__wallet_public_key": "0xd3C2A59CE57A28B927211A931Fc919d1683c6004",
+                  "recipient__wallet_public_key": "0x40C0c3132baAbE39e3002De9aA786088D86a5469",
+                  "amount": 10,
+                  "status": "success",
+                  "timestamp": "2025-04-21T06:42:16.027599Z",
+                  "description": null,
+                  "is_read": true
+              }
+          },
+          {
+              "type": "crypto_transaction",
+              "timestamp": "2025-04-21T08:25:44.260292Z",
+              "data": {
+                  "sender__wallet_public_key": "0xd3C2A59CE57A28B927211A931Fc919d1683c6004",
+                  "recipient__wallet_public_key": "0x40C0c3132baAbE39e3002De9aA786088D86a5469",
+                  "amount": 1,
+                  "status": "success",
+                  "timestamp": "2025-04-21T08:25:44.260292Z",
+                  "description": null,
+                  "is_read": true
+              }
+          },
+          {
+              "type": "message",
+              "timestamp": "2025-04-21T08:31:37.194253Z",
+              "data": {
+                  "sender__email": "payairotest12@yopmail.com",
+                  "recipient__email": "rishabhsingh321@yopmail.com",
+                  "content": "hello",
+                  "timestamp": "2025-04-21T08:31:37.194253Z",
+                  "is_read": true
+              }
+          },
+          {
+              "type": "message",
+              "timestamp": "2025-04-21T08:34:40.971209Z",
+              "data": {
+                  "sender__email": "rishabhsingh321@yopmail.com",
+                  "recipient__email": "payairotest12@yopmail.com",
+                  "content": "Hyy",
+                  "timestamp": "2025-04-21T08:34:40.971209Z",
+                  "is_read": true
+              }
+          },
+          {
+              "type": "message",
+              "timestamp": "2025-04-21T08:37:04.002460Z",
+              "data": {
+                  "sender__email": "rishabhsingh321@yopmail.com",
+                  "recipient__email": "payairotest12@yopmail.com",
+                  "content": "How are you ",
+                  "timestamp": "2025-04-21T08:37:04.002460Z",
+                  "is_read": true
+              }
+          },
+          {
+              "type": "message",
+              "timestamp": "2025-04-21T08:57:01.880480Z",
+              "data": {
+                  "sender__email": "payairotest12@yopmail.com",
+                  "recipient__email": "rishabhsingh321@yopmail.com",
+                  "content": "Hey\n",
+                  "timestamp": "2025-04-21T08:57:01.880480Z",
+                  "is_read": true
+              }
+          },
+          {
+              "type": "message",
+              "timestamp": "2025-04-21T09:42:59.890688Z",
+              "data": {
+                  "sender__email": "payairotest12@yopmail.com",
+                  "recipient__email": "rishabhsingh321@yopmail.com",
+                  "content": "hello",
+                  "timestamp": "2025-04-21T09:42:59.890688Z",
+                  "is_read": true
+              }
+          },
+          {
+              "type": "message",
+              "timestamp": "2025-04-21T09:43:19.007911Z",
+              "data": {
+                  "sender__email": "payairotest12@yopmail.com",
+                  "recipient__email": "rishabhsingh321@yopmail.com",
+                  "content": "Hey I am here",
+                  "timestamp": "2025-04-21T09:43:19.007911Z",
+                  "is_read": true
+              }
+          },
+          {
+              "type": "message",
+              "timestamp": "2025-04-21T09:44:01.460358Z",
+              "data": {
+                  "sender__email": "rishabhsingh321@yopmail.com",
+                  "recipient__email": "payairotest12@yopmail.com",
+                  "content": "Hry",
+                  "timestamp": "2025-04-21T09:44:01.460358Z",
+                  "is_read": true
+              }
+          },
+          {
+              "type": "message",
+              "timestamp": "2025-04-21T09:48:27.232113Z",
+              "data": {
+                  "sender__email": "payairotest12@yopmail.com",
+                  "recipient__email": "rishabhsingh321@yopmail.com",
+                  "content": "Hey",
+                  "timestamp": "2025-04-21T09:48:27.232113Z",
+                  "is_read": true
+              }
+          },
+          {
+              "type": "message",
+              "timestamp": "2025-04-21T09:48:36.385492Z",
+              "data": {
+                  "sender__email": "rishabhsingh321@yopmail.com",
+                  "recipient__email": "payairotest12@yopmail.com",
+                  "content": "How are you ",
+                  "timestamp": "2025-04-21T09:48:36.385492Z",
+                  "is_read": true
+              }
+          },
+          {
+              "type": "message",
+              "timestamp": "2025-04-21T09:48:55.654539Z",
+              "data": {
+                  "sender__email": "rishabhsingh321@yopmail.com",
+                  "recipient__email": "payairotest12@yopmail.com",
+                  "content": "Hey",
+                  "timestamp": "2025-04-21T09:48:55.654539Z",
+                  "is_read": true
+              }
+          },
+          {
+              "type": "message",
+              "timestamp": "2025-04-21T09:49:05.394317Z",
+              "data": {
+                  "sender__email": "payairotest12@yopmail.com",
+                  "recipient__email": "rishabhsingh321@yopmail.com",
+                  "content": "Hii",
+                  "timestamp": "2025-04-21T09:49:05.394317Z",
+                  "is_read": true
+              }
+          },
+          {
+              "type": "message",
+              "timestamp": "2025-04-21T09:51:46.242638Z",
+              "data": {
+                  "sender__email": "payairotest12@yopmail.com",
+                  "recipient__email": "rishabhsingh321@yopmail.com",
+                  "content": "hey",
+                  "timestamp": "2025-04-21T09:51:46.242638Z",
+                  "is_read": true
+              }
+          },
+          {
+              "type": "message",
+              "timestamp": "2025-04-21T09:54:07.608662Z",
+              "data": {
+                  "sender__email": "payairotest12@yopmail.com",
+                  "recipient__email": "rishabhsingh321@yopmail.com",
+                  "content": "hii",
+                  "timestamp": "2025-04-21T09:54:07.608662Z",
+                  "is_read": true
+              }
+          },
+          {
+              "type": "message",
+              "timestamp": "2025-04-21T09:56:31.347244Z",
+              "data": {
+                  "sender__email": "payairotest12@yopmail.com",
+                  "recipient__email": "rishabhsingh321@yopmail.com",
+                  "content": "hey",
+                  "timestamp": "2025-04-21T09:56:31.347244Z",
+                  "is_read": true
+              }
+          },
+          {
+              "type": "message",
+              "timestamp": "2025-04-21T10:03:26.837772Z",
+              "data": {
+                  "sender__email": "payairotest12@yopmail.com",
+                  "recipient__email": "rishabhsingh321@yopmail.com",
+                  "content": "hy",
+                  "timestamp": "2025-04-21T10:03:26.837772Z",
+                  "is_read": true
+              }
+          },
+          {
+              "type": "crypto_transaction",
+              "timestamp": "2025-04-21T10:04:08.988863Z",
+              "data": {
+                  "sender__wallet_public_key": "0xd3C2A59CE57A28B927211A931Fc919d1683c6004",
+                  "recipient__wallet_public_key": "0x40C0c3132baAbE39e3002De9aA786088D86a5469",
+                  "amount": 1,
+                  "status": "success",
+                  "timestamp": "2025-04-21T10:04:08.988863Z",
+                  "description": null,
+                  "is_read": true
+              }
+          },
+          {
+              "type": "crypto_transaction",
+              "timestamp": "2025-04-21T10:06:24.970485Z",
+              "data": {
+                  "sender__wallet_public_key": "0xd3C2A59CE57A28B927211A931Fc919d1683c6004",
+                  "recipient__wallet_public_key": "0x40C0c3132baAbE39e3002De9aA786088D86a5469",
+                  "amount": 10,
+                  "status": "success",
+                  "timestamp": "2025-04-21T10:06:24.970485Z",
+                  "description": null,
+                  "is_read": true
+              }
+          },
+          {
+              "type": "message",
+              "timestamp": "2025-04-21T10:15:52.117664Z",
+              "data": {
+                  "sender__email": "payairotest12@yopmail.com",
+                  "recipient__email": "rishabhsingh321@yopmail.com",
+                  "content": "Hey",
+                  "timestamp": "2025-04-21T10:15:52.117664Z",
+                  "is_read": false
+              }
+          },
+          {
+              "type": "message",
+              "timestamp": "2025-04-21T10:16:43.779533Z",
+              "data": {
+                  "sender__email": "payairotest12@yopmail.com",
+                  "recipient__email": "rishabhsingh321@yopmail.com",
+                  "content": "hey",
+                  "timestamp": "2025-04-21T10:16:43.779533Z",
+                  "is_read": false
+              }
+          }
+      ]
+  }
+}

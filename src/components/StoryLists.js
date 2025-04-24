@@ -79,6 +79,7 @@ export default function StoryLists({data, isVisble3}) {
         )}
         contentContainerStyle={styles.list}
         showsHorizontalScrollIndicator={false}
+        removeClippedSubviews={false}
       />
     </View>
   );

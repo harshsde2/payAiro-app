@@ -5,7 +5,7 @@ export const postReq2 = (des_url, data, token, isFile) => {
   let url = BASE_URL + des_url;
   console.log(token);
   console.log(data);
-  console.log(url, 'BASE_URL-->>>');
+  // console.log(url, 'BASE_URL-->>>');
   return new Promise((resolve, reject) => {
     let headers = {};
     if (isFile) {
@@ -32,7 +32,7 @@ export const postReq2 = (des_url, data, token, isFile) => {
 
 export const patchReq2 = (des_url, data, isToken, isFormData) => {
   let url = BASE_URL + des_url;
-  console.log(url, 'BASE_URL-->>>');
+  // console.log(url, 'BASE_URL-->>>');
   return new Promise((resolve, reject) => {
     let headers = {};
     if (isToken) {
@@ -73,7 +73,7 @@ export const postReqFile = (url, data) => {
 
 export const getReq2 = (des_url, token) => {
   let url = BASE_URL + des_url;
-  console.log(url, 'BASE_URL-->>>');
+  // console.log(url, 'BASE_URL-->>>');
   return new Promise((resolve, reject) => {
     let headers = {};
     if (token) {
