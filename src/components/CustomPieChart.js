@@ -43,11 +43,13 @@ const CustomPieChart = React.memo(({allocationLists = [], isTx = false, amount =
     `;
   }, [outerRadius, innerRadius, centerX, centerY]);
 
+  //
   const filteredData = useMemo(
     () => allocationLists.filter(item => item?.percentage > 0),
     [allocationLists],
   );
 
+  //
   const total = useMemo(
     () => filteredData.reduce((sum, item) => sum + (item?.percentage || 0), 0),
     [filteredData],
@@ -144,10 +146,12 @@ const CustomPieChart = React.memo(({allocationLists = [], isTx = false, amount =
     {backgroundColor: isTx ? 'rgba(245, 245, 245, 0.6)' : '#000'},
   ], [isTx]);
 
+  
+
   return (
     <View style={containerStyle}>
       <View style={styles.chartWrapper}>
-        <Svg width={isTx ? 250 : 270} height={isTx ? 150 : 300}>
+        <Svg width={isTx ? 250 : 250}  height={isTx ? 150 : 210}>
           <G>
             {segments.map((segment, index) => {
               const animatedOpacity =
@@ -162,6 +166,8 @@ const CustomPieChart = React.memo(({allocationLists = [], isTx = false, amount =
                   d={segment.path}
                   fill={segment.color}
                   stroke="#000"
+                  x={isTx ? 0:-45}
+                  y={isTx ? 0:-45}
                   strokeWidth={isTx ? 0 : 2}
                   style={{opacity: animatedOpacity}}
                 />
@@ -214,7 +220,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-start',
     alignItems: 'center',
-    backgroundColor: '#000',
+    backgroundColor: 'green',
     borderRadius: 30,
   },
   chartWrapper: {
@@ -223,7 +229,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   legendContainer: {
-    width: '60%',
+    // width: '40%',
   },
   legendRow: {
     flexDirection: 'row',

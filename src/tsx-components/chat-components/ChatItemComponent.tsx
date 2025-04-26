@@ -8,6 +8,7 @@ import Fonts from 'constants/Fonts'
 import { Theme, useTheme } from 'styles'
 import BankingTransaction from './BankingTransaction'
 import PendingRequest from './PendingRequest'
+import NFTTransaction from './NFTTransaction'
 
 interface ChatItemComponentProps {
     item?: Interaction,
@@ -19,11 +20,11 @@ const ChatItemComponent: FC<ChatItemComponentProps> = ({
     contact
 }) => {
     const { theme } = useTheme();
-    const { tokens, userData, walletData } = useSelectorAction();
+    const { tokens, userData, walletData, isCrypto } = useSelectorAction();
 
     
 //    console.log("contact on ChatItemComponent",contact)
-
+console.log("nft_transactions",item?.type == 'nft_transaction')
     if (item?.type == 'message') {
 
         const senderType = getMessageSender(walletData, item?.data,'message');
@@ -33,7 +34,7 @@ const ChatItemComponent: FC<ChatItemComponentProps> = ({
             <MessageBubble item={item.data} isFromUser={isFromUser} />
         )
     }
-    else if (item?.type == 'crypto_transaction') {
+    else if (isCrypto && item?.type == 'crypto_transaction') {
 
         const senderType = getMessageSender(walletData, item?.data,"crypto_transaction");
         const isFromUser = senderType == 'user';
@@ -42,7 +43,18 @@ const ChatItemComponent: FC<ChatItemComponentProps> = ({
             <BankingTransaction contact={contact} item={item.data} isFromUser={isFromUser}   />
         )
     }
-    else if (item?.type == 'payment_request') {
+    else if (!isCrypto && item?.type == 'nft_transaction') {
+
+        
+        const senderType = getMessageSender(walletData, item?.data,"nft_transaction");
+        const isFromUser = senderType == 'user';
+        console.log("senderType =>",senderType)
+
+        return (
+            <NFTTransaction contact={contact} item={item.data} isFromUser={isFromUser}   />
+        )
+    }
+    else if (isCrypto && item?.type == 'payment_request') {
 
         const senderType = getMessageSender(walletData, item?.data,"payment_request");
         const isFromUser = senderType == 'user';

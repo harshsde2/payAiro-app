@@ -19,6 +19,7 @@ import HeaderTitle from './HeaderTitle';
 import {SVGCross, SVGRightIcon} from '../constants/images';
 import Fonts from '../constants/Fonts';
 import {useNavigation} from '@react-navigation/native';
+import { ScreenContainer } from 'HOC';
 
 const Offer = ({width, height}) => {
   const offerImage = useImage(require('../../assets/images/scratch.jpg'));
@@ -114,7 +115,7 @@ export const ScratchCard = () => {
 
   return (
     <GestureHandlerRootView>
-      <CommonHeaderv2>
+      <ScreenContainer padding={0}>
         <HeaderTitle rightIcon={SVGCross} isBack={true} />
         <GestureDetector gesture={pan}>
           <View style={styles.container}>
@@ -175,7 +176,7 @@ export const ScratchCard = () => {
             </Text>
           </View>
         </GestureDetector>
-      </CommonHeaderv2>
+      </ScreenContainer>
     </GestureHandlerRootView>
   );
 };

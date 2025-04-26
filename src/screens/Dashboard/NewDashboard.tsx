@@ -6,13 +6,13 @@ import { DashboardHeader, CryptoCard, FontTest, Card, CustomText } from '../../u
 import { ScreenContainer } from '../../HOC';
 import { useTheme } from '../../styles/ThemeContext';
 import { useSelector } from 'react-redux';
-import { SVGLoggo, SVGUSD, SVGDownArrow3, SVGSecurities, SVGReceive, SVGHolding, SVGAdd, SVGSend, SVGNewBank, SVGBilPay, SVGRecharge, SVGDebit, SVGCredit, SVGBANK2, SVGDebitAdd, SVGBamkAdd, SVGDebitCardAdd, SVGVoucher, SVGRef, SVGKYC2, SVGSliders, SVG_hide_eye, SVGBit, SVGDownArrow2, SVG_eye_on, SVG_eye_off, SVG_backspace, SVG_done } from '../../constants/images';
+import { SVGLoggo, SVGUSD, SVGDownArrow3, SVGSecurities, SVGReceive, SVGHolding, SVGAdd, SVGSend, SVGNewBank, SVGBilPay, SVGRecharge, SVGDebit, SVGCredit, SVGBANK2, SVGDebitAdd, SVGBamkAdd, SVGDebitCardAdd, SVGVoucher, SVGRef, SVGKYC2, SVGSliders, SVG_hide_eye, SVGBit, SVGDownArrow2, SVG_eye_on, SVG_eye_off, SVG_backspace, SVG_done, SVG_Bank_tab, SVG_credit_tab, SVG_debit_tab, SVGBankIcon } from '../../constants/images';
 import useDispatchAction from '../../hooks/useDispatchAction';
 import { setisCrypto, setCalculatedBalance, setWalletData, setBankLists, setBankbalances, setErrorMsg, setSuccessMsg } from '../../redux/slices/authenticationSlice';
 import FlipSlideExample from 'animations/examples/FlipSlideExample';
 import BottomNavigation from 'components/BottomNavigation';
 import GhostSlide from 'animations/animations-components/GhostSlide';
-import { addbankAccountRoth, createPin, getBalance, getBalanceCrypto, getBankDetails, getBanksAllAccount, getContacts, getCryptoTx, getPayAeroTx, getPinFromSev, getWallet, uploadKYC, checkUser } from 'services/Services';
+import { addbankAccountRoth, createPin, getBalance, getBalanceCrypto, getBankDetails, getBanksAllAccount, getContacts, getCryptoTx, getPayAeroTx, getPinFromSev, getWallet, uploadKYC, checkUser, getAllReward, redeemReward } from 'services/Services';
 import { SvgXml } from 'react-native-svg';
 import { SCREENS } from 'constants/SCREENS';
 import { useNavigation } from '@react-navigation/native';
@@ -35,7 +35,14 @@ import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 import BalanceModal from 'components/BalanceModal';
 import GenericButton from 'components/GenericButton';
 import LineChartCustom from 'components/LineChartCustom';
+import PinScreen from 'tsx-components/modals/PinScreen';
+import { PinScreenRef } from 'tsx-components/modals/modal.types';
+import IconTextComponent from 'tsx-components/IconTextComponent';
+import { renderFinanceIcons, renderUtilitiesIcons } from 'tsx-components/components.configs';
+import FiatGraphSection from 'tsx-components/FiatGraphSection';
 const CustomPieChart = require('../../components/CustomPieChart').default;
+import RewardModal from 'tsx-components/modals/RewardModal';
+
 
 // Lazy load non-critical components
 const LazyBankModal = lazy(() => import('components/BankModal'));
@@ -50,7 +57,7 @@ const LazyGuideModal = lazy(() => import('components/GuideModal'));
 const BANK_TYPE = 'FDIC Insured';
 
 // API call utility with automatic retries, caching, and error handling
-const useApiCall = <T,>(apiFunction: (token: string) => Promise<any>, options = { retries: 1, cacheTime: 5 * 60 * 1000 }) => {
+export const useApiCall = <T,>(apiFunction: (token: string) => Promise<any>, options = { retries: 1, cacheTime: 5 * 60 * 1000 }) => {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -188,13 +195,21 @@ const CryptoFinanceSection = React.memo(({ navigation }: CryptoFinanceSectionPro
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{}}
           style={{ marginVertical: 10 }}>
-          <SvgXml
-            xml={SVGBANK2}
-            onPress={() => navigation.navigate(NAVIGATION_SCREENS.SELECT_BANK_SCREEN)}
-            style={{ marginRight: 10 }}
-          />
-          <SvgXml xml={SVGDebit} style={{ marginRight: 10 }} />
-          <SvgXml xml={SVGCredit} />
+          {renderFinanceIcons.map((item, index) => (
+            <IconTextComponent
+              label={item?.label}
+              key={index}
+            >
+              <SvgXml
+                xml={item?.IconName}
+                width={item?.width}
+                height={item?.height}
+                disabled={item?.navigationScreenName == ''}
+                onPress={() => navigation.navigate(item?.navigationScreenName)}
+              // style={{ marginRight: 10 }}
+              />
+            </IconTextComponent>
+          ))}
         </ScrollView>
       </MemoizedDashboardSection>
       <MemoizedDashboardSection
@@ -207,9 +222,21 @@ const CryptoFinanceSection = React.memo(({ navigation }: CryptoFinanceSectionPro
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{}}
           style={{ marginVertical: 10 }}>
-          <SvgXml xml={SVGRecharge} style={{ marginRight: 10 }} />
-          <SvgXml xml={SVGBilPay} style={{ marginRight: 10 }} />
-          <SvgXml xml={SVGBilPay} />
+          {renderUtilitiesIcons.map((item, index) => (
+            <IconTextComponent
+              label={item?.label}
+              key={index}
+            >
+              <SvgXml
+                xml={item?.IconName}
+                width={item?.width}
+                height={item?.height}
+                disabled={item?.navigationScreenName == ''}
+                onPress={() => navigation.navigate(item?.navigationScreenName)}
+              // style={{ marginRight: 10 }}
+              />
+            </IconTextComponent>
+          ))}
         </ScrollView>
       </MemoizedDashboardSection>
     </View>
@@ -311,6 +338,8 @@ const NewDashboard = () => {
   const { height: screenHeight } = useWindowDimensions();
   const navigation = useNavigation<any>();
 
+  const pinScreenRef = useRef<PinScreenRef>(null)
+
   const { theme, toggleTheme } = useTheme();
   const [userName, setUserName] = useState('Daniel Hamilton');
   const [showFontTest, setShowFontTest] = useState(false);
@@ -340,6 +369,8 @@ const NewDashboard = () => {
   const [isVerifyingPin, setIsVerifyingPin] = useState(false);
   const [pinAmount, setPinAmount] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [isRewardModalVisible, setisRewardModalVisible] = useState(false);
+
 
   const [selectedGraph, setselectedGraph] = useState('Assets');
 
@@ -353,6 +384,8 @@ const NewDashboard = () => {
   const txListsApi = useApiCall(getPayAeroTx);
   const cryptoTxApi = useApiCall(getCryptoTx);
   const kycApi = useApiCall(uploadKYC);
+  const rewardsApi = useApiCall(getAllReward);
+
 
   // Add this near other hooks at the top level of your NewDashboard component
   const memoizedAllocationLists = useMemo(
@@ -373,6 +406,7 @@ const NewDashboard = () => {
 
         // Create an array of promises with descriptive catch handlers
         const promises = [
+
           fetchKycStatus().catch(err => console.error("KYC status fetch failed:", err)),
           fetchCryptoBalance().catch(err => console.error("Crypto balance fetch failed:", err)),
           fetchBankBalance().catch(err => console.error("Bank balance fetch failed:", err)),
@@ -394,6 +428,8 @@ const NewDashboard = () => {
     fetchInitialData();
     handlePin();
   }, [tokens?.access]);
+
+
 
   // Separate effect for Plaid token which changes independently
   useEffect(() => {
@@ -418,6 +454,49 @@ const NewDashboard = () => {
     fetchLinkToken();
   }, [tokens?.access]);
 
+  // Initialize all balances as hidden on first load
+  useEffect(() => {
+    if (bankLists && bankLists.length > 0) {
+      const initialHiddenState: Record<string, boolean> = {};
+
+      bankLists.forEach((item: any) => {
+        const accountId = item?.account_number ?? item?.account_id;
+        if (accountId) {
+          initialHiddenState[accountId] = true;
+        }
+      });
+
+      setHiddenBalances(initialHiddenState);
+    }
+  }, [bankLists]);
+
+  // Add refresh function to reload all data
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+
+    try {
+      // Group all data fetch operations
+      const promises = [
+        handleReward().catch(err => console.error("handle Reward fetch failed:", err)),
+        fetchKycStatus().catch(err => console.error("KYC status fetch failed:", err)),
+        fetchCryptoBalance().catch(err => console.error("Crypto balance fetch failed:", err)),
+        fetchBankBalance().catch(err => console.error("Bank balance fetch failed:", err)),
+        fetchBankAccounts().catch(err => console.error("Bank accounts fetch failed:", err)),
+        fetchContacts().catch(err => console.error("Contacts fetch failed:", err)),
+        fetchTransactions().catch(err => console.error("Transactions fetch failed:", err)),
+        fetchCryptoTransactions().catch(err => console.error("Crypto transactions fetch failed:", err)),
+        fetchWalletData().catch(err => console.error("Wallet data fetch failed:", err)),
+      ];
+
+      // Execute all promises in parallel
+      await Promise.allSettled(promises);
+    } catch (error) {
+      console.error('Error refreshing dashboard data:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [tokens?.access]);
+
   // Define interfaces for better type safety
   interface CryptoAsset {
     assetType: string;
@@ -427,95 +506,27 @@ const NewDashboard = () => {
     symbol?: string;
   }
 
-  // 
-  const renderButtonGraph = () => {
-    return (
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'flex-start',
-            alignItems: 'center',
-          }}>
-          <TouchableOpacity
-            onPress={() => setselectedGraph('pnl')}
-            style={{
-              backgroundColor:
-                selectedGraph === 'pnl'
-                  ? 'rgba(44, 106, 63, 1)'
-                  : 'rgba(255, 255, 255, 0.1)',
-              // padding: 10,
-              paddingBottom: 10,
-              paddingTop: 7,
-              width: '33%',
-              borderRadius: 30,
-            }}>
-            <Text
-              style={{
-                color: selectedGraph === 'pnl' ? '#fff' : '#fff',
-                fontFamily: Fonts.bold,
-                textAlign: 'center',
-                fontSize: 12,
-              }}>
-              PnL(%)
-            </Text>
-          </TouchableOpacity>
+  const handleReward = async () => {
+    console.log("ashdhas. =>")
+    try {
+      const data = await rewardsApi.execute(tokens?.access);
 
-          <TouchableOpacity
-            onPress={() => setselectedGraph('Assets')}
-            style={{
-              backgroundColor:
-                selectedGraph === 'Assets' ? 'rgba(44, 106, 63, 1)' : '#000',
-              // padding: 10,
-              paddingBottom: 10,
-              paddingTop: 7,
-              width: '33%',
-              borderRadius: 30,
-              marginLeft: 15,
-            }}>
-            <Text
-              style={{
-                color: selectedGraph === 'Assets' ? '#fff' : '#fff',
-                fontFamily: Fonts.bold,
-                textAlign: 'center',
-                fontSize: 12,
-              }}>
-              Assets
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* <TouchableOpacity
-          onPress={() => {
-            setisShowWeeks(true);
-          }}
-          style={{
-            backgroundColor:theme.colors.palette.green700,
-            // padding: 10,
-            paddingBottom: 10,
-            paddingTop: 7,
-            width: '27%',
-            borderRadius: 30,
-          }}>
-          <Text
-            style={{
-              color: 'black',
-              fontFamily: Fonts.bold,
-              textAlign: 'center',
-              fontSize: 12,
-              textTransform: 'capitalize',
-            }}>
-            {timeframe} <SvgXml xml={SVGDownArrow2} />
-          </Text>
-        </TouchableOpacity> */}
-      </View>
-    );
+      console.log(data, 'datatatatatat');
+      if (data && data?.data?.length > 0) {
+        setisRewardModalVisible(!data?.data[0]?.redeem);
+        const redeem = await redeemReward(
+          { redeem: true },
+          data?.data[0]?.id,
+          tokens?.access,
+        );
+        console.log(redeem, 'redeem===>>>>');
+      }
+    } catch (error) {
+      console.log(error, '=====>>>');
+      setisRewardModalVisible(false);
+    }
   };
+
   // Optimized API call functions
   const fetchCryptoBalance = async () => {
     try {
@@ -960,16 +971,6 @@ const NewDashboard = () => {
     open(config);
   }, [linkToken, onSuccess]);
 
-  // console.log("bankBalance?.bank_account?.usd =>", bankBalance?.bank_account?.usd)
-  // Handle view switch with proper memo dependencies
-  const handleSwitchView = useCallback(() => {
-    // console.log("asasas")
-    setGhostSlideVisible(!ghostSlideVisible)
-    const newCryptoState = !isCrypto;
-    useDispatchAction(setCalculatedBalance(selectedCrypto?.balance_in_tether ?? 0));
-    useDispatchAction(setisCrypto(newCryptoState));
-  }, [isCrypto, selectedCrypto?.balance_in_tether, ghostSlideVisible]);
-
   // Memoize contact see all navigation
   const onContactSeeALl = useCallback(() => {
     navigation.navigate(NAVIGATION_SCREENS.CONTACT_SCREEN, {
@@ -1015,117 +1016,30 @@ const NewDashboard = () => {
     }));
   }, [bankLists, bankBalance]);
 
-
-  // const MemoizedPieChart = React.memo(CustomPieChart);
-
-  // Enhanced toggle that triggers PIN verification
-  const toggleBalanceVisibility = (accountId: string) => {
-    // If balance is already visible, just hide it without PIN validation
-    if (!hiddenBalances[accountId]) {
-      setHiddenBalances(prev => ({
-        ...prev,
-        [accountId]: true
-      }));
-      return;
+  //
+  const handleEyeClick = (account_id: string) => {
+    if (pinScreenRef.current) {
+      pinScreenRef.current.toggleBalanceVisibility(account_id)
     }
+  }
 
-    // If balance is hidden, we need PIN verification to show it
-    setCurrentAccountForPin(accountId);
-    setPinForShowBalance('');
-    setIsPinModalVisible(true);
-  };
-
-  // Verify PIN and show balance if correct
-  const verifyPinAndShowBalance = async () => {
-    if (!currentAccountForPin || pinForShowBalance.length < 4) return;
-
-      console.log("step 1 ")
-
-    setIsVerifyingPin(true);
-
-    console.log('step 2')
-    
-    try {
-      console.log('step 3',pinForShowBalance)
-      const formData = new FormData();
-      formData.append('tpin', pinForShowBalance);
-      formData.append('identifier', walletData?.username || '');
-
-      console.log('step 4')
-      // Use checkUser API to verify the PIN
-      const response = await checkUser(formData, tokens?.access);
-
-      console.log(response,"response")
-
-      if (response && response.status) {
-        // PIN is correct, refresh bank balance data
-        await bankBalanceApi.execute(tokens?.access, true);
-
-        // Update the visibility state for this specific account
-        setHiddenBalances(prev => ({
-          ...prev,
-          [currentAccountForPin]: false
-        }));
-
-        // Close the modal
-        setIsPinModalVisible(false);
-        setCurrentAccountForPin(null);
-        setPinForShowBalance('');
-      } else {
-        // PIN is incorrect
-        useDispatchAction(setErrorMsg('Invalid PIN. Please try again.'));
-      }
-    } catch (error) {
-      console.error('Error verifying PIN:', error);
-      useDispatchAction(setErrorMsg('Failed to verify PIN. Please try again.'));
-    } finally {
-      setIsVerifyingPin(false);
-    }
-  };
-
-  // Initialize all balances as hidden on first load
-  useEffect(() => {
-    if (bankLists && bankLists.length > 0) {
-      const initialHiddenState: Record<string, boolean> = {};
-
-      bankLists.forEach((item: any) => {
-        const accountId = item?.account_number ?? item?.account_id;
-        if (accountId) {
-          initialHiddenState[accountId] = true;
-        }
-      });
-
-      setHiddenBalances(initialHiddenState);
-    }
-  }, [bankLists]);
-
-  // Add these PIN input handlers
-  const handlePinDigit = (digit: string) => {
-    if (pinForShowBalance.length < 4) {
-      setPinForShowBalance(prev => prev + digit);
-    }
-  };
-
-  const handlePinBackspace = () => {
-    setPinForShowBalance(prev => prev.slice(0, -1));
-  };
-
+  // Handle pin if it is not set then it will set in local stroage
   const handlePin = async () => {
 
-    if(!tokens?.access) return
+    if (!tokens?.access) return
     try {
       // First check if pins are available locally
       const pins = await getPin();
-      
+
       if (pins) {
         // If pins are available locally, use them
         setshowPin(false);
         return;
       }
-      
+
       // If pins are not available locally, fetch from server
       const data = await getPinFromSev(tokens?.access);
-      
+
       if (data && data?.status) {
         await setPin(data?.data?.tpin);
         setshowPin(false);
@@ -1139,31 +1053,96 @@ const NewDashboard = () => {
     }
   };
 
-  // Add refresh function to reload all data
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    
-    try {
-      // Group all data fetch operations
-      const promises = [
-        fetchKycStatus().catch(err => console.error("KYC status fetch failed:", err)),
-        fetchCryptoBalance().catch(err => console.error("Crypto balance fetch failed:", err)),
-        fetchBankBalance().catch(err => console.error("Bank balance fetch failed:", err)),
-        fetchBankAccounts().catch(err => console.error("Bank accounts fetch failed:", err)),
-        fetchContacts().catch(err => console.error("Contacts fetch failed:", err)),
-        fetchTransactions().catch(err => console.error("Transactions fetch failed:", err)),
-        fetchCryptoTransactions().catch(err => console.error("Crypto transactions fetch failed:", err)),
-        fetchWalletData().catch(err => console.error("Wallet data fetch failed:", err)),
-      ];
 
-      // Execute all promises in parallel
-      await Promise.allSettled(promises);
-    } catch (error) {
-      console.error('Error refreshing dashboard data:', error);
-    } finally {
-      setRefreshing(false);
-    }
-  }, [tokens?.access]);
+  // 
+  const renderButtonGraph = () => {
+    return (
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+          }}>
+          <TouchableOpacity
+            onPress={() => setselectedGraph('pnl')}
+            style={{
+              backgroundColor:
+                selectedGraph === 'pnl'
+                  ? 'rgba(44, 106, 63, 1)'
+                  : 'rgba(255, 255, 255, 0.1)',
+              // padding: 10,
+              paddingBottom: 10,
+              paddingTop: 7,
+              width: '33%',
+              borderRadius: 30,
+            }}>
+            <Text
+              style={{
+                color: selectedGraph === 'pnl' ? '#fff' : '#fff',
+                fontFamily: Fonts.bold,
+                textAlign: 'center',
+                fontSize: 12,
+              }}>
+              PnL(%)
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setselectedGraph('Assets')}
+            style={{
+              backgroundColor:
+                selectedGraph === 'Assets' ? 'rgba(44, 106, 63, 1)' : '#000',
+              // padding: 10,
+              paddingBottom: 10,
+              paddingTop: 7,
+              width: '33%',
+              borderRadius: 30,
+              marginLeft: 15,
+            }}>
+            <Text
+              style={{
+                color: selectedGraph === 'Assets' ? '#fff' : '#fff',
+                fontFamily: Fonts.bold,
+                textAlign: 'center',
+                fontSize: 12,
+              }}>
+              Assets
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* <TouchableOpacity
+            onPress={() => {
+              setisShowWeeks(true);
+            }}
+            style={{
+              backgroundColor:theme.colors.palette.green700,
+              // padding: 10,
+              paddingBottom: 10,
+              paddingTop: 7,
+              width: '27%',
+              borderRadius: 30,
+            }}>
+            <Text
+              style={{
+                color: 'black',
+                fontFamily: Fonts.bold,
+                textAlign: 'center',
+                fontSize: 12,
+                textTransform: 'capitalize',
+              }}>
+              {timeframe} <SvgXml xml={SVGDownArrow2} />
+            </Text>
+          </TouchableOpacity> */}
+      </View>
+    );
+  };
 
   return (
     <ScreenContainer
@@ -1321,301 +1300,22 @@ const NewDashboard = () => {
           </Modal>
         )}
 
-        {/* PIN Verification Modal */}
-        {isPinModalVisible && (
-          <Modal
-            animationType="fade"
-            transparent={true}
-            visible={isPinModalVisible}
-            onRequestClose={() => setIsPinModalVisible(false)}
-          >
-            <View style={{
-              flex: 1,
-              backgroundColor: '#FFFFFF'
-            }}>
-              {/* Header with bank name and logo */}
-              <View style={{
-                backgroundColor: theme.colors.palette.green700,
-                paddingVertical: 5,
-                paddingHorizontal: 20,
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <View>
-                  <Text style={{
-                    color: '#FFFFFF',
-                    fontSize: 16,
-                    fontFamily: theme.typography.fontFamily.montserratBold,
-                    // fontWeight:theme.typography.fontWeight.bold
-                  }}>
-                    PayAiro App
-                  </Text>
-                  <Text style={{
-                    color: '#FFFFFF',
-                    fontSize: 14,
-                    fontFamily: theme.typography.fontFamily.montserrat,
-                    marginTop: 3
-                  }}>
-                    {currentAccountForPin ? `****${currentAccountForPin.slice(-4)}` : 'Account'}
-                  </Text>
-                </View>
-                <SvgXml
-                  xml={SVGLoggo}
-                  width={55}
-                  height={55}
-                />
-              </View>
-
-              <View style={{
-                flex: 1,
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingBottom: 20
-              }}>
-                {/* PIN Entry Area */}
-                <View style={{
-                  alignItems: 'center',
-                  width: '100%',
-                  paddingTop: 60,
-                  paddingHorizontal: 30
-                }}>
-                  <View style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    marginBottom: 50
-                  }}>
-                    <Text style={{
-                      fontSize: 16,
-                      color: theme.colors.palette.green700,
-                      fontFamily: theme.typography.fontFamily.nexaHeavy,
-                      marginRight: 10
-                    }}>
-                      ENTER PAYAIRO PIN
-                    </Text>
-                    <SvgXml
-                      xml={SVG_eye_on}
-                      width={22}
-                      height={22}
-                    />
-                    <Text style={{
-                      fontSize: 14,
-                      color: theme.colors.palette.green700,
-                      fontFamily: theme.typography.fontFamily.nexaHeavy,
-                      fontWeight:'400',
-                      marginLeft: 5
-                    }}>
-                      SHOW
-                    </Text>
-                  </View>
-
-                  <View style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    width: '80%'
-                  }}>
-                    {[0, 1, 2, 3].map(index => (
-                      <View key={index} style={{
-                        width: '22%',
-                        height: 35,
-                        alignItems: 'center',
-                        justifyContent: 'flex-end'
-                      }}>
-                        <Text style={{
-                          fontSize: 40,
-                          color: theme.colors.palette.green700,
-                          position: 'absolute',
-                          top: -15,
-                          opacity: pinForShowBalance.length > index ? 1 : 0,
-                          fontFamily: Fonts.bold
-                        }}>
-                          *
-                        </Text>
-                        <View style={{
-                          position: 'absolute',
-                          bottom: 0,
-                          width: '100%',
-                          height: 2,
-                          backgroundColor: pinForShowBalance.length > index ? theme.colors.palette.green700 : '#CCCCCC',
-                        }} />
-                      </View>
-                    ))}
-                  </View>
-                </View>
-
-                {/* Custom Keypad */}
-                <View style={{
-                  width: '90%',
-                  backgroundColor: '#F8F8F8',
-                  borderRadius: 10,
-                  paddingVertical: 20,
-                  paddingHorizontal: 20
-                }}>
-                  {/* Row 1-3 */}
-                  <View style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    marginBottom: 30
-                  }}>
-                    {[1, 2, 3].map(num => (
-                      <TouchableOpacity
-                        key={num}
-                        style={{
-                          width: 70,
-                          height: 70,
-                          justifyContent: 'center',
-                          alignItems: 'center'
-                        }}
-                        onPress={() => handlePinDigit(num.toString())}
-                      >
-                        <Text style={{
-                          fontSize: 30,
-                          color: theme.colors.palette.green700,
-                          fontFamily: Fonts.bold
-                        }}>
-                          {num}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-
-                  {/* Row 4-6 */}
-                  <View style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    marginBottom: 30
-                  }}>
-                    {[4, 5, 6].map(num => (
-                      <TouchableOpacity
-                        key={num}
-                        style={{
-                          width: 70,
-                          height: 70,
-                          justifyContent: 'center',
-                          alignItems: 'center'
-                        }}
-                        onPress={() => handlePinDigit(num.toString())}
-                      >
-                        <Text style={{
-                          fontSize: 30,
-                          color: theme.colors.palette.green700,
-                          fontFamily: Fonts.bold
-                        }}>
-                          {num}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-
-                  {/* Row 7-9 */}
-                  <View style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    marginBottom: 30
-                  }}>
-                    {[7, 8, 9].map(num => (
-                      <TouchableOpacity
-                        key={num}
-                        style={{
-                          width: 70,
-                          height: 70,
-                          justifyContent: 'center',
-                          alignItems: 'center'
-                        }}
-                        onPress={() => handlePinDigit(num.toString())}
-                      >
-                        <Text style={{
-                          fontSize: 30,
-                          color: theme.colors.palette.green700,
-                          fontFamily: Fonts.bold
-                        }}>
-                          {num}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-
-                  {/* Row X-0-Check */}
-                  <View style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}>
-                    <TouchableOpacity
-                      style={{
-                        width: 70,
-                        height: 70,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                      }}
-                      onPress={handlePinBackspace}
-                    >
-                      <SvgXml
-                        fill={'#fff'}
-                        xml={SVG_backspace}
-                        width={35}
-                        height={35}
-                      />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={{
-                        width: 70,
-                        height: 70,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                      }}
-                      onPress={() => handlePinDigit('0')}
-                    >
-                      <Text style={{
-                        fontSize: 30,
-                        color: theme.colors.palette.green700,
-                        fontFamily: Fonts.bold
-                      }}>
-                        0
-                      </Text>
-                    </TouchableOpacity>
-
-                    <View style={{
-                      width: 70,
-                      height: 70,
-                      borderRadius: 35,
-                      justifyContent: 'center',
-                      alignItems: 'center'
-                    }}>
-                      <TouchableOpacity
-                        style={{
-                          width: 60,
-                          height: 60,
-                          backgroundColor: pinForShowBalance.length === 4 ? theme.colors.palette.green700 : theme.colors.palette.green300,
-                          borderRadius: 35,
-                          justifyContent: 'center',
-                          alignItems: 'center'
-                        }}
-                        onPress={verifyPinAndShowBalance}
-                        disabled={pinForShowBalance.length !== 4 || isVerifyingPin}
-                      >
-                        {isVerifyingPin ? (
-                          <ActivityIndicator color="#FFF" size="small" />
-                        ) : (
-                          <SvgXml
-                            fill={'#fff'}
-                            xml={SVG_done}
-                            width={35}
-                            height={35}
-                          />
-                        )}
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            </View>
-          </Modal>
+        {isRewardModalVisible && (
+          <RewardModal
+            isVisible={isRewardModalVisible}
+            onClose={() => setisRewardModalVisible(false)}
+          />
         )}
+
+        {/* PIN Verification Modal */}
+        <PinScreen
+          ref={pinScreenRef}
+          hiddenBalances={hiddenBalances}
+          setHiddenBalances={setHiddenBalances}
+        />
       </View>
       {
-        isCrypto &&
+        // isCrypto &&
         <View style={{
           zIndex: 100,
           width: '92%',
@@ -1852,51 +1552,7 @@ const NewDashboard = () => {
                             {`${BANK_TYPE}`}
                           </CustomText>
                         </View>
-                        {/* <Text
-                          style={{
-                            fontFamily: Fonts.semibold,
-                            color: '#000',
-                            fontSize: 16,
-                            marginLeft: 8,
-                          }}>
-                          {item.displayName}
-                          <Text
-                            style={{
-                              color: 'rgba(44, 106, 63, 1)',
-                              fontSize: 10,
-                              textTransform: 'uppercase',
-                            }}>
-                            {' '}({item.accountType})
-                          </Text>
-                        </Text> */}
                       </View>
-                      {/* <CustomText
-                          // variant={'subtitle1'}
-                          // fontWeight={'medium'}
-                          color={theme.colors.palette.grey600}
-                          fontFamily={theme.typography.fontFamily.nexaHeavy}
-                          style={{
-                            marginLeft: 5,
-                            marginTop: 2,
-                            fontSize:14,
-                            fontWeight:"400"
-                          }}
-                        >
-                          {item.address}
-                        </CustomText> */}
-                      {/* <Text
-                        numberOfLines={1}
-                        style={{
-                          color: 'rgba(106, 106, 106, 1)',
-                          fontSize: 10,
-                          fontFamily: Fonts.bold,
-                          marginLeft: 5,
-                          marginTop: 2,
-                        }}>
-                        {item.address}
-                        
-                      </Text> */}
-
                       <CustomText
 
                         color={theme.colors.palette.grey600}
@@ -1929,11 +1585,11 @@ const NewDashboard = () => {
                             {hiddenBalances[item.accountNumber] ? '••••••' : `$${item.balance}`}
                           </Text>
                           {!hiddenBalances[item.accountNumber] ? (
-                            <TouchableOpacity style={{padding:10}} onPress={() => toggleBalanceVisibility(item.accountNumber)}>
+                            <TouchableOpacity style={{ padding: 10 }} onPress={() => handleEyeClick(item.accountNumber)}>
                               <SvgXml style={{ marginLeft: 10, top: 1 }} xml={SVG_eye_on} width={15} height={15} />
                             </TouchableOpacity>
                           ) : (
-                            <TouchableOpacity style={{padding:10}} onPress={() => toggleBalanceVisibility(item.accountNumber)}>
+                            <TouchableOpacity style={{ padding: 10 }} onPress={() => handleEyeClick(item.accountNumber)}>
                               <SvgXml style={{ marginLeft: 10, top: 1 }} xml={SVG_eye_off} width={15} height={15} />
                             </TouchableOpacity>
                           )}
@@ -1960,11 +1616,11 @@ const NewDashboard = () => {
                     </View>
                   ))
                 )}
-                <SvgXml width={250} height={115} xml={SVGNewBank} onPress={handleOpenLink} />
+                <SvgXml width={250} height={130} xml={SVGNewBank} onPress={handleOpenLink} />
               </ScrollView>
             </MemoizedDashboardSection>
             <MemoizedDashboardSection
-              title='Pay Airo Contacts'
+              title='PayAiro Contacts'
               actionText='see all'
               onActionPress={onContactSeeALl}
             >
@@ -2004,7 +1660,7 @@ const NewDashboard = () => {
               )}
             </MemoizedDashboardSection>
             {isCrypto && <CryptoFinanceSection navigation={navigation} />}
-            {!isCrypto &&
+            {/* {!isCrypto &&
               <MemoizedDashboardSection
                 title='PnL & Assets Allocation'
               // actionText='see all'
@@ -2076,7 +1732,16 @@ const NewDashboard = () => {
                   </View>
                 </View>
               </MemoizedDashboardSection>
-            }
+            } */}
+            {!isCrypto && (
+              <FiatGraphSection
+                selectedGraph={selectedGraph}
+                setselectedGraph={setselectedGraph}
+                alloCationLists={alloCationLists}
+                memoizedAllocationLists={memoizedAllocationLists}
+              />
+            )}
+
             {!isCrypto &&
               <MemoizedDashboardSection
                 title='Explore Securities'
@@ -2196,41 +1861,43 @@ const NewDashboard = () => {
                   </View>
                 </ScrollView>
 
-              </MemoizedDashboardSection>}
+              </MemoizedDashboardSection>
+            }
             <MemoizedDashboardSection title='Recent Transactions' onActionPress={() => { }}>
-              {txListsApi.loading || cryptoTxApi.loading ? (
-                // Skeleton loading for transactions
-                <>
-                  <SkeletonTransactionCard />
-                  <SkeletonTransactionCard />
-                  <SkeletonTransactionCard />
-                </>
-              ) : (
-                <>
-                  {txLists && isCrypto && sortedTxLists.length > 0 ? (
-                    sortedTxLists.map((item: any, key: any) => (
-                      <View key={key}>
-                        <MemoizedTransactionCard
-                          item={item}
-                          key={key}
-                          isMerchent={item?.order_id}
-                          isCrypto={item?.order_id}
-                        />
-                      </View>
-                    ))
-                  ) : (
-                    <></>
-                  )}
-                  {web3TxLists &&
-                    !isCrypto &&
-                    sortedWeb3TxLists.length > 0 &&
-                    sortedWeb3TxLists.map((item: any, key: any) => (
-                      <View key={key}>
-                        <MemoizedTransactionCard isCrypto={true} item={item} key={key} isMerchent={item?.order_id} />
-                      </View>
-                    ))}
-                </>
-              )}
+              {txListsApi.loading || cryptoTxApi.loading ?
+                ( // Skeleton loading for transactions
+                  <>
+                    <SkeletonTransactionCard />
+                    <SkeletonTransactionCard />
+                    <SkeletonTransactionCard />
+                  </>
+                ) :
+                (
+                  <>
+                    {txLists && isCrypto && sortedTxLists.length > 0 ? (
+                      sortedTxLists.map((item: any, key: any) => (
+                        <View key={key}>
+                          <MemoizedTransactionCard
+                            item={item}
+                            key={key}
+                            isMerchent={item?.order_id}
+                            isCrypto={item?.order_id}
+                          />
+                        </View>
+                      ))
+                    ) : (
+                      <></>
+                    )}
+                    {web3TxLists &&
+                      !isCrypto &&
+                      sortedWeb3TxLists.length > 0 &&
+                      sortedWeb3TxLists.map((item: any, key: any) => (
+                        <View key={key}>
+                          <MemoizedTransactionCard isCrypto={true} item={item} key={key} isMerchent={item?.order_id} />
+                        </View>
+                      ))}
+                  </>
+                )}
             </MemoizedDashboardSection>
             {isCrypto && <CryptoRewardsSection />}
             {isCrypto && (

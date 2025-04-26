@@ -18,10 +18,12 @@ import Fonts from '../constants/Fonts';
 import moment from 'moment';
 import useSelectorAction from '../hooks/useSelectorAction';
 import {useNavigation} from '@react-navigation/native';
+import { useTheme } from 'styles';
 
 export default function TransactionCard({item, isCrypto, isMerchent}) {
   const {walletData} = useSelectorAction();
   const navigation = useNavigation();
+  const {theme} =useTheme();
   return (
     <>
       <TouchableOpacity
@@ -104,11 +106,11 @@ export default function TransactionCard({item, isCrypto, isMerchent}) {
                   alignItems: 'center',
                   overflow: 'hidden',
                 },
-                {backgroundColor: 'rgba(255, 37, 99, 1)'},
+                {backgroundColor: theme.colors.palette.green200},
               ]}>
               <Text
                 style={{
-                  color: '#000',
+                  color:theme.colors.palette.green700,
                   fontSize: 16,
                   fontFamily: Fonts.semibold,
                 }}>

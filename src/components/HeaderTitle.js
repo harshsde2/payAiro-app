@@ -9,7 +9,7 @@ export default function HeaderTitle({
   title,
   leftIcon,
   rightIcon,
-  isBack = false,
+  isBack = true,
   onPressLeft,
   onPressRight,
   titleStyle,

@@ -129,7 +129,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ contactData, getUserData 
     };
   }, [isFocused, getContactMessages]);
 
-//   console.log("interactions-->>> ",JSON.stringify(interactions,null,2))
+  // console.log("interactions-->>> ",JSON.stringify(interactions.filter((i)=> i.type == 'nft_transaction'),null,2))
   return (
     <View style={styles.container}>
       <ChatComponent

@@ -1,8 +1,8 @@
-import React, {useEffect, useState} from 'react';
-import {View, Text, Alert, ToastAndroid, TouchableOpacity} from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, Alert, ToastAndroid, TouchableOpacity } from 'react-native';
 import Container from '../../HOC/Container';
 import PincodeKeypad from '../../components/PincodeKeypad';
-import {SvgXml} from 'react-native-svg';
+import { SvgXml } from 'react-native-svg';
 import {
   SVGDownArrow,
   SVGDownArrow3,
@@ -11,7 +11,7 @@ import {
 } from '../../constants/images';
 import Fonts from '../../constants/Fonts';
 import GenericButton from '../../components/GenericButton';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import {
   confirmPayment,
   confirmPaymentQR,
@@ -24,8 +24,8 @@ import {
 import useSelectorAction from '../../hooks/useSelectorAction';
 import moment from 'moment';
 import PincodeScreen from '../Authentications/PincodeScreen';
-import {getPin} from '../../services/Auth';
-import {SCREENS} from '../../constants/SCREENS';
+import { getPin } from '../../services/Auth';
+import { SCREENS } from '../../constants/SCREENS';
 import useDispatchAction from '../../hooks/useDispatchAction';
 import {
   setErrorMsg,
@@ -37,10 +37,16 @@ import FullScreenModal from '../../components/FullScreenModal';
 import SelectionNetwork from '../../components/SelectionNetwork';
 import SelectionTokens from '../../components/SelectedTokens';
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
+import PinScreen from 'tsx-components/modals/PinScreen';
 
 export default function ScanPay(props) {
-  const {type, sender, bank} = props?.route?.params;
-  const {tokens, isCrypto} = useSelectorAction();
+  const { type, sender, bank } = props?.route?.params;
+
+  console.log("props?.route?.params =>",props?.route?.params)
+
+  const pinScreenRef = useRef(null)
+
+  const { tokens, isCrypto } = useSelectorAction();
   const [amount, setAmount] = useState('0'); // State to store the input value
   const navigation = useNavigation();
   const [spin, setspin] = useState(false);
@@ -111,15 +117,15 @@ export default function ScanPay(props) {
       navigation.replace('TransactionSuccess', {
         data: null,
         transactionDetails: [
-          {'Transaction Id': data?.data?.transaction_id},
+          { 'Transaction Id': data?.data?.transaction_id },
           {
             'Transfer Date': moment(data?.data?.transaction_complete).format(
               'DD MMM YYYY',
             ),
           },
-          {'Transaction Status': data?.data?.transaction_status},
-          {'Requested Amount': data?.data?.transaction_amount},
-          {'Successfully Sent': data?.data?.transaction_amount},
+          { 'Transaction Status': data?.data?.transaction_status },
+          { 'Requested Amount': data?.data?.transaction_amount },
+          { 'Successfully Sent': data?.data?.transaction_amount },
         ],
       });
     } else {
@@ -144,8 +150,8 @@ export default function ScanPay(props) {
         !bank.account_type
           ? 'external'
           : bank?.account_type === 'personal'
-          ? 'bank'
-          : bank,
+            ? 'bank'
+            : bank,
       );
       console.log(payload, 'payload Datatat');
       const data = await sendPayAero(formData, tokens?.access, true);
@@ -158,10 +164,10 @@ export default function ScanPay(props) {
                 'DD MMM YYYY',
               ),
             },
-            {Sender: data?.data?.sender_username},
-            {'Receiver ID': data?.data?.recipient_username},
-            {' Amount': data?.data?.amount},
-            {'Successfully Sent': data?.data?.amount},
+            { Sender: data?.data?.sender_username },
+            { 'Receiver ID': data?.data?.recipient_username },
+            { ' Amount': data?.data?.amount },
+            { 'Successfully Sent': data?.data?.amount },
           ],
         });
       } else {
@@ -187,8 +193,8 @@ export default function ScanPay(props) {
         account_type: !bank.account_type
           ? 'external'
           : bank?.account_type === 'personal'
-          ? 'bank'
-          : bank?.account_type,
+            ? 'bank'
+            : bank?.account_type,
         receiver: sender,
       };
       console.log(payload, 'payloadssss');
@@ -207,10 +213,10 @@ export default function ScanPay(props) {
             {
               'Transaction Id': data?.data?.transaction?.transaction_id,
             },
-            {Sender: data?.data?.transaction?.sender},
-            {'Receiver ID': data?.data?.transaction?.recipient},
-            {' Amount': data?.data?.transaction?.amount},
-            {'Successfully Sent': data?.data?.transaction?.amount},
+            { Sender: data?.data?.transaction?.sender },
+            { 'Receiver ID': data?.data?.transaction?.recipient },
+            { ' Amount': data?.data?.transaction?.amount },
+            { 'Successfully Sent': data?.data?.transaction?.amount },
           ],
         });
       } else {
@@ -274,6 +280,28 @@ export default function ScanPay(props) {
     }
   };
 
+  const handleCheckPin = () => {
+    if (pinScreenRef.current) {
+      pinScreenRef.current?.checkUserPin();
+    }
+  }
+
+  const handleActionsAfterPinVerified = () => {
+    type === 'request'
+      ? sender?.requester_details
+        ? handleContactPayment()
+        : handleMercentPayment()
+      : type === 'requested'
+        ? handleRequested()
+        : type === 'merchantSend'
+          ? handleSend()
+          : type === 'receiveMerchent'
+            ? handleMercentPayment()
+            : type === 'crypto'
+              ? handleCrypto()
+              : handleSend();
+  }
+
   return (
     <Container>
       {/* Display the amount */}
@@ -310,7 +338,7 @@ export default function ScanPay(props) {
           }}
         />
       )}
-      {pinvisible && (
+      {/* {pinvisible && (
         <PincodeScreen
           isNotDecimals={true}
           onPress={async e => {
@@ -325,14 +353,14 @@ export default function ScanPay(props) {
                     ? handleContactPayment()
                     : handleMercentPayment()
                   : type === 'requested'
-                  ? handleRequested()
-                  : type === 'merchantSend'
-                  ? handleSend()
-                  : type === 'receiveMerchent'
-                  ? handleMercentPayment()
-                  : type === 'crypto'
-                  ? handleCrypto()
-                  : handleSend();
+                    ? handleRequested()
+                    : type === 'merchantSend'
+                      ? handleSend()
+                      : type === 'receiveMerchent'
+                        ? handleMercentPayment()
+                        : type === 'crypto'
+                          ? handleCrypto()
+                          : handleSend();
               } else {
                 useDispatchAction(
                   setErrorMsg(
@@ -345,7 +373,12 @@ export default function ScanPay(props) {
             // setshowPin(false);
           }}
         />
-      )}
+      )} */}
+      <PinScreen
+        ref={pinScreenRef}
+        onAction={handleActionsAfterPinVerified}
+        accountNumber={bank?.account_number}
+      />
       {!isCrypto && (
         <TouchableOpacity
           onPress={() => setisVisible2(true)}
@@ -394,13 +427,13 @@ export default function ScanPay(props) {
           alignItems: 'center',
           marginTop: 80,
         }}>
-        <Text style={{color: '#000', fontSize: 72, fontFamily: Fonts.bold}}>
+        <Text style={{ color: '#000', fontSize: 72, fontFamily: Fonts.bold }}>
           $
           {type === 'request'
             ? sender?.amount || sender?.request_details?.amount
             : type === 'merchantSend'
-            ? sender?.amount
-            : amount}
+              ? sender?.amount
+              : amount}
         </Text>
       </View>
       {!isCrypto && (
@@ -471,37 +504,38 @@ export default function ScanPay(props) {
         {type === 'receive' && (
           <GenericButton
             title={'Pay'}
-            cStyle={{width: '100%'}}
+            cStyle={{ width: '100%' }}
             onPress={() => {
               // setisVisibleBank(true);
-              setpinvisible(true);
+              // setpinvisible(true);
+              handleCheckPin()
             }}
           />
         )}
         {type === 'receiveMerchent' && (
           <GenericButton
             title={'Pay'}
-            cStyle={{width: '100%'}}
+            cStyle={{ width: '100%' }}
             onPress={() => {
               // setisVisibleBank(true);
-              setpinvisible(true);
+              handleCheckPin()
             }}
           />
         )}
         {type === 'request' && (
           <GenericButton
             title={'Pay'}
-            cStyle={{width: '100%'}}
+            cStyle={{ width: '100%' }}
             onPress={() => {
               // setisVisibleBank(true);
-              setpinvisible(true);
+              handleCheckPin()
             }}
           />
         )}
         {type === 'widthdraw' && (
           <GenericButton
             title={'Next'}
-            cStyle={{width: '100%', backgroundColor: 'grey'}}
+            cStyle={{ width: '100%', backgroundColor: 'grey' }}
             onPress={() => navigation.navigate('Widhdraw')}
           />
         )}
@@ -509,9 +543,9 @@ export default function ScanPay(props) {
         {type === 'requested' && (
           <GenericButton
             title={'Request'}
-            cStyle={{width: '100%', backgroundColor: 'grey'}}
+            cStyle={{ width: '100%', backgroundColor: 'grey' }}
             onPress={() => {
-              setpinvisible(true);
+              handleCheckPin()
             }}
           />
         )}
@@ -519,9 +553,9 @@ export default function ScanPay(props) {
         {(type === 'merchantSend' || type === 'crypto') && (
           <GenericButton
             title={'Pay'}
-            cStyle={{width: '100%'}}
+            cStyle={{ width: '100%' }}
             onPress={() => {
-              setpinvisible(true);
+              handleCheckPin()
             }}
           />
         )}

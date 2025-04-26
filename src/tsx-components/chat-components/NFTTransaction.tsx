@@ -11,28 +11,29 @@ import moment from 'moment';
 import { useNavigation, NavigationProp, ParamListBase } from '@react-navigation/native';
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 
-interface BankingTransactionProps {
+interface NFTTransactionProps {
     item?: TransactionData,
     isFromUser?: boolean,
     contact:ContactData
 }
 
 
-const BankingTransaction: FC<BankingTransactionProps> = ({
+const NFTTransaction: FC<NFTTransactionProps> = ({
     item,
     isFromUser,
     contact
 }) => {
     const { theme } = useTheme();
     const styles = createStyles(theme);
-    const { tokens, userData, walletData } = useSelectorAction();
+    const { tokens, userData, walletData,isCrypto } = useSelectorAction();
     const navigation = useNavigation<NavigationProp<ParamListBase>>();
 
     // console.log("contact =>",JSON.stringify(contact,null,2))
     let userName = isFromUser ? contact && (contact as ContactData).nickname ? (contact as ContactData).nickname : '' : 'you';
     let amount = `$ ${item?.amount}`;
+    let value = `${item?.value}`;
     let paymentStatus = {
-        success: isFromUser ? 'Paid' : 'Recieved',
+        false: isFromUser ? 'Paid' : 'Recieved',
         cancelled: 'Cancelled',
     } as any
 
@@ -41,7 +42,7 @@ const BankingTransaction: FC<BankingTransactionProps> = ({
 
     const getPaymentStatus = (status: any) => {
         switch (status) {
-            case 'success':
+            case false:
                 return <View
                         style={{ 
                             flex: 1, 
@@ -81,7 +82,7 @@ const BankingTransaction: FC<BankingTransactionProps> = ({
             </View>
                     
         }
-    }
+    } 
 
 
     return (
@@ -106,12 +107,12 @@ const BankingTransaction: FC<BankingTransactionProps> = ({
                           transactionLists: [
                             {
                               To:
-                                (item as any)?.recipient__wallet_public_key ??
+                                (item as any)?.to_address__wallet_public_key ??
                                 (item as any)?.to_wallet,
                             },
                             {
                               From:
-                                (item as any)?.sender__wallet_public_key ??
+                                (item as any)?.from_address__wallet_public_key ??
                                 (item as any)?.to_address__wallet_public_key,
                             },
                             {TxId: '1ertya34uiopchh-2345790'},
@@ -128,7 +129,7 @@ const BankingTransaction: FC<BankingTransactionProps> = ({
                 />
             </View>
             <View>
-                <CustomText size={theme.typography.fontSize.xxl} fontWeight={'medium'} >{amount}</CustomText>
+                <CustomText size={theme.typography.fontSize.xxl} fontWeight={'medium'} >{value}</CustomText>
             </View>
             <View style={{
                 flexDirection: 'row',
@@ -144,7 +145,7 @@ const BankingTransaction: FC<BankingTransactionProps> = ({
     )
 }
 
-export default BankingTransaction;
+export default NFTTransaction;
 
 const createStyles = (theme: Theme) => StyleSheet.create({
     transactionCard: {

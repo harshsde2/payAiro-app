@@ -96,7 +96,7 @@ export default function TXViewDetails(props) {
   });
   return (
     <CommonHeaderv2>
-      <HeaderTitle leftIcon={SVGLeftArrow} />
+      <HeaderTitle  leftIcon={SVGLeftArrow} />
       <View
         style={{
           flex: 1,
@@ -158,7 +158,7 @@ export default function TXViewDetails(props) {
                 fontSize: 32,
                 marginTop: 20,
               }}>
-              ${transactionLists[3]?.Amount}
+             { isCrypto ? `$${transactionLists[3]?.Amount}`:`${transactionLists[3]?.Amount}`}
             </Text>
             <GenericButton
               onPress={() =>

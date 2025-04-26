@@ -31,6 +31,7 @@ import {
   getPayRequest,
 } from '../../services/Services';
 import useSelectorAction from '../../hooks/useSelectorAction';
+import CustomPieChart from '../../components/CustomPieChart';
 
 export default function Transaction() {
   const {walletData, tokens, isCrypto} = useSelectorAction();
@@ -45,6 +46,8 @@ export default function Transaction() {
   const [activeTab2, setActiveTab2State] = useState('1');
   const [web3TxLists, setweb3TxLists] = useState([]);
   const [txListsWeb3, settxListsWeb3] = useState([]);
+  const [formattedDataTx, setformattedDataTx] = useState([]);
+  const [totalAmount, settotalAmount] = useState(0);
 
   // Dispatch action when screen is focused
   useEffect(() => {
@@ -79,12 +82,18 @@ export default function Transaction() {
   }, [activeTab2, txLists, web3TxLists]);
   const getTxLists = async () => {
     const data = await getPayAeroTx(tokens?.access);
-    console.log(data, 'Transaction Data');
+    console.log(data?.data?.category_percentages, 'Transaction Data');
+    setformattedDataTx(data?.data?.category_percentages);
+    settotalAmount(data?.data?.total_transaction_amount);
     setTxLists(
       [
         ...data?.data?.merchantTransactions,
         ...data?.data?.userToUserTransactions,
-      ].filter(i => i?.status === 'success') ?? [],
+      ].filter(i => i?.status === 'success' || i?.status === 'completed') ?? [],
+    );
+    console.log(
+      ...data?.data?.category_percentages,
+      '...data?.data?.category_percentages',
     );
   };
 
@@ -147,6 +156,16 @@ export default function Transaction() {
     setActiveTab2State(tab);
   };
 
+  const formattedData = e => {
+    const data = Object.keys(e)?.map(key => ({
+      assetType: key?.replace(/_/g, ' '),
+      percentage: e[key]?.percentage,
+      color: e[key]?.color,
+    }));
+    console.log(data, 'formated Data');
+    return data;
+  };
+
   const handleCancel = async item => {
     let data;
     const formData = new FormData();
@@ -193,7 +212,24 @@ export default function Transaction() {
               padding: 20,
               marginTop: 20,
             }}>
-            {/* Payment Requests */}
+            {isCrypto && (
+              <>
+                <Text
+                  style={{
+                    color: '#1D1D1D',
+                    fontFamily: Fonts.bold,
+                    fontSize: 20,
+                    marginVertical: 15,
+                  }}>
+                  Transaction Summary
+                </Text>
+                <CustomPieChart
+                  isTx={true}
+                  amount={totalAmount}
+                  alloCationLists={formattedData(formattedDataTx) ?? []}
+                />
+              </>
+            )}
             {isCrypto && merchentLists?.length > 0 && (
               <Text
                 style={{
@@ -223,51 +259,55 @@ export default function Transaction() {
                   onCancel={() => handleCancel(i)}
                 />
               ))}
-
             {/* Recent Transactions */}
-
-            <Text
-              style={{
-                color: '#1D1D1D',
-                fontFamily: Fonts.bold,
-                fontSize: 20,
-                marginVertical: 15,
-              }}>
-              Recent Transactions
-            </Text>
-            {isCrypto &&
-              txLists &&
-              txLists.length > 0 &&
-              txLists
-                ?.sort(
-                  (a, b) => new Date(b.created_at) - new Date(a.created_at),
-                )
-                .map((item, key) => (
-                  <View key={key}>
-                    <TransactionCard
-                      item={item}
-                      isMerchent={item?.order_id}
-                      isCrypto={item?.order_id}
-                    />
-                  </View>
-                ))}
-            {!isCrypto && web3TxLists.length > 0 ? (
-              web3TxLists
-                ?.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-                ?.map((i, k) => (
-                  <TransactionCard isCrypto={true} item={i} key={k} />
-                ))
-            ) : (
+            <View style={{paddingBottom: 160}}>
               <Text
                 style={{
+                  color: '#1D1D1D',
                   fontFamily: Fonts.bold,
-                  color: '#fff',
-                  textAlign: 'center',
-                  marginTop: 100,
+                  fontSize: 20,
+                  marginVertical: 15,
                 }}>
-                No Transaction Found
+                Recent Transactions
               </Text>
-            )}
+              {isCrypto &&
+                txLists &&
+                txLists.length > 0 &&
+                txLists
+                  ?.sort(
+                    (a, b) => new Date(b.created_at) - new Date(a.created_at),
+                  )
+                  .map((item, key) => (
+                    <View key={key}>
+                      <TransactionCard
+                        item={item}
+                        isMerchent={item?.order_id ? true : false}
+                        isCrypto={item?.order_id ? true : false}
+                      />
+                    </View>
+                  ))}
+              {!isCrypto && web3TxLists.length > 0 ? (
+                web3TxLists
+                  ?.sort((a, b) => {
+                    const dateA = new Date(a?.created_at || a?.timestamp);
+                    const dateB = new Date(b?.created_at || b?.timestamp);
+                    return dateB - dateA;
+                  })
+                  ?.map((i, k) => (
+                    <TransactionCard isCrypto={true} item={i} key={k} />
+                  ))
+              ) : (
+                <Text
+                  style={{
+                    fontFamily: Fonts.bold,
+                    color: '#fff',
+                    textAlign: 'center',
+                    marginTop: 100,
+                  }}>
+                  No Transaction Found
+                </Text>
+              )}
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

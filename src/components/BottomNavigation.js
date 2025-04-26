@@ -55,7 +55,10 @@ export default function BottomNavigation({isVer}) {
       checkCam(name);
       return;
     }
-    navigation.navigate(name);
+    navigation.reset({
+      index: 0,
+      routes: [{ name: name }], // or your screen name
+    });
   };
   const checkCam = name => {
     checkCameraPremission()

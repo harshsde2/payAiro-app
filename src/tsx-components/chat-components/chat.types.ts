@@ -12,6 +12,7 @@ export interface TransactionData {
     sender__email: string,
     recipient__email: string,
     amount: number;
+    value: number;
     status: string;
     timestamp: string;
     description: string | null;
@@ -30,7 +31,7 @@ export interface MessageData {
 }
 
 export interface Interaction {
-    type: 'crypto_transaction' | 'message' | 'nft_transactions' | 'payment_request';
+    type: 'crypto_transaction' | 'message' | 'nft_transaction' | 'payment_request';
     timestamp: string;
     data: TransactionData;
 }

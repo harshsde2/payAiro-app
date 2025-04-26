@@ -100,6 +100,7 @@ export default function TextInputField({
                 paddingLeft: 15,
                 fontFamily: Fonts.semibold,
                 width: '90%',
+                minHeight:40,
               }}
               placeholder={placeholder}
               placeholderTextColor={'#6A6A6A'}

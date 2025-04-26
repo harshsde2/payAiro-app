@@ -13,6 +13,8 @@ import CommonHeaderv2 from '../../HOC/CommonHeaderv2';
 import HeaderTitle from '../../components/HeaderTitle';
 import {SVGLeftArrow} from '../../constants/images';
 import Fonts from '../../constants/Fonts';
+import { ScreenContainer } from 'HOC';
+import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 
 const cards = [
   {
@@ -50,7 +52,7 @@ const HomeScreen = () => {
   const navigation = useNavigation();
 
   return (
-    <CommonHeaderv2>
+    <ScreenContainer padding={0} >
       <HeaderTitle title={'Rewards'} leftIcon={SVGLeftArrow} />
       <View
         style={{
@@ -102,7 +104,7 @@ const HomeScreen = () => {
               <Pressable
                 key={k}
                 style={{width: '48%', height: 200, marginTop: 15}}
-                onPress={() => navigation.navigate('ScratchCard', {card: i})}>
+                onPress={() => navigation.navigate(NAVIGATION_SCREENS.SCRATCH_CARD, {card: i})}>
                 <Image
                   source={i?.image}
                   style={{
@@ -116,7 +118,7 @@ const HomeScreen = () => {
             ))}
         </View>
       </View>
-    </CommonHeaderv2>
+    </ScreenContainer>
   );
 };
 
