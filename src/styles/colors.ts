@@ -40,6 +40,7 @@ export const baseColors = {
   grey50: '#F9FAFB',
   grey100: '#F7F7F7',
   grey200: '#E5E7EB',
+  grey250:'#D9D9D912',
   grey300: '#D1D5DB',
   grey400: '#9CA3AF',
   grey500: '#6B7280',

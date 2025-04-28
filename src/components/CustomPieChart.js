@@ -1,6 +1,6 @@
-import React, {useEffect, useMemo, useState, useCallback} from 'react';
-import {View, StyleSheet, Animated, Text} from 'react-native';
-import Svg, {G, Path, Text as SVGText} from 'react-native-svg';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { View, StyleSheet, Animated, Text } from 'react-native';
+import Svg, { G, Path, Text as SVGText } from 'react-native-svg';
 import Fonts from '../constants/Fonts';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -8,7 +8,7 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 // Helper functions moved outside component to avoid recreation
 const toRadians = angle => (Math.PI * angle) / 180;
 
-const CustomPieChart = React.memo(({allocationLists = [], isTx = false, amount = 0}) => {
+const CustomPieChart = React.memo(({ allocationLists = [], isTx = false, amount = 0 }) => {
   const [segmentAnimations, setSegmentAnimations] = useState([]);
 
   // Constants defined outside functions for better performance
@@ -57,7 +57,7 @@ const CustomPieChart = React.memo(({allocationLists = [], isTx = false, amount =
 
   const segments = useMemo(() => {
     if (filteredData.length === 0 || total === 0) return [];
-    
+
     let startAngle = -90;
     return filteredData.map(item => {
       const sliceAngle = Math.max(
@@ -87,14 +87,21 @@ const CustomPieChart = React.memo(({allocationLists = [], isTx = false, amount =
     });
   }, [filteredData, total, calculateArc, centerX, centerY, outerRadius]);
 
+  // Memoize style arrays to prevent unnecessary re-renders
+  const containerStyle = useMemo(() => [
+    styles.container,
+    { padding: isTx ? 20 : 0 },
+    { backgroundColor: isTx ? 'rgba(245, 245, 245, 0.6)' : '#000' },
+  ], [isTx]);
+
   // Create animation logic
   useEffect(() => {
     // Only create new animations if segments change
     if (segments.length === 0) return;
-    
+
     // Clean up previous animations first
     segmentAnimations.forEach(anim => anim.stopAnimation());
-    
+
     const animations = segments.map(() => new Animated.Value(0));
     setSegmentAnimations(animations);
 
@@ -139,19 +146,14 @@ const CustomPieChart = React.memo(({allocationLists = [], isTx = false, amount =
     );
   }
 
-  // Memoize style arrays to prevent unnecessary re-renders
-  const containerStyle = useMemo(() => [
-    styles.container,
-    {padding: isTx ? 20 : 0},
-    {backgroundColor: isTx ? 'rgba(245, 245, 245, 0.6)' : '#000'},
-  ], [isTx]);
 
-  
+
+
 
   return (
     <View style={containerStyle}>
       <View style={styles.chartWrapper}>
-        <Svg width={isTx ? 250 : 250}  height={isTx ? 150 : 210}>
+        <Svg width={isTx ? 250 : 250} height={isTx ? 150 : 210}>
           <G>
             {segments.map((segment, index) => {
               const animatedOpacity =
@@ -166,10 +168,10 @@ const CustomPieChart = React.memo(({allocationLists = [], isTx = false, amount =
                   d={segment.path}
                   fill={segment.color}
                   stroke="#000"
-                  x={isTx ? 0:-45}
-                  y={isTx ? 0:-45}
+                  x={isTx ? 0 : -45}
+                  y={isTx ? 0 : -45}
                   strokeWidth={isTx ? 0 : 2}
-                  style={{opacity: animatedOpacity}}
+                  style={{ opacity: animatedOpacity }}
                 />
               );
             })}
@@ -192,13 +194,13 @@ const CustomPieChart = React.memo(({allocationLists = [], isTx = false, amount =
           )}
           {allocationLists.map((item, index) => {
             // Memoize color style to avoid recreating objects
-            const colorStyle = {backgroundColor: item.color};
+            const colorStyle = { backgroundColor: item.color };
             const textStyle = {
               ...styles.legendText,
               color: isTx ? '#000' : '#fff',
               fontSize: 10,
             };
-            
+
             return (
               <View key={`legend-${index}`} style={styles.legendRow}>
                 <View style={[styles.colorBox, colorStyle]} />

@@ -192,6 +192,7 @@ export default function Transaction() {
       }
     }
   };
+  console.log('formattedDataTx =>',formattedDataTx)
   return (
     <Container>
       <BottomNavigation />

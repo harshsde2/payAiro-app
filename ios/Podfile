@@ -17,6 +17,7 @@
  node_require('react-native/scripts/react_native_pods.rb')
  node_require('react-native-permissions/scripts/setup.rb')
 platform :ios, min_ios_version_supported
+use_modular_headers!
 prepare_react_native_project!
 
 setup_permissions([
@@ -49,7 +50,7 @@ end
 
 target 'payAiro' do
   config = use_native_modules!
-
+  # use_frameworks! :linkage => :static
   use_react_native!(
     :path => config[:reactNativePath],
     # An absolute path to your application root.
