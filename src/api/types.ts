@@ -41,16 +41,16 @@ export interface CryptoWallet {
   address: string;
 }
 
-// Transaction interfaces
-export interface Transaction {
-  id: string;
-  amount: number;
-  status: string;
-  timestamp: string;
-  sender?: string;
-  receiver?: string;
-  transactionType?: string;
-}
+// // Transaction interfaces
+// export interface Transaction {
+//   id: string;
+//   amount: number;
+//   status: string;
+//   timestamp: string;
+//   sender?: string;
+//   receiver?: string;
+//   transactionType?: string;
+// }
 
 // Auth interfaces
 export interface Tokens {
@@ -94,3 +94,51 @@ export interface CryptoAsset {
   disbursable: number;
   pending: number;
 } 
+
+export type Transaction = {
+  sender__wallet_public_key: string;
+  recipient__wallet_public_key: string;
+  amount: number;
+  status: string;
+  timestamp: string; // Could be Date if you want to work with Date objects
+  description: string | null;
+};
+
+export type Message = {
+  id: number;
+  sender_email: string;
+  recipient_email: string;
+  content: string;
+  timestamp: string; // Could also be Date if you'd prefer
+  is_read: boolean;
+};
+
+export type NFTTransaction = {
+  tx_hash: string;
+  from_address: string;
+  to_address: string;
+  value: number;
+  timestamp: string;
+  usd_value: number | null;
+  token: string;
+  web3: boolean;
+  from_wallet: string;
+  to_wallet: string;
+};
+
+export type RecentContact = {
+  uuid: string;
+  mobileno: string;
+  email: string;
+  wallet_address: string;
+  nickname: string;
+  username: string;
+  profile_photo: string | null;
+  transactions: Transaction;
+  pending_requests: any[]; // Assuming it's an array, you can adjust the type as needed
+  messages: Message;
+  nft_transactions: NFTTransaction[];
+  unread_count: number;
+};
+
+

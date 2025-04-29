@@ -24,6 +24,7 @@ import QRCode from 'react-native-qrcode-svg';
 import Fonts from '../../constants/Fonts';
 import Share from 'react-native-share';
 import ViewShot from 'react-native-view-shot';
+import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 
 export default function Receive() {
   const navigation = useNavigation();
@@ -138,8 +139,9 @@ export default function Receive() {
           marginHorizontal: 20,
         }}
         onPress={() =>
-          navigation.navigate(SCREENS.Send, {
+          navigation.navigate(NAVIGATION_SCREENS.SEND, {
             requested: true,
+            type: 'requested',
           })
         }
       />

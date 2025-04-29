@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,8 @@ import HeaderTitle from '../../components/HeaderTitle';
 import Fonts from '../../constants/Fonts';
 import TransactionCard from '../../components/TransactionCard';
 import RequestPayCard from '../../components/RequestPayCard';
-import {SCREENS} from '../../constants/SCREENS';
-import {useIsFocused, useNavigation} from '@react-navigation/native';
+import { SCREENS } from '../../constants/SCREENS';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import useDispatchAction from '../../hooks/useDispatchAction';
 import {
   setActiveTab,
@@ -32,9 +32,11 @@ import {
 } from '../../services/Services';
 import useSelectorAction from '../../hooks/useSelectorAction';
 import CustomPieChart from '../../components/CustomPieChart';
+import { ScreenContainer } from 'HOC';
+import { themes, useTheme } from 'styles';
 
 export default function Transaction() {
-  const {walletData, tokens, isCrypto} = useSelectorAction();
+  const { walletData, tokens, isCrypto } = useSelectorAction();
   const navigation = useNavigation();
   const isFocused = useIsFocused();
 
@@ -48,6 +50,8 @@ export default function Transaction() {
   const [txListsWeb3, settxListsWeb3] = useState([]);
   const [formattedDataTx, setformattedDataTx] = useState([]);
   const [totalAmount, settotalAmount] = useState(0);
+
+  const { theme } = useTheme();
 
   // Dispatch action when screen is focused
   useEffect(() => {
@@ -110,17 +114,17 @@ export default function Transaction() {
 
     const merchant_transactions =
       data?.data?.merchant_transactions?.transactions?.map(i => {
-        return {...i, type: 'merchant_transactions'};
+        return { ...i, type: 'merchant_transactions' };
       });
 
     const received_pending_requests =
       data?.data?.user_to_user_requests?.received_pending_requests?.map(i => {
-        return {...i, type: 'received_pending_requests'};
+        return { ...i, type: 'received_pending_requests' };
       });
 
     const sent_pending_requests =
       data?.data?.user_to_user_requests?.sent_pending_requests?.map(i => {
-        return {...i, type: 'sent_pending_requests'};
+        return { ...i, type: 'sent_pending_requests' };
       });
     console.log(
       [
@@ -192,17 +196,17 @@ export default function Transaction() {
       }
     }
   };
-  console.log('formattedDataTx =>',formattedDataTx)
+  console.log('formattedDataTx =>', formattedDataTx)
   return (
-    <Container>
+    <ScreenContainer padding={0} backgroundColor={theme.colors.background.primary}>
       <BottomNavigation />
 
       <KeyboardAvoidingView
-        style={{flex: 1}}
+        style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{flexGrow: 1}}>
+          contentContainerStyle={{ flexGrow: 1 }}>
           <HeaderTitle title={'Transactions'} />
           <View
             style={{
@@ -261,7 +265,7 @@ export default function Transaction() {
                 />
               ))}
             {/* Recent Transactions */}
-            <View style={{paddingBottom: 160}}>
+            <View style={{ paddingBottom: 160 }}>
               <Text
                 style={{
                   color: '#1D1D1D',
@@ -312,6 +316,6 @@ export default function Transaction() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </Container>
+    </ScreenContainer>
   );
 }

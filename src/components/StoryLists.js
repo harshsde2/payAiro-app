@@ -11,61 +11,72 @@ import Fonts from '../constants/Fonts';
 import { useNavigation } from '@react-navigation/native';
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 import { themes, useTheme } from 'styles';
+import { CustomText } from 'tsx-components';
 
 const CircleItem = ({ item, navigation, isVisble3 }) => {
   const { theme } = useTheme();
-  
-  return(
-  
-<TouchableOpacity
-  style={styles.circleContainer}
-  onPress={() =>
-    navigation.navigate(NAVIGATION_SCREENS.CONTACT_TX, {
-      item: item ?? null,
-      isVisble3,
-    })
-  }>
-  {/* {console.log(item?.pending_requests, 'oendingrerer')} */}
-  <View style={[styles.circle, { backgroundColor: theme.colors.palette.green200 }]}>
-    {item?.pending_requests && item?.pending_requests?.length > 0 && (
-      <View
-        style={{
-          width: 20,
-          height: 20,
-          borderRadius: 35,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: 'blue',
-          position: 'absolute',
-          top: 10,
-          right: -5,
-          zIndex: 999999,
-        }}>
-        <Text
-          style={{
-            color: theme.colors.palette.green700,
-            fontFamily: Fonts.semibold,
-            textAlign: 'center',
-            fontSize: 12,
-            // paddingBottom: 5,
-          }}>
-          {item?.pending_requests?.length ?? 0}
-        </Text>
-      </View>
-    )}
+  // console.log("item =>",JSON.stringify(item,null,2))
+  return (
+    <View style={{}}>
+      <TouchableOpacity
+        style={styles.circleContainer}
+        onPress={() =>
+          navigation.navigate(NAVIGATION_SCREENS.CONTACT_TX, {
+            item: item ?? null,
+            isVisble3,
+          })
+        }>
+        <View style={[styles.circle, { backgroundColor: theme.colors.palette.green200 }]}>
+          {item?.pending_requests && item?.pending_requests?.length > 0 && (
+            <View
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: 35,
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: 'blue',
+                position: 'absolute',
+                top: 10,
+                right: -5,
+                zIndex: 999999,
+              }}>
+              <Text
+                style={{
+                  color: theme.colors.palette.green700,
+                  fontFamily: Fonts.semibold,
+                  textAlign: 'center',
+                  fontSize: 12,
+                  // paddingBottom: 5,
+                }}>
+                {item?.pending_requests?.length ?? 0}
+              </Text>
+            </View>
+          )}
 
-    {item?.image ? (
-      <Image source={{ uri: item?.image }} style={styles.image} />
-    ) : (
-      <Text style={styles.initials}>
-        {item?.nickname?.charAt(0)?.toUpperCase() +
-          item?.nickname?.charAt(1)?.toUpperCase()}
-      </Text>
-    )}
-  </View>
-  <Text style={styles.name}>{item?.nickname ?? item?.username}</Text>
-</TouchableOpacity>
-)};
+          {item?.image ? (
+            <Image source={{ uri: item?.image }} style={styles.image} />
+          ) : (
+            <Text style={styles.initials}>
+              {item?.nickname?.charAt(0)?.toUpperCase() +
+                item?.nickname?.charAt(1)?.toUpperCase()}
+            </Text>
+          )}
+        </View>
+        <Text style={styles.name}>{item?.nickname ?? item?.username}</Text>
+      </TouchableOpacity>
+      {item?.unread_count > 0 && (
+        <View style={styles.unreadBadge}>
+          <CustomText
+            variant="caption"
+            color={theme.colors.text.inverse}>
+            {item.unread_count}
+          </CustomText>
+        </View>
+      )}
+    </View>
+  )
+};
 
 export default function StoryLists({ data, isVisble3 }) {
   const navigation = useNavigation();
@@ -116,6 +127,17 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     // overflow: 'hidden',
+  },
+  unreadBadge: {
+    backgroundColor: themes.light.colors.palette.green700,
+    width: 20,
+    height: 20,
+    position:'absolute',
+    top:5,
+    right:5,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   initials: {
     color: themes.light.colors.palette.green700,

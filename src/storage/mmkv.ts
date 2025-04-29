@@ -30,4 +30,6 @@ export const STORAGE_KEYS = {
   WALLET_DATA: 'wallet_data',
   BIOMETRIC_AVAILABLE: 'biometric_available',
   THEME_PREFERENCE: 'theme_preference',
+  CONTACTS: 'contacts_data', // Add the key for contacts
+  RECENT_CONTACTS:'recent_contacts_data'
 }; 

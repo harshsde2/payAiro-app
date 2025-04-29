@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, ActivityIndicator, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { SvgXml } from 'react-native-svg';
-import { ChatAdapter } from './ChatAdapter';
 import { getContactListsForAll, sendMessage as apiSendMessage } from '../services/Services';
 import { useTheme } from '../styles/ThemeContext';
 import { SVGSend2, SVGInfo, SVGReceived, SVGSent, SVGRequested, SVGCanceled } from '../constants/images';
@@ -208,7 +207,6 @@ const CustomChatComponent: React.FC<CustomChatComponentProps> = ({
     mountedRef.current = true;
     
     // Initialize the adapter
-    ChatAdapter.init(currentUser, token);
     
     // Start polling for messages
     if (isFocused) {

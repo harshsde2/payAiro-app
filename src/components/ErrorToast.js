@@ -23,7 +23,7 @@ export default function ErrorToast() {
       style={{
         backgroundColor: errorMsg ? 'red' : 'green',
         position: 'absolute',
-        top: 10,
+        top: 30,
         zIndex: 99999,
         width: '90%',
         alignSelf: 'center',
@@ -37,13 +37,13 @@ export default function ErrorToast() {
       <CustomText
         variant={'body1'}
         color={theme.theme.colors.palette.white}
-        // style={{
-        //   color: 'white',
-        //   fontFamily: Fonts.bold,
-        //   width: '80%',
-        //   fontSize: 13,
-        //   marginBottom: 3,
-        // }}
+        style={{
+          color: 'white',
+          // fontFamily: Fonts.bold,
+          width: '80%',
+          // fontSize: 13,
+          // marginBottom: 3,
+        }}
         >
         {errorMsg || successMsg}
       </CustomText>

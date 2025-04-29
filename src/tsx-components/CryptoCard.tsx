@@ -5,7 +5,7 @@ import { useTheme } from '../styles/ThemeContext';
 import Card from './Card';
 import CustomText from './CustomText';
 import { colors, fontFamily, fontSize, fontWeight } from 'styles';
-import { PayAiro_Green_logo, PayAiro_White_logo, SVGCopy2, SVGCopy3, SVGDownArrow3, SVGLogo2, SVGLogo3 } from 'constants/images';
+import { PayAiro_Green_logo, PayAiro_White_logo, SVGCopy2, SVGCopy3, SVGDoubleChevronGreen, SVGDoubleChevronWhite, SVGDownArrow3, SVGLogo2, SVGLogo3, SVGPayairoAccountText, SVGPayAirofadeLogo, SVGPayAiroPatternCard, SVGScurityfadeLogo, SVGSecurityAccountText, SVGSecurityPatternCard } from 'constants/images';
 import { Text } from 'react-native-gesture-handler';
 import useDispatchAction from 'hooks/useDispatchAction';
 import Slide from 'animations/animations-components/Slide';
@@ -116,7 +116,7 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
   const [parentLayout, setParentLayout] = useState<LayoutRectangle | null>(null);
   const [logoFadeVisible, setLogoFadeVisible] = useState(true);
   const [logoSwitch, setLogoSwitch] = useState(true);
-  const [cardBackgroundColor, setCardBackgroundColor] = useState(theme.colors.palette.green700);
+  const [cardBackgroundColor, setCardBackgroundColor] = useState(theme.colors.palette.white);
   const [userDetails, setUserDetails] = useState(ACCOUNTS.PAYAIRO as any);
   const [expandAnimationComplete, setExpandAnimationComplete] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -150,7 +150,7 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
   };
 
   const handleSwitch = () => {
-    
+
     if (isAnimating) return; // Prevent multiple clicks during animation
 
     onSwitchView()
@@ -171,9 +171,9 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
     if (isCrypto) {
       // Switching from PayAiro to Crypto
       switchToCrypto();
-      setTimeout(()=>{
+      setTimeout(() => {
         useDispatchAction(setisCrypto(!isCrypto));
-      },ANIMATION_CONSTANTS.EXPANDABLE_CARD.DURATION)
+      }, ANIMATION_CONSTANTS.EXPANDABLE_CARD.DURATION)
 
     } else {
 
@@ -295,16 +295,16 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
         />
       </View>
       <GhostSlide
-          visible={ghostSlideVisible}
-          direction="custom"
-          duration={2500}
-          distance={1000}
-          customX={-100}
-          customY={400}
-          ghostOpacity={1}
-          onAnimationComplete={() => console.log('Ghost slide completed')}
-        >
-      {renderCurrencySelector()}
+        visible={ghostSlideVisible}
+        direction="custom"
+        duration={2500}
+        distance={1000}
+        customX={-100}
+        customY={400}
+        ghostOpacity={1}
+        onAnimationComplete={() => console.log('Ghost slide completed')}
+      >
+        {renderCurrencySelector()}
       </GhostSlide>
     </View>
   );
@@ -347,19 +347,20 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
   );
 
   const renderBalanceInfo = () => (
-    <View style={[styles.leftContent, { padding: theme.spacing.spacing.sm }]}>
+    <View style={[styles.leftContent, { padding: theme.spacing.spacing.sm, }]}>
       <CustomText
         variant="subtitle2"
         color={isCrypto ? theme.colors.palette.white : theme.colors.text.primary}
-        style={[styles.balanceTitle, { marginBottom: theme.spacing.spacing.sm }]}
+        style={[styles.balanceTitle, { marginBottom: theme.spacing.spacing[0] }]}
         fontFamily={theme.typography.fontFamily.montserrat}
         fontWeight={'regular'}
       >
         {userDetails.balanceName}
       </CustomText>
 
+
       {renderCryptoBalance()}
-      {renderPendingAmount()}
+      {/* {renderPendingAmount()} */}
       {renderIdentifierInfo()}
     </View>
   );
@@ -414,7 +415,7 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
 
   const renderPendingAmount = () => (
     <CustomText
-      color={(pendingAmount !== undefined && !isCrypto) ?  "red" : theme.colors.palette.green700}
+      color={(pendingAmount !== undefined && !isCrypto) ? "red" : theme.colors.palette.white}
       variant="caption"
       style={[styles.pendingAmount, { marginBottom: theme.spacing.spacing.md }]}
     >
@@ -426,7 +427,7 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
     identifierType && (
       <>
         <CustomText
-          color={isCrypto ? theme.colors.palette.white : theme.colors.text.primary}
+          color={ theme.colors.palette.white}
           fontFamily={theme.typography.fontFamily.montserrat}
           style={{
             fontSize: theme.typography.fontSize.sm,
@@ -440,9 +441,9 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
         <View style={styles.identifierRow}>
           <CustomText
             // variant="body2"
-            color={isCrypto ? theme.colors.palette.white : theme.colors.text.primary}
+            color={ theme.colors.palette.white}
             numberOfLines={1}
-            style={[styles.identifier,{
+            style={[styles.identifier, {
               fontSize: theme.typography.fontSize.xs,
               fontWeight: "300"
             }]}
@@ -451,7 +452,7 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
           </CustomText>
 
           {onCopy && (
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => {
                 if (identifier) {
                   copyToClipboard(identifier);
@@ -490,8 +491,8 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
               style={{ margin: 10 }}
               width={ANIMATION_CONSTANTS.LOGO_SIZE.WIDTH}
               height={ANIMATION_CONSTANTS.LOGO_SIZE.HEIGHT}
-              onPress={()=>{ 
-                if(!isAnimating){
+              onPress={() => {
+                if (!isAnimating) {
                   handleSwitch()
                 }
               }}
@@ -501,8 +502,8 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
             <SvgXml
               xml={PayAiro_White_logo}
               style={{ margin: 10 }}
-              onPress={()=>{ 
-                if(!isAnimating){
+              onPress={() => {
+                if (!isAnimating) {
                   handleSwitch()
                 }
               }}
@@ -600,10 +601,43 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
         onLayout={handleCardLayout}
         style={styles.mainCard}
       >
-        <View style={styles.cardContent}>
-          {renderBalanceInfo()}
-          {renderLogoSection()}
-          {renderExpandableCard()}
+        <View style={{ flex: 1 }}>
+          <SvgXml
+            xml={isCrypto ? SVGPayAiroPatternCard : SVGSecurityPatternCard}
+            width={'100%'}
+            height={170}
+            style={{ position: 'absolute', left: -55, top: -10 }}
+          />
+          <SvgXml
+            xml={isCrypto ? SVGDoubleChevronGreen : SVGDoubleChevronWhite}
+            width={30}
+            height={30}
+            style={{ position: 'absolute',right:80,top:60}}
+            onPress={()=>{
+              setCardBackgroundColor(isCrypto ? theme.colors.palette.green700 : theme.colors.palette.white)
+              setUserDetails(!isCrypto ? ACCOUNTS.CRYPTO : ACCOUNTS.PAYAIRO);
+              useDispatchAction(setisCrypto(!isCrypto));
+            }}
+          />
+          
+          <SvgXml 
+           xml={isCrypto ? SVGScurityfadeLogo : SVGPayAirofadeLogo}
+           width={70}
+           height={70}
+           style={{ position: 'absolute',right:5,top:80}}
+          />
+          <SvgXml 
+           xml={ isCrypto ? SVGSecurityAccountText : SVGPayairoAccountText}
+           width={70}
+           height={70}
+           style={{ position: 'absolute',right:10,top:-15}}
+          />
+
+          <View style={styles.cardContent}>
+            {renderBalanceInfo()}
+            {/* {renderLogoSection()} */}
+            {/* {renderExpandableCard()} */}
+          </View>
         </View>
       </Card>
       {/* </GhostSlide> */}
@@ -626,6 +660,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     alignItems: 'center',
     // paddingVertical: theme?.spacing?.spacing?.sm,
     width: '100%',
+    marginLeft:-5
     // backgroundColor:'red'
   },
   contentContainer: {
@@ -635,6 +670,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   leftContent: {
     width: '70%', // Reduced width to ensure space for logo
+    height:150
   },
 
   // Header styles
@@ -663,7 +699,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme?.spacing?.spacing?.xs,
+    marginBottom: theme?.spacing?.spacing[10],
     paddingRight: 10, // Ensure space from logo
     width: '100%', // Take full width
     // backgroundColor:'blue'
@@ -695,7 +731,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   identifier: {
     // width: '80%',
-    marginRight:20
+    marginRight: 20
   },
 
   // Logo styles

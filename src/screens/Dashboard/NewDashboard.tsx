@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useRef, useMemo, Suspense, lazy } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, Pressable, ActivityIndicator, useWindowDimensions, Button, Modal, TextInput, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, Pressable, ActivityIndicator, useWindowDimensions, Button, Modal, TextInput, RefreshControl, BackHandler } from 'react-native';
 import ThemeUsageExample from '../../styles/ThemeUsageExample';
 // Import from the module alias utility
 import { DashboardHeader, CryptoCard, FontTest, Card, CustomText } from '../../utils/moduleAlias';
@@ -430,6 +430,14 @@ const NewDashboard = () => {
   }, [tokens?.access]);
 
 
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      console.log('Back button pressed');
+      return false; // Let it behave normally
+    });
+  
+    return () => backHandler.remove();
+  }, []);
 
   // Separate effect for Plaid token which changes independently
   useEffect(() => {
@@ -507,11 +515,11 @@ const NewDashboard = () => {
   }
 
   const handleReward = async () => {
-    console.log("ashdhas. =>")
+    // console.log("ashdhas. =>")
     try {
       const data = await rewardsApi.execute(tokens?.access);
 
-      console.log(data, 'datatatatatat');
+      // console.log(data, 'datatatatatat');
       if (data && data?.data?.length > 0) {
         setisRewardModalVisible(!data?.data[0]?.redeem);
         const redeem = await redeemReward(
@@ -1318,12 +1326,12 @@ const NewDashboard = () => {
         // isCrypto &&
         <View style={{
           zIndex: 100,
-          width: '92%',
+          width: '100%',
           alignSelf: 'center',
           backgroundColor: 'black',
           borderRadius: 20,
           position: 'absolute',
-          bottom: 20,
+          bottom: -15,
         }}>
           <GhostSlide
             visible={isCrypto}
@@ -1336,7 +1344,7 @@ const NewDashboard = () => {
             onAnimationComplete={() => console.log('Ghost slide completed')}
           >
             <View style={{
-              padding: 10,
+              paddingVertical: 10,
               backgroundColor: 'black',
               borderRadius: 20,
               position: 'absolute',

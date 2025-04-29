@@ -48,7 +48,7 @@ const PinScreen =  forwardRef<PinScreenRef,PinScreenProps>(({
 
     // const [hiddenBalances, setHiddenBalances] = useState<Record<string, boolean>>({});
 
-    console.log("account number =>",accountNumber)
+    // console.log("account number =>",accountNumber)
     
       // Expose the toggleCardSize function through the ref
   useImperativeHandle(ref, () => ({

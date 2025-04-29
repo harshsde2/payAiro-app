@@ -74,7 +74,7 @@ export default function HeaderTitle({
 const styles = (theme) => StyleSheet.create({
   headerContainer: {
     // paddingTop: Platform.OS === 'ios' ? 60 : 30,
-    paddingBottom: 12,
+    // paddingBottom: 5,
     backgroundColor: 'transparent',
     width: '100%',
     zIndex: 10,

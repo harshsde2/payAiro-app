@@ -22,6 +22,7 @@ import useSelectorAction from '../../hooks/useSelectorAction';
 import useDispatchAction from '../../hooks/useDispatchAction';
 import { setErrorMsg, setSuccessMsg } from '../../redux/slices/authenticationSlice';
 import { useTheme } from '../../styles/ThemeContext';
+import { getItem, setItem, STORAGE_KEYS } from 'storage/mmkv';
 
 export default function AddContact() {
   // Hooks
@@ -130,7 +131,9 @@ export default function AddContact() {
       
       const response = await addContact(payload, tokens?.access);
       
+      console.log(' add contact response =>',JSON.stringify(response,null,2))
       if (response && response?.status) {
+        handleAddContactToCache(response?.data);
         useDispatchAction(setSuccessMsg('Contact added successfully'));
         navigation.navigate(SCREENS.Dashboard);
       } else {
@@ -158,6 +161,31 @@ export default function AddContact() {
     return Object.keys(errors).length === 0;
   }, [formData, errors]);
 
+
+  const handleAddContactToCache = (newMessage) => {
+    try {
+      const storedData = getItem(STORAGE_KEYS.RECENT_CONTACTS);
+      let cachedContacts = [];
+  
+      if (storedData) {
+        try {
+          cachedContacts = JSON.parse(storedData);
+          if (!Array.isArray(cachedContacts)) {
+            cachedContacts = [];
+          }
+        } catch (e) {
+          console.warn('Failed to parse cached contacts:', e);
+          cachedContacts = [];
+        }
+      }
+  
+      const updatedData = [...cachedContacts, newMessage];
+      setItem(STORAGE_KEYS.RECENT_CONTACTS, JSON.stringify(updatedData));
+    } catch (e) {
+      console.error('error in add contact to storage:', e);
+    }
+  };
+  
   return (
     <ScreenContainer padding={0} backgroundColor={theme.colors.palette.green50}>
       <HeaderTitle 

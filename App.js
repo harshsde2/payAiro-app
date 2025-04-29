@@ -12,6 +12,7 @@ import {
 } from './src/services/Auth';
 import useDispatchAction from './src/hooks/useDispatchAction';
 import {
+  setActiveTab,
   setBiometricAvailable,
   setFcmToken,
   setGuides,
@@ -21,7 +22,7 @@ import {
   setUserData,
   setWalletData,
 } from './src/redux/slices/authenticationSlice';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { getMechentPay, getWallet } from './src/services/Services';
 import ErrorToast from './src/components/ErrorToast';
 import SplashScreen from './src/screens/Authentications/SplashScreen';
@@ -32,11 +33,14 @@ import { QueryProvider } from './src/query/index';
 import { setItem, STORAGE_KEYS } from './src/storage/mmkv';
 import { ThemeProvider } from './src/styles';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { NAVIGATION_SCREENS } from './src/navigations/navigationConstants';
 
 export default function App() {
   // -------------------- Redux State --------------------
   const { isLogin, tokens, errorMsg, successMsg, biometricAvailable } =
     useSelector(state => state.authenticationSlice);
+
+  const dispatch = useDispatch();
 
   // -------------------- Local State --------------------
   const [appState, setAppState] = useState(AppState.currentState);
@@ -188,7 +192,7 @@ export default function App() {
   const requestPermission = async () => {
     const authorizationStatus = await messaging().requestPermission();
     if (authorizationStatus === messaging.AuthorizationStatus.AUTHORIZED) {
-      console.log('FCM permission granted');
+      // console.log('FCM permission granted');
     } else {
       console.log('FCM permission denied');
     }
@@ -241,13 +245,42 @@ export default function App() {
     return <SplashScreen />;
   }
 
-  console.log("isLogin =>",isLogin)
+  // console.log("isLogin =>", isLogin)
   // Render main app navigation
   return (
     <SafeAreaProvider>
       <ThemeProvider>
         <QueryProvider>
-          <NavigationContainer>
+          <NavigationContainer
+            onStateChange={(state) => {
+              const currentRoute = state.routes[state.index];
+              console.log('Current Screen:', currentRoute.name);
+              let activeTabs = '1'; // Default to home (or whichever default)
+
+              switch (currentRoute.name) {
+                case NAVIGATION_SCREENS.NEW_DASHBOARD:
+                  activeTabs = '1';
+                  break;
+                case NAVIGATION_SCREENS.TRANSACTION:
+                  activeTabs = '2';
+                  break;
+                case NAVIGATION_SCREENS.SCANS:
+                  activeTabs = '3';
+                  break;
+                case NAVIGATION_SCREENS.REWARDS:
+                  activeTabs = '4';
+                  break;
+                case NAVIGATION_SCREENS.SETTING_SCREEN:
+                  activeTabs = '5';
+                  break;
+                default:
+                  activeTabs = '1'; // Default to home
+              }
+
+              // Dispatch to update Redux store
+              dispatch(setActiveTab(activeTabs));
+            }}
+          >
             {errorMsg || successMsg ? <ErrorToast /> : null}
             {!isLogin ? <AuthStack /> : <AppStack />}
           </NavigationContainer>

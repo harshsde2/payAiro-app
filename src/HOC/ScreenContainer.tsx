@@ -91,6 +91,7 @@ const ScreenContainer: React.FC<ScreenContainerProps> = ({
   // Add scroll functionality if enabled
   const scrollContent = scrollable ? (
     <ScrollView 
+      nestedScrollEnabled
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
     >
