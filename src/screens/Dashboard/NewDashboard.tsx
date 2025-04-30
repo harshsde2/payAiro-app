@@ -1333,7 +1333,7 @@ const NewDashboard = () => {
           position: 'absolute',
           bottom: -15,
         }}>
-          <GhostSlide
+          {/* <GhostSlide
             visible={isCrypto}
             direction="custom"
             duration={2500}
@@ -1342,7 +1342,7 @@ const NewDashboard = () => {
             customY={-400}
             ghostOpacity={1}
             onAnimationComplete={() => console.log('Ghost slide completed')}
-          >
+          > */}
             <View style={{
               paddingVertical: 10,
               backgroundColor: 'black',
@@ -1355,7 +1355,7 @@ const NewDashboard = () => {
             }}>
               <BottomNavigation isVer={true} />
             </View>
-          </GhostSlide>
+          {/* </GhostSlide> */}
         </View>
       }
 
