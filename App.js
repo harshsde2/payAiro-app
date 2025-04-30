@@ -166,26 +166,32 @@ export default function App() {
   // -------------------- Push Notifications --------------------
   // Set up notification listener when component mounts
   useEffect(() => {
-    const unsubscribe = messaging().onMessage(async remoteMessage => {
-      onDisplayNotification(remoteMessage);
-    });
+    if (Platform.OS == 'android') {
 
-    requestPermission();
+      const unsubscribe = messaging().onMessage(async remoteMessage => {
+        onDisplayNotification(remoteMessage);
+      });
 
-    return unsubscribe;
+      requestPermission();
+
+      return unsubscribe;
+    }
   }, []);
 
   // Request notification permissions and get FCM token
   React.useEffect(() => {
-    getFCMToken();
+    if (Platform.OS == 'android') {
 
-    const unsubscribe = messaging().onMessage(async remoteMessage => {
-      onDisplayNotification(remoteMessage);
-    });
+      getFCMToken();
 
-    requestPermission();
+      const unsubscribe = messaging().onMessage(async remoteMessage => {
+        onDisplayNotification(remoteMessage);
+      });
 
-    return unsubscribe;
+      requestPermission();
+
+      return unsubscribe;
+    }
   }, []);
 
   // Request notification permissions

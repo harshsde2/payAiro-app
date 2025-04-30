@@ -1,4 +1,4 @@
-import { View, Text, Modal, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { View, Text, Modal, TouchableOpacity,SafeAreaView, ActivityIndicator } from 'react-native'
 import React, { FC, forwardRef, useImperativeHandle, useState } from 'react'
 import { PinScreenProps, PinScreenRef } from './modal.types'
 import { useTheme } from 'styles'
@@ -180,11 +180,12 @@ const PinScreen =  forwardRef<PinScreenRef,PinScreenProps>(({
             transparent={true}
             visible={isPinModalVisible}
             onRequestClose={() => setIsPinModalVisible(false)}
+           
         >
             {errorMsg || successMsg ? <ErrorToast /> : null}
-            <View style={{
+            <SafeAreaView style={{
                 flex: 1,
-                backgroundColor: '#FFFFFF'
+                backgroundColor: '#FFFFFF',
             }}>
                 {/* { errorMsg && <CustomText color={theme.colors.palette.red500}>Error</CustomText>} */}
                 {/* Header with bank name and logo */}
@@ -464,7 +465,7 @@ const PinScreen =  forwardRef<PinScreenRef,PinScreenProps>(({
                         </View>
                     </View>
                 </View>
-            </View>
+            </SafeAreaView>
         </Modal>
     )
 })
