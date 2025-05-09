@@ -92,6 +92,7 @@ const createStyles = (theme: Theme) =>
       paddingHorizontal: 16,
       height: 50,
       marginVertical: 10,
+      flex:1
     },
     input: {
       flex: 1,

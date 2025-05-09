@@ -273,7 +273,7 @@ export default function App() {
                 case NAVIGATION_SCREENS.SCANS:
                   activeTabs = '3';
                   break;
-                case NAVIGATION_SCREENS.REWARDS:
+                case NAVIGATION_SCREENS.TRUSTED_CIRCLE:
                   activeTabs = '4';
                   break;
                 case NAVIGATION_SCREENS.SETTING_SCREEN:

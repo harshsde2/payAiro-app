@@ -74,5 +74,7 @@ export const NAVIGATION_SCREENS = {
   WITHDRAW_SCREEN: 'WithdrawScreen',
   INTRA_ACCOUNT_TRANSFER: 'IntraAccountTransfer',
   BUY: 'Buy',
-  DETAILS_CRYPTO_SCREEN: 'DetailsCryptoScreen'
+  DETAILS_CRYPTO_SCREEN: 'DetailsCryptoScreen',
+  MX_CONNECT_WIDGET_SCREEN:'MXConnectWidgetScreen',
+  TRUSTED_CIRCLE:'TrustedCircle',
 }; 

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ScrollView,
   View,
@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   Platform,
   BackHandler,
+  FlatList,
+  Dimensions,
 } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
@@ -30,10 +32,25 @@ import { FINANCE_LISTS } from '../../constants/constant';
 import { useTheme } from '../../styles/ThemeContext';
 
 const BankDetails = props => {
+
+  const { width } = Dimensions.get('window');
+
   const { item, bankbalance } = props.route.params;
   const navigation = useNavigation();
   const { theme } = useTheme();
-  
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const handleScroll = (event) => {
+    const scrollX = event.nativeEvent.contentOffset.x;
+    const index = Math.round(scrollX / Dimensions.get('window').width);
+    setCurrentIndex(index);
+  };
+
+
+
+  console.log("item =>", JSON.stringify(item, null, 2))
+
   // Handle back navigation
   const handleGoBack = useCallback(() => {
     try {
@@ -47,7 +64,7 @@ const BankDetails = props => {
       console.log('Navigation error:', err);
     }
   }, [navigation]);
-  
+
   // Handle hardware back button
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
@@ -71,6 +88,8 @@ const BankDetails = props => {
     }
   }, [navigation]);
 
+  const data = [item,item,item]
+
   return (
     <ScreenContainer padding={0} backgroundColor={theme.colors.palette.green50}>
       <KeyboardAvoidingView
@@ -79,21 +98,55 @@ const BankDetails = props => {
         <ScrollView
           nestedScrollEnabled={true}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles(theme).scrollContent}>
-          <HeaderTitle 
+
+          contentContainerStyle={[styles(theme).scrollContent,]}>
+          <HeaderTitle
             title="Finance"
-            leftIcon={SVGLeftArrow} 
+            leftIcon={SVGLeftArrow}
             isBack={true}
             onPressLeft={handleGoBack}
           />
-          
-          <WalletCard data={item} bankbalance={bankbalance} />
+          <View>
+            <FlatList
+              horizontal
+              pagingEnabled
+              data={data}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <View style={{ width: Dimensions.get('window').width, alignItems: 'center' }}>
+                  <WalletCard data={item} bankbalance={bankbalance} />
+                </View>
+              )}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
+              showsHorizontalScrollIndicator={false}
+            />
 
-          <SvgXml
+            {/* Dot indicator BELOW FlatList */}
+            <View style={{ flexDirection: 'row', justifyContent: 'center', marginVertical: 10 }}>
+              {data.map((_, index) => (
+                <View
+                  key={index}
+                  style={{
+                    width: currentIndex === index ? 24 : 10,
+                    height: 10,
+                    borderRadius: 5,
+                    backgroundColor: currentIndex === index ? 'grey' : '#e5e5e5',
+                    marginHorizontal: 4,
+                  }}
+                />
+              ))}
+            </View>
+          </View>
+
+
+
+          {/* <SvgXml
             xml={SVGSlider}
             style={styles(theme).sliderIcon}
-          />
-          
+          /> */}
+
+
           <View style={styles(theme).financeContainer}>
             <ScrollView>
               <View style={styles(theme).financeItemsContainer}>
@@ -140,7 +193,7 @@ const styles = (theme) => StyleSheet.create({
     flexGrow: 1,
   },
   sliderIcon: {
-    alignSelf: 'center', 
+    alignSelf: 'center',
     margin: theme.spacing.spacing.md,
   },
   financeContainer: {

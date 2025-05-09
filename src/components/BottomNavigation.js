@@ -12,6 +12,7 @@ import {
   SVGSettingIncative,
   SVGTransaction,
   SVGTransactionInactive,
+  SVGTrustedCircle,
 } from '../constants/images';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { SCREENS } from '../constants/SCREENS';
@@ -168,9 +169,9 @@ export default function BottomNavigation({ isVer }) {
         {/* Offer Tab */}
         <TouchableOpacity
           // disabled={true}
-          onPress={() => handleTabSwitch('Rewards')}>
+          onPress={() => handleTabSwitch(NAVIGATION_SCREENS.TRUSTED_CIRCLE)}>
           <SvgXml
-            xml={SVGOffer}
+            xml={SVGTrustedCircle}
             style={{ opacity: activeTab === '4' ? 1 : 0.6 }}
           />
         </TouchableOpacity>

@@ -6,24 +6,26 @@
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
 	<string>payAiro</string>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
+	<key>NSContactsUsageDescription</key>
+	<string>This app needs access to your contacts to enhance your experience by allowing easy communication.</string>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>This app needs access to your Apple Music to provide a personalized media experience.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app uses your location to provide better recommendations and nearby services.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app uses your location only while using the app to provide relevant content and services.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Allow to access camera</string>
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Your message to user when the microsphone is accessed for the first time</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Allow to access media</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Allow to access media</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
@@ -39,22 +41,16 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Allow to access camera</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
-	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
-	<key>UIRequiredDeviceCapabilities</key>
-	<array>
-		<string>arm64</string>
-	</array>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UIViewControllerBasedStatusBarAppearance</key>
-	<false/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Your message to user when the microsphone is accessed for the first time</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Allow to access media</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Allow to access media</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Neue Plak Black.ttf</string>
@@ -98,5 +94,19 @@
 		<string>Montserrat-SemiBold.ttf</string>
 		<string>Montserrat-Bold.ttf</string>
 	</array>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
 </dict>
 </plist>

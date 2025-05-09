@@ -1,11 +1,22 @@
-import {View, Text, TouchableOpacity, StyleSheet, Platform} from 'react-native';
-import React from 'react';
+import {View, Text, TouchableOpacity, StyleSheet, Platform, TextStyle} from 'react-native';
+import React, { FC } from 'react';
 import Fonts from '../constants/Fonts';
 import {SvgXml} from 'react-native-svg';
 import {useNavigation} from '@react-navigation/native';
 import {useTheme} from '../styles/ThemeContext';
+import { Theme } from 'styles';
 
-export default function HeaderTitle({
+interface HeaderTitleProps {
+  title: string;
+  leftIcon: string;
+  rightIcon?: string;
+  isBack?: boolean;
+  onPressLeft: () => void;
+  onPressRight?: () => void; // <-- optional
+  titleStyle?: TextStyle;    // <-- optional
+}
+
+const HeaderTitle: FC<HeaderTitleProps> = ({
   title,
   leftIcon,
   rightIcon,
@@ -13,7 +24,7 @@ export default function HeaderTitle({
   onPressLeft,
   onPressRight,
   titleStyle,
-}) {
+}) =>{
   const navigation = useNavigation();
   const {theme} = useTheme();
   
@@ -70,8 +81,9 @@ export default function HeaderTitle({
     </View>
   );
 }
+export default HeaderTitle
 
-const styles = (theme) => StyleSheet.create({
+const styles = (theme : Theme) => StyleSheet.create({
   headerContainer: {
     // paddingTop: Platform.OS === 'ios' ? 60 : 30,
     // paddingBottom: 5,

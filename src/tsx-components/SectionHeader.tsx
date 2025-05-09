@@ -17,6 +17,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   const { theme } = useTheme();
   const styles = createStyles(theme);
 
+  // console.log("SectionHeader =>",actionText)
+
   return (
     <View style={styles.container}>
       <CustomText variant="h4" fontWeight="bold" style={styles.title}>

@@ -34,7 +34,8 @@ export default function ContactScreen(props) {
   const { data: deviceContacts = [], isLoading: isDeviceLoading, contactError } = useDeviceContacts();
   const { data, isLoading: isLoading, error } = useRecentContacts();
   const contactLists = data?.data || [];
-  // console.log(' ContactScreen contactLists -->',JSON.stringify(data,null,2))
+
+  // console.log(' deviceContacts contactLists -->',JSON.stringify(contactError,null,2))
 
   // Back Handler
   const handleGoBack = useCallback(() => {
@@ -54,24 +55,24 @@ export default function ContactScreen(props) {
   // }, [handleGoBack]);
 
   
-  const getContactLists = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const response = await getContacts(tokens?.access);
-      // console.log("response =>",JSON.stringify(response,null,2))
-      if (response?.data) {
-        setFullContactList(response.data || []);
-        setContactLists(response.data || []);
-      } else {
-        setError('Failed to load contacts');
-      }
-    } catch (err) {
-      console.error('Fetching error:', err);
-      setError('An error occurred');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [tokens]);
+  // const getContactLists = useCallback(async () => {
+  //   try {
+  //     setIsLoading(true);
+  //     const response = await getContacts(tokens?.access);
+  //     // console.log("response =>",JSON.stringify(response,null,2))
+  //     if (response?.data) {
+  //       setFullContactList(response.data || []);
+  //       setContactLists(response.data || []);
+  //     } else {
+  //       setError('Failed to load contacts');
+  //     }
+  //   } catch (err) {
+  //     console.error('Fetching error:', err);
+  //     setError('An error occurred');
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // }, [tokens]);
 
   // useEffect(() => {
   //   getContactLists();
@@ -173,7 +174,7 @@ export default function ContactScreen(props) {
         isBack
         onPressLeft={handleGoBack}
       />
-      <View style={{ width: '100%', paddingHorizontal: 20 }}>
+      <View style={{ width: '100%', paddingHorizontal: 20 ,flex:1,maxHeight:70}}>
         <CustomSearchTextInput
           placeholder="Search Name or Payairo tag..."
           placeholderTextColor={theme.colors.palette.green700}
@@ -236,7 +237,7 @@ export default function ContactScreen(props) {
                   </CustomText>
                 </View>
               </View>}
-            data={deviceContacts}
+            data={deviceContacts.data}
             keyExtractor={(item, index) => `device-${index}`}
             renderItem={renderDeviceContact}
             ListEmptyComponent={<Text>No device contacts found</Text>}

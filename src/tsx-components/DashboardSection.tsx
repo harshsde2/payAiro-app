@@ -12,6 +12,7 @@ interface DashboardSectionProps {
 }
 
 const DashboardSection = ({ title, actionText, onActionPress, children, style, contentContainerStyle }: DashboardSectionProps) => {
+  // console.log("actionText =>",actionText)
   return (
     <View 
         style={[styles.container,style]}

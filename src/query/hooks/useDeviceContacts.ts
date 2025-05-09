@@ -6,50 +6,52 @@ import { userContactKeys } from 'query/queryKeys';
 
 export const useDeviceContacts = () => {
   // First, try to get contacts from local cache (MMKV)
-  const cachedContacts = getItem(STORAGE_KEYS.CONTACTS);
+  // const cachedContacts = getItem(STORAGE_KEYS.CONTACTS);
 
   return useQuery<ApiResponse<User[]>>({
     queryKey: userContactKeys.contacts(),
     queryFn: async () => {
-      if (cachedContacts) {
-        // Return cached contacts if available
-        // console.log('cache contact')
-        return JSON.parse(cachedContacts) as ApiResponse<User[]>;
-      } else {
-        // console.log('fetch again cache contact')
-
-        // Fetch contacts from the device using react-native-contacts
-        return new Promise<ApiResponse<User[]>>((resolve, reject) => {
-          Contacts.getAll()
-            .then((deviceContacts) => {
-              // Map the device contacts to match your expected User[] format
-              const mappedContacts = deviceContacts.map((contact) => ({
-                id: contact.recordID,
-                name: contact.givenName + ' ' + contact.familyName,
-                phoneNumber: contact.phoneNumbers[0]?.number ?? '', // Assuming the first phone number
-                email: contact.emailAddresses[0]?.email ?? '',
-              }));
-
-              // Cache the response in MMKV for future use
-              setItem(STORAGE_KEYS.CONTACTS, JSON.stringify(mappedContacts));
-
-              // Return the mapped contacts as API response with boolean status
-              resolve({
-                status: true, // Changed to boolean
-                data: mappedContacts,
-              });
-            })
-            .catch((error) => {
-              reject(error);
-            });
-        });
-      }
-    },
-    staleTime: 1000 * 60, // 1 minute, adjust if necessary
-    retry: 1,
-    retryDelay: 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: true,
-    refetchOnReconnect: true,
-  });
+       // Step 1: Try local cache first
+       const cached = getItem(STORAGE_KEYS.CONTACTS);
+       if (cached) {
+         return {
+           status: true,
+           data: JSON.parse(cached) as User[],
+         };
+       }
+ 
+       // Step 2: Check and request permission
+       let permission = await Contacts.checkPermission();
+       if (permission === 'undefined') {
+         permission = await Contacts.requestPermission();
+       }
+ 
+       if (permission !== 'authorized') {
+         throw new Error('Permission to access contacts was denied.');
+       }
+ 
+       // Step 3: Get and format contacts
+       const deviceContacts = await Contacts.getAll();
+       const mappedContacts: User[] = deviceContacts.map((contact) => ({
+         id: contact.recordID,
+         name: `${contact.givenName} ${contact.familyName}`.trim(),
+         phoneNumber: contact.phoneNumbers[0]?.number ?? '',
+         email: contact.emailAddresses[0]?.email ?? '',
+       }));
+ 
+       // Step 4: Save to cache
+       setItem(STORAGE_KEYS.CONTACTS, JSON.stringify(mappedContacts));
+ 
+       return {
+         status: true,
+         data: mappedContacts,
+       };
+     },
+     staleTime: 1000 * 60,
+     retry: 1,
+     retryDelay: 1000,
+     refetchOnMount: true,
+     refetchOnWindowFocus: false,
+     refetchOnReconnect: true,
+   });
 };

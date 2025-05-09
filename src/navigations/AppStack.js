@@ -67,6 +67,8 @@ import DetailsCryptoScreen from '../screens/Crypto/DetailsCryptoScreen';
 import DashboardRefactored from '../screens/Dashboard/DashboardRefactored';
 import NewDashboard from '../screens/Dashboard/NewDashboard';
 import { NAVIGATION_SCREENS } from './navigationConstants';
+import ConnectWidgetTest from 'screens/TSX-Screens/ConnectWidgetTest';
+import TrustedCircle from 'screens/TSX-Screens/TrustedCircle';
 
 const Stack = createNativeStackNavigator();
 
@@ -363,6 +365,17 @@ export default function AppStack() {
         name={NAVIGATION_SCREENS.DETAILS_CRYPTO_SCREEN}
         component={DetailsCryptoScreen}
       />
+      <Stack.Screen
+        options={{headerShown: true}}
+        name={NAVIGATION_SCREENS.MX_CONNECT_WIDGET_SCREEN}
+        component={ConnectWidgetTest}
+      />
+      <Stack.Screen
+        options={{headerShown: false}}
+        name={NAVIGATION_SCREENS.TRUSTED_CIRCLE}
+        component={TrustedCircle}
+      />
+
     </Stack.Navigator>
   );
 }

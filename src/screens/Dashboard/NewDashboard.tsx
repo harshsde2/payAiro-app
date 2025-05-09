@@ -42,6 +42,8 @@ import { renderFinanceIcons, renderUtilitiesIcons } from 'tsx-components/compone
 import FiatGraphSection from 'tsx-components/FiatGraphSection';
 const CustomPieChart = require('../../components/CustomPieChart').default;
 import RewardModal from 'tsx-components/modals/RewardModal';
+import axios from 'axios';
+import { getReq2 } from 'services/Api';
 
 
 // Lazy load non-critical components
@@ -341,7 +343,7 @@ const NewDashboard = () => {
   const pinScreenRef = useRef<PinScreenRef>(null)
 
   const { theme, toggleTheme } = useTheme();
-  const [userName, setUserName] = useState('Daniel Hamilton');
+  const [userName, setUserName] = useState('');
   const [showFontTest, setShowFontTest] = useState(false);
   const [ghostSlideVisible, setGhostSlideVisible] = useState(false);
   const [isVisible, setisVisible] = useState(false);
@@ -658,6 +660,7 @@ const NewDashboard = () => {
   };
 
   const fetchTransactions = async () => {
+    // if(!tokens?.access) return;
     try {
       // console.log("Fetching PayAiro transactions...");
       const response = await getPayAeroTx(tokens?.access);
@@ -962,23 +965,42 @@ const NewDashboard = () => {
   // console.log("bankBalance?.bank_account?.usd =>", bankBalance?.bank_account?.usd)
 
   // Handling open links
-  const handleOpenLink = useCallback(() => {
-    if (!linkToken) return;
+  // const handleOpenLink = useCallback(() => {
+  //   if (!linkToken) return;
 
-    const config = {
-      token: linkToken,
-      onSuccess,
-      onExit: (linkExit: any) => {
-        dismissLink();
-      },
-      iOSPresentationStyle: LinkIOSPresentationStyle.MODAL,
-      logLevel: LinkLogLevel.ERROR,
-    };
+  //   const config = {
+  //     token: linkToken,
+  //     onSuccess,
+  //     onExit: (linkExit: any) => {
+  //       dismissLink();
+  //     },
+  //     iOSPresentationStyle: LinkIOSPresentationStyle.MODAL,
+  //     logLevel: LinkLogLevel.ERROR,
+  //   };
 
-    create(config);
-    open(config);
-  }, [linkToken, onSuccess]);
+  //   create(config);
+  //   open(config);
+  // }, [linkToken, onSuccess]);
 
+  // console.log("access =>",tokens)
+
+  const handleOpenLink = useCallback(async () => {
+    try {
+      const resp = await axios.get(`${BASE_URL}auth/url-external-account`, {
+        headers: {
+          Authorization: `Bearer ${tokens?.access}`, // ✅ this is the correct way to send auth header
+        },
+      });
+      const {status ,data} = resp?.data;
+      if(status && data){
+        navigation.navigate(NAVIGATION_SCREENS.MX_CONNECT_WIDGET_SCREEN,{URL :data?.fortress_response.widgetUrl })
+      }
+      console.log("handleOpenLink =>", JSON.stringify(resp.data,null,2)); // Use .data to access response body
+    } catch (e) {
+      console.error("Error fetching external account URL:", e);
+    }
+  }, []);
+  
   // Memoize contact see all navigation
   const onContactSeeALl = useCallback(() => {
     navigation.navigate(NAVIGATION_SCREENS.CONTACT_SCREEN, {
@@ -1151,6 +1173,7 @@ const NewDashboard = () => {
       </View>
     );
   };
+  
 
   return (
     <ScreenContainer
