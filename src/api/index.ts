@@ -2,6 +2,8 @@ import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'ax
 import { BASE_URL } from './endpoints';
 import { getItem, STORAGE_KEYS } from '../storage/mmkv';
 import { Tokens } from './types';
+import { Platform } from 'react-native';
+import { stat } from 'react-native-fs';
 
 // Create Axios instance
 const api = axios.create({
@@ -18,8 +20,10 @@ api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     try {
       const tokensString = getItem(STORAGE_KEYS.AUTH_TOKENS);
-      if (tokensString && config.headers) {
+      if (tokensString) {
         const tokens: Tokens = JSON.parse(tokensString);
+        // console.log('[MMKV] iOS parsed access token:', tokens.access); // <== ADD THIS
+
         if (tokens.access) {
           config.headers.Authorization = `Bearer ${tokens.access}`;
         }
@@ -43,21 +47,21 @@ api.interceptors.response.use(
     // Handle error responses
     if (error.response) {
       const { status } = error.response;
-      
+
       // Handle 401 Unauthorized errors (token expired)
       if (status === 401) {
         // Here you could implement token refresh logic
         console.log('Token expired or unauthorized');
-        
+
         // For now, we'll just log the error
         // In a real implementation, you would refresh the token
       }
-      
+
       // Handle 403 Forbidden errors
       if (status === 403) {
         console.log('Forbidden access');
       }
-      
+
       // Handle 500 Server errors
       if (status >= 500) {
         console.log('Server error, please try again later');
@@ -69,7 +73,7 @@ api.interceptors.response.use(
       // Something happened in setting up the request
       console.log('Error', error.message);
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -80,7 +84,7 @@ export const apiClient = {
     const response = await api.get<T>(url);
     return response.data;
   },
-  
+
   post: async <T>(url: string, data: any, isFormData: boolean = false): Promise<T> => {
     let headers = {};
     if (isFormData) {
@@ -88,11 +92,11 @@ export const apiClient = {
         'Content-Type': 'multipart/form-data',
       };
     }
-    
+
     const response = await api.post<T>(url, data, { headers });
     return response.data;
   },
-  
+
   patch: async <T>(url: string, data: any, isFormData: boolean = false): Promise<T> => {
     let headers = {};
     if (isFormData) {
@@ -100,11 +104,11 @@ export const apiClient = {
         'Content-Type': 'multipart/form-data',
       };
     }
-    
+
     const response = await api.patch<T>(url, data, { headers });
     return response.data;
   },
-  
+
   delete: async <T>(url: string): Promise<T> => {
     const response = await api.delete<T>(url);
     return response.data;

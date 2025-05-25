@@ -1,9 +1,25 @@
-import React from 'react';
-import { Text, StyleSheet, TextProps, TextStyle, StyleProp } from 'react-native';
-import { useTheme } from '../styles/ThemeContext';
+import React from "react";
+import {
+  Text,
+  StyleSheet,
+  TextProps,
+  TextStyle,
+  StyleProp,
+} from "react-native";
+import { useTheme } from "../styles/ThemeContext";
 
-type FontWeight = 'regular' | 'medium' | 'semiBold' | 'bold';
-type TextVariant = 'h1' | 'h2' | 'h3' | 'h4' | 'subtitle1' | 'subtitle2' | 'body1' | 'body2' | 'button' | 'caption';
+type FontWeight = "regular" | "medium" | "semiBold" | "bold";
+type TextVariant =
+  | "h1"
+  | "h2"
+  | "h3"
+  | "h4"
+  | "subtitle1"
+  | "subtitle2"
+  | "body1"
+  | "body2"
+  | "button"
+  | "caption";
 
 interface CustomTextProps extends TextProps {
   children: React.ReactNode;
@@ -12,7 +28,7 @@ interface CustomTextProps extends TextProps {
   fontWeight?: FontWeight;
   color?: string;
   size?: number;
-  align?: 'auto' | 'left' | 'right' | 'center' | 'justify';
+  align?: "auto" | "left" | "right" | "center" | "justify";
   fontFamily?: string;
   useThemeColor?: boolean;
 }
@@ -34,16 +50,16 @@ const CustomText: React.FC<CustomTextProps> = ({
   // Helper function to get the font family based on weight
   const getFontFamily = (weight?: FontWeight): string => {
     if (fontFamily) return fontFamily;
-    
+
     if (weight) {
       switch (weight) {
-        case 'regular':
+        case "regular":
           return theme.typography.fontFamily.regular;
-        case 'medium':
+        case "medium":
           return theme.typography.fontFamily.medium;
-        case 'semiBold':
+        case "semiBold":
           return theme.typography.fontFamily.semiBold;
-        case 'bold':
+        case "bold":
           return theme.typography.fontFamily.bold;
         default:
           return theme.typography.fontFamily.regular;
@@ -62,12 +78,12 @@ const CustomText: React.FC<CustomTextProps> = ({
   const getTextColor = (): string | undefined => {
     // If color is explicitly provided, use it (highest priority)
     if (color) return color;
-    
+
     // If useThemeColor flag is true, use appropriate theme color
     if (useThemeColor) {
       return theme.colors.text.primary;
     }
-    
+
     // Default to current theme's primary text color
     return theme.colors.text.primary;
   };
@@ -75,19 +91,19 @@ const CustomText: React.FC<CustomTextProps> = ({
   // Merge styles in the correct order of precedence
   const textStyle: StyleProp<TextStyle> = [
     // Default styles
+
     styles.text,
-    
+
     // Variant styles from theme
     variant && theme.typography.textStyles[variant],
-    
+
     // Get theme-based color
     { color: getTextColor() },
-    
+
     // Explicit props override variant styles
     fontWeight && { fontFamily: getFontFamily(fontWeight) },
     size && { fontSize: size },
     align && { textAlign: align },
-    
     // User provided style overrides everything
     style,
   ];
@@ -105,4 +121,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CustomText; 
+export default CustomText;

@@ -1,473 +1,423 @@
-import { View, Text, Modal, TouchableOpacity,SafeAreaView, ActivityIndicator } from 'react-native'
-import React, { FC, forwardRef, useImperativeHandle, useState } from 'react'
-import { PinScreenProps, PinScreenRef } from './modal.types'
-import { useTheme } from 'styles'
-import { SvgXml } from 'react-native-svg'
-import { SVG_backspace, SVG_done, SVG_eye_on, SVGLoggo } from 'constants/images'
-import Fonts from 'constants/Fonts'
-import { useDispatch, useSelector } from 'react-redux'
-import { checkUser, getBalance } from 'services/Services'
-import useDispatchAction from 'hooks/useDispatchAction'
-import { setErrorMsg, setSuccessMsg } from 'redux/slices/authenticationSlice'
-import { useApiCall } from 'screens/Dashboard/NewDashboard'
-import { getPin } from 'services/Auth'
-import ErrorToast from 'components/ErrorToast'
-import CustomText from 'tsx-components/CustomText'
+import {
+  View,
+  Text,
+  Modal,
+  TouchableOpacity,
+  SafeAreaView,
+  ActivityIndicator,
+  StyleSheet,
+} from "react-native";
+import React, { FC, forwardRef, useImperativeHandle, useState } from "react";
+import { PinScreenProps, PinScreenRef } from "./modal.types";
+import { Theme, useTheme } from "styles";
+import { SvgXml } from "react-native-svg";
+import {
+  SVG_backspace,
+  SVG_done,
+  SVG_eye_off,
+  SVG_eye_on,
+  SVGLoggo,
+} from "constants/images";
+import Fonts from "constants/Fonts";
+import { useDispatch, useSelector } from "react-redux";
+import { checkUser, getBalance } from "services/Services";
+import useDispatchAction from "hooks/useDispatchAction";
+import { setErrorMsg, setSuccessMsg } from "redux/slices/authenticationSlice";
+import { useApiCall } from "screens/Dashboard/NewDashboard";
+import { getPin } from "services/Auth";
+import ErrorToast from "components/ErrorToast";
+import CustomText from "tsx-components/CustomText";
+import { useCreatePin } from "query/hooks/useAPIAuth";
 
 const PIN_SCREEN_TASKS = {
-    SHOW_BANK_BALANCE:'show_bank_balance',
-    CHECK_PIN:'check_pin',
-}
+  SHOW_BANK_BALANCE: "show_bank_balance",
+  CHECK_PIN: "check_pin",
+  SET_USER_PIN: "set_user_pin",
+};
 
+const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
+  ({ hiddenBalances, setHiddenBalances, onAction, accountNumber }, ref) => {
+    const { theme } = useTheme();
+    const styles = customStyles(theme);
+    const { tokens, errorMsg, successMsg } = useSelector(
+      (state: any) => state.authenticationSlice
+    );
 
-const PinScreen =  forwardRef<PinScreenRef,PinScreenProps>(({
-    // isPinModalVisible,
-    // setIsPinModalVisible,
-    hiddenBalances,
-    setHiddenBalances,
-    onAction,
-    accountNumber
-  }: PinScreenProps, ref) => {
-    const { theme } = useTheme()
-    // Get data from Redux store
-    const {
-        walletData,
-        tokens,
-        errorMsg,
-        successMsg
-    } = useSelector((state: any) => state.authenticationSlice);
-    
-    // API call
     const bankBalanceApi = useApiCall(getBalance);
 
-    const [currentAccountForPin, setCurrentAccountForPin] = useState<string | null>(accountNumber || "");
-    const [pinForShowBalance, setPinForShowBalance] = useState('');
+    const [currentAccountForPin, setCurrentAccountForPin] = useState<
+      string | null
+    >(accountNumber || "");
+
+    const [pinForShowBalance, setPinForShowBalance] = useState("");
     const [isVerifyingPin, setIsVerifyingPin] = useState(false);
-    const [pinScreenTask, setPinScreenTask] = useState<string>(PIN_SCREEN_TASKS.SHOW_BANK_BALANCE);
+    const [showPin, setShowPin] = useState(false);
+
+    const [pinScreenTask, setPinScreenTask] = useState<string>(
+      PIN_SCREEN_TASKS.SHOW_BANK_BALANCE
+    );
     const [isPinModalVisible, setIsPinModalVisible] = useState(false);
 
-    // const [hiddenBalances, setHiddenBalances] = useState<Record<string, boolean>>({});
-
-    // console.log("account number =>",accountNumber)
-    
-      // Expose the toggleCardSize function through the ref
-  useImperativeHandle(ref, () => ({
-    //For Verifing pin and show bank balance
-    toggleBalanceVisibility: (accountId: string) => {
-        // If balance is already visible, just hide it without PIN validation
+    useImperativeHandle(ref, () => ({
+      toggleBalanceVisibility: (accountId: string) => {
         setPinScreenTask(PIN_SCREEN_TASKS.SHOW_BANK_BALANCE);
 
         if (!hiddenBalances[accountId]) {
-          setHiddenBalances((prev : any) => ({
+          setHiddenBalances((prev: any) => ({
             ...prev,
-            [accountId]: true
+            [accountId]: true,
           }));
           return;
         }
-    
-        // If balance is hidden, we need PIN verification to show it
+
         setCurrentAccountForPin(accountId);
-        setPinForShowBalance('');
+        setPinForShowBalance("");
         setIsPinModalVisible(true);
-    },
-    // for check pin
-    checkUserPin:() =>{
+      },
+      checkUserPin: () => {
         setPinScreenTask(PIN_SCREEN_TASKS.CHECK_PIN);
-        setPinForShowBalance('');
-        setCurrentAccountForPin(accountNumber)
+        setPinForShowBalance("");
+        setCurrentAccountForPin(accountNumber);
         setIsPinModalVisible(true);
-    }
-        
-  }))
+      },
+      setUserPin: () => {
+        setPinScreenTask(PIN_SCREEN_TASKS.SET_USER_PIN);
+        setPinForShowBalance("");
+        setIsPinModalVisible(true);
+      },
+    }));
 
-
-    // Add these PIN input handlers
     const handlePinDigit = (digit: string) => {
-        if (pinForShowBalance.length < 4) {
-            setPinForShowBalance(prev => prev + digit);
-        }
+      if (pinForShowBalance.length < 4) {
+        setPinForShowBalance((prev) => prev + digit);
+      }
     };
 
     const handlePinBackspace = () => {
-        setPinForShowBalance(prev => prev.slice(0, -1));
+      setPinForShowBalance((prev) => prev.slice(0, -1));
     };
 
-    const checkPin = async (currentPin? : string) =>{
-        const correctPin = await getPin();
-        return currentPin == correctPin;
-    } 
+    const checkPin = async (currentPin?: string) => {
+      const correctPin = await getPin();
+      return currentPin == correctPin;
+    };
 
-    // Verify PIN and show balance if correct
     const verifyPinAndShowBalance = async () => {
-        if (!currentAccountForPin || pinForShowBalance.length < 4) return;
-        setIsVerifyingPin(true);
+      if (!currentAccountForPin || pinForShowBalance.length < 4) return;
+      setIsVerifyingPin(true);
 
+      try {
+        const isUserEnterCorrectPin = await checkPin(pinForShowBalance);
 
-        try {
-            // console.log('step 3 pinForShowBalance', JSON.stringify(pinForShowBalance,null,2))
-        
-            const isUserEnterCorrectPin = await checkPin(pinForShowBalance);
-
-            // console.log("step 3 pinForShowBalance =>",currentPin ," ",pinForShowBalance)
-            if (isUserEnterCorrectPin) {
-                // PIN is correct, refresh bank balance data
-                await bankBalanceApi.execute(tokens?.access, true);
-
-                // Update the visibility state for this specific account
-                setHiddenBalances((prev:any) => ({
-                    ...prev,
-                    [currentAccountForPin]: false
-                }));
-
-                // Close the modal
-                setIsPinModalVisible(false);
-                setCurrentAccountForPin(null);
-                setPinForShowBalance('');
-            } else {
-                // PIN is incorrect
-                // console.log("agya")
-                useDispatchAction(setErrorMsg('Invalid PIN. Please try again'));
-            }
-        } catch (error) {
-            // console.error('Error verifying PIN:', error);
-            useDispatchAction(setErrorMsg('Failed to verify PIN. Please try again.'));
-        } finally {
-            setIsVerifyingPin(false);
+        if (isUserEnterCorrectPin) {
+          await bankBalanceApi.execute(tokens?.access, true);
+          setHiddenBalances((prev: any) => ({
+            ...prev,
+            [currentAccountForPin]: false,
+          }));
+          setIsPinModalVisible(false);
+          setCurrentAccountForPin(null);
+          setPinForShowBalance("");
+        } else {
+          useDispatchAction(setErrorMsg("Invalid PIN. Please try again"));
         }
+      } catch {
+        useDispatchAction(
+          setErrorMsg("Failed to verify PIN. Please try again.")
+        );
+      } finally {
+        setIsVerifyingPin(false);
+      }
     };
 
-    // Verify PIN
-    const handleVerifyPin = async () =>{
-        if (pinForShowBalance.length < 4) return;
-        setIsVerifyingPin(true);
+    const handleVerifyPin = async () => {
+      if (pinForShowBalance.length < 4) return;
+      setIsVerifyingPin(true);
 
-        try{
-            const isUserEnterCorrectPin = await checkPin(pinForShowBalance);
-
-            // console.log("step 3 pinForShowBalance =>",currentPin ," ",pinForShowBalance)
-            if (isUserEnterCorrectPin) {
-                // PIN is correct, refresh bank balance data
-                onAction?.();
-                setIsPinModalVisible(false);
-                setPinForShowBalance('');
-            } else {
-                // PIN is incorrect
-                // console.log("agya")
-                useDispatchAction(setErrorMsg('Invalid PIN. Please try again'));
-            }
-        }catch{
-            useDispatchAction(setErrorMsg('Failed to verify PIN. Please try again.'));
-
-        }finally{
-            setIsVerifyingPin(false);
+      try {
+        const isUserEnterCorrectPin = await checkPin(pinForShowBalance);
+        if (isUserEnterCorrectPin) {
+          onAction?.(null);
+          setIsPinModalVisible(false);
+          setPinForShowBalance("");
+        } else {
+          useDispatchAction(setErrorMsg("Invalid PIN. Please try again"));
         }
-    }
+      } catch {
+        useDispatchAction(
+          setErrorMsg("Failed to verify PIN. Please try again.")
+        );
+      } finally {
+        setIsVerifyingPin(false);
+      }
+    };
 
-    // console.log('errorMsg =>',errorMsg)
-    const conditionalFunction = async(cases : string) =>{
-        switch(cases){
-            case PIN_SCREEN_TASKS.SHOW_BANK_BALANCE:{
-              return await verifyPinAndShowBalance();
-            }
-            case PIN_SCREEN_TASKS.CHECK_PIN:{
-              return  await handleVerifyPin();
-            }
-        }
-    }
+    const handleSetAndCreatePin = (pin: any) => {
+      onAction?.(pin);
+      setIsPinModalVisible(false);
+    };
+
+    const conditionalFunction = async (task: string) => {
+      switch (task) {
+        case PIN_SCREEN_TASKS.SHOW_BANK_BALANCE:
+          return await verifyPinAndShowBalance();
+        case PIN_SCREEN_TASKS.CHECK_PIN:
+          return await handleVerifyPin();
+        case PIN_SCREEN_TASKS.SET_USER_PIN:
+          return handleSetAndCreatePin(pinForShowBalance);
+      }
+    };
+    const handleShowAndHidePin = () => {
+      setShowPin((prev) => !prev);
+    };
+
     return (
-        <Modal
-            animationType="fade"
-            transparent={true}
-            visible={isPinModalVisible}
-            onRequestClose={() => setIsPinModalVisible(false)}
-           
-        >
-            {errorMsg || successMsg ? <ErrorToast /> : null}
-            <SafeAreaView style={{
-                flex: 1,
-                backgroundColor: '#FFFFFF',
-            }}>
-                {/* { errorMsg && <CustomText color={theme.colors.palette.red500}>Error</CustomText>} */}
-                {/* Header with bank name and logo */}
-                <View style={{
-                    backgroundColor: theme.colors.palette.green700,
-                    paddingVertical: 5,
-                    paddingHorizontal: 20,
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                }}>
-                    <View>
-                        <Text style={{
-                            color: '#FFFFFF',
-                            fontSize: 16,
-                            fontFamily: theme.typography.fontFamily.montserratBold,
-                            // fontWeight:theme.typography.fontWeight.bold
-                        }}>
-                            PayAiro App
-                        </Text>
-                        <Text style={{
-                            color: '#FFFFFF',
-                            fontSize: 14,
-                            fontFamily: theme.typography.fontFamily.montserrat,
-                            marginTop: 3
-                        }}>
-                            {currentAccountForPin ? `****${currentAccountForPin.slice(-4)}` : 'Account'}
-                        </Text>
-                    </View>
-                    <SvgXml
-                        xml={SVGLoggo}
-                        width={55}
-                        height={55}
+      <Modal
+        animationType="fade"
+        transparent
+        visible={isPinModalVisible}
+        onRequestClose={() => setIsPinModalVisible(false)}
+      >
+        {errorMsg || successMsg ? <ErrorToast /> : null}
+
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.header}>
+            <View>
+              <CustomText style={styles.appTitle}>PayAiro App</CustomText>
+              {currentAccountForPin && (
+                <CustomText style={styles.accountText}>
+                  `****${currentAccountForPin.slice(-4)}`
+                </CustomText>
+              )}
+            </View>
+            <SvgXml xml={SVGLoggo} width={55} height={55} />
+          </View>
+
+          <View style={styles.mainContent}>
+            <View style={styles.pinEntryContainer}>
+              <View style={styles.pinEntryLabelRow}>
+                <CustomText style={styles.pinEntryText}>
+                  ENTER PAYAIRO PIN
+                </CustomText>
+                <SvgXml
+                  xml={!showPin ? SVG_eye_on : SVG_eye_off}
+                  width={22}
+                  height={22}
+                />
+                <CustomText
+                  onPress={handleShowAndHidePin}
+                  style={styles.showText}
+                >
+                  SHOW
+                </CustomText>
+              </View>
+
+              <View style={styles.pinDotContainer}>
+                {[0, 1, 2, 3].map((index) => (
+                  <View key={index} style={styles.pinDotWrapper}>
+                    <Text
+                      style={[
+                        styles.pinDot,
+                        { opacity: pinForShowBalance.length > index ? 1 : 0 },
+                      ]}
+                    >
+                      {showPin && pinForShowBalance[index]
+                        ? pinForShowBalance[index]
+                        : "*"}
+                    </Text>
+                    <View
+                      style={[
+                        styles.pinUnderline,
+                        {
+                          backgroundColor:
+                            pinForShowBalance.length > index
+                              ? theme.colors.palette.green700
+                              : "#CCCCCC",
+                        },
+                      ]}
                     />
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.keypadContainer}>
+              {[
+                ["1", "2", "3"],
+                ["4", "5", "6"],
+                ["7", "8", "9"],
+              ].map((row, i) => (
+                <View key={i} style={styles.keypadRow}>
+                  {row.map((num) => (
+                    <TouchableOpacity
+                      key={num}
+                      style={styles.keypadButton}
+                      onPress={() => handlePinDigit(num)}
+                    >
+                      <Text style={styles.keypadNumber}>{num}</Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
+              ))}
 
-                <View style={{
-                    flex: 1,
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    paddingBottom: 20
-                }}>
-                    {/* PIN Entry Area */}
-                    <View style={{
-                        alignItems: 'center',
-                        width: '100%',
-                        paddingTop: 60,
-                        paddingHorizontal: 30
-                    }}>
-                        <View style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            marginBottom: 50
-                        }}>
-                            <Text style={{
-                                fontSize: 16,
-                                color: theme.colors.palette.green700,
-                                fontFamily: theme.typography.fontFamily.nexaHeavy,
-                                marginRight: 10
-                            }}>
-                                ENTER PAYAIRO PIN
-                            </Text>
-                            <SvgXml
-                                xml={SVG_eye_on}
-                                width={22}
-                                height={22}
-                            />
-                            <Text style={{
-                                fontSize: 14,
-                                color: theme.colors.palette.green700,
-                                fontFamily: theme.typography.fontFamily.nexaHeavy,
-                                fontWeight: '400',
-                                marginLeft: 5
-                            }}>
-                                SHOW
-                            </Text>
-                        </View>
+              <View style={styles.keypadRow}>
+                <TouchableOpacity
+                  style={styles.keypadButton}
+                  onPress={handlePinBackspace}
+                >
+                  <SvgXml xml={SVG_backspace} width={35} height={35} />
+                </TouchableOpacity>
 
-                        <View style={{
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                            width: '80%'
-                        }}>
-                            {[0, 1, 2, 3].map(index => (
-                                <View key={index} style={{
-                                    width: '22%',
-                                    height: 35,
-                                    alignItems: 'center',
-                                    justifyContent: 'flex-end'
-                                }}>
-                                    <Text style={{
-                                        fontSize: 40,
-                                        color: theme.colors.palette.green700,
-                                        position: 'absolute',
-                                        top: -15,
-                                        opacity: pinForShowBalance.length > index ? 1 : 0,
-                                        fontFamily: Fonts.bold
-                                    }}>
-                                        *
-                                    </Text>
-                                    <View style={{
-                                        position: 'absolute',
-                                        bottom: 0,
-                                        width: '100%',
-                                        height: 2,
-                                        backgroundColor: pinForShowBalance.length > index ? theme.colors.palette.green700 : '#CCCCCC',
-                                    }} />
-                                </View>
-                            ))}
-                        </View>
-                    </View>
+                <TouchableOpacity
+                  style={styles.keypadButton}
+                  onPress={() => handlePinDigit("0")}
+                >
+                  <Text style={styles.keypadNumber}>0</Text>
+                </TouchableOpacity>
 
-                    {/* Custom Keypad */}
-                    <View style={{
-                        width: '90%',
-                        backgroundColor: '#F8F8F8',
-                        borderRadius: 10,
-                        paddingVertical: 20,
-                        paddingHorizontal: 20
-                    }}>
-                        {/* Row 1-3 */}
-                        <View style={{
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                            marginBottom: 30
-                        }}>
-                            {[1, 2, 3].map(num => (
-                                <TouchableOpacity
-                                    key={num}
-                                    style={{
-                                        width: 70,
-                                        height: 70,
-                                        justifyContent: 'center',
-                                        alignItems: 'center'
-                                    }}
-                                    onPress={() => handlePinDigit(num.toString())}
-                                >
-                                    <Text style={{
-                                        fontSize: 30,
-                                        color: theme.colors.palette.green700,
-                                        fontFamily: Fonts.bold
-                                    }}>
-                                        {num}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-
-                        {/* Row 4-6 */}
-                        <View style={{
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                            marginBottom: 30
-                        }}>
-                            {[4, 5, 6].map(num => (
-                                <TouchableOpacity
-                                    key={num}
-                                    style={{
-                                        width: 70,
-                                        height: 70,
-                                        justifyContent: 'center',
-                                        alignItems: 'center'
-                                    }}
-                                    onPress={() => handlePinDigit(num.toString())}
-                                >
-                                    <Text style={{
-                                        fontSize: 30,
-                                        color: theme.colors.palette.green700,
-                                        fontFamily: Fonts.bold
-                                    }}>
-                                        {num}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-
-                        {/* Row 7-9 */}
-                        <View style={{
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                            marginBottom: 30
-                        }}>
-                            {[7, 8, 9].map(num => (
-                                <TouchableOpacity
-                                    key={num}
-                                    style={{
-                                        width: 70,
-                                        height: 70,
-                                        justifyContent: 'center',
-                                        alignItems: 'center'
-                                    }}
-                                    onPress={() => handlePinDigit(num.toString())}
-                                >
-                                    <Text style={{
-                                        fontSize: 30,
-                                        color: theme.colors.palette.green700,
-                                        fontFamily: Fonts.bold
-                                    }}>
-                                        {num}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-
-                        {/* Row X-0-Check */}
-                        <View style={{
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                        }}>
-                            <TouchableOpacity
-                                style={{
-                                    width: 70,
-                                    height: 70,
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                }}
-                                onPress={handlePinBackspace}
-                            >
-                                <SvgXml
-                                    fill={'#fff'}
-                                    xml={SVG_backspace}
-                                    width={35}
-                                    height={35}
-                                />
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={{
-                                    width: 70,
-                                    height: 70,
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                }}
-                                onPress={() => handlePinDigit('0')}
-                            >
-                                <Text style={{
-                                    fontSize: 30,
-                                    color: theme.colors.palette.green700,
-                                    fontFamily: Fonts.bold
-                                }}>
-                                    0
-                                </Text>
-                            </TouchableOpacity>
-
-                            <View style={{
-                                width: 70,
-                                height: 70,
-                                borderRadius: 35,
-                                justifyContent: 'center',
-                                alignItems: 'center'
-                            }}>
-                                <TouchableOpacity
-                                    style={{
-                                        width: 60,
-                                        height: 60,
-                                        backgroundColor: pinForShowBalance.length === 4 ? theme.colors.palette.green700 : theme.colors.palette.green300,
-                                        borderRadius: 35,
-                                        justifyContent: 'center',
-                                        alignItems: 'center'
-                                    }}
-                                    onPress={async()=>conditionalFunction(pinScreenTask)}
-                                    disabled={pinForShowBalance.length !== 4 || isVerifyingPin}
-                                >
-                                    {isVerifyingPin ? (
-                                        <ActivityIndicator color="#FFF" size="small" />
-                                    ) : (
-                                        <SvgXml
-                                            fill={'#fff'}
-                                            xml={SVG_done}
-                                            width={35}
-                                            height={35}
-                                        />
-                                    )}
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
+                <View style={styles.actionButtonWrapper}>
+                  <TouchableOpacity
+                    style={(styles as any).actionButton(
+                      pinForShowBalance.length === 4
+                    )}
+                    onPress={() => conditionalFunction(pinScreenTask)}
+                    disabled={pinForShowBalance.length !== 4 || isVerifyingPin}
+                  >
+                    {isVerifyingPin ? (
+                      <ActivityIndicator color="#FFF" size="small" />
+                    ) : (
+                      <SvgXml xml={SVG_done} width={35} height={35} />
+                    )}
+                  </TouchableOpacity>
                 </View>
-            </SafeAreaView>
-        </Modal>
-    )
-})
+              </View>
+            </View>
+          </View>
+        </SafeAreaView>
+      </Modal>
+    );
+  }
+);
 
-export default PinScreen
+export default PinScreen;
+
+const customStyles = (theme: Theme) =>
+  StyleSheet.create({
+    modalContainer: {
+      flex: 1,
+      backgroundColor: "#FFFFFF",
+    },
+    header: {
+      backgroundColor: theme.colors.palette.green700,
+      paddingVertical: 5,
+      paddingHorizontal: 20,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    appTitle: {
+      color: "#FFFFFF",
+      fontSize: 16,
+      fontFamily: theme.typography.fontFamily.montserratBold,
+    },
+    accountText: {
+      color: "#FFFFFF",
+      fontSize: 14,
+      fontFamily: theme.typography.fontFamily.montserrat,
+      marginTop: 3,
+    },
+    mainContent: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingBottom: 20,
+    },
+    pinEntryContainer: {
+      alignItems: "center",
+      width: "100%",
+      paddingTop: 60,
+      paddingHorizontal: 30,
+    },
+    pinEntryLabelRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 50,
+    },
+    pinEntryText: {
+      fontSize: 16,
+      color: theme.colors.palette.green700,
+      fontFamily: theme.typography.fontFamily.nexaHeavy,
+      marginRight: 10,
+    },
+    showText: {
+      fontSize: 14,
+      color: theme.colors.palette.green700,
+      fontFamily: theme.typography.fontFamily.nexaHeavy,
+      fontWeight: "400",
+      marginLeft: 5,
+    },
+    pinDotContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      width: "80%",
+    },
+    pinDotWrapper: {
+      width: "22%",
+      height: 35,
+      alignItems: "center",
+      justifyContent: "flex-end",
+    },
+    pinDot: {
+      fontSize: 40,
+      position: "absolute",
+      color: theme.colors.palette.green700,
+      top: -15,
+      fontFamily: Fonts.bold,
+    },
+    pinUnderline: {
+      position: "absolute",
+      bottom: 0,
+      width: "100%",
+      height: 2,
+    },
+    keypadContainer: {
+      width: "90%",
+      backgroundColor: "#F8F8F8",
+      borderRadius: 10,
+      paddingVertical: 20,
+      paddingHorizontal: 20,
+    },
+    keypadRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: 30,
+    },
+    keypadButton: {
+      width: 70,
+      height: 70,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    keypadNumber: {
+      fontSize: 30,
+      color: theme.colors.palette.green700,
+      fontFamily: Fonts.bold,
+    },
+    actionButtonWrapper: {
+      width: 70,
+      height: 70,
+      borderRadius: 35,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    actionButton: (enabled: any) => ({
+      width: 60,
+      height: 60,
+      backgroundColor: enabled
+        ? theme.colors.palette.green700
+        : theme.colors.palette.green300,
+      borderRadius: 35,
+      justifyContent: "center",
+      alignItems: "center",
+    }),
+  } as any);

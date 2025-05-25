@@ -1,34 +1,35 @@
-import {View, Text, TextInput, TouchableOpacity} from 'react-native';
-import React, {useState} from 'react';
-import CommonHeaderv2 from '../../HOC/CommonHeaderv2';
-import HeaderTitle from '../../components/HeaderTitle';
-import {SVGEth, SVGLeftArrow, SVGTextImage} from '../../constants/images';
-import {SvgXml} from 'react-native-svg';
-import Fonts from '../../constants/Fonts';
-import TextInputField from '../../components/TextInputField';
-import GenericButton from '../../components/GenericButton';
-import {buy, calculateQuantity} from '../../services/Services';
-import useSelectorAction from '../../hooks/useSelectorAction';
-import useDispatchAction from '../../hooks/useDispatchAction';
+import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
+import CommonHeaderv2 from "../../HOC/CommonHeaderv2";
+import HeaderTitle from "../../components/HeaderTitle";
+import { SVGEth, SVGLeftArrow, SVGTextImage } from "../../constants/images";
+import { SvgXml } from "react-native-svg";
+import Fonts from "../../constants/Fonts";
+import TextInputField from "../../components/TextInputField";
+import GenericButton from "../../components/GenericButton";
+import { buy, calculateQuantity } from "../../services/Services";
+import useSelectorAction from "../../hooks/useSelectorAction";
+import useDispatchAction from "../../hooks/useDispatchAction";
 import {
   setErrorMsg,
+  setShowLoader,
   setSuccessMsg,
-} from '../../redux/slices/authenticationSlice';
-import {useNavigation} from '@react-navigation/native';
-import FullScreenModal from '../../components/FullScreenModal';
+} from "../../redux/slices/authenticationSlice";
+import { useNavigation } from "@react-navigation/native";
+import FullScreenModal from "../../components/FullScreenModal";
 
 export default function Buy(props) {
   const navigation = useNavigation();
-  const {item} = props.route.params;
-  const {tokens} = useSelectorAction();
+  const { item } = props.route.params;
+  const { tokens } = useSelectorAction();
   const [amount, setamount] = useState(0);
-  const [quantity, setquantity] = useState('');
+  const [quantity, setquantity] = useState("");
   const [isVisibleBank, setisVisibleBank] = useState(false); // State to store the input value
   const [bankSelected, setbankSelected] = useState(null); // State to store the input value
 
-  const [selectedFilter, setselectedFilter] = useState('12hour');
+  const [selectedFilter, setselectedFilter] = useState("12hour");
 
-  const handleQuantity = async e => {
+  const handleQuantity = async (e) => {
     const data = await calculateQuantity({
       network: item?.network,
       currency: item?.currency,
@@ -36,10 +37,10 @@ export default function Buy(props) {
     });
     setquantity(data?.data?.quantity?.toString());
 
-    console.log(data?.data?.quantity, 'quantity');
+    console.log(data?.data?.quantity, "quantity");
   };
   const handleQuantityChange = async (value, type) => {
-    if (type === 'amount') {
+    if (type === "amount") {
       setamount(value);
       if (value) {
         const data = await calculateQuantity({
@@ -49,9 +50,9 @@ export default function Buy(props) {
         });
         setquantity(data?.data?.quantity?.toString());
       } else {
-        setquantity('');
+        setquantity("");
       }
-    } else if (type === 'quantity') {
+    } else if (type === "quantity") {
       setquantity(value);
       if (value) {
         const data = await calculateQuantity({
@@ -61,57 +62,60 @@ export default function Buy(props) {
         });
         setamount(data?.data?.usd_amount?.toString());
       } else {
-        setamount('');
+        setamount("");
       }
     }
   };
 
   const handleSubmit = async () => {
+    useDispatchAction(setShowLoader(true));
     try {
       const data = await buy(
         {
-          from_asset: 'usd',
+          from_asset: "usd",
           from_amount: Number(amount),
           to_asset: item?.currency,
           network: item?.network,
           fund_source:
-            bankSelected?.account_type === 'rothIra'
-              ? 'roth_ira'
-              : bankSelected?.account_type === 'traditionalIra'
-              ? 'traditional_ira'
-              : 'bank',
+            bankSelected?.account_type === "rothIra"
+              ? "roth_ira"
+              : bankSelected?.account_type === "traditionalIra"
+              ? "traditional_ira"
+              : "bank",
         },
-        tokens?.access,
+        tokens?.access
       );
       console.log(
         {
-          from_asset: 'usd',
+          from_asset: "usd",
           from_amount: Number(amount),
           to_asset: item?.currency,
           network: item?.network,
           fund_source:
-            bankSelected?.account_type === 'rothIra'
-              ? 'roth_ira'
-              : bankSelected?.account_type === 'traditionalIra'
-              ? 'traditional_ira'
-              : 'bank',
+            bankSelected?.account_type === "rothIra"
+              ? "roth_ira"
+              : bankSelected?.account_type === "traditionalIra"
+              ? "traditional_ira"
+              : "bank",
         },
-        'payloads',
+        "payloads"
       );
-      console.log(data?.data?.details, 'datatata');
-      if (data && data?.data.message === 'Trade successful') {
-        useDispatchAction(setSuccessMsg('Trade successful'));
+      console.log(data?.data?.details, "datatata");
+      if (data && data?.data.message === "Trade successful") {
+        useDispatchAction(setSuccessMsg("Trade successful"));
         navigation.goBack();
       } else {
-        useDispatchAction(setErrorMsg('Trade failed, Some thing went wrong'));
+        useDispatchAction(setErrorMsg("Trade failed, Some thing went wrong"));
       }
     } catch (error) {
-      console.log(error?.data?.details?.errors, 'errororor');
-      useDispatchAction(setErrorMsg('Trade failed, Some thing went wrong'));
+      console.log(error?.data?.details?.errors, "errororor");
+      useDispatchAction(setErrorMsg("Trade failed, Some thing went wrong"));
+    } finally {
+      useDispatchAction(setShowLoader(false));
     }
   };
 
-  const handleChange = async e => {
+  const handleChange = async (e) => {
     setamount(e);
     setTimeout(() => {
       handleQuantity(e);
@@ -122,69 +126,77 @@ export default function Buy(props) {
       <HeaderTitle leftIcon={SVGLeftArrow} />
       <View
         style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
           padding: 10,
-        }}>
+        }}
+      >
         <View
           style={{
-            flexDirection: 'row',
-            justifyContent: 'flex-start',
-            alignItems: 'center',
-          }}>
+            flexDirection: "row",
+            justifyContent: "flex-start",
+            alignItems: "center",
+          }}
+        >
           <SvgXml xml={SVGTextImage} />
-          <View style={{marginLeft: 8}}>
+          <View style={{ marginLeft: 8 }}>
             <Text
-              style={{color: 'black', fontFamily: Fonts.bold, fontSize: 18}}>
+              style={{ color: "black", fontFamily: Fonts.bold, fontSize: 18 }}
+            >
               {item?.network?.toUpperCase()}, {item?.currency?.toUpperCase()}
             </Text>
             <Text
               style={{
-                color: 'rgba(106, 106, 106, 1)',
+                color: "rgba(106, 106, 106, 1)",
                 fontFamily: Fonts.semibold,
                 fontSize: 12,
-              }}>
+              }}
+            >
               Multinational Technology
             </Text>
           </View>
         </View>
         <Text
           style={{
-            color: 'rgba(44, 106, 63, 1)',
+            color: "rgba(44, 106, 63, 1)",
             fontFamily: Fonts.regular,
             fontSize: 14,
-          }}>
+          }}
+        >
           Depth
         </Text>
       </View>
       <View
         style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
           padding: 20,
-        }}>
-        <View style={{width: '48%'}}>
+        }}
+      >
+        <View style={{ width: "48%" }}>
           <Text
             style={{
-              color: 'rgba(106, 106, 106, 1)',
+              color: "rgba(106, 106, 106, 1)",
               fontFamily: Fonts.semibold,
               fontSize: 12,
               marginBottom: 8,
-            }}>
+            }}
+          >
             Amount
           </Text>
           <TextInput
             placeholder="Enter Amount"
             value={amount}
-            onChangeText={text => handleQuantityChange(text, 'amount')}
-            placeholderTextColor={'rgba(106, 106, 106, 1)'}
+            onChangeText={(text) => handleQuantityChange(text, "amount")}
+            placeholderTextColor={"rgba(106, 106, 106, 1)"}
             style={{
-              backgroundColor: 'rgba(226, 241, 227, 1)',
+              backgroundColor: "rgba(226, 241, 227, 1)",
               borderRadius: 12,
               height: 50,
-              color: 'black',
+              color: "black",
+              paddingLeft: 10,
               fontFamily: Fonts.semibold,
             }}
           />
@@ -193,34 +205,37 @@ export default function Buy(props) {
           isVisible={isVisibleBank}
           sendAmount={amount}
           onClose={() => setisVisibleBank(false)}
-          onSelected={e => setbankSelected(e)}
-          onCancel={e => {
-            console.log(e, 'eeeeeeee');
+          onSelected={(e) => setbankSelected(e)}
+          onCancel={(e) => {
+            console.log(e, "eeeeeeee");
             setisVisibleBank(false);
             handleSubmit();
           }}
         />
 
-        <View style={{width: '48%'}}>
+        <View style={{ width: "48%" }}>
           <Text
             style={{
-              color: 'rgba(106, 106, 106, 1)',
+              color: "rgba(106, 106, 106, 1)",
               fontFamily: Fonts.semibold,
               fontSize: 12,
               marginBottom: 8,
-            }}>
+            }}
+          >
             Quantity
           </Text>
           <TextInput
             value={quantity}
-            onChangeText={text => handleQuantityChange(text, 'quantity')}
+            onChangeText={(text) => handleQuantityChange(text, "quantity")}
             placeholder="0"
-            placeholderTextColor={'rgba(106, 106, 106, 1)'}
+            placeholderTextColor={"rgba(106, 106, 106, 1)"}
             style={{
-              backgroundColor: 'rgba(226, 241, 227, 1)',
+              backgroundColor: "rgba(226, 241, 227, 1)",
               borderRadius: 12,
               height: 50,
-              color: 'black',
+              color: "black",
+              paddingLeft: 10,
+
               fontFamily: Fonts.semibold,
             }}
           />
@@ -228,101 +243,110 @@ export default function Buy(props) {
       </View>
       <View
         style={{
-          flexDirection: 'row',
-          justifyContent: 'flex-start',
-          alignItems: 'center',
+          flexDirection: "row",
+          justifyContent: "flex-start",
+          alignItems: "center",
           padding: 7,
 
           marginVertical: 12,
-        }}>
+        }}
+      >
         <TouchableOpacity
-          onPress={() => setselectedFilter('12hour')}
+          onPress={() => setselectedFilter("12hour")}
           style={{
             backgroundColor:
-              selectedFilter === '12hour' ? '#000' : 'rgba(226, 241, 227, 0.5)',
+              selectedFilter === "12hour" ? "#000" : "rgba(226, 241, 227, 0.5)",
             paddingVertical: 10,
             paddingHorizontal: 20,
             borderRadius: 20,
-            width: '22%',
+            width: "22%",
             marginLeft: 10,
-          }}>
+          }}
+        >
           <Text
             style={{
               color:
-                selectedFilter === '12hour' ? '#fff' : 'rgba(44, 106, 63, 1)',
+                selectedFilter === "12hour" ? "#fff" : "rgba(44, 106, 63, 1)",
               fontFamily: Fonts.semibold,
-              textAlign: 'center',
+              textAlign: "center",
               fontSize: 10,
-            }}>
+            }}
+          >
             Market
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => setselectedFilter('oneDay')}
+          onPress={() => setselectedFilter("oneDay")}
           style={{
             backgroundColor:
-              selectedFilter === 'oneDay' ? '#000' : 'rgba(226, 241, 227, 1)',
+              selectedFilter === "oneDay" ? "#000" : "rgba(226, 241, 227, 1)",
             paddingVertical: 10,
             paddingHorizontal: 20,
             borderRadius: 20,
-            width: '22%',
+            width: "22%",
             marginLeft: 10,
-          }}>
+          }}
+        >
           <Text
             style={{
               color:
-                selectedFilter === 'oneDay' ? '#fff' : 'rgba(44, 106, 63, 1)',
+                selectedFilter === "oneDay" ? "#fff" : "rgba(44, 106, 63, 1)",
               fontFamily: Fonts.semibold,
-              textAlign: 'center',
+              textAlign: "center",
               fontSize: 10,
-            }}>
+            }}
+          >
             Limit
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => setselectedFilter('oneWeek')}
+          onPress={() => setselectedFilter("oneWeek")}
           style={{
             backgroundColor:
-              selectedFilter === 'oneWeek' ? '#000' : 'rgba(226, 241, 227, 1)',
+              selectedFilter === "oneWeek" ? "#000" : "rgba(226, 241, 227, 1)",
             paddingVertical: 10,
             paddingHorizontal: 20,
             borderRadius: 20,
-            width: '22%',
+            width: "22%",
             marginLeft: 10,
-          }}>
+          }}
+        >
           <Text
             style={{
               color:
-                selectedFilter === 'oneWeek' ? '#fff' : 'rgba(44, 106, 63, 1)',
+                selectedFilter === "oneWeek" ? "#fff" : "rgba(44, 106, 63, 1)",
               fontFamily: Fonts.semibold,
-              textAlign: 'center',
+              textAlign: "center",
               fontSize: 10,
-            }}>
+            }}
+          >
             SL Lmt
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => setselectedFilter('oneMonth')}
+          onPress={() => setselectedFilter("oneMonth")}
           style={{
             backgroundColor:
-              selectedFilter === 'oneMonth' ? '#000' : 'rgba(226, 241, 227, 1)',
+              selectedFilter === "oneMonth" ? "#000" : "rgba(226, 241, 227, 1)",
             paddingVertical: 10,
             paddingHorizontal: 20,
             borderRadius: 20,
-            width: '22%',
+            width: "22%",
             marginLeft: 10,
-          }}>
+          }}
+        >
           <Text
             style={{
               color:
-                selectedFilter === 'oneMonth' ? '#fff' : 'rgba(44, 106, 63, 1)',
+                selectedFilter === "oneMonth" ? "#fff" : "rgba(44, 106, 63, 1)",
               fontFamily: Fonts.semibold,
-              textAlign: 'center',
+              textAlign: "center",
               fontSize: 10,
-            }}>
+            }}
+          >
             Mkt Lmt
           </Text>
         </TouchableOpacity>
@@ -330,20 +354,21 @@ export default function Buy(props) {
 
       <Text
         style={{
-          color: 'rgba(106, 106, 106, 1)',
-          textAlign: 'center',
+          color: "rgba(106, 106, 106, 1)",
+          textAlign: "center",
           fontFamily: Fonts.semibold,
           fontSize: 12,
-        }}>
+        }}
+      >
         Order will be executed at best price in market
       </Text>
       <GenericButton
         onPress={() => setisVisibleBank(true)}
         title="Buy"
         cStyle={{
-          backgroundColor: 'rgba(44, 106, 63, 1)',
-          width: '90%',
-          alignSelf: 'center',
+          backgroundColor: "rgba(44, 106, 63, 1)",
+          width: "90%",
+          alignSelf: "center",
           marginTop: 40,
         }}
       />

@@ -15,9 +15,8 @@ import Fonts from '../../constants/Fonts';
 import { getContacts } from '../../services/Services';
 import useSelectorAction from '../../hooks/useSelectorAction';
 import { useTheme } from '../../styles/ThemeContext';
-import { useDeviceContacts } from 'query/hooks';
+import { useDeviceContacts, useRecentContacts } from 'query/hooks';
 import { removeItem, STORAGE_KEYS } from 'storage/mmkv';
-import { useRecentContacts } from 'query/hooks/useRecentContacts';
 
 export default function ContactScreen(props) {
   const { isVisble3 } = props.route.params;

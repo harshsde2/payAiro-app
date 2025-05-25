@@ -65,7 +65,7 @@ const CryptoCardSkeleton: React.FC<CryptoCardSkeletonProps> = memo(({
     });
     
     return (
-      <View style={[style, { overflow: 'hidden', backgroundColor: baseColor }]}>
+      <View style={[ { overflow: 'hidden', backgroundColor: baseColor },style]}>
         <Animated.View
           style={{
             width: '100%',
@@ -103,22 +103,34 @@ const CryptoCardSkeleton: React.FC<CryptoCardSkeletonProps> = memo(({
       borderRadius={theme.spacing.spacing[10]}
     >
       {/* Header Section */}
-      <View style={styles.header}>
+      <View style={[styles.header,
+        {
+          paddingHorizontal: theme.spacing.spacing.md,
+          // marginVertical: theme.spacing.spacing.sm,
+          paddingVertical: theme.spacing.spacing.md,
+          justifyContent: 'space-between',
+          width: '100%',
+          flexDirection: 'row',
+          alignItems: 'center'
+        }
+      ]}>
         <ShimmerBox style={styles.headerTitle} />
         <ShimmerBox style={styles.currencySelector} />
       </View>
 
       {/* Main Card */}
       <Card
-        backgroundColor={theme.colors.palette.green700}
+        backgroundColor={theme.colors.palette.white}
         borderRadius={theme.spacing.spacing[10]}
         elevation={7}
-        padding={10}
+        padding={0}
         style={styles.mainCard}
       >
+        <ShimmerBox  style={styles.arrowButton} />
+
         <View style={styles.cardContent}>
           {/* Left Content - Balance Info */}
-          <View style={styles.leftContent}>
+          {/* <View style={styles.leftContent}>
             <ShimmerBox style={styles.balanceLabel} />
             
             <View style={styles.balanceRow}>
@@ -132,12 +144,35 @@ const CryptoCardSkeleton: React.FC<CryptoCardSkeletonProps> = memo(({
               <ShimmerBox style={styles.identifier} />
               <ShimmerBox style={styles.copyIcon} />
             </View>
-          </View>
+          </View> */}
           
           {/* Right Content - Logo */}
-          <View style={styles.logoSection}>
+          {/* <View style={styles.logoSection}>
             <ShimmerBox style={styles.logo} />
             <ShimmerBox style={styles.logoText} />
+          </View> */}
+
+          <View style={styles.leftContent}>
+            <ShimmerBox style={styles.balanceLabel} />
+            <View style={styles.balanceRow}>
+              <ShimmerBox style={styles.balanceAmount} />
+              {/* <ShimmerBox style={styles.withdrawButton} /> */}
+            </View>
+            <ShimmerBox style={styles.identifierLabel} />
+            <View style={styles.identifierRow}>
+              <ShimmerBox style={styles.identifier} />
+              <ShimmerBox style={styles.copyIcon} />
+            </View>
+          </View>
+          <View style={styles.logoSection}>
+            <ShimmerBox style={styles.logo} />
+            <View style={styles.logoContainer} >
+            <ShimmerBox style={styles.logoText} />
+            <View style={styles.logoStripContainer}>
+
+              <ShimmerBox style={styles.logoStrip} />
+            </View>
+            </View>
           </View>
         </View>
       </Card>
@@ -167,7 +202,9 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderRadius: 20,
   },
   mainCard: {
-    width: '100%',
+    // width: '100%',
+    flex: 1,
+    height: 160,
   },
   cardContent: {
     flexDirection: 'row',
@@ -176,8 +213,12 @@ const createStyles = (theme: any) => StyleSheet.create({
     width: '100%',
   },
   leftContent: {
-    width: '70%',
-    padding: theme.spacing.spacing.sm,
+    width: '72%',
+    paddingHorizontal: theme.spacing.spacing.lg,
+    paddingVertical: theme.spacing.spacing.sm,
+    backgroundColor: theme.colors.palette.green700,
+    borderTopRightRadius: theme.spacing.spacing[5],
+    borderBottomRightRadius: theme.spacing.spacing[5],
   },
   balanceLabel: {
     width: 120,
@@ -216,31 +257,69 @@ const createStyles = (theme: any) => StyleSheet.create({
     marginTop: 5,
   },
   identifier: {
-    width: '80%',
+    width: 150,
     height: 15,
-    borderRadius: 4,
+    // borderRadius: 4,
   },
   copyIcon: {
     width: 18,
     height: 18,
     borderRadius: 4,
   },
+  arrowButton: {
+    width: 25,
+    height: 25,
+    borderRadius: 12.5,
+    position: 'absolute',
+    top: '43%',
+    left: '73%',
+    backgroundColor:theme.colors.palette.green700,
+    zIndex: 1,
+  },
   logoSection: {
-    width: '25%',
+    // width: '25%',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    // backgroundColor: 'blue',
+    flex:1,
+    height: '100%',
   },
   logo: {
     width: 70,
-    height: 70,
-    borderRadius: 35,
-    marginBottom: 5,
+    height: 30,
+    borderRadius: theme.spacing.spacing[2],
+    // width: 70,
+    // height: 70,
+    // borderRadius: 35,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    marginTop: 15,
   },
   logoText: {
-    width: 60,
-    height: 15,
-    borderRadius: 3,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderBottomLeftRadius: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    
+    // borderRadius: 3,
   },
+  logoStripContainer: {
+    width: 50,
+    height: 40,
+    // backgroundColor:'red'
+  },
+  logoStrip:{
+    width: 10,
+    height: 40,
+    borderRadius: 3,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    marginBottom: 15,
+  },
+  logoContainer:{
+    // backgroundColor:'red',
+    marginLeft: 15,
+    marginBottom: 15,
+  }
 });
 
 export default CryptoCardSkeleton; 

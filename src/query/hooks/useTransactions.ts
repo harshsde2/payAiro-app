@@ -1,15 +1,15 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../../api';
-import { WALLET, MERCHANT } from '../../api/endpoints';
-import { ApiResponse, Transaction } from '../../api/types';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "../../api";
+import { WALLET, MERCHANT } from "../../api/endpoints";
+import { ApiResponse, Transaction } from "../../api/types";
 
 // Query keys
 export const transactionKeys = {
-  all: ['transactions'] as const,
-  list: () => [...transactionKeys.all, 'list'] as const,
-  detail: (id: string) => [...transactionKeys.all, 'detail', id] as const,
-  pending: () => [...transactionKeys.all, 'pending'] as const,
-  merchant: () => [...transactionKeys.all, 'merchant'] as const,
+  all: ["transactions"] as const,
+  list: () => [...transactionKeys.all, "list"] as const,
+  detail: (id: string) => [...transactionKeys.all, "detail", id] as const,
+  pending: () => [...transactionKeys.all, "pending"] as const,
+  merchant: () => [...transactionKeys.all, "merchant"] as const,
 };
 
 // Interface for transaction list response
@@ -25,7 +25,9 @@ export const useTransactions = () => {
   return useQuery<ApiResponse<TransactionListResponse>>({
     queryKey: transactionKeys.list(),
     queryFn: async () => {
-      return await apiClient.get<ApiResponse<TransactionListResponse>>(WALLET.ALL_TRANSACTION);
+      return await apiClient.get<ApiResponse<TransactionListResponse>>(
+        WALLET.ALL_TRANSACTION
+      );
     },
   });
 };
@@ -37,7 +39,9 @@ export const usePendingRequests = () => {
   return useQuery<ApiResponse<Transaction[]>>({
     queryKey: transactionKeys.pending(),
     queryFn: async () => {
-      return await apiClient.get<ApiResponse<Transaction[]>>(WALLET.PENDING_REQUESTS);
+      return await apiClient.get<ApiResponse<Transaction[]>>(
+        WALLET.PENDING_REQUESTS
+      );
     },
   });
 };
@@ -49,7 +53,9 @@ export const useMerchantTransactions = () => {
   return useQuery<ApiResponse<Transaction[]>>({
     queryKey: transactionKeys.merchant(),
     queryFn: async () => {
-      return await apiClient.get<ApiResponse<Transaction[]>>(MERCHANT.TRANSACTIONS);
+      return await apiClient.get<ApiResponse<Transaction[]>>(
+        MERCHANT.TRANSACTIONS
+      );
     },
   });
 };
@@ -57,7 +63,7 @@ export const useMerchantTransactions = () => {
 // Interface for payment request payload
 interface PaymentRequestPayload {
   amount: number;
-  identifier_type: 'username' | 'email' | 'phone';
+  identifier_type: "username" | "email" | "phone";
   identifier_value: string;
   remarks?: string;
 }
@@ -67,14 +73,14 @@ interface PaymentRequestPayload {
  */
 export const useSendPaymentRequest = () => {
   const queryClient = useQueryClient();
-  
-  return useMutation<
-    ApiResponse<any>,
-    Error,
-    PaymentRequestPayload
-  >({
+
+  return useMutation<ApiResponse<any>, Error, PaymentRequestPayload>({
     mutationFn: async (payload) => {
-      return await apiClient.post<ApiResponse<any>>(WALLET.PAYMENT_REQUEST, payload, false);
+      return await apiClient.post<ApiResponse<any>>(
+        WALLET.PAYMENT_REQUEST,
+        payload,
+        false
+      );
     },
     onSuccess: () => {
       // Invalidate relevant queries to trigger refetch
@@ -89,14 +95,18 @@ export const useSendPaymentRequest = () => {
  */
 export const usePayRequest = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation<
     ApiResponse<any>,
     Error,
     string // request ID
   >({
     mutationFn: async (requestId) => {
-      return await apiClient.post<ApiResponse<any>>(WALLET.PAYMENT_REQUEST_PAY(requestId), {}, false);
+      return await apiClient.post<ApiResponse<any>>(
+        WALLET.PAYMENT_REQUEST_PAY(requestId),
+        {},
+        false
+      );
     },
     onSuccess: () => {
       // Invalidate relevant queries to trigger refetch
@@ -104,4 +114,4 @@ export const usePayRequest = () => {
       queryClient.invalidateQueries({ queryKey: transactionKeys.pending() });
     },
   });
-}; 
+};

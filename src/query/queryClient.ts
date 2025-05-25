@@ -1,5 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import { persister } from '../storage/persistConfig';
+import { persistQueryClient } from '@tanstack/react-query-persist-client';
 
 // Create a client with more conservative settings
 export const queryClient = new QueryClient({
@@ -20,7 +21,3 @@ export const queryClient = new QueryClient({
   },
 });
 
-// Additional setup for client persistence
-export const setupQueryClientPersistence = () => {
-  // Any additional persistence setup can go here
-}; 

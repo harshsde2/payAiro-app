@@ -18,27 +18,22 @@ const FadeWrapperExample = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         {/* Default fade (300ms) */}
-        <FadeWrapper visible={isVisible}>
-          <View style={styles.card}>
-            <Text style={styles.text}>
-              Default Fade (300ms)
-            </Text>
-          </View>
-        </FadeWrapper>
+        <FadeWrapper
+          visible={isVisible} // Toggle this to fade between components
+          duration={2000}
+          firstComponent={<Text style={{ fontSize: 18 }}>Component A</Text>}
+          secondComponent={<Text style={{ fontSize: 18 }}>Component B</Text>}
+        />
+
 
         {/* Slow fade (1000ms) with completion callback */}
-        <FadeWrapper 
+        {/* <FadeWrapper
           visible={isVisible}
+          firstComponent={<Text style={{ fontSize: 18 }}>Component A</Text>}
+          secondComponent={<Text style={{ fontSize: 18 }}>Component B</Text>}
           duration={1000}
-          onComplete={handleAnimationComplete}
-        >
-          <View style={[styles.card, styles.slowCard]}>
-            <Text style={styles.text}>
-              Slow Fade (1000ms)
-            </Text>
-          </View>
-        </FadeWrapper>
-
+        /> */}
+          
         {/* Status text */}
         {lastAction ? (
           <Text style={styles.status}>
@@ -46,7 +41,7 @@ const FadeWrapperExample = () => {
           </Text>
         ) : null}
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.button}
           onPress={toggleVisibility}
         >

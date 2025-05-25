@@ -28,22 +28,29 @@ export const useBankAccounts = () => {
  * Hook to get all bank accounts including special accounts
  */
 export const useAllBankAccounts = () => {
-  return useQuery<ApiResponse<{
-    bank_accounts: BankAccount[],
-    traditional_ira_accounts: BankAccount[],
-    roth_ira_accounts: BankAccount[]
-  }>>({
+  return useQuery<BankAccount[]>({
     queryKey: bankKeys.allAccounts(),
     queryFn: async () => {
-      return await apiClient.get<ApiResponse<{
+      const response = await apiClient.get<ApiResponse<{
         bank_accounts: BankAccount[],
         traditional_ira_accounts: BankAccount[],
-        roth_ira_accounts: BankAccount[]
+        roth_ira_accounts: BankAccount[],
+        external_accounts: BankAccount[]
       }>>(AUTH.ALL_BANK_ACCOUNTS);
+
+      const payAiroBankAccounts = [
+        ...(response?.data?.bank_accounts || []),
+        ...(response?.data?.traditional_ira_accounts || []),
+        ...(response?.data?.roth_ira_accounts || []),
+        ...(response?.data?.external_accounts || [])  
+      ];
+      // console.log('PayAiro Bank Accounts ====>',  JSON.stringify(payAiroBankAccounts,null, 2));
+      return payAiroBankAccounts;
     },
+    staleTime: 1000, // ✅ 10 minutes: only refetch if older than this
+    // refetchOnWindowFocus: true, // ✅ (default) only refetch if data is stale
   });
 };
-
 /**
  * Hook to get bank account balances
  */
@@ -51,7 +58,8 @@ export const useBankBalances = () => {
   return useQuery<ApiResponse<any>>({
     queryKey: bankKeys.balance(),
     queryFn: async () => {
-      return await apiClient.get<ApiResponse<any>>(AUTH.ALL_BANKACCOUNT_BALANCE);
+      const response = await apiClient.get<ApiResponse<any>>(AUTH.ALL_BANKACCOUNT_BALANCE);
+      return response.data;
     },
   });
 };

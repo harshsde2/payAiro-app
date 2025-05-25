@@ -26,14 +26,17 @@ import useSelectorAction from '../../hooks/useSelectorAction';
 import { checkUser } from '../../services/Services';
 import useDispatchAction from '../../hooks/useDispatchAction';
 import { setErrorMsg } from '../../redux/slices/authenticationSlice';
+import { CustomText } from 'tsx-components';
+import { useTheme } from 'styles';
 
 export default function Send(props) {
   const { requested, type, sender: senderDetails } = props.route.params;
+  const { theme } = useTheme();
 
 
-  console.log('requested =>', requested)
-  console.log('type =>', type)
-  console.log('senderDetails =>', senderDetails)
+  // console.log('requested =>', requested)
+  // console.log('type =>', type)
+  // console.log('senderDetails =>', senderDetails)
 
   const { walletData, tokens } = useSelectorAction();
   const navigation = useNavigation();
@@ -125,24 +128,27 @@ export default function Send(props) {
                       flexDirection: 'row',
                       justifyContent: 'space-between',
                       alignItems: 'center',
+                      flex: 1,
+                      marginBottom: isDropdown ? 10 : 0,
                       //   padding: 20,
                     }}>
                     <View
                       style={{
+                        flex: 1,
                         flexDirection: 'row',
                         justifyContent: 'flex-start',
                         alignItems: 'center',
                         //   padding: 20,
                       }}>
                       <SvgXml xml={SVGUSD} width={40} height={40} />
-                      <View style={{ marginHorizontal: 10 }}>
+                      <View style={{ marginHorizontal: 10,flex:1 }}>
                         <Text
                           style={{
                             color: 'black',
                             fontSize: 16,
                             fontFamily: Fonts.bold,
                           }}>
-                          {selectedBank?.bank_name ?? selectedBank?.name}
+                          {selectedBank?.bank_name ?? selectedBank?.name} <CustomText variant={'body2'}  color={theme?.colors.palette.green700} style={{textTransform:'capitalize'}}  >{` (${selectedBank?.account_type})`}</CustomText>
                         </Text>
                         <Text
                           style={{
@@ -162,8 +168,9 @@ export default function Send(props) {
                       </View>
                     </View>
                     <TouchableOpacity
-                      style={{ width: '40%', alignItems: 'flex-end' }}
+                      style={{ width: 20, alignItems: 'center',marginLeft:5}}
                       disabled
+                      
                     >
                       <SvgXml xml={isDropdown ? SVGUpArrow : SVGDowArrow2} />
                     </TouchableOpacity>
@@ -174,7 +181,8 @@ export default function Send(props) {
                     bankLists.map((item, k) => (
                       <TouchableOpacity
                         onPress={() => {
-                          setselectedBank(item);
+                          console.log(item, 'item');
+                          setselectedBank(item );
                           setisDropdown(false);
                         }}
                         key={k}
@@ -182,7 +190,7 @@ export default function Send(props) {
                           flexDirection: 'row',
                           justifyContent: 'flex-start',
                           alignItems: 'center',
-                          marginVertical: 10,
+                          marginVertical:10,
                           //   padding: 20,
                         }}>
                         <SvgXml xml={SVGUSD} width={40} height={40} />
@@ -193,17 +201,9 @@ export default function Send(props) {
                               fontSize: 16,
                               fontFamily: Fonts.bold,
                             }}>
-                            {item?.bank_name ?? item?.name} ({' '}
-                            <Text
-                              style={{
-                                color: 'rgba(44, 106, 63, 1)',
-                                fontSize: 12,
-                                fontFamily: Fonts.semibold,
-                                textTransform: 'uppercase',
-                              }}>
-                              {item?.account_type ?? 'External'}
-                            </Text>
-                            )
+                            {item?.bank_name ?? item?.name} 
+                            <CustomText variant={'body2'}  color={theme?.colors.palette.green700} style={{textTransform:'capitalize'}}  >{` (${item?.account_type})`}</CustomText>
+                            
                           </Text>
                           <Text
                             style={{

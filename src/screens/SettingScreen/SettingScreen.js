@@ -28,6 +28,7 @@ import useSelectorAction from '../../hooks/useSelectorAction';
 // Services & Actions
 import { getKYC } from '../../services/Services';
 import {
+  resetState,
   setLogin,
   setTokens,
   setUserData,
@@ -40,12 +41,19 @@ import {
   setUser,
   setWalletDataAuth,
 } from '../../services/Auth';
+import { ScreenContainer } from 'HOC';
+import { useDispatch } from 'react-redux';
+import { resetAppState } from 'utils/configs';
 
 export default function SettingScreen() {
   const navigation = useNavigation();
   const [isVisible, setIsVisible] = useState(false);
   const { tokens, walletData } = useSelectorAction();
   const [kycStep, setKycStep] = useState('');
+
+  const dispatch = useDispatch();
+
+  console.log(kycStep?.selfimage, 'image');
 
   useEffect(() => {
     fetchKycStep();
@@ -63,35 +71,18 @@ export default function SettingScreen() {
   };
 
   const handleLogout = async () => {
-    console.log("handleLogout in")
-    useDispatchAction(setUserData(null));
-    console.log("handleLogout 2")
-    useDispatchAction(setTokens(null));
-    console.log("handleLogout 3")
-    useDispatchAction(setWalletData(null));
-    console.log("handleLogout 4")
-    // await setUser(null);
-    console.log("handleLogout 5")
+    resetAppState();
     setWalletDataAuth(null);
-    console.log("handleLogout 6")
-    // setIsVisible(false);
-    console.log("handleLogout 7")
-    console.log("handleLogout 8")
     setPin(null);
-    console.log("handleLogout 9")
     setKYCAcceopted(null);
-    console.log("handleLogout 10")
-    // Wait until all interactions complete before updating navigation logic
-    // Delay the navigation stack switch to prevent crash
-  setTimeout(() => {
-    useDispatchAction(setLogin(false));
-    console.log("handleLogout 9");
-  }, 100); // even 50ms may work
 
+    setTimeout(() => {
+      useDispatchAction(setLogin(false)); // optional, already in reset
+    }, 100);
   };
 
   return (
-    <Container>
+    <ScreenContainer padding={0}>
       <BottomNavigation />
       <LogoutModal
         isVisible={isVisible}
@@ -103,21 +94,25 @@ export default function SettingScreen() {
             handleLogout();
           }, 300);
         }}
-        
+
       />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
+
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ flexGrow: 1 }}>
+          contentContainerStyle={{ flexGrow: 1 }}
+        >
+
           <View
             style={{
               flexDirection: 'row',
               justifyContent: 'flex-start',
               alignItems: 'center',
-              margin: 30,
-              marginTop: 40,
+              marginHorizontal: 15,
+              marginBottom: 20,
+              marginTop: 10,
             }}>
             <View
               style={[
@@ -127,9 +122,9 @@ export default function SettingScreen() {
               {kycStep?.selfimage ? (
                 <Image
                   source={{
-                    uri: kycStep?.selfimage.includes('https://api.payairo.com')
+                    uri: kycStep?.selfimage.includes('https://app.payairo.com')
                       ? kycStep?.selfimage
-                      : 'https://api.payairo.com' + kycStep?.selfimage,
+                      : 'https://app.payairo.com' + kycStep?.selfimage,
                   }}
                   style={styles.image}
                 />
@@ -155,7 +150,8 @@ export default function SettingScreen() {
               backgroundColor: '#fff',
               borderTopEndRadius: 32,
               borderTopStartRadius: 32,
-              padding: 20,
+              paddingVertical: 20,
+              paddingHorizontal: 10,
               marginTop: 0,
             }}>
             <Text
@@ -231,7 +227,7 @@ export default function SettingScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </Container>
+    </ScreenContainer>
   );
 }
 

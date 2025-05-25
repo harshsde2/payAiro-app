@@ -38,7 +38,7 @@ export default function SuccesScreen() {
   };
   const getkycStep = async () => {
     const kycData = await getKYC(tokens?.access);
-    console.log(kycData, 'KYCDatataaatat');
+    // console.log(kycData, 'KYCDatataaatat');
     if (!kycData?.data?.is_varified) {
       setisVisible(true);
     }

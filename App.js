@@ -1,16 +1,16 @@
-import { View, Text, AppState, Linking, Platform, Alert } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import AuthStack from './src/navigations/AuthStack';
-import AppStack from './src/navigations/AppStack';
+import { View, Text, AppState, Linking, Platform, Alert } from "react-native";
+import React, { useEffect, useState } from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import AuthStack from "./src/navigations/AuthStack";
+import AppStack from "./src/navigations/AppStack";
 import {
   getBiometric,
   getGuide,
   getToken,
   getUser,
   getWalletDataAuth,
-} from './src/services/Auth';
-import useDispatchAction from './src/hooks/useDispatchAction';
+} from "./src/services/Auth";
+import useDispatchAction from "./src/hooks/useDispatchAction";
 import {
   setActiveTab,
   setBiometricAvailable,
@@ -21,24 +21,32 @@ import {
   setTokens,
   setUserData,
   setWalletData,
-} from './src/redux/slices/authenticationSlice';
-import { useDispatch, useSelector } from 'react-redux';
-import { getMechentPay, getWallet } from './src/services/Services';
-import ErrorToast from './src/components/ErrorToast';
-import SplashScreen from './src/screens/Authentications/SplashScreen';
-import notifee, { AndroidStyle } from '@notifee/react-native';
-import messaging from '@react-native-firebase/messaging';
-import ReactNativeBiometrics from 'react-native-biometrics';
-import { QueryProvider } from './src/query/index';
-import { setItem, STORAGE_KEYS } from './src/storage/mmkv';
-import { ThemeProvider } from './src/styles';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NAVIGATION_SCREENS } from './src/navigations/navigationConstants';
+} from "./src/redux/slices/authenticationSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { getMechentPay, getWallet } from "./src/services/Services";
+import ErrorToast from "./src/components/ErrorToast";
+import SplashScreen from "./src/screens/Authentications/SplashScreen";
+import notifee, { AndroidStyle } from "@notifee/react-native";
+import messaging from "@react-native-firebase/messaging";
+import ReactNativeBiometrics from "react-native-biometrics";
+import { PersistQueryProvider, QueryProvider } from "./src/query/index";
+import { getItem, setItem, STORAGE_KEYS } from "./src/storage/mmkv";
+import { ThemeProvider } from "./src/styles";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { NAVIGATION_SCREENS } from "./src/navigations/navigationConstants";
+import { setupQueryClientPersistence } from "./src/query/queryClient";
+import GlobalLoader from "./src/tsx-components/GlobalLoader";
 
 export default function App() {
   // -------------------- Redux State --------------------
-  const { isLogin, tokens, errorMsg, successMsg, biometricAvailable } =
-    useSelector(state => state.authenticationSlice);
+  const {
+    isLogin,
+    tokens,
+    errorMsg,
+    successMsg,
+    biometricAvailable,
+    showLoader,
+  } = useSelector((state) => state.authenticationSlice);
 
   const dispatch = useDispatch();
 
@@ -61,15 +69,16 @@ export default function App() {
 
   // Get all necessary data from storage and set in Redux
   const getInitialData = async () => {
-    const token = await getToken();
+    const token = getItem(STORAGE_KEYS.AUTH_TOKENS);
+
     const wallet = await getWalletDataAuth();
     const biometric = await getBiometric();
 
     if (token && wallet) {
       // Store token in MMKV for React Query
-      setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(token));
-
-      useDispatchAction(setTokens(token));
+      // setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(token));]
+      // console.log('Token:', token);
+      useDispatchAction(setTokens(JSON.parse(token)));
       useDispatchAction(setWalletData(wallet));
       getMerchentRequest(token);
       useDispatchAction(setLogin(true));
@@ -83,10 +92,10 @@ export default function App() {
   // Handle biometric authentication when app comes to foreground
   useEffect(() => {
     if (isLogin && biometricAvailable) {
-      const handleAppStateChange = nextAppState => {
+      const handleAppStateChange = (nextAppState) => {
         if (
           appState.match(/inactive|background/) &&
-          nextAppState === 'active'
+          nextAppState === "active"
         ) {
           // App has come to the foreground
           if (lastBackgroundTime) {
@@ -121,8 +130,8 @@ export default function App() {
 
       // Add event listener for app state changes
       const subscription = AppState.addEventListener(
-        'change',
-        handleAppStateChange,
+        "change",
+        handleAppStateChange
       );
 
       return () => {
@@ -133,10 +142,10 @@ export default function App() {
   }, [appState, lastBackgroundTime, isLogin, biometricAvailable]);
 
   // Function to handle biometric authentication
-  const authenticateWithBiometrics = async val => {
+  const authenticateWithBiometrics = async (val) => {
     try {
       const { success } = await rnBiometrics.simplePrompt({
-        promptMessage: 'Verify With PayAiro',
+        promptMessage: "Verify With PayAiro",
       });
 
       if (success) {
@@ -154,9 +163,9 @@ export default function App() {
 
   // Open device settings for biometric configuration
   const openSettings = () => {
-    if (Platform.OS === 'ios') {
-      Linking.openURL('app-settings:');
-    } else if (Platform.OS === 'android') {
+    if (Platform.OS === "ios") {
+      Linking.openURL("app-settings:");
+    } else if (Platform.OS === "android") {
       Linking.openSettings();
     } else {
       // setErrorMessage('Biometric settings not supported on this platform.');
@@ -166,9 +175,8 @@ export default function App() {
   // -------------------- Push Notifications --------------------
   // Set up notification listener when component mounts
   useEffect(() => {
-    if (Platform.OS == 'android') {
-
-      const unsubscribe = messaging().onMessage(async remoteMessage => {
+    if (Platform.OS == "android") {
+      const unsubscribe = messaging().onMessage(async (remoteMessage) => {
         onDisplayNotification(remoteMessage);
       });
 
@@ -180,11 +188,10 @@ export default function App() {
 
   // Request notification permissions and get FCM token
   React.useEffect(() => {
-    if (Platform.OS == 'android') {
-
+    if (Platform.OS == "android") {
       getFCMToken();
 
-      const unsubscribe = messaging().onMessage(async remoteMessage => {
+      const unsubscribe = messaging().onMessage(async (remoteMessage) => {
         onDisplayNotification(remoteMessage);
       });
 
@@ -200,17 +207,17 @@ export default function App() {
     if (authorizationStatus === messaging.AuthorizationStatus.AUTHORIZED) {
       // console.log('FCM permission granted');
     } else {
-      console.log('FCM permission denied');
+      console.log("FCM permission denied");
     }
     await notifee.requestPermission();
   };
 
   // Display a notification
-  const onDisplayNotification = async remoteMessage => {
+  const onDisplayNotification = async (remoteMessage) => {
     const channelId = await notifee.createChannel({
-      id: 'default',
-      name: 'PayAiro Channel',
-      sound: 'default',
+      id: "default",
+      name: "PayAiro Channel",
+      sound: "default",
     });
 
     await notifee.displayNotification({
@@ -222,7 +229,7 @@ export default function App() {
         sound: remoteMessage?.notification?.android?.sound,
         style: {
           type: AndroidStyle.BIGPICTURE,
-          picture: 'https://gift.utribe.app/demo/images/avatar/GIFT-Icon.png',
+          picture: "https://gift.utribe.app/demo/images/avatar/GIFT-Icon.png",
         },
       },
     });
@@ -240,7 +247,7 @@ export default function App() {
 
   // -------------------- API Requests --------------------
   // Get merchant payment requests
-  const getMerchentRequest = async token => {
+  const getMerchentRequest = async (token) => {
     const data = await getMechentPay(token?.access);
     useDispatchAction(setPendingRequest(data?.data?.total_pending_requests));
   };
@@ -256,31 +263,31 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <QueryProvider>
+        <PersistQueryProvider>
           <NavigationContainer
             onStateChange={(state) => {
               const currentRoute = state.routes[state.index];
-              console.log('Current Screen:', currentRoute.name);
-              let activeTabs = '1'; // Default to home (or whichever default)
+              // console.log('Current Screen:', currentRoute.name);
+              let activeTabs = "1"; // Default to home (or whichever default)
 
               switch (currentRoute.name) {
                 case NAVIGATION_SCREENS.NEW_DASHBOARD:
-                  activeTabs = '1';
+                  activeTabs = "1";
                   break;
                 case NAVIGATION_SCREENS.TRANSACTION:
-                  activeTabs = '2';
+                  activeTabs = "2";
                   break;
                 case NAVIGATION_SCREENS.SCANS:
-                  activeTabs = '3';
+                  activeTabs = "3";
                   break;
-                case NAVIGATION_SCREENS.TRUSTED_CIRCLE:
-                  activeTabs = '4';
+                case NAVIGATION_SCREENS.REWARDS:
+                  activeTabs = "4";
                   break;
                 case NAVIGATION_SCREENS.SETTING_SCREEN:
-                  activeTabs = '5';
+                  activeTabs = "5";
                   break;
                 default:
-                  activeTabs = '1'; // Default to home
+                  activeTabs = "1"; // Default to home
               }
 
               // Dispatch to update Redux store
@@ -288,9 +295,11 @@ export default function App() {
             }}
           >
             {errorMsg || successMsg ? <ErrorToast /> : null}
+            {/* {console.log('showLoader =>', showLoader)} */}
+            {showLoader && <GlobalLoader />}
             {!isLogin ? <AuthStack /> : <AppStack />}
           </NavigationContainer>
-        </QueryProvider>
+        </PersistQueryProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

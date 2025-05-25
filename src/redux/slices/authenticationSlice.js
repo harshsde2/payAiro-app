@@ -1,9 +1,9 @@
 import {createSlice} from '@reduxjs/toolkit';
 import {SVGEthrum, SVGPolly} from '../../constants/images';
+import { themes } from 'styles';
+import { useAnimatedStyle } from 'react-native-reanimated';
 
-const authenticationSlice = createSlice({
-  name: 'authenticationSlice',
-  initialState: {
+const initialState = {
     isLogin: false,
     activeTab: '1',
     userData: null,
@@ -24,6 +24,25 @@ const authenticationSlice = createSlice({
     bankBalance: null,
     bankLists: [],
     guide: false,
+    CardSwitchDetails:{
+      balanceHeaderText: 'PayAiro Balance',
+      payAiroBalanceText: '0.00',
+      securityBalancetext: '0.00',
+      idHeaderText: 'PayAiro ID',
+      payAiroIdText: '0',
+      cardBackgroundColor: themes.light.colors.palette.white,
+      lottieArrowBackgroundColor: themes.light.colors.palette.green700,
+      useSharedValueOfBgColor:0,
+      useAniamationStylesForCard:{},
+    },
+    mxExternalAccountDetails:[],
+    showLoader: false,
+  }
+
+const authenticationSlice = createSlice({
+  name: 'authenticationSlice',
+  initialState: {
+    ...initialState,
   },
 
   reducers: {
@@ -87,6 +106,16 @@ const authenticationSlice = createSlice({
     setGuides: (state, action) => {
       state.guide = action.payload;
     },
+    setCardSwitchDetails: (state, action) => {
+      state.CardSwitchDetails = action.payload;
+    },
+    setMxExternalAccountDetails: (state, action) => {
+      state.mxExternalAccountDetails = action.payload;
+    },
+    setShowLoader: (state, action) => {
+      state.showLoader = action.payload;
+    },
+    resetState: () => initialState,
   },
 });
 export const {
@@ -110,6 +139,10 @@ export const {
   setBankbalances,
   setBankLists,
   setGuides,
+  setCardSwitchDetails,
+  setMxExternalAccountDetails,
+  setShowLoader,
+  resetState,
 } = authenticationSlice.actions;
 
 export default authenticationSlice.reducer;

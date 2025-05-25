@@ -7,7 +7,7 @@ import { Theme, useTheme } from 'styles'
 import CustomSearchTextInput from 'tsx-components/CustomSearchTextInput'
 import { SvgXml } from 'react-native-svg'
 import DashboardSection from 'tsx-components/DashboardSection'
-import { useRecentContacts } from 'query/hooks/useRecentContacts'
+// import { useRecentContacts } from 'query/hooks/useRecentContacts'
 import StoryLists from 'components/StoryLists'
 import { useSelector } from 'react-redux'
 import { useNavigation } from '@react-navigation/native'
@@ -16,17 +16,24 @@ import Fonts from 'constants/Fonts'
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants'
 import { RecentContact } from 'api/types'
 import { getCryptoTx, getPayAeroTx } from 'services/Services'
+import { useAllBankAccounts, useBankAccounts, useRecentContacts, useTransactions } from 'query/hooks'
 
 
 const TrustedCircle = () => {
     const { theme } = useTheme();
     const navigation = useNavigation();
     const { isCrypto ,tokens} = useSelector((state: any) => state.authenticationSlice);
-    const { data } = useRecentContacts() as any;
+    const { data:RecentContacts  } = useRecentContacts() as any;
+
+    const { data: AllBankAccounts } = useAllBankAccounts();
+    const { data: BankAccounts, } = useBankAccounts();
+
+    console.log("AllBankAccounts =>", JSON.stringify(AllBankAccounts,null,2));
+    console.log("BankAccounts =>", JSON.stringify(BankAccounts?.data,null,2));
 
     const styles = customStyles(theme);
 
-    const contactLists = data?.data || [];
+    const contactLists = RecentContacts?.data || [];
     
 
     const [latestContacts, setLatestContacts] = useState<RecentContact[]>([]);
@@ -38,41 +45,41 @@ const TrustedCircle = () => {
 
 
     useEffect(() => {
-        if (Array.isArray(data?.data)) {
-            setLatestContacts(data?.data);
+        if (Array.isArray(RecentContacts?.data)) {
+            setLatestContacts(RecentContacts?.data);
             setIsLoadingLatestContact(false);
 
         }
     }, [])
 
-    useEffect(() => {
-        // Group all data fetch operations
-        const fetchInitialData = async () => {
-          if (!tokens && !tokens?.access) {
-            console.error("No access token available");
-            return;
-          }
+    // useEffect(() => {
+    //     // Group all data fetch operations
+    //     const fetchInitialData = async () => {
+    //       if (!tokens && !tokens?.access) {
+    //         console.error("No access token available");
+    //         return;
+    //       }
     
-          try {
-            console.log("Fetching initial dashboard data");
+    //       try {
+    //         console.log("Fetching initial dashboard data");
     
-            // Create an array of promises with descriptive catch handlers
-            const promises = [
-              fetchTransactions().catch(err => console.error("Transactions fetch failed TrustedCircle:", err)),
-              fetchCryptoTransactions().catch(err => console.error("Crypto transactions fetch failed:", err)),
-            ];
+    //         // Create an array of promises with descriptive catch handlers
+    //         const promises = [
+    //           fetchTransactions().catch(err => console.error("Transactions fetch failed TrustedCircle:", err)),
+    //           fetchCryptoTransactions().catch(err => console.error("Crypto transactions fetch failed:", err)),
+    //         ];
     
-            // Execute all promises in parallel
-            await Promise.allSettled(promises);
-            // console.log("All initial data fetch operations completed");
-          } catch (error) {
-            console.error('Error loading dashboard data:', error);
-          }
-        };
+    //         // Execute all promises in parallel
+    //         await Promise.allSettled(promises);
+    //         // console.log("All initial data fetch operations completed");
+    //       } catch (error) {
+    //         console.error('Error loading dashboard data:', error);
+    //       }
+    //     };
     
-        fetchInitialData();
+    //     fetchInitialData();
     
-      }, [tokens?.access]);
+    //   }, [tokens?.access]);
 
     const handleNavigation = (ScreenName: string) => {
         switch (ScreenName) {
@@ -84,105 +91,105 @@ const TrustedCircle = () => {
         }
     }
 
-    const fetchTransactions = async () => {
-        if(!tokens?.access) return;
-        try {
-          console.log("Fetching PayAiro transactions...");
-          const response = await getPayAeroTx(tokens?.access);
+    // const fetchTransactions = async () => {
+    //     if(!tokens?.access) return;
+    //     try {
+    //       console.log("Fetching PayAiro transactions...");
+    //       const response = await getPayAeroTx(tokens?.access);
 
-          console.log("PayAiro transactions response:", response);
+    //       console.log("PayAiro transactions response:", response);
     
-          // Extract transactions data correctly based on response format
-          let transactionsData = null;
+    //       // Extract transactions data correctly based on response format
+    //       let transactionsData = null;
     
-          if (response?.data?.merchantTransactions || response?.data?.userToUserTransactions) {
-            // Format: { data: { merchantTransactions: [], userToUserTransactions: [] } }
-            transactionsData = {
-              merchantTransactions: response.data.merchantTransactions || [],
-              userToUserTransactions: response.data.userToUserTransactions || []
-            };
-          } else if (response?.merchantTransactions || response?.userToUserTransactions) {
-            // Format: { merchantTransactions: [], userToUserTransactions: [] }
-            transactionsData = {
-              merchantTransactions: response.merchantTransactions || [],
-              userToUserTransactions: response.userToUserTransactions || []
-            };
-          } else if (response?.data?.data) {
-            // Format: { data: { data: { merchantTransactions: [], userToUserTransactions: [] } } }
-            transactionsData = {
-              merchantTransactions: response.data.data.merchantTransactions || [],
-              userToUserTransactions: response.data.data.userToUserTransactions || []
-            };
-          }
+    //       if (response?.data?.merchantTransactions || response?.data?.userToUserTransactions) {
+    //         // Format: { data: { merchantTransactions: [], userToUserTransactions: [] } }
+    //         transactionsData = {
+    //           merchantTransactions: response.data.merchantTransactions || [],
+    //           userToUserTransactions: response.data.userToUserTransactions || []
+    //         };
+    //       } else if (response?.merchantTransactions || response?.userToUserTransactions) {
+    //         // Format: { merchantTransactions: [], userToUserTransactions: [] }
+    //         transactionsData = {
+    //           merchantTransactions: response.merchantTransactions || [],
+    //           userToUserTransactions: response.userToUserTransactions || []
+    //         };
+    //       } else if (response?.data?.data) {
+    //         // Format: { data: { data: { merchantTransactions: [], userToUserTransactions: [] } } }
+    //         transactionsData = {
+    //           merchantTransactions: response.data.data.merchantTransactions || [],
+    //           userToUserTransactions: response.data.data.userToUserTransactions || []
+    //         };
+    //       }
     
-          if (!transactionsData) {
-            console.error("Could not find valid transactions data in response:", response);
-            return;
-          }
+    //       if (!transactionsData) {
+    //         console.error("Could not find valid transactions data in response:", response);
+    //         return;
+    //       }
     
-          // console.log("Extracted transactions data:", transactionsData);
+    //       // console.log("Extracted transactions data:", transactionsData);
     
-          // Create a merged and filtered list in one operation
-          const successfulTransactions = [
-            ...transactionsData.merchantTransactions,
-            ...transactionsData.userToUserTransactions
-          ].filter(tx => tx?.status === 'success');
+    //       // Create a merged and filtered list in one operation
+    //       const successfulTransactions = [
+    //         ...transactionsData.merchantTransactions,
+    //         ...transactionsData.userToUserTransactions
+    //       ].filter(tx => tx?.status === 'success');
     
-          // console.log(`Found ${successfulTransactions.length} successful transactions`);
-          settxLists(successfulTransactions);
-        } catch (error) {
-          console.error('Error fetching transactions:', error);
-        }
-      };
+    //       // console.log(`Found ${successfulTransactions.length} successful transactions`);
+    //       settxLists(successfulTransactions);
+    //     } catch (error) {
+    //       console.error('Error fetching transactions:', error);
+    //     }
+    //   };
 
-    const fetchCryptoTransactions = async () => {
-        try {
-          // console.log("Fetching crypto transactions...");
-          const response = await getCryptoTx(tokens?.access);
-          // console.log("Crypto transactions response:", response);
+    // const fetchCryptoTransactions = async () => {
+    //     try {
+    //       // console.log("Fetching crypto transactions...");
+    //       const response = await getCryptoTx(tokens?.access);
+    //       // console.log("Crypto transactions response:", response);
     
-          // Extract crypto transactions data correctly based on response format
-          let cryptoData = null;
+    //       // Extract crypto transactions data correctly based on response format
+    //       let cryptoData = null;
     
-          if (response?.data?.nft_transactions || response?.data?.trades) {
-            // Format: { data: { nft_transactions: [], trades: [] } }
-            cryptoData = {
-              nft_transactions: response.data.nft_transactions || [],
-              trades: response.data.trades || []
-            };
-          } else if (response?.nft_transactions || response?.trades) {
-            // Format: { nft_transactions: [], trades: [] }
-            cryptoData = {
-              nft_transactions: response.nft_transactions || [],
-              trades: response.trades || []
-            };
-          } else if (response?.data?.data) {
-            // Format: { data: { data: { nft_transactions: [], trades: [] } } }
-            cryptoData = {
-              nft_transactions: response.data.data.nft_transactions || [],
-              trades: response.data.data.trades || []
-            };
-          }
+    //       if (response?.data?.nft_transactions || response?.data?.trades) {
+    //         // Format: { data: { nft_transactions: [], trades: [] } }
+    //         cryptoData = {
+    //           nft_transactions: response.data.nft_transactions || [],
+    //           trades: response.data.trades || []
+    //         };
+    //       } else if (response?.nft_transactions || response?.trades) {
+    //         // Format: { nft_transactions: [], trades: [] }
+    //         cryptoData = {
+    //           nft_transactions: response.nft_transactions || [],
+    //           trades: response.trades || []
+    //         };
+    //       } else if (response?.data?.data) {
+    //         // Format: { data: { data: { nft_transactions: [], trades: [] } } }
+    //         cryptoData = {
+    //           nft_transactions: response.data.data.nft_transactions || [],
+    //           trades: response.data.data.trades || []
+    //         };
+    //       }
     
-          if (!cryptoData) {
-            console.error("Could not find valid crypto transactions data in response:", response);
-            return;
-          }
+    //       if (!cryptoData) {
+    //         console.error("Could not find valid crypto transactions data in response:", response);
+    //         return;
+    //       }
     
-          // console.log("Extracted crypto transactions data:", cryptoData);
+    //       // console.log("Extracted crypto transactions data:", cryptoData);
     
-          // Safely combine NFT transactions and trades
-          const allTransactions = [
-            ...cryptoData.nft_transactions,
-            ...cryptoData.trades
-          ];
+    //       // Safely combine NFT transactions and trades
+    //       const allTransactions = [
+    //         ...cryptoData.nft_transactions,
+    //         ...cryptoData.trades
+    //       ];
     
-          // console.log(`Found ${allTransactions.length} crypto transactions`);
-          setweb3TxLists(allTransactions);
-        } catch (error) {
-          console.error('Error fetching crypto transactions:', error);
-        }
-      };
+    //       // console.log(`Found ${allTransactions.length} crypto transactions`);
+    //       setweb3TxLists(allTransactions);
+    //     } catch (error) {
+    //       console.error('Error fetching crypto transactions:', error);
+    //     }
+    //   };
 
 
     const MemoizedStoryLists = React.memo(StoryLists);

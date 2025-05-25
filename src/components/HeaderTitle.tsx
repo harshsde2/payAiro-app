@@ -1,4 +1,4 @@
-import {View, Text, TouchableOpacity, StyleSheet, Platform, TextStyle} from 'react-native';
+import {View, Text, TouchableOpacity, StyleSheet, Platform, TextStyle, ViewStyle} from 'react-native';
 import React, { FC } from 'react';
 import Fonts from '../constants/Fonts';
 import {SvgXml} from 'react-native-svg';
@@ -7,16 +7,18 @@ import {useTheme} from '../styles/ThemeContext';
 import { Theme } from 'styles';
 
 interface HeaderTitleProps {
-  title: string;
-  leftIcon: string;
+  style?: ViewStyle;
+  title?: string;
+  leftIcon?: string;
   rightIcon?: string;
   isBack?: boolean;
-  onPressLeft: () => void;
+  onPressLeft?: () => void;
   onPressRight?: () => void; // <-- optional
   titleStyle?: TextStyle;    // <-- optional
 }
 
 const HeaderTitle: FC<HeaderTitleProps> = ({
+  style,
   title,
   leftIcon,
   rightIcon,
@@ -46,7 +48,7 @@ const HeaderTitle: FC<HeaderTitleProps> = ({
   };
 
   return (
-    <View style={styles(theme).headerContainer}>
+    <View style={[styles(theme).headerContainer,style]}>
       <View style={styles(theme).headerContent}>
         {leftIcon ? (
           <TouchableOpacity

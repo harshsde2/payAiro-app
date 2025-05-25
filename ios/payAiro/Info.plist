@@ -15,7 +15,7 @@
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app uses your location to provide better recommendations and nearby services.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app uses your location only while using the app to provide relevant content and services.</string>
+	<string/>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -43,8 +43,6 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Allow to access camera</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Your message to user when the microsphone is accessed for the first time</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

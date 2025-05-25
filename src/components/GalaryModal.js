@@ -1,20 +1,21 @@
-import React from 'react';
+import React from "react";
 import {
   Image,
   Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-import Fonts from '../constants/Fonts';
-import GenericButton from './GenericButton';
-import {SCREENS} from '../constants/SCREENS';
-import {useNavigation} from '@react-navigation/native';
-import {SvgXml} from 'react-native-svg';
+} from "react-native";
+import Fonts from "../constants/Fonts";
+import GenericButton from "./GenericButton";
+import { SCREENS } from "../constants/SCREENS";
+import { useNavigation } from "@react-navigation/native";
+import { SvgXml } from "react-native-svg";
 
-const GalleryModal = ({isVisible, onClose, onConfirm}) => {
+const GalleryModal = ({ isVisible, onClose, onConfirm }) => {
   const navigation = useNavigation();
 
   return (
@@ -22,33 +23,37 @@ const GalleryModal = ({isVisible, onClose, onConfirm}) => {
       visible={isVisible}
       transparent={true}
       animationType="slide"
-      onRequestClose={onClose}>
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <SvgXml style={{alignSelf: 'center'}} onPress={() => onClose()} />
+      onRequestClose={onClose}
+    >
+      <Pressable style={styles.modalContainer} onPress={onClose}>
+        <Pressable
+          style={styles.modalContent}
+          onPress={(e) => e.stopPropagation()} // prevent closing when clicking on modal content
+        >
           <Text style={styles.headerText}>Select File Upload</Text>
           <Text
             style={{
               fontSize: 18,
               fontFamily: Fonts.regular,
-              color: 'grey',
-              textAlign: 'center',
-            }}>
+              color: "grey",
+              textAlign: "center",
+            }}
+          >
             Choose Photos From Gallery or Capture
           </Text>
           <GenericButton
             title="Choose From Gallery"
-            cStyle={{marginTop: 25}}
-            onPress={() => onConfirm('gallery')}
+            cStyle={{ marginTop: 25 }}
+            onPress={() => onConfirm("gallery")}
           />
           <GenericButton
-            title={'Open Camera'}
-            cStyle={{backgroundColor: '#000', marginVertical: 10}}
-            tStyle={{color: 'white'}}
-            onPress={() => onConfirm('camera')}
+            title={"Open Camera"}
+            cStyle={{ backgroundColor: "#000", marginVertical: 10 }}
+            tStyle={{ color: "white" }}
+            onPress={() => onConfirm("camera")}
           />
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 };
@@ -58,43 +63,43 @@ export default GalleryModal;
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    backgroundColor: '#fff',
-    width: '100%',
+    backgroundColor: "#fff",
+    width: "100%",
     borderTopEndRadius: 20,
     borderTopStartRadius: 20,
     padding: 20,
     elevation: 8,
-    height: '50%',
+    height: "50%",
     marginTop: 500,
     flex: 1,
   },
   headerText: {
     fontSize: 26,
     fontFamily: Fonts.bold,
-    color: 'rgba(29, 29, 29, 1)',
-    textAlign: 'center',
+    color: "rgba(29, 29, 29, 1)",
+    textAlign: "center",
     marginBottom: 10,
   },
   sectionHeader: {
     fontSize: 16,
     fontFamily: Fonts.medium,
-    color: '#333',
+    color: "#333",
     marginVertical: 10,
   },
   optionContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     marginVertical: 5,
   },
   radioButton: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 8,
@@ -102,47 +107,47 @@ const styles = StyleSheet.create({
   },
   checkbox: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 10,
     paddingHorizontal: 15,
     paddingVertical: 8,
     marginVertical: 5,
   },
   selectedOption: {
-    backgroundColor: '#4F378B',
-    borderColor: '#4F378B',
+    backgroundColor: "#4F378B",
+    borderColor: "#4F378B",
   },
   optionText: {
     fontSize: 14,
     fontFamily: Fonts.medium,
-    color: '#333',
+    color: "#333",
   },
   selectedText: {
-    color: '#fff',
+    color: "#fff",
   },
   buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 20,
   },
   clearButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     padding: 10,
     borderRadius: 10,
     flex: 0.4,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 2,
-    borderColor: 'black',
+    borderColor: "black",
   },
   applyButton: {
-    backgroundColor: '#4F378B',
+    backgroundColor: "#4F378B",
     padding: 10,
     borderRadius: 10,
     flex: 0.4,
-    alignItems: 'center',
+    alignItems: "center",
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontFamily: Fonts.medium,
     fontSize: 14,
   },

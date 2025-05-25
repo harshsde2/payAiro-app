@@ -42,7 +42,7 @@ export default function Invite() {
   const getkycStep = async () => {
     Alert.alert();
     const kycData = await getKYC(tokens?.access);
-    console.log(kycData, 'KYCDatataaatat');
+    // console.log(kycData, 'KYCDatataaatat');
     if (!kycData?.data?.is_varified) {
       setisVisible(true);
     }

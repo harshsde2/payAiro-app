@@ -42,7 +42,8 @@ import PinScreen from 'tsx-components/modals/PinScreen';
 export default function ScanPay(props) {
   const { type, sender, bank } = props?.route?.params;
 
-  console.log("props?.route?.params =>",props?.route?.params)
+  // console.log("props?.route?.params =>",JSON.stringify(props?.route?.params,null, 2))
+  // console.log("sender?.requester_details =>",JSON.stringify(sender,null, 2))
 
   const pinScreenRef = useRef(null)
 
@@ -135,7 +136,7 @@ export default function ScanPay(props) {
   };
 
   const handleSend = async () => {
-    console.log(bank, 'bankkkkkkkk');
+    console.log(JSON.stringify(bank,null,2), 'bankkkkkkkk');
     setspin(true);
     try {
       const payload = {
@@ -147,13 +148,13 @@ export default function ScanPay(props) {
       formData.append('amount', sender?.amount ?? amount);
       formData.append(
         'account_type',
-        !bank.account_type
+        bank.bank_type == 'external' 
           ? 'external'
           : bank?.account_type === 'personal'
             ? 'bank'
             : bank,
       );
-      console.log(payload, 'payload Datatat');
+      console.log(JSON.stringify(formData,null,2), 'payload Datatat');
       const data = await sendPayAero(formData, tokens?.access, true);
       if (data && data.status) {
         navigation.navigate('TransactionSuccess', {

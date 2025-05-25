@@ -1,129 +1,98 @@
-import React, { useEffect, useRef } from 'react';
-import { StyleSheet } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, StyleSheet, ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  cancelAnimation,
   runOnJS,
+  cancelAnimation,
+  Easing,
 } from 'react-native-reanimated';
-import { FadeWrapperProps } from '../animations-functions/types';
-import { getAnimationConfig } from '../animations-functions/animationUtils';
+
+type FadeWrapperProps = {
+  firstComponent: React.ReactNode;
+  secondComponent: React.ReactNode;
+  visible: boolean; // true = show second, false = show first
+  duration?: number; // total duration (e.g. 1000ms = 500ms out + 500ms in)
+  style?: ViewStyle[] | ViewStyle;
+  onComplete?: () => void;
+};
 
 const FadeWrapper = ({
-  children,
+  firstComponent,
+  secondComponent,
   visible = true,
-  duration = 300,
-  onComplete,
+  duration = 1000,
   style,
-  fadeInOut = false,
-  fadeOutDuration,
-  fadeInDuration,
-  onFadeOutComplete,
+  onComplete,
 }: FadeWrapperProps) => {
-  // Initialize with current visibility state
-  const opacity = useSharedValue(visible ? 1 : 0);
-  const isFadingInAfterOut = useRef(false);
-  
-  // Use provided durations or fall back to main duration
-  const actualFadeOutDuration = fadeOutDuration || duration;
-  const actualFadeInDuration = fadeInDuration || duration;
+  const halfDuration = duration / 2;
+
+  const firstOpacity = useSharedValue(visible ? 1 : 0);
+  const secondOpacity = useSharedValue(visible ? 0 : 1);
 
   useEffect(() => {
-    // Cancel any ongoing animation
-    cancelAnimation(opacity);
-    
-    // For normal operation (non-fadeInOut)
-    if (!fadeInOut) {
-      // Get animation configuration
-      const animationConfig = getAnimationConfig(duration);
+    cancelAnimation(firstOpacity);
+    cancelAnimation(secondOpacity);
 
-      // Animate to new value
-      opacity.value = withTiming(
-        visible ? 1 : 0, 
-        animationConfig,
-        (finished) => {
-          if (finished && onComplete) {
-            runOnJS(onComplete)();
-          }
+    const config = {
+      duration: halfDuration,
+      easing: Easing.inOut(Easing.ease),
+    };
+
+    if (visible) {
+      // Step 1: Fade out firstComponent
+      firstOpacity.value = withTiming(0, config, (fadeOutFinished) => {
+        if (fadeOutFinished) {
+          // Step 2: Fade in secondComponent
+          secondOpacity.value = withTiming(1, config, (fadeInFinished) => {
+            if (fadeInFinished && onComplete) runOnJS(onComplete)();
+          });
         }
-      );
-    } 
-    // For fadeInOut operation
-    else if (visible && !isFadingInAfterOut.current) {
-      // First fade out
-      const fadeOutConfig = getAnimationConfig(actualFadeOutDuration);
-      isFadingInAfterOut.current = true;
-      
-      opacity.value = withTiming(
-        0, 
-        fadeOutConfig,
-        (finished) => {
-          if (finished) {
-            // After fade out is complete, trigger fade in
-            if (onFadeOutComplete) {
-              runOnJS(onFadeOutComplete)();
-            }
-            
-            const fadeInConfig = getAnimationConfig(actualFadeInDuration);
-            opacity.value = withTiming(
-              1, 
-              fadeInConfig,
-              (innerFinished) => {
-                if (innerFinished) {
-                  isFadingInAfterOut.current = false;
-                  if (onComplete) {
-                    runOnJS(onComplete)();
-                  }
-                }
-              }
-            );
-          }
+      });
+    } else {
+      // Step 1: Fade out secondComponent
+      secondOpacity.value = withTiming(0, config, (fadeOutFinished) => {
+        if (fadeOutFinished) {
+          // Step 2: Fade in firstComponent
+          firstOpacity.value = withTiming(1, config, (fadeInFinished) => {
+            if (fadeInFinished && onComplete) runOnJS(onComplete)();
+          });
         }
-      );
-    } else if (!visible) {
-      // Handle normal fade out when visible becomes false
-      const animationConfig = getAnimationConfig(duration);
-      isFadingInAfterOut.current = false;
-      
-      opacity.value = withTiming(
-        0, 
-        animationConfig,
-        (finished) => {
-          if (finished && onComplete) {
-            runOnJS(onComplete)();
-          }
-        }
-      );
+      });
     }
 
-    // Cleanup function
     return () => {
-      cancelAnimation(opacity);
+      cancelAnimation(firstOpacity);
+      cancelAnimation(secondOpacity);
     };
-  }, [visible, duration, onComplete, fadeInOut, actualFadeOutDuration, actualFadeInDuration, onFadeOutComplete]);
+  }, [visible]);
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: opacity.value,
-    };
-  }, []);
+  const firstStyle = useAnimatedStyle(() => ({
+    opacity: firstOpacity.value,
+    position: 'absolute',
+    width: '100%',
+  }));
 
-  if (!children) {
-    return null;
-  }
+  const secondStyle = useAnimatedStyle(() => ({
+    opacity: secondOpacity.value,
+    position: 'absolute',
+    width: '100%',
+  }));
 
   return (
-    <Animated.View style={[animatedStyle, style]}>
-      {children}
-    </Animated.View>
+    <View style={[styles.container, style]}>
+      <Animated.View style={firstStyle}>{firstComponent}</Animated.View>
+      <Animated.View style={secondStyle}>{secondComponent}</Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    position: 'relative',
     width: '100%',
   },
 });
 
-export default FadeWrapper; 
+export default FadeWrapper;

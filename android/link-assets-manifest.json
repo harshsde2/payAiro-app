@@ -2,6 +2,22 @@
   "migIndex": 1,
   "data": [
     {
+      "path": "assets/fonts/Montserrat-Bold.ttf",
+      "sha1": "c7d907722af4fb845ab97d515bb414f29651f000"
+    },
+    {
+      "path": "assets/fonts/Montserrat-Medium.ttf",
+      "sha1": "4656e40419da86a5fec473ea8e7fc0efef183f05"
+    },
+    {
+      "path": "assets/fonts/Montserrat-Regular.ttf",
+      "sha1": "1c8119b38eef1914a4fbd9f6cfdedf198445ab97"
+    },
+    {
+      "path": "assets/fonts/Montserrat-SemiBold.ttf",
+      "sha1": "d491c9d0af61faef59ca807737b560170f547f5b"
+    },
+    {
       "path": "assets/fonts/Neue Plak Black.ttf",
       "sha1": "82da207e8a66151802085c851530157cfbe810d4"
     },
@@ -140,6 +156,10 @@
     {
       "path": "assets/fonts/Neue Plak UltraLight.ttf",
       "sha1": "50cf314dc225d4762e3b14f0cb18f7a505c4ca3f"
+    },
+    {
+      "path": "assets/fonts/Nexa-Heavy.ttf",
+      "sha1": "fcc84c63a8d378d80a4389b55b7a960e7b91fb57"
     }
   ]
 }

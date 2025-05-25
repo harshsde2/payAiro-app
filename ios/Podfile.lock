@@ -63,6 +63,29 @@ PODS:
   - hermes-engine (0.76.3):
     - hermes-engine/Pre-built (= 0.76.3)
   - hermes-engine/Pre-built (0.76.3)
+  - lottie-ios (4.5.0)
+  - lottie-react-native (7.2.2):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - lottie-ios (= 4.5.0)
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - nanopb (3.30910.0):
     - nanopb/decode (= 3.30910.0)
     - nanopb/encode (= 3.30910.0)
@@ -1310,6 +1333,48 @@ PODS:
     - Yoga
   - react-native-biometrics (3.0.1):
     - React-Core
+  - react-native-blob-util (0.21.2):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
+  - react-native-blur (4.4.1):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - react-native-camera (4.2.1):
     - React-Core
     - react-native-camera/RCT (= 4.2.1)
@@ -1386,7 +1451,7 @@ PODS:
     - React-Core
   - react-native-html-to-pdf (0.12.0):
     - React-Core
-  - react-native-image-picker (7.2.3):
+  - react-native-image-picker (8.2.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1408,6 +1473,27 @@ PODS:
     - ReactCommon/turbomodule/core
     - Yoga
   - react-native-mmkv (3.2.0):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
+  - react-native-pdf (6.7.7):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1946,6 +2032,15 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - RNImageCropPicker (0.42.0):
+    - React-Core
+    - React-RCTImage
+    - RNImageCropPicker/QBImagePickerController (= 0.42.0)
+    - TOCropViewController (~> 2.7.4)
+  - RNImageCropPicker/QBImagePickerController (0.42.0):
+    - React-Core
+    - React-RCTImage
+    - TOCropViewController (~> 2.7.4)
   - RNNotifee (9.1.8):
     - React-Core
     - RNNotifee/NotifeeCore (= 9.1.8)
@@ -2201,6 +2296,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - Yoga
   - SocketRocket (0.7.1)
+  - TOCropViewController (2.7.4)
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -2211,6 +2307,7 @@ DEPENDENCIES:
   - fmt (from `../node_modules/react-native/third-party-podspecs/fmt.podspec`)
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
+  - lottie-react-native (from `../node_modules/lottie-react-native`)
   - QrCode (from `../node_modules/react-native-qr-decode-image-camera`)
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCT-Folly/Fabric (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
@@ -2244,6 +2341,8 @@ DEPENDENCIES:
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-biometrics (from `../node_modules/react-native-biometrics`)
+  - react-native-blob-util (from `../node_modules/react-native-blob-util`)
+  - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
   - react-native-camera (from `../node_modules/react-native-camera`)
   - react-native-contacts (from `../node_modules/react-native-contacts`)
   - react-native-date-picker (from `../node_modules/react-native-date-picker`)
@@ -2252,6 +2351,7 @@ DEPENDENCIES:
   - react-native-html-to-pdf (from `../node_modules/react-native-html-to-pdf`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - react-native-mmkv (from `../node_modules/react-native-mmkv`)
+  - react-native-pdf (from `../node_modules/react-native-pdf`)
   - react-native-plaid-link-sdk (from `../node_modules/react-native-plaid-link-sdk`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - "react-native-skia (from `../node_modules/@shopify/react-native-skia`)"
@@ -2291,6 +2391,7 @@ DEPENDENCIES:
   - "RNFBMessaging (from `../node_modules/@react-native-firebase/messaging`)"
   - RNFS (from `../node_modules/react-native-fs`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
+  - RNImageCropPicker (from `../node_modules/react-native-image-crop-picker`)
   - "RNNotifee (from `../node_modules/@notifee/react-native`)"
   - RNPermissions (from `../node_modules/react-native-permissions`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
@@ -2309,11 +2410,13 @@ SPEC REPOS:
     - FirebaseMessaging
     - GoogleDataTransport
     - GoogleUtilities
+    - lottie-ios
     - nanopb
     - Plaid
     - PromisesObjC
     - React-Codegen
     - SocketRocket
+    - TOCropViewController
 
 EXTERNAL SOURCES:
   boost:
@@ -2331,6 +2434,8 @@ EXTERNAL SOURCES:
   hermes-engine:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-2024-11-12-RNv0.76.2-5b4aa20c719830dcf5684832b89a6edb95ac3d64
+  lottie-react-native:
+    :path: "../node_modules/lottie-react-native"
   QrCode:
     :path: "../node_modules/react-native-qr-decode-image-camera"
   RCT-Folly:
@@ -2393,6 +2498,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
   react-native-biometrics:
     :path: "../node_modules/react-native-biometrics"
+  react-native-blob-util:
+    :path: "../node_modules/react-native-blob-util"
+  react-native-blur:
+    :path: "../node_modules/@react-native-community/blur"
   react-native-camera:
     :path: "../node_modules/react-native-camera"
   react-native-contacts:
@@ -2409,6 +2518,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-image-picker"
   react-native-mmkv:
     :path: "../node_modules/react-native-mmkv"
+  react-native-pdf:
+    :path: "../node_modules/react-native-pdf"
   react-native-plaid-link-sdk:
     :path: "../node_modules/react-native-plaid-link-sdk"
   react-native-safe-area-context:
@@ -2487,6 +2598,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-fs"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
+  RNImageCropPicker:
+    :path: "../node_modules/react-native-image-crop-picker"
   RNNotifee:
     :path: "../node_modules/@notifee/react-native"
   RNPermissions:
@@ -2518,6 +2631,8 @@ SPEC CHECKSUMS:
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleUtilities: 26a3abef001b6533cf678d3eb38fd3f614b7872d
   hermes-engine: 0555a84ea495e8e3b4bde71b597cd87fbb382888
+  lottie-ios: a881093fab623c467d3bce374367755c272bdd59
+  lottie-react-native: 83580847fed6eaf097b4b6b03f6632792809d147
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   Plaid: 293e77af7a75c035b8dce0938910dc00a9e24910
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
@@ -2553,14 +2668,17 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 6cb36cecef68ec3b4782ea54b0bca45a1e7da9e0
   React-microtasksnativemodule: 81c795a6bbe87c94eeef9fa4e8ed35fdc21b8c3e
   react-native-biometrics: 352e5a794bfffc46a0c86725ea7dc62deb085bdc
+  react-native-blob-util: d18fc3acedec6309daaef6166c3dfa208ae32b26
+  react-native-blur: d81883c19b028d3d04b44126ea661ae9e7ff35b6
   react-native-camera: 3eae183c1d111103963f3dd913b65d01aef8110f
   react-native-contacts: 10c50e29036f3f2d38c9ea6bb30ae54957b05d1d
   react-native-date-picker: d366d738b5f74c185c35dadfd4b2a4baa477164f
   react-native-document-picker: 1e082836a633ca9e7c75758036ff42535baaf36b
   react-native-encrypted-storage: db300a3f2f0aba1e818417c1c0a6be549038deb7
   react-native-html-to-pdf: 4c5c6e26819fe202971061594058877aa9b25265
-  react-native-image-picker: 8d06080ecb33269e77e0728f1fd8a16f2f5aad07
+  react-native-image-picker: 5c078469eb60ef8840c5c0123c63865ee1dba930
   react-native-mmkv: 35992c4170a4a46be095fd1b7fe17d2fd1d42124
+  react-native-pdf: 5d85253646c36b0fda050ec5226654f0f2f31a25
   react-native-plaid-link-sdk: ec01f6fb12a58bdaefc4fd165b1fc4e97fd01d8e
   react-native-safe-area-context: d2a27f4bd25ee263641970904107e069cd4d8cf8
   react-native-skia: 3e676b80ae8e8fbda01d10fdec49f7dc2f982d01
@@ -2600,6 +2718,7 @@ SPEC CHECKSUMS:
   RNFBMessaging: aab4dcf6d121cfe338c9ac45631d90e125b3a5ef
   RNFS: 4ac0f0ea233904cb798630b3c077808c06931688
   RNGestureHandler: f81b6b9710750770867f97c15ad941ac2542d089
+  RNImageCropPicker: 64b6bec9ec185ee59b71a93d7058816bd0e1916e
   RNNotifee: 4a6ee5c7deaf00e005050052d73ee6315dff7ec9
   RNPermissions: 663c4a4c9d534447a817bd23b89f70636cca4b36
   RNReanimated: 18c703b5684bf074617fedca65d0c516bd3ceed9
@@ -2607,8 +2726,9 @@ SPEC CHECKSUMS:
   RNShare: 2ff8d5040f2c1651173d810a7bb6c1b0cd2c6699
   RNSVG: 3cd6669b7ad658c8b482db630dccf364c3b59cfb
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
+  TOCropViewController: 80b8985ad794298fb69d3341de183f33d1853654
   Yoga: e6c2f5a192a47cd0c5523ec8c4f7eca01d15d077
 
 PODFILE CHECKSUM: 3f220529f5ed3695b239bac97b0bcfdf0dcb5bfa
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2

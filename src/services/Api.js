@@ -3,8 +3,8 @@ import {BASE_URL} from '../constants/mockData';
 
 export const postReq2 = (des_url, data, token, isFile) => {
   let url = BASE_URL + des_url;
-  console.log(token);
-  console.log(data);
+  // console.log(token);
+  // console.log(data);
   // console.log(url, 'BASE_URL-->>>');
   return new Promise((resolve, reject) => {
     let headers = {};
@@ -16,7 +16,7 @@ export const postReq2 = (des_url, data, token, isFile) => {
     if (token) {
       headers = {...headers, Authorization: `Bearer ${token}`};
     }
-    console.log(headers, 'headers');
+    // console.log(headers, 'headers');
     axios
       .post(url, data, {headers})
       .then(function (response) {
@@ -41,7 +41,7 @@ export const patchReq2 = (des_url, data, isToken, isFormData) => {
     if (isFormData) {
       headers = {...headers, 'Content-Type': 'multipart/form-data'};
     }
-    console.log(headers, 'headers');
+    // console.log(headers, 'headers');
     axios
       .patch(url, data, {headers})
       .then(function (response) {

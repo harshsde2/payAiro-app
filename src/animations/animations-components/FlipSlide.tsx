@@ -146,9 +146,9 @@ const styles = StyleSheet.create({
         minWidth: 100,
     },
     textContainer: {
-        minHeight: 50,
-        justifyContent: 'center',
-        alignItems: 'flex-start',
+        height: 30,
+        textAlign: 'center',
+        textAlignVertical: 'center',
         overflow: 'hidden',
         backgroundColor: 'transparent',
         width: '100%',
@@ -156,6 +156,7 @@ const styles = StyleSheet.create({
     text: {
         position: 'absolute',
         textAlign: 'center',
+        textAlignVertical: 'center',
         color: 'black',
         fontSize: 16,
         fontWeight: 'bold',

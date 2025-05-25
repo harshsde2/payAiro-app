@@ -1,74 +1,101 @@
-// ConnectWidgetTest.tsx
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useRef } from "react";
+import { View, StyleSheet } from "react-native";
 import { ConnectWidget } from "@mxenabled/react-native-widget-sdk";
 import { useRoute } from "@react-navigation/native";
+import {
+  useMxAccountDetailsExternal,
+  useMxCreateMember,
+  useMxLinkExternalAccount,
+  useMxRegisterExternalAccount,
+} from "query/hooks/useMxIntegration";
 
 const ConnectWidgetTest = () => {
-    const route = useRoute();
-    const { URL } = route.params as any;
+  const route = useRoute();
+  const { URL } = route.params as any;
 
-    console.log("🔗 Widget URL =>", URL);
+  const hasStartedFlow = useRef(false);
 
-    // Logging function for all events/messages
-    const handleEvent = (type: string, payload: any) => {
-        console.group(`📡 MX Connect Event: ${type}`);
-        console.log("Payload:", payload);
-        console.groupEnd();
-    };
+  const { mutateAsync: createMember } = useMxCreateMember();
+  const { mutateAsync: getAccountDetails } = useMxAccountDetailsExternal();
+  const { mutateAsync: linkExternalAccount } = useMxLinkExternalAccount();
+  const { mutate: registerExternalAccount } = useMxRegisterExternalAccount();
 
-    return (
-        <View style={styles.container}>
-            <Text style={styles.title}>MX Connect Widget Test</Text>
+  const handleFullOnboardingFlow = async (memberGUID: string) => {
+    try {
+      console.log("🚀 Starting onboarding flow with memberGUID:", memberGUID);
+      const created = await createMember({ memberGuid: memberGUID });
 
-            <View style={styles.widgetContainer}>
-                <ConnectWidget
-                    url={URL}
-                    onLoaded={() => console.log("✅ Widget Loaded")}
-                    onEnterCredentials={(metadata) => {
-                        console.log('onEnterCredentials =>', metadata)
-                    }}
-                    onMemberConnected={(metadata) => {
-                        console.log('onMemberConnected =>', metadata)
-                    }}
-                    onCreateMemberError={(metadata) => {
-                        console.log('onCreateMemberError =>', metadata)                        
-                    }}
-                    onOAuthError={(metadata) => {
-                        console.log('onOAuthError =>', metadata)
-                    }}
-                    onOAuthRequested={(metadata) => {
-                        console.log('onOAuthRequested =>', metadata)
-                    }}
-                    onSubmitMFA={(metadata) => {
-                        console.log('onSubmitMFA =>', metadata)
-                    }}
-                    style={{
-                        minHeight: '100%',
-                    }}
-                />
-            </View>
-        </View>
-    );
+      const accountResponse = await getAccountDetails();
+      const account = accountResponse?.data?.data?.[0];
+
+      if (!account) {
+        throw new Error("No account found for this member.");
+      }
+
+      console.log("✅ Account fetched:", account);
+
+     const inkExternalAccount =  await linkExternalAccount({ financialAccountId: account.accountGuid });
+
+      const mapped = mapKeys(account) as any;
+      registerExternalAccount(mapped);
+    } catch (error) {
+        if(error instanceof Error) {
+          console.error("❌ Onboarding flow error:", error.message);
+        } else {
+          console.error("❌ Onboarding flow error:", error);
+        }
+    }
+  };
+
+  const mapKeys = (account: any) => ({
+    account_type: account.accountType?.toLowerCase(),
+    account_number: `${account.accountNumberLast4}`,
+    account_id: account.accountGuid,
+    bank_name: account.financialInstitutionName,
+    small_logo_url: account.smallLogoUrl,
+    medium_logo_url: account.mediumLogoUrl,
+    financialInstitutionName: account.financialInstitutionName
+  });
+
+  const handleMemberConnected = (metadata: any) => {
+    const memberGUID = metadata?.member_guid;
+    if (memberGUID && !hasStartedFlow.current) {
+      hasStartedFlow.current = true;
+      handleFullOnboardingFlow(memberGUID);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.widgetContainer}>
+        <ConnectWidget
+          url={URL}
+          onLoaded={() => console.log("✅ Widget Loaded")}
+          onMemberConnected={handleMemberConnected}
+          onCreateMemberError={(meta) => console.error("❌ Create Member Error:", meta)}
+          onOAuthError={(meta) => console.error("❌ OAuth Error:", meta)}
+          onOAuthRequested={(meta) => console.log("🌐 OAuth Requested:", meta)}
+          onEnterCredentials={(meta) => console.log("🔐 Entering Credentials:", meta)}
+          onSubmitMFA={(meta) => console.log("🔐 Submit MFA:", meta)}
+          onAccountCreated={(meta) => console.log("✅ Account Created event:", meta)}
+          
+          style={{ minHeight: "100%" }}
+        />
+      </View>
+    </View>
+  );
 };
 
-
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        paddingTop: 50,
-        paddingHorizontal: 10,
-        backgroundColor: "#fff",
-    },
-    title: {
-        fontSize: 22,
-        fontWeight: "600",
-        textAlign: "center",
-        marginBottom: 20,
-    },
-    widgetContainer: {
-        flex: 1,
-    },
+  container: {
+    flex: 1,
+    paddingTop: 50,
+    paddingHorizontal: 10,
+    backgroundColor: "#fff",
+  },
+  widgetContainer: {
+    flex: 1,
+  },
 });
 
 export default ConnectWidgetTest;

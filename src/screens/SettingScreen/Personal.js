@@ -93,7 +93,7 @@ export default function Personal() {
 
   const getkycStep = async () => {
     const kycData = await getKYC(tokens?.access);
-    console.log(kycData, 'KYCDatata');
+    // console.log(kycData, 'KYCDatata');
     if (kycData?.data) {
       setphone(kycData?.data?.mobile_number);
       setkycStep(kycData?.data);

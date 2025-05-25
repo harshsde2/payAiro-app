@@ -16,6 +16,8 @@ export const NAVIGATION_SCREENS = {
   SELFIE_SCREEN: 'SelfieScreen',
   BIOMETRIC: 'Biometcric',
   DOB: 'Dob',
+  PDF_VIEWER:'PDFViewer',
+  
 
   // App Stack Screens
   DASHBOARD: 'Dashboard',

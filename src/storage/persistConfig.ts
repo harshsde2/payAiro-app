@@ -1,5 +1,5 @@
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
-import { getItem, setItem } from './mmkv';
+import { getItem, setItem, storage } from './mmkv';
 
 // Custom storage interface to work with MMKV
 const mmkvStorage = {
@@ -21,3 +21,7 @@ export const persister = createSyncStoragePersister({
   serialize: (data: unknown) => JSON.stringify(data),
   deserialize: (data: string | null) => data ? JSON.parse(data) : null
 }); 
+
+export const clearAll = (): void => {
+  storage.clearAll();
+};
