@@ -1,168 +1,118 @@
 import React, {
+  lazy,
   useCallback,
   useEffect,
-  useState,
-  useRef,
   useMemo,
-  Suspense,
-  lazy,
+  useRef,
+  useState,
 } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Animated,
-  Pressable,
   ActivityIndicator,
-  useWindowDimensions,
-  Button,
-  Modal,
-  TextInput,
-  RefreshControl,
   BackHandler,
   Image,
+  Modal,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
 } from "react-native";
-import ThemeUsageExample from "../../styles/ThemeUsageExample";
 // Import from the module alias utility
-import {
-  DashboardHeader,
-  CryptoCard,
-  FontTest,
-  Card,
-  CustomText,
-} from "../../utils/moduleAlias";
-import { ScreenContainer } from "../../HOC";
-import { useTheme } from "../../styles/ThemeContext";
-import { useSelector } from "react-redux";
-import {
-  SVGLoggo,
-  SVGUSD,
-  SVGDownArrow3,
-  SVGSecurities,
-  SVGReceive,
-  SVGHolding,
-  SVGAdd,
-  SVGSend,
-  SVGNewBank,
-  SVGBilPay,
-  SVGRecharge,
-  SVGDebit,
-  SVGCredit,
-  SVGBANK2,
-  SVGDebitAdd,
-  SVGBamkAdd,
-  SVGDebitCardAdd,
-  SVGVoucher,
-  SVGRef,
-  SVGKYC2,
-  SVGSliders,
-  SVG_hide_eye,
-  SVGBit,
-  SVGDownArrow2,
-  SVG_eye_on,
-  SVG_eye_off,
-  SVG_backspace,
-  SVG_done,
-  SVG_Bank_tab,
-  SVG_credit_tab,
-  SVG_debit_tab,
-  SVGBankIcon,
-} from "../../constants/images";
-import useDispatchAction from "../../hooks/useDispatchAction";
-import {
-  setisCrypto,
-  setCalculatedBalance,
-  setWalletData,
-  setBankLists,
-  setBankbalances,
-  setErrorMsg,
-  setSuccessMsg,
-  setCardSwitchDetails,
-  setMxExternalAccountDetails,
-  setShowLoader,
-} from "../../redux/slices/authenticationSlice";
-import FlipSlideExample from "animations/examples/FlipSlideExample";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
+import axios from "axios";
+import BalanceModal from "components/BalanceModal";
 import BottomNavigation from "components/BottomNavigation";
-import GhostSlide from "animations/animations-components/GhostSlide";
-import {
-  addbankAccountRoth,
-  createPin,
-  getBalance,
-  getBalanceCrypto,
-  getBankDetails,
-  getBanksAllAccount,
-  getContacts,
-  getCryptoTx,
-  getPayAeroTx,
-  getPinFromSev,
-  getWallet,
-  uploadKYC,
-  checkUser,
-  getAllReward,
-  redeemReward,
-} from "services/Services";
-import { SvgXml } from "react-native-svg";
-import { SCREENS } from "constants/SCREENS";
-import { useNavigation } from "@react-navigation/native";
-import AssetsCards from "components/AssetsCards";
-import Fonts from "constants/Fonts";
-import { open } from "react-native-plaid-link-sdk";
-import { create } from "react-native-plaid-link-sdk";
-import {
-  dismissLink,
-  LinkIOSPresentationStyle,
-} from "react-native-plaid-link-sdk";
-import { LinkLogLevel } from "react-native-plaid-link-sdk";
-import { BASE_URL } from "constants/mockData";
+import GenericButton from "components/GenericButton";
+import GuideModal from "components/GuideModal";
+import Rewards from "components/Rewards";
 import StoryLists from "components/StoryLists";
 import TransactionCard from "components/TransactionCard";
-import Rewards from "components/Rewards";
-import { getPin, setPin } from "services/Auth";
-import PincodeScreen from "screens/Authentications/PincodeScreen";
-import { SectionHeader } from "tsx-components";
-import DashboardSection from "tsx-components/DashboardSection";
-import CryptoCardSkeleton from "tsx-components/CryptoCardSkeleton";
+import Fonts from "constants/Fonts";
+import { SCREENS } from "constants/SCREENS";
+import { BASE_URL } from "constants/mockData";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import BalanceModal from "components/BalanceModal";
-import GenericButton from "components/GenericButton";
-import LineChartCustom from "components/LineChartCustom";
-import PinScreen from "tsx-components/modals/PinScreen";
-import { PinScreenRef } from "tsx-components/modals/modal.types";
+import {
+  useAllBankAccounts,
+  useBankBalances,
+  useCryptoBalance,
+  useCryptoTrades,
+  useGetReward,
+  useRecentContacts,
+  useRedeemReward,
+  useTransactions,
+  useWalletDetails,
+} from "query/hooks";
+import { SvgXml } from "react-native-svg";
+import { useDispatch, useSelector } from "react-redux";
+import { getPin, setPin } from "services/Auth";
+import {
+  addbankAccountRoth,
+  getBanksAllAccount,
+  getCryptoTx,
+  getPinFromSev,
+  uploadKYC,
+} from "services/Services";
+import { STORAGE_KEYS, setItem } from "storage/mmkv";
+import CryptoCardSkeleton from "tsx-components/CryptoCardSkeleton";
+import DashboardSection from "tsx-components/DashboardSection";
+import FiatGraphSection from "tsx-components/FiatGraphSection";
 import IconTextComponent from "tsx-components/IconTextComponent";
 import {
   renderFinanceIcons,
   renderUtilitiesIcons,
 } from "tsx-components/components.configs";
-import FiatGraphSection from "tsx-components/FiatGraphSection";
-const CustomPieChart = require("../../components/CustomPieChart").default;
+import PinScreen from "tsx-components/modals/PinScreen";
 import RewardModal from "tsx-components/modals/RewardModal";
-import axios from "axios";
-import { getReq2 } from "services/Api";
+import { ScreenContainer } from "../../HOC";
 import {
-  useAllBankAccounts,
-  useBankAccounts,
-  useBankBalances,
-  useContacts,
-  useCryptoTrades,
-  useRecentContacts,
-  useTransactions,
-} from "query/hooks";
-import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
-import { useMxAccountDetailsExternal } from "query/hooks/useMxIntegration";
-import GlobalLoader from "tsx-components/GlobalLoader";
+  SVGAdd,
+  SVGBamkAdd,
+  SVGBit,
+  SVGDebitAdd,
+  SVGDebitCardAdd,
+  SVGHolding,
+  SVGKYC2,
+  SVGLoggo,
+  SVGNewBank,
+  SVGReceive,
+  SVGRef,
+  SVGSecurities,
+  SVGSend,
+  SVGSliders,
+  SVGUSD,
+  SVGVoucher,
+  SVG_eye_off,
+  SVG_eye_on,
+} from "../../constants/images";
+import {
+  setBankLists,
+  setBankbalances,
+  setCardSwitchDetails,
+  setErrorMsg,
+  setShowGuide,
+  setShowLoader,
+  setShowRedeemReward,
+  setSuccessMsg,
+  setWalletData,
+} from "../../redux/slices/authenticationSlice";
+import { useTheme } from "../../styles/ThemeContext";
+import {
+  Card,
+  CryptoCard,
+  CustomText,
+  DashboardHeader,
+} from "../../utils/moduleAlias";
 
 // Lazy load non-critical components
 const LazyBankModal = lazy(() => import("components/BankModal"));
 const LazyBankModal2 = lazy(() => import("components/BankModal2"));
 const LazySelectionModal = lazy(() => import("components/SelectionModal"));
-const LazyBalanceModal = lazy(() => import("components/BalanceModal"));
 const LazySelectionModal2 = lazy(() => import("components/SelectionModal2"));
-const LazyGuideModal = lazy(() => import("components/GuideModal"));
 
 // Variables
-
 const BANK_TYPE = "FDIC Insured";
 
 // API call utility with automatic retries, caching, and error handling
@@ -545,16 +495,20 @@ const NewDashboard = () => {
     bankLists,
     CardSwitchDetails,
     mxExternalAccountDetails,
+    showRedeemReward,
+    showGuide,
   } = useSelector((state: any) => state.authenticationSlice);
 
-  const { height: screenHeight } = useWindowDimensions();
-  const navigation = useNavigation<any>();
+  const dispatch = useDispatch();
 
+  // Example custom theme handling
+  const { theme, toggleTheme } = useTheme();
+  const styles = createStyles(theme);
+
+  const navigation = useNavigation<any>();
   const pinScreenRef = useRef<any>(null);
 
-  const { theme, toggleTheme } = useTheme();
   const [userName, setUserName] = useState("");
-  const [showFontTest, setShowFontTest] = useState(false);
   const [ghostSlideVisible, setGhostSlideVisible] = useState(false);
   const [isVisible, setisVisible] = useState(false);
   const [linkToken, setLinkToken] = useState(null);
@@ -563,13 +517,10 @@ const NewDashboard = () => {
   const [web3TxLists, setweb3TxLists] = useState<any[]>([]);
   const [isCardModalVisible, setisCardModalVisible] = useState(false);
   const [showPin, setshowPin] = useState(false);
-  const [isConfirm, setisConfirm] = useState(false);
-  const [pinTxt, setpinTxt] = useState("Create your pin");
   const [isBankModalVisible, setisBankModalVisible] = useState(false);
   const [isVisible2, setisVisible2] = useState(false);
   const [isShowWeeks, setisShowWeeks] = useState(false);
   const [timeframe, settimeframe] = useState("Week");
-  const [isGuideVisible, setisGuideVisible] = useState(false);
   const [isShowKYC, setisShowKYC] = useState(false);
   const [alloCationLists, setalloCationLists] = useState([]);
   const [totalDisbursable, settotalDisbursable] = useState(0);
@@ -577,33 +528,34 @@ const NewDashboard = () => {
   const [hiddenBalances, setHiddenBalances] = useState<Record<string, boolean>>(
     {}
   );
-  const [isPinModalVisible, setIsPinModalVisible] = useState(false);
-  const [currentAccountForPin, setCurrentAccountForPin] = useState<
-    string | null
-  >(null);
-  const [pinForShowBalance, setPinForShowBalance] = useState("");
-  const [isVerifyingPin, setIsVerifyingPin] = useState(false);
-  const [pinAmount, setPinAmount] = useState("");
+
   const [refreshing, setRefreshing] = useState(false);
-  const [isRewardModalVisible, setisRewardModalVisible] = useState(false);
+
+  const focus = useIsFocused();
 
   // Get the bank accounts from the API with cache stoage and store them in Redux
   const {
     data: AllBankAccounts,
     isLoading: isLoadingAllBankAccounts,
     error: allBankAccountsError,
+    refetch: refetchAllBankAccounts,
   } = useAllBankAccounts();
+
+  const { mutate: redeemReward } = useRedeemReward();
+  const { data: getRewardData, isError, isSuccess } = useGetReward();
 
   const {
     data: bankBalanceData,
     isLoading: isLoadingBankBalanceData,
     error: bankBalanceDataError,
+    refetch: refetchBankBalanceData,
   } = useBankBalances();
 
   const {
     data: AllContacts,
     isLoading: isLoadingAllContacts,
     error: allContactsError,
+    refetch: refetchAllContacts,
   } = useRecentContacts();
 
   const {
@@ -611,6 +563,7 @@ const NewDashboard = () => {
     isLoading: isLoadingAllTransactions,
     error: allTransactionsError,
     isSuccess: AllTransactionsSuccess,
+    refetch: refetchAllTransactions,
   } = useTransactions();
 
   const {
@@ -618,14 +571,44 @@ const NewDashboard = () => {
     isLoading: isLoadingAllTradesHistorys,
     error: AllTradesHistoryError,
     isSuccess: AllTradesHistorySuccess,
+    refetch: refetchAllTradesHistory,
   } = useCryptoTrades();
 
   const {
-    mutate: getMxAccountDetailsExternal,
-    isSuccess: isSuccessMxAccountDetailsExternal,
-    isError: isErrorMxAccountDetailsExternal,
-    data: dataMxAccountDetailsExternal,
-  } = useMxAccountDetailsExternal();
+    data: CryptoBalance,
+    isLoading: isLoadingCryptoBalances,
+    error: CryptoBalanceError,
+    isSuccess: CryptoBalanceSuccess,
+    refetch: refetchCryptoBalance,
+  } = useCryptoBalance();
+
+  const {
+    data: WalletDetailsData,
+    isLoading: isPendingWalletDetails,
+    isSuccess: isSuccessWalletDetails,
+    isError: isErrorWalletDetails,
+    refetch: refetchWalletDetails,
+  } = useWalletDetails();
+
+  const {
+    data: RecentContactsData,
+    isLoading: isPendingRecentContacts,
+    isSuccess: isSuccessRecentContacts,
+    isError: isErrorRecentContacts,
+    refetch: refetchRecentContacts,
+  } = useRecentContacts();
+
+  // console.log(
+  //   "RecentContactsData =>",
+  //   JSON.stringify(RecentContactsData?.recentContacts, null, 2)
+  // );
+
+  useEffect(() => {
+    // console.log("Focus screeen", focus);
+    if (focus) {
+      refetchAllBankAccounts();
+    }
+  }, [focus]);
 
   useEffect(() => {
     if (AllTransactionsSuccess) {
@@ -637,7 +620,44 @@ const NewDashboard = () => {
           []
       );
     }
-  }, [AllTransactionsSuccess, AllTransactions]);
+    if (CryptoBalance) {
+      const cryptoAssets = (CryptoBalance as any)?.data?.data;
+
+      if (!cryptoAssets) return;
+
+      // console.log("cryptoAssets =>", cryptoAssets);
+
+      // Filter non-USD assets in one pass
+      const nonUsdAssets = cryptoAssets.filter(
+        (asset: CryptoAsset) => asset?.assetType !== "usd"
+      );
+
+      setalloCationLists(nonUsdAssets as any);
+
+      // Calculate totals in a single reduce operation for better performance
+      const totals = nonUsdAssets.reduce(
+        (acc: { disbursable: number; pending: number }, asset: CryptoAsset) => {
+          return {
+            disbursable: acc.disbursable + (asset?.disbursable || 0),
+            pending: acc.pending + (asset?.pending || 0),
+          };
+        },
+        { disbursable: 0, pending: 0 }
+      );
+
+      settotalDisbursable(Number(totals.disbursable));
+      settotalDisbursablePending(Number(totals.pending));
+    }
+
+    if (WalletDetailsData) {
+      dispatch(setWalletData(WalletDetailsData?.data));
+    }
+  }, [
+    AllTransactionsSuccess,
+    AllTransactions,
+    CryptoBalanceSuccess,
+    isSuccessWalletDetails,
+  ]);
 
   useEffect(() => {
     if (AllTradesHistorySuccess) {
@@ -646,13 +666,17 @@ const NewDashboard = () => {
         ...AllTradesHistory?.data?.trades,
       ]);
     }
-  }, [AllTradesHistorySuccess, AllTradesHistory]);
+
+    if (RecentContactsData) {
+      handleContacts(RecentContactsData?.allContacts);
+    }
+  }, [AllTradesHistorySuccess, AllTradesHistory, isSuccessRecentContacts]);
 
   // console.log(JSON.stringify(AllTradesHistory, null, 2), "AllTradesHistory");
 
   useEffect(() => {
     if (totalDisbursable || bankBalance) {
-      useDispatchAction(
+      dispatch(
         setCardSwitchDetails({
           ...CardSwitchDetails,
           balanceText: bankBalance?.bank_account?.usd,
@@ -662,75 +686,23 @@ const NewDashboard = () => {
     }
   }, [bankBalance, walletData]);
 
-  console.log("token =>", tokens?.access);
+  // console.log("token =>", tokens?.access);
 
   // Dispatched all the data into Redux store
   useEffect(() => {
     if (AllBankAccounts && AllBankAccounts.length > 0) {
-      console.log("AllBankAccounts =>", AllBankAccounts);
-      useDispatchAction(setBankLists(AllBankAccounts));
+      // console.log("AllBankAccounts =>", AllBankAccounts);
+      dispatch(setBankLists(AllBankAccounts));
     }
     if (bankBalanceData && Object.keys(bankBalanceData).length > 0) {
-      useDispatchAction(setBankbalances(bankBalanceData));
+      dispatch(setBankbalances(bankBalanceData));
     }
   }, [AllBankAccounts, bankBalanceData]);
-
-  //  const temp = {"accountGuid": "ACT-6377b82d-9296-4835-ae3c-9db2f229abc8", "accountNumberLast4": "0685", "accountType": "CHECKING", "financialInstitutionName": "MX Bank", "mediumLogoUrl": "https://content.moneydesktop.com/storage/MD_Assets/Ipad%20Logos/100x100/INS-1572a04c-912b-59bf-5841-332c7dfafaef_100x100.png", "name": "Checking", "smallLogoUrl": "https://content.moneydesktop.com/storage/MD_Assets/Ipad%20Logos/50x50/INS-1572a04c-912b-59bf-5841-332c7dfafaef_50x50.png"}
-  // console.log('temp =>', mapKeys(temp))
-  // console.log('token =>', tokens?.access)
-
-  let flag = useRef(true);
-
-  // (global as any).isMxExternalAccountDetailsExist = false;
-
-  // useEffect(() => {
-  //   if (flag.current) {
-  //     getMxAccountDetailsExternal();
-  //     flag.current = false;
-  //   }
-  //   if (isSuccessMxAccountDetailsExternal && dataMxAccountDetailsExternal?.data?.data.length > 0) {
-  //     // (global as any).isMxExternalAccountDetailsExist = true;
-  //     useDispatchAction(setMxExternalAccountDetails(dataMxAccountDetailsExternal?.data?.data));
-  //     let tempdata = [...dataMxAccountDetailsExternal?.data?.data];
-  //     let temp = tempdata.map((item: any) => {
-  //       return mapKeys(item);
-  //     });
-  //     useDispatchAction(setBankLists([...bankLists, ...temp]));
-  //   }
-
-  // }, [dataMxAccountDetailsExternal, isSuccessMxAccountDetailsExternal])
-
-  // 🔁 Mapping keys from array2 to array1-like structure
-  function mapKeys(array2Obj: any) {
-    return {
-      account_type: array2Obj.accountType?.toLowerCase(),
-      account_number: `${array2Obj.accountNumberLast4}`,
-      account_id: array2Obj.accountGuid,
-      bank_name: array2Obj.financialInstitutionName,
-      financialInstitutionName: array2Obj.financialInstitutionName,
-      label: array2Obj.name,
-      small_logo_url: array2Obj.smallLogoUrl,
-      medium_logo_url: array2Obj.mediumLogoUrl,
-    };
-  }
-
-  // console.log(JSON.stringify(AllBankAccounts, null, 2), ' AllBankAccounts');
-  // console.log(JSON.stringify(bankLists.length, null, 2), 'banklist redux');
-  // console.log(JSON.stringify((global as any).isMxExternalAccountDetailsExist, null, 2), '(global as any).isMxExternalAccountDetailsExist');
 
   const [selectedGraph, setselectedGraph] = useState("Assets");
 
   // Create API hooks with automatic retries and caching
-  const cryptoBalanceApi = useApiCall(getBalanceCrypto);
-  const bankBalanceApi = useApiCall(getBalance);
-  const walletApi = useApiCall(getWallet);
-  const bankDetailsApi = useApiCall(getBankDetails);
-  const bankAccountsApi = useApiCall(getBanksAllAccount);
-  const contactsApi = useApiCall(getContacts);
-  // const txListsApi = useApiCall(getPayAeroTx);
-  const cryptoTxApi = useApiCall(getCryptoTx);
   const kycApi = useApiCall(uploadKYC);
-  const rewardsApi = useApiCall(getAllReward);
 
   // Add this near other hooks at the top level of your NewDashboard component
   const memoizedAllocationLists = useMemo(
@@ -738,50 +710,35 @@ const NewDashboard = () => {
     [alloCationLists]
   );
 
-  useEffect(() => {
-    // Group all data fetch operations
-    const fetchInitialData = async () => {
-      if (!tokens && !tokens?.access) {
-        // console.error("No access token available");
-        return;
-      }
+  // useEffect(() => {
+  //   // Group all data fetch operations
+  //   const fetchInitialData = async () => {
+  //     if (!tokens && !tokens?.access) {
+  //       // console.error("No access token available");
+  //       return;
+  //     }
 
-      try {
-        // console.log("Fetching initial dashboard data");
+  //     try {
+  //       // console.log("Fetching initial dashboard data");
 
-        // Create an array of promises with descriptive catch handlers
-        const promises = [
-          fetchKycStatus().catch((err) =>
-            console.error("KYC status fetch failed:", err)
-          ),
-          fetchCryptoBalance().catch((err) =>
-            console.error("Crypto balance fetch failed:", err)
-          ),
-          // fetchBankBalance().catch(err => console.error("Bank balance fetch failed:", err)),
-          // fetchBankAccounts().catch(err => console.error("Bank accounts fetch failed:", err)),
-          fetchContacts().catch((err) =>
-            console.error("Contacts fetch failed:", err)
-          ),
-          // fetchTransactions().catch(err => console.error("Transactions fetch failed:", err)),
-          fetchCryptoTransactions().catch((err) =>
-            console.error("Crypto transactions fetch failed:", err)
-          ),
-          fetchWalletData().catch((err) =>
-            console.error("Wallet data fetch failed:", err)
-          ),
-        ];
+  //       // Create an array of promises with descriptive catch handlers
+  //       const promises = [
+  //         fetchKycStatus().catch((err) =>
+  //           console.error("KYC status fetch failed:", err)
+  //         ),
+  //       ];
 
-        // Execute all promises in parallel
-        await Promise.allSettled(promises);
-        // console.log("All initial data fetch operations completed");
-      } catch (error) {
-        console.error("Error loading dashboard data:", error);
-      }
-    };
+  //       // Execute all promises in parallel
+  //       await Promise.allSettled(promises);
+  //       // console.log("All initial data fetch operations completed");
+  //     } catch (error) {
+  //       console.error("Error loading dashboard data:", error);
+  //     }
+  //   };
 
-    fetchInitialData();
-    handlePin();
-  }, [tokens?.access]);
+  //   fetchInitialData();
+  //   handlePin();
+  // }, [tokens?.access]);
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
@@ -839,33 +796,11 @@ const NewDashboard = () => {
     setRefreshing(true);
 
     try {
-      // Group all data fetch operations
-      const promises = [
-        handleReward().catch((err) =>
-          console.error("handle Reward fetch failed:", err)
-        ),
-        fetchKycStatus().catch((err) =>
-          console.error("KYC status fetch failed:", err)
-        ),
-        fetchCryptoBalance().catch((err) =>
-          console.error("Crypto balance fetch failed:", err)
-        ),
-        // fetchBankBalance().catch(err => console.error("Bank balance fetch failed:", err)),
-        // fetchBankAccounts().catch(err => console.error("Bank accounts fetch failed:", err)),
-        fetchContacts().catch((err) =>
-          console.error("Contacts fetch failed:", err)
-        ),
-        // fetchTransactions().catch(err => console.error("Transactions fetch failed:", err)),
-        fetchCryptoTransactions().catch((err) =>
-          console.error("Crypto transactions fetch failed:", err)
-        ),
-        fetchWalletData().catch((err) =>
-          console.error("Wallet data fetch failed:", err)
-        ),
-      ];
-
-      // Execute all promises in parallel
-      await Promise.allSettled(promises);
+      refetchAllBankAccounts();
+      refetchBankBalanceData();
+      refetchAllContacts();
+      refetchAllTransactions();
+      refetchAllTradesHistory();
     } catch (error) {
       console.error("Error refreshing dashboard data:", error);
     } finally {
@@ -882,59 +817,23 @@ const NewDashboard = () => {
     symbol?: string;
   }
 
-  const handleReward = async () => {
-    // console.log("ashdhas. =>")
-    try {
-      const data = await rewardsApi.execute(tokens?.access);
-
-      // console.log(data, 'datatatatatat');
-      if (data && data?.data?.length > 0) {
-        setisRewardModalVisible(!data?.data[0]?.redeem);
-        const redeem = await redeemReward(
-          { redeem: true },
-          data?.data[0]?.id,
-          tokens?.access
-        );
-        console.log(redeem, "redeem===>>>>");
-      }
-    } catch (error) {
-      console.log(error, "=====>>>");
-      setisRewardModalVisible(false);
-    }
-  };
-
-  // Optimized API call functions
-  const fetchCryptoBalance = async () => {
-    try {
-      const response = await cryptoBalanceApi.execute(tokens?.access);
-      const cryptoAssets = response?.data;
-
-      if (!cryptoAssets) return;
-
-      // Filter non-USD assets in one pass
-      const nonUsdAssets = cryptoAssets.filter(
-        (asset: CryptoAsset) => asset?.assetType !== "usd"
-      );
-
-      setalloCationLists(nonUsdAssets);
-
-      // Calculate totals in a single reduce operation for better performance
-      const totals = nonUsdAssets.reduce(
-        (acc: { disbursable: number; pending: number }, asset: CryptoAsset) => {
-          return {
-            disbursable: acc.disbursable + (asset?.disbursable || 0),
-            pending: acc.pending + (asset?.pending || 0),
-          };
+  const handleReward = async (data: any) => {
+    redeemReward(
+      {
+        payload: { redeem: true },
+        value: data?.data[0]?.id,
+      },
+      {
+        onSuccess: (data: any) => {
+          setItem(STORAGE_KEYS.REDEEM_REWARD, JSON.stringify(false));
+          refetchBankBalanceData();
+          dispatch(setShowRedeemReward(false));
         },
-        { disbursable: 0, pending: 0 }
-      );
-
-      // console.log(response, 'response');
-      settotalDisbursable(Number(totals.disbursable));
-      settotalDisbursablePending(Number(totals.pending));
-    } catch (error) {
-      console.error("Error fetching crypto balance:", error);
-    }
+        onError: (error: any) => {
+          console.log("error =>", JSON.stringify(error.response, null, 2));
+        },
+      }
+    );
   };
 
   const fetchKycStatus = async () => {
@@ -959,220 +858,41 @@ const NewDashboard = () => {
     }
   };
 
-  const fetchWalletData = async () => {
-    try {
-      const data = await walletApi.execute(tokens?.access);
-      if (!data) return;
-
-      useDispatchAction(setWalletData(data));
-    } catch (error) {
-      console.error("Error fetching wallet data:", error);
-    }
-  };
-
-  // const fetchBankBalance = async () => {
-  //   try {
-  //     const data = await bankBalanceApi.execute(tokens?.access);
-  //     if (!data) return;
-  //     console.log(JSON.stringify(data, null, 2), 'bankBalanceData');
-  //     useDispatchAction(setBankbalances(data));
-  //   } catch (error) {
-  //     console.error('Error fetching bank balance:', error);
-  //   }
-  // };
-
   const kycHandleUrl = async () => {
-    const data = await uploadKYC(tokens?.access);
-    // console.log(data, 'kycHandle');
-    if (data?.data?.status === 400) {
-      if (data?.data?.title === "Identity suspended") {
-        useDispatchAction(
-          setErrorMsg("Operation is forbidden. Custodial account is suspended")
-        );
-        // navigation.navigate('InAppKYCBrowser', {
-        //   url: 'https://docv.alloy.co/02797998-719f-407b-bf98-ed852e3540b3',
-        // });
-      }
-    } else {
-      navigation.navigate("InAppKYCBrowser", {
-        url: data?.data?.url,
-      });
-    }
-  };
-
-  // const fetchBankAccounts = async () => {
-  //   try {
-  //     // Get both data sources in parallel using optimized API calls
-  //     const [bankDetailsResponse, bankAccountsResponse] = await Promise.all([
-  //       bankDetailsApi.execute(tokens?.access),
-  //       bankAccountsApi.execute(tokens?.access)
-  //     ]);
-
-  //     if (!bankAccountsResponse) return;
-
-  //     console.log(JSON.stringify(bankAccountsResponse, null, 2), 'bankAccountsResponse');
-  //     console.log(JSON.stringify(bankDetailsResponse, null, 2), 'bankDetailsResponse');
-  //     // Extract all bank accounts
-  //     const payAiroBankAccounts = [
-  //       ...(bankAccountsResponse?.bank_accounts || []),
-  //       ...(bankAccountsResponse?.traditional_ira_accounts || []),
-  //       ...(bankAccountsResponse?.roth_ira_accounts || [])
-  //     ];
-
-  //     console.log(JSON.stringify(payAiroBankAccounts, null, 2), 'payAiroBankAccounts');
-
-  //     // Combine with bank details accounts if available
-  //     const combinedAccounts = [
-  //       ...(bankDetailsResponse?.accounts || []),
-  //       ...payAiroBankAccounts
-  //     ];
-
-  //     console.log(JSON.stringify(combinedAccounts, null, 2), 'combinedAccounts');
-  //     useDispatchAction(setBankLists(combinedAccounts));
-  //   } catch (error) {
-  //     console.error('Error fetching bank accounts:', error);
-  //   }
-  // };
-
-  // const fetchTransactions = async () => {
-  //   // if(!tokens?.access) return;
-  //   try {
-  //     // console.log("Fetching PayAiro transactions...");
-  //     const response = await getPayAeroTx(tokens?.access);
-  //     // console.log("PayAiro transactions response:", response);
-
-  //     // Extract transactions data correctly based on response format
-  //     let transactionsData = null;
-
-  //     if (response?.data?.merchantTransactions || response?.data?.userToUserTransactions) {
-  //       // Format: { data: { merchantTransactions: [], userToUserTransactions: [] } }
-  //       transactionsData = {
-  //         merchantTransactions: response.data.merchantTransactions || [],
-  //         userToUserTransactions: response.data.userToUserTransactions || []
-  //       };
-  //     } else if (response?.merchantTransactions || response?.userToUserTransactions) {
-  //       // Format: { merchantTransactions: [], userToUserTransactions: [] }
-  //       transactionsData = {
-  //         merchantTransactions: response.merchantTransactions || [],
-  //         userToUserTransactions: response.userToUserTransactions || []
-  //       };
-  //     } else if (response?.data?.data) {
-  //       // Format: { data: { data: { merchantTransactions: [], userToUserTransactions: [] } } }
-  //       transactionsData = {
-  //         merchantTransactions: response.data.data.merchantTransactions || [],
-  //         userToUserTransactions: response.data.data.userToUserTransactions || []
-  //       };
-  //     }
-
-  //     if (!transactionsData) {
-  //       console.error("Could not find valid transactions data in response:", response);
-  //       return;
-  //     }
-
-  //     // console.log("Extracted transactions data:", transactionsData);
-
-  //     // Create a merged and filtered list in one operation
-  //     const successfulTransactions = [
-  //       ...transactionsData.merchantTransactions,
-  //       ...transactionsData.userToUserTransactions
-  //     ].filter(tx => tx?.status === 'success');
-
-  //     // console.log(`Found ${successfulTransactions.length} successful transactions`);
-  //     settxLists(successfulTransactions);
-  //   } catch (error) {
-  //     console.error('Error fetching transactions:', error);
-  //   }
-  // };
-
-  const fetchCryptoTransactions = async () => {
+    dispatch(setShowLoader(true));
     try {
-      // console.log("Fetching crypto transactions...");
-      const response = await getCryptoTx(tokens?.access);
-      // console.log("Crypto transactions response:", response);
-
-      // Extract crypto transactions data correctly based on response format
-      let cryptoData = null;
-
-      if (response?.data?.nft_transactions || response?.data?.trades) {
-        // Format: { data: { nft_transactions: [], trades: [] } }
-        cryptoData = {
-          nft_transactions: response.data.nft_transactions || [],
-          trades: response.data.trades || [],
-        };
-      } else if (response?.nft_transactions || response?.trades) {
-        // Format: { nft_transactions: [], trades: [] }
-        cryptoData = {
-          nft_transactions: response.nft_transactions || [],
-          trades: response.trades || [],
-        };
-      } else if (response?.data?.data) {
-        // Format: { data: { data: { nft_transactions: [], trades: [] } } }
-        cryptoData = {
-          nft_transactions: response.data.data.nft_transactions || [],
-          trades: response.data.data.trades || [],
-        };
+      const data = await uploadKYC(tokens?.access);
+      // console.log(data, 'kycHandle');
+      if (data?.data?.status === 400) {
+        if (data?.data?.title === "Identity suspended") {
+          dispatch(
+            setErrorMsg(
+              "Operation is forbidden. Custodial account is suspended"
+            )
+          );
+        }
+      } else {
+        navigation.navigate(NAVIGATION_SCREENS.IN_APP_KYC_BROWSER, {
+          url: data?.data?.url,
+        });
       }
-
-      if (!cryptoData) {
-        console.error(
-          "Could not find valid crypto transactions data in response:",
-          response
-        );
-        return;
-      }
-
-      // console.log("Extracted crypto transactions data:", cryptoData);
-
-      // Safely combine NFT transactions and trades
-      const allTransactions = [
-        ...cryptoData.nft_transactions,
-        ...cryptoData.trades,
-      ];
-
-      // console.log(`Found ${allTransactions.length} crypto transactions`);
-      setweb3TxLists(allTransactions);
     } catch (error) {
-      console.error("Error fetching crypto transactions:", error);
+      console.error("Error handling KYC URL:", error);
+      dispatch(setErrorMsg("Failed to handle KYC URL"));
+    } finally {
+      dispatch(setShowLoader(false));
     }
   };
 
-  const fetchContacts = async () => {
+  const handleContacts = async (contactsData: any) => {
     try {
-      // console.log("Starting fetchContacts with token:", tokens?.access?.substring(0, 10) + "...");
-
-      // Direct API call to get contacts
-      const response = await getContacts(tokens?.access);
-      // console.log("Raw contacts API response:", response);
-
-      // Check different possible response formats
-      let contactsData = null;
-
-      if (response?.data?.data) {
-        // Format: { data: { data: [...contacts] } }
-        contactsData = response.data.data;
-      } else if (Array.isArray(response?.data)) {
-        // Format: { data: [...contacts] }
-        contactsData = response.data;
-      } else if (Array.isArray(response)) {
-        // Format: [...contacts]
-        contactsData = response;
-      }
-
       if (!contactsData || !Array.isArray(contactsData)) {
-        console.error(
-          "Could not find valid contacts data in response:",
-          response
-        );
+        console.error("Could not find valid contacts data in response:");
         return;
       }
 
-      // console.log("Extracted contacts data:", contactsData);
-
-      // Check the object structure to identify the correct field names
       const sampleContact = contactsData[0];
-      // console.log("Sample contact object:", sampleContact);
 
-      // Determine which field name is used for pending requests
       const pendingRequestsField = sampleContact?.pending_requests
         ? "pending_requests"
         : sampleContact?.pendingRequests
@@ -1186,8 +906,6 @@ const NewDashboard = () => {
         setcontactLists(contactsData);
         return;
       }
-
-      // console.log(`Using '${pendingRequestsField}' as the pending requests field`);
 
       // Function to get earliest timestamp - adapted to work with variable field names
       const getEarliestTimestamp = (contact: any) => {
@@ -1241,161 +959,21 @@ const NewDashboard = () => {
       const data = await addbankAccountRoth(tokens?.access);
       // console.log(data?.data, 'royjir');
       if (data && data?.data && !data?.data?.error) {
-        useDispatchAction(setSuccessMsg("Bank Account Created Successfully"));
+        dispatch(setSuccessMsg("Bank Account Created Successfully"));
         // fetchBankAccounts();
       } else {
-        useDispatchAction(
-          setErrorMsg(data?.data?.error ?? "Something went wrong")
-        );
+        dispatch(setErrorMsg(data?.data?.error ?? "Something went wrong"));
       }
     } catch (error) {}
   };
-
-  const onSuccess = useCallback(
-    async (publicToken: any) => {
-      try {
-        // Parse the metadataJson string
-        const metadata = publicToken?.metadata;
-        const metadataJson = metadata?.metadataJson
-          ? JSON.parse(metadata.metadataJson)
-          : null;
-
-        if (!metadataJson) {
-          console.error("Invalid metadataJson structure");
-          return;
-        }
-
-        const accountId = metadataJson?.account_id;
-
-        // Process all API calls in sequence with proper error handling
-        // 1. Exchange for access token
-        const exchangeResponse = await fetch(`${BASE_URL}kyc/exchange-token/`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${tokens?.access}`,
-          },
-          body: JSON.stringify({
-            public_token: publicToken.publicToken,
-          }),
-        });
-
-        const exchangeData = await exchangeResponse.json();
-        if (!exchangeResponse.ok) {
-          throw new Error(
-            `Exchange token error: ${exchangeData?.message || "Unknown error"}`
-          );
-        }
-
-        const accessToken = exchangeData?.data?.access_token;
-        if (!accessToken) {
-          throw new Error("Missing access token in exchange response");
-        }
-
-        // 2. Get processor token
-        const processorResponse = await fetch(
-          `${BASE_URL}kyc/processor-token/`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${tokens?.access}`,
-            },
-            body: JSON.stringify({
-              access_token: accessToken,
-              account_id: accountId,
-            }),
-          }
-        );
-
-        const processorData = await processorResponse.json();
-        if (!processorResponse.ok) {
-          throw new Error(
-            `Processor token error: ${
-              processorData?.message || "Unknown error"
-            }`
-          );
-        }
-
-        const processorToken = processorData?.data?.processor_token;
-        if (!processorToken) {
-          throw new Error("Missing processor token in processor response");
-        }
-
-        // 3. Register bank
-        const registerBankResponse = await fetch(
-          `${BASE_URL}kyc/register-bank/`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${tokens?.access}`,
-            },
-            body: JSON.stringify({
-              processor_token: processorToken,
-              identityId: exchangeData?.data?.identityId,
-              type: "financial",
-              accountNumberLast4: metadataJson?.account_id?.slice(-4),
-            }),
-          }
-        );
-
-        if (!registerBankResponse.ok) {
-          const registerBankData = await registerBankResponse.json();
-          throw new Error(
-            `Register bank error: ${
-              registerBankData?.message || "Unknown error"
-            }`
-          );
-        }
-
-        // 4. Success - refresh bank accounts
-        // await fetchBankAccounts();
-        useDispatchAction(setSuccessMsg("Bank account added successfully"));
-      } catch (error) {
-        console.error("Error in Plaid success handler:", error);
-        useDispatchAction(
-          setErrorMsg(
-            error instanceof Error
-              ? error.message
-              : "Failed to add bank account"
-          )
-        );
-      }
-    },
-    [tokens?.access]
-  ); // Only depend on the access token
-
-  // console.log("bankBalance?.bank_account?.usd =>", bankBalance?.bank_account?.usd)
-
-  // Handling open links
-  // const handleOpenLink = useCallback(() => {
-  //   if (!linkToken) return;
-
-  //   const config = {
-  //     token: linkToken,
-  //     onSuccess,
-  //     onExit: (linkExit: any) => {
-  //       dismissLink();
-  //     },
-  //     iOSPresentationStyle: LinkIOSPresentationStyle.MODAL,
-  //     logLevel: LinkLogLevel.ERROR,
-  //   };
-
-  //   create(config);
-  //   open(config);
-  // }, [linkToken, onSuccess]);
 
   // console.log("access =>",tokens)
   const hasKey = (bank: any, key: any) => bank.some((obj: any) => key in obj);
 
   const handleOpenLink = useCallback(async () => {
-    // console.log("handleOpenLink =>", tokens?.access)
-    // console.log("`${BASE_URL}auth/url-external-account` =>", `${BASE_URL}auth/url-external-account`)
-    console.log("bankLists =>", hasKey(bankLists, "bank_type"));
     if (!hasKey(bankLists, "bank_type")) {
       try {
-        useDispatchAction(setShowLoader(true));
+        dispatch(setShowLoader(true));
         const resp = await axios.get(`${BASE_URL}auth/url-external-account`, {
           headers: {
             Authorization: `Bearer ${tokens?.access}`, // ✅ this is the correct way to send auth header
@@ -1411,11 +989,11 @@ const NewDashboard = () => {
       } catch (e) {
         console.error("Error fetching external account URL:", e);
       } finally {
-        useDispatchAction(setShowLoader(false));
+        dispatch(setShowLoader(false));
       }
     } else {
       // console.log("mxExternalAccountDetails =>", mxExternalAccountDetails)
-      useDispatchAction(setErrorMsg("External account aleardy found"));
+      dispatch(setErrorMsg("External account aleardy found"));
     }
   }, []);
 
@@ -1425,9 +1003,6 @@ const NewDashboard = () => {
       isVisble3: isCrypto,
     });
   }, [navigation, isCrypto]);
-
-  // Example custom theme handling
-  const styles = createStyles(theme);
 
   // Memoize expensive calculations and derived state
   const sortedTxLists = useMemo(() => {
@@ -1506,127 +1081,16 @@ const NewDashboard = () => {
     }
   };
 
-  const loaderTesting = () => {
-    useDispatchAction(setShowLoader(true));
-    console.log("Loader shown");
-    setTimeout(() => {
-      console.log("Loader hidden");
-      useDispatchAction(setShowLoader(false));
-    }, 2000);
-  };
-
-  //
-  const renderButtonGraph = () => {
-    return (
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "flex-start",
-            alignItems: "center",
-          }}
-        >
-          <TouchableOpacity
-            onPress={() => setselectedGraph("pnl")}
-            style={{
-              backgroundColor:
-                selectedGraph === "pnl"
-                  ? "rgba(44, 106, 63, 1)"
-                  : "rgba(255, 255, 255, 0.1)",
-              // padding: 10,
-              paddingBottom: 10,
-              paddingTop: 7,
-              width: "33%",
-              borderRadius: 30,
-            }}
-          >
-            <Text
-              style={{
-                color: selectedGraph === "pnl" ? "#fff" : "#fff",
-                fontFamily: Fonts.bold,
-                textAlign: "center",
-                fontSize: 12,
-              }}
-            >
-              PnL(%)
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setselectedGraph("Assets")}
-            style={{
-              backgroundColor:
-                selectedGraph === "Assets" ? "rgba(44, 106, 63, 1)" : "#000",
-              // padding: 10,
-              paddingBottom: 10,
-              paddingTop: 7,
-              width: "33%",
-              borderRadius: 30,
-              marginLeft: 15,
-            }}
-          >
-            <Text
-              style={{
-                color: selectedGraph === "Assets" ? "#fff" : "#fff",
-                fontFamily: Fonts.bold,
-                textAlign: "center",
-                fontSize: 12,
-              }}
-            >
-              Assets
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* <TouchableOpacity
-            onPress={() => {
-              setisShowWeeks(true);
-            }}
-            style={{
-              backgroundColor:theme.colors.palette.green700,
-              // padding: 10,
-              paddingBottom: 10,
-              paddingTop: 7,
-              width: '27%',
-              borderRadius: 30,
-            }}>
-            <Text
-              style={{
-                color: 'black',
-                fontFamily: Fonts.bold,
-                textAlign: 'center',
-                fontSize: 12,
-                textTransform: 'capitalize',
-              }}>
-              {timeframe} <SvgXml xml={SVGDownArrow2} />
-            </Text>
-          </TouchableOpacity> */}
-      </View>
-    );
-  };
-
   return (
     <ScreenContainer
       style={{
         paddingHorizontal: 0,
       }}
     >
-      {/* <Button title='Test Loader' onPress={loaderTesting} /> */}
-      {/* <GlobalLoader /> */}
       {/* Modal container with high z-index */}
       <View
         style={{
           position: "absolute",
-          // top: 0,
-          // left: 0,
-          // right: 0,
-          // bottom: 0,
           zIndex: 9999,
           elevation: 9999,
           justifyContent: "center",
@@ -1645,7 +1109,6 @@ const NewDashboard = () => {
                 flex: 1,
                 justifyContent: "center",
                 alignItems: "center",
-                // backgroundColor: 'rgba(0,0,0,0.5)'
               }}
             >
               <LazyBankModal
@@ -1669,7 +1132,6 @@ const NewDashboard = () => {
                 flex: 1,
                 justifyContent: "center",
                 alignItems: "center",
-                // backgroundColor: 'rgba(0,0,0,0.5)'
               }}
             >
               <LazyBankModal2
@@ -1693,7 +1155,6 @@ const NewDashboard = () => {
                 flex: 1,
                 justifyContent: "center",
                 alignItems: "center",
-                // backgroundColor: 'rgba(0,0,0,0.5)'
               }}
             >
               <BalanceModal
@@ -1706,6 +1167,15 @@ const NewDashboard = () => {
               />
             </View>
           </Modal>
+        )}
+        {showGuide && (
+          <GuideModal
+            isVisible={showGuide}
+            onClose={() => {
+              setItem(STORAGE_KEYS.GUIDE, JSON.stringify(false));
+              dispatch(setShowGuide(false));
+            }}
+          />
         )}
 
         {isVisible2 && (
@@ -1720,7 +1190,6 @@ const NewDashboard = () => {
                 flex: 1,
                 justifyContent: "center",
                 alignItems: "center",
-                // backgroundColor: 'rgba(0,0,0,0.5)'
               }}
             >
               <LazySelectionModal
@@ -1746,7 +1215,6 @@ const NewDashboard = () => {
                 flex: 1,
                 justifyContent: "center",
                 alignItems: "center",
-                // backgroundColor: 'rgba(0,0,0,0.5)'
               }}
             >
               <LazySelectionModal2
@@ -1759,34 +1227,12 @@ const NewDashboard = () => {
           </Modal>
         )}
 
-        {isGuideVisible && (
-          <Modal
-            animationType="fade"
-            transparent={true}
-            visible={isGuideVisible}
-            onRequestClose={() => setisGuideVisible(false)}
-          >
-            <View
-              style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center",
-                // backgroundColor: 'rgba(0,0,0,0.5)'
-              }}
-            >
-              <LazyGuideModal
-                isVisible={isGuideVisible}
-                onClose={() => setisGuideVisible(false)}
-                onConfirm={() => {}}
-              />
-            </View>
-          </Modal>
-        )}
-
-        {isRewardModalVisible && (
+        {showRedeemReward && (
           <RewardModal
-            isVisible={isRewardModalVisible}
-            onClose={() => setisRewardModalVisible(false)}
+            isVisible={showRedeemReward}
+            onClose={() => {
+              handleReward(getRewardData);
+            }}
           />
         )}
 
@@ -1798,7 +1244,6 @@ const NewDashboard = () => {
         />
       </View>
       {
-        // isCrypto &&
         <View
           style={{
             zIndex: 100,
@@ -1810,16 +1255,6 @@ const NewDashboard = () => {
             bottom: -15,
           }}
         >
-          {/* <GhostSlide
-            visible={isCrypto}
-            direction="custom"
-            duration={2500}
-            distance={1000}
-            customX={0}
-            customY={-400}
-            ghostOpacity={1}
-            onAnimationComplete={() => console.log('Ghost slide completed')}
-          > */}
           <View
             style={{
               paddingVertical: 10,
@@ -1834,7 +1269,6 @@ const NewDashboard = () => {
           >
             <BottomNavigation isVer={true} />
           </View>
-          {/* </GhostSlide> */}
         </View>
       }
 
@@ -1847,6 +1281,9 @@ const NewDashboard = () => {
             tintColor={theme.colors.palette.green700}
           />
         }
+        style={{
+          flex: 1,
+        }}
       >
         <DashboardHeader
           name={userName}
@@ -1978,6 +1415,9 @@ const NewDashboard = () => {
           style={{
             backgroundColor: theme.colors.palette.white,
             borderWidth: 0,
+            marginBottom: 80,
+            borderBottomLeftRadius: 0,
+            borderBottomRightRadius: 0,
           }}
           padding={10}
           borderRadius={theme.spacing.spacing[10]}
@@ -2343,84 +1783,11 @@ const NewDashboard = () => {
               </MemoizedDashboardSection>
             )}
 
-            {/* {!isCrypto &&
-              <MemoizedDashboardSection
-                title='PnL & Assets Allocation'
-              // actionText='see all'
-              // onActionPress={onContactSeeALl}
-              >
-                <View style={{ width: '100%' }}>
-                  <View>
-                    {selectedGraph !== 'Assets' && (
-                      <>
-                        <View
-                          style={{
-                            width: '100%',
-                            alignSelf: 'center',
-                            marginTop: 30,
-                            marginBottom: 20,
-                          }}>
-                          {renderButtonGraph()}
-                        </View>
-                        <LineChartCustom isNoBg={true} />
-                      </>
-                    )}
-                    {selectedGraph === 'Assets' && (
-                      <View
-                        style={{
-                          backgroundColor: '#000',
-                          padding: 20,
-                          borderRadius: 20,
-                          width: '100%',
-                          alignSelf: 'center',
-                          marginVertical: 15,
-                        }}>
-                        {renderButtonGraph()}
-                        <View style={{ width: '100%', alignSelf: 'center' }}>
-                          <CustomPieChart
-                            allocationLists={memoizedAllocationLists}
-                          />
-                        </View>
-
-                        <View
-                          style={{
-                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                            padding: 20,
-                            borderRadius: 20,
-                          }}>
-                          <Text
-                            style={{
-                              color: 'white',
-                              fontFamily: Fonts.bold,
-                              marginBottom: 10,
-                              fontSize: 16,
-                            }}>
-                            Assets Allocation
-                          </Text>
-                          {alloCationLists &&
-                            alloCationLists.length > 0 &&
-                            alloCationLists.map((item, key) => (
-                              <View key={key}>
-                                <AssetsCards
-                                  item={item}
-                                  isSelected={false}
-                                  onPress={() => { }}
-                                  type="display"
-                                />
-                              </View>
-                            ))}
-                        </View>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              </MemoizedDashboardSection>
-            } */}
-
             {!isCrypto && (
               <MemoizedDashboardSection
                 title="Explore Securities"
                 // actionText=''
+
                 onActionPress={() => {}}
               >
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -2540,50 +1907,69 @@ const NewDashboard = () => {
                 </ScrollView>
               </MemoizedDashboardSection>
             )}
-
-            <MemoizedDashboardSection
-              title="Recent Transactions"
-              onActionPress={() => {}}
-            >
-              {isLoadingAllTransactions || isLoadingAllTransactions ? (
-                // Skeleton loading for transactions
-                <>
-                  <SkeletonTransactionCard />
-                  <SkeletonTransactionCard />
-                  <SkeletonTransactionCard />
-                </>
-              ) : (
-                <>
-                  {txLists && isCrypto && sortedTxLists.length > 0 ? (
-                    sortedTxLists.map((item: any, key: any) => (
-                      <View key={key}>
-                        <MemoizedTransactionCard
-                          item={item}
-                          key={key}
-                          isMerchent={item?.order_id}
-                          isCrypto={item?.order_id}
-                        />
-                      </View>
-                    ))
-                  ) : (
-                    <></>
-                  )}
-                  {web3TxLists &&
-                    !isCrypto &&
-                    sortedWeb3TxLists.length > 0 &&
-                    sortedWeb3TxLists.map((item: any, key: any) => (
-                      <View key={key}>
-                        <MemoizedTransactionCard
-                          isCrypto={true}
-                          item={item}
-                          key={key}
-                          isMerchent={item?.order_id}
-                        />
-                      </View>
-                    ))}
-                </>
-              )}
-            </MemoizedDashboardSection>
+            {isCrypto && sortedTxLists.length > 0 && (
+              <MemoizedDashboardSection
+                title="Recent Transactions"
+                // style={{ marginBottom: 120 }}
+                onActionPress={() => {}}
+              >
+                {isLoadingAllTransactions ? (
+                  // Skeleton loading for transactions
+                  <>
+                    <SkeletonTransactionCard />
+                    <SkeletonTransactionCard />
+                    <SkeletonTransactionCard />
+                  </>
+                ) : (
+                  <>
+                    {txLists &&
+                      isCrypto &&
+                      sortedTxLists.length > 0 &&
+                      sortedTxLists.map((item: any, key: any) => (
+                        <View key={key}>
+                          <MemoizedTransactionCard
+                            item={item}
+                            key={key}
+                            isMerchent={item?.order_id}
+                            isCrypto={item?.order_id}
+                          />
+                        </View>
+                      ))}
+                  </>
+                )}
+              </MemoizedDashboardSection>
+            )}
+            {!isCrypto && sortedWeb3TxLists.length > 0 && (
+              <MemoizedDashboardSection
+                title="Recent Transactions"
+                onActionPress={() => {}}
+              >
+                {isLoadingAllTransactions ? (
+                  // Skeleton loading for transactions
+                  <>
+                    <SkeletonTransactionCard />
+                    <SkeletonTransactionCard />
+                    <SkeletonTransactionCard />
+                  </>
+                ) : (
+                  <>
+                    {web3TxLists &&
+                      !isCrypto &&
+                      sortedWeb3TxLists.length > 0 &&
+                      sortedWeb3TxLists.map((item: any, key: any) => (
+                        <View key={key}>
+                          <MemoizedTransactionCard
+                            isCrypto={true}
+                            item={item}
+                            key={key}
+                            isMerchent={item?.order_id}
+                          />
+                        </View>
+                      ))}
+                  </>
+                )}
+              </MemoizedDashboardSection>
+            )}
             {isCrypto && <CryptoRewardsSection />}
             {isCrypto && (
               <CryptoOtherServicesSection
@@ -2595,39 +1981,6 @@ const NewDashboard = () => {
           </View>
         </Card>
       </ScrollView>
-      {showPin && (
-        <PincodeScreen
-          pinTxt={pinTxt}
-          onPress={async (e: any, f: any) => {
-            setshowPin(false);
-
-            if (!f) {
-              if (e !== isConfirm) {
-                useDispatchAction(setErrorMsg("Pin not matched , Try Again"));
-                setpinTxt("Confirm your pin");
-                setshowPin(true);
-                return;
-              }
-              const formData = new FormData();
-              formData.append("tpin", e);
-              const data = await createPin(formData, tokens?.access);
-              if (data && data?.status) {
-                setPin(e);
-                useDispatchAction(
-                  setSuccessMsg("Transaction Pin created successfully")
-                );
-              } else {
-                useDispatchAction(setErrorMsg("Something Went Wrong"));
-              }
-            } else {
-              setisConfirm(e);
-              setpinTxt("Confirm your pin");
-              setshowPin(f);
-            }
-          }}
-          isNotDecimals={null}
-        />
-      )}
     </ScreenContainer>
   );
 };

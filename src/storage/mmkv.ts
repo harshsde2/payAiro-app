@@ -1,9 +1,9 @@
-import { MMKV } from 'react-native-mmkv';
+import { MMKV } from "react-native-mmkv";
 
 // Create the storage instance
 export const storage = new MMKV({
-  id: 'payAiro-app-storage',
-  encryptionKey: 'payAiro-secure-storage-key'
+  id: "payAiro-app-storage",
+  encryptionKey: "payAiro-secure-storage-key",
 });
 
 // Helper functions
@@ -25,11 +25,13 @@ export const clearAll = (): void => {
 
 // Key constants for the app
 export const STORAGE_KEYS = {
-  AUTH_TOKENS: 'auth_tokens',
-  USER_DATA: 'user_data',
-  WALLET_DATA: 'wallet_data',
-  BIOMETRIC_AVAILABLE: 'biometric_available',
-  THEME_PREFERENCE: 'theme_preference',
-  CONTACTS: 'contacts_data', // Add the key for contacts
-  RECENT_CONTACTS:'recent_contacts_data'
-}; 
+  AUTH_TOKENS: "auth_tokens",
+  USER_DATA: "user_data",
+  WALLET_DATA: "wallet_data",
+  BIOMETRIC_AVAILABLE: "biometric_available",
+  THEME_PREFERENCE: "theme_preference",
+  CONTACTS: "contacts_data", // Add the key for contacts
+  RECENT_CONTACTS: "recent_contacts_data",
+  GUIDE: "guide",
+  REDEEM_REWARD: "redeem_reward",
+};

@@ -15,6 +15,8 @@ export const AUTH = {
   STORE_TOKEN: "auth/store-token/",
   CONTACT_ADDING: "auth/contact-adding/",
   MY_BANK_ACCOUNTS: "auth/my-bank-accounts/",
+  ADD_NORMAL_BANK_ACCOUNT: "auth/fortreetrust-bankaccount/",
+  ADD_TRADITIONAL_IRA_BANK_ACCOUNT: "auth/fortreetrust-TraditionalIraAccount/",
   ALL_BANK_ACCOUNTS: "auth/all-bank-accounts/",
   ALL_BANKACCOUNT_BALANCE: "auth/all-bankaccount-balance/",
   TRADES_HISTORY: "auth/trades-history/",
@@ -35,6 +37,8 @@ export const AUTH = {
   MX_ACCOUNT_DETAILS_EXTERNAL: "auth/fortress/account-details-external/",
   MX_LINK_EXTERNAL_ACCOUNT: "auth/link-external-account",
   MX_REGISTER_EXTERNAL_ACCOUNT: "auth/regester/externalbankaccount/",
+  GET_MY_REWARD: "auth/my-rewards/",
+  REDEEM_REWARD: "auth/reward-redeem/",
 };
 // Wallet endpoints
 export const WALLET = {

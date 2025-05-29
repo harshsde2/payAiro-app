@@ -62,7 +62,7 @@ export default function Name(props: any) {
 
   // Handle From
   const handleForm = () => {
-    if (fname.length === 0 || uname.length === 0) {
+    if (fname.length === 0 || lname.length === 0 || uname.length === 0) {
       useDispatchAction(setErrorMsg("Fields cannot be empty"));
       return;
     }
@@ -75,6 +75,7 @@ export default function Name(props: any) {
       return;
     }
 
+    console.log("handleForm called with:");
     const payload = new FormData();
     payload.append("name", fname);
     payload.append("mobile_number", "+1" + phone);
@@ -98,12 +99,15 @@ export default function Name(props: any) {
       },
       onError: (error: any) => {
         setIsPending(false);
-        if (error.data.data.errors.mobile_number) {
+
+        if (error.response.data.data.errors.mobile_number) {
           useDispatchAction(
-            setErrorMsg(error.data.data.errors.mobile_number[0])
+            setErrorMsg(error.response.data.data.errors.mobile_number[0])
           );
-        } else if (error.data.data.errors.usernames) {
-          useDispatchAction(setErrorMsg(error.data.data.errors.usernames[0]));
+        } else if (error.response.data.data.errors.usernames) {
+          useDispatchAction(
+            setErrorMsg(error.response.data.data.errors.usernames[0])
+          );
         } else {
           useDispatchAction(setErrorMsg("Failed to submit details"));
         }
@@ -112,7 +116,7 @@ export default function Name(props: any) {
   };
 
   return (
-    <ScreenContainer avoidKeyboard padding={0}>
+    <ScreenContainer scrollable padding={0}>
       <View style={{ flex: 1 / 2.5 }}>
         <AuthHeader showAuthLogo={true} />
       </View>

@@ -72,7 +72,7 @@ export default function Login() {
   };
 
   return (
-    <ScreenContainer padding={0}>
+    <ScreenContainer scrollable={true} padding={0}>
       <View style={{ flex: 1 }}>
         <AuthHeader showAuthLogo={true} />
       </View>

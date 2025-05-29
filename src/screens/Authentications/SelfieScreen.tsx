@@ -1,64 +1,69 @@
-import {
-  View,
-  Text,
-  Image,
-  Alert,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
-import React, { useRef, useState } from "react";
-import CommonContainer from "../../HOC/CommonContainer";
-import Fonts from "../../constants/Fonts";
-import GenericButton from "../../components/GenericButton";
-import { launchCamera, launchImageLibrary } from "react-native-image-picker";
-import useDispatchAction from "../../hooks/useDispatchAction";
-import {
-  setErrorMsg,
-  setSuccessMsg,
-} from "../../redux/slices/authenticationSlice";
-import moment from "moment";
-import { patchKyc } from "../../services/Services";
-import useSelectorAction from "../../hooks/useSelectorAction";
-import { SCREENS } from "../../constants/SCREENS";
 import { useNavigation } from "@react-navigation/native";
-import Loader from "../../components/Loader";
-import {
-  askCameraPremission,
-  checkCameraPremission,
-} from "../../helper/Permission";
+import { ScreenContainer } from "HOC";
+import UploadFile from "components/UploadFile";
 import { SVGChecked, SVGUnChecked } from "constants/images";
-import { SvgXml } from "react-native-svg";
-import { CustomText } from "tsx-components";
-import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
-import PDFViewer from "tsx-components/PDFViewer";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import {
+  useAddBankAccount,
+  useAddTraditionalIRABankAccount,
   useCreatePin,
-  useStepCount,
   useSubmitKYC,
 } from "query/hooks/useAPIAuth";
-import { ScreenContainer } from "HOC";
-import AuthHeader from "tsx-components/AuthHeader";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Button,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SvgXml } from "react-native-svg";
 import { Theme, useTheme } from "styles";
-import UploadFile from "components/UploadFile";
+import { CustomText } from "tsx-components";
+import AuthHeader from "tsx-components/AuthHeader";
 import PinScreen from "tsx-components/modals/PinScreen";
+import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
 import { PinScreenRef } from "tsx-components/modals/modal.types";
+import GenericButton from "../../components/GenericButton";
+import Fonts from "../../constants/Fonts";
+import useSelectorAction from "../../hooks/useSelectorAction";
+import {
+  setErrorMsg,
+  setLogin,
+  setShowGuide,
+  setShowLoader,
+  setShowRedeemReward,
+  setSuccessMsg,
+  setWalletData,
+} from "../../redux/slices/authenticationSlice";
+import { addBank, addBank2, getWallet } from "services/Services";
+import { useGetReward, useWalletDetails } from "query/hooks";
+import { setWalletDataAuth } from "services/Auth";
+import { useDispatch } from "react-redux";
+import { setItem, STORAGE_KEYS } from "storage/mmkv";
+import useDispatchAction from "hooks/useDispatchAction";
 
 export default function SelfieScreen(props: any) {
   const { payload } = props.route.params || {};
 
   const { theme } = useTheme();
   const styles = customStyles(theme);
+  const dispatch = useDispatch();
   const pinScreenRef = useRef<PinScreenRef | any>();
 
   const { tokens, userData } = useSelectorAction();
   const [checked, setchecked] = useState(false);
 
-  console.log("auth ->", JSON.stringify((tokens as any)?.access, null, 2));
+  const token = (tokens as any)?.access || "";
+
+  // console.log("auth ->", JSON.stringify((tokens as any)?.access, null, 2));
   const termsAndConditionRef = useRef<any>(null);
 
   const [selfie, setselfie] = useState<any>(null);
   const navigation = useNavigation<any>();
+  const [shouldFetchWalletDetails, setShouldFetchWalletDetails] =
+    useState(false);
 
   const { mutate: handlKYC, isPending, isSuccess } = useSubmitKYC();
   const {
@@ -67,13 +72,149 @@ export default function SelfieScreen(props: any) {
     isSuccess: isSuccessCreatePin,
   } = useCreatePin();
 
+  const {
+    mutate: handleAddBankAccount,
+    isPending: isPendingAddBankAccount,
+    isSuccess: isSuccessAddBankAccount,
+  } = useAddBankAccount();
+
+  const {
+    mutate: handleTraditionalIRABankAccountt,
+    isPending: isPendingTraditionalIRABankAccount,
+    isSuccess: isSuccessTraditionalIRABankAccount,
+  } = useAddTraditionalIRABankAccount();
+
+  const {
+    data: data,
+    isLoading: isPendingWalletDetails,
+    isSuccess: isSuccessWalletDetails,
+    isError: isErrorWalletDetails,
+    refetch: refetchWalletDetails,
+  } = useWalletDetails();
+
+  const {
+    data: getRewardData,
+    isError,
+    isSuccess: isSuccessGetReward,
+    refetch: refetchGetReward,
+  } = useGetReward();
+
+  // useEffect(() => {
+  //   dispatch(setShowLoader(false));
+  // }, []);
+
+  const handleGetRewardDetails = async () => {
+    await refetchGetReward();
+    if (isSuccessGetReward) {
+      console.log("refetchGetReward => ✅");
+      if (isSuccess && getRewardData?.data?.length > 0) {
+        if (getRewardData && getRewardData?.data?.length > 0) {
+          setItem(
+            STORAGE_KEYS.REDEEM_REWARD,
+            JSON.stringify(!getRewardData?.data[0]?.redeem)
+          );
+          // dispatch(setShowRedeemReward(true));
+        }
+      }
+    }
+  };
+
+  const handleUserGuide = async () => {
+    setItem(STORAGE_KEYS.GUIDE, JSON.stringify(true));
+    dispatch(setShowGuide(true));
+    console.log("setShowGuide => ✅");
+  };
+
+  const getWalletD = async () => {
+    useDispatchAction(setShowLoader(true));
+    await refetchWalletDetails();
+    if (isSuccessWalletDetails) {
+      console.log("handleAddBankAccount => ✅");
+      await handleGetRewardDetails();
+      handleUserGuide();
+      // const data1 = await addBank(token);
+      // const data2 = await addBank2(token);
+      // console.log("bankAdded===>>>", data1);
+      // const data = await getWallet(token);
+      console.log(data);
+      dispatch(setWalletData(data?.data));
+      setWalletDataAuth(data?.data);
+      setItem(STORAGE_KEYS.WALLET_DATA, JSON.stringify(data?.data));
+      dispatch(setLogin(true));
+      dispatch(setSuccessMsg("Create Account Successfully"));
+      dispatch(setShowLoader(false));
+    }
+  };
+
+  const getWalletDetails = async () => {
+    try {
+      const data1 = await addBank(token);
+      const data2 = await addBank2(token);
+      console.log("bankAdded===>>>", JSON.stringify(data1, null, 2));
+      console.log("bankAdded2===>>>", JSON.stringify(data2, null, 2));
+      const data = await getWallet(token);
+      console.log("getting wallet =>", JSON.stringify(data, null, 2));
+      dispatch(setWalletData(data?.data));
+      setWalletDataAuth(data?.data);
+      setItem(STORAGE_KEYS.WALLET_DATA, JSON.stringify(data?.data));
+      dispatch(setLogin(true));
+      dispatch(setSuccessMsg("Logged In Successfully"));
+    } catch (error) {
+      console.error("Error fetching wallet details:", error);
+      dispatch(setErrorMsg("Failed to fetch wallet details"));
+    } finally {
+      dispatch(setShowLoader(false));
+    }
+  };
+
+  const handleAddBankAccounts = () => {
+    useDispatchAction(setShowLoader(true));
+    handleAddBankAccount({} as any, {
+      onSuccess: (data) => {
+        console.log("handleAddBankAccount => ✅");
+        // console.log("data on add bank =>", data.data);
+        dispatch(setSuccessMsg("Bank Account Added Successfully"));
+        // console.log("Bank Account Added Successfully", data);
+        handleTraditionalIRABankAccountt({} as any, {
+          onSuccess: (data) => {
+            dispatch(
+              setSuccessMsg("Traditional IRA Bank Account Added Successfully")
+            );
+            console.log("handleTraditional IRA BankAccountt => ✅");
+            getWalletD();
+          },
+          onError: (error: any) => {
+            console.log("Error adding Traditional IRA Bank Account:", error);
+          },
+          onSettled: () => {
+            dispatch(setShowLoader(false));
+          },
+        });
+      },
+      onError: (error: any) => {
+        console.log("Error adding bank account:", error.response);
+      },
+      onSettled: () => {
+        dispatch(setShowLoader(false));
+      },
+    });
+  };
+
+  const getErrors = (errors: any) => {
+    return (
+      errors.data?.data?.details.errors["Ssn"][0] ||
+      errors.data?.data?.details.errors["state"][0] ||
+      "Something went wrong"
+    );
+  };
+
   const handleImage = async () => {
     if (!selfie) {
-      useDispatchAction(setErrorMsg("Selfie is Required!"));
+      dispatch(setErrorMsg("Selfie is Required!"));
       return;
     }
     if (!checked) {
-      useDispatchAction(
+      dispatch(
         setErrorMsg(
           "Please agree with Consumer Disclosure and Fortress trust Account Agreement"
         )
@@ -102,17 +243,25 @@ export default function SelfieScreen(props: any) {
     formData.append("dob", payload?.dob);
     formData.append("consumer_disclosure_fortress_agreement", checked);
 
-    handlKYC(payload as any, {
+    // console.log(JSON.stringify(payload, null, 2));
+    dispatch(setShowLoader(true));
+    handlKYC(formData as any, {
       onSuccess: (data) => {
-        useDispatchAction(setSuccessMsg("KYC Updated Successfully"));
+        console.log("handlKYC => ✅");
+        dispatch(setSuccessMsg("KYC Updated Successfully"));
+        // handleAddBankAccounts();
         handleCreatePin();
       },
       onError: (error: any) => {
-        console.log("Error uploading selfie:", error.data.data.details.errors);
-        useDispatchAction(
-          setErrorMsg(Object.values(error?.data?.data?.details?.errors)[0]) ??
-            "Something went wrong"
-        );
+        dispatch(setShowLoader(false));
+
+        const errors = getErrors(error.response);
+
+        console.log("Error uploading selfie:", errors);
+        dispatch(setErrorMsg(errors));
+      },
+      onSettled: () => {
+        dispatch(setShowLoader(false));
       },
     });
   };
@@ -130,25 +279,38 @@ export default function SelfieScreen(props: any) {
   };
 
   const handleSetUserPin = (pin: any) => {
+    console.log("Pin entered:", pin);
     if (pin.length < 4) {
-      useDispatchAction(setErrorMsg("Pin should be 4 digit"));
+      dispatch(setErrorMsg("Pin should be 4 digit"));
       return;
     }
     const formData = new FormData();
     formData.append("tpin", pin);
 
+    dispatch(setShowLoader(true));
+
     handlPinCreation(formData as any, {
       onSuccess: (data) => {
         if (data && data?.status) {
-          useDispatchAction(
-            setSuccessMsg("Transaction Pin created successfully")
-          );
-          navigation.navigate("SuccesScreen");
+          console.log("handlPinCreation => ✅");
+          dispatch(setSuccessMsg("Transaction Pin created successfully"));
+          handleAddBankAccounts();
+          // getWalletDetails();
+          // navigation.navigate("SuccesScreen");
         } else {
-          useDispatchAction(setErrorMsg("Something Went Wrong"));
+          dispatch(setErrorMsg("Something Went Wrong"));
         }
       },
-      onError: (error) => {},
+      onError: (error: any) => {
+        console.log("Error creating pin:", error);
+        dispatch(
+          setErrorMsg(Object.values(error?.data?.data?.details?.errors)[0]) ??
+            "Something went wrong"
+        );
+      },
+      onSettled: () => {
+        dispatch(setShowLoader(false));
+      },
     });
   };
 
@@ -165,6 +327,7 @@ export default function SelfieScreen(props: any) {
         onAgree={() => setchecked(true)}
         ref={termsAndConditionRef}
       />
+      {/* <Button title="Add BankAccount" onPress={getWalletDetails} /> */}
       <View style={[styles.conntentContainer]}>
         <View style={[styles.headerContainer]}>
           <CustomText

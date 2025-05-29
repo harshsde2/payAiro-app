@@ -1,14 +1,15 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../../api';
-import { AUTH } from '../../api/endpoints';
-import { ApiResponse, CryptoAsset } from '../../api/types';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "../../api";
+import { AUTH } from "../../api/endpoints";
+import { ApiResponse, CryptoAsset } from "../../api/types";
+import { queryStaleTime } from "query/queryConfigs";
 
 // Query keys
 export const cryptoKeys = {
-  all: ['crypto'] as const,
-  balance: () => [...cryptoKeys.all, 'balance'] as const,
-  trades: () => [...cryptoKeys.all, 'trades'] as const,
-  prices: () => [...cryptoKeys.all, 'prices'] as const,
+  all: ["crypto"] as const,
+  balance: () => [...cryptoKeys.all, "balance"] as const,
+  trades: () => [...cryptoKeys.all, "trades"] as const,
+  prices: () => [...cryptoKeys.all, "prices"] as const,
 };
 
 /**
@@ -18,8 +19,11 @@ export const useCryptoBalance = () => {
   return useQuery<ApiResponse<CryptoAsset[]>>({
     queryKey: cryptoKeys.balance(),
     queryFn: async () => {
-      return await apiClient.get<ApiResponse<CryptoAsset[]>>(AUTH.BANKACCOUNT_CRYPTO_BALANCE);
+      return await apiClient.get<ApiResponse<CryptoAsset[]>>(
+        AUTH.BANKACCOUNT_CRYPTO_BALANCE
+      );
     },
+    staleTime: queryStaleTime.NORMAL_STALE_TIME,
   });
 };
 
@@ -61,14 +65,14 @@ interface CryptoTransferPayload {
  */
 export const useCryptoTransfer = () => {
   const queryClient = useQueryClient();
-  
-  return useMutation<
-    ApiResponse<any>,
-    Error,
-    CryptoTransferPayload
-  >({
+
+  return useMutation<ApiResponse<any>, Error, CryptoTransferPayload>({
     mutationFn: async (payload) => {
-      return await apiClient.post<ApiResponse<any>>(AUTH.CRYPTO_TRANSFER, payload, false);
+      return await apiClient.post<ApiResponse<any>>(
+        AUTH.CRYPTO_TRANSFER,
+        payload,
+        false
+      );
     },
     onSuccess: () => {
       // Invalidate relevant queries to trigger refetch
@@ -76,4 +80,4 @@ export const useCryptoTransfer = () => {
       queryClient.invalidateQueries({ queryKey: cryptoKeys.trades() });
     },
   });
-}; 
+};

@@ -133,6 +133,8 @@ export default function UploadFile({
           style={{
             paddingRight: 10,
             paddingLeft: 15,
+            flex: 1,
+            // width: "10%",
           }}
         >
           {value

@@ -19,6 +19,9 @@ import useSelectorAction from "../../hooks/useSelectorAction";
 import {
   setErrorMsg,
   setLogin,
+  setShowGuide,
+  setShowLoader,
+  setShowRedeemReward,
   setSuccessMsg,
   setTokens,
   setWalletData,
@@ -35,6 +38,7 @@ import AuthHeader from "tsx-components/AuthHeader";
 import { CustomText } from "tsx-components";
 import { Theme, useTheme } from "styles";
 import { useLogin, useStepCount, useVerifyOTP } from "query/hooks/useAPIAuth";
+import { useGetReward, useWalletDetails } from "query/hooks";
 
 export default function ConfirmOTP() {
   let deviceId = DeviceInfo.getDeviceId();
@@ -54,6 +58,20 @@ export default function ConfirmOTP() {
   } = useLogin();
   const { mutate: verifyOtp, isPending, error } = useVerifyOTP();
   const { mutate: stepCount } = useStepCount();
+  const {
+    data: getRewardData,
+    isError,
+    isSuccess: isSuccessGetReward,
+    refetch: refetchGetReward,
+  } = useGetReward(false);
+
+  const {
+    data: data,
+    isLoading: isPendingWalletDetails,
+    isSuccess: isSuccessWalletDetails,
+    isError: isErrorWalletDetails,
+    refetch: refetchWalletDetails,
+  } = useWalletDetails(false);
 
   const { email } = (route as any).params;
   // const email = "";
@@ -80,6 +98,25 @@ export default function ConfirmOTP() {
       setResendEnabled(false);
       handleResendOTP();
     }
+  };
+
+  const handleGetRewardDetails = async () => {
+    await refetchGetReward();
+    if (isSuccessGetReward) {
+      console.log("refetchGetReward => ✅");
+      if (getRewardData?.data?.length > 0) {
+        if (getRewardData && getRewardData?.data?.length > 0) {
+          setItem(STORAGE_KEYS.REDEEM_REWARD, JSON.stringify(false));
+          // dispatch(setShowRedeemReward(true));
+        }
+      }
+    }
+  };
+
+  const handleUserGuide = async () => {
+    setItem(STORAGE_KEYS.GUIDE, JSON.stringify(false));
+    dispatch(setShowGuide(false));
+    console.log("setShowGuide => ✅");
   };
 
   const handleOtpChange = (text: any, index: any) => {
@@ -147,7 +184,7 @@ export default function ConfirmOTP() {
       onSuccess: async (data) => {
         if (data?.status) {
           const kycData = await getKYC(data?.data?.data?.access);
-          console.log(JSON.stringify(data, null, 2), "kycData");
+          console.log(JSON.stringify(kycData, null, 2), "kycData");
 
           // console.log(JSON.stringify(kycData, null, 2), "KycData");
           const formData = new FormData();
@@ -162,7 +199,8 @@ export default function ConfirmOTP() {
 
           useDispatchAction(setSuccessMsg("OTP Verified Successfully"));
           if (kycData?.data?.is_varified) {
-            getWalletDetails(data?.data?.data?.access);
+            console.log("chla", kycData?.data?.is_varified);
+            getWalletD();
           } else {
             getCurrentStep(data.data);
           }
@@ -179,6 +217,9 @@ export default function ConfirmOTP() {
           "Something went wrong";
         useDispatchAction(setErrorMsg(errorMessage));
         setIsVerifying(false);
+      },
+      onSettled: () => {
+        useDispatchAction(setShowLoader(false));
       },
     });
   };
@@ -208,61 +249,27 @@ export default function ConfirmOTP() {
     });
   };
 
-  // const handleVerify = async () => {
-  //   setIsVerifying(true);
-  //   const enteredOtp = otp.join("");
-  //   if (enteredOtp.length < 6) {
-  //     setIsVerifying(false);
-  //     useDispatchAction(setErrorMsg("OTP Should Be 6 Digits"));
-  //     return;
-  //   }
-
-  //   try {
-  //     const data = await verify({ email, otp: enteredOtp });
-  //     // console.log("data =>", data);
-  //     if (data?.status) {
-  //       // console.log(data, 'VerifyData');
-  //       const kycData = await getKYC(data?.data?.data?.access);
-  //       console.log(kycData, "KycData");
-  //       const formData = new FormData();
-
-  //       formData.append("fcm_token", fcmToken);
-  //       formData.append("device_id", deviceId);
-
-  //       const fcmData = await addFcm(formData, data?.data?.data?.access);
-  //       useDispatchAction(setTokens(data?.data?.data));
-  //       await setToken(data?.data?.data);
-  //       setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(data?.data?.data));
-
-  //       useDispatchAction(setSuccessMsg("OTP Verified Successfully"));
-  //       if (kycData?.data?.is_varified) {
-  //         getWalletDetails(data?.data?.data?.access);
-  //       } else {
-  //         (navigation as any).navigate(SCREENS.Name, {
-  //           email,
-  //           data: data?.data,
-  //         });
-  //       }
-  //     } else {
-  //       useDispatchAction(setErrorMsg("Invalid OTP. Please Try Again."));
-  //     }
-  //     setIsVerifying(false);
-  //   } catch (error) {
-  //     console.log(error);
-  //     setIsVerifying(false);
-  //   }
-  // };
-
-  const getWalletDetails = async (accessToken: any) => {
+  const getWalletD = async () => {
     try {
-      const data = await getWallet(accessToken);
-      dispatch(setWalletData(data?.data));
-      setWalletDataAuth(data?.data);
-      setItem(STORAGE_KEYS.WALLET_DATA, JSON.stringify(data?.data));
-      dispatch(setLogin(true));
-      useDispatchAction(setSuccessMsg("Logged In Successfully"));
+      const result = await refetchWalletDetails();
+
+      if (result.isSuccess && result.data?.data) {
+        const walletData = result.data.data;
+
+        await handleGetRewardDetails();
+        handleUserGuide();
+
+        dispatch(setWalletData(walletData));
+        setWalletDataAuth(walletData);
+        setItem(STORAGE_KEYS.WALLET_DATA, JSON.stringify(walletData));
+        dispatch(setLogin(true));
+        dispatch(setSuccessMsg("Logged in Successfully"));
+      } else {
+        throw new Error("Wallet fetch failed");
+      }
     } catch (error) {
-      console.log("error =>", error);
+      console.log("error =>", JSON.stringify(error, null, 2));
+      useDispatchAction(setErrorMsg("Something went wrong!"));
     }
   };
 

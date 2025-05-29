@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../../api";
 import { WALLET, MERCHANT } from "../../api/endpoints";
 import { ApiResponse, Transaction } from "../../api/types";
+import { queryStaleTime } from "query/queryConfigs";
 
 // Query keys
 export const transactionKeys = {
@@ -29,6 +30,7 @@ export const useTransactions = () => {
         WALLET.ALL_TRANSACTION
       );
     },
+    staleTime: queryStaleTime.VERY_FAST_STALE_TIME, // 10 minutes
   });
 };
 

@@ -367,7 +367,7 @@ export default function AppStack() {
         component={DetailsCryptoScreen}
       />
       <Stack.Screen
-        options={{ headerShown: true, headerTitle: "Link External Account" }}
+        options={{ headerShown: false, headerTitle: "Link External Account" }}
         name={NAVIGATION_SCREENS.MX_CONNECT_WIDGET_SCREEN}
         component={ConnectWidgetTest}
       />

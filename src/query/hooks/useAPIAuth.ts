@@ -1,8 +1,12 @@
-import { useMutation } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  UseQueryOptions,
+  UseQueryResult,
+} from "@tanstack/react-query";
 import { apiClient } from "api";
 import { AUTH, KYC } from "api/endpoints";
 import { ApiResponse } from "api/types";
-import { queryClient } from "query/queryClient";
 
 export const useLogin = () => {
   return useMutation<ApiResponse<any>, Error>({
@@ -53,15 +57,15 @@ export const useSubmitKYC = () => {
   return useMutation<ApiResponse<any>, Error>({
     mutationFn: async (payload) => {
       // console.log(JSON.stringify(payload, null, 2));
-      const data = apiClient.post<ApiResponse<any>>(
+      const data = apiClient.patch<ApiResponse<any>>(
         KYC.SUBMISSION,
         payload,
         true
       );
       return data;
     },
-    onError: (error) => {
-      console.log("error =>", JSON.stringify(error, null, 2));
+    onError: (error: any) => {
+      console.log("error =>", JSON.stringify(error.response, null, 2));
     },
     onSuccess(data, variables, context) {
       console.log("on data =>", data);
@@ -76,6 +80,32 @@ export const useCreatePin = () => {
         AUTH.CREATE_PIN,
         payload,
         true
+      );
+      return data;
+    },
+  });
+};
+
+export const useAddBankAccount = () => {
+  return useMutation<ApiResponse<any>, Error>({
+    mutationFn: async () => {
+      const data = apiClient.post<ApiResponse<any>>(
+        AUTH.ADD_NORMAL_BANK_ACCOUNT,
+        {},
+        false
+      );
+      return data;
+    },
+  });
+};
+
+export const useAddTraditionalIRABankAccount = () => {
+  return useMutation<ApiResponse<any>, Error>({
+    mutationFn: async () => {
+      const data = apiClient.post<ApiResponse<any>>(
+        AUTH.ADD_TRADITIONAL_IRA_BANK_ACCOUNT,
+        {},
+        false
       );
       return data;
     },

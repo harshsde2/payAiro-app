@@ -18,6 +18,8 @@ import {
   setGuides,
   setLogin,
   setPendingRequest,
+  setShowGuide,
+  setShowRedeemReward,
   setTokens,
   setUserData,
   setWalletData,
@@ -70,7 +72,10 @@ export default function App() {
   // Get all necessary data from storage and set in Redux
   const getInitialData = async () => {
     const token = getItem(STORAGE_KEYS.AUTH_TOKENS);
+    const guide = getItem(STORAGE_KEYS.GUIDE);
+    // setItem(STORAGE_KEYS.GUIDE, JSON.stringify(true));
 
+    // const redeem = getItem(STORAGE_KEYS.REDEEM_REWARD);
     const wallet = await getWalletDataAuth();
     const biometric = await getBiometric();
 
@@ -79,6 +84,7 @@ export default function App() {
       // setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(token));]
       // console.log('Token:', token);
       useDispatchAction(setTokens(JSON.parse(token)));
+      useDispatchAction(setShowGuide(JSON.parse(guide)));
       useDispatchAction(setWalletData(wallet));
       getMerchentRequest(token);
       useDispatchAction(setLogin(true));

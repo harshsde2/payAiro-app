@@ -1,46 +1,48 @@
-import {createSlice} from '@reduxjs/toolkit';
-import {SVGEthrum, SVGPolly} from '../../constants/images';
-import { themes } from 'styles';
-import { useAnimatedStyle } from 'react-native-reanimated';
+import { createSlice } from "@reduxjs/toolkit";
+import { SVGEthrum, SVGPolly } from "../../constants/images";
+import { themes } from "styles";
+import { useAnimatedStyle } from "react-native-reanimated";
 
 const initialState = {
-    isLogin: false,
-    activeTab: '1',
-    userData: null,
-    tokens: null,
-    walletData: null,
-    pendingRequest: 0,
-    networkLists: [],
-    selectedCrypto: null,
-    calculatedBalance: 0,
-    isCrypto: true,
-    errorMsg: null,
-    successMsg: null,
-    defaultValue: null,
-    fcmToken: null,
-    biometricAvailable: false,
-    showAppLock: false,
-    activeTabCrypto: '1',
-    bankBalance: null,
-    bankLists: [],
-    guide: false,
-    CardSwitchDetails:{
-      balanceHeaderText: 'PayAiro Balance',
-      payAiroBalanceText: '0.00',
-      securityBalancetext: '0.00',
-      idHeaderText: 'PayAiro ID',
-      payAiroIdText: '0',
-      cardBackgroundColor: themes.light.colors.palette.white,
-      lottieArrowBackgroundColor: themes.light.colors.palette.green700,
-      useSharedValueOfBgColor:0,
-      useAniamationStylesForCard:{},
-    },
-    mxExternalAccountDetails:[],
-    showLoader: false,
-  }
+  isLogin: false,
+  activeTab: "1",
+  userData: null,
+  tokens: null,
+  walletData: null,
+  pendingRequest: 0,
+  networkLists: [],
+  selectedCrypto: null,
+  calculatedBalance: 0,
+  isCrypto: true,
+  errorMsg: null,
+  successMsg: null,
+  defaultValue: null,
+  fcmToken: null,
+  biometricAvailable: false,
+  showAppLock: false,
+  activeTabCrypto: "1",
+  bankBalance: null,
+  bankLists: [],
+  guide: false,
+  CardSwitchDetails: {
+    balanceHeaderText: "PayAiro Balance",
+    payAiroBalanceText: "0.00",
+    securityBalancetext: "0.00",
+    idHeaderText: "PayAiro ID",
+    payAiroIdText: "0",
+    cardBackgroundColor: themes.light.colors.palette.white,
+    lottieArrowBackgroundColor: themes.light.colors.palette.green700,
+    useSharedValueOfBgColor: 0,
+    useAniamationStylesForCard: {},
+  },
+  mxExternalAccountDetails: [],
+  showLoader: false,
+  showRedeemReward: false,
+  showGuide: false,
+};
 
 const authenticationSlice = createSlice({
-  name: 'authenticationSlice',
+  name: "authenticationSlice",
   initialState: {
     ...initialState,
   },
@@ -115,6 +117,12 @@ const authenticationSlice = createSlice({
     setShowLoader: (state, action) => {
       state.showLoader = action.payload;
     },
+    setShowRedeemReward: (state, action) => {
+      state.showRedeemReward = action.payload;
+    },
+    setShowGuide: (state, action) => {
+      state.showGuide = action.payload;
+    },
     resetState: () => initialState,
   },
 });
@@ -143,6 +151,8 @@ export const {
   setMxExternalAccountDetails,
   setShowLoader,
   resetState,
+  setShowGuide,
+  setShowRedeemReward,
 } = authenticationSlice.actions;
 
 export default authenticationSlice.reducer;
