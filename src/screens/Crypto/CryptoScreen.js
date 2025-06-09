@@ -1,37 +1,37 @@
-import {View, Text, TouchableOpacity} from 'react-native';
-import React, {useEffect, useState} from 'react';
-import CommonHeaderv2 from '../../HOC/CommonHeaderv2';
-import HeaderTitle2 from '../../components/HeaderTitle2';
+import { View, Text, TouchableOpacity } from "react-native";
+import React, { useEffect, useState } from "react";
+import CommonHeaderv2 from "../../HOC/CommonHeaderv2";
+import HeaderTitle2 from "../../components/HeaderTitle2";
 import {
   SVGEth,
   SVGLeftArrow,
   SVGRight,
   SVGSearch,
-} from '../../constants/images';
-import Fonts from '../../constants/Fonts';
-import {SvgXml} from 'react-native-svg';
-import CryptoHoldingsCarrd from '../../components/CryptoHoldingsCarrd';
-import {COIN_LISTS} from '../../constants/mockData';
-import {getBlockchain, getCryptoPrice} from '../../services/Services';
-import useSelectorAction from '../../hooks/useSelectorAction';
+} from "../../constants/images";
+import Fonts from "../../constants/Fonts";
+import { SvgXml } from "react-native-svg";
+import CryptoHoldingsCarrd from "../../components/CryptoHoldingsCarrd";
+import { COIN_LISTS } from "../../constants/mockData";
+import { getBlockchain, getCryptoPrice } from "../../services/Services";
+import useSelectorAction from "../../hooks/useSelectorAction";
 
 export default function CryptoScreen() {
-  const {tokens} = useSelectorAction();
-  const [activeTab, setactiveTab] = useState('1');
-  const [activeCoin, setactiveCoin] = useState('1');
+  const { tokens } = useSelectorAction();
+  const [activeTab, setactiveTab] = useState("1");
+  const [activeCoin, setactiveCoin] = useState("1");
   const [blockchansList, setblockchansList] = useState([]);
 
   useEffect(() => {
     getBlockchainData();
   }, []);
 
-  const handleCoinTab = tab => {
+  const handleCoinTab = (tab) => {
     setactiveCoin(tab);
   };
 
   const getBlockchainData = async () => {
     const data = await getCryptoPrice(tokens?.access);
-    console.log(data?.data, 'data?.data?.blockchains');
+    console.log(data?.data, "data?.data?.blockchains");
     setblockchansList(data?.data);
   };
 
@@ -39,57 +39,62 @@ export default function CryptoScreen() {
     <CommonHeaderv2 isBottomNav={true} isCrypto={true}>
       <HeaderTitle2
         leftIcon={SVGLeftArrow}
-        title={'Securities Holdings'}
+        title={"Securities Holdings"}
         rightIcon={SVGSearch}
       />
       <View
         style={{
           padding: 5,
-          backgroundColor: 'rgba(236, 241, 237, 1)',
+          backgroundColor: "rgba(236, 241, 237, 1)",
           borderRadius: 40,
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          width: '90%',
-          alignSelf: 'center',
-        }}>
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          width: "90%",
+          alignSelf: "center",
+        }}
+      >
         <TouchableOpacity
-          onPress={() => setactiveTab('1')}
+          onPress={() => setactiveTab("1")}
           style={{
             backgroundColor:
-              activeTab === '1' ? 'rgba(44, 106, 63, 1)' : 'transparent',
-            width: '50%',
+              activeTab === "1" ? "rgba(44, 106, 63, 1)" : "transparent",
+            width: "50%",
             borderRadius: 30,
             padding: 15,
-          }}>
+          }}
+        >
           <Text
             style={{
-              color: activeTab === '1' ? 'white' : 'black',
+              color: activeTab === "1" ? "white" : "black",
               marginLeft: 10,
               fontFamily: Fonts.semibold,
               fontSize: 14,
-              textAlign: 'center',
-            }}>
+              textAlign: "center",
+            }}
+          >
             All
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => setactiveTab('2')}
+          onPress={() => setactiveTab("2")}
           style={{
             backgroundColor:
-              activeTab === '2' ? 'rgba(44, 106, 63, 1)' : 'transparent',
-            width: '50%',
+              activeTab === "2" ? "rgba(44, 106, 63, 1)" : "transparent",
+            width: "50%",
             borderRadius: 30,
             padding: 15,
-          }}>
+          }}
+        >
           <Text
             style={{
-              color: activeTab === '2' ? 'white' : 'black',
+              color: activeTab === "2" ? "white" : "black",
               marginLeft: 10,
               fontFamily: Fonts.semibold,
               fontSize: 14,
-              textAlign: 'center',
-            }}>
+              textAlign: "center",
+            }}
+          >
             Explore
           </Text>
         </TouchableOpacity>
@@ -97,102 +102,112 @@ export default function CryptoScreen() {
       <View
         style={{
           flex: 1,
-          backgroundColor: '#fff',
+          backgroundColor: "#fff",
           borderTopEndRadius: 32,
           borderTopStartRadius: 32,
           padding: 15,
           marginTop: 20,
-        }}>
-        {activeTab === '2' ? (
+        }}
+      >
+        {activeTab === "2" ? (
           <>
             <View
               style={{
-                flexDirection: 'row',
-                justifyContent: 'flex-start',
-                alignItems: 'center',
-              }}>
+                flexDirection: "row",
+                justifyContent: "flex-start",
+                alignItems: "center",
+              }}
+            >
               <TouchableOpacity
-                onPress={() => handleCoinTab('1')}
+                onPress={() => handleCoinTab("1")}
                 style={{
-                  width: '23%',
+                  width: "23%",
                   padding: 7,
                   backgroundColor:
-                    activeCoin === '1' ? 'black' : 'rgba(43, 43, 43, 0.12)',
+                    activeCoin === "1" ? "black" : "rgba(43, 43, 43, 0.12)",
                   margin: 5,
                   borderRadius: 30,
-                }}>
+                }}
+              >
                 <Text
                   style={{
-                    color: activeCoin === '1' ? 'white' : 'black',
+                    color: activeCoin === "1" ? "white" : "black",
                     fontFamily: Fonts.regular,
                     fontSize: 12,
-                    textAlign: 'center',
-                  }}>
+                    textAlign: "center",
+                  }}
+                >
                   USDT
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => handleCoinTab('2')}
+                onPress={() => handleCoinTab("2")}
                 style={{
-                  width: '23%',
+                  width: "23%",
                   padding: 7,
                   backgroundColor:
-                    activeCoin === '2' ? 'black' : 'rgba(43, 43, 43, 0.12)',
+                    activeCoin === "2" ? "black" : "rgba(43, 43, 43, 0.12)",
                   margin: 5,
                   borderRadius: 30,
-                }}>
+                }}
+              >
                 <Text
                   style={{
-                    color: activeCoin === '2' ? 'white' : 'black',
+                    color: activeCoin === "2" ? "white" : "black",
                     fontFamily: Fonts.regular,
                     fontSize: 12,
-                    textAlign: 'center',
-                  }}>
+                    textAlign: "center",
+                  }}
+                >
                   BTC
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => handleCoinTab('3')}
+                onPress={() => handleCoinTab("3")}
                 style={{
-                  width: '23%',
+                  width: "23%",
                   padding: 7,
                   backgroundColor:
-                    activeCoin === '3' ? 'black' : 'rgba(43, 43, 43, 0.12)',
+                    activeCoin === "3" ? "black" : "rgba(43, 43, 43, 0.12)",
                   margin: 5,
                   borderRadius: 30,
-                }}>
+                }}
+              >
                 <Text
                   style={{
-                    color: activeCoin === '3' ? 'white' : 'black',
+                    color: activeCoin === "3" ? "white" : "black",
                     fontFamily: Fonts.regular,
                     fontSize: 12,
-                    textAlign: 'center',
-                  }}>
+                    textAlign: "center",
+                  }}
+                >
                   INR
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => handleCoinTab('4')}
+                onPress={() => handleCoinTab("4")}
                 style={{
-                  width: '23%',
+                  width: "23%",
                   padding: 7,
                   backgroundColor:
-                    activeCoin === '4' ? 'black' : 'rgba(43, 43, 43, 0.12)',
+                    activeCoin === "4" ? "black" : "rgba(43, 43, 43, 0.12)",
                   margin: 5,
                   borderRadius: 30,
-                }}>
+                }}
+              >
                 <Text
                   style={{
-                    color: activeCoin === '4' ? 'white' : 'black',
+                    color: activeCoin === "4" ? "white" : "black",
                     fontFamily: Fonts.regular,
                     fontSize: 12,
-                    textAlign: 'center',
-                  }}>
+                    textAlign: "center",
+                  }}
+                >
                   ALTs
                 </Text>
               </TouchableOpacity>
             </View>
-            <View style={{padding: 10, marginBottom: 100}}>
+            <View style={{ padding: 10, marginBottom: 100 }}>
               {blockchansList &&
                 blockchansList?.length > 0 &&
                 blockchansList?.map((i, k) => (
@@ -204,22 +219,29 @@ export default function CryptoScreen() {
           <>
             <View
               style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
                 margin: 7,
-              }}>
+              }}
+            >
               <View>
                 <Text
-                  style={{fontFamily: Fonts.bold, fontSize: 18, color: '#000'}}>
+                  style={{
+                    fontFamily: Fonts.bold,
+                    fontSize: 18,
+                    color: "#000",
+                  }}
+                >
                   Trending
                 </Text>
                 <Text
                   style={{
-                    color: 'rgba(106, 106, 106, 1)',
+                    color: "rgba(106, 106, 106, 1)",
                     fontSize: 14,
                     fontFamily: Fonts.regular,
-                  }}>
+                  }}
+                >
                   Top Price fluctuation in the past 2 hrs
                 </Text>
               </View>
@@ -234,22 +256,29 @@ export default function CryptoScreen() {
 
             <View
               style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
                 margin: 7,
-              }}>
+              }}
+            >
               <View>
                 <Text
-                  style={{fontFamily: Fonts.bold, fontSize: 18, color: '#000'}}>
+                  style={{
+                    fontFamily: Fonts.bold,
+                    fontSize: 18,
+                    color: "#000",
+                  }}
+                >
                   Most traded
                 </Text>
                 <Text
                   style={{
-                    color: 'rgba(106, 106, 106, 1)',
+                    color: "rgba(106, 106, 106, 1)",
                     fontSize: 14,
                     fontFamily: Fonts.regular,
-                  }}>
+                  }}
+                >
                   Top tokens by volume in the past 24 hrs
                 </Text>
               </View>
@@ -264,22 +293,29 @@ export default function CryptoScreen() {
 
             <View
               style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
                 margin: 7,
-              }}>
+              }}
+            >
               <View>
                 <Text
-                  style={{fontFamily: Fonts.bold, fontSize: 18, color: '#000'}}>
+                  style={{
+                    fontFamily: Fonts.bold,
+                    fontSize: 18,
+                    color: "#000",
+                  }}
+                >
                   Large cap
                 </Text>
                 <Text
                   style={{
-                    color: 'rgba(106, 106, 106, 1)',
+                    color: "rgba(106, 106, 106, 1)",
                     fontSize: 14,
                     fontFamily: Fonts.regular,
-                  }}>
+                  }}
+                >
                   Top tokens by volume in the past 24 hrs
                 </Text>
               </View>

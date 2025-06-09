@@ -25,7 +25,11 @@ import {
   setWalletData,
 } from "./src/redux/slices/authenticationSlice";
 import { useDispatch, useSelector } from "react-redux";
-import { getMechentPay, getWallet } from "./src/services/Services";
+import {
+  getMechentPay,
+  getPinFromSev,
+  getWallet,
+} from "./src/services/Services";
 import ErrorToast from "./src/components/ErrorToast";
 import SplashScreen from "./src/screens/Authentications/SplashScreen";
 import notifee, { AndroidStyle } from "@notifee/react-native";
@@ -38,6 +42,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NAVIGATION_SCREENS } from "./src/navigations/navigationConstants";
 import { setupQueryClientPersistence } from "./src/query/queryClient";
 import GlobalLoader from "./src/tsx-components/GlobalLoader";
+import { useUserPin } from "./src/query/hooks";
 
 export default function App() {
   // -------------------- Redux State --------------------

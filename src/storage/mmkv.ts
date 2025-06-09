@@ -15,6 +15,14 @@ export const setItem = (key: string, value: string): void => {
   storage.set(key, value);
 };
 
+export const setPin = (value: string): void => {
+  storage.set(STORAGE_KEYS.PIN, value);
+};
+
+export const getPin = () => {
+  return storage.getString(STORAGE_KEYS.PIN);
+};
+
 export const removeItem = (key: string): void => {
   storage.delete(key);
 };
@@ -34,4 +42,5 @@ export const STORAGE_KEYS = {
   RECENT_CONTACTS: "recent_contacts_data",
   GUIDE: "guide",
   REDEEM_REWARD: "redeem_reward",
+  PIN: "pin",
 };

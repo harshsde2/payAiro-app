@@ -9,6 +9,7 @@ import React, {
 import {
   ActivityIndicator,
   BackHandler,
+  FlatList,
   Image,
   Modal,
   Pressable,
@@ -35,6 +36,7 @@ import { SCREENS } from "constants/SCREENS";
 import { BASE_URL } from "constants/mockData";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import {
+  bankKeys,
   useAllBankAccounts,
   useBankBalances,
   useCryptoBalance,
@@ -63,6 +65,7 @@ import IconTextComponent from "tsx-components/IconTextComponent";
 import {
   renderFinanceIcons,
   renderUtilitiesIcons,
+  size,
 } from "tsx-components/components.configs";
 import PinScreen from "tsx-components/modals/PinScreen";
 import RewardModal from "tsx-components/modals/RewardModal";
@@ -105,12 +108,34 @@ import {
   CustomText,
   DashboardHeader,
 } from "../../utils/moduleAlias";
+import LoaderComponent from "tsx-components/LoaderComponent";
+import RealStateComponent from "tsx-components/RealStateComponent";
+import {
+  useGetAllRWA,
+  useGetRWACategory,
+  useGetRWAList,
+  useGetUserHoldings,
+} from "query/hooks/useRWA";
+import { defaultImage } from "utils/configs";
+import { VIEW_TYPE } from "screens/TSX-Screens/RWA/RWA";
+import { queryClient } from "query/queryClient";
+import { userContactKeys } from "query/queryKeys";
 
 // Lazy load non-critical components
 const LazyBankModal = lazy(() => import("components/BankModal"));
 const LazyBankModal2 = lazy(() => import("components/BankModal2"));
 const LazySelectionModal = lazy(() => import("components/SelectionModal"));
 const LazySelectionModal2 = lazy(() => import("components/SelectionModal2"));
+
+const categories = {
+  Commodities: "Commodities",
+  Crypto: "Crypto",
+  Bonds: "Bonds",
+  EFTS: "EFTS",
+  Metal: "Metal",
+  Stocks: "Stocks",
+  RealEstate: "Real Estate",
+};
 
 // Variables
 const BANK_TYPE = "FDIC Insured";
@@ -323,6 +348,7 @@ const MemoizedStoryLists = React.memo(StoryLists);
 const MemoizedTransactionCard = React.memo(TransactionCard);
 const MemoizedRewards = React.memo(Rewards);
 const MemoizedDashboardSection = React.memo(DashboardSection);
+const MemoizedRWASection = React.memo(DashboardSection);
 
 // Separate crypto view components to improve re-rendering
 interface CryptoFinanceSectionProps {
@@ -431,6 +457,71 @@ const CryptoRewardsSection = React.memo(() => (
     </View>
   </MemoizedDashboardSection>
 ));
+// No props needed for this component
+const CryptoRWASection = React.memo(({ data, navigation }: any) => {
+  const onPress = (item: any) => {
+    const name = item?.name?.toLowerCase();
+
+    switch (name) {
+      case categories.RealEstate.toLowerCase():
+        navigation.navigate(NAVIGATION_SCREENS.REAL_STATE, {
+          type: VIEW_TYPE.rwa,
+          dataType: "Realestate",
+        });
+        break;
+
+      case categories.Stocks.toLowerCase():
+        navigation.navigate(NAVIGATION_SCREENS.STOCKS, {
+          type: VIEW_TYPE.rwa,
+          dataType: "Stocks",
+        });
+        break;
+
+      case categories.Crypto.toLowerCase():
+        navigation.navigate(NAVIGATION_SCREENS.CRYPTO_SCREEN);
+        break;
+
+      default:
+        navigation.navigate(NAVIGATION_SCREENS.COMMON_ASSETS_SCREEN, {
+          type: VIEW_TYPE.rwa,
+          dataType: name,
+        });
+        break;
+    }
+  };
+
+  return (
+    <MemoizedDashboardSection
+      title="RWA Category"
+      actionText="see all"
+      onActionPress={() => {
+        navigation.navigate(NAVIGATION_SCREENS.RWA, {});
+      }}
+    >
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{}}
+        style={{ marginVertical: 10 }}
+      >
+        {data?.map((item: any, index: number) => (
+          <IconTextComponent
+            onPress={() => {
+              onPress(item);
+            }}
+            label={item?.name}
+            key={index}
+          >
+            <Image
+              style={{ width: size.width, height: size.height }}
+              source={{ uri: item.logos }}
+            />
+          </IconTextComponent>
+        ))}
+      </ScrollView>
+    </MemoizedDashboardSection>
+  );
+});
 
 interface CryptoOtherServicesSectionProps {
   handleRothBank: () => Promise<void>;
@@ -543,6 +634,29 @@ const NewDashboard = () => {
 
   const { mutate: redeemReward } = useRedeemReward();
   const { data: getRewardData, isError, isSuccess } = useGetReward();
+  const {
+    data: getRWACategory,
+    isError: isErrorRWACategory,
+    isSuccess: isSuccessRWACategory,
+  } = useGetRWACategory();
+
+  const {
+    data: getGetAllRWA,
+    isError: isErrorGetAllRWA,
+    isSuccess: isSuccessGetAllRWA,
+  } = useGetAllRWA();
+
+  const {
+    data: getRWAList,
+    isError: isErrorRWAListA,
+    isSuccess: isSuccessRWAList,
+  } = useGetUserHoldings();
+
+  const filteredMyRWA =
+    getRWAList?.data.filter((item: any) => item.asset_type == "Realestate") ??
+    [];
+  // console.log("dataaaa =>", JSON.stringify(filteredMyRWA, null, 2));
+  // console.log("token =>", tokens.access);
 
   const {
     data: bankBalanceData,
@@ -603,12 +717,12 @@ const NewDashboard = () => {
   //   JSON.stringify(RecentContactsData?.recentContacts, null, 2)
   // );
 
-  useEffect(() => {
-    // console.log("Focus screeen", focus);
-    if (focus) {
-      refetchAllBankAccounts();
-    }
-  }, [focus]);
+  // useEffect(() => {
+  //   // console.log("Focus screeen", focus);
+  //   if (focus) {
+  //     refetchAllBankAccounts();
+  //   }
+  // }, [focus]);
 
   useEffect(() => {
     if (AllTransactionsSuccess) {
@@ -818,16 +932,18 @@ const NewDashboard = () => {
   }
 
   const handleReward = async (data: any) => {
+    dispatch(setShowRedeemReward(false));
     redeemReward(
       {
         payload: { redeem: true },
         value: data?.data[0]?.id,
       },
       {
-        onSuccess: (data: any) => {
+        onSuccess: async (data: any) => {
           setItem(STORAGE_KEYS.REDEEM_REWARD, JSON.stringify(false));
           refetchBankBalanceData();
-          dispatch(setShowRedeemReward(false));
+          await queryClient.invalidateQueries(bankKeys.balance());
+          await queryClient.refetchQueries(bankKeys.balance());
         },
         onError: (error: any) => {
           console.log("error =>", JSON.stringify(error.response, null, 2));
@@ -1292,6 +1408,7 @@ const NewDashboard = () => {
             marginHorizontal: 15,
           }}
         />
+
         {isShowKYC && (
           <View
             style={{
@@ -1335,6 +1452,7 @@ const NewDashboard = () => {
           </View>
         )}
         <View style={{ marginHorizontal: 15 }}>
+          {/* {console.log("bankBalance?.bank_account?.usd", bankBalance) as any} */}
           {/* Use a consistent height container to prevent layout shifts */}
           <View style={{ minHeight: 220 }}>
             {bankBalance?.bank_account?.usd == undefined ? (
@@ -1931,7 +2049,7 @@ const NewDashboard = () => {
                             item={item}
                             key={key}
                             isMerchent={item?.order_id}
-                            isCrypto={item?.order_id}
+                            isCrypto={true}
                           />
                         </View>
                       ))}
@@ -1969,6 +2087,33 @@ const NewDashboard = () => {
                   </>
                 )}
               </MemoizedDashboardSection>
+            )}
+            {!isCrypto && (
+              <CryptoRWASection
+                data={getRWACategory?.data}
+                navigation={navigation}
+              />
+            )}
+            {!isCrypto && filteredMyRWA.length > 0 && (
+              <DashboardSection
+                title="My RWA Assets"
+                actionText="see all"
+                onActionPress={() => {
+                  navigation.navigate(NAVIGATION_SCREENS.MY_RWA_ASSETS, {});
+                }}
+              >
+                <FlatList
+                  horizontal
+                  data={filteredMyRWA}
+                  renderItem={({ item, index }) => (
+                    <RealStateComponent
+                      item={item}
+                      type={VIEW_TYPE.owned}
+                      key={index}
+                    />
+                  )}
+                />
+              </DashboardSection>
             )}
             {isCrypto && <CryptoRewardsSection />}
             {isCrypto && (
@@ -2071,3 +2216,30 @@ const createStyles = (theme: any) =>
 
 // Export memoized component for better performance
 export default React.memo(NewDashboard);
+
+const array = [
+  {
+    title: "Modern Family Home",
+    author: "John Elis",
+    price_per_share: 30,
+    growth: "5%",
+    image_url:
+      "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+  },
+  {
+    title: "Luxury Villa with Pool",
+    author: "John Elis",
+    price_per_share: 30,
+    growth: "5%",
+    image_url:
+      "https://images.pexels.com/photos/261146/pexels-photo-261146.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+  },
+  {
+    title: "Downtown Apartment",
+    author: "John Elis",
+    price_per_share: 30,
+    growth: "5%",
+    image_url:
+      "https://images.pexels.com/photos/439391/pexels-photo-439391.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+  },
+];

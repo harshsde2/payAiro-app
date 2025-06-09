@@ -24,10 +24,11 @@ import { checkUser, getBalance } from "services/Services";
 import useDispatchAction from "hooks/useDispatchAction";
 import { setErrorMsg, setSuccessMsg } from "redux/slices/authenticationSlice";
 import { useApiCall } from "screens/Dashboard/NewDashboard";
-import { getPin } from "services/Auth";
+// import { getPin, setPin } from "services/Auth";
 import ErrorToast from "components/ErrorToast";
 import CustomText from "tsx-components/CustomText";
 import { useCreatePin } from "query/hooks/useAPIAuth";
+import { getPin } from "storage/mmkv";
 
 const PIN_SCREEN_TASKS = {
   SHOW_BANK_BALANCE: "show_bank_balance",
@@ -97,8 +98,9 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
       setPinForShowBalance((prev) => prev.slice(0, -1));
     };
 
-    const checkPin = async (currentPin?: string) => {
-      const correctPin = await getPin();
+    const checkPin = (currentPin?: string) => {
+      const correctPin = getPin();
+      console.log("correctPin =>", correctPin);
       return currentPin == correctPin;
     };
 
@@ -107,7 +109,7 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
       setIsVerifyingPin(true);
 
       try {
-        const isUserEnterCorrectPin = await checkPin(pinForShowBalance);
+        const isUserEnterCorrectPin = checkPin(pinForShowBalance);
 
         if (isUserEnterCorrectPin) {
           await bankBalanceApi.execute(tokens?.access, true);
@@ -135,7 +137,11 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
       setIsVerifyingPin(true);
 
       try {
-        const isUserEnterCorrectPin = await checkPin(pinForShowBalance);
+        const isUserEnterCorrectPin = checkPin(pinForShowBalance);
+        console.log(
+          "isUserEnterCorrectPin =>",
+          JSON.stringify(isUserEnterCorrectPin, null, 2)
+        );
         if (isUserEnterCorrectPin) {
           onAction?.(null);
           setIsPinModalVisible(false);

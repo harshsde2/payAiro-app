@@ -39,6 +39,11 @@ export const AUTH = {
   MX_REGISTER_EXTERNAL_ACCOUNT: "auth/regester/externalbankaccount/",
   GET_MY_REWARD: "auth/my-rewards/",
   REDEEM_REWARD: "auth/reward-redeem/",
+  RWA_LIST: "/auth/assets/",
+  RWA_ALL_LIST: "/auth/assets/",
+  BUY_RWA: "/auth/rwa/buy/",
+  SELL_RWA: "/auth/rwa/sell/",
+  RWA_USER_HOLDINGS: "/auth/user/rwa-holdings/",
 };
 // Wallet endpoints
 export const WALLET = {
@@ -68,6 +73,7 @@ export const MERCHANT = {
   QR_CONFIRM_PAYMENT: "merchant/Qr-confirm-payment/",
   CANCEL_PAYMENT: "merchant/cancel-payment/",
   TRANSACTIONS: "merchant/transactions/",
+  RWA_ICON: "merchant/rwalist/",
 };
 
 // Chat endpoints

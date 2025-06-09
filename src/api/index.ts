@@ -103,6 +103,7 @@ api.interceptors.response.use(
     if (error.response) {
       const { status } = error.response;
 
+      // console.log("interceptors=>", error.config);
       // Only show this if NOT a public route
       if (status === 401 && !isPublicRoute) {
         console.log("Token expired or unauthorized");

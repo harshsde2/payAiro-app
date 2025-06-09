@@ -49,7 +49,7 @@ export const useCryptoPrices = () => {
       return await apiClient.get<ApiResponse<any>>(AUTH.CRYPTO_PRICE_LIST);
     },
     // Price data changes frequently, use shorter stale time
-    staleTime: 1000 * 60 * 1, // 1 minute
+    staleTime: queryStaleTime.INSTANT_STALE_TIME, // 1 minute
   });
 };
 

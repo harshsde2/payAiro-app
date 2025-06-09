@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import DeviceInfo from "react-native-device-info";
 import { useDispatch } from "react-redux";
-import { setItem, STORAGE_KEYS } from "storage/mmkv";
+import { setItem, setPin, STORAGE_KEYS } from "storage/mmkv";
 import GenericButton from "../../components/GenericButton";
 import Fonts from "../../constants/Fonts";
 import { SCREENS } from "../../constants/SCREENS";
@@ -38,7 +38,7 @@ import AuthHeader from "tsx-components/AuthHeader";
 import { CustomText } from "tsx-components";
 import { Theme, useTheme } from "styles";
 import { useLogin, useStepCount, useVerifyOTP } from "query/hooks/useAPIAuth";
-import { useGetReward, useWalletDetails } from "query/hooks";
+import { useGetReward, useUserPin, useWalletDetails } from "query/hooks";
 
 export default function ConfirmOTP() {
   let deviceId = DeviceInfo.getDeviceId();
@@ -72,6 +72,16 @@ export default function ConfirmOTP() {
     isError: isErrorWalletDetails,
     refetch: refetchWalletDetails,
   } = useWalletDetails(false);
+
+  const {
+    data: dataUserPin,
+    isLoading: isPendingUserPin,
+    isSuccess: isSuccessUserPin,
+    isError: isErrorUserPin,
+    refetch: refetchUserPin,
+  } = useUserPin(false);
+
+  // console.log("dataUserPin =>", dataUserPin?.data);
 
   const { email } = (route as any).params;
   // const email = "";
@@ -252,6 +262,10 @@ export default function ConfirmOTP() {
   const getWalletD = async () => {
     try {
       const result = await refetchWalletDetails();
+      const pinResp = await refetchUserPin();
+
+      const pin = pinResp.data?.data.tpin;
+      // console.log("pin =>", pin.data);
 
       if (result.isSuccess && result.data?.data) {
         const walletData = result.data.data;
@@ -262,6 +276,7 @@ export default function ConfirmOTP() {
         dispatch(setWalletData(walletData));
         setWalletDataAuth(walletData);
         setItem(STORAGE_KEYS.WALLET_DATA, JSON.stringify(walletData));
+        setPin(pin);
         dispatch(setLogin(true));
         dispatch(setSuccessMsg("Logged in Successfully"));
       } else {

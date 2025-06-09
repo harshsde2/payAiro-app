@@ -8,3 +8,4 @@ export * from "./useBank";
 export * from "./useContact";
 export * from "./useAPIAuth";
 export * from "./useRewards";
+export * from "./useRWA";

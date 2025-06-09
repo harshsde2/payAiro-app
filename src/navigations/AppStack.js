@@ -67,8 +67,16 @@ import DetailsCryptoScreen from "../screens/Crypto/DetailsCryptoScreen";
 import DashboardRefactored from "../screens/Dashboard/DashboardRefactored";
 import NewDashboard from "../screens/Dashboard/NewDashboard";
 import { NAVIGATION_SCREENS } from "./navigationConstants";
-import ConnectWidgetTest from "screens/TSX-Screens/ConnectWidgetTest";
+import ConnectWidgetTest from "screens/TSX-Screens/Fortess/ConnectWidgetTest";
 import TrustedCircle from "screens/TSX-Screens/TrustedCircle";
+import RWA from "screens/TSX-Screens/RWA/RWA";
+import RealState from "screens/TSX-Screens/RWA/RealState";
+import Stocks from "screens/TSX-Screens/RWA/Stocks";
+import RealStateProfile from "screens/TSX-Screens/RWA/RealStateProfile";
+import StocksProfile from "screens/TSX-Screens/RWA/StocksProfile";
+import MyRWAAssets from "screens/TSX-Screens/RWA/MyRWAAssets";
+import TransactionSuccessScreen from "screens/TSX-Screens/RWA/TransactionSuccessScreen";
+import CommonAssetsScreen from "screens/TSX-Screens/RWA/CommonAssetsScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -375,6 +383,46 @@ export default function AppStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.TRUSTED_CIRCLE}
         component={TrustedCircle}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.RWA}
+        component={RWA}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.MY_RWA_ASSETS}
+        component={MyRWAAssets}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.REAL_STATE}
+        component={RealState}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.STOCKS}
+        component={Stocks}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.REAL_STATE_PROFILE}
+        component={RealStateProfile}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.STOCK_PROFILE}
+        component={StocksProfile}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.TRANSACTION_SUCCESS_SCREEN}
+        component={TransactionSuccessScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.COMMON_ASSETS_SCREEN}
+        component={CommonAssetsScreen}
       />
     </Stack.Navigator>
   );

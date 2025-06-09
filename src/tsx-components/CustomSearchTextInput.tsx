@@ -1,10 +1,20 @@
-import React, { FC, useRef } from 'react';
-import { View, TextInput, StyleSheet, TextInputProps, TouchableOpacity } from 'react-native';
-import { useTheme } from 'styles/ThemeContext';
-import { SvgXml } from 'react-native-svg';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
-import { SVGSearchIcon, SVGCanceled, SVGCross } from '../constants/images';
-import { Theme } from 'styles';
+import React, { FC, useRef } from "react";
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  TextInputProps,
+  TouchableOpacity,
+} from "react-native";
+import { useTheme } from "styles/ThemeContext";
+import { SvgXml } from "react-native-svg";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from "react-native-reanimated";
+import { SVGSearchIcon, SVGCanceled, SVGCross } from "../constants/images";
+import { Theme } from "styles";
 
 interface CustomSearchTextInputProps extends TextInputProps {
   value: string;
@@ -18,7 +28,7 @@ interface CustomSearchTextInputProps extends TextInputProps {
 const CustomSearchTextInput: FC<CustomSearchTextInputProps> = ({
   value,
   onChangeText,
-  placeholder = 'Search Name or Payairo tag...',
+  placeholder = "Search Name or Payairo tag...",
   autoFocus = false,
   showClearButton = true,
   onClearPress,
@@ -50,7 +60,12 @@ const CustomSearchTextInput: FC<CustomSearchTextInputProps> = ({
 
   return (
     <Animated.View style={[styles.container, animatedStyle]}>
-      <SvgXml xml={SVGSearchIcon} width={25} height={25} style={styles.iconLeft} />
+      <SvgXml
+        xml={SVGSearchIcon}
+        width={25}
+        height={25}
+        style={styles.iconLeft}
+      />
       <TextInput
         ref={inputRef}
         style={styles.input}
@@ -58,7 +73,6 @@ const CustomSearchTextInput: FC<CustomSearchTextInputProps> = ({
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={theme.colors.palette.green900}
-        
         onFocus={handleFocus}
         onBlur={handleBlur}
         // keyboardType='default'
@@ -85,14 +99,14 @@ const CustomSearchTextInput: FC<CustomSearchTextInputProps> = ({
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       borderWidth: 1,
       borderRadius: 999, // full pill
       paddingHorizontal: 16,
       height: 50,
       marginVertical: 10,
-      flex:1
+      // flex:1
     },
     input: {
       flex: 1,

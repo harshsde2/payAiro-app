@@ -15,6 +15,8 @@ import { SVGLeftArrow } from "constants/images";
 import { useDispatch } from "react-redux";
 import useDispatchAction from "hooks/useDispatchAction";
 import { setShowLoader } from "redux/slices/authenticationSlice";
+import { queryClient } from "query/queryClient";
+import { bankKeys } from "query/hooks";
 
 const ConnectWidgetTest = () => {
   const route = useRoute();
@@ -37,6 +39,7 @@ const ConnectWidgetTest = () => {
   }, []);
 
   const handleFullOnboardingFlow = async (memberGUID: string) => {
+    useDispatchAction(setShowLoader(true));
     try {
       console.log("🚀 Starting onboarding flow with memberGUID:", memberGUID);
       const created = await createMember({ memberGuid: memberGUID });
@@ -57,6 +60,9 @@ const ConnectWidgetTest = () => {
       const mapped = mapKeys(account) as any;
       await registerExternalAccount(mapped);
 
+      await queryClient.invalidateQueries(bankKeys.allAccounts());
+      await queryClient.refetchQueries(bankKeys.allAccounts());
+
       // setTimeout(() => {
       navigation.goBack();
       // }, 1000); // Wait for the account to be registered
@@ -66,6 +72,8 @@ const ConnectWidgetTest = () => {
       } else {
         console.error("❌ Onboarding flow error:", error);
       }
+    } finally {
+      useDispatchAction(setShowLoader(false));
     }
   };
 

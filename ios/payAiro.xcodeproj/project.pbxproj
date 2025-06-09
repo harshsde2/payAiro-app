@@ -68,11 +68,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		004F13919E6F4918AB35AA97 /* Montserrat-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Montserrat-Bold.ttf"; path = "../assets/fonts/Montserrat-Bold.ttf"; sourceTree = "<group>"; };
+		004F13919E6F4918AB35AA97 /* Montserrat-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Montserrat-Bold.ttf"; path = "../assets/fonts/Montserrat-Bold.ttf"; sourceTree = "<group>"; };
 		00E356EE1AD99517003FC87E /* payAiroTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = payAiroTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		00E356F21AD99517003FC87E /* payAiroTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = payAiroTests.m; sourceTree = "<group>"; };
-		11363C8507B143B693B751C0 /* Montserrat-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Montserrat-Regular.ttf"; path = "../assets/fonts/Montserrat-Regular.ttf"; sourceTree = "<group>"; };
+		11363C8507B143B693B751C0 /* Montserrat-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Montserrat-Regular.ttf"; path = "../assets/fonts/Montserrat-Regular.ttf"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* payAiro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = payAiro.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = payAiro/AppDelegate.h; sourceTree = "<group>"; };
 		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = payAiro/AppDelegate.mm; sourceTree = "<group>"; };
@@ -84,7 +84,7 @@
 		184B0A336A424FEEB85B33C4 /* Neue Plak Extended Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Extended Bold.ttf"; path = "../assets/fonts/Neue Plak Extended Bold.ttf"; sourceTree = "<group>"; };
 		1AC1AD42F9AA4F60A76769C4 /* Neue Plak Extended Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Extended Regular.ttf"; path = "../assets/fonts/Neue Plak Extended Regular.ttf"; sourceTree = "<group>"; };
 		21169AE75DBFEAE0401131DF /* Pods-payAiro.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-payAiro.release.xcconfig"; path = "Target Support Files/Pods-payAiro/Pods-payAiro.release.xcconfig"; sourceTree = "<group>"; };
-		262CDA1D04894CF2B1E10C15 /* Montserrat-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Montserrat-Medium.ttf"; path = "../assets/fonts/Montserrat-Medium.ttf"; sourceTree = "<group>"; };
+		262CDA1D04894CF2B1E10C15 /* Montserrat-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Montserrat-Medium.ttf"; path = "../assets/fonts/Montserrat-Medium.ttf"; sourceTree = "<group>"; };
 		294780BFDBCE487B9E8B014A /* Neue Plak Text Light Italic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Text Light Italic.ttf"; path = "../assets/fonts/Neue Plak Text Light Italic.ttf"; sourceTree = "<group>"; };
 		2A5A19548ACC40A7BCE79623 /* Neue Plak Text Thin Italic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Text Thin Italic.ttf"; path = "../assets/fonts/Neue Plak Text Thin Italic.ttf"; sourceTree = "<group>"; };
 		2C1532709D8B44CC801A87A7 /* Neue Plak Condensed Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Condensed Regular.ttf"; path = "../assets/fonts/Neue Plak Condensed Regular.ttf"; sourceTree = "<group>"; };
@@ -95,7 +95,7 @@
 		473008983E4D4328998080B4 /* Neue Plak Text Thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Text Thin.ttf"; path = "../assets/fonts/Neue Plak Text Thin.ttf"; sourceTree = "<group>"; };
 		477ECD74842F405CB944DA73 /* Neue Plak ExtraBlack.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak ExtraBlack.ttf"; path = "../assets/fonts/Neue Plak ExtraBlack.ttf"; sourceTree = "<group>"; };
 		4AB98041ACD04E4BA06B086F /* Neue Plak Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Bold.ttf"; path = "../assets/fonts/Neue Plak Bold.ttf"; sourceTree = "<group>"; };
-		4FB66535EEB44F41BC97C3C3 /* Nexa-Heavy.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Nexa-Heavy.ttf"; path = "../assets/fonts/Nexa-Heavy.ttf"; sourceTree = "<group>"; };
+		4FB66535EEB44F41BC97C3C3 /* Nexa-Heavy.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Nexa-Heavy.ttf"; path = "../assets/fonts/Nexa-Heavy.ttf"; sourceTree = "<group>"; };
 		50C1260983BF4C2D897EB7F3 /* Neue Plak Extended Thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Extended Thin.ttf"; path = "../assets/fonts/Neue Plak Extended Thin.ttf"; sourceTree = "<group>"; };
 		5BEDF7D18E5F41BABCDBC61C /* Neue Plak Text SemiBold Italic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Text SemiBold Italic.ttf"; path = "../assets/fonts/Neue Plak Text SemiBold Italic.ttf"; sourceTree = "<group>"; };
 		5FEA830A39CD469BAED2AD76 /* Neue Plak Condensed Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Condensed Light.ttf"; path = "../assets/fonts/Neue Plak Condensed Light.ttf"; sourceTree = "<group>"; };
@@ -109,7 +109,7 @@
 		92BF6552D4604451BB4FF678 /* Neue Plak Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Regular.ttf"; path = "../assets/fonts/Neue Plak Regular.ttf"; sourceTree = "<group>"; };
 		A0792AED21AC44CDA2DA3E25 /* Neue Plak Condensed SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Condensed SemiBold.ttf"; path = "../assets/fonts/Neue Plak Condensed SemiBold.ttf"; sourceTree = "<group>"; };
 		A6FC6AF6CD234ADDBD6E1811 /* Neue Plak Text Black Italic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Text Black Italic.ttf"; path = "../assets/fonts/Neue Plak Text Black Italic.ttf"; sourceTree = "<group>"; };
-		A75EC8C0E9DA48FCB9A2D29F /* Montserrat-SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Montserrat-SemiBold.ttf"; path = "../assets/fonts/Montserrat-SemiBold.ttf"; sourceTree = "<group>"; };
+		A75EC8C0E9DA48FCB9A2D29F /* Montserrat-SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Montserrat-SemiBold.ttf"; path = "../assets/fonts/Montserrat-SemiBold.ttf"; sourceTree = "<group>"; };
 		ABE5B67E26061F3D0826824D /* Pods_payAiro.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_payAiro.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B29ECCEDE7B5467DB87FE03B /* Neue Plak Black.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Black.ttf"; path = "../assets/fonts/Neue Plak Black.ttf"; sourceTree = "<group>"; };
 		B3B8F6375FBD42138AD7D2CD /* Neue Plak Text Black.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Text Black.ttf"; path = "../assets/fonts/Neue Plak Text Black.ttf"; sourceTree = "<group>"; };
@@ -660,7 +660,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.4;
+				MARKETING_VERSION = 1.5;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -688,7 +688,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.4;
+				MARKETING_VERSION = 1.5;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -781,10 +781,7 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -864,10 +861,7 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;

@@ -11,6 +11,8 @@ export const resetAppState = () => {
   store.dispatch(resetState());
 
   // Clear all query cache
-    queryClient.clear(); // Clears query cache
-
+  queryClient.clear(); // Clears query cache
 };
+
+export const defaultImage = require("../../assets/images/Default_Image.webp");
+export const defaultCrypto = require("../../assets/images/default_crypto.png");

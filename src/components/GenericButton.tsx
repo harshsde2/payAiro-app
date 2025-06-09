@@ -28,13 +28,13 @@ const GenericButton: FC<GenericButtonProps> = ({
   // console.log("is loading. =>",isLoading)
   return (
     <TouchableOpacity
-      disabled={disabled}
+      disabled={!!disabled}
       onPress={onPress}
       style={{
         width: "100%",
         backgroundColor: theme?.colors.palette.green700,
         borderRadius: 30,
-        padding: 18,
+        padding: 10,
         opacity: disabled ? 0.7 : 1,
         ...cStyle,
       }}
@@ -76,7 +76,7 @@ const GenericButton: FC<GenericButtonProps> = ({
 
 export default GenericButton;
 
-const customStyles = (theme:Theme) =>
+const customStyles = (theme: Theme) =>
   StyleSheet.create({
     flexbox: {
       width: "100%",

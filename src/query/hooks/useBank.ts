@@ -11,7 +11,7 @@ export const bankKeys = {
   allAccounts: () => [...bankKeys.all, "allAccounts"] as const,
   balance: () => [...bankKeys.all, "balance"] as const,
   linkToken: () => [...bankKeys.all, "linkToken"] as const,
-};
+} as any;
 
 /**
  * Hook to get user's bank accounts

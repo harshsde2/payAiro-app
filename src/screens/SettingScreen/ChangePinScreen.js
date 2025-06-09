@@ -1,4 +1,4 @@
-import React, {useState, useRef} from 'react';
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -6,21 +6,34 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   ScrollView,
-} from 'react-native';
-import Container from '../../HOC/Container';
-import HeaderTitle from '../../components/HeaderTitle';
-import {SVGLeftArrow} from '../../constants/images';
-import Fonts from '../../constants/Fonts';
-import GenericButton from '../../components/GenericButton';
+  Button,
+} from "react-native";
+import Container from "../../HOC/Container";
+import HeaderTitle from "../../components/HeaderTitle";
+import { SVGLeftArrow } from "../../constants/images";
+import Fonts from "../../constants/Fonts";
+import GenericButton from "../../components/GenericButton";
+import { getPin, setPin } from "storage/mmkv";
+import { ScreenContainer } from "HOC";
+import { globalStyles, useGlobalStyles } from "styles/GlobalStyles";
+import useDispatchAction from "hooks/useDispatchAction";
+import {
+  setErrorMsg,
+  setShowLoader,
+  setSuccessMsg,
+} from "redux/slices/authenticationSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { patchPin } from "services/Services";
+import { useChangePin } from "query/hooks";
 
-const PinInput = ({value, setValue, nextRef}) => {
+const PinInput = ({ value, setValue, nextRef }) => {
   return (
     <TextInput
       style={styles.pinInput}
       keyboardType="numeric"
       maxLength={1}
       value={value}
-      onChangeText={text => {
+      onChangeText={(text) => {
         setValue(text);
         if (text && nextRef) nextRef.current.focus();
       }}
@@ -29,115 +42,185 @@ const PinInput = ({value, setValue, nextRef}) => {
 };
 
 const ChangePinScreen = () => {
-  const [currentPin, setCurrentPin] = useState(['', '', '', '']);
-  const [newPin, setNewPin] = useState(['', '', '', '']);
-  const [confirmPin, setConfirmPin] = useState(['', '', '', '']);
+  const globalStyles = useGlobalStyles();
+
+  const { tokens } = useSelector((state) => state.authenticationSlice);
+  const dispatch = useDispatch();
+  const [currentPin, setCurrentPin] = useState(["", "", "", ""]);
+  const [newPin, setNewPin] = useState(["", "", "", ""]);
+  const [confirmPin, setConfirmPin] = useState(["", "", "", ""]);
+  const [showLoader, setShowLoader] = useState(false);
 
   const pinRefs = [useRef(), useRef(), useRef(), useRef()];
   const newPinRefs = [useRef(), useRef(), useRef(), useRef()];
   const confirmPinRefs = [useRef(), useRef(), useRef(), useRef()];
 
+  const {
+    mutate: handlChangePin,
+    isPending: isPendingCreatePin,
+    isSuccess: isSuccessCreatePin,
+  } = useChangePin();
+
   const isPinMatched =
-    newPin.join('') === confirmPin.join('') && newPin.join('') !== '';
+    newPin.join("") === confirmPin.join("") && newPin.join("") !== "";
+
+  const isCurrentPinCorrect = () => {
+    const currentUserPin = getPin();
+    console.log("current pin =>", currentUserPin);
+    return currentPin.join("") == currentUserPin;
+  };
+  const isNewPinAndConfirmPinSame = () => {
+    return newPin.join("") === confirmPin.join("") && newPin.join("") !== "";
+  };
+
+  const handlePinChange = async () => {
+    if (isCurrentPinCorrect()) {
+      if (isNewPinAndConfirmPinSame()) {
+        setShowLoader(true);
+
+        const formData = new FormData();
+        formData.append("tpin", confirmPin.join(""));
+        formData.append("new_pin", newPin.join(""));
+        formData.append("old_pin", currentPin.join(""));
+
+        // handlChangePin(formData, {
+        //   onSuccess: (data) => {
+        //     setPin(confirmPin);
+        //     dispatch(setSuccessMsg("Pin change successfully"));
+        //     setConfirmPin(["", "", "", ""]);
+        //     setCurrentPin(["", "", "", ""]);
+        //     setNewPin(["", "", "", ""]);
+        //   },
+        //   onError: () => {
+        //     dispatch(
+        //       setErrorMsg(err?.data?.data?.error || "Some error occured!")
+        //     );
+        //     console.log(JSON.stringify(err, null, 2));
+        //   },
+        //   onSettled: () => {
+        //     setShowLoader(false);
+        //   },
+        // });
+
+        // try {
+        const resp = await patchPin(formData, tokens?.access);
+        console.log(JSON.stringify(resp, null, 2));
+        // if (resp.status) {
+        setPin(confirmPin);
+        dispatch(setSuccessMsg("Pin change successfully"));
+        setConfirmPin(["", "", "", ""]);
+        setCurrentPin(["", "", "", ""]);
+        setNewPin(["", "", "", ""]);
+        setShowLoader(false);
+
+        // }
+        // }
+        // catch (err) {
+        //   dispatch(
+        //     setErrorMsg(err?.data?.data?.error || "Some error occured!")
+        //   );
+        //   console.log(JSON.stringify(err, null, 2));
+        // } finally {
+        //   setShowLoader(false);
+        // }
+      } else {
+        dispatch(setErrorMsg("New PIN does not match with confirm PIN"));
+      }
+    } else {
+      dispatch(setErrorMsg("Current PIN is not correct"));
+    }
+  };
 
   return (
-    <Container>
+    <ScreenContainer padding={0}>
       <KeyboardAvoidingView
-        style={{flex: 1}}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{flexGrow: 1}}>
-          <HeaderTitle title={'Set Pin'} leftIcon={SVGLeftArrow} />
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: '#fff',
-              borderTopEndRadius: 32,
-              borderTopStartRadius: 32,
-              padding: 20,
-              marginTop: 20,
-            }}>
-            <Text style={styles.title}>Change Your Pin</Text>
-            <Text style={styles.subtitle}>
-              To set up your <Text style={styles.bold}>PIN</Text> create a{' '}
-              <Text style={styles.bold}>4 digit code</Text> then confirm it
-              below.
-            </Text>
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <HeaderTitle title={"Set Pin"} leftIcon={SVGLeftArrow} />
+        {/* <Button title="click me" onPress={() => setPin("0000")} /> */}
+        <View style={[globalStyles.whiteSheetContainer]}>
+          <Text style={styles.title}>Change Your Pin</Text>
+          <Text style={styles.subtitle}>
+            To set up your <Text style={styles.bold}>PIN</Text> create a{" "}
+            <Text style={styles.bold}>4 digit code</Text> then confirm it below.
+          </Text>
 
-            {/* Current PIN Input */}
-            <Text style={styles.label}>Enter current PIN</Text>
-            <View style={styles.pinContainer}>
-              {currentPin.map((digit, index) => (
-                <TextInput
-                  key={index}
-                  style={styles.pinInput}
-                  keyboardType="numeric"
-                  maxLength={1}
-                  value={digit}
-                  onChangeText={val => {
-                    let tempPin = [...currentPin];
-                    tempPin[index] = val;
-                    setCurrentPin(tempPin);
-                    if (val && pinRefs[index + 1])
-                      pinRefs[index + 1].current.focus();
-                  }}
-                  ref={pinRefs[index]}
-                />
-              ))}
-            </View>
-
-            {/* New PIN Input */}
-            <Text style={styles.label}>Enter new PIN</Text>
-            <View style={styles.pinContainer}>
-              {newPin.map((digit, index) => (
-                <TextInput
-                  key={index}
-                  style={styles.pinInput}
-                  keyboardType="numeric"
-                  maxLength={1}
-                  value={digit}
-                  onChangeText={val => {
-                    let tempPin = [...newPin];
-                    tempPin[index] = val;
-                    setNewPin(tempPin);
-                    if (val && newPinRefs[index + 1])
-                      newPinRefs[index + 1].current.focus();
-                  }}
-                  ref={newPinRefs[index]}
-                />
-              ))}
-            </View>
-
-            {/* Confirm New PIN Input */}
-            <Text style={styles.label}>Confirm new PIN</Text>
-            <View style={styles.pinContainer}>
-              {confirmPin.map((digit, index) => (
-                <TextInput
-                  key={index}
-                  style={styles.pinInput}
-                  keyboardType="numeric"
-                  maxLength={1}
-                  value={digit}
-                  onChangeText={val => {
-                    let tempPin = [...confirmPin];
-                    tempPin[index] = val;
-                    setConfirmPin(tempPin);
-                    if (val && confirmPinRefs[index + 1])
-                      confirmPinRefs[index + 1].current.focus();
-                  }}
-                  ref={confirmPinRefs[index]}
-                />
-              ))}
-            </View>
+          {/* Current PIN Input */}
+          <Text style={styles.label}>Enter current PIN</Text>
+          <View style={styles.pinContainer}>
+            {currentPin.map((digit, index) => (
+              <TextInput
+                key={index}
+                style={styles.pinInput}
+                keyboardType="numeric"
+                maxLength={1}
+                value={digit}
+                onChangeText={(val) => {
+                  let tempPin = [...currentPin];
+                  tempPin[index] = val;
+                  setCurrentPin(tempPin);
+                  if (val && pinRefs[index + 1])
+                    pinRefs[index + 1].current.focus();
+                }}
+                ref={pinRefs[index]}
+              />
+            ))}
           </View>
-          <GenericButton
-            title={'Save PIN'}
-            cStyle={{width: '90%', alignSelf: 'center'}}
-          />
-        </ScrollView>
+
+          {/* New PIN Input */}
+          <Text style={styles.label}>Enter new PIN</Text>
+          <View style={styles.pinContainer}>
+            {newPin.map((digit, index) => (
+              <TextInput
+                key={index}
+                style={styles.pinInput}
+                keyboardType="numeric"
+                maxLength={1}
+                value={digit}
+                onChangeText={(val) => {
+                  let tempPin = [...newPin];
+                  tempPin[index] = val;
+                  setNewPin(tempPin);
+                  if (val && newPinRefs[index + 1])
+                    newPinRefs[index + 1].current.focus();
+                }}
+                ref={newPinRefs[index]}
+              />
+            ))}
+          </View>
+
+          {/* Confirm New PIN Input */}
+          <Text style={styles.label}>Confirm new PIN</Text>
+          <View style={styles.pinContainer}>
+            {confirmPin.map((digit, index) => (
+              <TextInput
+                key={index}
+                style={styles.pinInput}
+                keyboardType="numeric"
+                maxLength={1}
+                value={digit}
+                onChangeText={(val) => {
+                  let tempPin = [...confirmPin];
+                  tempPin[index] = val;
+                  setConfirmPin(tempPin);
+                  if (val && confirmPinRefs[index + 1])
+                    confirmPinRefs[index + 1].current.focus();
+                }}
+                ref={confirmPinRefs[index]}
+              />
+            ))}
+          </View>
+        </View>
+        <GenericButton
+          onPress={() => handlePinChange()}
+          title={"Save PIN"}
+          cStyle={{ width: "90%", alignSelf: "center" }}
+          showLoader={true}
+          isLoading={showLoader}
+        />
       </KeyboardAvoidingView>
-    </Container>
+    </ScreenContainer>
   );
 };
 
@@ -145,7 +228,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   title: {
     fontSize: 22,
@@ -154,10 +237,10 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
     marginBottom: 20,
     fontFamily: Fonts.regular,
-    color: 'black',
+    color: "black",
   },
   bold: {
     fontFamily: Fonts.semibold,
@@ -168,8 +251,8 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   pinContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 20,
   },
   pinInput: {
@@ -177,20 +260,20 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 35,
     borderWidth: 1,
-    borderColor: 'rgba(0, 119, 4, 0.4)',
-    textAlign: 'center',
+    borderColor: "rgba(0, 119, 4, 0.4)",
+    textAlign: "center",
     fontSize: 22,
-    backgroundColor: 'rgba(0, 119, 4, 0.07)',
+    backgroundColor: "rgba(0, 119, 4, 0.07)",
   },
   successContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 10,
   },
   successText: {
-    color: 'green',
+    color: "green",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
 

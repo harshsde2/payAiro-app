@@ -41,7 +41,7 @@ import { addBank, addBank2, getWallet } from "services/Services";
 import { useGetReward, useWalletDetails } from "query/hooks";
 import { setWalletDataAuth } from "services/Auth";
 import { useDispatch } from "react-redux";
-import { setItem, STORAGE_KEYS } from "storage/mmkv";
+import { setItem, setPin, STORAGE_KEYS } from "storage/mmkv";
 import useDispatchAction from "hooks/useDispatchAction";
 
 export default function SelfieScreen(props: any) {
@@ -243,7 +243,7 @@ export default function SelfieScreen(props: any) {
     formData.append("dob", payload?.dob);
     formData.append("consumer_disclosure_fortress_agreement", checked);
 
-    // console.log(JSON.stringify(payload, null, 2));
+    console.log(JSON.stringify(payload, null, 2));
     dispatch(setShowLoader(true));
     handlKYC(formData as any, {
       onSuccess: (data) => {
@@ -287,14 +287,16 @@ export default function SelfieScreen(props: any) {
     const formData = new FormData();
     formData.append("tpin", pin);
 
-    dispatch(setShowLoader(true));
+    useDispatchAction(setShowLoader(true));
 
     handlPinCreation(formData as any, {
       onSuccess: (data) => {
         if (data && data?.status) {
           console.log("handlPinCreation => ✅");
+          setPin(pin);
           dispatch(setSuccessMsg("Transaction Pin created successfully"));
           handleAddBankAccounts();
+
           // getWalletDetails();
           // navigation.navigate("SuccesScreen");
         } else {
