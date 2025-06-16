@@ -39,6 +39,8 @@ const initialState = {
   showLoader: false,
   showRedeemReward: false,
   showGuide: false,
+  totalDisbursable: 0.0,
+  totalDisbursablePending: 0.0,
 };
 
 const authenticationSlice = createSlice({
@@ -123,6 +125,12 @@ const authenticationSlice = createSlice({
     setShowGuide: (state, action) => {
       state.showGuide = action.payload;
     },
+    setTotalDisbursablePending: (state, action) => {
+      state.totalDisbursablePending = action.payload;
+    },
+    setTotalDisbursable: (state, action) => {
+      state.totalDisbursable = action.payload;
+    },
     resetState: () => initialState,
   },
 });
@@ -153,6 +161,8 @@ export const {
   resetState,
   setShowGuide,
   setShowRedeemReward,
+  setTotalDisbursable,
+  setTotalDisbursablePending,
 } = authenticationSlice.actions;
 
 export default authenticationSlice.reducer;

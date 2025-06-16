@@ -1,16 +1,17 @@
-import React, { ReactNode } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  StatusBar, 
-  ScrollView, 
-  KeyboardAvoidingView, 
+import React, { ReactNode } from "react";
+import {
+  View,
+  StyleSheet,
+  StatusBar,
+  ScrollView,
+  KeyboardAvoidingView,
   Platform,
   ViewStyle,
-  StyleProp
-} from 'react-native';
-import { useTheme } from '../styles/ThemeContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
+  StyleProp,
+  SafeAreaView,
+} from "react-native";
+import { useTheme } from "../styles/ThemeContext";
+// import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface ScreenContainerProps {
   children: ReactNode;
@@ -18,7 +19,7 @@ interface ScreenContainerProps {
   avoidKeyboard?: boolean;
   safeArea?: boolean;
   statusBarColor?: string;
-  statusBarStyle?: 'light-content' | 'dark-content';
+  statusBarStyle?: "light-content" | "dark-content";
   padding?: boolean | number;
   paddingHorizontal?: boolean | number;
   paddingVertical?: boolean | number;
@@ -46,33 +47,35 @@ const ScreenContainer: React.FC<ScreenContainerProps> = ({
   backgroundColor,
 }) => {
   const { theme } = useTheme();
-  
+
   // Set up status bar style based on theme
-  const barStyle = statusBarStyle || (theme.mode === 'dark' ? 'light-content' : 'dark-content');
+  const barStyle =
+    statusBarStyle ||
+    (theme.mode === "dark" ? "light-content" : "dark-content");
   const barColor = statusBarColor || theme.colors.background.primary;
-  
+
   // Determine padding values
   const screenPadding = theme.spacing.layout.screenPadding;
   const paddingStyle: ViewStyle = {};
-  
+
   if (padding === true) {
     paddingStyle.padding = screenPadding;
-  } else if (typeof padding === 'number') {
+  } else if (typeof padding === "number") {
     paddingStyle.padding = padding;
   }
-  
+
   if (paddingHorizontal === true) {
     paddingStyle.paddingHorizontal = screenPadding;
-  } else if (typeof paddingHorizontal === 'number') {
+  } else if (typeof paddingHorizontal === "number") {
     paddingStyle.paddingHorizontal = paddingHorizontal;
   }
-  
+
   if (paddingVertical === true) {
     paddingStyle.paddingVertical = screenPadding;
-  } else if (typeof paddingVertical === 'number') {
+  } else if (typeof paddingVertical === "number") {
     paddingStyle.paddingVertical = paddingVertical;
   }
-  
+
   // Main container style - use green50 as default background
   const containerStyle = [
     styles.container,
@@ -87,41 +90,41 @@ const ScreenContainer: React.FC<ScreenContainerProps> = ({
       {children}
     </View>
   );
-  
+
   // Add scroll functionality if enabled
   const scrollContent = scrollable ? (
-    <ScrollView 
+    <ScrollView
       nestedScrollEnabled
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
     >
       {content}
     </ScrollView>
-  ) : content;
-  
+  ) : (
+    content
+  );
+
   // Add keyboard avoiding if enabled
   const keyboardContent = avoidKeyboard ? (
     <KeyboardAvoidingView
       style={styles.keyboardView}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 25}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 25}
     >
       {scrollContent}
     </KeyboardAvoidingView>
-  ) : scrollContent;
-  
+  ) : (
+    scrollContent
+  );
+
   // Add safe area if enabled
   return (
     <>
       <StatusBar backgroundColor={barColor} barStyle={barStyle} />
       {safeArea ? (
-        <SafeAreaView style={containerStyle}>
-          {keyboardContent}
-        </SafeAreaView>
+        <SafeAreaView style={containerStyle}>{keyboardContent}</SafeAreaView>
       ) : (
-        <View style={containerStyle}>
-          {keyboardContent}
-        </View>
+        <View style={containerStyle}>{keyboardContent}</View>
       )}
     </>
   );
@@ -142,4 +145,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ScreenContainer; 
+export default ScreenContainer;

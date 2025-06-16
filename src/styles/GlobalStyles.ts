@@ -17,4 +17,20 @@ export const globalStyles = (theme: Theme) =>
       padding: theme.spacing.spacing[5],
       marginTop: theme.spacing.spacing[5],
     },
+    shadowContainer: {
+      shadowColor: theme.colors.palette.black,
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.2,
+      shadowRadius: 5,
+      elevation: 2,
+    },
+    rowJustifyItems: {
+      flexDirection: "row",
+      backgroundColor: "red",
+      justifyContent: "space-around",
+      alignItems: "center",
+    },
   });

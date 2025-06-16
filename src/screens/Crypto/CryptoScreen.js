@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import React, { useEffect, useState } from "react";
 import CommonHeaderv2 from "../../HOC/CommonHeaderv2";
 import HeaderTitle2 from "../../components/HeaderTitle2";
@@ -14,12 +14,15 @@ import CryptoHoldingsCarrd from "../../components/CryptoHoldingsCarrd";
 import { COIN_LISTS } from "../../constants/mockData";
 import { getBlockchain, getCryptoPrice } from "../../services/Services";
 import useSelectorAction from "../../hooks/useSelectorAction";
+import useDispatchAction from "hooks/useDispatchAction";
+import { setErrorMsg } from "redux/slices/authenticationSlice";
 
 export default function CryptoScreen() {
   const { tokens } = useSelectorAction();
   const [activeTab, setactiveTab] = useState("1");
   const [activeCoin, setactiveCoin] = useState("1");
   const [blockchansList, setblockchansList] = useState([]);
+  const [showLoader, setShowLoader] = useState(false);
 
   useEffect(() => {
     getBlockchainData();
@@ -30,9 +33,23 @@ export default function CryptoScreen() {
   };
 
   const getBlockchainData = async () => {
-    const data = await getCryptoPrice(tokens?.access);
-    console.log(data?.data, "data?.data?.blockchains");
-    setblockchansList(data?.data);
+    try {
+      setShowLoader(true);
+      const data = await getCryptoPrice(tokens?.access);
+      console.log(data?.data, "data?.data?.blockchains");
+      setblockchansList(data?.data);
+      setShowLoader(false);
+    } catch (error) {
+      console.error(
+        "Error fetching blockchain data:",
+        JSON.stringify(error.response, null, 2)
+      );
+      useDispatchAction(
+        setErrorMsg("Failed to fetch blockchain data. Please try again later.")
+      );
+    } finally {
+      setShowLoader(false);
+    }
   };
 
   return (
@@ -247,6 +264,18 @@ export default function CryptoScreen() {
               </View>
               <SvgXml xml={SVGRight} />
             </View>
+            {showLoader && (
+              <View
+                style={{
+                  justifyContent: "center",
+                  alignItems: "center",
+                  width: "100%",
+                  height: 200,
+                }}
+              >
+                <ActivityIndicator size={"small"} color={"black"} />
+              </View>
+            )}
 
             {blockchansList &&
               blockchansList?.length > 0 &&
@@ -285,6 +314,19 @@ export default function CryptoScreen() {
               <SvgXml xml={SVGRight} />
             </View>
 
+            {showLoader && (
+              <View
+                style={{
+                  justifyContent: "center",
+                  alignItems: "center",
+                  width: "100%",
+                  height: 200,
+                }}
+              >
+                <ActivityIndicator size={"small"} color={"black"} />
+              </View>
+            )}
+
             {blockchansList &&
               blockchansList?.length > 0 &&
               blockchansList
@@ -321,7 +363,18 @@ export default function CryptoScreen() {
               </View>
               <SvgXml xml={SVGRight} />
             </View>
-
+            {showLoader && (
+              <View
+                style={{
+                  justifyContent: "center",
+                  alignItems: "center",
+                  width: "100%",
+                  height: 200,
+                }}
+              >
+                <ActivityIndicator size={"small"} color={"black"} />
+              </View>
+            )}
             {blockchansList &&
               blockchansList?.length > 0 &&
               blockchansList

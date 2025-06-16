@@ -99,6 +99,8 @@ import {
   setShowLoader,
   setShowRedeemReward,
   setSuccessMsg,
+  setTotalDisbursable,
+  setTotalDisbursablePending,
   setWalletData,
 } from "../../redux/slices/authenticationSlice";
 import { useTheme } from "../../styles/ThemeContext";
@@ -120,6 +122,7 @@ import { defaultImage } from "utils/configs";
 import { VIEW_TYPE } from "screens/TSX-Screens/RWA/RWA";
 import { queryClient } from "query/queryClient";
 import { userContactKeys } from "query/queryKeys";
+import DashboardCard from "tsx-components/DashboardCard";
 
 // Lazy load non-critical components
 const LazyBankModal = lazy(() => import("components/BankModal"));
@@ -421,42 +424,47 @@ const CryptoFinanceSection = React.memo(
 );
 
 // No props needed for this component
-const CryptoRewardsSection = React.memo(() => (
-  <MemoizedDashboardSection
-    title="Offer & Rewards"
-    actionText="see all"
-    onActionPress={() => {}}
-  >
-    <View style={[]}>
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginRight: 10,
-        }}
-      >
-        <MemoizedRewards item={{}} />
-        <MemoizedRewards
-          item={{
-            name: "Vouchers",
-            icon: SVGVoucher,
-            route: "VouchersScreens",
-            bgColor: "#f1edfe",
+const CryptoRewardsSection = React.memo(() => {
+  const navigation = useNavigation<any>();
+  return (
+    <MemoizedDashboardSection
+      title="Offer & Rewards"
+      actionText="see all"
+      onActionPress={() => {
+        navigation.navigate(NAVIGATION_SCREENS.REWARDS);
+      }}
+    >
+      <View style={[]}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginRight: 10,
           }}
-        />
-        <MemoizedRewards
-          item={{
-            name: "Referrals",
-            icon: SVGRef,
-            route: "VouchersScreens",
-            bgColor: "rgba(95, 255, 0, 0.09)",
-          }}
-        />
+        >
+          <MemoizedRewards item={{}} />
+          <MemoizedRewards
+            item={{
+              name: "Vouchers",
+              icon: SVGVoucher,
+              route: "VouchersScreens",
+              bgColor: "#f1edfe",
+            }}
+          />
+          <MemoizedRewards
+            item={{
+              name: "Referrals",
+              icon: SVGRef,
+              route: "VouchersScreens",
+              bgColor: "rgba(95, 255, 0, 0.09)",
+            }}
+          />
+        </View>
       </View>
-    </View>
-  </MemoizedDashboardSection>
-));
+    </MemoizedDashboardSection>
+  );
+});
 // No props needed for this component
 const CryptoRWASection = React.memo(({ data, navigation }: any) => {
   const onPress = (item: any) => {
@@ -535,11 +543,7 @@ const CryptoOtherServicesSection = React.memo(
     setisCardModalVisible,
     navigation,
   }: CryptoOtherServicesSectionProps) => (
-    <MemoizedDashboardSection
-      title="Others Services"
-      actionText="see all"
-      onActionPress={() => {}}
-    >
+    <MemoizedDashboardSection title="Others Services">
       <View style={{ marginBottom: 130, marginRight: 20 }}>
         <SvgXml
           xml={SVGBamkAdd}
@@ -588,6 +592,7 @@ const NewDashboard = () => {
     mxExternalAccountDetails,
     showRedeemReward,
     showGuide,
+    showLoader,
   } = useSelector((state: any) => state.authenticationSlice);
 
   const dispatch = useDispatch();
@@ -655,6 +660,7 @@ const NewDashboard = () => {
   const filteredMyRWA =
     getRWAList?.data.filter((item: any) => item.asset_type == "Realestate") ??
     [];
+
   // console.log("dataaaa =>", JSON.stringify(filteredMyRWA, null, 2));
   // console.log("token =>", tokens.access);
 
@@ -696,6 +702,8 @@ const NewDashboard = () => {
     refetch: refetchCryptoBalance,
   } = useCryptoBalance();
 
+  // console.log("CryptoBalance =>", JSON.stringify(CryptoBalance, null, 2));
+
   const {
     data: WalletDetailsData,
     isLoading: isPendingWalletDetails,
@@ -734,6 +742,7 @@ const NewDashboard = () => {
           []
       );
     }
+
     if (CryptoBalance) {
       const cryptoAssets = (CryptoBalance as any)?.data?.data;
 
@@ -759,6 +768,8 @@ const NewDashboard = () => {
         { disbursable: 0, pending: 0 }
       );
 
+      dispatch(setTotalDisbursable(totals.disbursable));
+      dispatch(setTotalDisbursablePending(totals.pending));
       settotalDisbursable(Number(totals.disbursable));
       settotalDisbursablePending(Number(totals.pending));
     }
@@ -1161,6 +1172,10 @@ const NewDashboard = () => {
     }));
   }, [bankLists, bankBalance]);
 
+  // console.log(
+  //   "sortedWeb3TxLists =>",
+  //   JSON.stringify(processedBankAccounts, null, 2)
+  // );
   //
   const handleEyeClick = (account_id: string) => {
     if (pinScreenRef.current) {
@@ -1451,39 +1466,21 @@ const NewDashboard = () => {
             />
           </View>
         )}
+        {bankBalance?.bank_account?.usd == undefined ? (
+          <CryptoCardSkeleton
+            shimmerColor="rgba(255, 255, 255, 0.6)"
+            baseColor="rgba(255, 255, 255, 0.2)"
+            speed={1000}
+            visible={true}
+          />
+        ) : (
+          <DashboardCard />
+        )}
         <View style={{ marginHorizontal: 15 }}>
           {/* {console.log("bankBalance?.bank_account?.usd", bankBalance) as any} */}
           {/* Use a consistent height container to prevent layout shifts */}
-          <View style={{ minHeight: 220 }}>
-            {bankBalance?.bank_account?.usd == undefined ? (
-              <CryptoCardSkeleton
-                shimmerColor="rgba(255, 255, 255, 0.6)"
-                baseColor="rgba(255, 255, 255, 0.2)"
-                speed={1000}
-                visible={true}
-              />
-            ) : (
-              <CryptoCard
-                isCrypto={isCrypto}
-                onSwitchView={() => {
-                  // handleSwitchView();
-                  setGhostSlideVisible(!ghostSlideVisible);
-                  // console.log("onSwitchView")
-                }}
-                headerTitle={"Payairo Account"}
-                payAirobalance={bankBalance?.bank_account?.usd}
-                totalDisbursable={totalDisbursable}
-                currencySymbol="USD"
-                currencyIcon={SVGUSD}
-                identifierType={"Payairo ID:"}
-                identifier={walletData?.username || "Username"}
-                pendingAmount={!isCrypto ? totalDisbursablePending : 0}
-                onCopy={() => console.log("Copy identifier")}
-                onWithdraw={() => console.log("Withdraw pressed")}
-                logoSvg={isCrypto ? SVGSecurities : SVGLoggo}
-              />
-            )}
-          </View>
+          {/* <View style={{ minHeight: 220 }}> */}
+          {/* </View> */}
 
           <View
             style={{
@@ -1546,7 +1543,13 @@ const NewDashboard = () => {
                 <MemoizedDashboardSection
                   title="Your Accounts"
                   actionText="see all"
-                  onActionPress={() => {}}
+                  onActionPress={() => {
+                    navigation.navigate(NAVIGATION_SCREENS.BANK_DETAILS, {
+                      item: processedBankAccounts,
+                      bankbalance: processedBankAccounts[0].balance,
+                      index: 0,
+                    });
+                  }}
                 >
                   <ScrollView
                     horizontal
@@ -1723,8 +1726,9 @@ const NewDashboard = () => {
                                 navigation.navigate(
                                   NAVIGATION_SCREENS.BANK_DETAILS,
                                   {
-                                    item: item,
+                                    item: processedBankAccounts,
                                     bankbalance: item.balance,
+                                    index: index,
                                   }
                                 )
                               }
@@ -1747,6 +1751,7 @@ const NewDashboard = () => {
                       width={250}
                       height={130}
                       xml={SVGNewBank}
+                      disabled={showLoader}
                       onPress={handleOpenLink}
                     />
                   </ScrollView>
@@ -1898,131 +1903,6 @@ const NewDashboard = () => {
                     </Text>
                   </TouchableOpacity>
                 )}
-              </MemoizedDashboardSection>
-            )}
-
-            {!isCrypto && (
-              <MemoizedDashboardSection
-                title="Explore Securities"
-                // actionText=''
-
-                onActionPress={() => {}}
-              >
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  <View
-                    style={{
-                      backgroundColor: "rgba(248, 248, 248, 1)",
-                      borderRadius: 15,
-                      padding: 15,
-                      flexDirection: "row",
-                      justifyContent: "flex-start",
-                      width: 170,
-                    }}
-                  >
-                    <SvgXml xml={SVGBit} />
-                    <View style={{ marginLeft: 15 }}>
-                      <Text
-                        style={{
-                          color: "black",
-                          fontFamily: Fonts.semibold,
-                          textAlign: "left",
-                          marginLeft: 15,
-                          marginBottom: 10,
-                        }}
-                      >
-                        Crypto
-                      </Text>
-                      <GenericButton
-                        title={"Explore "}
-                        onPress={() => navigation.navigate("CryptoScreen")}
-                        cStyle={{
-                          backgroundColor: "#000",
-                          padding: 5,
-                          width: 80,
-                        }}
-                        tStyle={{ color: "white", fontSize: 10 }}
-                        disabled={false}
-                        icon={null}
-                      />
-                    </View>
-                  </View>
-                  <View
-                    style={{
-                      backgroundColor: "rgba(248, 248, 248, 1)",
-                      borderRadius: 15,
-                      padding: 15,
-                      flexDirection: "row",
-                      justifyContent: "flex-start",
-                      width: 170,
-                      marginLeft: 10,
-                    }}
-                  >
-                    <SvgXml xml={SVGSecurities} />
-                    <View style={{ marginLeft: 15 }}>
-                      <Text
-                        style={{
-                          color: "black",
-                          fontFamily: Fonts.semibold,
-                          textAlign: "left",
-                          marginLeft: 8,
-                          marginBottom: 10,
-                        }}
-                      >
-                        Stocks
-                      </Text>
-                      <GenericButton
-                        onPress={() => navigation.navigate("StocksScreen")}
-                        title={"Explore "}
-                        cStyle={{
-                          backgroundColor: "#000",
-                          padding: 5,
-                          width: 80,
-                        }}
-                        tStyle={{ color: "white", fontSize: 10 }}
-                        disabled={false}
-                        icon={null}
-                      />
-                    </View>
-                  </View>
-                  <View
-                    style={{
-                      backgroundColor: "rgba(248, 248, 248, 1)",
-                      borderRadius: 15,
-                      padding: 15,
-                      flexDirection: "row",
-                      justifyContent: "flex-start",
-                      width: 170,
-                      marginLeft: 10,
-                    }}
-                  >
-                    <SvgXml xml={SVGSecurities} />
-                    <View style={{ marginLeft: 15 }}>
-                      <Text
-                        style={{
-                          color: "black",
-                          fontFamily: Fonts.semibold,
-                          textAlign: "left",
-                          marginLeft: 8,
-                          marginBottom: 10,
-                        }}
-                      >
-                        Stocks
-                      </Text>
-                      <GenericButton
-                        onPress={() => navigation.navigate("StocksScreen")}
-                        title={"Explore "}
-                        cStyle={{
-                          backgroundColor: "#000",
-                          padding: 5,
-                          width: 80,
-                        }}
-                        tStyle={{ color: "white", fontSize: 10 }}
-                        disabled={false}
-                        icon={null}
-                      />
-                    </View>
-                  </View>
-                </ScrollView>
               </MemoizedDashboardSection>
             )}
             {isCrypto && sortedTxLists.length > 0 && (

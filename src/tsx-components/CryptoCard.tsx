@@ -130,8 +130,11 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
   const { isCrypto, CardSwitchDetails, walletData } = useSelector(
     (state: any) => state.authenticationSlice
   );
+  const { balance, headerText } = useSelector(
+    (state: any) => state.animationSlice
+  );
 
-  // console.log("CardSwitchDetails =>", CardSwitchDetails)
+  // console.log("CardSwitchDetails =>", headerText);
   // Theme
   const { theme } = useTheme();
 

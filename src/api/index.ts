@@ -116,7 +116,7 @@ api.interceptors.response.use(
       }
 
       if (status >= 500) {
-        console.log("Server error, please try again later");
+        console.log("Server error, please try again later", requestUrl);
         useDispatchAction(setErrorMsg("Server error, please try again later"));
       }
     } else if (error.request) {

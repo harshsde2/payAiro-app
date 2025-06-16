@@ -77,52 +77,29 @@ const ChangePinScreen = () => {
     if (isCurrentPinCorrect()) {
       if (isNewPinAndConfirmPinSame()) {
         setShowLoader(true);
-
         const formData = new FormData();
-        formData.append("tpin", confirmPin.join(""));
         formData.append("new_pin", newPin.join(""));
         formData.append("old_pin", currentPin.join(""));
-
-        // handlChangePin(formData, {
-        //   onSuccess: (data) => {
-        //     setPin(confirmPin);
-        //     dispatch(setSuccessMsg("Pin change successfully"));
-        //     setConfirmPin(["", "", "", ""]);
-        //     setCurrentPin(["", "", "", ""]);
-        //     setNewPin(["", "", "", ""]);
-        //   },
-        //   onError: () => {
-        //     dispatch(
-        //       setErrorMsg(err?.data?.data?.error || "Some error occured!")
-        //     );
-        //     console.log(JSON.stringify(err, null, 2));
-        //   },
-        //   onSettled: () => {
-        //     setShowLoader(false);
-        //   },
-        // });
-
-        // try {
-        const resp = await patchPin(formData, tokens?.access);
-        console.log(JSON.stringify(resp, null, 2));
-        // if (resp.status) {
-        setPin(confirmPin);
-        dispatch(setSuccessMsg("Pin change successfully"));
-        setConfirmPin(["", "", "", ""]);
-        setCurrentPin(["", "", "", ""]);
-        setNewPin(["", "", "", ""]);
-        setShowLoader(false);
-
-        // }
-        // }
-        // catch (err) {
-        //   dispatch(
-        //     setErrorMsg(err?.data?.data?.error || "Some error occured!")
-        //   );
-        //   console.log(JSON.stringify(err, null, 2));
-        // } finally {
-        //   setShowLoader(false);
-        // }
+        handlChangePin(formData, {
+          onSuccess: (data) => {
+            setShowLoader(false);
+            setPin(confirmPin.join(""));
+            console.log(JSON.stringify(data.data, null, 2));
+            dispatch(setSuccessMsg("Pin change successfully"));
+            setConfirmPin(["", "", "", ""]);
+            setCurrentPin(["", "", "", ""]);
+            setNewPin(["", "", "", ""]);
+          },
+          onError: () => {
+            dispatch(
+              setErrorMsg(err?.data?.data?.error || "Some error occured!")
+            );
+            console.log(JSON.stringify(err, null, 2));
+          },
+          onSettled: () => {
+            setShowLoader(false);
+          },
+        });
       } else {
         dispatch(setErrorMsg("New PIN does not match with confirm PIN"));
       }

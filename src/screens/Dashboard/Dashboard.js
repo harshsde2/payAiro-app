@@ -1,5 +1,11 @@
-import { useIsFocused, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useIsFocused, useNavigation } from "@react-navigation/native";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Alert,
   Animated,
@@ -12,19 +18,19 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-import { SvgXml } from 'react-native-svg';
-import Container from '../../HOC/Container';
-import BalanceModal from '../../components/BalanceModal';
-import BottomNavigation from '../../components/BottomNavigation';
-import Header from '../../components/Header';
-import QRModal from '../../components/QRModal';
-import Rewards from '../../components/Rewards';
-import StoryLists from '../../components/StoryLists';
-import TransactionCard from '../../components/TransactionCard';
-import Fonts from '../../constants/Fonts';
-import { SCREENS } from '../../constants/SCREENS';
-import * as Progress from 'react-native-progress';
+} from "react-native";
+import { SvgXml } from "react-native-svg";
+import Container from "../../HOC/Container";
+import BalanceModal from "../../components/BalanceModal";
+import BottomNavigation from "../../components/BottomNavigation";
+import Header from "../../components/Header";
+import QRModal from "../../components/QRModal";
+import Rewards from "../../components/Rewards";
+import StoryLists from "../../components/StoryLists";
+import TransactionCard from "../../components/TransactionCard";
+import Fonts from "../../constants/Fonts";
+import { SCREENS } from "../../constants/SCREENS";
+import * as Progress from "react-native-progress";
 import {
   SVGAdd,
   SVGBANK2,
@@ -55,9 +61,9 @@ import {
   SVGUSD,
   SVGUSDT,
   SVGVoucher,
-} from '../../constants/images';
-import useDispatchAction from '../../hooks/useDispatchAction';
-import useSelectorAction from '../../hooks/useSelectorAction';
+} from "../../constants/images";
+import useDispatchAction from "../../hooks/useDispatchAction";
+import useSelectorAction from "../../hooks/useSelectorAction";
 import {
   setActiveTab,
   setBankLists,
@@ -71,7 +77,7 @@ import {
   setSuccessMsg,
   setWalletData,
   setisCrypto,
-} from '../../redux/slices/authenticationSlice';
+} from "../../redux/slices/authenticationSlice";
 import {
   getGuide,
   getKYCAccpted,
@@ -79,7 +85,7 @@ import {
   setKYCAcceopted,
   setPin,
   setWalletDataAuth,
-} from '../../services/Auth';
+} from "../../services/Auth";
 import {
   addbankAccountRoth,
   createPin,
@@ -97,32 +103,32 @@ import {
   getWallet,
   getWalletBalance,
   uploadKYC,
-} from '../../services/Services';
-import PincodeScreen from '../Authentications/PincodeScreen';
-import AssetsCards from '../../components/AssetsCards';
-import CustomPieChart from '../../components/CustomPieChart';
-import SelectionModal from '../../components/SelectionModal';
-import LineChartCustom from '../../components/LineChartCustom';
-import SelectionModal2 from '../../components/SelectionModal2';
-import BiometricModal from '../../components/BiometricModal';
-import { useSelector } from 'react-redux';
-import BankModal from '../../components/BankModal';
-import BankModal2 from '../../components/BankModal2';
+} from "../../services/Services";
+import PincodeScreen from "../Authentications/PincodeScreen";
+import AssetsCards from "../../components/AssetsCards";
+import CustomPieChart from "../../components/CustomPieChart";
+import SelectionModal from "../../components/SelectionModal";
+import LineChartCustom from "../../components/LineChartCustom";
+import SelectionModal2 from "../../components/SelectionModal2";
+import BiometricModal from "../../components/BiometricModal";
+import { useSelector } from "react-redux";
+import BankModal from "../../components/BankModal";
+import BankModal2 from "../../components/BankModal2";
 import {
   LinkIOSPresentationStyle,
   LinkLogLevel,
   create,
   dismissLink,
   open,
-} from 'react-native-plaid-link-sdk';
+} from "react-native-plaid-link-sdk";
 
-import { BASE_URL } from '../../constants/mockData';
-import KYCModal from '../../components/KYCModal';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
-import CustomModal from '../../components/CustomModal';
-import GenericButton from '../../components/GenericButton';
-import GuideModal from '../../components/GuideModal';
-import GhostSlide from '../../animations/animations-components/GhostSlide';
+import { BASE_URL } from "../../constants/mockData";
+import KYCModal from "../../components/KYCModal";
+import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
+import CustomModal from "../../components/CustomModal";
+import GenericButton from "../../components/GenericButton";
+import GuideModal from "../../components/GuideModal";
+import GhostSlide from "../../animations/animations-components/GhostSlide";
 
 export default function Dashboard(props) {
   const translateY = useRef(new Animated.Value(0)).current;
@@ -137,8 +143,8 @@ export default function Dashboard(props) {
     isCrypto,
     calculatedBalance,
     biometricAvailable,
-  } = useSelector(state => state.authenticationSlice);
-  const [balance, setbalance] = useState('');
+  } = useSelector((state) => state.authenticationSlice);
+  const [balance, setbalance] = useState("");
   const [txLists, settxLists] = useState([]);
   const [contactLists, setcontactLists] = useState([]);
   const [web3TxLists, setweb3TxLists] = useState([]);
@@ -154,13 +160,13 @@ export default function Dashboard(props) {
   const [isShow, setisShow] = useState(true);
   const [isShowKYC, setisShowKYC] = useState(false);
 
-  const [selectedGraph, setselectedGraph] = useState('Assets');
-  const [timeframe, settimeframe] = useState('Week');
+  const [selectedGraph, setselectedGraph] = useState("Assets");
+  const [timeframe, settimeframe] = useState("Week");
   const [isShowWeeks, setisShowWeeks] = useState(false);
 
   const isFoucused = useIsFocused();
   const [isConfirm, setisConfirm] = useState(false);
-  const [pinTxt, setpinTxt] = useState('Create your pin');
+  const [pinTxt, setpinTxt] = useState("Create your pin");
   const [refreshing, setRefreshing] = useState(false);
   const [isBioMetricVisible, setisBioMetricVisible] = useState(false);
   const [isCardModalVisible, setisCardModalVisible] = useState(false);
@@ -179,7 +185,7 @@ export default function Dashboard(props) {
     getGuideStatus();
     // setKYCAcceopted(n ull);
     if (isFoucused) {
-      useDispatchAction(setActiveTab('1'));
+      useDispatchAction(setActiveTab("1"));
     }
   }, [isFoucused]);
 
@@ -203,14 +209,14 @@ export default function Dashboard(props) {
     // console.log(data?.data?.data, 'cryptoBalance');
     if (data?.data?.data) {
       setalloCationLists(
-        data?.data?.data.filter(asset => asset?.assetType !== 'usd'),
+        data?.data?.data.filter((asset) => asset?.assetType !== "usd")
       );
       const totalDisbursable = data?.data?.data
-        .filter(asset => asset.assetType !== 'usd')
+        .filter((asset) => asset.assetType !== "usd")
         .reduce((sum, asset) => sum + asset?.disbursable, 0);
 
       const totalPending = data?.data?.data
-        .filter(asset => asset?.assetType !== 'usd')
+        .filter((asset) => asset?.assetType !== "usd")
         .reduce((sum, asset) => sum + asset.pending, 0);
 
       settotalDisbursable(Number(totalDisbursable));
@@ -245,17 +251,17 @@ export default function Dashboard(props) {
 
   useEffect(() => {
     fetch(`${BASE_URL}kyc/link-token/`, {
-      method: 'GET',
+      method: "GET",
       headers: {
         Authorization: `Bearer ${tokens?.access}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     })
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         setLinkToken(data?.data?.link_token);
       })
-      .catch(err => console.error('Error fetching link token:', err));
+      .catch((err) => console.error("Error fetching link token:", err));
   }, []);
 
   const getGuideStatus = async () => {
@@ -266,7 +272,7 @@ export default function Dashboard(props) {
     }
   };
 
-  const onSuccess = useCallback(async publicToken => {
+  const onSuccess = useCallback(async (publicToken) => {
     try {
       // Parse the metadataJson string
       const metadata = publicToken?.metadata;
@@ -285,9 +291,9 @@ export default function Dashboard(props) {
 
       // Exchange public token for access token
       const exchangeResponse = await fetch(`${BASE_URL}kyc/exchange-token/`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${tokens?.access}`,
         },
         body: JSON.stringify({
@@ -298,7 +304,7 @@ export default function Dashboard(props) {
       const exchangeData = await exchangeResponse.json();
       if (!exchangeResponse.ok) {
         throw new Error(
-          `Exchange token error: ${exchangeData?.message || 'Unknown error'}`,
+          `Exchange token error: ${exchangeData?.message || "Unknown error"}`
         );
       }
 
@@ -312,9 +318,9 @@ export default function Dashboard(props) {
 
       // Get processor token
       const processorResponse = await fetch(`${BASE_URL}kyc/processor-token/`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${tokens?.access}`,
         },
         body: JSON.stringify({
@@ -326,7 +332,7 @@ export default function Dashboard(props) {
       const processorData = await processorResponse.json();
       if (!processorResponse.ok) {
         throw new Error(
-          `Processor token error: ${processorData?.message || 'Unknown error'}`,
+          `Processor token error: ${processorData?.message || "Unknown error"}`
         );
       }
 
@@ -342,25 +348,24 @@ export default function Dashboard(props) {
       const registerBankResponse = await fetch(
         `${BASE_URL}kyc/register-bank/`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${tokens?.access}`,
           },
           body: JSON.stringify({
             processor_token: processorToken,
             identityId: exchangeData?.data?.identityId, // Assuming identityId comes from exchangeData
-            type: 'financial',
+            type: "financial",
             accountNumberLast4: metadataJson?.account_id?.slice(-4), // Extract last 4 digits
           }),
-        },
+        }
       );
 
       const registerBankData = await registerBankResponse.json();
       if (!registerBankResponse.ok) {
         throw new Error(
-          `Register bank error: ${registerBankData?.message || 'Unknown error'
-          }`,
+          `Register bank error: ${registerBankData?.message || "Unknown error"}`
         );
       }
 
@@ -375,8 +380,8 @@ export default function Dashboard(props) {
       const config = {
         token: linkToken,
         onSuccess,
-        onExit: linkExit => {
-          console.log('Exit: ', linkExit);
+        onExit: (linkExit) => {
+          console.log("Exit: ", linkExit);
           dismissLink();
         },
         iOSPresentationStyle: LinkIOSPresentationStyle.MODAL,
@@ -387,7 +392,7 @@ export default function Dashboard(props) {
       open(config);
     }
   };
-  
+
   const getBank = async () => {
     try {
       const data = await getBankDetails(tokens?.access);
@@ -424,45 +429,44 @@ export default function Dashboard(props) {
     }
   };
 
-
   useEffect(() => {
     handlePin();
   }, []);
-  const symbol = selectedCrypto?.image?.includes('btc')
-    ? 'BTC'
-    : selectedCrypto?.image?.includes('eth')
-      ? 'ETH'
-      : selectedCrypto?.image?.includes('matic')
-        ? 'MATIC'
-        : 'XRP';
+  const symbol = selectedCrypto?.image?.includes("btc")
+    ? "BTC"
+    : selectedCrypto?.image?.includes("eth")
+    ? "ETH"
+    : selectedCrypto?.image?.includes("matic")
+    ? "MATIC"
+    : "XRP";
 
-  const balanceAssets = selectedCrypto?.image?.includes('btc')
+  const balanceAssets = selectedCrypto?.image?.includes("btc")
     ? Number(
-      networkLists[0]?.balance_in_tether +
-      networkLists[0]?.btc_in_eth +
-      networkLists[0]?.btc_in_matic +
-      networkLists[0]?.btc_in_xrp,
-    )
-    : selectedCrypto?.image?.includes('eth')
-      ? Number(
+        networkLists[0]?.balance_in_tether +
+          networkLists[0]?.btc_in_eth +
+          networkLists[0]?.btc_in_matic +
+          networkLists[0]?.btc_in_xrp
+      )
+    : selectedCrypto?.image?.includes("eth")
+    ? Number(
         networkLists[1]?.balance +
-        Number(networkLists[1]?.eth_in_btc) +
-        networkLists[1]?.eth_in_eth +
-        networkLists[1]?.eth_in_matic,
+          Number(networkLists[1]?.eth_in_btc) +
+          networkLists[1]?.eth_in_eth +
+          networkLists[1]?.eth_in_matic
       ).toFixed(3)
-      : selectedCrypto?.image?.includes('matic')
-        ? Number(
-          networkLists[2]?.balance +
+    : selectedCrypto?.image?.includes("matic")
+    ? Number(
+        networkLists[2]?.balance +
           networkLists[2]?.matic_in_btc +
           networkLists[2]?.matic_in_eth +
-          networkLists[2]?.matic_in_xrp,
-        )
-        : Number(
-          networkLists[3]?.balance +
+          networkLists[2]?.matic_in_xrp
+      )
+    : Number(
+        networkLists[3]?.balance +
           networkLists[3]?.xrp_in_btc +
           networkLists[3]?.xrp_in_eth +
-          networkLists[3]?.xrp_in_matic,
-        );
+          networkLists[3]?.xrp_in_matic
+      );
 
   const getWallets = async () => {
     const data = await getWallet(tokens?.access);
@@ -479,9 +483,9 @@ export default function Dashboard(props) {
   };
   const getCryptoTxs = async () => {
     const data = await getCryptoTx(tokens?.access);
-    console.log(data?.data, 'datatatas');
+    // console.log(data?.data, 'datatatas');
     setweb3TxLists(
-      [...data?.data?.nft_transactions, ...data?.data?.trades] ?? [],
+      [...data?.data?.nft_transactions, ...data?.data?.trades] ?? []
     );
   };
   const getWalletBalances = async () => {
@@ -505,11 +509,10 @@ export default function Dashboard(props) {
     setcontactLists(newData ?? []);
   };
 
-
-  const getEarliestTimestamp = requests => {
+  const getEarliestTimestamp = (requests) => {
     if (requests.length === 0) return null;
     return new Date(
-      Math.min(...requests.map(request => new Date(request.timestamp))),
+      Math.min(...requests.map((request) => new Date(request.timestamp)))
     );
   };
 
@@ -519,15 +522,14 @@ export default function Dashboard(props) {
     setmxTx(data?.data?.transactions ?? []);
   };
 
-  const toggleGhostSlide = () => setGhostSlideVisible(prev => !prev);
+  const toggleGhostSlide = () => setGhostSlideVisible((prev) => !prev);
 
   const handleSwitch = () => {
-
-    toggleGhostSlide()
+    toggleGhostSlide();
     // setshow(false);
 
     useDispatchAction(
-      setCalculatedBalance(selectedCrypto?.balance_in_tether ?? 0),
+      setCalculatedBalance(selectedCrypto?.balance_in_tether ?? 0)
     );
     useDispatchAction(setisCrypto(!isCrypto));
     // setshow(true);
@@ -604,59 +606,65 @@ export default function Dashboard(props) {
     return (
       <View
         style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}>
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <View
           style={{
-            flexDirection: 'row',
-            justifyContent: 'flex-start',
-            alignItems: 'center',
-          }}>
+            flexDirection: "row",
+            justifyContent: "flex-start",
+            alignItems: "center",
+          }}
+        >
           <TouchableOpacity
-            onPress={() => setselectedGraph('pnl')}
+            onPress={() => setselectedGraph("pnl")}
             style={{
               backgroundColor:
-                selectedGraph === 'pnl'
-                  ? 'rgba(44, 106, 63, 1)'
-                  : 'rgba(255, 255, 255, 0.1)',
+                selectedGraph === "pnl"
+                  ? "rgba(44, 106, 63, 1)"
+                  : "rgba(255, 255, 255, 0.1)",
               // padding: 10,
               paddingBottom: 10,
               paddingTop: 7,
-              width: '33%',
+              width: "33%",
               borderRadius: 30,
-            }}>
+            }}
+          >
             <Text
               style={{
-                color: selectedGraph === 'pnl' ? '#fff' : '#fff',
+                color: selectedGraph === "pnl" ? "#fff" : "#fff",
                 fontFamily: Fonts.bold,
-                textAlign: 'center',
+                textAlign: "center",
                 fontSize: 12,
-              }}>
+              }}
+            >
               PnL(%)
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => setselectedGraph('Assets')}
+            onPress={() => setselectedGraph("Assets")}
             style={{
               backgroundColor:
-                selectedGraph === 'Assets' ? 'rgba(44, 106, 63, 1)' : '#000',
+                selectedGraph === "Assets" ? "rgba(44, 106, 63, 1)" : "#000",
               // padding: 10,
               paddingBottom: 10,
               paddingTop: 7,
-              width: '33%',
+              width: "33%",
               borderRadius: 30,
               marginLeft: 15,
-            }}>
+            }}
+          >
             <Text
               style={{
-                color: selectedGraph === 'Assets' ? '#fff' : '#fff',
+                color: selectedGraph === "Assets" ? "#fff" : "#fff",
                 fontFamily: Fonts.bold,
-                textAlign: 'center',
+                textAlign: "center",
                 fontSize: 12,
-              }}>
+              }}
+            >
               Assets
             </Text>
           </TouchableOpacity>
@@ -667,21 +675,23 @@ export default function Dashboard(props) {
             setisShowWeeks(true);
           }}
           style={{
-            backgroundColor: '#fff',
+            backgroundColor: "#fff",
             // padding: 10,
             paddingBottom: 10,
             paddingTop: 7,
-            width: '27%',
+            width: "27%",
             borderRadius: 30,
-          }}>
+          }}
+        >
           <Text
             style={{
-              color: 'black',
+              color: "black",
               fontFamily: Fonts.bold,
-              textAlign: 'center',
+              textAlign: "center",
               fontSize: 12,
-              textTransform: 'capitalize',
-            }}>
+              textTransform: "capitalize",
+            }}
+          >
             {timeframe} <SvgXml xml={SVGDownArrow2} />
           </Text>
         </TouchableOpacity>
@@ -692,29 +702,29 @@ export default function Dashboard(props) {
   const opacity = translateY.interpolate({
     inputRange: [-100, 0], // As translateY moves from -50 to 0
     outputRange: [0.2, 1], // Opacity changes from 0.5 to 1
-    extrapolate: 'clamp', // Ensures values don't go beyond the range
+    extrapolate: "clamp", // Ensures values don't go beyond the range
   });
   const opacity1 = translateX.interpolate({
     inputRange: [-100, 0], // As translateY moves from -50 to 0
     outputRange: [0.2, 1], // Opacity changes from 0.5 to 1
-    extrapolate: 'clamp', // Ensures values don't go beyond the range
+    extrapolate: "clamp", // Ensures values don't go beyond the range
   });
-  
+
   const getTxLists = async () => {
     const data = await getPayAeroTx(tokens?.access);
-    console.log(data?.data, 'data?.data');
+    console.log(data?.data, "data?.data");
     settxLists(
       [
         ...data?.data?.merchantTransactions,
         ...data?.data?.userToUserTransactions,
-      ].filter(i => i?.status === 'success') ?? [],
+      ].filter((i) => i?.status === "success") ?? []
     );
   };
 
   const kycHandle = async () => {
     const data = await uploadKYC(tokens?.access);
     if (data?.data?.status === 400 || !data?.status) {
-      if (data?.data?.title === 'Identity suspended') {
+      if (data?.data?.title === "Identity suspended") {
         setisShowKYC(true);
       } else {
         setisShowKYC(false);
@@ -727,16 +737,16 @@ export default function Dashboard(props) {
     const data = await uploadKYC(tokens?.access);
     // console.log(data, 'kycHandle');
     if (data?.data?.status === 400) {
-      if (data?.data?.title === 'Identity suspended') {
+      if (data?.data?.title === "Identity suspended") {
         useDispatchAction(
-          setErrorMsg('Operation is forbidden. Custodial account is suspended'),
+          setErrorMsg("Operation is forbidden. Custodial account is suspended")
         );
         // navigation.navigate('InAppKYCBrowser', {
         //   url: 'https://docv.alloy.co/02797998-719f-407b-bf98-ed852e3540b3',
         // });
       }
     } else {
-      navigation.navigate('InAppKYCBrowser', {
+      navigation.navigate("InAppKYCBrowser", {
         url: data?.data?.url,
       });
     }
@@ -747,19 +757,18 @@ export default function Dashboard(props) {
       const data = await addbankAccountRoth(tokens?.access);
       // console.log(data?.data, 'royjir');
       if (data && data?.data && !data?.data?.error) {
-        useDispatchAction(setSuccessMsg('Bank Account Created Successfully'));
+        useDispatchAction(setSuccessMsg("Bank Account Created Successfully"));
         getBank();
       } else {
         useDispatchAction(
-          setErrorMsg(data?.data?.error ?? 'Something went wrong'),
+          setErrorMsg(data?.data?.error ?? "Something went wrong")
         );
       }
-    } catch (error) { }
+    } catch (error) {}
   };
 
-
   return (
-    <Container bgColor={'rgba(226, 241, 227, 0.2)'}>
+    <Container bgColor={"rgba(226, 241, 227, 0.2)"}>
       {/* {isShow && (
         <CustomModal isVisible={isShow} onClose={() => handleIsShow()} />
       )} */}
@@ -823,14 +832,15 @@ export default function Dashboard(props) {
           }}>{ghostSlideVisible ? 'Hide' : 'Show'}</Text>
         </TouchableOpacity>
       </View> */}
-      <View style={{
-
-        position: 'absolute',
-        bottom: 20,
-        zIndex: 9999,
-        width: '92%',
-        alignSelf: 'center',
-      }}>
+      <View
+        style={{
+          position: "absolute",
+          bottom: 20,
+          zIndex: 9999,
+          width: "92%",
+          alignSelf: "center",
+        }}
+      >
         <GhostSlide
           visible={ghostSlideVisible}
           direction="custom"
@@ -839,19 +849,20 @@ export default function Dashboard(props) {
           customX={0}
           customY={-400}
           ghostOpacity={1}
-          onAnimationComplete={() => console.log('Ghost slide completed')}
+          onAnimationComplete={() => console.log("Ghost slide completed")}
         >
-          <View style={{
-            padding: 10,
-            backgroundColor: 'black',
-            borderRadius: 20,
-            position: 'absolute',
-            bottom: 20,
-            zIndex: 9999,
-            width: '92%',
-            alignSelf: 'center',
-          }}>
-
+          <View
+            style={{
+              padding: 10,
+              backgroundColor: "black",
+              borderRadius: 20,
+              position: "absolute",
+              bottom: 20,
+              zIndex: 9999,
+              width: "92%",
+              alignSelf: "center",
+            }}
+          >
             <BottomNavigation isVer={true} />
           </View>
         </GhostSlide>
@@ -882,46 +893,51 @@ export default function Dashboard(props) {
       />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
         <ScrollView
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={['#B1FF84', '#000']}
+              colors={["#B1FF84", "#000"]}
             />
           }
-          contentContainerStyle={{ flexGrow: 1 }}>
+          contentContainerStyle={{ flexGrow: 1 }}
+        >
           <Header name={walletData?.name} />
           {isShowKYC && (
             <View
               style={{
-                backgroundColor: '#000',
-                width: '95%',
+                backgroundColor: "#000",
+                width: "95%",
                 padding: 15,
                 borderRadius: 15,
-                alignSelf: 'center',
+                alignSelf: "center",
                 marginBottom: 10,
-              }}>
+              }}
+            >
               <View
                 style={{
-                  flexDirection: 'row',
-                  justifyContent: 'flex-start',
-                  alignItems: 'flex-start',
-                }}>
+                  flexDirection: "row",
+                  justifyContent: "flex-start",
+                  alignItems: "flex-start",
+                }}
+              >
                 <SvgXml xml={SVGKYC2} />
                 <Text
                   style={{
-                    color: 'rgba(177, 177, 177, 1)',
+                    color: "rgba(177, 177, 177, 1)",
                     fontFamily: Fonts.semibold,
                     fontSize: 14,
                     marginLeft: 10,
-                  }}>
-                  Your Second level KYC verification is pending.{' '}
+                  }}
+                >
+                  Your Second level KYC verification is pending.{" "}
                   <TouchableOpacity onPress={kycHandleUrl}>
-                    <Text style={{ color: 'white', fontFamily: Fonts.bold }}>
-                      {' '}
+                    <Text style={{ color: "white", fontFamily: Fonts.bold }}>
+                      {" "}
                       Verify Now!
                     </Text>
                   </TouchableOpacity>
@@ -929,66 +945,75 @@ export default function Dashboard(props) {
               </View>
               <SvgXml
                 xml={SVGSliders}
-                style={{ marginTop: 15, width: '80%', alignSelf: 'center' }}
+                style={{ marginTop: 15, width: "80%", alignSelf: "center" }}
               />
             </View>
           )}
-          <View style={{ backgroundColor: 'rgba(249, 249, 249, 1)' }}>
+          <View style={{ backgroundColor: "rgba(249, 249, 249, 1)" }}>
             <View
               style={{
-                backgroundColor: 'rgba(224, 239, 225, 1)',
+                backgroundColor: "rgba(224, 239, 225, 1)",
                 borderRadius: 40,
-                width: '90%',
-                alignSelf: 'center',
+                width: "90%",
+                alignSelf: "center",
                 // elevation: 2,
-              }}>
+              }}
+            >
               <View
                 style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                   paddingVertical: 15,
                   paddingHorizontal: 25,
-                }}>
-                <Text style={{ fontFamily: Fonts.semibold, color: '#000' }}>
-                  {!isCrypto ? 'SECURITY' : 'PAYAIRO'} ACCOUNT
+                }}
+              >
+                <Text style={{ fontFamily: Fonts.semibold, color: "#000" }}>
+                  {!isCrypto ? "SECURITY" : "PAYAIRO"} ACCOUNT
                 </Text>
                 {isCrypto ? (
                   <Animated.View
                     style={[
-                      { transform: [{ translateY: translateY }], opacity: opacity }, // Add opacity here
-                    ]}>
+                      {
+                        transform: [{ translateY: translateY }],
+                        opacity: opacity,
+                      }, // Add opacity here
+                    ]}
+                  >
                     <TouchableOpacity
                       disabled={true}
                       onPress={() => setisVisible2(true)}
                       style={{
-                        backgroundColor: 'rgba(224, 239, 225, 1)',
+                        backgroundColor: "rgba(224, 239, 225, 1)",
                         padding: 5,
                         borderRadius: 40,
                         elevation: 3,
                         borderWidth: 1,
-                        borderColor: 'rgba(224, 239, 225, 1)',
-                        flexDirection: 'row',
-                        justifyContent: 'flex-start',
-                        alignItems: 'center',
+                        borderColor: "rgba(224, 239, 225, 1)",
+                        flexDirection: "row",
+                        justifyContent: "flex-start",
+                        alignItems: "center",
                         // backfaceVisibility: 'hidden',
-                      }}>
+                      }}
+                    >
                       <SvgXml xml={SVGUSD} />
 
                       <View
                         style={{
-                          flexDirection: 'row',
-                          justifyContent: 'flex-start',
-                          alignItems: 'center',
+                          flexDirection: "row",
+                          justifyContent: "flex-start",
+                          alignItems: "center",
                           marginLeft: 5,
-                        }}>
+                        }}
+                      >
                         <Text
                           style={{
-                            color: '#000',
+                            color: "#000",
                             fontSize: 14,
                             fontFamily: Fonts.semibold,
                             marginRight: 5,
-                          }}>
+                          }}
+                        >
                           USD
                         </Text>
                         <SvgXml xml={SVGDownArrow3} />
@@ -998,38 +1023,45 @@ export default function Dashboard(props) {
                 ) : (
                   <Animated.View
                     style={[
-                      { transform: [{ translateY: translateY }], opacity: opacity }, // Add opacity here
-                    ]}>
+                      {
+                        transform: [{ translateY: translateY }],
+                        opacity: opacity,
+                      }, // Add opacity here
+                    ]}
+                  >
                     <TouchableOpacity
                       disabled={true}
                       onPress={() => setisVisible2(true)}
                       style={{
-                        backgroundColor: 'rgba(224, 239, 225, 1)',
+                        backgroundColor: "rgba(224, 239, 225, 1)",
                         padding: 5,
                         borderRadius: 40,
                         elevation: 3,
                         borderWidth: 1,
-                        borderColor: 'rgba(224, 239, 225, 1)',
-                        flexDirection: 'row',
-                        justifyContent: 'flex-start',
-                        alignItems: 'center',
+                        borderColor: "rgba(224, 239, 225, 1)",
+                        flexDirection: "row",
+                        justifyContent: "flex-start",
+                        alignItems: "center",
                         // backfaceVisibility: 'hidden',
-                      }}>
+                      }}
+                    >
                       <SvgXml xml={SVGUSD} width={30} height={30} />
                       <View
                         style={{
-                          flexDirection: 'row',
-                          justifyContent: 'flex-start',
-                          alignItems: 'center',
+                          flexDirection: "row",
+                          justifyContent: "flex-start",
+                          alignItems: "center",
                           marginLeft: 5,
-                        }}>
+                        }}
+                      >
                         <Text
                           style={{
-                            color: '#000',
+                            color: "#000",
                             fontSize: 14,
                             fontFamily: Fonts.semibold,
                             marginRight: 5,
-                          }}>
+                          }}
+                        >
                           USD
                         </Text>
                         <SvgXml xml={SVGDownArrow3} />
@@ -1043,78 +1075,86 @@ export default function Dashboard(props) {
                   {
                     padding: 10,
                     borderRadius: 25,
-                    backgroundColor: isCrypto ? 'rgba(44, 106, 63, 1)' : '#fff',
+                    backgroundColor: isCrypto ? "rgba(44, 106, 63, 1)" : "#fff",
                     marginVertical: 5,
                     elevation: 7,
                   },
-                ]}>
+                ]}
+              >
                 <Animated.View
                   style={{
                     transform: [{ translateY: translateY }],
                     opacity: opacity,
-                    width: '100%',
-                  }}>
+                    width: "100%",
+                  }}
+                >
                   <View
                     style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}>
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
                     {show && (
-                      <View style={{ padding: 10, width: '80%' }}>
+                      <View style={{ padding: 10, width: "80%" }}>
                         <Text
                           style={{
                             fontFamily: Fonts.semibold,
-                            color: isCrypto ? '#fff' : 'black',
+                            color: isCrypto ? "#fff" : "black",
                             marginTop: 0,
-                          }}>
-                          {!isCrypto ? 'Holdings' : 'Payairo Balance'}
+                          }}
+                        >
+                          {!isCrypto ? "Holdings" : "Payairo Balance"}
                         </Text>
                         <Text
                           style={{
                             fontFamily: Fonts.bold,
-                            color: isCrypto ? '#fff' : 'black',
+                            color: isCrypto ? "#fff" : "black",
                             fontSize: 25,
                             marginBottom: !isCrypto ? 0 : 40,
-                          }}>
+                          }}
+                        >
                           {!isCrypto
                             ? Number(totalDisbursable).toFixed(5)
-                            : '$' +
-                            Number(
-                              bankbalance?.bank_account?.usd ?? 0,
-                            ).toFixed(2)}{' '}
+                            : "$" +
+                              Number(
+                                bankbalance?.bank_account?.usd ?? 0
+                              ).toFixed(2)}{" "}
                         </Text>
                         {!isCrypto && (
                           <Text
                             style={{
                               fontFamily: Fonts.regular,
-                              color: 'red',
+                              color: "red",
                               fontSize: 12,
                               marginBottom: 30,
-                            }}>
+                            }}
+                          >
                             (
                             {!isCrypto &&
-                              'Pending ' +
-                              Number(totalDisbursablePending).toFixed(5)}
+                              "Pending " +
+                                Number(totalDisbursablePending).toFixed(5)}
                             )
                           </Text>
                         )}
                         <Text
                           style={{
                             fontFamily: Fonts.semibold,
-                            color: isCrypto ? '#fff' : 'black',
-                          }}>
-                          {!isCrypto ? '' : 'Payairo ID'}{' '}
+                            color: isCrypto ? "#fff" : "black",
+                          }}
+                        >
+                          {!isCrypto ? "" : "Payairo ID"}{" "}
                         </Text>
                         <Text
                           numberOfLines={1}
                           style={{
                             fontFamily: Fonts.semibold,
-                            color: isCrypto ? '#fff' : 'black',
+                            color: isCrypto ? "#fff" : "black",
                             fontSize: 12,
-                            width: '80%',
-                          }}>
-                          {!isCrypto ? '' : walletData?.username}{' '}
+                            width: "80%",
+                          }}
+                        >
+                          {!isCrypto ? "" : walletData?.username}{" "}
                           <SvgXml xml={SVGCopy3} />
                         </Text>
                       </View>
@@ -1130,12 +1170,13 @@ export default function Dashboard(props) {
             </View>
             <View
               style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
                 marginVertical: 10,
                 marginHorizontal: 15,
-              }}>
+              }}
+            >
               <SvgXml
                 xml={SVGSend}
                 onPress={() => {
@@ -1143,7 +1184,7 @@ export default function Dashboard(props) {
                     !isCrypto ? SCREENS.SendToken : SCREENS.Send,
                     {
                       requested: false,
-                    },
+                    }
                   );
                 }}
               />
@@ -1151,7 +1192,7 @@ export default function Dashboard(props) {
                 xml={SVGReceive}
                 onPress={() =>
                   navigation.navigate(
-                    !isCrypto ? SCREENS.ReceiveToken : SCREENS.Receive,
+                    !isCrypto ? SCREENS.ReceiveToken : SCREENS.Receive
                   )
                 }
               />
@@ -1160,7 +1201,7 @@ export default function Dashboard(props) {
                 style={{ marginBottom: 20 }}
                 onPress={() => {
                   if (!isCrypto) {
-                    navigation.navigate('CryptoDashboard');
+                    navigation.navigate("CryptoDashboard");
                   } else {
                     setisVisible(true);
                   }
@@ -1171,59 +1212,67 @@ export default function Dashboard(props) {
           <BiometricModal
             isVisible={isBioMetricVisible}
             onCancel={() => setisBioMetricVisible(false)}
-            onClose={() => console.log('object')}
+            onClose={() => console.log("object")}
           />
           <View
             style={{
               flex: 1,
-              backgroundColor: '#fff',
+              backgroundColor: "#fff",
               borderTopEndRadius: 32,
               borderTopStartRadius: 32,
 
               marginTop: 20,
-            }}>
+            }}
+          >
             {!isCrypto && (
               <View>
                 <Animated.View
                   style={[
-                    { transform: [{ translateX: translateX }], opacity: opacity1 }, // Add opacity here
-                  ]}>
+                    {
+                      transform: [{ translateX: translateX }],
+                      opacity: opacity1,
+                    }, // Add opacity here
+                  ]}
+                >
                   <Text
                     style={{
-                      color: '#1D1D1D',
+                      color: "#1D1D1D",
                       fontFamily: Fonts.semibold,
                       fontSize: 20,
                       marginLeft: 30,
                       marginTop: 15,
-                    }}>
+                    }}
+                  >
                     PnL & Assets Allocation
                   </Text>
-                  {selectedGraph !== 'Assets' && (
+                  {selectedGraph !== "Assets" && (
                     <>
                       <View
                         style={{
-                          width: '80%',
-                          alignSelf: 'center',
+                          width: "80%",
+                          alignSelf: "center",
                           marginTop: 30,
                           marginBottom: 20,
-                        }}>
+                        }}
+                      >
                         {renderButtonGraph()}
                       </View>
                       <LineChartCustom timeframe={timeframe.toLowerCase()} />
                     </>
                   )}
-                  {selectedGraph === 'Assets' && (
+                  {selectedGraph === "Assets" && (
                     <View
                       style={{
-                        backgroundColor: '#000',
+                        backgroundColor: "#000",
                         padding: 20,
                         borderRadius: 20,
-                        width: '90%',
-                        alignSelf: 'center',
+                        width: "90%",
+                        alignSelf: "center",
                         marginVertical: 15,
-                      }}>
+                      }}
+                    >
                       {renderButtonGraph()}
-                      <View style={{ width: '90%', alignSelf: 'center' }}>
+                      <View style={{ width: "90%", alignSelf: "center" }}>
                         {/* <MemoizedPieChart
                           alloCationLists={useMemo(
                             () => alloCationLists,
@@ -1234,17 +1283,19 @@ export default function Dashboard(props) {
 
                       <View
                         style={{
-                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          backgroundColor: "rgba(255, 255, 255, 0.1)",
                           padding: 20,
                           borderRadius: 20,
-                        }}>
+                        }}
+                      >
                         <Text
                           style={{
-                            color: 'white',
+                            color: "white",
                             fontFamily: Fonts.bold,
                             marginBottom: 10,
                             fontSize: 16,
-                          }}>
+                          }}
+                        >
                           Assets Allocation
                         </Text>
                         {alloCationLists &&
@@ -1264,117 +1315,125 @@ export default function Dashboard(props) {
               <>
                 <Text
                   style={{
-                    color: '#000',
+                    color: "#000",
                     fontFamily: Fonts.semibold,
                     padding: 13,
                     marginLeft: 5,
                     fontSize: 20,
-                  }}>
+                  }}
+                >
                   Explore Securities
                 </Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={{ paddingHorizontal: 10 }}
-                  style={{ marginVertical: 10 }}>
+                  style={{ marginVertical: 10 }}
+                >
                   <View
                     style={{
-                      backgroundColor: 'rgba(248, 248, 248, 1)',
+                      backgroundColor: "rgba(248, 248, 248, 1)",
                       borderRadius: 15,
                       padding: 15,
-                      flexDirection: 'row',
-                      justifyContent: 'flex-start',
+                      flexDirection: "row",
+                      justifyContent: "flex-start",
                       width: 170,
-                    }}>
+                    }}
+                  >
                     <SvgXml xml={SVGBit} />
                     <View style={{ marginLeft: 15 }}>
                       <Text
                         style={{
-                          color: 'black',
+                          color: "black",
                           fontFamily: Fonts.semibold,
-                          textAlign: 'left',
+                          textAlign: "left",
                           marginLeft: 15,
                           marginBottom: 10,
-                        }}>
+                        }}
+                      >
                         Crypto
                       </Text>
                       <GenericButton
-                        title={'Explore '}
-                        onPress={() => navigation.navigate('CryptoScreen')}
+                        title={"Explore "}
+                        onPress={() => navigation.navigate("CryptoScreen")}
                         cStyle={{
-                          backgroundColor: '#000',
+                          backgroundColor: "#000",
                           padding: 5,
-                          width: '80%',
+                          width: "80%",
                         }}
-                        tStyle={{ color: 'white', fontSize: 10 }}
+                        tStyle={{ color: "white", fontSize: 10 }}
                       />
                     </View>
                   </View>
                   <View
                     style={{
-                      backgroundColor: 'rgba(248, 248, 248, 1)',
+                      backgroundColor: "rgba(248, 248, 248, 1)",
                       borderRadius: 15,
                       padding: 15,
-                      flexDirection: 'row',
-                      justifyContent: 'flex-start',
+                      flexDirection: "row",
+                      justifyContent: "flex-start",
                       width: 170,
                       marginLeft: 10,
-                    }}>
+                    }}
+                  >
                     <SvgXml xml={SVGSecurities} />
                     <View style={{ marginLeft: 15 }}>
                       <Text
                         style={{
-                          color: 'black',
+                          color: "black",
                           fontFamily: Fonts.semibold,
-                          textAlign: 'left',
+                          textAlign: "left",
                           marginLeft: 8,
                           marginBottom: 10,
-                        }}>
+                        }}
+                      >
                         Stocks
                       </Text>
                       <GenericButton
-                        onPress={() => navigation.navigate('StocksScreen')}
-                        title={'Explore '}
+                        onPress={() => navigation.navigate("StocksScreen")}
+                        title={"Explore "}
                         cStyle={{
-                          backgroundColor: '#000',
+                          backgroundColor: "#000",
                           padding: 5,
-                          width: '80%',
+                          width: "80%",
                         }}
-                        tStyle={{ color: 'white', fontSize: 10 }}
+                        tStyle={{ color: "white", fontSize: 10 }}
                       />
                     </View>
                   </View>
                   <View
                     style={{
-                      backgroundColor: 'rgba(248, 248, 248, 1)',
+                      backgroundColor: "rgba(248, 248, 248, 1)",
                       borderRadius: 15,
                       padding: 15,
-                      flexDirection: 'row',
-                      justifyContent: 'flex-start',
+                      flexDirection: "row",
+                      justifyContent: "flex-start",
                       width: 170,
                       marginLeft: 10,
-                    }}>
+                    }}
+                  >
                     <SvgXml xml={SVGSecurities} />
                     <View style={{ marginLeft: 15 }}>
                       <Text
                         style={{
-                          color: 'black',
+                          color: "black",
                           fontFamily: Fonts.semibold,
-                          textAlign: 'left',
+                          textAlign: "left",
                           marginLeft: 8,
                           marginBottom: 10,
-                        }}>
+                        }}
+                      >
                         Stocks
                       </Text>
                       <GenericButton
-                        onPress={() => navigation.navigate('StocksScreen')}
-                        title={'Explore '}
+                        onPress={() => navigation.navigate("StocksScreen")}
+                        title={"Explore "}
                         cStyle={{
-                          backgroundColor: '#000',
+                          backgroundColor: "#000",
                           padding: 5,
-                          width: '80%',
+                          width: "80%",
                         }}
-                        tStyle={{ color: 'white', fontSize: 10 }}
+                        tStyle={{ color: "white", fontSize: 10 }}
                       />
                     </View>
                   </View>
@@ -1385,128 +1444,139 @@ export default function Dashboard(props) {
               <>
                 <Text
                   style={{
-                    color: '#000',
+                    color: "#000",
                     fontFamily: Fonts.semibold,
                     padding: 13,
                     marginLeft: 5,
                     fontSize: 20,
-                  }}>
+                  }}
+                >
                   Your Accounts
                 </Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={{ paddingHorizontal: 10 }}
-                  style={{ marginVertical: 10 }}>
+                  style={{ marginVertical: 10 }}
+                >
                   {bankLists &&
                     bankLists?.map((item, index) => (
                       <View
                         key={index}
                         style={{
-                          backgroundColor: 'rgba(247, 247, 247, 1)',
+                          backgroundColor: "rgba(247, 247, 247, 1)",
                           padding: 10,
                           width: 200, // Fixed width for consistent horizontal scrolling
                           borderRadius: 15,
                           marginRight: 10, // Space between cards
-                        }}>
+                        }}
+                      >
                         <View
                           style={{
-                            flexDirection: 'row',
-                            justifyContent: 'flex-start',
-                            alignItems: 'center',
-                            width: '90%',
-                          }}>
+                            flexDirection: "row",
+                            justifyContent: "flex-start",
+                            alignItems: "center",
+                            width: "90%",
+                          }}
+                        >
                           <SvgXml xml={SVGUSD} width={25} height={25} />
                           <Text
                             style={{
                               fontFamily: Fonts.semibold,
-                              color: '#000',
+                              color: "#000",
                               fontSize: 16,
                               marginLeft: 8,
-                            }}>
+                            }}
+                          >
                             {item?.bank_name ?? item?.name}
                             <Text
                               style={{
-                                color: 'rgba(44, 106, 63, 1)',
+                                color: "rgba(44, 106, 63, 1)",
                                 fontSize: 10,
-                                textTransform: 'uppercase',
-                              }}>
-                              {' '}
-                              ({item?.account_type ?? 'Personal'})
+                                textTransform: "uppercase",
+                              }}
+                            >
+                              {" "}
+                              ({item?.account_type ?? "Personal"})
                             </Text>
                           </Text>
                         </View>
                         <Text
                           numberOfLines={1}
                           style={{
-                            color: 'rgba(106, 106, 106, 1)',
+                            color: "rgba(106, 106, 106, 1)",
                             fontSize: 10,
                             fontFamily: Fonts.bold,
                             marginLeft: 5,
                             marginTop: 2,
-                          }}>
+                          }}
+                        >
                           {item?.bank_address ?? item?.official_name}
                         </Text>
 
                         <Text
                           numberOfLines={1}
                           style={{
-                            color: 'black',
+                            color: "black",
                             fontSize: 10,
                             fontFamily: Fonts.bold,
                             marginLeft: 5,
                             marginTop: 5,
-                          }}>
-                          Account No: {item?.account_number ?? item?.account_id}{' '}
+                          }}
+                        >
+                          Account No: {item?.account_number ?? item?.account_id}{" "}
                         </Text>
                         <View
                           style={{
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            width: '100%',
-                          }}>
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            width: "100%",
+                          }}
+                        >
                           <Text
                             numberOfLines={1}
                             style={{
-                              color: 'rgba(44, 106, 63, 1)',
+                              color: "rgba(44, 106, 63, 1)",
                               fontSize: 16,
                               fontFamily: Fonts.bold,
                               marginLeft: 5,
                               marginTop: 5,
-                              width: '60%',
-                            }}>
-                            ${' '}
+                              width: "60%",
+                            }}
+                          >
+                            ${" "}
                             {item?.balances?.available
                               ? item?.balances?.available
-                              : item?.account_type === 'rothIra'
-                                ? bankbalance?.roth_ira_account?.usd
-                                : item?.account_type === 'traditionalIra'
-                                  ? bankbalance?.traditional_ira_account?.usd
-                                  : bankbalance?.bank_account?.usd}
+                              : item?.account_type === "rothIra"
+                              ? bankbalance?.roth_ira_account?.usd
+                              : item?.account_type === "traditionalIra"
+                              ? bankbalance?.traditional_ira_account?.usd
+                              : bankbalance?.bank_account?.usd}
                           </Text>
 
                           <Text
                             onPress={() =>
-                              navigation.navigate('BankDetails', {
+                              navigation.navigate("BankDetails", {
                                 item,
                                 bankbalance: item?.balances?.available
                                   ? item?.balances?.available
-                                  : item?.account_type === 'rothIra'
-                                    ? bankbalance?.roth_ira_account?.usd
-                                    : item?.account_type === 'traditionalIra'
-                                      ? bankbalance?.traditional_ira_account?.usd
-                                      : bankbalance?.bank_account?.usd,
+                                  : item?.account_type === "rothIra"
+                                  ? bankbalance?.roth_ira_account?.usd
+                                  : item?.account_type === "traditionalIra"
+                                  ? bankbalance?.traditional_ira_account?.usd
+                                  : bankbalance?.bank_account?.usd,
                               })
                             }
                             style={{
-                              color: 'rgba(106, 106, 106, 1)',
+                              color: "rgba(106, 106, 106, 1)",
                               fontSize: 10,
                               fontFamily: Fonts.regular,
                               marginLeft: 5,
                               marginTop: 5,
-                              textDecorationLine: 'underline',
-                            }}>
+                              textDecorationLine: "underline",
+                            }}
+                          >
                             View Details
                           </Text>
                         </View>
@@ -1521,34 +1591,37 @@ export default function Dashboard(props) {
 
             <View
               style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                width: '95%',
-                alignSelf: 'center',
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                width: "95%",
+                alignSelf: "center",
                 paddingVertical: 20,
                 marginLeft: 5,
                 paddingHorizontal: 5,
-              }}>
+              }}
+            >
               <Text
                 style={{
-                  color: '#1D1D1D',
+                  color: "#1D1D1D",
                   fontFamily: Fonts.semibold,
                   fontSize: 20,
-                }}>
+                }}
+              >
                 Pay Airo Contacts
               </Text>
               <Text
                 onPress={() =>
-                  navigation.navigate('ContactScreen', {
+                  navigation.navigate("ContactScreen", {
                     isVisble3: isCrypto,
                   })
                 }
                 style={{
-                  color: '#6A6A6A',
+                  color: "#6A6A6A",
                   fontFamily: Fonts.semibold,
                   fontSize: 12,
-                }}>
+                }}
+              >
                 See all
               </Text>
             </View>
@@ -1557,22 +1630,24 @@ export default function Dashboard(props) {
               <StoryLists data={contactLists} isVisble3={isCrypto} />
             ) : (
               <TouchableOpacity
-                onPress={() => navigation.navigate('AddContact')}
+                onPress={() => navigation.navigate("AddContact")}
                 style={{
-                  backgroundColor: 'rgba(44, 106, 63, 1)',
+                  backgroundColor: "rgba(44, 106, 63, 1)",
                   paddingBottom: 10,
                   paddingTop: 7,
                   paddingHorizontal: 10,
                   borderRadius: 30,
-                  alignSelf: 'center',
+                  alignSelf: "center",
                   marginTop: 20,
-                }}>
+                }}
+              >
                 <Text
                   style={{
-                    color: 'white',
+                    color: "white",
                     fontSize: 12,
                     fontFamily: Fonts.semibold,
-                  }}>
+                  }}
+                >
                   + Add People
                 </Text>
               </TouchableOpacity>
@@ -1581,21 +1656,23 @@ export default function Dashboard(props) {
               <>
                 <View
                   style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    width: '95%',
-                    alignSelf: 'center',
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    width: "95%",
+                    alignSelf: "center",
                     paddingVertical: 20,
                     marginLeft: 5,
                     paddingHorizontal: 5,
-                  }}>
+                  }}
+                >
                   <Text
                     style={{
-                      color: '#1D1D1D',
+                      color: "#1D1D1D",
                       fontFamily: Fonts.semibold,
                       fontSize: 20,
-                    }}>
+                    }}
+                  >
                     Finance
                   </Text>
                   <Text
@@ -1605,10 +1682,11 @@ export default function Dashboard(props) {
                     //   })
                     // }
                     style={{
-                      color: '#6A6A6A',
+                      color: "#6A6A6A",
                       fontFamily: Fonts.semibold,
                       fontSize: 12,
-                    }}>
+                    }}
+                  >
                     See all
                   </Text>
                 </View>
@@ -1616,10 +1694,11 @@ export default function Dashboard(props) {
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={{ paddingHorizontal: 10 }}
-                  style={{ marginVertical: 10 }}>
+                  style={{ marginVertical: 10 }}
+                >
                   <SvgXml
                     xml={SVGBANK2}
-                    onPress={() => navigation.navigate('SelectBankScreen')}
+                    onPress={() => navigation.navigate("SelectBankScreen")}
                     style={{ marginRight: 10 }}
                   />
                   <SvgXml xml={SVGDebit} style={{ marginRight: 10 }} />
@@ -1627,21 +1706,23 @@ export default function Dashboard(props) {
                 </ScrollView>
                 <View
                   style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    width: '95%',
-                    alignSelf: 'center',
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    width: "95%",
+                    alignSelf: "center",
                     paddingVertical: 20,
                     marginLeft: 5,
                     paddingHorizontal: 5,
-                  }}>
+                  }}
+                >
                   <Text
                     style={{
-                      color: '#1D1D1D',
+                      color: "#1D1D1D",
                       fontFamily: Fonts.semibold,
                       fontSize: 20,
-                    }}>
+                    }}
+                  >
                     Utilities
                   </Text>
                   <Text
@@ -1651,10 +1732,11 @@ export default function Dashboard(props) {
                     //   })
                     // }
                     style={{
-                      color: '#6A6A6A',
+                      color: "#6A6A6A",
                       fontFamily: Fonts.semibold,
                       fontSize: 12,
-                    }}>
+                    }}
+                  >
                     See all
                   </Text>
                 </View>
@@ -1662,7 +1744,8 @@ export default function Dashboard(props) {
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={{ paddingHorizontal: 10 }}
-                  style={{ marginVertical: 10 }}>
+                  style={{ marginVertical: 10 }}
+                >
                   <SvgXml xml={SVGRecharge} style={{ marginRight: 10 }} />
                   <SvgXml xml={SVGBilPay} style={{ marginRight: 10 }} />
                   <SvgXml xml={SVGBilPay} />
@@ -1674,23 +1757,25 @@ export default function Dashboard(props) {
                 marginHorizontal: 25,
                 marginTop: 20,
                 paddingBottom: 10,
-              }}>
+              }}
+            >
               {(txLists && txLists.length > 0) ||
-                (web3TxLists && web3TxLists.length > 0) ? (
+              (web3TxLists && web3TxLists.length > 0) ? (
                 <Text
                   style={{
-                    color: '#1D1D1D',
+                    color: "#1D1D1D",
                     fontFamily: Fonts.semibold,
                     fontSize: 20,
                     marginBottom: 10,
-                  }}>
+                  }}
+                >
                   Recent Transactions
                 </Text>
               ) : null}
               {txLists && isCrypto && txLists.length > 0 ? (
                 txLists
                   ?.sort(
-                    (a, b) => new Date(b.created_at) - new Date(a.created_at),
+                    (a, b) => new Date(b.created_at) - new Date(a.created_at)
                   )
                   ?.slice(0, 5)
                   .map((item, key) => (
@@ -1710,7 +1795,7 @@ export default function Dashboard(props) {
                 web3TxLists.length > 0 &&
                 web3TxLists
                   ?.sort(
-                    (a, b) => new Date(b.timestamp) - new Date(a.timestamp),
+                    (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
                   )
                   ?.slice(0, 5)
                   .map((item, key) => (
@@ -1724,40 +1809,46 @@ export default function Dashboard(props) {
                 <View style={{ marginHorizontal: 25, marginTop: 20 }}>
                   <Text
                     style={{
-                      color: '#1D1D1D',
+                      color: "#1D1D1D",
                       fontFamily: Fonts.semibold,
                       fontSize: 20,
                       marginBottom: 10,
-                    }}>
-                    Offer & Rewards{' '}
+                    }}
+                  >
+                    Offer & Rewards{" "}
                   </Text>
                 </View>
                 <Animated.View
                   style={[
-                    { transform: [{ translateY: translateY }], opacity: opacity }, // Add opacity here
-                  ]}>
+                    {
+                      transform: [{ translateY: translateY }],
+                      opacity: opacity,
+                    }, // Add opacity here
+                  ]}
+                >
                   <View
                     style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
                       marginHorizontal: 10,
-                    }}>
+                    }}
+                  >
                     <Rewards />
                     <Rewards
                       item={{
-                        name: 'Vouchers',
+                        name: "Vouchers",
                         icon: SVGVoucher,
-                        route: 'VouchersScreens',
-                        bgColor: '#f1edfe',
+                        route: "VouchersScreens",
+                        bgColor: "#f1edfe",
                       }}
                     />
                     <Rewards
                       item={{
-                        name: 'Referrals',
+                        name: "Referrals",
                         icon: SVGRef,
-                        route: 'VouchersScreens',
-                        bgColor: 'rgba(95, 255, 0, 0.09)',
+                        route: "VouchersScreens",
+                        bgColor: "rgba(95, 255, 0, 0.09)",
                       }}
                     />
                   </View>
@@ -1765,12 +1856,13 @@ export default function Dashboard(props) {
                     <>
                       <Text
                         style={{
-                          color: '#000',
+                          color: "#000",
                           fontFamily: Fonts.semibold,
                           padding: 13,
                           marginLeft: 5,
                           fontSize: 20,
-                        }}>
+                        }}
+                      >
                         Others Services
                       </Text>
                       <View style={{ marginBottom: 130, marginHorizontal: 20 }}>
@@ -1785,21 +1877,23 @@ export default function Dashboard(props) {
                         />
                         <Pressable
                           onPress={() =>
-                            navigation.navigate('IntraAccountTransfer')
+                            navigation.navigate("IntraAccountTransfer")
                           }
                           style={{
-                            flexDirection: 'row',
-                            justifyContent: 'flex-start',
-                            alignItems: 'center',
+                            flexDirection: "row",
+                            justifyContent: "flex-start",
+                            alignItems: "center",
                             marginVertical: 10,
-                          }}>
+                          }}
+                        >
                           <SvgXml xml={SVGDebitAdd} />
                           <Text
                             style={{
-                              color: 'black',
+                              color: "black",
                               fontFamily: Fonts.semibold,
                               marginLeft: 10,
-                            }}>
+                            }}
+                          >
                             Intra account transfer
                           </Text>
                         </Pressable>
@@ -1821,25 +1915,25 @@ export default function Dashboard(props) {
 
             if (!f) {
               if (e !== isConfirm) {
-                useDispatchAction(setErrorMsg('Pin not matched , Try Again'));
-                setpinTxt('Confirm your pin');
+                useDispatchAction(setErrorMsg("Pin not matched , Try Again"));
+                setpinTxt("Confirm your pin");
                 setshowPin(true);
                 return;
               }
               const formData = new FormData();
-              formData.append('tpin', e);
+              formData.append("tpin", e);
               const data = await createPin(formData, tokens?.access);
               if (data && data?.status) {
                 setPin(e);
                 useDispatchAction(
-                  setSuccessMsg('Transaction Pin created successfully'),
+                  setSuccessMsg("Transaction Pin created successfully")
                 );
               } else {
-                useDispatchAction(setErrorMsg('Something Went Wrong'));
+                useDispatchAction(setErrorMsg("Something Went Wrong"));
               }
             } else {
               setisConfirm(e);
-              setpinTxt('Confirm your pin');
+              setpinTxt("Confirm your pin");
               setshowPin(f);
             }
           }}

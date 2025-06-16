@@ -1,26 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   KeyboardAvoidingView,
   ScrollView,
   TouchableOpacity,
-} from 'react-native';
-import Container from '../../HOC/Container';
-import BottomNavigation from '../../components/BottomNavigation';
-import HeaderTitle from '../../components/HeaderTitle';
-import Fonts from '../../constants/Fonts';
-import TransactionCard from '../../components/TransactionCard';
-import RequestPayCard from '../../components/RequestPayCard';
-import { SCREENS } from '../../constants/SCREENS';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
-import useDispatchAction from '../../hooks/useDispatchAction';
+} from "react-native";
+import Container from "../../HOC/Container";
+import BottomNavigation from "../../components/BottomNavigation";
+import HeaderTitle from "../../components/HeaderTitle";
+import Fonts from "../../constants/Fonts";
+import TransactionCard from "../../components/TransactionCard";
+import RequestPayCard from "../../components/RequestPayCard";
+import { SCREENS } from "../../constants/SCREENS";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
+import useDispatchAction from "../../hooks/useDispatchAction";
 import {
   setActiveTab,
   setErrorMsg,
   setPendingRequest,
   setSuccessMsg,
-} from '../../redux/slices/authenticationSlice';
+} from "../../redux/slices/authenticationSlice";
 import {
   cancelMerchent,
   cancelUser,
@@ -29,14 +29,59 @@ import {
   getMechentPay,
   getPayAeroTx,
   getPayRequest,
-} from '../../services/Services';
-import useSelectorAction from '../../hooks/useSelectorAction';
-import CustomPieChart from '../../components/CustomPieChart';
-import { ScreenContainer } from 'HOC';
-import { themes, useTheme } from 'styles';
+} from "../../services/Services";
+import useSelectorAction from "../../hooks/useSelectorAction";
+import CustomPieChart from "../../components/CustomPieChart";
+import { ScreenContainer } from "HOC";
+import { themes, useTheme } from "styles";
+import {
+  useCryptoTrades,
+  usePendingRequests,
+  useTransactions,
+  useUserPaymentRequests,
+} from "query/hooks";
+import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
+import DashboardSection from "tsx-components/DashboardSection";
 
 export default function Transaction() {
   const { walletData, tokens, isCrypto } = useSelectorAction();
+
+  const {
+    data: AllTransactions,
+    isLoading: isLoadingAllTransactions,
+    error: allTransactionsError,
+    isSuccess: AllTransactionsSuccess,
+    refetch: refetchAllTransactions,
+    isFetched: isFetchedAllTransactions,
+  } = useTransactions();
+
+  const {
+    data: AllTradesHistory,
+    isLoading: isLoadingAllTradesHistorys,
+    error: AllTradesHistoryError,
+    isSuccess: AllTradesHistorySuccess,
+    refetch: refetchAllTradesHistory,
+    isFetched: isFetchedAllTradesHistory,
+  } = useCryptoTrades();
+
+  const {
+    data: AllUserPaymentRequests,
+    isLoading: isLoadingAllUserPaymentRequests,
+    error: AllUserPaymentRequestsError,
+    isSuccess: AllUserPaymentRequestsSuccess,
+    refetch: refetchAllUserPaymentRequests,
+    isFetched: isFetchedAllUserPaymentRequests,
+  } = useUserPaymentRequests();
+
+  const {
+    data: AllPendingRequests,
+    isLoading: isLoadingAllPendingRequests,
+    error: AllPendingRequestsError,
+    isSuccess: AllPendingRequestsSuccess,
+    refetch: refetchAllPendingRequests,
+    isFetched: isFetchedAllPendingRequests,
+  } = usePendingRequests();
+
   const navigation = useNavigation();
   const isFocused = useIsFocused();
 
@@ -44,8 +89,8 @@ export default function Transaction() {
   const [merchentLists, setMerchentLists] = useState([]);
   const [contactsLists, setContactsLists] = useState([]);
   const [requestLists, setRequestLists] = useState([]);
-  const [activeTab, setActiveTabState] = useState('1');
-  const [activeTab2, setActiveTab2State] = useState('1');
+  const [activeTab, setActiveTabState] = useState("1");
+  const [activeTab2, setActiveTab2State] = useState("1");
   const [web3TxLists, setweb3TxLists] = useState([]);
   const [txListsWeb3, settxListsWeb3] = useState([]);
   const [formattedDataTx, setformattedDataTx] = useState([]);
@@ -56,85 +101,86 @@ export default function Transaction() {
   // Dispatch action when screen is focused
   useEffect(() => {
     if (isFocused) {
-      useDispatchAction(setActiveTab('2'));
+      useDispatchAction(setActiveTab("2"));
     }
   }, [isFocused]);
 
-  // Fetch data on component mount
   useEffect(() => {
-    getMerchentRequest();
-    getContactRequests();
-    getTxLists();
-    getCryptoTxs();
-  }, []);
-  console.log(isCrypto);
+    if (AllTransactionsSuccess && isFetchedAllTransactions) {
+      getTxLists(AllTransactions.data);
+    }
+    if (AllTradesHistorySuccess && isFetchedAllTradesHistory) {
+      getCryptoTxs(AllTradesHistory.data);
+    }
+    if (AllUserPaymentRequests && isFetchedAllUserPaymentRequests) {
+      getMerchentRequest(AllUserPaymentRequests.data);
+    }
+    if (AllPendingRequestsSuccess && isFetchedAllPendingRequests) {
+      getContactRequests(AllPendingRequests.data);
+    }
+  }, [
+    AllTransactions,
+    AllTradesHistory,
+    AllTransactionsSuccess,
+    AllTradesHistorySuccess,
+    AllUserPaymentRequestsSuccess,
+    AllUserPaymentRequests,
+    AllPendingRequests,
+    isFetchedAllPendingRequests,
+  ]);
+
+  // console.log(isCrypto);
   // Handle tab switching
   useEffect(() => {
-    if (activeTab === '1') {
+    if (activeTab === "1") {
       setRequestLists(merchentLists);
-    } else if (activeTab === '2') {
+    } else if (activeTab === "2") {
       setRequestLists(contactsLists);
     }
   }, [activeTab, merchentLists, contactsLists]);
 
   useEffect(() => {
-    if (activeTab2 === '1') {
+    if (activeTab2 === "1") {
       settxListsWeb3(txLists);
-    } else if (activeTab2 === '2') {
+    } else if (activeTab2 === "2") {
       settxListsWeb3(web3TxLists);
     }
   }, [activeTab2, txLists, web3TxLists]);
-  const getTxLists = async () => {
-    const data = await getPayAeroTx(tokens?.access);
-    console.log(data?.data?.category_percentages, 'Transaction Data');
-    setformattedDataTx(data?.data?.category_percentages);
-    settotalAmount(data?.data?.total_transaction_amount);
+
+  const getTxLists = async (data) => {
+    // if (!data) {
+    setformattedDataTx(data?.category_percentages);
+    settotalAmount(data?.total_transaction_amount);
     setTxLists(
-      [
-        ...data?.data?.merchantTransactions,
-        ...data?.data?.userToUserTransactions,
-      ].filter(i => i?.status === 'success' || i?.status === 'completed') ?? [],
+      [...data?.merchantTransactions, ...data?.userToUserTransactions].filter(
+        (i) => i?.status === "success" || i?.status === "completed"
+      ) ?? []
     );
-    console.log(
-      ...data?.data?.category_percentages,
-      '...data?.data?.category_percentages',
-    );
+    // }
   };
 
-  const getCryptoTxs = async () => {
-    const data = await getCryptoTx(tokens?.access);
-    console.log(data?.data, 'datatatas');
-    setweb3TxLists(
-      [...data?.data?.nft_transactions, ...data?.data?.trades] ?? [],
-    );
+  const getCryptoTxs = async (data) => {
+    setweb3TxLists([...data?.nft_transactions, ...data?.trades] ?? []);
   };
 
-  const getMerchentRequest = async () => {
-    const data = await getPayRequest(tokens?.access);
+  const getMerchentRequest = async (data) => {
+    // const data = await getPayRequest(tokens?.access);
 
     const merchant_transactions =
-      data?.data?.merchant_transactions?.transactions?.map(i => {
-        return { ...i, type: 'merchant_transactions' };
+      data?.merchant_transactions?.transactions?.map((i) => {
+        return { ...i, type: "merchant_transactions" };
       });
 
     const received_pending_requests =
-      data?.data?.user_to_user_requests?.received_pending_requests?.map(i => {
-        return { ...i, type: 'received_pending_requests' };
+      data?.user_to_user_requests?.received_pending_requests?.map((i) => {
+        return { ...i, type: "received_pending_requests" };
       });
 
     const sent_pending_requests =
-      data?.data?.user_to_user_requests?.sent_pending_requests?.map(i => {
-        return { ...i, type: 'sent_pending_requests' };
+      data?.user_to_user_requests?.sent_pending_requests?.map((i) => {
+        return { ...i, type: "sent_pending_requests" };
       });
-    console.log(
-      [
-        ...merchant_transactions,
-        ...received_pending_requests,
-        ...sent_pending_requests,
-      ],
-      'merchant_transactions',
-    );
-    console.log(data?.data, 'data?.data?.total_pending_requests');
+
     setMerchentLists([
       ...merchant_transactions,
       ...received_pending_requests,
@@ -142,145 +188,134 @@ export default function Transaction() {
     ]);
     useDispatchAction(
       setPendingRequest(
-        merchant_transactions?.length + received_pending_requests?.length ?? 0,
-      ),
+        merchant_transactions?.length + received_pending_requests?.length ?? 0
+      )
     );
   };
 
-  const getContactRequests = async () => {
-    const data = await getContactPay(tokens?.access);
-    console.log(data?.data, 'Contact Data');
-    setContactsLists(data?.data?.received_pending_requests ?? []);
+  const getContactRequests = async (data) => {
+    setContactsLists(data?.received_pending_requests ?? []);
   };
 
-  const handleTabSwitch = tab => {
+  const handleTabSwitch = (tab) => {
     setActiveTabState(tab);
   };
-  const handleTabSwitch2 = tab => {
+  const handleTabSwitch2 = (tab) => {
     setActiveTab2State(tab);
   };
 
-  const formattedData = e => {
-    const data = Object.keys(e)?.map(key => ({
-      assetType: key?.replace(/_/g, ' '),
-      percentage: e[key]?.percentage,
-      color: e[key]?.color,
-    }));
-    console.log(data, 'formated Data');
-    return data;
+  const formattedData = (e) => {
+    if (!e || typeof e !== "object") return [];
+
+    return Object.keys(e).map((key) => {
+      const item = e[key] || {};
+      return {
+        assetType: key.replace(/_/g, " "),
+        percentage: item.percentage ?? 0,
+        color: item.color ?? "#000000",
+      };
+    });
   };
 
-  const handleCancel = async item => {
+  const handleCancel = async (item) => {
     let data;
     const formData = new FormData();
     if (item?.project_name) {
-      formData.append('order_id', item?.order_id);
+      formData.append("order_id", item?.order_id);
       data = await cancelMerchent(formData, tokens?.access);
-      console.log(data, 'cancelPayment');
+      // console.log(data, "cancelPayment");
       if (data && data?.status) {
         useDispatchAction(setSuccessMsg(data?.data?.message));
         getMerchentRequest();
       } else {
-        useDispatchAction(setErrorMsg('Failed to cancel a payment'));
+        useDispatchAction(setErrorMsg("Failed to cancel a payment"));
       }
     } else {
       data = await cancelUser(
         item?.request_details?.request_id,
-        tokens?.access,
+        tokens?.access
       );
       if (data && data?.status) {
-        useDispatchAction(setSuccessMsg('Payment request has been cancelled.'));
+        useDispatchAction(setSuccessMsg("Payment request has been cancelled."));
         getMerchentRequest();
       } else {
-        useDispatchAction(setErrorMsg('Failed to cancel a payment'));
+        useDispatchAction(setErrorMsg("Failed to cancel a payment"));
       }
     }
   };
-  console.log('formattedDataTx =>', formattedDataTx)
+  console.log(
+    "formattedDataTx =>",
+    JSON.stringify(AllTransactions.data, null, 2)
+  );
   return (
-    <ScreenContainer padding={0} backgroundColor={theme.colors.background.primary}>
+    <ScreenContainer
+      padding={0}
+      backgroundColor={theme.colors.background.primary}
+    >
       <BottomNavigation />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ flexGrow: 1 }}>
-          <HeaderTitle title={'Transactions'} />
+          contentContainerStyle={{ flexGrow: 1 }}
+        >
+          <HeaderTitle title={"Transactions"} />
           <View
             style={{
               flex: 1,
-              backgroundColor: '#fff',
+              backgroundColor: "#fff",
               borderTopEndRadius: 32,
               borderTopStartRadius: 32,
               padding: 20,
               marginTop: 20,
-            }}>
+            }}
+          >
             {isCrypto && (
-              <>
-                <Text
-                  style={{
-                    color: '#1D1D1D',
-                    fontFamily: Fonts.bold,
-                    fontSize: 20,
-                    marginVertical: 15,
-                  }}>
-                  Transaction Summary
-                </Text>
+              <DashboardSection title="Transaction Summary">
                 <CustomPieChart
                   isTx={true}
                   amount={totalAmount}
                   alloCationLists={formattedData(formattedDataTx) ?? []}
                 />
-              </>
+              </DashboardSection>
             )}
             {isCrypto && merchentLists?.length > 0 && (
-              <Text
-                style={{
-                  color: '#1D1D1D',
-                  fontFamily: Fonts.bold,
-                  fontSize: 20,
-                  marginBottom: 15,
-                }}>
-                Payment Request
-              </Text>
+              <DashboardSection style={{}} title="Payment Requests">
+                {isCrypto &&
+                  merchentLists?.length > 0 &&
+                  merchentLists?.map((i, k) => (
+                    <RequestPayCard
+                      item={i}
+                      key={k}
+                      amount={i?.request_details?.amount}
+                      reqId={i?.request_uuid}
+                      isSentRequest={i?.recipient_details}
+                      onPress={() =>
+                        navigation.navigate(SCREENS.ScanPay, {
+                          type: "request",
+                          sender: i,
+                        })
+                      }
+                      onCancel={() => handleCancel(i)}
+                    />
+                  ))}
+              </DashboardSection>
             )}
-            {isCrypto &&
-              merchentLists?.length > 0 &&
-              merchentLists?.map((i, k) => (
-                <RequestPayCard
-                  item={i}
-                  key={k}
-                  amount={i?.request_details?.amount}
-                  reqId={i?.request_uuid}
-                  isSentRequest={i?.recipient_details}
-                  onPress={() =>
-                    navigation.navigate(SCREENS.ScanPay, {
-                      type: 'request',
-                      sender: i,
-                    })
-                  }
-                  onCancel={() => handleCancel(i)}
-                />
-              ))}
+
             {/* Recent Transactions */}
-            <View style={{ paddingBottom: 160 }}>
-              <Text
-                style={{
-                  color: '#1D1D1D',
-                  fontFamily: Fonts.bold,
-                  fontSize: 20,
-                  marginVertical: 15,
-                }}>
-                Recent Transactions
-              </Text>
+            <DashboardSection
+              title="Recent Transactions"
+              style={{ paddingBottom: 160 }}
+            >
               {isCrypto &&
                 txLists &&
                 txLists.length > 0 &&
                 txLists
                   ?.sort(
-                    (a, b) => new Date(b.created_at) - new Date(a.created_at),
+                    (a, b) => new Date(b.created_at) - new Date(a.created_at)
                   )
                   .map((item, key) => (
                     <View key={key}>
@@ -305,14 +340,15 @@ export default function Transaction() {
                 <Text
                   style={{
                     fontFamily: Fonts.bold,
-                    color: '#fff',
-                    textAlign: 'center',
+                    color: "#fff",
+                    textAlign: "center",
                     marginTop: 100,
-                  }}>
+                  }}
+                >
                   No Transaction Found
                 </Text>
               )}
-            </View>
+            </DashboardSection>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

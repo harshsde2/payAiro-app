@@ -1,5 +1,5 @@
-import { ComponentType, ReactNode } from 'react';
-import { StyleProp, TextProps, TextStyle, ViewStyle } from 'react-native';
+import { ComponentType, ReactNode } from "react";
+import { StyleProp, TextProps, TextStyle, ViewStyle } from "react-native";
 
 // Card types
 export interface CardProps {
@@ -17,8 +17,18 @@ export interface CardProps {
 export const Card: ComponentType<CardProps>;
 
 // CustomText types
-type FontWeight = 'regular' | 'medium' | 'semiBold' | 'bold';
-type TextVariant = 'h1' | 'h2' | 'h3' | 'h4' | 'subtitle1' | 'subtitle2' | 'body1' | 'body2' | 'button' | 'caption';
+type FontWeight = "regular" | "medium" | "semiBold" | "bold";
+type TextVariant =
+  | "h1"
+  | "h2"
+  | "h3"
+  | "h4"
+  | "subtitle1"
+  | "subtitle2"
+  | "body1"
+  | "body2"
+  | "button"
+  | "caption";
 
 export interface CustomTextProps extends TextProps {
   children: ReactNode;
@@ -27,7 +37,7 @@ export interface CustomTextProps extends TextProps {
   fontWeight?: FontWeight;
   color?: string;
   size?: number;
-  align?: 'auto' | 'left' | 'right' | 'center' | 'justify';
+  align?: "auto" | "left" | "right" | "center" | "justify";
   fontFamily?: string;
 }
 
@@ -63,4 +73,4 @@ export const DashboardHeader: ComponentType<DashboardHeaderProps>;
 export const FontTest: ComponentType<{}>;
 
 // ExampleComponents type
-export const ExampleComponents: ComponentType<{}>; 
+export const ExampleComponents: ComponentType<{}>;

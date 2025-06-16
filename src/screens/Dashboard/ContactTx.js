@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -15,27 +15,27 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
-} from 'react-native';
-import Fonts from '../../constants/Fonts';
-import { useNavigation, useIsFocused } from '@react-navigation/native';
-import { SCREENS } from '../../constants/SCREENS';
-import { getContactListsForAll, sendMessage } from '../../services/Services';
-import useSelectorAction from '../../hooks/useSelectorAction';
-import { SVGLeftArrow, SVGSend2, SVGThreeDot } from '../../constants/images';
-import { SvgXml } from 'react-native-svg';
-import { ScreenContainer } from '../../HOC';
-import { useTheme } from '../../styles/ThemeContext';
-import TransactionList from '../../components/TransactionLists';
-import CustomChatComponent from '../../tsx-components/CustomChatComponent';
-import MinimalChatComponent from '../../tsx-components/MinimalChatComponent';
-import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
-import ChatComponent from 'tsx-components/chat-components/ChatComponent';
-import ChatContainer from 'tsx-components/chat-components/ChatContainer';
+} from "react-native";
+import Fonts from "../../constants/Fonts";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
+import { SCREENS } from "../../constants/SCREENS";
+import { getContactListsForAll, sendMessage } from "../../services/Services";
+import useSelectorAction from "../../hooks/useSelectorAction";
+import { SVGLeftArrow, SVGSend2, SVGThreeDot } from "../../constants/images";
+import { SvgXml } from "react-native-svg";
+import { ScreenContainer } from "../../HOC";
+import { useTheme } from "../../styles/ThemeContext";
+import TransactionList from "../../components/TransactionLists";
+import CustomChatComponent from "../../tsx-components/CustomChatComponent";
+import MinimalChatComponent from "../../tsx-components/MinimalChatComponent";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import ChatComponent from "tsx-components/chat-components/ChatComponent";
+import ChatContainer from "tsx-components/chat-components/ChatContainer";
 
 // Transaction status components
 const PendingTransaction = ({ amount, date }) => (
   <View style={styles.transactionCard}>
-    <View style={[styles.transactionContent, { backgroundColor: '#FFF9F2' }]}>
+    <View style={[styles.transactionContent, { backgroundColor: "#FFF9F2" }]}>
       <View style={styles.transactionHeader}>
         <Text style={styles.transactionAmount}>${amount}</Text>
         <View style={styles.checkContainer}>
@@ -45,9 +45,9 @@ const PendingTransaction = ({ amount, date }) => (
       </View>
       <View style={styles.statusRow}>
         <View style={styles.warningIcon}>
-          <Text style={{ color: '#FF9500' }}>!</Text>
+          <Text style={{ color: "#FF9500" }}>!</Text>
         </View>
-        <Text style={[styles.statusText, { color: '#FF9500' }]}>Pending</Text>
+        <Text style={[styles.statusText, { color: "#FF9500" }]}>Pending</Text>
       </View>
     </View>
   </View>
@@ -55,7 +55,7 @@ const PendingTransaction = ({ amount, date }) => (
 
 const CancelledTransaction = ({ amount, date }) => (
   <View style={styles.transactionCard}>
-    <View style={[styles.transactionContent, { backgroundColor: '#FFF0F0' }]}>
+    <View style={[styles.transactionContent, { backgroundColor: "#FFF0F0" }]}>
       <View style={styles.transactionHeader}>
         <Text style={styles.transactionAmount}>${amount}</Text>
         <View style={styles.checkContainer}>
@@ -64,18 +64,18 @@ const CancelledTransaction = ({ amount, date }) => (
         </View>
       </View>
       <View style={styles.statusRow}>
-        <View style={[styles.warningIcon, { backgroundColor: '#FFEFEF' }]}>
-          <Text style={{ color: '#FF3B30' }}>!</Text>
+        <View style={[styles.warningIcon, { backgroundColor: "#FFEFEF" }]}>
+          <Text style={{ color: "#FF3B30" }}>!</Text>
         </View>
-        <Text style={[styles.statusText, { color: '#FF3B30' }]}>Cancelled</Text>
+        <Text style={[styles.statusText, { color: "#FF3B30" }]}>Cancelled</Text>
       </View>
     </View>
   </View>
 );
 
 const ReceivedTransaction = ({ amount, date }) => (
-  <View style={[styles.transactionCard, { alignSelf: 'flex-start' }]}>
-    <View style={[styles.transactionContent, { backgroundColor: '#F0F8FF' }]}>
+  <View style={[styles.transactionCard, { alignSelf: "flex-start" }]}>
+    <View style={[styles.transactionContent, { backgroundColor: "#F0F8FF" }]}>
       <View style={styles.transactionHeader}>
         <Text style={styles.transactionAmount}>${amount}</Text>
         <View style={styles.checkContainer}>
@@ -84,10 +84,10 @@ const ReceivedTransaction = ({ amount, date }) => (
         </View>
       </View>
       <View style={styles.statusRow}>
-        <View style={[styles.receivedIcon, { backgroundColor: '#E6F2FF' }]}>
-          <Text style={{ color: '#007AFF' }}>✓</Text>
+        <View style={[styles.receivedIcon, { backgroundColor: "#E6F2FF" }]}>
+          <Text style={{ color: "#007AFF" }}>✓</Text>
         </View>
-        <Text style={[styles.statusText, { color: '#007AFF' }]}>Received</Text>
+        <Text style={[styles.statusText, { color: "#007AFF" }]}>Received</Text>
       </View>
     </View>
   </View>
@@ -95,7 +95,7 @@ const ReceivedTransaction = ({ amount, date }) => (
 
 const PaidTransaction = ({ amount, date }) => (
   <View style={styles.transactionCard}>
-    <View style={[styles.transactionContent, { backgroundColor: '#F0FFF4' }]}>
+    <View style={[styles.transactionContent, { backgroundColor: "#F0FFF4" }]}>
       <View style={styles.transactionHeader}>
         <Text style={styles.transactionAmount}>${amount}</Text>
         <View style={styles.checkContainer}>
@@ -104,10 +104,10 @@ const PaidTransaction = ({ amount, date }) => (
         </View>
       </View>
       <View style={styles.statusRow}>
-        <View style={[styles.successIcon, { backgroundColor: '#E6FFE8' }]}>
-          <Text style={{ color: '#34C759' }}>✓</Text>
+        <View style={[styles.successIcon, { backgroundColor: "#E6FFE8" }]}>
+          <Text style={{ color: "#34C759" }}>✓</Text>
         </View>
-        <Text style={[styles.statusText, { color: '#34C759' }]}>Paid</Text>
+        <Text style={[styles.statusText, { color: "#34C759" }]}>Paid</Text>
       </View>
     </View>
   </View>
@@ -118,35 +118,42 @@ const DropdownMenu = ({ onSelectItem }) => (
   <View style={styles.dropdownMenu}>
     <TouchableOpacity
       style={styles.menuItem}
-      onPress={() => onSelectItem('Statement')}
+      onPress={() => onSelectItem("Statement")}
     >
       <Text style={styles.menuItemText}>Statement</Text>
     </TouchableOpacity>
     <View style={styles.menuDivider} />
     <TouchableOpacity
       style={styles.menuItem}
-      onPress={() => onSelectItem('Help')}
+      onPress={() => onSelectItem("Help")}
     >
       <Text style={styles.menuItemText}>Help</Text>
     </TouchableOpacity>
   </View>
 );
 
-
-
 // Let's try a simple placeholder component first to verify the component area is rendering
 const PlaceholderChatComponent = ({ onTestPress }) => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f0f0' }}>
-    <Text style={{ fontSize: 16, marginBottom: 20 }}>Chat Component Placeholder</Text>
+  <View
+    style={{
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: "#f0f0f0",
+    }}
+  >
+    <Text style={{ fontSize: 16, marginBottom: 20 }}>
+      Chat Component Placeholder
+    </Text>
     <TouchableOpacity
       onPress={onTestPress}
       style={{
         padding: 15,
-        backgroundColor: '#2C6A3F',
-        borderRadius: 8
+        backgroundColor: "#2C6A3F",
+        borderRadius: 8,
       }}
     >
-      <Text style={{ color: 'white' }}>Test Button</Text>
+      <Text style={{ color: "white" }}>Test Button</Text>
     </TouchableOpacity>
   </View>
 );
@@ -184,8 +191,8 @@ const ContactTx = ({ route }) => {
   // Ensure user data is also complete for proper message identification
   const getUserData = useMemo(() => {
     const user = {
-      email: userData?.email || '',
-      username: userData?.username || ''
+      email: userData?.email || "",
+      username: userData?.username || "",
     };
 
     // Add email if missing but username exists
@@ -206,7 +213,7 @@ const ContactTx = ({ route }) => {
       // Use immediate navigation for clean exit
       navigation.goBack();
     } catch (error) {
-      console.log('Navigation error:', error);
+      console.log("Navigation error:", error);
       // Force navigation as fallback
       navigation.reset({
         index: 0,
@@ -220,11 +227,11 @@ const ContactTx = ({ route }) => {
   // Use a proper back handler
   useEffect(() => {
     // Add back press listener when component mounts
-    BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+    BackHandler.addEventListener("hardwareBackPress", handleBackPress);
 
     // Return cleanup function
     return () => {
-      BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
+      BackHandler.removeEventListener("hardwareBackPress", handleBackPress);
     };
   }, [handleBackPress]);
 
@@ -245,9 +252,9 @@ const ContactTx = ({ route }) => {
   // Get display name safely
   const getDisplayName = () => {
     try {
-      return (item?.nickname || 'Contact');
+      return item?.nickname || "Contact";
     } catch (e) {
-      return 'Contact';
+      return "Contact";
     }
   };
 
@@ -256,9 +263,14 @@ const ContactTx = ({ route }) => {
   // Get user identifier
   const getUserIdentifier = () => {
     try {
-      return item?.email?.trim() || item?.username?.trim() || item?.wallet_address || '';
+      return (
+        item?.email?.trim() ||
+        item?.username?.trim() ||
+        item?.wallet_address ||
+        ""
+      );
     } catch (e) {
-      return '';
+      return "";
     }
   };
 
@@ -266,23 +278,26 @@ const ContactTx = ({ route }) => {
   const handleMenuSelection = (option) => {
     setIsDropdownVisible(false);
 
-    if (option === 'Statement') {
-      navigation.navigate('Statement');
-    } else if (option === 'Help') {
-      alert('Help Selected');
+    if (option === "Statement") {
+      navigation.navigate("Statement");
+    } else if (option === "Help") {
+      alert("Help Selected");
     }
   };
 
-
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <TouchableWithoutFeedback onPress={() => {
-        setIsDropdownVisible(false)
-        // console.log("isDropdownVisible =>", isDropdownVisible)
-      }}>
+    <KeyboardAvoidingView style={{ flex: 1 }}>
+      <TouchableWithoutFeedback
+        onPress={() => {
+          setIsDropdownVisible(false);
+          // console.log("isDropdownVisible =>", isDropdownVisible)
+        }}
+      >
         <View style={{ flex: 1 }}>
-
-          <ScreenContainer padding={0} backgroundColor={theme.colors.palette.white}>
+          <ScreenContainer
+            padding={0}
+            backgroundColor={theme.colors.palette.white}
+          >
             {/* Header with profile and back button */}
             <View style={styles.headerContainer}>
               <View style={styles.header}>
@@ -291,7 +306,10 @@ const ContactTx = ({ route }) => {
                 <View style={styles.profileSection}>
                   <View style={styles.avatarContainer}>
                     {contactData?.image ? (
-                      <Image source={{ uri: contactData.image }} style={styles.avatar} />
+                      <Image
+                        source={{ uri: contactData.image }}
+                        style={styles.avatar}
+                      />
                     ) : (
                       <View style={styles.avatarFallback}>
                         <Text style={styles.avatarText}>
@@ -330,7 +348,10 @@ const ContactTx = ({ route }) => {
                 />
               ) : (
                 <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="large" color={theme.colors.palette.green700} />
+                  <ActivityIndicator
+                    size="large"
+                    color={theme.colors.palette.green700}
+                  />
                 </View>
               )}
             </View>
@@ -387,20 +408,20 @@ const ContactTx = ({ route }) => {
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     // backgroundColor: '#FFFFFF',
   },
   headerContainer: {
     // backgroundColor: '',
-    paddingTop: Platform.OS === 'ios' ? 44 : 0,
-    position: 'relative',
+    paddingTop: Platform.OS === "ios" ? 44 : 0,
+    position: "relative",
     zIndex: 10,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     padding: 15,
     marginTop: 5,
   },
@@ -408,13 +429,13 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F0F0F0',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#F0F0F0",
+    justifyContent: "center",
+    alignItems: "center",
   },
   profileSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
     paddingHorizontal: 10,
   },
@@ -422,52 +443,52 @@ const styles = StyleSheet.create({
     width: 45,
     height: 45,
     borderRadius: 22.5,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(255, 37, 99, 1)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    overflow: "hidden",
+    backgroundColor: "rgba(255, 37, 99, 1)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   avatar: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   avatarFallback: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
   },
   avatarText: {
     fontSize: 18,
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
   profileInfo: {
     marginLeft: 12,
   },
   profileName: {
     fontSize: 14,
-    color: '#000',
+    color: "#000",
     fontFamily: Fonts.bold,
   },
   profileId: {
     fontSize: 10,
-    color: 'grey',
+    color: "grey",
     fontFamily: Fonts.semibold,
   },
   menuButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   dropdownMenu: {
-    position: 'absolute',
+    position: "absolute",
     top: 75,
     right: 20,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 8,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
@@ -481,359 +502,366 @@ const styles = StyleSheet.create({
   },
   menuDivider: {
     height: 1,
-    backgroundColor: '#EEEEEE',
+    backgroundColor: "#EEEEEE",
   },
   menuItemText: {
     fontSize: 16,
-    color: '#000',
+    color: "#000",
     fontFamily: Fonts.regular,
   },
   keyboardAvoidView: {
     flex: 1,
-    display: 'flex',
+    display: "flex",
   },
   transactionListContainer: {
     flex: 1,
   },
   centerContent: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   // Bottom action bar
   bottomActions: {
     paddingHorizontal: 10,
     paddingBottom: 10,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderTopWidth: 1,
-    flexDirection: 'row',
-    borderTopColor: 'rgba(237, 237, 237, 1)',
+    flexDirection: "row",
+    borderTopColor: "rgba(237, 237, 237, 1)",
   },
   actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    width: '45%',
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    width: "45%",
     marginVertical: 5,
   },
   payButton: {
-    backgroundColor: 'black',
+    backgroundColor: "black",
     borderRadius: 15,
     paddingVertical: 8,
     // paddingHorizontal: 15,
-    justifyContent: 'center',
+    justifyContent: "center",
     marginLeft: 5,
-    width: '45%',
-    alignItems: 'center',
+    width: "45%",
+    alignItems: "center",
   },
   payButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 12,
     fontFamily: Fonts.semibold,
   },
   requestButton: {
-    backgroundColor: 'rgba(44, 106, 63, 1)',
+    backgroundColor: "rgba(44, 106, 63, 1)",
     borderRadius: 15,
     paddingVertical: 8,
     // paddingHorizontal: 15,
-    width: '45%',
-    alignItems: 'center',
+    width: "45%",
+    alignItems: "center",
   },
   requestButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 12,
     fontFamily: Fonts.semibold,
   },
   messageInputContainer: {
     borderWidth: 1,
-    borderColor: 'rgba(237, 237, 237, 1)',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    borderColor: "rgba(237, 237, 237, 1)",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     borderRadius: 40,
-    width: '55%',
-    alignSelf: 'flex-end',
+    width: "55%",
+    alignSelf: "flex-end",
     paddingHorizontal: 10,
     paddingVertical: 2,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     marginTop: 5,
   },
   messageInput: {
     flex: 1,
     paddingLeft: 5,
-    color: 'rgba(106, 106, 106, 1)',
+    color: "rgba(106, 106, 106, 1)",
     height: 40,
   },
   sendButton: {
     padding: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   backButtonText: {
     fontSize: 22,
-    color: '#333',
-    fontWeight: 'bold',
+    color: "#333",
+    fontWeight: "bold",
   },
   chatContainer: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: "white",
   },
 });
 
 export default ContactTx;
 
-
 const messageData = {
-  "status": true,
-  "message": "OK",
-  "data": {
-    "contact": {
-      "mobileno": "",
-      "email": "",
-      "wallet_address": "0x40C0c3132baAbE39e3002De9aA786088D86a5469",
-      "nickname": "rishabh",
-      "username": "rishabpay12"
+  status: true,
+  message: "OK",
+  data: {
+    contact: {
+      mobileno: "",
+      email: "",
+      wallet_address: "0x40C0c3132baAbE39e3002De9aA786088D86a5469",
+      nickname: "rishabh",
+      username: "rishabpay12",
     },
-    "interactions": [
+    interactions: [
       {
-        "type": "crypto_transaction",
-        "timestamp": "2025-04-21T06:42:16.027599Z",
-        "data": {
-          "sender__wallet_public_key": "0xd3C2A59CE57A28B927211A931Fc919d1683c6004",
-          "recipient__wallet_public_key": "0x40C0c3132baAbE39e3002De9aA786088D86a5469",
-          "amount": 10,
-          "status": "success",
-          "timestamp": "2025-04-21T06:42:16.027599Z",
-          "description": null,
-          "is_read": true
-        }
+        type: "crypto_transaction",
+        timestamp: "2025-04-21T06:42:16.027599Z",
+        data: {
+          sender__wallet_public_key:
+            "0xd3C2A59CE57A28B927211A931Fc919d1683c6004",
+          recipient__wallet_public_key:
+            "0x40C0c3132baAbE39e3002De9aA786088D86a5469",
+          amount: 10,
+          status: "success",
+          timestamp: "2025-04-21T06:42:16.027599Z",
+          description: null,
+          is_read: true,
+        },
       },
       {
-        "type": "crypto_transaction",
-        "timestamp": "2025-04-21T08:25:44.260292Z",
-        "data": {
-          "sender__wallet_public_key": "0xd3C2A59CE57A28B927211A931Fc919d1683c6004",
-          "recipient__wallet_public_key": "0x40C0c3132baAbE39e3002De9aA786088D86a5469",
-          "amount": 1,
-          "status": "success",
-          "timestamp": "2025-04-21T08:25:44.260292Z",
-          "description": null,
-          "is_read": true
-        }
+        type: "crypto_transaction",
+        timestamp: "2025-04-21T08:25:44.260292Z",
+        data: {
+          sender__wallet_public_key:
+            "0xd3C2A59CE57A28B927211A931Fc919d1683c6004",
+          recipient__wallet_public_key:
+            "0x40C0c3132baAbE39e3002De9aA786088D86a5469",
+          amount: 1,
+          status: "success",
+          timestamp: "2025-04-21T08:25:44.260292Z",
+          description: null,
+          is_read: true,
+        },
       },
       {
-        "type": "message",
-        "timestamp": "2025-04-21T08:31:37.194253Z",
-        "data": {
-          "sender__email": "payairotest12@yopmail.com",
-          "recipient__email": "rishabhsingh321@yopmail.com",
-          "content": "hello",
-          "timestamp": "2025-04-21T08:31:37.194253Z",
-          "is_read": true
-        }
+        type: "message",
+        timestamp: "2025-04-21T08:31:37.194253Z",
+        data: {
+          sender__email: "payairotest12@yopmail.com",
+          recipient__email: "rishabhsingh321@yopmail.com",
+          content: "hello",
+          timestamp: "2025-04-21T08:31:37.194253Z",
+          is_read: true,
+        },
       },
       {
-        "type": "message",
-        "timestamp": "2025-04-21T08:34:40.971209Z",
-        "data": {
-          "sender__email": "rishabhsingh321@yopmail.com",
-          "recipient__email": "payairotest12@yopmail.com",
-          "content": "Hyy",
-          "timestamp": "2025-04-21T08:34:40.971209Z",
-          "is_read": true
-        }
+        type: "message",
+        timestamp: "2025-04-21T08:34:40.971209Z",
+        data: {
+          sender__email: "rishabhsingh321@yopmail.com",
+          recipient__email: "payairotest12@yopmail.com",
+          content: "Hyy",
+          timestamp: "2025-04-21T08:34:40.971209Z",
+          is_read: true,
+        },
       },
       {
-        "type": "message",
-        "timestamp": "2025-04-21T08:37:04.002460Z",
-        "data": {
-          "sender__email": "rishabhsingh321@yopmail.com",
-          "recipient__email": "payairotest12@yopmail.com",
-          "content": "How are you ",
-          "timestamp": "2025-04-21T08:37:04.002460Z",
-          "is_read": true
-        }
+        type: "message",
+        timestamp: "2025-04-21T08:37:04.002460Z",
+        data: {
+          sender__email: "rishabhsingh321@yopmail.com",
+          recipient__email: "payairotest12@yopmail.com",
+          content: "How are you ",
+          timestamp: "2025-04-21T08:37:04.002460Z",
+          is_read: true,
+        },
       },
       {
-        "type": "message",
-        "timestamp": "2025-04-21T08:57:01.880480Z",
-        "data": {
-          "sender__email": "payairotest12@yopmail.com",
-          "recipient__email": "rishabhsingh321@yopmail.com",
-          "content": "Hey\n",
-          "timestamp": "2025-04-21T08:57:01.880480Z",
-          "is_read": true
-        }
+        type: "message",
+        timestamp: "2025-04-21T08:57:01.880480Z",
+        data: {
+          sender__email: "payairotest12@yopmail.com",
+          recipient__email: "rishabhsingh321@yopmail.com",
+          content: "Hey\n",
+          timestamp: "2025-04-21T08:57:01.880480Z",
+          is_read: true,
+        },
       },
       {
-        "type": "message",
-        "timestamp": "2025-04-21T09:42:59.890688Z",
-        "data": {
-          "sender__email": "payairotest12@yopmail.com",
-          "recipient__email": "rishabhsingh321@yopmail.com",
-          "content": "hello",
-          "timestamp": "2025-04-21T09:42:59.890688Z",
-          "is_read": true
-        }
+        type: "message",
+        timestamp: "2025-04-21T09:42:59.890688Z",
+        data: {
+          sender__email: "payairotest12@yopmail.com",
+          recipient__email: "rishabhsingh321@yopmail.com",
+          content: "hello",
+          timestamp: "2025-04-21T09:42:59.890688Z",
+          is_read: true,
+        },
       },
       {
-        "type": "message",
-        "timestamp": "2025-04-21T09:43:19.007911Z",
-        "data": {
-          "sender__email": "payairotest12@yopmail.com",
-          "recipient__email": "rishabhsingh321@yopmail.com",
-          "content": "Hey I am here",
-          "timestamp": "2025-04-21T09:43:19.007911Z",
-          "is_read": true
-        }
+        type: "message",
+        timestamp: "2025-04-21T09:43:19.007911Z",
+        data: {
+          sender__email: "payairotest12@yopmail.com",
+          recipient__email: "rishabhsingh321@yopmail.com",
+          content: "Hey I am here",
+          timestamp: "2025-04-21T09:43:19.007911Z",
+          is_read: true,
+        },
       },
       {
-        "type": "message",
-        "timestamp": "2025-04-21T09:44:01.460358Z",
-        "data": {
-          "sender__email": "rishabhsingh321@yopmail.com",
-          "recipient__email": "payairotest12@yopmail.com",
-          "content": "Hry",
-          "timestamp": "2025-04-21T09:44:01.460358Z",
-          "is_read": true
-        }
+        type: "message",
+        timestamp: "2025-04-21T09:44:01.460358Z",
+        data: {
+          sender__email: "rishabhsingh321@yopmail.com",
+          recipient__email: "payairotest12@yopmail.com",
+          content: "Hry",
+          timestamp: "2025-04-21T09:44:01.460358Z",
+          is_read: true,
+        },
       },
       {
-        "type": "message",
-        "timestamp": "2025-04-21T09:48:27.232113Z",
-        "data": {
-          "sender__email": "payairotest12@yopmail.com",
-          "recipient__email": "rishabhsingh321@yopmail.com",
-          "content": "Hey",
-          "timestamp": "2025-04-21T09:48:27.232113Z",
-          "is_read": true
-        }
+        type: "message",
+        timestamp: "2025-04-21T09:48:27.232113Z",
+        data: {
+          sender__email: "payairotest12@yopmail.com",
+          recipient__email: "rishabhsingh321@yopmail.com",
+          content: "Hey",
+          timestamp: "2025-04-21T09:48:27.232113Z",
+          is_read: true,
+        },
       },
       {
-        "type": "message",
-        "timestamp": "2025-04-21T09:48:36.385492Z",
-        "data": {
-          "sender__email": "rishabhsingh321@yopmail.com",
-          "recipient__email": "payairotest12@yopmail.com",
-          "content": "How are you ",
-          "timestamp": "2025-04-21T09:48:36.385492Z",
-          "is_read": true
-        }
+        type: "message",
+        timestamp: "2025-04-21T09:48:36.385492Z",
+        data: {
+          sender__email: "rishabhsingh321@yopmail.com",
+          recipient__email: "payairotest12@yopmail.com",
+          content: "How are you ",
+          timestamp: "2025-04-21T09:48:36.385492Z",
+          is_read: true,
+        },
       },
       {
-        "type": "message",
-        "timestamp": "2025-04-21T09:48:55.654539Z",
-        "data": {
-          "sender__email": "rishabhsingh321@yopmail.com",
-          "recipient__email": "payairotest12@yopmail.com",
-          "content": "Hey",
-          "timestamp": "2025-04-21T09:48:55.654539Z",
-          "is_read": true
-        }
+        type: "message",
+        timestamp: "2025-04-21T09:48:55.654539Z",
+        data: {
+          sender__email: "rishabhsingh321@yopmail.com",
+          recipient__email: "payairotest12@yopmail.com",
+          content: "Hey",
+          timestamp: "2025-04-21T09:48:55.654539Z",
+          is_read: true,
+        },
       },
       {
-        "type": "message",
-        "timestamp": "2025-04-21T09:49:05.394317Z",
-        "data": {
-          "sender__email": "payairotest12@yopmail.com",
-          "recipient__email": "rishabhsingh321@yopmail.com",
-          "content": "Hii",
-          "timestamp": "2025-04-21T09:49:05.394317Z",
-          "is_read": true
-        }
+        type: "message",
+        timestamp: "2025-04-21T09:49:05.394317Z",
+        data: {
+          sender__email: "payairotest12@yopmail.com",
+          recipient__email: "rishabhsingh321@yopmail.com",
+          content: "Hii",
+          timestamp: "2025-04-21T09:49:05.394317Z",
+          is_read: true,
+        },
       },
       {
-        "type": "message",
-        "timestamp": "2025-04-21T09:51:46.242638Z",
-        "data": {
-          "sender__email": "payairotest12@yopmail.com",
-          "recipient__email": "rishabhsingh321@yopmail.com",
-          "content": "hey",
-          "timestamp": "2025-04-21T09:51:46.242638Z",
-          "is_read": true
-        }
+        type: "message",
+        timestamp: "2025-04-21T09:51:46.242638Z",
+        data: {
+          sender__email: "payairotest12@yopmail.com",
+          recipient__email: "rishabhsingh321@yopmail.com",
+          content: "hey",
+          timestamp: "2025-04-21T09:51:46.242638Z",
+          is_read: true,
+        },
       },
       {
-        "type": "message",
-        "timestamp": "2025-04-21T09:54:07.608662Z",
-        "data": {
-          "sender__email": "payairotest12@yopmail.com",
-          "recipient__email": "rishabhsingh321@yopmail.com",
-          "content": "hii",
-          "timestamp": "2025-04-21T09:54:07.608662Z",
-          "is_read": true
-        }
+        type: "message",
+        timestamp: "2025-04-21T09:54:07.608662Z",
+        data: {
+          sender__email: "payairotest12@yopmail.com",
+          recipient__email: "rishabhsingh321@yopmail.com",
+          content: "hii",
+          timestamp: "2025-04-21T09:54:07.608662Z",
+          is_read: true,
+        },
       },
       {
-        "type": "message",
-        "timestamp": "2025-04-21T09:56:31.347244Z",
-        "data": {
-          "sender__email": "payairotest12@yopmail.com",
-          "recipient__email": "rishabhsingh321@yopmail.com",
-          "content": "hey",
-          "timestamp": "2025-04-21T09:56:31.347244Z",
-          "is_read": true
-        }
+        type: "message",
+        timestamp: "2025-04-21T09:56:31.347244Z",
+        data: {
+          sender__email: "payairotest12@yopmail.com",
+          recipient__email: "rishabhsingh321@yopmail.com",
+          content: "hey",
+          timestamp: "2025-04-21T09:56:31.347244Z",
+          is_read: true,
+        },
       },
       {
-        "type": "message",
-        "timestamp": "2025-04-21T10:03:26.837772Z",
-        "data": {
-          "sender__email": "payairotest12@yopmail.com",
-          "recipient__email": "rishabhsingh321@yopmail.com",
-          "content": "hy",
-          "timestamp": "2025-04-21T10:03:26.837772Z",
-          "is_read": true
-        }
+        type: "message",
+        timestamp: "2025-04-21T10:03:26.837772Z",
+        data: {
+          sender__email: "payairotest12@yopmail.com",
+          recipient__email: "rishabhsingh321@yopmail.com",
+          content: "hy",
+          timestamp: "2025-04-21T10:03:26.837772Z",
+          is_read: true,
+        },
       },
       {
-        "type": "crypto_transaction",
-        "timestamp": "2025-04-21T10:04:08.988863Z",
-        "data": {
-          "sender__wallet_public_key": "0xd3C2A59CE57A28B927211A931Fc919d1683c6004",
-          "recipient__wallet_public_key": "0x40C0c3132baAbE39e3002De9aA786088D86a5469",
-          "amount": 1,
-          "status": "success",
-          "timestamp": "2025-04-21T10:04:08.988863Z",
-          "description": null,
-          "is_read": true
-        }
+        type: "crypto_transaction",
+        timestamp: "2025-04-21T10:04:08.988863Z",
+        data: {
+          sender__wallet_public_key:
+            "0xd3C2A59CE57A28B927211A931Fc919d1683c6004",
+          recipient__wallet_public_key:
+            "0x40C0c3132baAbE39e3002De9aA786088D86a5469",
+          amount: 1,
+          status: "success",
+          timestamp: "2025-04-21T10:04:08.988863Z",
+          description: null,
+          is_read: true,
+        },
       },
       {
-        "type": "crypto_transaction",
-        "timestamp": "2025-04-21T10:06:24.970485Z",
-        "data": {
-          "sender__wallet_public_key": "0xd3C2A59CE57A28B927211A931Fc919d1683c6004",
-          "recipient__wallet_public_key": "0x40C0c3132baAbE39e3002De9aA786088D86a5469",
-          "amount": 10,
-          "status": "success",
-          "timestamp": "2025-04-21T10:06:24.970485Z",
-          "description": null,
-          "is_read": true
-        }
+        type: "crypto_transaction",
+        timestamp: "2025-04-21T10:06:24.970485Z",
+        data: {
+          sender__wallet_public_key:
+            "0xd3C2A59CE57A28B927211A931Fc919d1683c6004",
+          recipient__wallet_public_key:
+            "0x40C0c3132baAbE39e3002De9aA786088D86a5469",
+          amount: 10,
+          status: "success",
+          timestamp: "2025-04-21T10:06:24.970485Z",
+          description: null,
+          is_read: true,
+        },
       },
       {
-        "type": "message",
-        "timestamp": "2025-04-21T10:15:52.117664Z",
-        "data": {
-          "sender__email": "payairotest12@yopmail.com",
-          "recipient__email": "rishabhsingh321@yopmail.com",
-          "content": "Hey",
-          "timestamp": "2025-04-21T10:15:52.117664Z",
-          "is_read": false
-        }
+        type: "message",
+        timestamp: "2025-04-21T10:15:52.117664Z",
+        data: {
+          sender__email: "payairotest12@yopmail.com",
+          recipient__email: "rishabhsingh321@yopmail.com",
+          content: "Hey",
+          timestamp: "2025-04-21T10:15:52.117664Z",
+          is_read: false,
+        },
       },
       {
-        "type": "message",
-        "timestamp": "2025-04-21T10:16:43.779533Z",
-        "data": {
-          "sender__email": "payairotest12@yopmail.com",
-          "recipient__email": "rishabhsingh321@yopmail.com",
-          "content": "hey",
-          "timestamp": "2025-04-21T10:16:43.779533Z",
-          "is_read": false
-        }
-      }
-    ]
-  }
-}
+        type: "message",
+        timestamp: "2025-04-21T10:16:43.779533Z",
+        data: {
+          sender__email: "payairotest12@yopmail.com",
+          recipient__email: "rishabhsingh321@yopmail.com",
+          content: "hey",
+          timestamp: "2025-04-21T10:16:43.779533Z",
+          is_read: false,
+        },
+      },
+    ],
+  },
+};

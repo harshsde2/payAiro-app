@@ -82,7 +82,7 @@ export const useChangePin = () => {
       return await apiClient.patch<ApiResponse<any>>(
         AUTH.CHANGE_PIN,
         payload,
-        false
+        true
       );
     },
     onSuccess: () => {},

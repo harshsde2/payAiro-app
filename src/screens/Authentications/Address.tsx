@@ -134,6 +134,7 @@ export default function Address() {
               cStyle={{ width: "48%" }}
               onSelected={setCountryCode}
               isCountry={true}
+              editable={true}
             />
             <TextInputField
               label="Postal Code"
@@ -171,6 +172,7 @@ const customStyles = (theme: Theme) =>
     },
     conntentContainer: {
       flex: 1,
+
       backgroundColor: "#fff",
       borderTopEndRadius: 32,
       borderTopStartRadius: 32,

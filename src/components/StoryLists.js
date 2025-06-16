@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -6,12 +6,12 @@ import {
   FlatList,
   StyleSheet,
   TouchableOpacity,
-} from 'react-native';
-import Fonts from '../constants/Fonts';
-import { useNavigation } from '@react-navigation/native';
-import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
-import { themes, useTheme } from 'styles';
-import { CustomText } from 'tsx-components';
+} from "react-native";
+import Fonts from "../constants/Fonts";
+import { useNavigation } from "@react-navigation/native";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { themes, useTheme } from "styles";
+import { CustomText } from "tsx-components";
 
 const CircleItem = ({ item, navigation, isVisble3 }) => {
   const { theme } = useTheme();
@@ -25,30 +25,38 @@ const CircleItem = ({ item, navigation, isVisble3 }) => {
             item: item ?? null,
             isVisble3,
           })
-        }>
-        <View style={[styles.circle, { backgroundColor: theme.colors.palette.green200 }]}>
+        }
+      >
+        <View
+          style={[
+            styles.circle,
+            { backgroundColor: theme.colors.palette.green200 },
+          ]}
+        >
           {item?.pending_requests && item?.pending_requests?.length > 0 && (
             <View
               style={{
                 width: 20,
                 height: 20,
                 borderRadius: 35,
-                justifyContent: 'center',
-                alignItems: 'center',
-                backgroundColor: 'blue',
-                position: 'absolute',
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: theme.colors.palette.red500,
+                position: "absolute",
                 top: 10,
                 right: -5,
                 zIndex: 999999,
-              }}>
+              }}
+            >
               <Text
                 style={{
-                  color: theme.colors.palette.green700,
+                  color: theme.colors.palette.white,
                   fontFamily: Fonts.semibold,
-                  textAlign: 'center',
+                  textAlign: "center",
                   fontSize: 12,
                   // paddingBottom: 5,
-                }}>
+                }}
+              >
                 {item?.pending_requests?.length ?? 0}
               </Text>
             </View>
@@ -67,15 +75,13 @@ const CircleItem = ({ item, navigation, isVisble3 }) => {
       </TouchableOpacity>
       {item?.unread_count > 0 && (
         <View style={styles.unreadBadge}>
-          <CustomText
-            variant="caption"
-            color={theme.colors.text.inverse}>
+          <CustomText variant="caption" color={theme.colors.text.inverse}>
             {item.unread_count}
           </CustomText>
         </View>
       )}
     </View>
-  )
+  );
 };
 
 export default function StoryLists({ data, isVisble3 }) {
@@ -85,7 +91,9 @@ export default function StoryLists({ data, isVisble3 }) {
       <FlatList
         data={data}
         horizontal
-        keyExtractor={(item, index) => `contact-${item?._id || item?.username || item?.email || index}`}
+        keyExtractor={(item, index) =>
+          `contact-${item?._id || item?.username || item?.email || index}`
+        }
         renderItem={({ item }) => (
           <CircleItem
             item={item}
@@ -104,7 +112,7 @@ export default function StoryLists({ data, isVisble3 }) {
 export const styles = StyleSheet.create({
   container: {
     // padding: -20,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     // flex: 1,
   },
   title: {
@@ -113,31 +121,31 @@ export const styles = StyleSheet.create({
     marginBottom: 10,
   },
   list: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   circleContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginRight: 10,
   },
   circle: {
     width: 60,
     height: 60,
     borderRadius: 35,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     // overflow: 'hidden',
   },
   unreadBadge: {
     backgroundColor: themes.light.colors.palette.green700,
     width: 20,
     height: 20,
-    position:'absolute',
-    top:5,
-    right:5,
+    position: "absolute",
+    top: 5,
+    right: 5,
     borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   initials: {
     color: themes.light.colors.palette.green700,
@@ -145,9 +153,9 @@ export const styles = StyleSheet.create({
     fontFamily: Fonts.semibold,
   },
   image: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   name: {
     marginTop: 5,

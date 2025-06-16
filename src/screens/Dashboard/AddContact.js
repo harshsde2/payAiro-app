@@ -148,16 +148,18 @@ export default function AddContact() {
           );
           return;
         }
+        useDispatchAction(setSuccessMsg("Contact added successfully"));
+        navigation.navigate(SCREENS.Dashboard);
+        setIsSubmitting(false);
 
         await queryClient.invalidateQueries(userContactKeys.recentContacts());
         await queryClient.refetchQueries(userContactKeys.recentContacts());
-
-        setIsSubmitting(false);
-        useDispatchAction(setSuccessMsg("Contact added successfully"));
-        navigation.navigate(SCREENS.Dashboard);
       },
       onError: (error) => {
-        console.error("Error adding contact:", error?.response || error);
+        console.error(
+          "Error adding contact:",
+          JSON.stringify(error?.response, null, 2) || error
+        );
         useDispatchAction(
           setErrorMsg("Failed to add contact. Please try again.")
         );
@@ -285,9 +287,9 @@ export default function AddContact() {
             title="Save Contact"
             cStyle={styles(theme).submitButton}
             onPress={handleSave}
-            disabled={!isFormValid() || isSubmitting}
+            disabled={isSubmitting}
             showLoader={true}
-            isLoading={isPending}
+            isLoading={isSubmitting}
           />
         </ScrollView>
       </View>

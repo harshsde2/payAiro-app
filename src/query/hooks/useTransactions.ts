@@ -10,6 +10,7 @@ export const transactionKeys = {
   list: () => [...transactionKeys.all, "list"] as const,
   detail: (id: string) => [...transactionKeys.all, "detail", id] as const,
   pending: () => [...transactionKeys.all, "pending"] as const,
+  payment: () => [...transactionKeys.all, "payment"] as const,
   merchant: () => [...transactionKeys.all, "merchant"] as const,
 };
 
@@ -45,6 +46,19 @@ export const usePendingRequests = () => {
         WALLET.PENDING_REQUESTS
       );
     },
+    staleTime: queryStaleTime.INSTANT_STALE_TIME, // 5 minutes
+  });
+};
+
+export const useUserPaymentRequests = () => {
+  return useQuery<ApiResponse<Transaction[]>>({
+    queryKey: transactionKeys.pending(),
+    queryFn: async () => {
+      return await apiClient.get<ApiResponse<Transaction[]>>(
+        WALLET.USER_REQUESTS
+      );
+    },
+    staleTime: queryStaleTime.INSTANT_STALE_TIME, // 5 minutes
   });
 };
 
