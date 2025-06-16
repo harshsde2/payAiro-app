@@ -1,0 +1,16 @@
+diff --git a/node_modules/react-native-signature-canvas/h5/html.js b/node_modules/react-native-signature-canvas/h5/html.js
+index 292fb87..d260207 100644
+--- a/node_modules/react-native-signature-canvas/h5/html.js
++++ b/node_modules/react-native-signature-canvas/h5/html.js
+@@ -160,9 +160,9 @@ export default (script) =>
+         <img style="position: absolute; top: 0; left: 0; pointer-events: none;" src=<%overlaySrc%> width=<%overlayWidth%> height=<%overlayHeight%> />
+       </div>
+       <div class="m-signature-pad--footer">
+-        <button type="button" class="button clear" data-action="clear"><%clear%></button>
++        <button type="button" style="font-size: 14px;" class="button clear" data-action="clear"><%clear%></button>
+         <div class="description"><%description%></div>
+-        <button type="button" class="button save" data-action="save"><%confirm%></button>
++        <button type="button" style="font-size: 14px;" class="button save" data-action="save"><%confirm%></button>
+       </div>
+     </div>
+   </div>
