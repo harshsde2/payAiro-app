@@ -1,48 +1,34 @@
-import { View, Text, AppState, Linking, Platform, Alert } from "react-native";
-import React, { useEffect, useState } from "react";
+import notifee, { AndroidStyle } from "@notifee/react-native";
+import messaging from "@react-native-firebase/messaging";
 import { NavigationContainer } from "@react-navigation/native";
-import AuthStack from "./src/navigations/AuthStack";
-import AppStack from "./src/navigations/AppStack";
-import {
-  getBiometric,
-  getGuide,
-  getToken,
-  getUser,
-  getWalletDataAuth,
-} from "./src/services/Auth";
+import React, { useEffect, useState } from "react";
+import { AppState, Linking, Platform } from "react-native";
+import ReactNativeBiometrics from "react-native-biometrics";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { useDispatch, useSelector } from "react-redux";
+import ErrorToast from "./src/components/ErrorToast";
 import useDispatchAction from "./src/hooks/useDispatchAction";
+import AppStack from "./src/navigations/AppStack";
+import AuthStack from "./src/navigations/AuthStack";
+import { NAVIGATION_SCREENS } from "./src/navigations/navigationConstants";
+import { PersistQueryProvider } from "./src/query/index";
 import {
   setActiveTab,
   setBiometricAvailable,
   setFcmToken,
-  setGuides,
   setLogin,
   setPendingRequest,
   setShowGuide,
-  setShowRedeemReward,
   setTokens,
-  setUserData,
   setWalletData,
 } from "./src/redux/slices/authenticationSlice";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  getMechentPay,
-  getPinFromSev,
-  getWallet,
-} from "./src/services/Services";
-import ErrorToast from "./src/components/ErrorToast";
 import SplashScreen from "./src/screens/Authentications/SplashScreen";
-import notifee, { AndroidStyle } from "@notifee/react-native";
-import messaging from "@react-native-firebase/messaging";
-import ReactNativeBiometrics from "react-native-biometrics";
-import { PersistQueryProvider, QueryProvider } from "./src/query/index";
-import { getItem, setItem, STORAGE_KEYS } from "./src/storage/mmkv";
+import { getBiometric, getWalletDataAuth } from "./src/services/Auth";
+import { getMechentPay } from "./src/services/Services";
+import { getItem, STORAGE_KEYS } from "./src/storage/mmkv";
 import { ThemeProvider } from "./src/styles";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import { NAVIGATION_SCREENS } from "./src/navigations/navigationConstants";
-import { setupQueryClientPersistence } from "./src/query/queryClient";
 import GlobalLoader from "./src/tsx-components/GlobalLoader";
-import { useUserPin } from "./src/query/hooks";
+import { LinkingPath } from "./src/utils/linking";
 
 export default function App() {
   // -------------------- Redux State --------------------
@@ -61,7 +47,6 @@ export default function App() {
   const [appState, setAppState] = useState(AppState.currentState);
   const [isFetching, setisFetching] = useState(true);
   const [lastBackgroundTime, setLastBackgroundTime] = useState(null);
-  const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
 
   // Initialize biometrics library
   const rnBiometrics = new ReactNativeBiometrics({
@@ -187,7 +172,14 @@ export default function App() {
   // Set up notification listener when component mounts
   useEffect(() => {
     if (Platform.OS == "android") {
+      console.log("step 1");
       const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+        console.log("step 3");
+        // Handle foreground messages
+        console.log(
+          "A new FCM message arrived!",
+          JSON.stringify(remoteMessage, null, 2)
+        );
         onDisplayNotification(remoteMessage);
       });
 
@@ -197,9 +189,11 @@ export default function App() {
     }
   }, []);
 
+  // console.log("step 1");
   // Request notification permissions and get FCM token
   React.useEffect(() => {
     if (Platform.OS == "android") {
+      console.log("step 2");
       getFCMToken();
 
       const unsubscribe = messaging().onMessage(async (remoteMessage) => {
@@ -231,6 +225,11 @@ export default function App() {
       sound: "default",
     });
 
+    if (remoteMessage?.data?.deeplink) {
+      Linking.openURL(remoteMessage.data.deeplink);
+    }
+    console.log("remoteMessage =>", JSON.stringify(remoteMessage, null, 2));
+
     await notifee.displayNotification({
       title: remoteMessage?.notification?.title,
       body: remoteMessage?.notification?.body,
@@ -250,6 +249,8 @@ export default function App() {
   const getFCMToken = async () => {
     await messaging().registerDeviceForRemoteMessages();
     const token = await messaging().getToken();
+
+    console.log("FCM Token =>", token);
 
     if (token) {
       useDispatchAction(setFcmToken(token));
@@ -276,6 +277,7 @@ export default function App() {
       <ThemeProvider>
         <PersistQueryProvider>
           <NavigationContainer
+            linking={LinkingPath}
             onStateChange={(state) => {
               const currentRoute = state.routes[state.index];
               // console.log('Current Screen:', currentRoute.name);

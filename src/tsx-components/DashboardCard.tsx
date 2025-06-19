@@ -7,17 +7,21 @@ import {
   Platform,
   ToastAndroid,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import React from "react";
 import Card from "./Card";
 import { Theme, useTheme } from "styles";
 import { useSelector } from "react-redux";
 import CustomText from "./CustomText";
-import { SvgXml } from "react-native-svg";
+import Svg, { SvgXml } from "react-native-svg";
 
 import {
   PayAiro_Green_logo,
   PayAiro_White_logo,
+  SVG_eye_off,
+  SVG_eye_off_white,
+  SVG_eye_on_white,
   SVGCopy2,
   SVGCopy3,
   SVGDoubleChevronGreen,
@@ -39,6 +43,9 @@ import FadeWrapper from "animations/animations-components/FadeWrapper";
 import useDispatchAction from "hooks/useDispatchAction";
 import { setisCrypto } from "redux/slices/authenticationSlice";
 import { setHeaderText, setTheme } from "redux/slices/animationSlice";
+import { queryClient } from "query/queryClient";
+import { userContactKeys } from "query/queryKeys";
+import { bankKeys } from "query/hooks";
 
 const CONFIGS = {
   CARD_WIDTH: "100%",
@@ -57,9 +64,11 @@ const DashboardCard = () => {
     totalDisbursable,
     totalDisbursablePending,
   } = useSelector((s: any) => s.authenticationSlice);
+
   const { theme } = useTheme();
   const styles = customStyles(theme);
-
+  const [showBalance, setShowBalance] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
   const renderCurrencySelector = () => (
     <TouchableOpacity
       style={[
@@ -137,6 +146,18 @@ const DashboardCard = () => {
     }
   };
 
+  const handleShowBalance = async (isShowBalance: boolean) => {
+    if (!isShowBalance) {
+      setIsLoading(true);
+      await queryClient.invalidateQueries(bankKeys.balance());
+      await queryClient.refetchQueries(bankKeys.balance());
+      setShowBalance(!showBalance);
+      setIsLoading(false);
+    } else {
+      setShowBalance(!showBalance);
+    }
+  };
+
   const BankingCard = () => {
     return (
       <View
@@ -173,13 +194,53 @@ const DashboardCard = () => {
               <CustomText color={theme.colors.palette.white} variant={"body1"}>
                 {"PayAiro Balance"}
               </CustomText>
-              <CustomText
-                numberOfLines={1}
-                color={theme.colors.palette.white}
-                variant={"h3"}
+              <View
+                style={{
+                  flexDirection: "row",
+                  gap: 10,
+                  alignItems: "center",
+                  // backgroundColor: "red",
+                  justifyContent: "center",
+                }}
               >
-                ${bankBalance?.bank_account?.usd}
-              </CustomText>
+                <CustomText
+                  numberOfLines={1}
+                  color={theme.colors.palette.white}
+                  variant={"h3"}
+                  style={{ textAlign: "center", textAlignVertical: "center" }}
+                >
+                  {showBalance
+                    ? `$${bankBalance?.bank_account?.usd}`
+                    : "$*****"}
+                </CustomText>
+                {isLoading && (
+                  <ActivityIndicator
+                    size="small"
+                    color={theme.colors.palette.white}
+                  />
+                )}
+                {!isLoading && (
+                  <>
+                    {showBalance ? (
+                      <SvgXml
+                        onPress={() => handleShowBalance(showBalance)}
+                        xml={SVG_eye_on_white}
+                        color={theme.colors.palette.white}
+                        width={20}
+                        height={20}
+                      />
+                    ) : (
+                      <SvgXml
+                        onPress={() => handleShowBalance(showBalance)}
+                        xml={SVG_eye_off_white}
+                        color={theme.colors.palette.white}
+                        width={20}
+                        height={20}
+                      />
+                    )}
+                  </>
+                )}
+              </View>
             </View>
             <View
               style={{

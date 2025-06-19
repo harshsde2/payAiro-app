@@ -797,7 +797,12 @@ const NewDashboard = () => {
     }
   }, [AllTradesHistorySuccess, AllTradesHistory, isSuccessRecentContacts]);
 
-  // console.log(JSON.stringify(AllTradesHistory, null, 2), "AllTradesHistory");
+  // console.log(
+  //   JSON.stringify(walletData?.TransactionFees_persentage, null, 2),
+  //   "AllTradesHistory"
+  // );
+
+  // console.log(JSON.stringify(tokens?.access, null, 2), "token");
 
   useEffect(() => {
     if (totalDisbursable || bankBalance) {
@@ -811,12 +816,11 @@ const NewDashboard = () => {
     }
   }, [bankBalance, walletData]);
 
-  // console.log("token =>", tokens?.access);
+  // console.log("token =>", JSON.stringify(walletData, null, 2));
 
   // Dispatched all the data into Redux store
   useEffect(() => {
     if (AllBankAccounts && AllBankAccounts.length > 0) {
-      // console.log("AllBankAccounts =>", AllBankAccounts);
       dispatch(setBankLists(AllBankAccounts));
     }
     if (bankBalanceData && Object.keys(bankBalanceData).length > 0) {
@@ -1094,10 +1098,13 @@ const NewDashboard = () => {
     } catch (error) {}
   };
 
-  // console.log("access =>",tokens)
   const hasKey = (bank: any, key: any) => bank.some((obj: any) => key in obj);
 
   const handleOpenLink = useCallback(async () => {
+    console.log(
+      "!hasKey(bankLists, bank_type) =>",
+      !hasKey(bankLists, "bank_type")
+    );
     if (!hasKey(bankLists, "bank_type")) {
       try {
         dispatch(setShowLoader(true));
@@ -1122,7 +1129,7 @@ const NewDashboard = () => {
       // console.log("mxExternalAccountDetails =>", mxExternalAccountDetails)
       dispatch(setErrorMsg("External account aleardy found"));
     }
-  }, []);
+  }, [bankLists]);
 
   // Memoize contact see all navigation
   const onContactSeeALl = useCallback(() => {
@@ -1173,10 +1180,10 @@ const NewDashboard = () => {
   }, [bankLists, bankBalance]);
 
   // console.log(
-  //   "sortedWeb3TxLists =>",
+  //   "processedBankAccounts =>",
   //   JSON.stringify(processedBankAccounts, null, 2)
   // );
-  //
+
   const handleEyeClick = (account_id: string) => {
     if (pinScreenRef.current) {
       pinScreenRef.current.toggleBalanceVisibility(account_id);
@@ -1659,7 +1666,12 @@ const NewDashboard = () => {
                               fontWeight: "400",
                             }}
                           >
-                            {`Total Available Balance`}
+                            {item?.account_number
+                              ? `${item.account_number.slice(
+                                  0,
+                                  2
+                                )}XXXX${item.account_number.slice(-4)}`
+                              : ""}
                           </CustomText>
                           <View
                             style={{
@@ -1687,7 +1699,7 @@ const NewDashboard = () => {
                                 }}
                               >
                                 {hiddenBalances[item.accountNumber]
-                                  ? "••••••"
+                                  ? "$••••••"
                                   : `$${item.balance}`}
                               </Text>
                               {!hiddenBalances[item.accountNumber] ? (

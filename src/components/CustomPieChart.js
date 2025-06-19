@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { View, StyleSheet, Animated, Text } from "react-native";
 import Svg, { G, Path, Text as SVGText } from "react-native-svg";
 import Fonts from "../constants/Fonts";
+import { themes } from "styles";
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -231,7 +232,7 @@ const styles = StyleSheet.create({
     height: 100,
     justifyContent: "flex-start",
     alignItems: "center",
-    backgroundColor: "green",
+    backgroundColor: themes.dark.colors.palette.green700,
     borderRadius: 30,
   },
   chartWrapper: {

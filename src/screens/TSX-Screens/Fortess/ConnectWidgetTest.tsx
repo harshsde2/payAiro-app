@@ -33,9 +33,9 @@ const ConnectWidgetTest = () => {
 
   useEffect(() => {
     useDispatchAction(setShowLoader(true));
-    setTimeout(() => {
+    return () => {
       useDispatchAction(setShowLoader(false));
-    }, 10000); // Simulate a delay for loading
+    };
   }, []);
 
   const handleFullOnboardingFlow = async (memberGUID: string) => {
@@ -46,6 +46,8 @@ const ConnectWidgetTest = () => {
 
       const accountResponse = await getAccountDetails();
       const account = accountResponse?.data?.data?.[0];
+
+      useDispatchAction(setShowLoader(false));
 
       if (!account) {
         throw new Error("No account found for this member.");
@@ -59,7 +61,6 @@ const ConnectWidgetTest = () => {
 
       const mapped = mapKeys(account) as any;
       await registerExternalAccount(mapped);
-
       await queryClient.invalidateQueries(bankKeys.allAccounts());
       await queryClient.refetchQueries(bankKeys.allAccounts());
 

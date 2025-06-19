@@ -29,6 +29,7 @@ export interface InputProps extends TextInputProps {
     | "twitter"
     | "web-search";
   maxLength?: number;
+  required?: boolean;
 }
 
 export interface GenericButtonProps {

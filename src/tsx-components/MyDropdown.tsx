@@ -1,19 +1,29 @@
 import React, { useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
+import { DropdownProps } from "react-native-element-dropdown/lib/typescript/components/Dropdown/model";
 import { Theme, useTheme } from "styles";
-
-interface MyDropdownProps {
-  placeholder?: string;
-  data: { label: string; value: string }[];
-  value: string | null;
-  onChange: (value: string) => void;
-  labelField?: string;
-  valueField?: string;
-  disable: boolean;
+import CustomText from "./CustomText";
+import Fonts from "constants/Fonts";
+interface DropdownItem {
+  label: string;
+  value: string;
 }
 
+interface MyDropdownProps
+  extends Omit<DropdownProps<DropdownItem>, "onChange"> {
+  placeholder?: string;
+  data: DropdownItem[];
+  value: string | null;
+  onChange: (value: string) => void;
+  labelField: keyof DropdownItem;
+  valueField: keyof DropdownItem;
+  disable: boolean;
+  label?: string;
+  required?: boolean;
+}
 const MyDropdown: React.FC<MyDropdownProps> = ({
+  label = "Select",
   placeholder = "Select item",
   data,
   value,
@@ -21,6 +31,8 @@ const MyDropdown: React.FC<MyDropdownProps> = ({
   labelField = "label",
   valueField = "value",
   disable = false,
+  required = false,
+  ...props
 }) => {
   const [isFocus, setIsFocus] = useState(false);
   const { theme } = useTheme();
@@ -28,6 +40,19 @@ const MyDropdown: React.FC<MyDropdownProps> = ({
 
   return (
     <View style={styles.container}>
+      {label && (
+        <CustomText
+          variant={"body2"}
+          style={{ fontFamily: Fonts.semibold, padding: 10 }}
+        >
+          {label}{" "}
+          {required && (
+            <CustomText color={theme.colors.palette.red500} variant={"body2"}>
+              *
+            </CustomText>
+          )}
+        </CustomText>
+      )}
       <Dropdown
         disable={disable}
         style={[
@@ -39,6 +64,10 @@ const MyDropdown: React.FC<MyDropdownProps> = ({
         inputSearchStyle={styles.inputSearchStyle}
         iconStyle={styles.iconStyle}
         data={data}
+        itemTextStyle={[
+          { fontFamily: theme.typography.fontFamily.montserrat },
+          props.itemTextStyle,
+        ]}
         search
         maxHeight={300}
         labelField={labelField}
@@ -52,6 +81,7 @@ const MyDropdown: React.FC<MyDropdownProps> = ({
           onChange(item[valueField]);
           setIsFocus(false);
         }}
+        {...props}
       />
     </View>
   );
@@ -72,6 +102,7 @@ const customStyles = (theme: Theme) =>
       borderWidth: 0.5,
       borderRadius: theme.spacing.spacing[8],
       paddingHorizontal: theme.spacing.spacing[4],
+      fontFamily: theme?.typography.fontFamily.montserrat,
     },
     placeholderStyle: {
       fontSize: 16,
@@ -79,6 +110,7 @@ const customStyles = (theme: Theme) =>
     },
     selectedTextStyle: {
       fontSize: 16,
+      fontFamily: theme?.typography.fontFamily.montserrat,
     },
     iconStyle: {
       width: 20,

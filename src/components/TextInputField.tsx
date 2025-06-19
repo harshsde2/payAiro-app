@@ -7,6 +7,7 @@ import { SvgXml } from "react-native-svg";
 import { SVGProfile3 } from "../constants/images";
 import { InputProps } from "./types";
 import { CustomText } from "tsx-components";
+import { useTheme } from "styles";
 
 const TextInputField: FC<InputProps> = (props) => {
   const {
@@ -26,9 +27,11 @@ const TextInputField: FC<InputProps> = (props) => {
     lStyle,
     keyboardType,
     maxLength,
+    required = false,
   } = props;
 
   const [isVisible, setisVisible] = useState(false);
+  const { theme } = useTheme();
   return (
     <>
       {isVisible && (
@@ -48,6 +51,11 @@ const TextInputField: FC<InputProps> = (props) => {
           style={{ fontFamily: Fonts.semibold, padding: 10, ...lStyle }}
         >
           {label}{" "}
+          {required && (
+            <CustomText color={theme.colors.palette.red500} variant={"body2"}>
+              *
+            </CustomText>
+          )}
         </CustomText>
         <View
           style={{

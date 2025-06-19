@@ -7,7 +7,7 @@ import { queryStaleTime } from "query/queryConfigs";
 // Query keys
 export const cryptoKeys = {
   all: ["crypto"] as const,
-  balance: () => [...cryptoKeys.all, "balance"] as const,
+  balance: () => [...cryptoKeys.all, "cryptoCheckBalance"] as const,
   trades: () => [...cryptoKeys.all, "trades"] as const,
   prices: () => [...cryptoKeys.all, "prices"] as const,
 };

@@ -16,6 +16,9 @@ import {
   SVG_done,
   SVG_eye_off,
   SVG_eye_on,
+  SVGDownArrow2,
+  SVGDownArrow3,
+  SVGLeftArrow,
   SVGLoggo,
 } from "constants/images";
 import Fonts from "constants/Fonts";
@@ -187,16 +190,36 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
         {errorMsg || successMsg ? <ErrorToast /> : null}
 
         <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.header}>
-            <View>
-              <CustomText style={styles.appTitle}>PayAiro App</CustomText>
-              {currentAccountForPin && (
-                <CustomText style={styles.accountText}>
-                  `****${currentAccountForPin.slice(-4)}`
-                </CustomText>
-              )}
+          <View
+            style={[
+              {
+                flexDirection: "row",
+                width: "100%",
+                backgroundColor: theme.colors.palette.green700,
+                paddingVertical: 5,
+                paddingHorizontal: 10,
+                justifyContent: "space-between",
+                alignItems: "center",
+              },
+            ]}
+          >
+            <SvgXml
+              width={60}
+              height={60}
+              xml={SVGLeftArrow}
+              onPress={() => setIsPinModalVisible(false)}
+            />
+            <View style={styles.header}>
+              <View>
+                <CustomText style={styles.appTitle}>PayAiro App</CustomText>
+                {currentAccountForPin && (
+                  <CustomText style={styles.accountText}>
+                    ****{currentAccountForPin.slice(-4)}
+                  </CustomText>
+                )}
+              </View>
+              <SvgXml xml={SVGLoggo} width={55} height={55} />
             </View>
-            <SvgXml xml={SVGLoggo} width={55} height={55} />
           </View>
 
           <View style={styles.mainContent}>
@@ -314,12 +337,15 @@ const customStyles = (theme: Theme) =>
       backgroundColor: "#FFFFFF",
     },
     header: {
+      flex: 1,
       backgroundColor: theme.colors.palette.green700,
       paddingVertical: 5,
-      paddingHorizontal: 20,
+
+      // paddingHorizontal: 20,
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
+      marginLeft: 10,
     },
     appTitle: {
       color: "#FFFFFF",

@@ -8,11 +8,14 @@ import useSelectorAction from "../hooks/useSelectorAction";
 import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "styles";
 import UserAvatar from "tsx-components/UserAvatar";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 
 export default function TransactionCard({ item, isCrypto, isMerchent }) {
   const { walletData, isCrypto: isCryptoView } = useSelectorAction();
   const navigation = useNavigation();
   const { theme } = useTheme();
+
+  // console.log("walletData item:", JSON.stringify(walletData, null, 2));
 
   const isTransactionbyProject = item?.project_name;
   const type = item?.type == "refund";
@@ -40,7 +43,7 @@ export default function TransactionCard({ item, isCrypto, isMerchent }) {
 
   const handlePress = () => {
     if (isMerchent) {
-      navigation.navigate("TransactionSuccess", {
+      navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_SUCCESS, {
         transactionDetails: [
           { "Order Id": item?.order_id },
           { "Sender ID": item?.sender_wallet },
@@ -64,7 +67,7 @@ export default function TransactionCard({ item, isCrypto, isMerchent }) {
         ],
       });
     } else {
-      navigation.navigate("TransactionSuccess", {
+      navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_SUCCESS, {
         transactionDetails: [
           { "Transaction Id": item?.transaction_id },
           {
@@ -99,7 +102,10 @@ export default function TransactionCard({ item, isCrypto, isMerchent }) {
           {!isCrypto && !isMerchent ? (
             <SvgXml xml={item?.type === "sell" ? SVGFailure : SVGSuccess} />
           ) : (
-            <UserAvatar item={item} />
+            <UserAvatar
+              currentUserWalletPublicKey={walletData?.wallet_public_key}
+              item={item}
+            />
           )}
           <View style={{ marginLeft: 10 }}>
             <Text

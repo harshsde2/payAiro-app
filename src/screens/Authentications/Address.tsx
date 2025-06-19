@@ -24,7 +24,7 @@ export default function Address() {
   const [locality, setLocality] = useState("");
 
   const [countryCode, setCountryCode] = useState({
-    country: "United States",
+    country: "+1",
     code: "+1",
     flag_image_url: "https://flagcdn.com/w320/us.png",
   });
@@ -131,7 +131,7 @@ export default function Address() {
               placeholder="Country"
               value={countryCode.country}
               onChange={handleInputChange(setCountryCode)}
-              cStyle={{ width: "48%" }}
+              cStyle={{ width: 80, marginRight: 10 }}
               onSelected={setCountryCode}
               isCountry={true}
               editable={true}

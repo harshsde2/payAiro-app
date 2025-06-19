@@ -25,6 +25,9 @@ export default function Rewards2() {
           flexDirection: "row",
           justifyContent: "flex-start",
           alignItems: "center",
+          // backgroundColor: "red",
+          flex: 1,
+          paddingHorizontal: 10,
         }}
       >
         <View
@@ -70,7 +73,7 @@ export default function Rewards2() {
           backgroundColor: "#000",
           paddingHorizontal: 10,
           paddingVertical: 5,
-          width: 100,
+          width: 80,
         }}
         tStyle={{ color: "white" }}
       />

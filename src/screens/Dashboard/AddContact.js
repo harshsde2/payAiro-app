@@ -24,6 +24,7 @@ import { getItem, setItem, STORAGE_KEYS } from "storage/mmkv";
 import { queryClient } from "query/queryClient";
 import { userContactKeys } from "query/queryKeys";
 import { useAddContact } from "query/hooks";
+import MyDropdown from "tsx-components/MyDropdown";
 
 export default function AddContact() {
   // Hooks
@@ -43,6 +44,7 @@ export default function AddContact() {
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState("email");
 
   // Handle back navigation
   const handleGoBack = useCallback(() => {
@@ -235,44 +237,64 @@ export default function AddContact() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles(theme).scrollContent}
         >
-          <TextInputField
-            label="Email"
-            placeholder="placeholder@gmail.com"
-            value={formData.email}
-            onChange={(value) => handleChange("email", value)}
-            error={errors.email}
+          <MyDropdown
+            required={true}
+            label={"Choose Contact Method"}
+            placeholder={"Choose Contact Method"}
+            data={[
+              { label: "Email", value: "email" },
+              { label: "PayAiro Tag", value: "payAiroTag" },
+              { label: "Contact Number", value: "contact" },
+            ]}
+            value={selectedMethod}
+            search={false}
+            itemTextStyle={{
+              fontSize: 14,
+              fontFamily: theme?.typography.fontFamily.montserrat,
+            }}
+            onChange={(item) => setSelectedMethod(item)}
           />
 
-          <TextInputField
-            label="Contact Number"
-            placeholder="+1 234567890"
-            value={formData.contactNumber}
-            onChange={(value) => handleChange("contactNumber", value)}
-            error={errors.contactNumber}
-          />
+          {selectedMethod === "email" && (
+            <TextInputField
+              label="Email"
+              required={true}
+              placeholder="placeholder@gmail.com"
+              value={formData.email}
+              onChange={(value) => handleChange("email", value)}
+              error={errors.email}
+            />
+          )}
+
+          {selectedMethod === "payAiroTag" && (
+            <TextInputField
+              label="PayAiro Tag"
+              required={true}
+              placeholder="Jhonwick3246"
+              value={formData.payAiroTag}
+              onChange={(value) => handleChange("payAiroTag", value)}
+              error={errors.payAiroTag}
+            />
+          )}
+
+          {selectedMethod === "contact" && (
+            <TextInputField
+              label="Contact Number"
+              placeholder="+1 234567890"
+              required={true}
+              value={formData.contactNumber}
+              onChange={(value) => handleChange("contactNumber", value)}
+              error={errors.contactNumber}
+            />
+          )}
 
           <TextInputField
             label="Nick Name"
             placeholder="Jhonwick"
+            required={true}
             value={formData.nickName}
             onChange={(value) => handleChange("nickName", value)}
             error={errors.nickName}
-          />
-
-          <TextInputField
-            label="Pay Airo Tag"
-            placeholder="Jhonwick3246"
-            value={formData.payAiroTag}
-            onChange={(value) => handleChange("payAiroTag", value)}
-            error={errors.payAiroTag}
-          />
-
-          <TextInputField
-            label="Wallet Address"
-            placeholder="0x2467jk...lko90"
-            value={formData.walletAddress}
-            onChange={(value) => handleChange("walletAddress", value)}
-            error={errors.walletAddress}
           />
 
           {errors.general ? (
@@ -317,5 +339,18 @@ const styles = (theme) =>
     },
     submitButton: {
       marginTop: theme.spacing.spacing.xl,
+    },
+    inputGroupContainer: {
+      marginBottom: theme.spacing.spacing.lg,
+      padding: theme.spacing.spacing.sm,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.colors.palette.grey100,
+      backgroundColor: theme.colors.palette.grey50,
+    },
+
+    inputGroupError: {
+      borderColor: theme.colors.error,
+      backgroundColor: theme.colors.error + "10", // light red tint
     },
   });

@@ -243,10 +243,10 @@ export default function Transaction() {
       }
     }
   };
-  console.log(
-    "formattedDataTx =>",
-    JSON.stringify(AllTransactions.data, null, 2)
-  );
+  // console.log(
+  //   "formattedDataTx =>",
+  //   JSON.stringify(AllTransactions.data, null, 2)
+  // );
   return (
     <ScreenContainer
       padding={0}

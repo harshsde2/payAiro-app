@@ -21,7 +21,7 @@ import {
 import { patchUser } from "../../services/Services";
 
 export default function Name(props: any) {
-  const { email, data } = props.route.params;
+  const { email, data } = props.route.params || {};
   const stepcount = "2";
 
   const navigation = useNavigation();
@@ -38,7 +38,7 @@ export default function Name(props: any) {
   const [isPending, setIsPending] = useState(false);
   const [checked, setchecked] = useState(false);
   const [countryCode, setCountryCode] = useState({
-    country: "United States",
+    country: "+1",
     code: "+1",
     flag_image_url: "https://flagcdn.com/w320/us.png",
   });
@@ -166,8 +166,8 @@ export default function Name(props: any) {
               countryCode={countryCode}
               label="Country"
               placeholder="Country"
-              value={countryCode.country}
-              cStyle={{ width: "38%" }}
+              value={countryCode.code}
+              cStyle={{ width: 80, marginRight: 10 }}
               // onSelected={setCountryCode}
               isCountry={true}
               editable={true}
@@ -178,7 +178,7 @@ export default function Name(props: any) {
               value={phone}
               onChange={setphone}
               keyboardType="numeric"
-              cStyle={{ width: "60%" }}
+              cStyle={{ flex: 1 }}
               maxLength={10}
             />
           </View>

@@ -5,7 +5,18 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>payAiro</string>
+<string>payAiro</string>
+
+<key>CFBundleURLTypes</key>
+<array>
+  <dict>
+    <key>CFBundleURLSchemes</key>
+    <array>
+      <string>payairo</string>
+    </array>
+  </dict>
+</array>
+
 	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
 	<key>NSContactsUsageDescription</key>

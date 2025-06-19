@@ -106,18 +106,20 @@ api.interceptors.response.use(
       // console.log("interceptors=>", error.config);
       // Only show this if NOT a public route
       if (status === 401 && !isPublicRoute) {
-        console.log("Token expired or unauthorized");
+        // console.log("Token expired or unauthorized");
         useDispatchAction(setErrorMsg("Token expired or unauthorized"));
       }
 
       if (status === 403 && !isPublicRoute) {
-        console.log("Forbidden access");
+        // console.log("Forbidden access");
         useDispatchAction(setErrorMsg("Forbidden access"));
       }
 
       if (status >= 500) {
         console.log("Server error, please try again later", requestUrl);
-        useDispatchAction(setErrorMsg("Server error, please try again later"));
+        useDispatchAction(
+          setErrorMsg("Something went wrong, please try again later")
+        );
       }
     } else if (error.request) {
       console.log("Network error, please check your connection");

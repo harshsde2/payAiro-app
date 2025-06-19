@@ -265,7 +265,6 @@ export default function ConfirmOTP() {
       const pinResp = await refetchUserPin();
 
       const pin = pinResp.data?.data.tpin;
-      // console.log("pin =>", pin.data);
 
       if (result.isSuccess && result.data?.data) {
         const walletData = result.data.data;
