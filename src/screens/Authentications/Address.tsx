@@ -24,8 +24,8 @@ export default function Address() {
   const [locality, setLocality] = useState("");
 
   const [countryCode, setCountryCode] = useState({
-    country: "+1",
-    code: "+1",
+    country: "",
+    code: "",
     flag_image_url: "https://flagcdn.com/w320/us.png",
   });
   const [postalCode, setPostalCode] = useState("");
@@ -101,14 +101,14 @@ export default function Address() {
         </View>
         <View style={{ marginVertical: 40 }}>
           <TextInputField
-            label="Residential Address"
-            placeholder="Residential Address"
+            label="Address 1"
+            placeholder="Address 1"
             value={residentialAddress}
             onChange={handleInputChange(setResidentialAddress)}
           />
           <TextInputField
-            label="Locality"
-            placeholder="Locality"
+            label="Address 2"
+            placeholder="Address 2"
             value={locality}
             onChange={handleInputChange(setLocality)}
           />
@@ -142,7 +142,7 @@ export default function Address() {
               placeholder="Postal Code"
               value={postalCode}
               onChange={handleInputChange(setPostalCode)}
-              cStyle={{ width: "48%" }}
+              cStyle={{ flex: 1 }}
               maxLength={5}
             />
           </View>

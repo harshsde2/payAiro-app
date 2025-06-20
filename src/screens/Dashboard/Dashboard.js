@@ -1104,7 +1104,7 @@ export default function Dashboard(props) {
                             marginTop: 0,
                           }}
                         >
-                          {!isCrypto ? "Holdings" : "Payairo Balance"}
+                          {!isCrypto ? "Holdings" : "PayAiro Balance"}
                         </Text>
                         <Text
                           style={{
@@ -1143,7 +1143,7 @@ export default function Dashboard(props) {
                             color: isCrypto ? "#fff" : "black",
                           }}
                         >
-                          {!isCrypto ? "" : "Payairo ID"}{" "}
+                          {!isCrypto ? "" : "PayAiro ID"}{" "}
                         </Text>
                         <Text
                           numberOfLines={1}

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,36 +7,36 @@ import {
   Image,
   Linking,
   TouchableOpacity,
-} from 'react-native';
-import CommonHeaderv2 from '../../HOC/CommonHeaderv2';
-import HeaderTitle from '../../components/HeaderTitle';
+} from "react-native";
+import CommonHeaderv2 from "../../HOC/CommonHeaderv2";
+import HeaderTitle from "../../components/HeaderTitle";
 import {
   SVGAddMore,
   SVGAdhar2,
   SVGKYCADhar,
   SVGLeftArrow,
   SVGPdf,
-} from '../../constants/images';
-import GenericButton from '../../components/GenericButton';
-import useSelectorAction from '../../hooks/useSelectorAction';
-import TextInputField from '../../components/TextInputField';
+} from "../../constants/images";
+import GenericButton from "../../components/GenericButton";
+import useSelectorAction from "../../hooks/useSelectorAction";
+import TextInputField from "../../components/TextInputField";
 import {
   setErrorMsg,
   setSuccessMsg,
   setUserData,
   setWalletData,
-} from '../../redux/slices/authenticationSlice';
-import {getKYC, patchKyc, patchUser} from '../../services/Services';
-import useDispatchAction from '../../hooks/useDispatchAction';
-import {setWalletDataAuth} from '../../services/Auth';
-import {useNavigation} from '@react-navigation/native';
-import Fonts from '../../constants/Fonts';
-import {SvgXml} from 'react-native-svg';
+} from "../../redux/slices/authenticationSlice";
+import { getKYC, patchKyc, patchUser } from "../../services/Services";
+import useDispatchAction from "../../hooks/useDispatchAction";
+import { setWalletDataAuth } from "../../services/Auth";
+import { useNavigation } from "@react-navigation/native";
+import Fonts from "../../constants/Fonts";
+import { SvgXml } from "react-native-svg";
 // import Pdf from 'react-native-pdf';
-import DocumentPicker from 'react-native-document-picker';
+import DocumentPicker from "react-native-document-picker";
 
 export default function Personal() {
-  const {walletData, tokens} = useSelectorAction();
+  const { walletData, tokens } = useSelectorAction();
   const [idProof1, setidProof1] = useState([]);
   const [idProof2, setidProof2] = useState([]);
   const navugatiion = useNavigation();
@@ -50,28 +50,28 @@ export default function Personal() {
         DocumentPicker.types.docx,
       ],
     });
-    console.log(result, 'result');
+    console.log(result, "result");
     if (result[0].size > maxFileSize) {
-      useDispatchAction(setErrorMsg('File Size should be less or 2MB'));
+      useDispatchAction(setErrorMsg("File Size should be less or 2MB"));
     } else {
       handleIdProof(result);
     }
   };
-  const handleIdProof = async proof => {
+  const handleIdProof = async (proof) => {
     try {
       const formData = new FormData();
-      formData.append('poi_doc', proof[0]);
+      formData.append("poi_doc", proof[0]);
 
       const datas = await patchKyc(formData, tokens?.access, true);
       if (datas) {
-        useDispatchAction(setSuccessMsg('ID Proof Updated Successfully'));
+        useDispatchAction(setSuccessMsg("ID Proof Updated Successfully"));
         getkycStep();
       } else {
-        useDispatchAction(setErrorMsg('Something went wrong'));
+        useDispatchAction(setErrorMsg("Something went wrong"));
       }
     } catch (error) {
       useDispatchAction(
-        setErrorMsg('Entity Too Large , Try To Upload Small File'),
+        setErrorMsg("Entity Too Large , Try To Upload Small File")
       );
     }
   };
@@ -89,7 +89,7 @@ export default function Personal() {
   useEffect(() => {
     getkycStep();
   }, []);
-  const [phone, setphone] = useState('');
+  const [phone, setphone] = useState("");
 
   const getkycStep = async () => {
     const kycData = await getKYC(tokens?.access);
@@ -100,61 +100,63 @@ export default function Personal() {
     }
   };
   const [formData, setFormData] = useState({
-    firstName: walletData?.name || '',
-    payairoTag: walletData?.username || '',
-    email: walletData?.account_email || '',
-    phoneNumber: phone || '',
-    address: walletData?.address || '',
+    firstName: walletData?.name || "",
+    payairoTag: walletData?.username || "",
+    email: walletData?.account_email || "",
+    phoneNumber: phone || "",
+    address: walletData?.address || "",
   });
 
+  console.log(" address =<>", JSON.stringify(kycStep, null, 2));
+
   const DETAILS_DATA = [
-    {key: 'PayAiro Tag', value: '#' + walletData?.username},
-    {key: 'Phone Number', value: kycStep?.mobile_number},
+    { key: "PayAiro Tag", value: "#" + walletData?.username },
+    { key: "Phone Number", value: kycStep?.mobile_number },
     {
-      key: 'Address',
-      value: `${kycStep?.address2}  ${kycStep?.street_address} `,
+      key: "Address",
+      value: `${kycStep?.address2 ?? ""}  ${kycStep?.street_address ?? ""}`,
     },
     {
-      key: 'City',
-      value: `${kycStep?.city}`,
+      key: "City",
+      value: `${kycStep?.city ?? ""}`,
     },
     {
-      key: 'State',
-      value: `${kycStep?.state}`,
+      key: "State",
+      value: `${kycStep?.state ?? ""}`,
     },
     {
-      key: 'Zipcode',
-      value: `${kycStep?.zip_code}`,
+      key: "Zipcode",
+      value: `${kycStep?.zip_code ?? ""}`,
     },
-    {key: 'Country', value: kycStep?.country},
-    {key: 'Currency', value: 'US Dollar'},
+    { key: "Country", value: kycStep?.country ?? "" },
+    { key: "Currency", value: "US Dollar" },
   ];
   const pdfDocs = [
     {
-      label: 'Address Proof',
+      label: "Address Proof",
       url: kycStep?.address_pov,
     },
     {
-      label: 'POI Document',
+      label: "POI Document",
       url: kycStep?.poi_doc,
     },
     {
-      label: 'Signature',
+      label: "Signature",
       url: kycStep?.signature,
     },
     {
-      label: 'Self Image',
+      label: "Self Image",
       url: kycStep?.selfimage,
     },
   ];
   // Handle input changes
   const handleInputChange = (field, value) => {
-    setFormData(prevState => ({
+    setFormData((prevState) => ({
       ...prevState,
       [field]: value,
     }));
   };
-  console.log(walletData, 'walletData');
+  console.log(walletData, "walletData");
   // Handle Save Changes button
   const handleSaveChanges = async () => {
     const payload = {
@@ -170,7 +172,7 @@ export default function Personal() {
     setWalletDataAuth(datas?.data?.data);
     useDispatchAction(setWalletData(datas?.data?.data));
     useDispatchAction(setUserData(datas?.data?.data));
-    navugatiion.navigate('Dashboard');
+    navugatiion.navigate("Dashboard");
   };
 
   return (
@@ -179,24 +181,27 @@ export default function Personal() {
       <View style={styles.container}>
         <View
           style={{
-            backgroundColor: 'rgba(226, 241, 227, 1)',
+            backgroundColor: "rgba(226, 241, 227, 1)",
             padding: 14,
             borderRadius: 20,
-          }}>
+          }}
+        >
           <View
             style={{
               padding: 10,
               borderRadius: 15,
-              backgroundColor: 'rgba(44, 106, 63, 1)',
-              flexDirection: 'row',
-              justifyContent: 'flex-start',
-              alignItems: 'center',
-            }}>
+              backgroundColor: "rgba(44, 106, 63, 1)",
+              flexDirection: "row",
+              justifyContent: "flex-start",
+              alignItems: "center",
+            }}
+          >
             <View
               style={[
                 styles.circle,
-                {backgroundColor: 'rgba(255, 172, 37, 1)'},
-              ]}>
+                { backgroundColor: "rgba(255, 172, 37, 1)" },
+              ]}
+            >
               {kycStep?.selfimage ? (
                 <Image
                   source={{
@@ -205,17 +210,18 @@ export default function Personal() {
                   style={styles.image}
                 />
               ) : (
-                <Text style={{...styles.initials, color: '#000'}}>
+                <Text style={{ ...styles.initials, color: "#000" }}>
                   {walletData?.name?.charAt(0)?.toUpperCase()}
                 </Text>
               )}
             </View>
-            <View style={{marginLeft: 15}}>
+            <View style={{ marginLeft: 15 }}>
               <Text
-                style={{fontFamily: Fonts.bold, color: 'white', fontSize: 16}}>
+                style={{ fontFamily: Fonts.bold, color: "white", fontSize: 16 }}
+              >
                 {walletData?.name}
               </Text>
-              <Text style={{fontFamily: Fonts.regular, color: 'white'}}>
+              <Text style={{ fontFamily: Fonts.regular, color: "white" }}>
                 {walletData?.account_email}
               </Text>
             </View>
@@ -223,27 +229,30 @@ export default function Personal() {
 
           <View
             style={{
-              flexDirection: 'row',
-              justifyContent: 'flex-start',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-            }}>
+              flexDirection: "row",
+              justifyContent: "flex-start",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
             {DETAILS_DATA.map((i, k) => (
-              <View style={{width: '40%', margin: 8}} key={k}>
+              <View style={{ width: "40%", margin: 8 }} key={k}>
                 <Text
                   style={{
-                    color: 'rgba(44, 106, 63, 1)',
+                    color: "rgba(44, 106, 63, 1)",
                     fontFamily: Fonts.regular,
-                    textAlign: k % 2 === 1 ? 'right' : 'left',
-                  }}>
+                    textAlign: k % 2 === 1 ? "right" : "left",
+                  }}
+                >
                   {i?.key}
                 </Text>
                 <Text
                   style={{
-                    color: 'black',
+                    color: "black",
                     fontFamily: Fonts.semibold,
-                    textAlign: k % 2 === 1 ? 'right' : 'left',
-                  }}>
+                    textAlign: k % 2 === 1 ? "right" : "left",
+                  }}
+                >
                   {i?.value}
                 </Text>
               </View>
@@ -252,20 +261,22 @@ export default function Personal() {
         </View>
         <Text
           style={{
-            color: 'black',
+            color: "black",
             fontSize: 18,
             fontFamily: Fonts.semibold,
             marginVertical: 10,
-          }}>
+          }}
+        >
           KYC Documents
         </Text>
         <View
           style={{
-            flexDirection: 'row',
-            justifyContent: 'flex-start',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-          }}>
+            flexDirection: "row",
+            justifyContent: "flex-start",
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
           {/* <SvgXml xml={SVGKYCADhar} />
           <SvgXml xml={SVGAdhar2} />
           <SvgXml xml={SVGAddMore} /> */}
@@ -316,31 +327,33 @@ export default function Personal() {
           </View> */}
           <View
             style={{
-              flexDirection: 'row',
-              justifyContent: 'flex-start',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-            }}>
+              flexDirection: "row",
+              justifyContent: "flex-start",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
             {pdfDocs.map((doc, index) =>
               doc.url ? (
                 <>
                   {/* PDF Pre */}
                   <TouchableOpacity
                     style={{
-                      backgroundColor: 'rgba(243, 251, 244, 1)',
+                      backgroundColor: "rgba(243, 251, 244, 1)",
                       padding: 10,
-                      width: '30%',
+                      width: "30%",
                       borderRadius: 20,
                       marginRight: 10,
                       marginVertical: 5,
                     }}
                     onPress={() => Linking.openURL(doc.url)}
-                    activeOpacity={0.8}>
+                    activeOpacity={0.8}
+                  >
                     <Image
                       source={{
                         uri: doc.url,
                       }}
-                      style={{resizeMode: 'cover', width: 80, height: 70}}
+                      style={{ resizeMode: "cover", width: 80, height: 70 }}
                     />
 
                     <Text
@@ -348,13 +361,14 @@ export default function Personal() {
                         fontFamily: Fonts.regular,
                         fontSize: 12,
                         marginVertical: 15,
-                        textAlign: 'center',
-                      }}>
+                        textAlign: "center",
+                      }}
+                    >
                       {doc.label}
                     </Text>
                   </TouchableOpacity>
                 </>
-              ) : null,
+              ) : null
             )}
             <SvgXml xml={SVGAddMore} onPress={handleUpload} />
           </View>
@@ -368,7 +382,7 @@ export default function Personal() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderTopEndRadius: 32,
     borderTopStartRadius: 32,
     padding: 20,
@@ -378,19 +392,19 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
   },
   initials: {
-    color: '#000',
+    color: "#000",
     fontSize: 18,
     fontFamily: Fonts.semibold,
   },
   image: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   inputContainer: {
     marginBottom: 15,
@@ -398,11 +412,11 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     marginBottom: 5,
-    color: '#333',
+    color: "#333",
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 8,
     padding: 10,
     fontSize: 16,

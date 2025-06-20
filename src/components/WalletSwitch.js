@@ -1,6 +1,12 @@
-import React, {useState, useRef} from 'react';
-import {View, Text, TouchableOpacity, Animated, StyleSheet} from 'react-native';
-import {SvgXml} from 'react-native-svg';
+import React, { useState, useRef } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Animated,
+  StyleSheet,
+} from "react-native";
+import { SvgXml } from "react-native-svg";
 
 const WalletSwitch = ({
   walletData,
@@ -32,63 +38,69 @@ const WalletSwitch = ({
   // Background color animation
   const backgroundColor = animation.interpolate({
     inputRange: [0, 1],
-    outputRange: ['#fff', '#81b0ff'], // Colors for off and on states
+    outputRange: ["#fff", "#81b0ff"], // Colors for off and on states
   });
 
   return (
     <Animated.View
       style={[
         styles.container,
-        {backgroundColor: backgroundColor}, // Animated background
+        { backgroundColor: backgroundColor }, // Animated background
       ]}
-      onTouchEnd={toggleSwitch}>
+      onTouchEnd={toggleSwitch}
+    >
       <View style={styles.content}>
         <View>
-          <Text style={{fontFamily: Fonts.semibold, color: 'black'}}>
+          <Text style={{ fontFamily: Fonts.semibold, color: "black" }}>
             Wallet Address:
           </Text>
           <Text
             numberOfLines={1}
             style={{
               fontFamily: Fonts.semibold,
-              color: 'black',
+              color: "black",
               fontSize: 12,
-              width: '80%',
-            }}>
+              width: "80%",
+            }}
+          >
             {walletData?.wallet_public_key}
           </Text>
           <Text
             style={{
               fontFamily: Fonts.semibold,
-              color: 'black',
+              color: "black",
               marginTop: 50,
-            }}>
-            Payairo Tokens
+            }}
+          >
+            PayAiro Tokens
           </Text>
           <Text
             style={{
               fontFamily: Fonts.bold,
-              color: 'black',
+              color: "black",
               fontSize: 30,
-            }}>
-            ${Number(balance).toFixed(2)}{' '}
+            }}
+          >
+            ${Number(balance).toFixed(2)}{" "}
             <TouchableOpacity
               onPress={() =>
                 navigation.navigate(SCREENS.ScanPay, {
-                  type: 'widthdraw',
+                  type: "widthdraw",
                 })
               }
               style={{
                 padding: 5,
-                backgroundColor: '#000',
+                backgroundColor: "#000",
                 borderRadius: 20,
-              }}>
+              }}
+            >
               <Text
                 style={{
-                  color: '#fff',
+                  color: "#fff",
                   fontFamily: Fonts.semibold,
                   fontSize: 10,
-                }}>
+                }}
+              >
                 Withdraw
               </Text>
             </TouchableOpacity>
@@ -98,8 +110,9 @@ const WalletSwitch = ({
         <Animated.View
           style={[
             styles.thumb,
-            {transform: [{translateX: thumbPosition}]}, // Animated thumb position
-          ]}>
+            { transform: [{ translateX: thumbPosition }] }, // Animated thumb position
+          ]}
+        >
           <SvgXml xml={SVGLogo2} />
         </Animated.View>
       </View>
@@ -114,12 +127,12 @@ const styles = StyleSheet.create({
     margin: 15,
   },
   content: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   thumb: {
-    position: 'absolute',
+    position: "absolute",
     right: 0,
     padding: 10,
   },

@@ -72,7 +72,7 @@ export default function TransactionSuccess(props) {
                   color: "black",
                   marginVertical: 15,
                   fontSize: 14,
-                  width: "60%",
+                  width: "40%",
                   textAlign: "right",
                 }}
               >

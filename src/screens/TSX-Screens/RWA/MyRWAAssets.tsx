@@ -295,7 +295,7 @@ const MyRWAAssets = () => {
       <View style={[styles.textInputAndFilterContainer]}>
         <View style={[styles.testInputContainer]}>
           <CustomSearchTextInput
-            placeholder="Search Name or Payairo tag..."
+            placeholder="Search Name or PayAiro tag..."
             placeholderTextColor={theme.colors.palette.green700}
             onChangeText={() => {}}
             value={searchText}

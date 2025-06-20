@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -10,23 +10,23 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-import Fonts from '../constants/Fonts';
-import GenericButton from './GenericButton';
-import {SCREENS} from '../constants/SCREENS';
-import {useNavigation} from '@react-navigation/native';
-import ReactNativeBiometrics from 'react-native-biometrics';
-import useSelectorAction from '../hooks/useSelectorAction';
-import {setBiometricAvailable} from '../redux/slices/authenticationSlice';
-import useDispatchAction from '../hooks/useDispatchAction';
-import {setBiometric} from '../services/Auth';
-import {CARD_TYPE} from '../constants/constant';
-import {SvgXml} from 'react-native-svg';
-import {SVGCross, SVGKYC} from '../constants/images';
-import {getKYC} from '../services/Services';
+} from "react-native";
+import Fonts from "../constants/Fonts";
+import GenericButton from "./GenericButton";
+import { SCREENS } from "../constants/SCREENS";
+import { useNavigation } from "@react-navigation/native";
+import ReactNativeBiometrics from "react-native-biometrics";
+import useSelectorAction from "../hooks/useSelectorAction";
+import { setBiometricAvailable } from "../redux/slices/authenticationSlice";
+import useDispatchAction from "../hooks/useDispatchAction";
+import { setBiometric } from "../services/Auth";
+import { CARD_TYPE } from "../constants/constant";
+import { SvgXml } from "react-native-svg";
+import { SVGCross, SVGKYC } from "../constants/images";
+import { getKYC } from "../services/Services";
 
-const KYCFailureModal = ({isVisible, onClose, onCancel}) => {
-  const {biometricAvailable} = useSelectorAction();
+const KYCFailureModal = ({ isVisible, onClose, onCancel }) => {
+  const { biometricAvailable } = useSelectorAction();
   const rnBiometrics = new ReactNativeBiometrics({
     allowDeviceCredentials: true,
   });
@@ -39,38 +39,41 @@ const KYCFailureModal = ({isVisible, onClose, onCancel}) => {
       visible={isVisible}
       transparent={true}
       animationType="slide"
-      onRequestClose={onClose}>
+      onRequestClose={onClose}
+    >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <SvgXml
             xml={SVGCross}
-            style={{alignSelf: 'flex-end'}}
+            style={{ alignSelf: "flex-end" }}
             onPress={onClose}
           />
 
-          <SvgXml style={{alignSelf: 'center'}} xml={SVGKYC} />
+          <SvgXml style={{ alignSelf: "center" }} xml={SVGKYC} />
           <Text style={styles.headerText}>Oops!</Text>
 
           <Text
             style={{
               fontSize: 14,
               fontFamily: Fonts.regular,
-              color: 'grey',
-              textAlign: 'center',
+              color: "grey",
+              textAlign: "center",
               marginTop: 20,
-            }}>
+            }}
+          >
             It looks like your KYC verification isn’t complete yet.
           </Text>
           <Text
             style={{
               fontSize: 14,
               fontFamily: Fonts.regular,
-              color: 'grey',
-              textAlign: 'center',
-            }}>
-            Thank you for choosing Payairo! ßßß{' '}
+              color: "grey",
+              textAlign: "center",
+            }}
+          >
+            Thank you for choosing PayAiro! ßßß{" "}
           </Text>
-          <View style={{marginVertical: 10}}></View>
+          <View style={{ marginVertical: 10 }}></View>
         </View>
       </View>
     </Modal>
@@ -82,13 +85,13 @@ export default KYCFailureModal;
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    backgroundColor: '#fff',
-    width: '90%',
+    backgroundColor: "#fff",
+    width: "90%",
     borderTopEndRadius: 20,
     borderTopStartRadius: 20,
     padding: 20,
@@ -96,33 +99,33 @@ const styles = StyleSheet.create({
     // height: '40%',
     // marginTop: 500,
     // flex: 1,
-    position: 'absolute',
+    position: "absolute",
     borderRadius: 30,
   },
 
   headerText: {
     fontSize: 24,
     fontFamily: Fonts.bold,
-    color: 'rgba(29, 29, 29, 1)',
-    textAlign: 'center',
+    color: "rgba(29, 29, 29, 1)",
+    textAlign: "center",
     // marginBottom: 10,
     // marginTop: 15,
   },
   sectionHeader: {
     fontSize: 14,
     fontFamily: Fonts.medium,
-    color: '#333',
+    color: "#333",
     marginVertical: 10,
   },
   optionContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     marginVertical: 5,
   },
   radioButton: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 8,
@@ -130,47 +133,47 @@ const styles = StyleSheet.create({
   },
   checkbox: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 10,
     paddingHorizontal: 15,
     paddingVertical: 8,
     marginVertical: 5,
   },
   selectedOption: {
-    backgroundColor: '#4F378B',
-    borderColor: '#4F378B',
+    backgroundColor: "#4F378B",
+    borderColor: "#4F378B",
   },
   optionText: {
     fontSize: 14,
     fontFamily: Fonts.medium,
-    color: '#333',
+    color: "#333",
   },
   selectedText: {
-    color: '#fff',
+    color: "#fff",
   },
   buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 20,
   },
   clearButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     padding: 10,
     borderRadius: 10,
     flex: 0.4,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 2,
-    borderColor: 'black',
+    borderColor: "black",
   },
   applyButton: {
-    backgroundColor: '#4F378B',
+    backgroundColor: "#4F378B",
     padding: 10,
     borderRadius: 10,
     flex: 0.4,
-    alignItems: 'center',
+    alignItems: "center",
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontFamily: Fonts.medium,
     fontSize: 14,
   },

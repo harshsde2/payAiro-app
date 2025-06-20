@@ -240,7 +240,7 @@ export default function ContactScreen(props: any) {
         style={{ width: "100%", paddingHorizontal: 20, flex: 1, maxHeight: 70 }}
       >
         <CustomSearchTextInput
-          placeholder="Search Name or Payairo tag..."
+          placeholder="Search Name or PayAiro tag..."
           placeholderTextColor={theme.colors.palette.green700}
           onChangeText={handleSearch}
           value={searchText}

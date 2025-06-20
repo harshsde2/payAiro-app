@@ -17,6 +17,14 @@ export const globalStyles = (theme: Theme) =>
       padding: theme.spacing.spacing[5],
       marginTop: theme.spacing.spacing[5],
     },
+    CommonModalContainer: {
+      backgroundColor: theme.colors.palette.white,
+      borderTopEndRadius: theme.spacing.spacing[8],
+      borderTopStartRadius: theme.spacing.spacing[8],
+      padding: theme.spacing.spacing[5],
+      marginTop: theme.spacing.spacing[5],
+      // justifyContent: "flex-end",
+    },
     shadowContainer: {
       shadowColor: theme.colors.palette.black,
       shadowOffset: {

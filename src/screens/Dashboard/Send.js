@@ -82,7 +82,7 @@ export default function Send(props) {
                   props.route.params?.sender === undefined
                 }
                 label={type === "requested" ? "From" : "To"}
-                placeholder={"Name,$Airtag,Phone,Email"}
+                placeholder={"PayAiroTag, Phone, Email"}
                 isIcon={true}
                 value={sender}
                 onChange={setsender}
@@ -185,57 +185,62 @@ export default function Send(props) {
                   {isDropdown &&
                     bankLists &&
                     bankLists?.length > 0 &&
-                    bankLists.map((item, k) => (
-                      <TouchableOpacity
-                        onPress={() => {
-                          console.log(item, "item");
-                          setselectedBank(item);
-                          setisDropdown(false);
-                        }}
-                        key={k}
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "flex-start",
-                          alignItems: "center",
-                          marginVertical: 10,
-                          //   padding: 20,
-                        }}
-                      >
-                        <SvgXml xml={SVGUSD} width={40} height={40} />
-                        <View style={{ marginHorizontal: 10 }}>
-                          <Text
-                            style={{
-                              color: "black",
-                              fontSize: 16,
-                              fontFamily: Fonts.bold,
-                            }}
-                          >
-                            {item?.bank_name ?? item?.name}
-                            <CustomText
-                              variant={"body2"}
-                              color={theme?.colors.palette.green700}
-                              style={{ textTransform: "capitalize" }}
-                            >{` (${item?.account_type})`}</CustomText>
-                          </Text>
-                          <Text
-                            style={{
-                              color: "rgba(106, 106, 106, 0.7)",
-                              fontFamily: Fonts.semibold,
-                              fontSize: 10,
-                            }}
-                          >
-                            $
-                            {item?.balances?.available
-                              ? item?.balances?.available
-                              : item?.account_type === "rothIra"
-                              ? bankBalance?.roth_ira_account?.usd
-                              : item?.account_type === "traditionalIra"
-                              ? bankBalance?.traditional_ira_account?.usd
-                              : bankBalance?.bank_account?.usd}
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                    ))}
+                    bankLists
+                      .filter(
+                        (bank) =>
+                          !bank.account_type.toLowerCase().includes("ira")
+                      )
+                      .map((item, k) => (
+                        <TouchableOpacity
+                          onPress={() => {
+                            console.log(item, "item");
+                            setselectedBank(item);
+                            setisDropdown(false);
+                          }}
+                          key={k}
+                          style={{
+                            flexDirection: "row",
+                            justifyContent: "flex-start",
+                            alignItems: "center",
+                            marginVertical: 10,
+                            //   padding: 20,
+                          }}
+                        >
+                          <SvgXml xml={SVGUSD} width={40} height={40} />
+                          <View style={{ marginHorizontal: 10 }}>
+                            <Text
+                              style={{
+                                color: "black",
+                                fontSize: 16,
+                                fontFamily: Fonts.bold,
+                              }}
+                            >
+                              {item?.bank_name ?? item?.name}
+                              <CustomText
+                                variant={"body2"}
+                                color={theme?.colors.palette.green700}
+                                style={{ textTransform: "capitalize" }}
+                              >{` (${item?.account_type})`}</CustomText>
+                            </Text>
+                            <Text
+                              style={{
+                                color: "rgba(106, 106, 106, 0.7)",
+                                fontFamily: Fonts.semibold,
+                                fontSize: 10,
+                              }}
+                            >
+                              $
+                              {item?.balances?.available
+                                ? item?.balances?.available
+                                : item?.account_type === "rothIra"
+                                ? bankBalance?.roth_ira_account?.usd
+                                : item?.account_type === "traditionalIra"
+                                ? bankBalance?.traditional_ira_account?.usd
+                                : bankBalance?.bank_account?.usd}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      ))}
                 </View>
               </View>
             )}

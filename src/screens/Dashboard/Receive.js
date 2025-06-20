@@ -39,7 +39,7 @@ export default function Receive() {
         message: `
         Use following credentials
         Wallet Address:  ${walletData?.wallet_public_key} 
-        Payairo Tag : ${walletData?.username} 
+        PayAiro Tag : ${walletData?.username} 
         Email: ${walletData?.account_email}  
         or scan QR to send crypto`,
         url: uri,

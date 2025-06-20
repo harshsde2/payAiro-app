@@ -47,16 +47,22 @@ import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import PinScreen from "tsx-components/modals/PinScreen";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
+import { CustomText } from "tsx-components";
+import { useTheme } from "styles";
 
 export default function ScanPay(props) {
   const { type, sender, bank } = props?.route?.params;
+  const { theme } = useTheme();
 
   // console.log("props?.route?.params =>",JSON.stringify(props?.route?.params,null, 2))
-  // console.log("sender?.requester_details =>",JSON.stringify(sender,null, 2))
 
   const pinScreenRef = useRef(null);
 
-  const { tokens, isCrypto } = useSelectorAction();
+  const { tokens, isCrypto, walletData } = useSelectorAction();
+  // console.log(
+  //   "sender?.requester_details =>",
+  //   JSON.stringify(walletData, null, 2)
+  // );
   const [amount, setAmount] = useState("0"); // State to store the input value
   const navigation = useNavigation();
   const [spin, setspin] = useState(false);
@@ -156,6 +162,10 @@ export default function ScanPay(props) {
       formData.append("recipient", sender?.address ?? sender);
       formData.append("amount", sender?.amount ?? amount);
       formData.append(
+        "transaction_fees",
+        walletData?.TransactionFees_persentage
+      );
+      formData.append(
         "account_type",
         bank.bank_type == "external"
           ? "external"
@@ -165,6 +175,7 @@ export default function ScanPay(props) {
       );
       console.log(JSON.stringify(formData, null, 2), "payload Datatat");
       const data = await sendPayAero(formData, tokens?.access, true);
+      console.log("send resp ", JSON.stringify(data, null, 2));
       if (data && data.status) {
         navigation.navigate("TransactionSuccess", {
           data: data?.data?.transaction,
@@ -177,13 +188,17 @@ export default function ScanPay(props) {
             { Sender: data?.data?.sender_username },
             { "Receiver ID": data?.data?.recipient_username },
             { " Amount": data?.data?.amount },
-            { "Successfully Sent": data?.data?.amount },
+            { "Successfully Sent": data?.data?.final_amount },
+            {
+              "Transaction Fee Percentage": `${data?.data?.Transaction_fee_persentage} %`,
+            },
           ],
         });
       } else {
         useDispatchAction(
           setErrorMsg(
-            "Operation is forbidden. Custodial account is suspended or Level 2 KYC Pending"
+            data.data.error ||
+              "Operation is forbidden. Custodial account is suspended or Level 2 KYC Pending"
           )
         );
       }
@@ -312,6 +327,27 @@ export default function ScanPay(props) {
       : handleSend();
   };
 
+  function getAmountAfterDeduction(amount, percentage) {
+    const fee = (amount * percentage) / 100;
+    const finalAmount = amount - fee;
+    return parseFloat(finalAmount.toFixed(2)); // rounded to 2 decimal places
+  }
+
+  function getAmountAfterAddition(amount, percentage) {
+    const fee = (amount * percentage) / 100;
+    const finalAmount = amount + fee;
+    return parseFloat(finalAmount.toFixed(2)); // rounded to 2 decimal places
+  }
+
+  const isRequestMoney = type === "request" || type === "receive";
+
+  const result = getAmountAfterDeduction(
+    parseInt(amount),
+    parseInt(walletData?.TransactionFees_persentage)
+  );
+
+  const actualAmount = amount ? parseFloat(amount).toFixed(2) : "0.00";
+
   return (
     <ScreenContainer padding={0}>
       {/* Display the amount */}
@@ -349,47 +385,13 @@ export default function ScanPay(props) {
           }}
         />
       )}
-      {/* {pinvisible && (
-        <PincodeScreen
-          isNotDecimals={true}
-          onPress={async e => {
-            console.log("aagya ")
-            if (e.length === 4) {
-              const data = await getPin();
-              console.log(data, 'pins');
-              if (e === data) {
-                setpinvisible(false);
-                type === 'request'
-                  ? sender?.requester_details
-                    ? handleContactPayment()
-                    : handleMercentPayment()
-                  : type === 'requested'
-                    ? handleRequested()
-                    : type === 'merchantSend'
-                      ? handleSend()
-                      : type === 'receiveMerchent'
-                        ? handleMercentPayment()
-                        : type === 'crypto'
-                          ? handleCrypto()
-                          : handleSend();
-              } else {
-                useDispatchAction(
-                  setErrorMsg(
-                    'Please enter correct pin to proceed for payment',
-                  ),
-                );
-              }
-            }
 
-            // setshowPin(false);
-          }}
-        />
-      )} */}
       <PinScreen
         ref={pinScreenRef}
         onAction={handleActionsAfterPinVerified}
         accountNumber={bank?.account_number}
       />
+
       {!isCrypto && (
         <TouchableOpacity
           onPress={() => setisVisible2(true)}
@@ -434,6 +436,7 @@ export default function ScanPay(props) {
           </View>
         </TouchableOpacity>
       )}
+
       <HeaderTitle title={"Payment"} leftIcon={SVGLeftArrow} />
       <View
         style={{
@@ -452,6 +455,56 @@ export default function ScanPay(props) {
             : amount}
         </Text>
       </View>
+      <View style={{ marginTop: 20, alignItems: "center" }}>
+        {amount && (
+          <View
+            style={{
+              justifyContent: "center",
+              alignItems: "center",
+              width: "90%",
+              borderRadius: 12,
+              backgroundColor: "rgba(224, 239, 225, 1)",
+              padding: 10,
+              paddingHorizontal: 20,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                width: "100%",
+                paddingVertical: 10,
+              }}
+            >
+              <CustomText fontWeight={"regular"} style={{ flex: 1 }}>
+                Transaction Fee:
+              </CustomText>
+              <CustomText
+                fontWeight={"regular"}
+              >{`${walletData?.TransactionFees_persentage} %`}</CustomText>
+            </View>
+            <View
+              style={{
+                width: "100%",
+                height: 1,
+                backgroundColor: theme.colors.palette.green300,
+              }}
+            />
+            <View
+              style={{
+                flexDirection: "row",
+                width: "100%",
+                paddingVertical: 10,
+              }}
+            >
+              <CustomText fontWeight={"semiBold"} style={{ flex: 1 }}>
+                Amount you will pay:
+              </CustomText>
+              <CustomText fontWeight={"semiBold"}>{result}</CustomText>
+            </View>
+          </View>
+        )}
+      </View>
+
       {!isCrypto && (
         <TouchableOpacity
           onPress={() => setisVisible3(true)}
@@ -497,16 +550,6 @@ export default function ScanPay(props) {
       )}
 
       {/* Card display */}
-      <View
-        style={{
-          marginTop: 80,
-        }}
-      >
-        {/* <Text
-          style={{color: 'white', fontSize: 12, fontFamily: Fonts.semibold}}>
-          <SvgXml xml={SVGProfile} width={10} height={10} /> ****2286
-        </Text> */}
-      </View>
 
       {/* Pincode Keypad */}
       <PincodeKeypad

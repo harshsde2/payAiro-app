@@ -10,22 +10,22 @@ import {
   ScrollView,
   StatusBar,
   SafeAreaView,
-} from 'react-native';
-import React, {useRef} from 'react';
-import {ScreenContainer} from '../../HOC';
-import HeaderTitle from '../../components/HeaderTitle';
-import {SVGCopy, SVGLeftArrow} from '../../constants/images';
-import Fonts from '../../constants/Fonts';
-import {SvgXml} from 'react-native-svg';
-import useSelectorAction from '../../hooks/useSelectorAction';
-import ViewShot from 'react-native-view-shot';
-import QRCode from 'react-native-qrcode-svg';
-import Share from 'react-native-share';
-import { useNavigation } from '@react-navigation/native';
+} from "react-native";
+import React, { useRef } from "react";
+import { ScreenContainer } from "../../HOC";
+import HeaderTitle from "../../components/HeaderTitle";
+import { SVGCopy, SVGLeftArrow } from "../../constants/images";
+import Fonts from "../../constants/Fonts";
+import { SvgXml } from "react-native-svg";
+import useSelectorAction from "../../hooks/useSelectorAction";
+import ViewShot from "react-native-view-shot";
+import QRCode from "react-native-qrcode-svg";
+import Share from "react-native-share";
+import { useNavigation } from "@react-navigation/native";
 
 export default function ReceiveToken() {
-  const {walletData} = useSelectorAction();
-  const {selectedCrypto, networkLists, tokens} = useSelectorAction();
+  const { walletData } = useSelectorAction();
+  const { selectedCrypto, networkLists, tokens } = useSelectorAction();
   const navigation = useNavigation();
 
   const viewShotRef = useRef(null);
@@ -33,104 +33,116 @@ export default function ReceiveToken() {
     try {
       const uri = await viewShotRef.current.capture();
       const shareOptions = {
-        title: 'Wallet Address',
+        title: "Wallet Address",
         message: `
         Use following credentials
         Wallet Address:  ${walletData?.wallet_public_key} 
-        Payairo Tag : ${walletData?.username} 
+        PayAiro Tag : ${walletData?.username} 
         Email: ${walletData?.account_email}  
         or scan QR to send crypto`,
         url: uri,
-        type: 'image/png',
+        type: "image/png",
       };
       const res = await Share.open(shareOptions);
-      console.log('Share result:', res);
+      console.log("Share result:", res);
     } catch (err) {
-      console.log('Error sharing:', err);
+      console.log("Error sharing:", err);
     }
   };
-  
-  const copyToClipboard = e => {
+
+  const copyToClipboard = (e) => {
     Clipboard.setString(e);
 
     // Display a success message
-    if (Platform.OS === 'android') {
-      ToastAndroid.show('Wallet Address Copied', ToastAndroid.SHORT);
-    } else if (Platform.OS === 'ios') {
-      Alert.alert('Text copied to clipboard!');
+    if (Platform.OS === "android") {
+      ToastAndroid.show("Wallet Address Copied", ToastAndroid.SHORT);
+    } else if (Platform.OS === "ios") {
+      Alert.alert("Text copied to clipboard!");
     }
   };
-  
+
   return (
     <ScreenContainer>
-      <StatusBar backgroundColor="transparent" barStyle="dark-content" translucent={true} />
-      
-      <View style={{
-        paddingHorizontal: 15,
-        flex: 1,
-      }}>
-        <HeaderTitle 
-          title={'Receive Token'} 
-          leftIcon={SVGLeftArrow} 
+      <StatusBar
+        backgroundColor="transparent"
+        barStyle="dark-content"
+        translucent={true}
+      />
+
+      <View
+        style={{
+          paddingHorizontal: 15,
+          flex: 1,
+        }}
+      >
+        <HeaderTitle
+          title={"Receive Token"}
+          leftIcon={SVGLeftArrow}
           onPressLeft={() => navigation.goBack()}
         />
-        
-        <ScrollView 
+
+        <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             flexGrow: 1,
-            paddingBottom: 20
+            paddingBottom: 20,
           }}
         >
-          <View style={{
-            alignItems: 'center',
-            marginTop: 30,
-          }}>
+          <View
+            style={{
+              alignItems: "center",
+              marginTop: 30,
+            }}
+          >
             <Text
               style={{
-                textAlign: 'center',
-                color: '#000',
+                textAlign: "center",
+                color: "#000",
                 fontSize: 14,
                 fontFamily: Fonts.regular,
                 marginBottom: 10,
-              }}>
-              Available Token{' '}
+              }}
+            >
+              Available Token{" "}
             </Text>
-            
+
             <Text
               style={{
-                textAlign: 'center',
-                color: '#000',
+                textAlign: "center",
+                color: "#000",
                 fontSize: 42,
                 fontFamily: Fonts.bold,
-              }}>
+              }}
+            >
               {Number(selectedCrypto?.balance).toFixed(5)}
             </Text>
-            
+
             <TouchableOpacity
               style={{
-                backgroundColor: 'rgba(44, 106, 63, 1)',
+                backgroundColor: "rgba(44, 106, 63, 1)",
                 paddingHorizontal: 10,
                 paddingVertical: 8,
-                width: '35%',
+                width: "35%",
                 borderRadius: 40,
                 marginVertical: 15,
-              }}>
+              }}
+            >
               <Text
                 style={{
-                  textAlign: 'center',
-                  color: '#fff',
+                  textAlign: "center",
+                  color: "#fff",
                   fontFamily: Fonts.semibold,
-                }}>
+                }}
+              >
                 $ {Number(selectedCrypto?.balance_in_tether).toFixed(5)}
               </Text>
             </TouchableOpacity>
           </View>
-          
+
           <View
             style={{
               flex: 1,
-              backgroundColor: '#fff',
+              backgroundColor: "#fff",
               borderTopEndRadius: 32,
               borderTopStartRadius: 32,
               padding: 20,
@@ -143,14 +155,14 @@ export default function ReceiveToken() {
               shadowOpacity: 0.1,
               shadowRadius: 3.84,
               elevation: 5,
-            }}>
-            
-            <TouchableOpacity 
+            }}
+          >
+            <TouchableOpacity
               onPress={handleShare}
               style={{
-                alignSelf: 'center',
+                alignSelf: "center",
                 marginTop: 20,
-                backgroundColor: '#fff',
+                backgroundColor: "#fff",
                 padding: 15,
                 borderRadius: 20,
                 shadowColor: "#000",
@@ -165,67 +177,69 @@ export default function ReceiveToken() {
             >
               <ViewShot
                 ref={viewShotRef}
-                options={{format: 'png', quality: 0.9}}
+                options={{ format: "png", quality: 0.9 }}
                 style={{
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 <QRCode value={walletData?.wallet_public_key} size={200} />
               </ViewShot>
             </TouchableOpacity>
-            
+
             <View
               style={{
-                width: '100%',
-                alignSelf: 'center',
+                width: "100%",
+                alignSelf: "center",
                 borderRadius: 40,
                 borderWidth: 1,
-                borderColor: 'rgba(106, 106, 106, 0.12)',
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                borderColor: "rgba(106, 106, 106, 0.12)",
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
                 padding: 12,
                 marginTop: 40,
-                backgroundColor: 'rgba(106, 106, 106, 0.12)',
-              }}>
+                backgroundColor: "rgba(106, 106, 106, 0.12)",
+              }}
+            >
               <TextInput
                 value={walletData?.wallet_public_key}
                 editable={false}
                 style={{
-                  color: '#000',
+                  color: "#000",
                   fontFamily: Fonts.semibold,
-                  width: '85%',
+                  width: "85%",
                   fontSize: 10,
                 }}
               />
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => copyToClipboard(walletData?.wallet_public_key)}
                 style={{
-                  padding: 5
+                  padding: 5,
                 }}
               >
-                <SvgXml
-                  xml={SVGCopy}
-                />
+                <SvgXml xml={SVGCopy} />
               </TouchableOpacity>
             </View>
-            
+
             <TouchableOpacity
               onPress={handleShare}
               style={{
-                backgroundColor: 'rgba(44, 106, 63, 1)',
+                backgroundColor: "rgba(44, 106, 63, 1)",
                 paddingVertical: 12,
                 borderRadius: 40,
                 marginTop: 30,
-              }}>
+              }}
+            >
               <Text
                 style={{
-                  textAlign: 'center',
-                  color: '#fff',
+                  textAlign: "center",
+                  color: "#fff",
                   fontFamily: Fonts.semibold,
                   fontSize: 16,
-                }}>
+                }}
+              >
                 Share Address
               </Text>
             </TouchableOpacity>

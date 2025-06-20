@@ -1,4 +1,4 @@
-import { TextInputProps } from "react-native";
+import { StyleProp, TextInputProps, TextStyle, ViewStyle } from "react-native";
 
 export interface InputProps extends TextInputProps {
   countryCode?: any;
@@ -7,14 +7,14 @@ export interface InputProps extends TextInputProps {
   placeholder?: string;
   onSelected?: ((value: any) => void | undefined) | any;
   label?: string;
-  cStyle?: object; // or StyleProp<ViewStyle> if using React Native
+  cStyle?: StyleProp<ViewStyle>;
   isCountry?: boolean;
   isIcon?: boolean | null;
   isMultiLine?: boolean;
   icon?: string;
-  iStyle?: object; // or StyleProp<TextStyle>
+  iStyle?: StyleProp<TextStyle>;
   editable?: boolean;
-  lStyle?: object; // or StyleProp<TextStyle>
+  lStyle?: StyleProp<TextStyle>;
   keyboardType?:
     | "default"
     | "email-address"
@@ -30,6 +30,8 @@ export interface InputProps extends TextInputProps {
     | "web-search";
   maxLength?: number;
   required?: boolean;
+  info?: boolean;
+  onInfoPress?: () => void;
 }
 
 export interface GenericButtonProps {

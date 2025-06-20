@@ -175,6 +175,7 @@ export default function Notification() {
         </View>
       );
     }
+    // console.log("Notifications:", JSON.stringify(notifications, null, 2));
 
     // Using ScrollView instead of FlatList
     return (
@@ -206,7 +207,7 @@ export default function Notification() {
       />
 
       <View style={styles.container}>
-        <View style={styles.tabContainer}>
+        {/* <View style={styles.tabContainer}>
           {TAB_OPTIONS.map((tab) => (
             <TabButton
               key={tab.id}
@@ -215,7 +216,7 @@ export default function Notification() {
               onPress={() => setActiveTab(tab.id)}
             />
           ))}
-        </View>
+        </View> */}
         {renderContent()}
       </View>
     </ScreenContainer>

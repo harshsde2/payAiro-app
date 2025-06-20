@@ -64,7 +64,7 @@ export default function DebitCard(props) {
               marginTop: 5,
             }}>
             Linking an external account allows you to move money in and out of
-            your Payairo App balance.
+            your PayAiro App balance.
           </Text>
         </View>
         <View style={{marginVertical: 40}}>

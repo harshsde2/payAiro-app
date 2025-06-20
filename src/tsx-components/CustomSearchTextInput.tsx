@@ -28,7 +28,7 @@ interface CustomSearchTextInputProps extends TextInputProps {
 const CustomSearchTextInput: FC<CustomSearchTextInputProps> = ({
   value,
   onChangeText,
-  placeholder = "Search Name or Payairo tag...",
+  placeholder = "Search Name or PayAiro tag...",
   autoFocus = false,
   showClearButton = true,
   onClearPress,

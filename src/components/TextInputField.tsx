@@ -4,7 +4,7 @@ import Fonts from "../constants/Fonts";
 import CountryCodeModal from "./CountryCodeModal";
 import { CC } from "../constants/countryCode";
 import { SvgXml } from "react-native-svg";
-import { SVGProfile3 } from "../constants/images";
+import { SVGInfo, SVGProfile3 } from "../constants/images";
 import { InputProps } from "./types";
 import { CustomText } from "tsx-components";
 import { useTheme } from "styles";
@@ -28,6 +28,8 @@ const TextInputField: FC<InputProps> = (props) => {
     keyboardType,
     maxLength,
     required = false,
+    info = false,
+    onInfoPress,
   } = props;
 
   const [isVisible, setisVisible] = useState(false);
@@ -45,29 +47,38 @@ const TextInputField: FC<InputProps> = (props) => {
           }}
         />
       )}
-      <View style={{ ...cStyle }}>
-        <CustomText
-          variant={"body2"}
-          style={{ fontFamily: Fonts.semibold, padding: 10, ...lStyle }}
-        >
-          {label}{" "}
+      <View style={[cStyle]}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <CustomText
+            variant={"body2"}
+            style={[{ fontFamily: Fonts.semibold, padding: 10 }, lStyle]}
+          >
+            {label}{" "}
+          </CustomText>
           {required && (
             <CustomText color={theme.colors.palette.red500} variant={"body2"}>
               *
             </CustomText>
           )}
-        </CustomText>
+          {info && (
+            <View style={{}}>
+              <SvgXml onPress={onInfoPress} xml={SVGInfo} />
+            </View>
+          )}
+        </View>
         <View
-          style={{
-            borderRadius: 30,
-            borderWidth: 1,
-            borderColor: "#6A6A6A33",
-            flexDirection: "row",
-            justifyContent: isCountry ? "space-between" : "flex-start",
-            alignItems: "center",
-            paddingVertical: !countryCode ? 5 : 0,
-            ...iStyle,
-          }}
+          style={[
+            {
+              borderRadius: 30,
+              borderWidth: 1,
+              borderColor: "#6A6A6A33",
+              flexDirection: "row",
+              justifyContent: isCountry ? "space-between" : "flex-start",
+              alignItems: "center",
+              paddingVertical: !countryCode ? 5 : 0,
+            },
+            iStyle,
+          ]}
         >
           {countryCode && (
             <TouchableOpacity
@@ -81,10 +92,21 @@ const TextInputField: FC<InputProps> = (props) => {
                 paddingVertical: 15,
                 flexDirection: "row",
                 alignItems: "center",
-                justifyContent: "space-between",
+                justifyContent: "center",
               }}
             >
-              <Text
+              {countryCode?.code && (
+                <Text
+                  style={{
+                    fontFamily: Fonts.semibold,
+                    fontSize: isCountry ? 12 : 12,
+                    marginRight: 5,
+                  }}
+                >
+                  {isCountry ? countryCode?.code : countryCode?.country}
+                </Text>
+              )}
+              {/* <Text
                 style={{
                   fontFamily: Fonts.semibold,
                   fontSize: isCountry ? 12 : 12,
@@ -92,7 +114,7 @@ const TextInputField: FC<InputProps> = (props) => {
                 }}
               >
                 {isCountry ? countryCode?.country : countryCode?.code}
-              </Text>
+              </Text> */}
               <Image
                 source={{
                   uri: countryCode?.flag_image_url,

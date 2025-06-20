@@ -364,7 +364,7 @@ const CryptoFinanceSection = React.memo(
 
     return (
       <View>
-        <MemoizedDashboardSection
+        {/* <MemoizedDashboardSection
           title="Finance"
           actionText="see all"
           onActionPress={() => {}}
@@ -390,7 +390,7 @@ const CryptoFinanceSection = React.memo(
               </IconTextComponent>
             ))}
           </ScrollView>
-        </MemoizedDashboardSection>
+        </MemoizedDashboardSection> */}
         <MemoizedDashboardSection
           title="Utilities"
           actionText="see all"
@@ -1768,74 +1768,76 @@ const NewDashboard = () => {
                     />
                   </ScrollView>
                 </MemoizedDashboardSection>
-                <MemoizedDashboardSection
-                  title="PayAiro Contacts"
-                  actionText="see all"
-                  onActionPress={onContactSeeALl}
-                >
-                  {isLoadingAllContacts ? (
-                    // Skeleton loading for contacts
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-around",
-                        marginVertical: 15,
-                      }}
-                    >
-                      {[1, 2, 3, 4].map((_, index) => (
-                        <View key={index} style={{ alignItems: "center" }}>
-                          <View
-                            style={{
-                              width: 60,
-                              height: 60,
-                              borderRadius: 30,
-                              backgroundColor: theme.colors.palette.grey200,
-                            }}
-                          />
-                          <View
-                            style={{
-                              width: 40,
-                              height: 12,
-                              backgroundColor: theme.colors.palette.grey200,
-                              borderRadius: 4,
-                              marginTop: 8,
-                            }}
-                          />
-                        </View>
-                      ))}
-                    </View>
-                  ) : AllContacts && AllContacts?.allContacts.length > 0 ? (
-                    <MemoizedStoryLists
-                      data={AllContacts?.allContacts}
-                      isVisble3={isCrypto}
-                    />
-                  ) : (
-                    <TouchableOpacity
-                      onPress={() =>
-                        navigation.navigate(NAVIGATION_SCREENS.ADD_CONTACT)
-                      }
-                      style={{
-                        backgroundColor: "rgba(44, 106, 63, 1)",
-                        paddingBottom: 10,
-                        paddingTop: 7,
-                        paddingHorizontal: 10,
-                        borderRadius: 30,
-                        alignSelf: "center",
-                        marginTop: 20,
-                      }}
-                    >
-                      <Text
+                {isCrypto && (
+                  <MemoizedDashboardSection
+                    title="PayAiro Contacts"
+                    actionText="see all"
+                    onActionPress={onContactSeeALl}
+                  >
+                    {isLoadingAllContacts ? (
+                      // Skeleton loading for contacts
+                      <View
                         style={{
-                          color: "white",
-                          fontSize: 12,
-                          fontFamily: Fonts.semibold,
+                          flexDirection: "row",
+                          justifyContent: "space-around",
+                          marginVertical: 15,
                         }}
                       >
-                        + Add People
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </MemoizedDashboardSection>
+                        {[1, 2, 3, 4].map((_, index) => (
+                          <View key={index} style={{ alignItems: "center" }}>
+                            <View
+                              style={{
+                                width: 60,
+                                height: 60,
+                                borderRadius: 30,
+                                backgroundColor: theme.colors.palette.grey200,
+                              }}
+                            />
+                            <View
+                              style={{
+                                width: 40,
+                                height: 12,
+                                backgroundColor: theme.colors.palette.grey200,
+                                borderRadius: 4,
+                                marginTop: 8,
+                              }}
+                            />
+                          </View>
+                        ))}
+                      </View>
+                    ) : AllContacts && AllContacts?.allContacts.length > 0 ? (
+                      <MemoizedStoryLists
+                        data={AllContacts?.allContacts}
+                        isVisble3={isCrypto}
+                      />
+                    ) : (
+                      <TouchableOpacity
+                        onPress={() =>
+                          navigation.navigate(NAVIGATION_SCREENS.ADD_CONTACT)
+                        }
+                        style={{
+                          backgroundColor: "rgba(44, 106, 63, 1)",
+                          paddingBottom: 10,
+                          paddingTop: 7,
+                          paddingHorizontal: 10,
+                          borderRadius: 30,
+                          alignSelf: "center",
+                          marginTop: 20,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "white",
+                            fontSize: 12,
+                            fontFamily: Fonts.semibold,
+                          }}
+                        >
+                          + Add People
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </MemoizedDashboardSection>
+                )}
               </>
             )}
             {isCrypto && <CryptoFinanceSection navigation={navigation} />}
@@ -1847,76 +1849,7 @@ const NewDashboard = () => {
                 memoizedAllocationLists={memoizedAllocationLists}
               />
             )}
-            {!isCrypto && (
-              <MemoizedDashboardSection
-                title="PayAiro Contacts"
-                actionText="see all"
-                onActionPress={onContactSeeALl}
-              >
-                {isLoadingAllContacts ? (
-                  // Skeleton loading for contacts
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-around",
-                      marginVertical: 15,
-                    }}
-                  >
-                    {[1, 2, 3, 4].map((_, index) => (
-                      <View key={index} style={{ alignItems: "center" }}>
-                        <View
-                          style={{
-                            width: 60,
-                            height: 60,
-                            borderRadius: 30,
-                            backgroundColor: theme.colors.palette.grey200,
-                          }}
-                        />
-                        <View
-                          style={{
-                            width: 40,
-                            height: 12,
-                            backgroundColor: theme.colors.palette.grey200,
-                            borderRadius: 4,
-                            marginTop: 8,
-                          }}
-                        />
-                      </View>
-                    ))}
-                  </View>
-                ) : AllContacts && AllContacts?.allContacts.length > 0 ? (
-                  <MemoizedStoryLists
-                    data={AllContacts?.allContacts}
-                    isVisble3={isCrypto}
-                  />
-                ) : (
-                  <TouchableOpacity
-                    onPress={() =>
-                      navigation.navigate(NAVIGATION_SCREENS.ADD_CONTACT)
-                    }
-                    style={{
-                      backgroundColor: "rgba(44, 106, 63, 1)",
-                      paddingBottom: 10,
-                      paddingTop: 7,
-                      paddingHorizontal: 10,
-                      borderRadius: 30,
-                      alignSelf: "center",
-                      marginTop: 20,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: "white",
-                        fontSize: 12,
-                        fontFamily: Fonts.semibold,
-                      }}
-                    >
-                      + Add People
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </MemoizedDashboardSection>
-            )}
+
             {isCrypto && sortedTxLists.length > 0 && (
               <MemoizedDashboardSection
                 title="Recent Transactions"

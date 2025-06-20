@@ -98,7 +98,10 @@ export default function IntraAccountTransfer() {
         <MyDropdown
           label={"Source Account Type"}
           placeholder={"Source Account Type"}
-          data={DROPDOWN_LISTS}
+          data={DROPDOWN_LISTS.filter(
+            (item) => !item.value.toLowerCase().includes("ira")
+          )} // Filter out external accounts if needed
+          // Filter out external accounts if needed
           value={souceAccount}
           search={false}
           itemTextStyle={{

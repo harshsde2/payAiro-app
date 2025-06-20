@@ -3,7 +3,13 @@ import { ScreenContainer } from "HOC";
 import { SVGChecked, SVGUnChecked } from "constants/images";
 import { usePatchUserDetails, useStepCount } from "query/hooks/useAPIAuth";
 import React, { useRef, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SvgXml } from "react-native-svg";
 import { Theme, useTheme } from "styles";
 import { CustomText } from "tsx-components";
@@ -19,11 +25,14 @@ import {
   setUserData,
 } from "../../redux/slices/authenticationSlice";
 import { patchUser } from "../../services/Services";
+import CommonModal from "tsx-components/modals/CommonModal";
+import { useGlobalStyles } from "styles/GlobalStyles";
 
 export default function Name(props: any) {
   const { email, data } = props.route.params || {};
   const stepcount = "2";
 
+  const globalStyles = useGlobalStyles();
   const navigation = useNavigation();
   const termsAndConditionRef = useRef<any>(null);
 
@@ -37,6 +46,7 @@ export default function Name(props: any) {
   const [lname, setlname] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [checked, setchecked] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
   const [countryCode, setCountryCode] = useState({
     country: "+1",
     code: "+1",
@@ -90,7 +100,7 @@ export default function Name(props: any) {
         useDispatchAction(setUserData(datas?.data?.data));
         if (datas && datas?.status) {
           useDispatchAction(
-            setSuccessMsg("Name & Payairo Has Been Updated Successfully")
+            setSuccessMsg("Name & PayAiro Has Been Updated Successfully")
           );
           (navigation as any).navigate(SCREENS.Address);
         } else {
@@ -117,6 +127,14 @@ export default function Name(props: any) {
 
   return (
     <ScreenContainer scrollable padding={0}>
+      <CommonModal isVisible={showInfo} onClose={() => setShowInfo(false)}>
+        {/* <Pressable
+          onPress={(e) => e.stopPropagation()}
+          style={[globalStyles.CommonModalContainer, { paddingBottom: 20 }]}
+        >
+          <CustomText>Terms and Conditions</CustomText>
+        </Pressable> */}
+      </CommonModal>
       <View style={{ flex: 1 / 2.5 }}>
         <AuthHeader showAuthLogo={true} />
       </View>
@@ -156,10 +174,15 @@ export default function Name(props: any) {
             />
           </View>
           <TextInputField
-            label="Payairo Tag"
-            placeholder={"Create Payairo Tag"}
+            label="PayAiro Tag"
+            placeholder={"Create PayAiro Tag"}
             value={uname}
             onChange={setuname}
+            cStyle={{}}
+            info={true}
+            onInfoPress={() => {
+              setShowInfo(true);
+            }}
           />
           <View style={[styles.textInputContainer]}>
             <TextInputField
