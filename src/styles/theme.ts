@@ -3,12 +3,13 @@
  * Supports both light and dark themes
  */
 
-import { colors, ColorPalette } from './colors';
-import typography from './typography';
-import spacing from './spacing';
+import { colors, ColorPalette } from "./colors";
+import typography from "./typography";
+import spacing from "./spacing";
+import { verify } from "services/Services";
 
 // Theme type definition
-export type ThemeMode = 'light' | 'dark';
+export type ThemeMode = "light" | "dark";
 
 // Theme interface
 export interface Theme {
@@ -31,6 +32,17 @@ export interface Theme {
       light: string;
       dark: string;
     };
+    kycStatusDark: {
+      Pending: string;
+      Verified: string;
+      Rejected: string;
+    };
+    kycStatusLight: {
+      Pending: string;
+      Verified: string;
+      Rejected: string;
+    };
+
     shadow: {
       default: string;
       light: string;
@@ -62,7 +74,7 @@ export interface Theme {
 
 // Light theme
 export const lightTheme: Theme = {
-  mode: 'light',
+  mode: "light",
   colors: {
     background: {
       primary: colors.green50,
@@ -81,12 +93,22 @@ export const lightTheme: Theme = {
       dark: colors.grey400,
     },
     shadow: {
-      default: 'rgba(0, 0, 0, 0.1)',
-      light: 'rgba(0, 0, 0, 0.05)',
+      default: "rgba(0, 0, 0, 0.1)",
+      light: "rgba(0, 0, 0, 0.05)",
     },
     card: {
       background: colors.white,
       border: colors.grey200,
+    },
+    kycStatusDark: {
+      Pending: colors.pendingStatusDark,
+      Verified: colors.verifiedStatusDark,
+      Rejected: colors.rejectStatusDark,
+    },
+    kycStatusLight: {
+      Pending: colors.pendingStatusLight,
+      Verified: colors.verifiedStatusLight,
+      Rejected: colors.rejectStatusLight,
     },
     button: {
       primary: {
@@ -98,7 +120,7 @@ export const lightTheme: Theme = {
         text: colors.green800,
       },
       ghost: {
-        background: 'transparent',
+        background: "transparent",
         text: colors.primary,
       },
     },
@@ -110,7 +132,7 @@ export const lightTheme: Theme = {
 
 // Dark theme
 export const darkTheme: Theme = {
-  mode: 'dark',
+  mode: "dark",
   colors: {
     background: {
       primary: colors.grey900,
@@ -128,9 +150,19 @@ export const darkTheme: Theme = {
       light: colors.grey600,
       dark: colors.grey800,
     },
+    kycStatusDark: {
+      Pending: colors.pendingStatusDark,
+      Verified: colors.verifiedStatusDark,
+      Rejected: colors.rejectStatusDark,
+    },
+    kycStatusLight: {
+      Pending: colors.pendingStatusLight,
+      Verified: colors.verifiedStatusLight,
+      Rejected: colors.rejectStatusLight,
+    },
     shadow: {
-      default: 'rgba(0, 0, 0, 0.3)',
-      light: 'rgba(0, 0, 0, 0.2)',
+      default: "rgba(0, 0, 0, 0.3)",
+      light: "rgba(0, 0, 0, 0.2)",
     },
     card: {
       background: colors.grey800,
@@ -146,7 +178,7 @@ export const darkTheme: Theme = {
         text: colors.green100,
       },
       ghost: {
-        background: 'transparent',
+        background: "transparent",
         text: colors.green400,
       },
     },
@@ -162,4 +194,4 @@ export const themes = {
   dark: darkTheme,
 };
 
-export default themes; 
+export default themes;

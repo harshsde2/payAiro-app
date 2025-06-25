@@ -1383,7 +1383,7 @@ PODS:
     - React-Core
   - react-native-camera/RN (4.2.1):
     - React-Core
-  - react-native-contacts (8.0.5):
+  - react-native-contacts (8.0.4):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2739,7 +2739,7 @@ SPEC CHECKSUMS:
   react-native-blob-util: 489c3b8c69f91946df64275ff3c91326b5ac8c87
   react-native-blur: d81883c19b028d3d04b44126ea661ae9e7ff35b6
   react-native-camera: 3eae183c1d111103963f3dd913b65d01aef8110f
-  react-native-contacts: 7b92b355b1975fb7c01ac2e2dd1e4a18aade3d8a
+  react-native-contacts: 10c50e29036f3f2d38c9ea6bb30ae54957b05d1d
   react-native-date-picker: e4586d7f426fb213b922e6e4e9002a9b0db62200
   react-native-document-picker: 1e082836a633ca9e7c75758036ff42535baaf36b
   react-native-encrypted-storage: db300a3f2f0aba1e818417c1c0a6be549038deb7

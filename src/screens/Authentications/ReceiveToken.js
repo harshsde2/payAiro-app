@@ -114,7 +114,7 @@ export default function ReceiveToken() {
                 fontFamily: Fonts.bold,
               }}
             >
-              {Number(selectedCrypto?.balance).toFixed(5)}
+              {Number(selectedCrypto?.balance ?? 0.0).toFixed(5)}
             </Text>
 
             <TouchableOpacity
@@ -134,7 +134,7 @@ export default function ReceiveToken() {
                   fontFamily: Fonts.semibold,
                 }}
               >
-                $ {Number(selectedCrypto?.balance_in_tether).toFixed(5)}
+                $ {Number(selectedCrypto?.balance_in_tether ?? 0.0).toFixed(5)}
               </Text>
             </TouchableOpacity>
           </View>

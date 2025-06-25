@@ -1,5 +1,5 @@
 import { View, Text } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import Container from "../../HOC/Container";
 import { SvgCss, SvgXml } from "react-native-svg";
 import { SVGSucc } from "../../constants/images";
@@ -8,6 +8,10 @@ import { TRANSACTION_HISTORY } from "../../constants/constant";
 import GenericButton from "../../components/GenericButton";
 import { useNavigation } from "@react-navigation/native";
 import { SCREENS } from "../../constants/SCREENS";
+import { ScreenContainer } from "HOC";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { queryClient } from "query/queryClient";
+import { transactionKeys } from "query/hooks";
 
 export default function TransactionSuccess(props) {
   const { transactionDetails } = props?.route?.params;
@@ -17,10 +21,21 @@ export default function TransactionSuccess(props) {
     const value = entry[key];
     return { label: key, value };
   });
+
   const navigation = useNavigation();
 
+  const [isLoading, setIsLoading] = useState(false);
+
+  const onDone = async () => {
+    // setIsLoading(true);
+    // await queryClient.invalidateQueries(transactionKeys.pending());
+    // await queryClient.refetchQueries(transactionKeys.pending());
+    navigation.navigate(NAVIGATION_SCREENS.NEW_DASHBOARD);
+    // setIsLoading(false);
+  };
+
   return (
-    <Container>
+    <ScreenContainer scrollable padding={0}>
       <SvgXml
         xml={SVGSucc}
         style={{ alignSelf: "center", marginVertical: 20 }}
@@ -93,10 +108,12 @@ export default function TransactionSuccess(props) {
           <GenericButton
             title={"Done"}
             cStyle={{ marginTop: 40 }}
-            onPress={() => navigation.navigate(SCREENS.Dashboard)}
+            onPress={onDone}
+            showLoader={true}
+            isLoading={isLoading}
           />
         </View>
       </View>
-    </Container>
+    </ScreenContainer>
   );
 }

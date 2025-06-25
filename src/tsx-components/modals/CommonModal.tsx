@@ -8,6 +8,7 @@ import {
   GestureResponderEvent,
   SafeAreaView,
   Pressable,
+  ViewStyle,
 } from "react-native";
 import { SvgXml } from "react-native-svg";
 import Fonts from "../../constants/Fonts";
@@ -18,12 +19,18 @@ interface CommonModalProps {
   children?: React.ReactNode;
   isVisible: boolean;
   onClose: (event?: GestureResponderEvent) => void;
+  style?: ViewStyle;
+  containerStyle?: ViewStyle;
+  isOnOutsidePressClose?: boolean;
 }
 
 const CommonModal: React.FC<CommonModalProps> = ({
   isVisible,
   onClose,
   children,
+  style,
+  containerStyle,
+  isOnOutsidePressClose = true,
 }) => {
   return (
     <Modal
@@ -34,12 +41,19 @@ const CommonModal: React.FC<CommonModalProps> = ({
     >
       {/* <SafeAreaView style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.5)" }}> */}
       <Pressable
-        onPress={onClose}
-        style={{
-          flex: 1,
-          justifyContent: "flex-end",
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
+        onPress={() => {
+          if (isOnOutsidePressClose) {
+            onClose();
+          }
         }}
+        style={[
+          {
+            flex: 1,
+            justifyContent: "flex-end",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+          },
+          containerStyle,
+        ]}
       >
         {children}
       </Pressable>

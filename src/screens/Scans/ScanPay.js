@@ -49,20 +49,39 @@ import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
 import { CustomText } from "tsx-components";
 import { useTheme } from "styles";
+import MyDropdown from "tsx-components/MyDropdown";
 
 export default function ScanPay(props) {
   const { type, sender, bank } = props?.route?.params;
   const { theme } = useTheme();
 
-  // console.log("props?.route?.params =>",JSON.stringify(props?.route?.params,null, 2))
+  const { tokens, isCrypto, walletData, bankLists } = useSelectorAction();
+
+  const DROPDOWN_LISTS = bankLists.map((item) => {
+    const last4 = item.account_number?.slice(-4); // Get last 4 digits
+    const maskedAccount = `•••• ${last4}`;
+    const isExternalAccount =
+      item?.account_type === "checking" || item?.account_type === "savings";
+    const accountType = !isExternalAccount
+      ? item?.account_type.toUpperCase()
+      : "external"; // Fallback if account_type is not available
+
+    return {
+      label: `${item?.bank_name} (${maskedAccount}) ${accountType}`,
+      value: item?.account_type, // use account_id or any unique field as value
+    };
+  });
+
+  console.log("props?.route?.params =>", JSON.stringify(props?.route?.params));
 
   const pinScreenRef = useRef(null);
 
-  const { tokens, isCrypto, walletData } = useSelectorAction();
   // console.log(
   //   "sender?.requester_details =>",
   //   JSON.stringify(walletData, null, 2)
   // );
+  const [souceAccount, setsouceAccount] = useState("");
+
   const [amount, setAmount] = useState("0"); // State to store the input value
   const navigation = useNavigation();
   const [spin, setspin] = useState(false);
@@ -84,15 +103,15 @@ export default function ScanPay(props) {
   const handleContactPayment = async () => {
     setspin(true);
 
-    console.log(
-      "sender?.request_details?.request_id",
-      sender?.request_details?.request_id
-    );
+    // console.log(
+    //   "sender?.request_details?.request_id",
+    //   sender?.request_details?.request_id
+    // );
     const data = await payUserContact(
       sender?.request_details?.request_id,
       tokens?.access
     );
-    console.log(data, "datsPay");
+    // console.log(data, "datsPay");
     if (data && data?.data.status) {
       useDispatchAction(setSuccessMsg("Transaction Paid Successfully"));
       navigation.replace(SCREENS.Dashboard);
@@ -151,7 +170,7 @@ export default function ScanPay(props) {
   };
 
   const handleSend = async () => {
-    console.log(JSON.stringify(bank, null, 2), "bankkkkkkkk");
+    // console.log(JSON.stringify(bank, null, 2), "bankkkkkkkk");
     setspin(true);
     try {
       const payload = {
@@ -167,11 +186,13 @@ export default function ScanPay(props) {
       );
       formData.append(
         "account_type",
-        bank.bank_type == "external"
+        bank?.bank_type == "external"
           ? "external"
           : bank?.account_type === "personal"
           ? "bank"
           : bank
+          ? bank
+          : "bank"
       );
       console.log(JSON.stringify(formData, null, 2), "payload Datatat");
       const data = await sendPayAero(formData, tokens?.access, true);
@@ -329,7 +350,7 @@ export default function ScanPay(props) {
 
   function getAmountAfterDeduction(amount, percentage) {
     const fee = (amount * percentage) / 100;
-    const finalAmount = amount - fee;
+    const finalAmount = amount + fee;
     return parseFloat(finalAmount.toFixed(2)); // rounded to 2 decimal places
   }
 
@@ -342,7 +363,7 @@ export default function ScanPay(props) {
   const isRequestMoney = type === "request" || type === "receive";
 
   const result = getAmountAfterDeduction(
-    parseInt(amount),
+    parseInt(sender?.amount ?? amount),
     parseInt(walletData?.TransactionFees_persentage)
   );
 
@@ -443,7 +464,7 @@ export default function ScanPay(props) {
           justifyContent: "center",
           flexDirection: "row",
           alignItems: "center",
-          marginTop: 80,
+          // marginTop: 80,
         }}
       >
         <Text style={{ color: "#000", fontSize: 72, fontFamily: Fonts.bold }}>
@@ -503,6 +524,24 @@ export default function ScanPay(props) {
             </View>
           </View>
         )}
+        {/* {type == "receive" && (
+          <MyDropdown
+            // label={"Select Bank Account"}
+            placeholder={"Select Bank Account"}
+            data={DROPDOWN_LISTS.filter(
+              (item) => !item.value.toLowerCase().includes("ira")
+            )} // Filter out external accounts if needed
+            // Filter out external accounts if needed
+            value={souceAccount}
+            containerStyles={{ marginVertical: 10, width: "90%" }}
+            search={false}
+            itemTextStyle={{
+              fontSize: 14,
+              fontFamily: theme?.typography.fontFamily.montserrat,
+            }}
+            onChange={(item) => setsouceAccount(item)}
+          />
+        )} */}
       </View>
 
       {!isCrypto && (

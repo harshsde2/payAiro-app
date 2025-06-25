@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Pressable,
 } from "react-native";
 import React, { useCallback, useState } from "react";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -22,6 +23,7 @@ import ImageCarousel from "../CommonComponents/ImageCarousel";
 import { CustomText } from "tsx-components";
 import GenericButton from "components/GenericButton";
 import BuyNowModal from "../CommonComponents/BuyNowModal";
+import CommonModal from "tsx-components/modals/CommonModal";
 
 const TABS_ARRAY = [
   { name: "About", id: 0 },
@@ -33,6 +35,8 @@ const RealStateProfile = () => {
   const { theme } = useTheme();
   const styles = { ...customStyles(theme), ...myStyles(theme) };
   const route = useRoute<any>();
+
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   const { data, type } = route.params;
 
@@ -84,6 +88,7 @@ const RealStateProfile = () => {
           isSellingMode={isOwned}
         />
       )}
+
       <HeaderTitle
         title="Real State"
         leftIcon={SVGLeftArrow}

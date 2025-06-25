@@ -86,4 +86,5 @@ export const NAVIGATION_SCREENS = {
   MY_RWA_ASSETS: "MyRWAAssets",
   TRANSACTION_SUCCESS_SCREEN: "TransactionSuccessScreen",
   COMMON_ASSETS_SCREEN: "CommonAssetsScreen",
+  COMING_SOON: "ComingSoon",
 };

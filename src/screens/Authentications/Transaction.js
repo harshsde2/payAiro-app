@@ -245,7 +245,7 @@ export default function Transaction() {
   };
   // console.log(
   //   "formattedDataTx =>",
-  //   JSON.stringify(AllTransactions.data, null, 2)
+  //   JSON.stringify(formattedData(formattedDataTx), null, 2)
   // );
   return (
     <ScreenContainer
@@ -283,7 +283,10 @@ export default function Transaction() {
               </DashboardSection>
             )}
             {isCrypto && merchentLists?.length > 0 && (
-              <DashboardSection style={{}} title="Payment Requests">
+              <DashboardSection
+                style={{ marginTop: "auto" }}
+                title="Payment Requests"
+              >
                 {isCrypto &&
                   merchentLists?.length > 0 &&
                   merchentLists?.map((i, k) => (

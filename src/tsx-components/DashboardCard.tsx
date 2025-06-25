@@ -69,6 +69,7 @@ const DashboardCard = () => {
   const styles = customStyles(theme);
   const [showBalance, setShowBalance] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [isDisable, setIsDisable] = React.useState(false);
   const renderCurrencySelector = () => (
     <TouchableOpacity
       style={[
@@ -263,7 +264,7 @@ const DashboardCard = () => {
                 </CustomText>
                 <TouchableOpacity
                   onPress={() => {
-                    copyToClipboard("adsadasd");
+                    copyToClipboard(walletData.username);
                     // onCopy();
                   }}
                 >
@@ -281,7 +282,13 @@ const DashboardCard = () => {
             style={{ position: "absolute", left: -55, top: 0 }}
           />
           <TouchableOpacity
-            onPress={() => handleSwitchBankingView()}
+            onPress={() => {
+              setIsDisable(true);
+              setTimeout(() => {
+                setIsDisable(false);
+              }, ANIMATION_CONSTANTS.DURATION);
+              handleSwitchBankingView();
+            }}
             style={{
               flex: 1,
               backgroundColor: themeApp.inverseBackgroundColor,
@@ -295,6 +302,7 @@ const DashboardCard = () => {
               borderRadius: 20,
             }}
             activeOpacity={1}
+            disabled={isDisable}
           >
             <LottieView
               style={{ width: 40, height: 40, top: -5, right: 4 }}
@@ -390,7 +398,7 @@ const DashboardCard = () => {
                 </CustomText>
                 <TouchableOpacity
                   onPress={() => {
-                    copyToClipboard("adsadasd");
+                    copyToClipboard(walletData.username);
                     // onCopy();
                   }}
                 >
@@ -408,7 +416,13 @@ const DashboardCard = () => {
             style={{ position: "absolute", left: -55, top: 0 }}
           />
           <TouchableOpacity
-            onPress={() => handleSwitchCryptoView()}
+            onPress={() => {
+              setIsDisable(true);
+              setTimeout(() => {
+                setIsDisable(false);
+              }, ANIMATION_CONSTANTS.DURATION);
+              handleSwitchCryptoView();
+            }}
             style={{
               flex: 1,
               backgroundColor: themeApp.inverseBackgroundColor,
@@ -422,6 +436,7 @@ const DashboardCard = () => {
               borderRadius: 20,
             }}
             activeOpacity={1}
+            disabled={isDisable}
           >
             <LottieView
               style={{ width: 40, height: 40, top: -5, right: 4 }}

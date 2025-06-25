@@ -8,6 +8,7 @@ import { SVGInfo, SVGProfile3 } from "../constants/images";
 import { InputProps } from "./types";
 import { CustomText } from "tsx-components";
 import { useTheme } from "styles";
+import Tooltip from "react-native-walkthrough-tooltip";
 
 const TextInputField: FC<InputProps> = (props) => {
   const {

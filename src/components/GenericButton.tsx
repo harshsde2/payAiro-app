@@ -48,7 +48,7 @@ const GenericButton: FC<GenericButtonProps> = ({
           >
             {title}
           </CustomText>
-          {icon && <SvgXml xml={icon} />}
+          {icon && <SvgXml style={{ marginLeft: 10 }} xml={icon} />}
         </View>
       )}
 
@@ -82,5 +82,6 @@ const customStyles = (theme: Theme) =>
       width: "100%",
       justifyContent: "center",
       alignItems: "center",
+      flexDirection: "row",
     },
   });

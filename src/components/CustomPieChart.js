@@ -10,8 +10,10 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 const toRadians = (angle) => (Math.PI * angle) / 180;
 
 const CustomPieChart = React.memo(
-  ({ allocationLists = [], isTx = false, amount = 0 }) => {
+  ({ alloCationLists = [], isTx = false, amount = 0 }) => {
     const [segmentAnimations, setSegmentAnimations] = useState([]);
+
+    // console.log("alloCationLists =>", JSON.stringify(alloCationLists, null, 2));
 
     // Constants defined outside functions for better performance
     const outerRadius = isTx ? 70 : 100;
@@ -50,8 +52,8 @@ const CustomPieChart = React.memo(
 
     //
     const filteredData = useMemo(
-      () => allocationLists.filter((item) => item?.percentage > 0),
-      [allocationLists]
+      () => alloCationLists.filter((item) => item?.percentage > 0),
+      [alloCationLists]
     );
 
     //
@@ -159,7 +161,15 @@ const CustomPieChart = React.memo(
     return (
       <View style={containerStyle}>
         <View style={styles.chartWrapper}>
-          <Svg width={isTx ? 250 : 250} height={isTx ? 150 : 210}>
+          <Svg
+            style={{
+              width: "60%",
+              height: 150,
+              marginLeft: -50,
+            }}
+            // width={isTx ? 250 : 250}
+            // height={isTx ? 150 : 210}
+          >
             <G>
               {segments.map((segment, index) => {
                 const animatedOpacity =
@@ -189,17 +199,15 @@ const CustomPieChart = React.memo(
               <Text
                 style={{
                   color: "black",
-                  fontSize: 22,
-                  position: "absolute",
-                  top: -40,
-                  right: 80,
+                  fontSize: 28,
+                  marginBottom: 10,
                   fontFamily: Fonts.bold,
                 }}
               >
                 $ {amount}
               </Text>
             )}
-            {allocationLists.map((item, index) => {
+            {alloCationLists.map((item, index) => {
               // Memoize color style to avoid recreating objects
               const colorStyle = { backgroundColor: item.color };
               const textStyle = {
@@ -229,19 +237,22 @@ const CustomPieChart = React.memo(
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    height: 100,
+    // height: 300,
+    // flex: 1,
     justifyContent: "flex-start",
     alignItems: "center",
     backgroundColor: themes.dark.colors.palette.green700,
     borderRadius: 30,
   },
   chartWrapper: {
+    // flex: 1,
+    width: "100%",
     flexDirection: "row",
-    justifyContent: "flex-start",
+    justifyContent: "space-between",
     alignItems: "center",
   },
   legendContainer: {
-    // width: '40%',
+    // width: "40%",
   },
   legendRow: {
     flexDirection: "row",

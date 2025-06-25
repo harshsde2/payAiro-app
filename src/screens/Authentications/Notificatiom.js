@@ -4,7 +4,7 @@ import { SvgXml } from "react-native-svg";
 import { SVGProfile, SVGRightIcon } from "../../constants/images";
 import Fonts from "../../constants/Fonts";
 import moment from "moment";
-import { defaultCrypto, defaultImage } from "utils/configs";
+import { defaultCrypto, defaultImage, NotificationIcons } from "utils/configs";
 import UserAvatar from "tsx-components/UserAvatar";
 
 export default function Notificatiom({ item }) {
@@ -32,8 +32,16 @@ export default function Notificatiom({ item }) {
             borderRadius={50}
             src={defaultCrypto}
           /> */}
-          <UserAvatar style={{ width: 50, height: 50 }} item={item} />
-          <View style={{ width: "75%", marginLeft: 10 }}>
+          {!NotificationIcons[item?.title] ? (
+            <UserAvatar style={{ width: 50, height: 50 }} item={item} />
+          ) : (
+            <SvgXml
+              width={45}
+              height={45}
+              xml={NotificationIcons[item?.title]}
+            />
+          )}
+          <View style={{ marginLeft: 10, padding: 10 }}>
             <Text
               style={{ color: "black", fontFamily: Fonts.bold, fontSize: 16 }}
             >
@@ -52,9 +60,9 @@ export default function Notificatiom({ item }) {
             <Text>{moment(item?.created_at).format("LT")}</Text>
           </View>
         </View>
-        <View style={{ width: "25%" }}>
+        {/* <View style={{ width: "25%" }}>
           <SvgXml xml={SVGRightIcon} />
-        </View>
+        </View> */}
       </View>
       <View
         style={{

@@ -35,7 +35,7 @@ export default function Receive() {
     try {
       const uri = await viewShotRef.current.capture();
       const shareOptions = {
-        title: "Wallet Address",
+        title: "PayAiro QR",
         message: `
         Use following credentials
         Wallet Address:  ${walletData?.wallet_public_key} 
@@ -51,6 +51,8 @@ export default function Receive() {
       console.log("Error sharing:", err);
     }
   };
+
+  // console.log("wallet data =>",walletData)
 
   const copyToClipboard = (e) => {
     Clipboard.setString(e);
@@ -70,13 +72,13 @@ export default function Receive() {
         style={{
           alignSelf: "center",
           marginTop: 30,
-          backgroundColor: "#000",
+          // backgroundColor: "#000",
           padding: 20,
           borderRadius: 20,
         }}
       >
         <ViewShot ref={viewShotRef} options={{ format: "png", quality: 0.9 }}>
-          <QRCode value={walletData?.username} size={200} />
+          <QRCode value={`sending: ${walletData?.username}`} size={200} />
         </ViewShot>
       </View>
       <Text
@@ -112,10 +114,13 @@ export default function Receive() {
             width: "85%",
             fontSize: 16,
             textAlign: "left",
+            marginLeft: 10,
           }}
         />
         <SvgXml
           xml={SVGCopy}
+          width={30}
+          height={30}
           style={{ marginRight: 1 }}
           onPress={() => copyToClipboard(walletData?.username)}
         />
@@ -131,6 +136,7 @@ export default function Receive() {
           flexDirection: "row",
           justifyContent: "center",
           alignItems: "center",
+          width: "90%",
         }}
         icon={SVGShare2}
         tStyle={{ color: "white" }}
@@ -141,6 +147,7 @@ export default function Receive() {
         title={"Request Payment"}
         cStyle={{
           marginHorizontal: 20,
+          width: "90%",
         }}
         onPress={() =>
           navigation.navigate(NAVIGATION_SCREENS.SEND, {

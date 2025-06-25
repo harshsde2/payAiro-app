@@ -3,6 +3,17 @@ export const SVGCheckboxChecked = `<svg width="16" height="16" viewBox="0 0 16 1
 </svg>
 `;
 
+export const SVGLinkDebitCard = `<svg width="66" height="52" viewBox="0 0 66 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="0.4" y="0.4" width="65.2" height="51.2" rx="13.6" fill="#EBF5EC" stroke="#2C6A3F" stroke-width="0.8" stroke-dasharray="5 5"/>
+<path d="M23.834 22.791H34.3757" stroke="#2C6A3F" stroke-width="1.2" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M27.5 30.125H29.3333" stroke="#2C6A3F" stroke-width="1.2" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M31.625 30.125H35.2917" stroke="#2C6A3F" stroke-width="1.2" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M42.1673 26.0282V29.7682C42.1673 32.9857 41.3515 33.7923 38.0973 33.7923H27.904C24.6498 33.7923 23.834 32.9857 23.834 29.7682V22.2332C23.834 19.0157 24.6498 18.209 27.904 18.209H34.3757" stroke="#2C6A3F" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M37.125 20.7285H42.1667" stroke="#2C6A3F" stroke-width="1.2" stroke-linecap="round"/>
+<path d="M39.6465 23.2507V18.209" stroke="#2C6A3F" stroke-width="1.2" stroke-linecap="round"/>
+</svg>
+`;
+
 export const SVGPlus = `<svg width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g filter="url(#filter0_d_8572_20341)">
 <path d="M1.5 8.5C1.5 4.08172 5.08172 0.5 9.5 0.5H17.5C21.9183 0.5 25.5 4.08172 25.5 8.5V16.5C25.5 20.9183 21.9183 24.5 17.5 24.5H9.5C5.08172 24.5 1.5 20.9183 1.5 16.5V8.5Z" fill="white" shape-rendering="crispEdges"/>

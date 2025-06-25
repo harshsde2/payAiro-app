@@ -44,10 +44,9 @@ const ConnectWidgetTest = () => {
       console.log("🚀 Starting onboarding flow with memberGUID:", memberGUID);
       const created = await createMember({ memberGuid: memberGUID });
 
+      useDispatchAction(setShowLoader(false));
       const accountResponse = await getAccountDetails();
       const account = accountResponse?.data?.data?.[0];
-
-      useDispatchAction(setShowLoader(false));
 
       if (!account) {
         throw new Error("No account found for this member.");

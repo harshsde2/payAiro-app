@@ -41,15 +41,23 @@ import { useLogin, useStepCount, useVerifyOTP } from "query/hooks/useAPIAuth";
 import { useGetReward, useUserPin, useWalletDetails } from "query/hooks";
 
 export default function ConfirmOTP() {
-  let deviceId = DeviceInfo.getDeviceId();
+  const getDeviceId = async () => {
+    const deviceId = await DeviceInfo.getUniqueId(); // ✅ Await the Promise
+    console.log("Device ID:", deviceId); // Now prints actual string
+    return deviceId;
+  };
+
+  console.log("deviceId =>", getDeviceId());
 
   const dispatch = useDispatch();
   const navigation = useNavigation();
 
-  const { fcmToken } = useSelectorAction();
+  const { fcmToken, tokens } = useSelectorAction();
   const route = useRoute();
   const { theme } = useTheme();
   const styles = customStyles(theme);
+
+  // console.log("token =>", tokens?.access);
 
   const {
     mutate: login,
@@ -194,15 +202,23 @@ export default function ConfirmOTP() {
       onSuccess: async (data) => {
         if (data?.status) {
           const kycData = await getKYC(data?.data?.data?.access);
-          console.log(JSON.stringify(kycData, null, 2), "kycData");
+          // console.log(JSON.stringify(kycData, null, 2), "kycData");
 
           // console.log(JSON.stringify(kycData, null, 2), "KycData");
           const formData = new FormData();
 
-          formData.append("fcm_token", fcmToken);
-          formData.append("device_id", deviceId);
+          const device_id = await getDeviceId();
+
+          formData.append(
+            "fcm_token",
+            "e9FK8sTqTsm12n5zJYKoDe:APA91bHdG9fT6Q-WZ0s1aFVupYr9U8g3JxFoZGh7YX9MKjSFG7nYX0ROmKkXzXW3Yx8RmPB1e2B6EZK7qE2Ldd4zHGoCZnDpNmJbZ_Lq0dfdfe9OlOq9u0hYJFdjHXr8y8O123456789"
+          );
+          formData.append("device_id", device_id);
+
+          console.log("formData =>", JSON.stringify(formData, null, 2));
 
           const fcmData = await addFcm(formData, data?.data?.data?.access);
+          console.log("fcmData =>", JSON.stringify(fcmData, null, 2));
           useDispatchAction(setTokens(data?.data?.data));
           await setToken(data?.data?.data);
           setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(data?.data?.data));
@@ -220,7 +236,7 @@ export default function ConfirmOTP() {
         setIsVerifying(false);
       },
       onError: (error) => {
-        console.log("error :--", error);
+        console.log("error :--", error.response);
         const errorMessage =
           (error as any)?.response?.data?.message ||
           error?.message ||
@@ -282,7 +298,7 @@ export default function ConfirmOTP() {
         throw new Error("Wallet fetch failed");
       }
     } catch (error) {
-      console.log("error =>", JSON.stringify(error, null, 2));
+      console.log("error =====>", JSON.stringify(error.response, null, 2));
       useDispatchAction(setErrorMsg("Something went wrong!"));
     }
   };

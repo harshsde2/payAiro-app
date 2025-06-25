@@ -2,6 +2,7 @@ import { useNavigation } from "@react-navigation/native";
 import GenericButton from "components/GenericButton";
 import { SVGMinus, SVGPlus } from "constants/images";
 import useDispatchAction from "hooks/useDispatchAction";
+import useSelectorAction from "hooks/useSelectorAction";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { RWAKeys, useBuyRWA, useSellRWA } from "query/hooks";
 import { queryClient } from "query/queryClient";
@@ -16,9 +17,13 @@ import {
   TextInput,
 } from "react-native";
 import { SvgXml } from "react-native-svg";
+import { useDispatch } from "react-redux";
 import { setErrorMsg, setSuccessMsg } from "redux/slices/authenticationSlice";
 import { Theme, useTheme } from "styles";
+import { useGlobalStyles } from "styles/GlobalStyles";
 import { CustomText } from "tsx-components";
+import CommonModal from "tsx-components/modals/CommonModal";
+import MyDropdown from "tsx-components/MyDropdown";
 
 interface BuyNowModalProps {
   isVisible?: boolean;
@@ -34,9 +39,32 @@ const BuyNowModal: FC<BuyNowModalProps> = ({
   isSellingMode,
 }) => {
   const { theme } = useTheme();
+
   const navigation = useNavigation<any>();
+  const dispatch = useDispatch();
+  const { tokens, bankLists } = useSelectorAction();
+
+  const DROPDOWN_LISTS = bankLists.map((item: any) => {
+    const last4 = item.account_number?.slice(-4); // Get last 4 digits
+    const maskedAccount = `•••• ${last4}`;
+    const isExternalAccount =
+      item?.account_type === "checking" || item?.account_type === "savings";
+    const accountType = !isExternalAccount
+      ? item?.account_type.toUpperCase()
+      : "external"; // Fallback if account_type is not available
+
+    return {
+      label: `${item?.bank_name} (${maskedAccount}) ${accountType}`,
+      value: item?.account_type, // use account_id or any unique field as value
+    };
+  });
+
   const styles = customStyles(theme);
+  const globalStyles = useGlobalStyles();
+
   const [quantity, setQuantity] = useState<number>(0);
+  const [souceAccount, setsouceAccount] = useState(null);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   const buttonName = isSellingMode ? "Sell" : "Buy";
 
@@ -85,12 +113,15 @@ const BuyNowModal: FC<BuyNowModalProps> = ({
       },
       onError: (error: any) => {
         const errors = JSON.parse(error.response.data.data.details);
-        console.log("errors=>", errors);
-        // console.log("error =>", JSON.stringify(error.response, null, 2));
-        onClose();
-        useDispatchAction(
-          setErrorMsg(errors.errors.Funds[0] || `Something went wrong!`)
+        const errorsfunds = JSON.parse(error.response.data.data.details)?.title;
+        // console.log("errors.  =>", errorsfunds);
+        // console.log("error ====>", JSON.stringify(error.response, null, 2));
+        dispatch(
+          setErrorMsg(
+            errors.errors.Funds[0] || errorsfunds || `Something went wrong!`
+          )
         );
+        onClose();
       },
       onSettled: () => {},
     });
@@ -153,6 +184,97 @@ const BuyNowModal: FC<BuyNowModalProps> = ({
       visible={isVisible}
       onRequestClose={onClose}
     >
+      <CommonModal
+        isVisible={showConfirmationModal}
+        onClose={() => {
+          setShowConfirmationModal(false);
+        }}
+        containerStyle={{ justifyContent: "flex-end", alignItems: "center" }}
+      >
+        {/* <ConfirmationModalComponent
+            onCancelPress={() => {
+              setShowAddAccountConfirmation(false);
+            }}
+            onConfirmPress={() => {
+              setShowAddAccountConfirmation(false);
+              handleRothBank();
+            }}
+            headerText={"Are you sure you want to add ROTH IRA account?"}
+            descriptionText={
+              "If you really want to open the ROTH IRA account then press confirmotherwsie press cancel."
+            }
+          /> */}
+        <Pressable
+          style={[
+            globalStyles.whiteSheetContainer,
+            { width: "100%", maxHeight: 400 },
+          ]}
+        >
+          <CustomText style={styles.title} variant="h3">
+            Summary
+          </CustomText>
+          <View style={styles.row}>
+            <CustomText variant={"caption"} style={styles.label}>
+              Asset Type
+            </CustomText>
+            <CustomText>{data?.asset_type}</CustomText>
+          </View>
+          <View style={styles.row}>
+            <CustomText variant={"caption"} style={styles.label}>
+              Asset name
+            </CustomText>
+            <Text>{data?.name}</Text>
+          </View>
+          <View style={styles.row}>
+            <CustomText variant={"caption"} style={styles.label}>
+              Quantity
+            </CustomText>
+            <Text>{quantity}</Text>
+          </View>
+          <View style={styles.row}>
+            <CustomText variant={"caption"} style={styles.label}>
+              Price per Share
+            </CustomText>
+            <CustomText>${pricePerShare}</CustomText>
+          </View>
+          <View style={styles.row}>
+            <CustomText variant={"caption"} style={styles.label}>
+              Fees
+            </CustomText>
+            <Text>${fee}</Text>
+          </View>
+          <View style={styles.row}>
+            <CustomText
+              variant={"subtitle2"}
+              size={14}
+              style={styles.labelBold}
+            >
+              Total
+            </CustomText>
+            <CustomText size={14} variant={"subtitle2"} style={styles.total}>
+              ${total.toFixed(2)}
+            </CustomText>
+          </View>
+          <View style={{ marginVertical: 20, gap: 10 }}>
+            <GenericButton
+              title={"Confirm"}
+              onPress={() => {
+                setShowConfirmationModal(false);
+                isSellingMode ? onSellClick() : onBuyClick();
+              }}
+              showLoader={true}
+              isLoading={isSellingMode ? isPendingSellRWA : isPendingBuyRWA}
+            />
+            <GenericButton
+              title={"Cancel"}
+              cStyle={{ backgroundColor: "black" }}
+              onPress={() => {
+                setShowConfirmationModal(false);
+              }}
+            />
+          </View>
+        </Pressable>
+      </CommonModal>
       <Pressable style={styles.modalContainer} onPress={onClose}>
         <Pressable
           style={styles.modalContent}
@@ -264,6 +386,23 @@ const BuyNowModal: FC<BuyNowModalProps> = ({
             </View>
           )}
 
+          <MyDropdown
+            containerStyles={{ marginBottom: 10 }}
+            label={"Select Bank Account"}
+            placeholder={"Select Bank Account"}
+            data={DROPDOWN_LISTS.filter(
+              (item) => !item.value.toLowerCase().includes("ira")
+            )} // Filter out external accounts if needed
+            // Filter out external accounts if needed
+            value={souceAccount}
+            search={false}
+            itemTextStyle={{
+              fontSize: 14,
+              fontFamily: theme?.typography.fontFamily.montserrat,
+            }}
+            onChange={(item: any) => setsouceAccount(item)}
+          />
+
           <View style={styles.row}>
             <CustomText variant={"caption"} style={styles.label}>
               Price per Share
@@ -292,7 +431,8 @@ const BuyNowModal: FC<BuyNowModalProps> = ({
             <GenericButton
               title={buttonName}
               onPress={() => {
-                isSellingMode ? onSellClick() : onBuyClick();
+                setShowConfirmationModal(true);
+                // isSellingMode ? onSellClick() : onBuyClick();
               }}
               showLoader={true}
               isLoading={isSellingMode ? isPendingSellRWA : isPendingBuyRWA}

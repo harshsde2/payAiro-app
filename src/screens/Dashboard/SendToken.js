@@ -120,10 +120,10 @@ export default function SendToken(props) {
             onClose={() => setselectionModalVisible(false)}
             onSelected={(e) => setselectedAccount(e)}
           />
-          <HeaderTitle2
+          <HeaderTitle
             title={`${type === "receive" ? "Receive" : "Send"} Token`}
             leftIcon={SVGLeftArrow}
-            rightIcon={SVGSearch}
+            // rightIcon={SVGSearch}
           />
 
           <View

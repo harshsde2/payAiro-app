@@ -117,9 +117,9 @@ api.interceptors.response.use(
 
       if (status >= 500) {
         console.log("Server error, please try again later", requestUrl);
-        useDispatchAction(
-          setErrorMsg("Something went wrong, please try again later")
-        );
+        // useDispatchAction(
+        //   setErrorMsg("Something went wrong, please try again later")
+        // );
       }
     } else if (error.request) {
       console.log("Network error, please check your connection");

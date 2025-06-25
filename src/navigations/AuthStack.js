@@ -23,7 +23,7 @@ export default function AuthStack() {
   return (
     <Stack.Navigator
       headerMode="none"
-      initialRouteName={NAVIGATION_SCREENS.NAME}
+      initialRouteName={NAVIGATION_SCREENS.LOGIN}
       screenOptions={{
         headerShown: false,
       }}

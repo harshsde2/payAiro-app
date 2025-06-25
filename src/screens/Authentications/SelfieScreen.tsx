@@ -311,7 +311,7 @@ export default function SelfieScreen(props: any) {
         );
       },
       onSettled: () => {
-        dispatch(setShowLoader(false));
+        // dispatch(setShowLoader(false));
       },
     });
   };

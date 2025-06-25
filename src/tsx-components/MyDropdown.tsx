@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, ViewStyle } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 import { DropdownProps } from "react-native-element-dropdown/lib/typescript/components/Dropdown/model";
 import { Theme, useTheme } from "styles";
@@ -21,9 +21,10 @@ interface MyDropdownProps
   disable: boolean;
   label?: string;
   required?: boolean;
+  containerStyles: ViewStyle;
 }
 const MyDropdown: React.FC<MyDropdownProps> = ({
-  label = "Select",
+  label,
   placeholder = "Select item",
   data,
   value,
@@ -32,6 +33,7 @@ const MyDropdown: React.FC<MyDropdownProps> = ({
   valueField = "value",
   disable = false,
   required = false,
+  containerStyles,
   ...props
 }) => {
   const [isFocus, setIsFocus] = useState(false);
@@ -39,7 +41,7 @@ const MyDropdown: React.FC<MyDropdownProps> = ({
   const styles = useMemo(() => customStyles(theme), [theme]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, containerStyles]}>
       {label && (
         <CustomText
           variant={"body2"}

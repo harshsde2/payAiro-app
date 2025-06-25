@@ -7,6 +7,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  TouchableHighlight,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -27,6 +28,7 @@ import {
 import { patchUser } from "../../services/Services";
 import CommonModal from "tsx-components/modals/CommonModal";
 import { useGlobalStyles } from "styles/GlobalStyles";
+import Tooltip from "react-native-walkthrough-tooltip";
 
 export default function Name(props: any) {
   const { email, data } = props.route.params || {};
@@ -127,14 +129,15 @@ export default function Name(props: any) {
 
   return (
     <ScreenContainer scrollable padding={0}>
-      <CommonModal isVisible={showInfo} onClose={() => setShowInfo(false)}>
-        {/* <Pressable
+      {/* <CommonModal isVisible={showInfo} onClose={() => setShowInfo(false)}> */}
+      {/* <Pressable
           onPress={(e) => e.stopPropagation()}
           style={[globalStyles.CommonModalContainer, { paddingBottom: 20 }]}
         >
           <CustomText>Terms and Conditions</CustomText>
         </Pressable> */}
-      </CommonModal>
+
+      {/* </CommonModal> */}
       <View style={{ flex: 1 / 2.5 }}>
         <AuthHeader showAuthLogo={true} />
       </View>

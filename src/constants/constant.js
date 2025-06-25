@@ -69,6 +69,12 @@ export const SETTINGS_LISTS = [
   },
   { name: "Alerts", icon: SVGNoti, isDisvled: false, route: "AlertScreen" },
   { name: "Logout", icon: SVGLog, isDisvled: false, route: "Profile" },
+  // {
+  //   name: "ACH",
+  //   icon: SVGLog,
+  //   isDisvled: false,
+  //   route: NAVIGATION_SCREENS.ACH_SCREEN,
+  // },
 ];
 export const SECURITY_LISTS = [
   { name: "App Lock", icon: SVG2FA, route: "2FA" },

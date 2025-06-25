@@ -45,12 +45,14 @@ import {
 import { ScreenContainer } from "HOC";
 import { useDispatch } from "react-redux";
 import { resetAppState } from "utils/configs";
+import KYCBadge from "tsx-components/KYCBadge";
 
 export default function SettingScreen() {
   const navigation = useNavigation();
   const [isVisible, setIsVisible] = useState(false);
   const { tokens, walletData } = useSelectorAction();
   const [kycStep, setKycStep] = useState("");
+  // console.log("kyc step =>", JSON.stringify(kycStep, null, 2));
 
   const dispatch = useDispatch();
 
@@ -140,16 +142,29 @@ export default function SettingScreen() {
                 </Text>
               )}
             </View>
-            <Text
-              style={{
-                color: "#000",
-                marginLeft: 10,
-                fontFamily: Fonts.semibold,
-                fontSize: 18,
-              }}
+            <View
+              style={{ flexDirection: "row", flex: 1, alignItems: "center" }}
             >
-              {walletData?.name}
-            </Text>
+              <Text
+                style={{
+                  color: "#000",
+                  marginLeft: 10,
+                  fontFamily: Fonts.semibold,
+                  fontSize: 18,
+                }}
+              >
+                {walletData?.name}
+              </Text>
+              <KYCBadge
+                status={
+                  kycStep?.is_varified == true
+                    ? "Verified"
+                    : kycStep?.is_varified == false
+                    ? "Pending"
+                    : "Rejected"
+                }
+              />
+            </View>
           </View>
           <View
             style={{

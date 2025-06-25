@@ -36,26 +36,27 @@ export const renderFinanceIcons = [
     navigationScreenName: "",
   },
 ];
+
 export const renderUtilitiesIcons = [
   {
     label: "Recharge",
     IconName: SVGRechargeIcon,
     width: size.width,
     height: size.height,
-    navigationScreenName: "",
+    navigationScreenName: NAVIGATION_SCREENS.COMING_SOON,
   },
   {
     label: "Bill Payment",
     IconName: SVGBillPaymentIcon,
     width: size.width,
     height: size.height,
-    navigationScreenName: "",
+    navigationScreenName: NAVIGATION_SCREENS.COMING_SOON,
   },
   {
     label: "Utilities",
     IconName: SVGUtilitiesIcon,
     width: size.width,
     height: size.height,
-    navigationScreenName: "",
+    navigationScreenName: NAVIGATION_SCREENS.COMING_SOON,
   },
 ];

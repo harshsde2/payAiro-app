@@ -6,6 +6,8 @@ import {
   StyleSheet,
   BackHandler,
   FlatList,
+  Pressable,
+  Keyboard,
 } from "react-native";
 import React, { useEffect, useState, useCallback } from "react";
 import { SvgXml } from "react-native-svg";
@@ -46,6 +48,7 @@ export default function ContactScreen(props: any) {
 
   const [filteredRecentContacts, setFilteredRecentContacts] = useState([]);
   const [filteredDeviceContacts, setFilteredDeviceContacts] = useState([]);
+  const [onSearch, setOnSearch] = useState(false);
 
   const {
     data: deviceContacts,
@@ -230,96 +233,123 @@ export default function ContactScreen(props: any) {
   };
   return (
     <ScreenContainer padding={0} backgroundColor={theme.colors.palette.green50}>
-      <HeaderTitle
-        title="Discover"
-        leftIcon={SVGLeftArrow}
-        isBack
-        onPressLeft={handleGoBack}
-      />
-      <View
-        style={{ width: "100%", paddingHorizontal: 20, flex: 1, maxHeight: 70 }}
+      <Pressable
+        onPress={() => {
+          setOnSearch(false);
+          Keyboard.dismiss();
+        }}
+        style={{ flex: 1 }}
       >
-        <CustomSearchTextInput
-          placeholder="Search Name or PayAiro tag..."
-          placeholderTextColor={theme.colors.palette.green700}
-          onChangeText={handleSearch}
-          value={searchText}
+        <HeaderTitle
+          title="Discover"
+          leftIcon={SVGLeftArrow}
+          isBack
+          onPressLeft={handleGoBack}
         />
-      </View>
-      <View style={styles(theme).container}>
-        {isLoading ? (
-          <LoaderComponent
-            style={{ flex: 1 }}
-            loaderColor="black"
-            loaderSize={"large"}
+        <View
+          style={{
+            width: "100%",
+            paddingHorizontal: 20,
+            flex: 1,
+            maxHeight: 70,
+          }}
+        >
+          <CustomSearchTextInput
+            placeholder="Search Name or PayAiro tag..."
+            placeholderTextColor={theme.colors.palette.green700}
+            onChangeText={handleSearch}
+            value={searchText}
+            onFocus={() => {
+              setOnSearch(true);
+            }}
+            onBlur={() => {
+              setOnSearch(false);
+            }}
           />
-        ) : (
-          <FlatList
-            removeClippedSubviews={true}
-            ListHeaderComponent={
-              <View>
-                <View
-                  style={{
-                    width: "100%",
-                    paddingHorizontal: 5,
-                    marginVertical: 10,
-                  }}
-                >
-                  <TouchableOpacity
-                    onPress={handleAddContact}
-                    activeOpacity={0.7}
-                    style={styles(theme).actionButton}
-                  >
-                    <SvgXml xml={SVGAddIcon} width={45} height={45} />
-                    <CustomText variant="subtitle1" style={{ marginLeft: 10 }}>
-                      New Contact
-                    </CustomText>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    style={styles(theme).actionButton}
-                  >
-                    <SvgXml xml={SVGInvitePeople} width={45} height={45} />
-                    <CustomText variant="subtitle1" style={{ marginLeft: 10 }}>
-                      Invite People
-                    </CustomText>
-                  </TouchableOpacity>
-                </View>
+        </View>
+        <View style={styles(theme).container}>
+          {isLoading ? (
+            <LoaderComponent
+              style={{ flex: 1 }}
+              loaderColor="black"
+              loaderSize={"large"}
+            />
+          ) : (
+            <FlatList
+              removeClippedSubviews={true}
+              ListHeaderComponent={
+                <View>
+                  {!onSearch && (
+                    <View
+                      style={{
+                        width: "100%",
+                        paddingHorizontal: 5,
+                        marginVertical: 10,
+                      }}
+                    >
+                      <TouchableOpacity
+                        onPress={handleAddContact}
+                        activeOpacity={0.7}
+                        style={styles(theme).actionButton}
+                      >
+                        <SvgXml xml={SVGAddIcon} width={45} height={45} />
+                        <CustomText
+                          variant="subtitle1"
+                          style={{ marginLeft: 10 }}
+                        >
+                          New Contact
+                        </CustomText>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        style={styles(theme).actionButton}
+                      >
+                        <SvgXml xml={SVGInvitePeople} width={45} height={45} />
+                        <CustomText
+                          variant="subtitle1"
+                          style={{ marginLeft: 10 }}
+                        >
+                          Invite People
+                        </CustomText>
+                      </TouchableOpacity>
+                    </View>
+                  )}
 
-                {/* Recent Contacts */}
-                <View style={styles(theme).header}>
-                  <CustomText variant="h4" color={theme.colors.text.primary}>
-                    Recent Contacts
-                  </CustomText>
+                  {/* Recent Contacts */}
+                  <View style={styles(theme).header}>
+                    <CustomText variant="h4" color={theme.colors.text.primary}>
+                      Recent Contacts
+                    </CustomText>
+                  </View>
+                  {isLoading ? (
+                    <LoaderComponent
+                      // style={{ flex: 1 }}
+                      loaderColor="black"
+                      loaderSize={"large"}
+                    />
+                  ) : (
+                    <FlatList
+                      data={filteredRecentContacts}
+                      keyExtractor={(item, index) => `recent-${index}`}
+                      renderItem={renderRecentContact}
+                      ListEmptyComponent={<Text>No recent contacts</Text>}
+                    />
+                  )}
+                  <View style={styles(theme).header}>
+                    <CustomText variant="h4" color={theme.colors.text.primary}>
+                      All Contacts
+                    </CustomText>
+                  </View>
                 </View>
-                {isLoading ? (
-                  <LoaderComponent
-                    // style={{ flex: 1 }}
-                    loaderColor="black"
-                    loaderSize={"large"}
-                  />
-                ) : (
-                  <FlatList
-                    data={filteredRecentContacts}
-                    keyExtractor={(item, index) => `recent-${index}`}
-                    renderItem={renderRecentContact}
-                    ListEmptyComponent={<Text>No recent contacts</Text>}
-                  />
-                )}
-                <View style={styles(theme).header}>
-                  <CustomText variant="h4" color={theme.colors.text.primary}>
-                    All Contacts
-                  </CustomText>
-                </View>
-              </View>
-            }
-            data={filteredDeviceContacts}
-            keyExtractor={(item, index) => `device-${index}`}
-            renderItem={renderDeviceContact}
-            ListEmptyComponent={<Text>No device contacts found</Text>}
-          />
-        )}
-      </View>
+              }
+              data={filteredDeviceContacts}
+              keyExtractor={(item, index) => `device-${index}`}
+              renderItem={renderDeviceContact}
+              ListEmptyComponent={<Text>No device contacts found</Text>}
+            />
+          )}
+        </View>
+      </Pressable>
     </ScreenContainer>
   );
 }

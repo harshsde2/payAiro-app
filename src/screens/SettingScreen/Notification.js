@@ -84,10 +84,7 @@ export default function Notification() {
     }
   }, [tokens?.access]);
 
-  console.log(
-    "Notification response:",
-    JSON.stringify(notifications[0], null, 2)
-  );
+  console.log("Notification response:", JSON.stringify(notifications, null, 2));
   // Load notifications on mount
   useEffect(() => {
     let isMounted = true;

@@ -12,6 +12,8 @@ export const AUTH = {
   GET_PIN: "auth/get-pin/",
   CREATE_PIN: "auth/create-pin/",
   CHANGE_PIN: "auth/change-pin/",
+  VERIFY_OTP_WITH_MAIL: "auth/verify/sendotp/",
+  VERIFY_SEND_OTP: "auth/verify-otp-send/",
   STORE_TOKEN: "auth/store-token/",
   CONTACT_ADDING: "auth/contact-adding/",
   MY_BANK_ACCOUNTS: "auth/my-bank-accounts/",

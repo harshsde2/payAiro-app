@@ -78,6 +78,7 @@ import {
   SVGDebitCardAdd,
   SVGHolding,
   SVGKYC2,
+  SVGLinkDebitCard,
   SVGLoggo,
   SVGNewBank,
   SVGReceive,
@@ -123,6 +124,9 @@ import { VIEW_TYPE } from "screens/TSX-Screens/RWA/RWA";
 import { queryClient } from "query/queryClient";
 import { userContactKeys } from "query/queryKeys";
 import DashboardCard from "tsx-components/DashboardCard";
+import AddAndLinkAcountCard from "tsx-components/AddAndLinkAcountCard";
+import CommonModal from "tsx-components/modals/CommonModal";
+import ConfirmationModalComponent from "tsx-components/ConfirmationModalComponent";
 
 // Lazy load non-critical components
 const LazyBankModal = lazy(() => import("components/BankModal"));
@@ -410,7 +414,9 @@ const CryptoFinanceSection = React.memo(
                   height={item?.height}
                   disabled={item?.navigationScreenName == ""}
                   onPress={() =>
-                    navigation.navigate(item?.navigationScreenName)
+                    navigation.navigate(item?.navigationScreenName, {
+                      title: item?.label,
+                    })
                   }
                   // style={{ marginRight: 10 }}
                 />
@@ -545,16 +551,29 @@ const CryptoOtherServicesSection = React.memo(
   }: CryptoOtherServicesSectionProps) => (
     <MemoizedDashboardSection title="Others Services">
       <View style={{ marginBottom: 130, marginRight: 20 }}>
-        <SvgXml
+        {/* <SvgXml
           xml={SVGBamkAdd}
           style={{ marginVertical: 10 }}
           onPress={() => handleRothBank()}
-        />
-        <SvgXml
-          xml={SVGDebitCardAdd}
-          onPress={() => setisCardModalVisible(true)}
-        />
-        <Pressable
+        /> */}
+        <TouchableOpacity
+          style={{
+            width: "100%",
+            alignItems: "center",
+            flexDirection: "row",
+            justifyContent: "flex-start",
+            gap: 10,
+          }}
+        >
+          <SvgXml
+            xml={SVGLinkDebitCard}
+            onPress={() => setisCardModalVisible(true)}
+          />
+          <CustomText size={13} variant="button">
+            Link Debit Card
+          </CustomText>
+        </TouchableOpacity>
+        {/* <Pressable
           onPress={() => navigation.navigate("IntraAccountTransfer")}
           style={{
             flexDirection: "row",
@@ -573,7 +592,7 @@ const CryptoOtherServicesSection = React.memo(
           >
             Intra account transfer
           </Text>
-        </Pressable>
+        </Pressable> */}
       </View>
     </MemoizedDashboardSection>
   )
@@ -621,11 +640,14 @@ const NewDashboard = () => {
   const [alloCationLists, setalloCationLists] = useState([]);
   const [totalDisbursable, settotalDisbursable] = useState(0);
   const [totalDisbursablePending, settotalDisbursablePending] = useState(0);
+  const [showAddAccountConfirmation, setShowAddAccountConfirmation] =
+    useState(false);
   const [hiddenBalances, setHiddenBalances] = useState<Record<string, boolean>>(
     {}
   );
 
   const [refreshing, setRefreshing] = useState(false);
+  const [souceAccount, setsouceAccount] = useState("");
 
   const focus = useIsFocused();
 
@@ -662,7 +684,7 @@ const NewDashboard = () => {
     [];
 
   // console.log("dataaaa =>", JSON.stringify(filteredMyRWA, null, 2));
-  // console.log("token =>", tokens.access);
+  console.log("token =>", tokens.access);
 
   const {
     data: bankBalanceData,
@@ -1087,15 +1109,27 @@ const NewDashboard = () => {
 
   const handleRothBank = async () => {
     try {
-      const data = await addbankAccountRoth(tokens?.access);
+      dispatch(setShowLoader(true));
+      const data = await addbankAccountRoth(
+        { account_type: souceAccount.toLowerCase() },
+        tokens?.access
+      );
       // console.log(data?.data, 'royjir');
       if (data && data?.data && !data?.data?.error) {
         dispatch(setSuccessMsg("Bank Account Created Successfully"));
+        dispatch(setShowLoader(false));
+        setsouceAccount("");
+        await queryClient.invalidateQueries(bankKeys.allAccounts());
+        await queryClient.refetchQueries(bankKeys.allAccounts());
         // fetchBankAccounts();
       } else {
         dispatch(setErrorMsg(data?.data?.error ?? "Something went wrong"));
       }
-    } catch (error) {}
+    } catch (error) {
+      console.log("error =>", error);
+    } finally {
+      dispatch(setShowLoader(false));
+    }
   };
 
   const hasKey = (bank: any, key: any) => bank.some((obj: any) => key in obj);
@@ -1179,10 +1213,7 @@ const NewDashboard = () => {
     }));
   }, [bankLists, bankBalance]);
 
-  // console.log(
-  //   "processedBankAccounts =>",
-  //   JSON.stringify(processedBankAccounts, null, 2)
-  // );
+  console.log("souceAccount =>", JSON.stringify(souceAccount, null, 2));
 
   const handleEyeClick = (account_id: string) => {
     if (pinScreenRef.current) {
@@ -1256,6 +1287,32 @@ const NewDashboard = () => {
               />
             </View>
           </Modal>
+        )}
+        {showAddAccountConfirmation && (
+          <CommonModal
+            isVisible={showAddAccountConfirmation}
+            onClose={() => {
+              setShowAddAccountConfirmation(false);
+            }}
+            containerStyle={{ justifyContent: "center", alignItems: "center" }}
+          >
+            {showAddAccountConfirmation && (
+              <ConfirmationModalComponent
+                onCancelPress={() => {
+                  setShowAddAccountConfirmation(false);
+                }}
+                onConfirmPress={() => {
+                  setShowAddAccountConfirmation(false);
+                  handleRothBank();
+                }}
+                onBankSelect={setsouceAccount}
+                selectedAccount={souceAccount}
+                headerText={"Do you want to create ROTH IRA account?"}
+                descriptionText={`($10 + ${walletData?.TransactionFees_persentage}% Transaction fee) will be charged to create ROTH IRA account`}
+                amountText={"$10.1"}
+              />
+            )}
+          </CommonModal>
         )}
 
         {isBankModalVisible && (
@@ -1527,7 +1584,9 @@ const NewDashboard = () => {
                 if (!isCrypto) {
                   navigation.navigate("CryptoDashboard");
                 } else {
-                  setisVisible(true);
+                  navigation.navigate(
+                    NAVIGATION_SCREENS.INTRA_ACCOUNT_TRANSFER
+                  );
                 }
               }}
             />
@@ -1759,12 +1818,26 @@ const NewDashboard = () => {
                         </View>
                       ))
                     )}
-                    <SvgXml
+                    {/* <SvgXml
                       width={250}
                       height={130}
                       xml={SVGNewBank}
                       disabled={showLoader}
                       onPress={handleOpenLink}
+                    /> */}
+                    <AddAndLinkAcountCard
+                      title={"LINK ACCOUNT"}
+                      description={"Link your external account"}
+                      buttonText={"Link Account"}
+                      onAddPress={handleOpenLink}
+                    />
+                    <AddAndLinkAcountCard
+                      title={"ADD ACCOUNT"}
+                      description={"Add your ROTH IRA account"}
+                      buttonText={"Add Account"}
+                      onAddPress={() => {
+                        setShowAddAccountConfirmation(true);
+                      }}
                     />
                   </ScrollView>
                 </MemoizedDashboardSection>

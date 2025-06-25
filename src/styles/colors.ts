@@ -50,6 +50,13 @@ export const baseColors = {
   grey700: "#374151",
   grey800: "#1F2937",
   grey900: "#111827",
+
+  rejectStatusDark: "#A21C1C",
+  pendingStatusDark: "#E5AB00",
+  rejectStatusLight: "#FFE0E0",
+  pendingStatusLight: "#FFF4D3",
+  verifiedStatusLight: "#E2F1E3",
+  verifiedStatusDark: "#2C6A3F",
 };
 
 // Type definition for colors

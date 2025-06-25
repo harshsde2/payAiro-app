@@ -41,19 +41,24 @@ export default function TransactionCard({ item, isCrypto, isMerchent }) {
   const sign = isSent ? "-" : "+";
   const amountColor = isSent ? "red" : "green";
 
+  // console.log("sent =>", JSON.stringify(item, null, 2));
   const handlePress = () => {
-    if (isMerchent) {
+    if (isMerchent || type) {
       navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_SUCCESS, {
         transactionDetails: [
-          { "Order Id": item?.order_id },
-          { "Sender ID": item?.sender_wallet },
-          { "Recipient ID": item?.recipient_wallet },
-          { "Requested Amount": item?.amount },
-          { "Successfully Sent": item?.amount },
+          { Amount: item?.amount },
+          type
+            ? { Type: !item?.order_id ? item?.type : "Paid" }
+            : { OrderID: item?.order_id },
+          { Merchant: item?.project_name },
+          { Date: moment(item?.created_at).format("DD-MMM-YYYY") },
+          {
+            Time: moment(item?.created_at).format("h:mm a"),
+          },
           { Status: item?.status?.toUpperCase() },
         ],
       });
-    } else if (isCrypto && item?.web3) {
+    } else if (!isCrypto && item?.web3) {
       Linking.openURL(`https://sepolia.etherscan.io/tx/0x${item?.tx_hash}`);
     } else if (isCrypto && !item?.web3) {
       navigation.navigate("SendReceipt", {

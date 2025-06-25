@@ -90,6 +90,38 @@ export const useChangePin = () => {
 };
 
 /**
+ * Hook to add a contact
+ */
+export const useVerifyUserForChangePin = () => {
+  return useMutation<ApiResponse<any>, Error, AddContactPayload>({
+    mutationFn: async () => {
+      return await apiClient.post<ApiResponse<any>>(
+        AUTH.VERIFY_OTP_WITH_MAIL,
+        {},
+        true
+      );
+    },
+    onSuccess: () => {},
+  });
+};
+
+/**
+ * Hook to add a contact
+ */
+export const useVerifyUserForChangePinOtp = () => {
+  return useMutation<ApiResponse<any>, Error, AddContactPayload>({
+    mutationFn: async (payload) => {
+      return await apiClient.post<ApiResponse<any>>(
+        AUTH.VERIFY_SEND_OTP,
+        payload,
+        true
+      );
+    },
+    onSuccess: () => {},
+  });
+};
+
+/**
  * Hook to get user notifications
  */
 export const useNotifications = () => {
