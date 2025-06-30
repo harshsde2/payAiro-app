@@ -317,7 +317,7 @@ export default function SelfieScreen(props: any) {
   };
 
   return (
-    <ScreenContainer scrollable padding={0}>
+    <ScreenContainer avoidKeyboard scrollable padding={0}>
       <PinScreen
         ref={pinScreenRef}
         onAction={(pin) => {

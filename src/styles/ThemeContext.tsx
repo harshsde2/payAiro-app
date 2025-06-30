@@ -58,12 +58,16 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
           setThemeMode("light");
         } else {
           // Otherwise use saved theme
-          setThemeMode(mode || defaultTheme);
+          setThemeMode("light");
+
+          // setThemeMode(mode || defaultTheme);
         }
       } else {
         // Default to system theme if no preference is saved
-        const colorScheme = Appearance.getColorScheme();
-        setThemeMode(colorScheme === "dark" ? "dark" : "light");
+        // const colorScheme = Appearance.getColorScheme();
+        // setThemeMode(colorScheme === "dark" ? "dark" : "light");
+
+        setThemeMode("light");
         setIsSystemTheme(true);
         saveThemePreference("system");
       }
@@ -76,7 +80,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   useEffect(() => {
     if (isSystemTheme) {
       const subscription = Appearance.addChangeListener(({ colorScheme }) => {
-        setThemeMode(colorScheme === "dark" ? "dark" : "light");
+        // setThemeMode(colorScheme === "dark" ? "dark" : "light");
+        setThemeMode("light");
       });
 
       return () => {
@@ -102,8 +107,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   // Handle theme mode changes
   const handleSetThemeMode = (mode: ThemeMode | "system") => {
     if (mode === "system") {
-      const colorScheme = Appearance.getColorScheme();
-      setThemeMode(colorScheme === "dark" ? "dark" : "light");
+      // const colorScheme = Appearance.getColorScheme();
+      // setThemeMode(colorScheme === "dark" ? "dark" : "light");
+
+      setThemeMode("light");
       setIsSystemTheme(true);
     } else {
       setThemeMode(mode);

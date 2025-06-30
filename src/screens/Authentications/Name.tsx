@@ -4,6 +4,7 @@ import { SVGChecked, SVGUnChecked } from "constants/images";
 import { usePatchUserDetails, useStepCount } from "query/hooks/useAPIAuth";
 import React, { useRef, useState } from "react";
 import {
+  KeyboardAvoidingView,
   Pressable,
   StyleSheet,
   Text,
@@ -87,7 +88,7 @@ export default function Name(props: any) {
       return;
     }
 
-    console.log("handleForm called with:");
+    // console.log("handleForm called with:");
     const payload = new FormData();
     payload.append("name", fname);
     payload.append("mobile_number", "+1" + phone);
@@ -123,21 +124,14 @@ export default function Name(props: any) {
         } else {
           useDispatchAction(setErrorMsg("Failed to submit details"));
         }
+        // useDispatchAction(setErrorMsg("Failed to submit details"));
+        console.log("error =>", error);
       },
     });
   };
 
   return (
-    <ScreenContainer scrollable padding={0}>
-      {/* <CommonModal isVisible={showInfo} onClose={() => setShowInfo(false)}> */}
-      {/* <Pressable
-          onPress={(e) => e.stopPropagation()}
-          style={[globalStyles.CommonModalContainer, { paddingBottom: 20 }]}
-        >
-          <CustomText>Terms and Conditions</CustomText>
-        </Pressable> */}
-
-      {/* </CommonModal> */}
+    <ScreenContainer avoidKeyboard scrollable padding={0}>
       <View style={{ flex: 1 / 2.5 }}>
         <AuthHeader showAuthLogo={true} />
       </View>

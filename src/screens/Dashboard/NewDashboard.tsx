@@ -824,7 +824,7 @@ const NewDashboard = () => {
   //   "AllTradesHistory"
   // );
 
-  // console.log(JSON.stringify(tokens?.access, null, 2), "token");
+  console.log(JSON.stringify(tokens?.access, null, 2), "token");
 
   useEffect(() => {
     if (totalDisbursable || bankBalance) {

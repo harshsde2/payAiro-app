@@ -105,7 +105,7 @@ export default function Signature(props: any) {
   };
 
   return (
-    <ScreenContainer scrollable padding={0}>
+    <ScreenContainer avoidKeyboard scrollable padding={0}>
       <AuthHeader header={true} showAuthLogo={true} />
       <SignaturePad
         onSelected={(e: any) => {

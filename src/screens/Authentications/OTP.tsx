@@ -2,6 +2,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  KeyboardAvoidingView,
   StyleSheet,
   Text,
   TextInput,
@@ -306,7 +307,7 @@ export default function ConfirmOTP() {
   const isOtpComplete = otp.every((digit) => digit !== "");
 
   return (
-    <ScreenContainer padding={0}>
+    <ScreenContainer avoidKeyboard padding={0}>
       {/* <AuthHeader showAuthLogo={true} /> */}
       <View style={{ flex: 1 }}>
         <AuthHeader header={resendEnabled} showAuthLogo={true} />

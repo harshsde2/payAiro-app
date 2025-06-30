@@ -105,17 +105,18 @@ const ScreenContainer: React.FC<ScreenContainerProps> = ({
   );
 
   // Add keyboard avoiding if enabled
-  const keyboardContent = avoidKeyboard ? (
-    <KeyboardAvoidingView
-      style={styles.keyboardView}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 25}
-    >
-      {scrollContent}
-    </KeyboardAvoidingView>
-  ) : (
-    scrollContent
-  );
+  const keyboardContent =
+    Platform.OS === "ios" && avoidKeyboard ? (
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior="padding"
+        keyboardVerticalOffset={0}
+      >
+        {scrollContent}
+      </KeyboardAvoidingView>
+    ) : (
+      scrollContent
+    );
 
   // Add safe area if enabled
   return (

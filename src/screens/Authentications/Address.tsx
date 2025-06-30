@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import React, { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { KeyboardAvoidingView, StyleSheet, View } from "react-native";
 import { Theme, useTheme } from "styles";
 import { CustomText } from "tsx-components";
 import AuthHeader from "tsx-components/AuthHeader";
@@ -81,7 +81,7 @@ export default function Address() {
   };
 
   return (
-    <ScreenContainer scrollable padding={0}>
+    <ScreenContainer avoidKeyboard scrollable padding={0}>
       <AuthHeader showAuthLogo={true} />
       <View style={styles.conntentContainer}>
         <View style={[styles.headerContainer]}>

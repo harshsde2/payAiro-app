@@ -1,7 +1,14 @@
 import { useNavigation } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import React, { useRef, useState } from "react";
-import { Button, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Button,
+  KeyboardAvoidingView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SvgXml } from "react-native-svg";
 import { Theme, useTheme } from "styles";
 import { CustomText } from "tsx-components";
@@ -50,6 +57,16 @@ export default function Login() {
       useDispatchAction(setErrorMsg("Terms & Conditions are required"));
       return;
     }
+
+    if (checked1) {
+      useDispatchAction(
+        setErrorMsg(
+          "If you are politically exposed then you cant able to create account"
+        )
+      );
+      return;
+    }
+
     setButtonDisabled(true);
 
     login({ email: email.trim().toLowerCase() } as any, {
@@ -72,7 +89,7 @@ export default function Login() {
   };
 
   return (
-    <ScreenContainer scrollable={true} padding={0}>
+    <ScreenContainer avoidKeyboard scrollable={true} padding={0}>
       <View style={{ flex: 1 }}>
         <AuthHeader showAuthLogo={true} />
       </View>

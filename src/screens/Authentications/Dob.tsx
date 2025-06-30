@@ -61,7 +61,7 @@ export default function Dob(props: any) {
   };
 
   return (
-    <ScreenContainer padding={0}>
+    <ScreenContainer avoidKeyboard padding={0}>
       <AuthHeader header={true} showAuthLogo={true} />
       <View style={[styles.conntentContainer]}>
         <View style={[styles.headerContainer]}>

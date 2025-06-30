@@ -1,6 +1,5 @@
 import { View, Text, TouchableOpacity } from "react-native";
-import React, { useEffect, useState } from "react";
-import CommonHeaderv2 from "../../HOC/CommonHeaderv2";
+import React, { useState } from "react";
 import HeaderTitle from "../../components/HeaderTitle";
 import { SVGDate, SVGLeftArrow, SVGOr } from "../../constants/images";
 import Fonts from "../../constants/Fonts";
@@ -16,32 +15,105 @@ import { ScreenContainer } from "HOC";
 
 export default function Statement() {
   const { tokens } = useSelectorAction();
+  const navigation = useNavigation();
+
   const [selectedTime, setselectedTime] = useState("week");
   const [date, setdate] = useState("");
   const [open, setOpen] = useState(false);
-  const [selectedType, setselectedType] = useState("all");
-
   const [date2, setdate2] = useState("");
   const [open2, setOpen2] = useState(false);
-  const [tx, settx] = useState([]);
-
-  const navigation = useNavigation();
-  // useEffect(() => {
-  //   handleTX();
-  // }, []);
+  const [selectedType, setselectedType] = useState("all");
+  const [numberOfTransaction, setNumberOfTransaction] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleTX = async () => {
-    const filter = `date_period=${selectedTime}&start_date=${date}&end_date=${date2}&transaction_type=${selectedType}`;
-    const data = await getStatementsTX(filter, tokens?.access);
-    console.log(data?.data?.transactions, "getStatementsTX!!");
-    settx(data?.data?.transaction);
-    navigation.navigate("StatementDetails", {
-      data: data?.data?.transactions,
-    });
+    try {
+      setIsLoading(true);
+
+      const filters = [];
+
+      if (numberOfTransaction.trim() !== "") {
+        filters.push(`limit=${numberOfTransaction}`);
+      }
+
+      if (selectedType !== "all") {
+        filters.push(`type=${selectedType}`);
+      }
+
+      if (selectedTime !== "custom") {
+        filters.push(`period=${selectedTime}`);
+      } else if (date && date2) {
+        filters.push(`start_date=${date}`);
+        filters.push(`end_date=${date2}`);
+      }
+
+      const filterQuery = filters.join("&");
+
+      console.log("Final Query →", filterQuery);
+
+      const data = await getStatementsTX(filterQuery, tokens?.access);
+
+      navigation.navigate("StatementDetails", {
+        data: data?.data?.transactions,
+      });
+    } catch (error) {
+      console.log(error, "handleTX error");
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const isButtonEnabled =
+    numberOfTransaction.trim() !== "" ||
+    selectedTime !== "custom" ||
+    (selectedTime === "custom" && date && date2);
+
+  const periodOptions = [
+    { key: "week", label: "Last Week" },
+    { key: "month", label: "Last Month" },
+    { key: "custom", label: "Custom Range" },
+  ];
+
+  const handleCustomRangeSelect = () => {
+    const threeMonthsAgo = moment().subtract(3, "months").format("YYYY-MM-DD");
+    const today = moment().format("YYYY-MM-DD");
+    setdate(threeMonthsAgo);
+    setdate2(today);
+    setselectedTime("custom");
+  };
+
   return (
-    <ScreenContainer padding={0}>
+    <ScreenContainer scrollable padding={0}>
       <HeaderTitle title={"Statement Details"} leftIcon={SVGLeftArrow} />
+
+      {open && (
+        <DatePicker
+          modal
+          mode="date"
+          open={open}
+          date={new Date()}
+          onConfirm={(date) => {
+            setOpen(false);
+            setdate(moment(date).format("YYYY-MM-DD"));
+          }}
+          onCancel={() => setOpen(false)}
+        />
+      )}
+
+      {open2 && (
+        <DatePicker
+          modal
+          mode="date"
+          open={open2}
+          date={new Date()}
+          onConfirm={(date) => {
+            setOpen2(false);
+            setdate2(moment(date).format("YYYY-MM-DD"));
+          }}
+          onCancel={() => setOpen2(false)}
+        />
+      )}
+
       <View
         style={{
           flex: 1,
@@ -55,33 +127,11 @@ export default function Statement() {
         <Text style={{ color: "black", fontFamily: Fonts.bold, fontSize: 22 }}>
           Transaction Duration
         </Text>
-        <DatePicker
-          modal
-          mode="date"
-          open={open}
-          date={new Date()}
-          onConfirm={(date) => {
-            setOpen(false);
-            setdate(moment(date).format("YYYY-MM-DD"));
-          }}
-          onCancel={() => {
-            setOpen(false);
-          }}
-        />
-        <DatePicker
-          modal
-          mode="date"
-          open={open2}
-          date={new Date()}
-          onConfirm={(date) => {
-            setOpen2(false);
-            setdate2(moment(date2).format("YYYY-MM-DD"));
-          }}
-          onCancel={() => {
-            setOpen2(false);
-          }}
-        />
+
         <TextInputField
+          keyboardType={"numeric"}
+          value={numberOfTransaction}
+          onChange={(text) => setNumberOfTransaction(text)}
           lStyle={{ fontSize: 12, fontFamily: Fonts.semibold }}
           label={"Select Number of Recent Transactions"}
           cStyle={{
@@ -98,174 +148,146 @@ export default function Statement() {
         <Text style={{ fontFamily: Fonts.bold, padding: 10 }}>
           Select Predefined Period
         </Text>
+
         <View
           style={{
             flexDirection: "row",
+            flexWrap: "wrap",
+            gap: 5,
             justifyContent: "space-between",
-            alignItems: "center",
-            marginVertical: 5,
+            width: "100%",
           }}
         >
-          <TouchableOpacity
-            onPress={() => setselectedTime("week")}
-            style={{
-              paddingHorizontal: 15,
-              borderRadius: 30,
-              backgroundColor:
-                selectedTime === "week" ? "#000" : "rgba(43, 43, 43, 0.4)",
-
-              paddingTop: 10,
-              paddingBottom: 13,
-            }}
-          >
-            <Text
+          {periodOptions.map(({ key, label }) => (
+            <TouchableOpacity
+              key={key}
+              onPress={() =>
+                key === "custom"
+                  ? handleCustomRangeSelect()
+                  : setselectedTime(key)
+              }
               style={{
-                color: "white",
-                fontFamily: Fonts.semibold,
-                fontSize: 14,
-              }}
-            >
-              Last Week
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setselectedTime("month")}
-            style={{
-              paddingHorizontal: 15,
-              borderRadius: 30,
-              backgroundColor:
-                selectedTime === "month" ? "#000" : "rgba(43, 43, 43, 0.4)",
-
-              paddingTop: 10,
-              paddingBottom: 13,
-            }}
-          >
-            <Text
-              style={{
-                color: "white",
-                fontFamily: Fonts.semibold,
-                fontSize: 14,
-              }}
-            >
-              Last Month
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setselectedTime("3month")}
-            style={{
-              paddingHorizontal: 15,
-              borderRadius: 30,
-              backgroundColor:
-                selectedTime === "3month" ? "#000" : "rgba(43, 43, 43, 0.4)",
-              paddingTop: 10,
-              paddingBottom: 13,
-            }}
-          >
-            <Text
-              style={{
-                color: "white",
-                fontFamily: Fonts.semibold,
-                fontSize: 14,
-              }}
-            >
-              Last 3 Month
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <Text style={{ fontFamily: Fonts.bold, padding: 10, marginTop: 20 }}>
-          Select Predefined Period
-        </Text>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <TouchableOpacity
-            onPress={() => setOpen(true)}
-            style={{ width: "48%" }}
-          >
-            <Text
-              style={{
-                fontFamily: Fonts.semibold,
-                padding: 10,
-
-                color: "rgba(29, 29, 29, 1)",
-              }}
-            >
-              Start Date
-            </Text>
-            <View
-              style={{
-                borderWidth: 1,
-                borderColor: "rgba(106, 106, 106, 0.08)",
-                paddingHorizontal: 15,
-                paddingBottom: 15,
-                paddingTop: 12,
-                backgroundColor: "rgba(217, 217, 217, 0.07)",
+                paddingHorizontal: 10,
                 borderRadius: 30,
+                marginBottom: 10,
+                backgroundColor:
+                  selectedTime === key ? "#000" : "rgba(43, 43, 43, 0.4)",
+                paddingTop: 10,
+                paddingBottom: 13,
               }}
             >
               <Text
                 style={{
+                  color: "white",
                   fontFamily: Fonts.semibold,
-                  color: "rgba(29, 29, 29, 1)",
+                  fontSize: 12,
                 }}
               >
-                {date === ""
-                  ? " MM/DD/YY"
-                  : moment(date ?? new Date()).format("MM/DD/YY")}{" "}
+                {label}
               </Text>
-              <SvgXml
-                xml={SVGDate}
-                style={{ position: "absolute", right: 15, top: 15 }}
-              />
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setOpen2(true)}
-            style={{ width: "48%" }}
-          >
-            <Text
-              style={{
-                fontFamily: Fonts.semibold,
-                padding: 10,
+            </TouchableOpacity>
+          ))}
+        </View>
 
-                color: "rgba(29, 29, 29, 1)",
-              }}
+        {selectedTime === "custom" && (
+          <>
+            <Text
+              style={{ fontFamily: Fonts.bold, padding: 10, marginTop: 20 }}
             >
-              End Date
+              Select Custom Date Range
             </Text>
             <View
               style={{
-                borderWidth: 1,
-                borderColor: "rgba(106, 106, 106, 0.08)",
-                paddingHorizontal: 15,
-                paddingBottom: 15,
-                paddingTop: 12,
-                backgroundColor: "rgba(217, 217, 217, 0.07)",
-                borderRadius: 30,
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
               }}
             >
-              <Text
-                style={{
-                  fontFamily: Fonts.semibold,
-                  color: "rgba(29, 29, 29, 1)",
-                }}
+              <TouchableOpacity
+                onPress={() => setOpen(true)}
+                style={{ width: "48%" }}
               >
-                {date2 === ""
-                  ? " MM/DD/YY"
-                  : moment(date2 ?? new Date()).format("MM/DD/YY")}
-              </Text>
-              <SvgXml
-                xml={SVGDate}
-                style={{ position: "absolute", right: 15, top: 15 }}
-              />
+                <Text
+                  style={{
+                    fontFamily: Fonts.semibold,
+                    padding: 10,
+                    color: "rgba(29, 29, 29, 1)",
+                  }}
+                >
+                  Start Date
+                </Text>
+                <View
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "rgba(106, 106, 106, 0.08)",
+                    paddingHorizontal: 15,
+                    paddingBottom: 15,
+                    paddingTop: 12,
+                    backgroundColor: "rgba(217, 217, 217, 0.07)",
+                    borderRadius: 30,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: Fonts.semibold,
+                      color: "rgba(29, 29, 29, 1)",
+                    }}
+                  >
+                    {date === ""
+                      ? " MM/DD/YY"
+                      : moment(date).format("MM/DD/YY")}
+                  </Text>
+                  <SvgXml
+                    xml={SVGDate}
+                    style={{ position: "absolute", right: 15, top: 15 }}
+                  />
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => setOpen2(true)}
+                style={{ width: "48%" }}
+              >
+                <Text
+                  style={{
+                    fontFamily: Fonts.semibold,
+                    padding: 10,
+                    color: "rgba(29, 29, 29, 1)",
+                  }}
+                >
+                  End Date
+                </Text>
+                <View
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "rgba(106, 106, 106, 0.08)",
+                    paddingHorizontal: 15,
+                    paddingBottom: 15,
+                    paddingTop: 12,
+                    backgroundColor: "rgba(217, 217, 217, 0.07)",
+                    borderRadius: 30,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: Fonts.semibold,
+                      color: "rgba(29, 29, 29, 1)",
+                    }}
+                  >
+                    {date2 === ""
+                      ? " MM/DD/YY"
+                      : moment(date2).format("MM/DD/YY")}
+                  </Text>
+                  <SvgXml
+                    xml={SVGDate}
+                    style={{ position: "absolute", right: 15, top: 15 }}
+                  />
+                </View>
+              </TouchableOpacity>
             </View>
-          </TouchableOpacity>
-        </View>
+          </>
+        )}
+
         <Text style={{ fontFamily: Fonts.bold, padding: 10, marginTop: 20 }}>
           Select Transaction Type
         </Text>
@@ -277,80 +299,41 @@ export default function Statement() {
             marginVertical: 5,
           }}
         >
-          <TouchableOpacity
-            onPress={() => setselectedType("all")}
-            style={{
-              paddingHorizontal: 15,
-              marginLeft: 10,
-              borderRadius: 30,
-              backgroundColor:
-                selectedType === "all" ? "#000" : "rgba(43, 43, 43, 0.4)",
-
-              paddingTop: 10,
-              paddingBottom: 13,
-            }}
-          >
-            <Text
+          {["all", "debit", "credit"].map((type) => (
+            <TouchableOpacity
+              key={type}
+              onPress={() => setselectedType(type)}
               style={{
-                color: "white",
-                fontFamily: Fonts.semibold,
-                fontSize: 14,
+                paddingHorizontal: 15,
+                marginLeft: 10,
+                borderRadius: 30,
+                backgroundColor:
+                  selectedType === type ? "#000" : "rgba(43, 43, 43, 0.4)",
+                paddingTop: 10,
+                paddingBottom: 13,
               }}
             >
-              All
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setselectedType("debit")}
-            style={{
-              paddingHorizontal: 15,
-              marginLeft: 10,
-              borderRadius: 30,
-              backgroundColor:
-                selectedType === "debit" ? "#000" : "rgba(43, 43, 43, 0.4)",
-
-              paddingTop: 10,
-              paddingBottom: 13,
-            }}
-          >
-            <Text
-              style={{
-                color: "white",
-                fontFamily: Fonts.semibold,
-                fontSize: 14,
-              }}
-            >
-              Debit Card
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setselectedType("credit")}
-            style={{
-              paddingHorizontal: 15,
-              marginLeft: 10,
-              borderRadius: 30,
-              backgroundColor:
-                selectedType === "credit" ? "#000" : "rgba(43, 43, 43, 0.4)",
-              paddingTop: 10,
-              paddingBottom: 13,
-            }}
-          >
-            <Text
-              style={{
-                color: "white",
-                fontFamily: Fonts.semibold,
-                fontSize: 14,
-              }}
-            >
-              Credit Card
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={{
+                  color: "white",
+                  fontFamily: Fonts.semibold,
+                  fontSize: 14,
+                  textTransform: "capitalize",
+                }}
+              >
+                {type}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
         <GenericButton
           title={"View Statement"}
           cStyle={{ marginTop: 30 }}
-          onPress={() => handleTX()}
+          onPress={handleTX}
+          showLoader={true}
+          isLoading={isLoading}
+          disabled={!isButtonEnabled}
         />
       </View>
     </ScreenContainer>

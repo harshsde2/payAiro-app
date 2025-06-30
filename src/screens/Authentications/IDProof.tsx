@@ -2,7 +2,12 @@ import { useNavigation } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import { useStepCount } from "query/hooks/useAPIAuth";
 import React, { useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SvgXml } from "react-native-svg";
 import { useDispatch } from "react-redux";
 import { Theme, useTheme } from "styles";
@@ -85,7 +90,7 @@ export default function IDProof(props: any) {
   };
 
   return (
-    <ScreenContainer scrollable padding={0}>
+    <ScreenContainer avoidKeyboard scrollable padding={0}>
       <AuthHeader header={true} showAuthLogo={true} />
       <DocumentModal
         isVisible={isVisible}
