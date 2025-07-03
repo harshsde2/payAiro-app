@@ -19,8 +19,8 @@ export default function Rewards({ item }) {
         borderRadius: 10,
         backgroundColor: item?.bgColor ?? "rgba(255, 234, 177, 0.7)",
         padding: 20,
-        width: "30%",
-        marginHorizontal: 5,
+        width: 110,
+        marginRight: 5,
       }}
     >
       <View
@@ -49,8 +49,14 @@ export default function Rewards({ item }) {
       </Text>
 
       <GenericButton
-        title={"Explore "}
-        cStyle={{ backgroundColor: "#555", padding: 5, flex: 0 }}
+        title={"Explore"}
+        cStyle={{
+          backgroundColor: "#000",
+          padding: 5,
+          width: "100%",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
         // tStyle={{color: 'white', fontSize: 10}}
         disabled={true}
       />

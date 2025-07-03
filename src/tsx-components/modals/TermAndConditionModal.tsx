@@ -22,7 +22,7 @@ import WebView from "react-native-webview";
 const TermAndConditionModal = forwardRef<
   TermAndConditionModalRef,
   TermAndConditionModalProps
->(({ onAgree }: TermAndConditionModalProps, ref) => {
+>(({ onAgree, isAgree = true }: TermAndConditionModalProps, ref) => {
   const [isVisible, setIsVisible] = useState(false);
   const [modalHeaderTitle, setModalHeaderTitle] = useState("");
   const [conditionArray, setConditionArray] = useState<any>([]);
@@ -145,23 +145,24 @@ const TermAndConditionModal = forwardRef<
             )}
           </ScrollView>
         )}
-
-        <GenericButton
-          title="I Agree"
-          cStyle={{
-            marginTop: 10,
-            marginHorizontal: 20,
-            opacity: showButton ? 1 : 0.7,
-            width: "90%",
-          }}
-          onPress={() => {
-            setIsVisible(false);
-            onAgree();
-          }}
-          tStyle={{}}
-          disabled={!showButton}
-          icon={false}
-        />
+        {isAgree && (
+          <GenericButton
+            title="I Agree"
+            cStyle={{
+              marginTop: 10,
+              marginHorizontal: 20,
+              opacity: showButton ? 1 : 0.7,
+              width: "90%",
+            }}
+            onPress={() => {
+              setIsVisible(false);
+              onAgree();
+            }}
+            tStyle={{}}
+            disabled={!showButton}
+            icon={false}
+          />
+        )}
         {/* </View> */}
       </SafeAreaView>
     </Modal>

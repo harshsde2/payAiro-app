@@ -1,7 +1,11 @@
-import React, { useEffect, useRef } from "react";
-import { View, StyleSheet } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { View, StyleSheet, ActivityIndicator } from "react-native";
 import { ConnectWidget } from "@mxenabled/react-native-widget-sdk";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import {
+  NavigationProp,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
 import {
   useMxAccountDetailsExternal,
   useMxCreateMember,
@@ -10,18 +14,22 @@ import {
 } from "query/hooks/useMxIntegration";
 import HeaderTitle from "components/HeaderTitle";
 import { ScreenContainer } from "HOC";
-import { Card } from "tsx-components";
+import { Card, CustomText } from "tsx-components";
 import { SVGLeftArrow } from "constants/images";
 import { useDispatch } from "react-redux";
 import useDispatchAction from "hooks/useDispatchAction";
 import { setShowLoader } from "redux/slices/authenticationSlice";
 import { queryClient } from "query/queryClient";
-import { bankKeys } from "query/hooks";
+import { bankKeys, userKeys } from "query/hooks";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { themes } from "styles";
 
 const ConnectWidgetTest = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const { URL } = route.params as any;
+
+  const [pleaseWait, setPleaseWait] = useState(false);
 
   const hasStartedFlow = useRef(false);
 
@@ -32,7 +40,7 @@ const ConnectWidgetTest = () => {
     useMxRegisterExternalAccount();
 
   useEffect(() => {
-    useDispatchAction(setShowLoader(true));
+    useDispatchAction(setShowLoader(false));
     return () => {
       useDispatchAction(setShowLoader(false));
     };
@@ -40,8 +48,10 @@ const ConnectWidgetTest = () => {
 
   const handleFullOnboardingFlow = async (memberGUID: string) => {
     useDispatchAction(setShowLoader(true));
+    setPleaseWait(true);
     try {
       console.log("🚀 Starting onboarding flow with memberGUID:", memberGUID);
+
       const created = await createMember({ memberGuid: memberGUID });
 
       useDispatchAction(setShowLoader(false));
@@ -60,11 +70,18 @@ const ConnectWidgetTest = () => {
 
       const mapped = mapKeys(account) as any;
       await registerExternalAccount(mapped);
-      await queryClient.invalidateQueries(bankKeys.allAccounts());
-      await queryClient.refetchQueries(bankKeys.allAccounts());
 
+      await queryClient.invalidateQueries({
+        queryKey: userKeys.fiatDashboard(),
+      });
+      await queryClient.refetchQueries({ queryKey: userKeys.fiatDashboard() });
+
+      setPleaseWait(false);
       // setTimeout(() => {
-      navigation.goBack();
+      navigation.reset({
+        index: 0,
+        routes: [{ name: NAVIGATION_SCREENS.NEW_DASHBOARD }], // or your screen name
+      });
       // }, 1000); // Wait for the account to be registered
     } catch (error) {
       if (error instanceof Error) {
@@ -74,6 +91,7 @@ const ConnectWidgetTest = () => {
       }
     } finally {
       useDispatchAction(setShowLoader(false));
+      setPleaseWait(false);
     }
   };
 
@@ -103,6 +121,24 @@ const ConnectWidgetTest = () => {
         leftIcon={SVGLeftArrow}
         onPressLeft={() => navigation.goBack()}
       />
+      {pleaseWait && (
+        <View
+          style={{
+            width: "100%",
+            justifyContent: "center",
+            alignItems: "center",
+            flexDirection: "row",
+            marginVertical: 10,
+          }}
+        >
+          <ActivityIndicator
+            style={{ marginHorizontal: 10 }}
+            size={"small"}
+            color={"black"}
+          />
+          <CustomText>Please wait... Do not press any key. </CustomText>
+        </View>
+      )}
       <Card style={styles.widgetContainer}>
         <ConnectWidget
           url={URL}

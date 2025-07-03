@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -46,6 +46,7 @@ import { ScreenContainer } from "HOC";
 import { useDispatch } from "react-redux";
 import { resetAppState } from "utils/configs";
 import KYCBadge from "tsx-components/KYCBadge";
+import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
 
 export default function SettingScreen() {
   const navigation = useNavigation();
@@ -53,6 +54,8 @@ export default function SettingScreen() {
   const { tokens, walletData } = useSelectorAction();
   const [kycStep, setKycStep] = useState("");
   // console.log("kyc step =>", JSON.stringify(kycStep, null, 2));
+
+  const termsAndConditionRef = useRef(null);
 
   const dispatch = useDispatch();
 
@@ -102,6 +105,7 @@ export default function SettingScreen() {
           }, 300);
         }}
       />
+      <TermAndConditionModal isAgree={false} ref={termsAndConditionRef} />
       {/* <Button title="clickme" onPress={setuserPin} /> */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -196,6 +200,9 @@ export default function SettingScreen() {
                   if (item.name === "Logout") {
                     setIsVisible(true);
                     return;
+                  } else if (item.name === "Terms & Condition") {
+                    termsAndConditionRef.current.showTermsAndConditions();
+                    return;
                   }
                   navigation.navigate(item.route);
                 }}
@@ -220,7 +227,11 @@ export default function SettingScreen() {
                     margin: 5,
                   }}
                 >
-                  <SvgXml xml={item.icon} />
+                  {typeof item.icon == "string" ? (
+                    <SvgXml xml={item.icon} />
+                  ) : (
+                    item.icon
+                  )}
                   <Text
                     style={{
                       color: "rgba(29, 29, 29, 1)",

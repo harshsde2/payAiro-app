@@ -123,7 +123,7 @@ api.interceptors.response.use(
         // );
       }
     } else if (error.request) {
-      console.log("Network error, please check your connection");
+      console.log("Network error, please check your connection", requestUrl);
     } else {
       console.log("Error", error.message);
     }

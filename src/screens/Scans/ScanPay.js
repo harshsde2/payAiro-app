@@ -370,7 +370,7 @@ export default function ScanPay(props) {
   const actualAmount = amount ? parseFloat(amount).toFixed(2) : "0.00";
 
   return (
-    <ScreenContainer padding={0}>
+    <ScreenContainer scrollable padding={0}>
       {/* Display the amount */}
       <Loader spin={spin} />
 

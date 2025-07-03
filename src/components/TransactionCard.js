@@ -60,7 +60,7 @@ export default function TransactionCard({ item, isCrypto, isMerchent }) {
       });
     } else if (!isCrypto && item?.web3) {
       Linking.openURL(`https://sepolia.etherscan.io/tx/0x${item?.tx_hash}`);
-    } else if (isCrypto && !item?.web3) {
+    } else if (!isCrypto && !item?.web3) {
       navigation.navigate("SendReceipt", {
         transactionDetails: [
           { From: item?.from_currency },

@@ -12,21 +12,18 @@ import {
   FlatList,
   Image,
   Modal,
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from "react-native";
 // Import from the module alias utility
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import BalanceModal from "components/BalanceModal";
 import BottomNavigation from "components/BottomNavigation";
-import GenericButton from "components/GenericButton";
 import GuideModal from "components/GuideModal";
 import Rewards from "components/Rewards";
 import StoryLists from "components/StoryLists";
@@ -34,63 +31,53 @@ import TransactionCard from "components/TransactionCard";
 import Fonts from "constants/Fonts";
 import { SCREENS } from "constants/SCREENS";
 import { BASE_URL } from "constants/mockData";
+import { SvgIcons } from "constants/svgs";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import {
   bankKeys,
+  useAddTraditionalIRABankAccount,
   useAllBankAccounts,
   useBankBalances,
   useCryptoBalance,
   useCryptoTrades,
+  useDashBoardFiatData,
   useGetReward,
   useRecentContacts,
   useRedeemReward,
+  userKeys,
   useTransactions,
+  useWalletDashboardData,
   useWalletDetails,
 } from "query/hooks";
-import { SvgXml } from "react-native-svg";
+import {
+  useGetAllRWA,
+  useGetRWACategory,
+  useGetUserHoldings,
+} from "query/hooks/useRWA";
+import { queryClient } from "query/queryClient";
 import { useDispatch, useSelector } from "react-redux";
+import { VIEW_TYPE } from "screens/TSX-Screens/RWA/RWA";
 import { getPin, setPin } from "services/Auth";
 import {
   addbankAccountRoth,
-  getBanksAllAccount,
-  getCryptoTx,
   getPinFromSev,
   uploadKYC,
 } from "services/Services";
 import { STORAGE_KEYS, setItem } from "storage/mmkv";
+import AddAndLinkAcountCard from "tsx-components/AddAndLinkAcountCard";
+import ConfirmationModalComponent from "tsx-components/ConfirmationModalComponent";
 import CryptoCardSkeleton from "tsx-components/CryptoCardSkeleton";
+import DashboardCard from "tsx-components/DashboardCard";
 import DashboardSection from "tsx-components/DashboardSection";
 import FiatGraphSection from "tsx-components/FiatGraphSection";
 import IconTextComponent from "tsx-components/IconTextComponent";
-import {
-  renderFinanceIcons,
-  renderUtilitiesIcons,
-  size,
-} from "tsx-components/components.configs";
+import RealStateComponent from "tsx-components/RealStateComponent";
+import { renderUtilitiesIcons, size } from "tsx-components/components.configs";
+import CommonModal from "tsx-components/modals/CommonModal";
 import PinScreen from "tsx-components/modals/PinScreen";
 import RewardModal from "tsx-components/modals/RewardModal";
 import { ScreenContainer } from "../../HOC";
-import {
-  SVGAdd,
-  SVGBamkAdd,
-  SVGBit,
-  SVGDebitAdd,
-  SVGDebitCardAdd,
-  SVGHolding,
-  SVGKYC2,
-  SVGLinkDebitCard,
-  SVGLoggo,
-  SVGNewBank,
-  SVGReceive,
-  SVGRef,
-  SVGSecurities,
-  SVGSend,
-  SVGSliders,
-  SVGUSD,
-  SVGVoucher,
-  SVG_eye_off,
-  SVG_eye_on,
-} from "../../constants/images";
+import { SVGRef, SVGVoucher } from "../../constants/images";
 import {
   setBankLists,
   setBankbalances,
@@ -105,28 +92,7 @@ import {
   setWalletData,
 } from "../../redux/slices/authenticationSlice";
 import { useTheme } from "../../styles/ThemeContext";
-import {
-  Card,
-  CryptoCard,
-  CustomText,
-  DashboardHeader,
-} from "../../utils/moduleAlias";
-import LoaderComponent from "tsx-components/LoaderComponent";
-import RealStateComponent from "tsx-components/RealStateComponent";
-import {
-  useGetAllRWA,
-  useGetRWACategory,
-  useGetRWAList,
-  useGetUserHoldings,
-} from "query/hooks/useRWA";
-import { defaultImage } from "utils/configs";
-import { VIEW_TYPE } from "screens/TSX-Screens/RWA/RWA";
-import { queryClient } from "query/queryClient";
-import { userContactKeys } from "query/queryKeys";
-import DashboardCard from "tsx-components/DashboardCard";
-import AddAndLinkAcountCard from "tsx-components/AddAndLinkAcountCard";
-import CommonModal from "tsx-components/modals/CommonModal";
-import ConfirmationModalComponent from "tsx-components/ConfirmationModalComponent";
+import { Card, CustomText, DashboardHeader } from "../../utils/moduleAlias";
 
 // Lazy load non-critical components
 const LazyBankModal = lazy(() => import("components/BankModal"));
@@ -147,7 +113,7 @@ const categories = {
 // Variables
 const BANK_TYPE = "FDIC Insured";
 
-// API call utility with automatic retries, caching, and error handling
+// // API call utility with automatic retries, caching, and error handling
 export const useApiCall = <T,>(
   apiFunction: (token: string) => Promise<any>,
   options = { retries: 1, cacheTime: 5 * 60 * 1000 }
@@ -230,16 +196,6 @@ export const useApiCall = <T,>(
       cacheRef.current = { data: null, timestamp: 0 };
     },
   };
-};
-
-// Loading fallback component
-const LoadingFallback = () => {
-  const { theme } = useTheme();
-  return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <ActivityIndicator size="large" color={theme.colors.palette.green700} />
-    </View>
-  );
 };
 
 // Skeleton components for loading states
@@ -355,7 +311,6 @@ const MemoizedStoryLists = React.memo(StoryLists);
 const MemoizedTransactionCard = React.memo(TransactionCard);
 const MemoizedRewards = React.memo(Rewards);
 const MemoizedDashboardSection = React.memo(DashboardSection);
-const MemoizedRWASection = React.memo(DashboardSection);
 
 // Separate crypto view components to improve re-rendering
 interface CryptoFinanceSectionProps {
@@ -406,22 +361,24 @@ const CryptoFinanceSection = React.memo(
             contentContainerStyle={{}}
             style={{ marginVertical: 10 }}
           >
-            {renderUtilitiesIcons.map((item, index) => (
-              <IconTextComponent label={item?.label} key={index}>
-                <SvgXml
-                  xml={item?.IconName}
-                  width={item?.width}
-                  height={item?.height}
-                  disabled={item?.navigationScreenName == ""}
-                  onPress={() =>
-                    navigation.navigate(item?.navigationScreenName, {
-                      title: item?.label,
-                    })
-                  }
-                  // style={{ marginRight: 10 }}
-                />
-              </IconTextComponent>
-            ))}
+            {renderUtilitiesIcons.map((item, index) => {
+              const Icon = item?.IconName;
+              return (
+                <IconTextComponent label={item?.label} key={index}>
+                  <Icon
+                    width={item?.width}
+                    height={item?.height}
+                    disabled={item?.navigationScreenName == ""}
+                    onPress={() =>
+                      navigation.navigate(item?.navigationScreenName, {
+                        title: item?.label,
+                      })
+                    }
+                    // style={{ marginRight: 10 }}
+                  />
+                </IconTextComponent>
+              );
+            })}
           </ScrollView>
         </MemoizedDashboardSection>
       </View>
@@ -440,33 +397,31 @@ const CryptoRewardsSection = React.memo(() => {
         navigation.navigate(NAVIGATION_SCREENS.REWARDS);
       }}
     >
-      <View style={[]}>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginRight: 10,
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginRight: 10,
+        }}
+      >
+        <MemoizedRewards item={{}} />
+        <MemoizedRewards
+          item={{
+            name: "Vouchers",
+            icon: SVGVoucher,
+            route: "VouchersScreens",
+            bgColor: "#f1edfe",
           }}
-        >
-          <MemoizedRewards item={{}} />
-          <MemoizedRewards
-            item={{
-              name: "Vouchers",
-              icon: SVGVoucher,
-              route: "VouchersScreens",
-              bgColor: "#f1edfe",
-            }}
-          />
-          <MemoizedRewards
-            item={{
-              name: "Referrals",
-              icon: SVGRef,
-              route: "VouchersScreens",
-              bgColor: "rgba(95, 255, 0, 0.09)",
-            }}
-          />
-        </View>
+        />
+        <MemoizedRewards
+          item={{
+            name: "Referrals",
+            icon: SVGRef,
+            route: "VouchersScreens",
+            bgColor: "rgba(95, 255, 0, 0.09)",
+          }}
+        />
       </View>
     </MemoizedDashboardSection>
   );
@@ -564,13 +519,11 @@ const CryptoOtherServicesSection = React.memo(
             justifyContent: "flex-start",
             gap: 10,
           }}
+          onPress={() => setisCardModalVisible(true)}
         >
-          <SvgXml
-            xml={SVGLinkDebitCard}
-            onPress={() => setisCardModalVisible(true)}
-          />
+          <SvgIcons.LinkDebitCard />
           <CustomText size={13} variant="button">
-            Link Debit Card
+            Link Card
           </CustomText>
         </TouchableOpacity>
         {/* <Pressable
@@ -642,6 +595,10 @@ const NewDashboard = () => {
   const [totalDisbursablePending, settotalDisbursablePending] = useState(0);
   const [showAddAccountConfirmation, setShowAddAccountConfirmation] =
     useState(false);
+  const [
+    showAddTraditionalAccountConfirmation,
+    setShowAddTraditionalAccountConfirmation,
+  ] = useState(false);
   const [hiddenBalances, setHiddenBalances] = useState<Record<string, boolean>>(
     {}
   );
@@ -652,69 +609,61 @@ const NewDashboard = () => {
   const focus = useIsFocused();
 
   // Get the bank accounts from the API with cache stoage and store them in Redux
-  const {
-    data: AllBankAccounts,
-    isLoading: isLoadingAllBankAccounts,
-    error: allBankAccountsError,
-    refetch: refetchAllBankAccounts,
-  } = useAllBankAccounts();
+  // const {
+  //   data: AllBankAccounts,
+  //   isLoading: isLoadingAllBankAccounts,
+  //   error: allBankAccountsError,
+  //   refetch: refetchAllBankAccounts,
+  // } = useAllBankAccounts();
 
   const { mutate: redeemReward } = useRedeemReward();
   const { data: getRewardData, isError, isSuccess } = useGetReward();
-  const {
-    data: getRWACategory,
-    isError: isErrorRWACategory,
-    isSuccess: isSuccessRWACategory,
-  } = useGetRWACategory();
 
   const {
-    data: getGetAllRWA,
-    isError: isErrorGetAllRWA,
-    isSuccess: isSuccessGetAllRWA,
-  } = useGetAllRWA();
+    data: DashBoardData,
+    isError: isErrorDashBoardData,
+    isSuccess: isSuccessDashBoardData,
+    isPending: isDashBoardDataPending,
+    isFetched: isDashBoardDataFetched,
+    refetch: refetchDashBoardFiatData,
+  } = useDashBoardFiatData();
 
   const {
-    data: getRWAList,
-    isError: isErrorRWAListA,
-    isSuccess: isSuccessRWAList,
-  } = useGetUserHoldings();
+    mutate: handleTraditionalIRABankAccountt,
+    isPending: isPendingTraditionalIRABankAccount,
+    isSuccess: isSuccessTraditionalIRABankAccount,
+  } = useAddTraditionalIRABankAccount();
+
+  const {
+    data: WalletDashboardData,
+    isError: isErrorWalletDashboardData,
+    isSuccess: isSuccessWalletDashboardData,
+    isPending: isWalletDashboardDataPending,
+    isFetched: isWalletDashboardDataFetched,
+  } = useWalletDashboardData();
+
+  // const {
+  //   data: getRWAList,
+  //   isError: isErrorRWAListA,
+  //   isSuccess: isSuccessRWAList,
+  // } = useGetUserHoldings();
 
   const filteredMyRWA =
-    getRWAList?.data.filter((item: any) => item.asset_type == "Realestate") ??
-    [];
+    WalletDashboardData?.data?.holdings.filter(
+      (item: any) => item.asset_type == "Realestate"
+    ) ?? [];
 
-  // console.log("dataaaa =>", JSON.stringify(filteredMyRWA, null, 2));
-  console.log("token =>", tokens.access);
+  // console.log("dataaaa =>", JSON.stringify(WalletDashboardData?.data, null, 2));
+  // console.log("token =>", tokens.access);
 
   const {
     data: bankBalanceData,
     isLoading: isLoadingBankBalanceData,
     error: bankBalanceDataError,
     refetch: refetchBankBalanceData,
+    isFetched: isBankBalanceDataFetched,
+    isSuccess: isBankBalanceDataSuccess,
   } = useBankBalances();
-
-  const {
-    data: AllContacts,
-    isLoading: isLoadingAllContacts,
-    error: allContactsError,
-    refetch: refetchAllContacts,
-  } = useRecentContacts();
-
-  const {
-    data: AllTransactions,
-    isLoading: isLoadingAllTransactions,
-    error: allTransactionsError,
-    isSuccess: AllTransactionsSuccess,
-    refetch: refetchAllTransactions,
-  } = useTransactions();
-
-  const {
-    data: AllTradesHistory,
-    isLoading: isLoadingAllTradesHistorys,
-    error: AllTradesHistoryError,
-    isSuccess: AllTradesHistorySuccess,
-    refetch: refetchAllTradesHistory,
-  } = useCryptoTrades();
 
   const {
     data: CryptoBalance,
@@ -724,47 +673,7 @@ const NewDashboard = () => {
     refetch: refetchCryptoBalance,
   } = useCryptoBalance();
 
-  // console.log("CryptoBalance =>", JSON.stringify(CryptoBalance, null, 2));
-
-  const {
-    data: WalletDetailsData,
-    isLoading: isPendingWalletDetails,
-    isSuccess: isSuccessWalletDetails,
-    isError: isErrorWalletDetails,
-    refetch: refetchWalletDetails,
-  } = useWalletDetails();
-
-  const {
-    data: RecentContactsData,
-    isLoading: isPendingRecentContacts,
-    isSuccess: isSuccessRecentContacts,
-    isError: isErrorRecentContacts,
-    refetch: refetchRecentContacts,
-  } = useRecentContacts();
-
-  // console.log(
-  //   "RecentContactsData =>",
-  //   JSON.stringify(RecentContactsData?.recentContacts, null, 2)
-  // );
-
-  // useEffect(() => {
-  //   // console.log("Focus screeen", focus);
-  //   if (focus) {
-  //     refetchAllBankAccounts();
-  //   }
-  // }, [focus]);
-
   useEffect(() => {
-    if (AllTransactionsSuccess) {
-      settxLists(
-        [
-          ...AllTransactions.data?.merchantTransactions,
-          ...AllTransactions.data?.userToUserTransactions,
-        ].filter((i) => i?.status === "success" || i?.status === "completed") ??
-          []
-      );
-    }
-
     if (CryptoBalance) {
       const cryptoAssets = (CryptoBalance as any)?.data?.data;
 
@@ -795,101 +704,82 @@ const NewDashboard = () => {
       settotalDisbursable(Number(totals.disbursable));
       settotalDisbursablePending(Number(totals.pending));
     }
-
-    if (WalletDetailsData) {
-      dispatch(setWalletData(WalletDetailsData?.data));
-    }
-  }, [
-    AllTransactionsSuccess,
-    AllTransactions,
-    CryptoBalanceSuccess,
-    isSuccessWalletDetails,
-  ]);
+  }, [CryptoBalanceSuccess]);
 
   useEffect(() => {
-    if (AllTradesHistorySuccess) {
+    if (
+      !isErrorWalletDashboardData &&
+      isWalletDashboardDataFetched &&
+      isSuccessWalletDashboardData &&
+      WalletDashboardData?.data?.transactions
+    ) {
       setweb3TxLists([
-        ...AllTradesHistory?.data?.nft_transactions,
-        ...AllTradesHistory?.data?.trades,
+        ...WalletDashboardData?.data?.transactions?.nft_transactions,
+        ...WalletDashboardData?.data?.transactions?.trades,
       ]);
     }
+  }, [
+    WalletDashboardData,
+    isWalletDashboardDataFetched,
+    isErrorWalletDashboardData,
+    isSuccessWalletDashboardData,
+  ]);
 
-    if (RecentContactsData) {
-      handleContacts(RecentContactsData?.allContacts);
-    }
-  }, [AllTradesHistorySuccess, AllTradesHistory, isSuccessRecentContacts]);
-
-  // console.log(
-  //   JSON.stringify(walletData?.TransactionFees_persentage, null, 2),
-  //   "AllTradesHistory"
-  // );
-
-  console.log(JSON.stringify(tokens?.access, null, 2), "token");
-
-  useEffect(() => {
-    if (totalDisbursable || bankBalance) {
-      dispatch(
-        setCardSwitchDetails({
-          ...CardSwitchDetails,
-          balanceText: bankBalance?.bank_account?.usd,
-          idText: walletData?.username,
-        })
-      );
-    }
-  }, [bankBalance, walletData]);
-
-  // console.log("token =>", JSON.stringify(walletData, null, 2));
+  // console.log(JSON.stringify(tokens?.access, null, 2), "token");
 
   // Dispatched all the data into Redux store
   useEffect(() => {
-    if (AllBankAccounts && AllBankAccounts.length > 0) {
-      dispatch(setBankLists(AllBankAccounts));
-    }
-    if (bankBalanceData && Object.keys(bankBalanceData).length > 0) {
+    if (
+      isBankBalanceDataFetched &&
+      isBankBalanceDataSuccess &&
+      bankBalanceData &&
+      Object.keys(bankBalanceData).length > 0
+    ) {
       dispatch(setBankbalances(bankBalanceData));
     }
-  }, [AllBankAccounts, bankBalanceData]);
+  }, [isBankBalanceDataFetched, isBankBalanceDataSuccess]);
+
+  useEffect(() => {
+    if (
+      !isErrorDashBoardData &&
+      isDashBoardDataFetched &&
+      DashBoardData?.data.bank
+    ) {
+      dispatch(
+        setBankLists([
+          ...DashBoardData?.data?.bank?.bank_accounts,
+          ...DashBoardData?.data?.bank?.roth_ira_accounts,
+          ...DashBoardData?.data?.bank?.traditional_ira_accounts,
+          ...DashBoardData?.data?.bank?.external_accounts,
+        ])
+      );
+    }
+
+    if (
+      !isErrorDashBoardData &&
+      isDashBoardDataFetched &&
+      DashBoardData?.data?.transactions
+    ) {
+      settxLists(
+        [
+          ...DashBoardData?.data?.transactions.merchantTransactions,
+          ...DashBoardData?.data?.transactions.userToUserTransactions,
+        ].filter((i) => i?.status === "success" || i?.status === "completed") ??
+          []
+      );
+    }
+  }, [isDashBoardDataFetched, DashBoardData]);
 
   const [selectedGraph, setselectedGraph] = useState("Assets");
 
   // Create API hooks with automatic retries and caching
-  const kycApi = useApiCall(uploadKYC);
+  // const kycApi = useApiCall(uploadKYC);
 
   // Add this near other hooks at the top level of your NewDashboard component
   const memoizedAllocationLists = useMemo(
     () => alloCationLists,
     [alloCationLists]
   );
-
-  // useEffect(() => {
-  //   // Group all data fetch operations
-  //   const fetchInitialData = async () => {
-  //     if (!tokens && !tokens?.access) {
-  //       // console.error("No access token available");
-  //       return;
-  //     }
-
-  //     try {
-  //       // console.log("Fetching initial dashboard data");
-
-  //       // Create an array of promises with descriptive catch handlers
-  //       const promises = [
-  //         fetchKycStatus().catch((err) =>
-  //           console.error("KYC status fetch failed:", err)
-  //         ),
-  //       ];
-
-  //       // Execute all promises in parallel
-  //       await Promise.allSettled(promises);
-  //       // console.log("All initial data fetch operations completed");
-  //     } catch (error) {
-  //       console.error("Error loading dashboard data:", error);
-  //     }
-  //   };
-
-  //   fetchInitialData();
-  //   handlePin();
-  // }, [tokens?.access]);
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
@@ -923,7 +813,7 @@ const NewDashboard = () => {
       }
     };
 
-    fetchLinkToken();
+    // fetchLinkToken();
   }, [tokens?.access]);
 
   // Initialize all balances as hidden on first load
@@ -947,11 +837,8 @@ const NewDashboard = () => {
     setRefreshing(true);
 
     try {
-      refetchAllBankAccounts();
       refetchBankBalanceData();
-      refetchAllContacts();
-      refetchAllTransactions();
-      refetchAllTradesHistory();
+      refetchDashBoardFiatData();
     } catch (error) {
       console.error("Error refreshing dashboard data:", error);
     } finally {
@@ -991,20 +878,19 @@ const NewDashboard = () => {
 
   const fetchKycStatus = async () => {
     try {
-      const data = await kycApi.execute(tokens?.access);
+      // const data = await kycApi.execute(tokens?.access);
       // console.log("data =>", data)
-      if (data?.status === 400 || !data?.status) {
-        // console.log("fetchKycStatus if")
-        if (data?.title) {
-          setisShowKYC(data?.title === "Identity suspended");
-        } else {
-          setisShowKYC(true);
-        }
-      } else {
-        // console.log("fetchKycStatus esle")
-
-        setisShowKYC(true);
-      }
+      // if (data?.status === 400 || !data?.status) {
+      //   // console.log("fetchKycStatus if")
+      //   if (data?.title) {
+      //     setisShowKYC(data?.title === "Identity suspended");
+      //   } else {
+      //     setisShowKYC(true);
+      //   }
+      // } else {
+      //   // console.log("fetchKycStatus esle")
+      //   setisShowKYC(true);
+      // }
     } catch (error) {
       console.error("Error checking KYC status:", error);
       setisShowKYC(false);
@@ -1100,12 +986,42 @@ const NewDashboard = () => {
         return timestampA.getTime() - timestampB.getTime();
       });
 
-      // console.log("Final sorted contacts:", sortedContacts);
       setcontactLists(sortedContacts);
     } catch (error) {
       console.error("Error fetching contacts:", error);
     }
   };
+
+  const handleCreateTraditionalIRAAccount = () => {
+    dispatch(setShowLoader(true));
+    const formdata = new FormData();
+    formdata.append("account_type", souceAccount.toLowerCase());
+    handleTraditionalIRABankAccountt(formdata as any, {
+      onSuccess: async (data) => {
+        dispatch(
+          setSuccessMsg("Traditional IRA Bank Account Added Successfully")
+        );
+        setsouceAccount("");
+        await queryClient.invalidateQueries({
+          queryKey: userKeys.fiatDashboard(),
+        });
+        await queryClient.refetchQueries({
+          queryKey: userKeys.fiatDashboard(),
+        });
+      },
+      onError: (error: any) => {
+        console.log(
+          "Error adding Traditional IRA Bank Account:",
+          JSON.stringify(error, null, 2)
+        );
+      },
+      onSettled: () => {
+        dispatch(setShowLoader(false));
+        setsouceAccount("");
+      },
+    });
+  };
+  // console.log("Final sorted contacts:", JSON.stringify(contactLists, null, 2));
 
   const handleRothBank = async () => {
     try {
@@ -1119,8 +1035,12 @@ const NewDashboard = () => {
         dispatch(setSuccessMsg("Bank Account Created Successfully"));
         dispatch(setShowLoader(false));
         setsouceAccount("");
-        await queryClient.invalidateQueries(bankKeys.allAccounts());
-        await queryClient.refetchQueries(bankKeys.allAccounts());
+        await queryClient.invalidateQueries({
+          queryKey: userKeys.fiatDashboard(),
+        });
+        await queryClient.refetchQueries({
+          queryKey: userKeys.fiatDashboard(),
+        });
         // fetchBankAccounts();
       } else {
         dispatch(setErrorMsg(data?.data?.error ?? "Something went wrong"));
@@ -1135,10 +1055,10 @@ const NewDashboard = () => {
   const hasKey = (bank: any, key: any) => bank.some((obj: any) => key in obj);
 
   const handleOpenLink = useCallback(async () => {
-    console.log(
-      "!hasKey(bankLists, bank_type) =>",
-      !hasKey(bankLists, "bank_type")
-    );
+    // console.log(
+    //   "!hasKey(bankLists, bank_type) =>",
+    //   !hasKey(bankLists, "bank_type")
+    // );
     if (!hasKey(bankLists, "bank_type")) {
       try {
         dispatch(setShowLoader(true));
@@ -1213,40 +1133,11 @@ const NewDashboard = () => {
     }));
   }, [bankLists, bankBalance]);
 
-  console.log("souceAccount =>", JSON.stringify(souceAccount, null, 2));
+  // console.log("souceAccount =>", JSON.stringify(souceAccount, null, 2));
 
   const handleEyeClick = (account_id: string) => {
     if (pinScreenRef.current) {
       pinScreenRef.current.toggleBalanceVisibility(account_id);
-    }
-  };
-
-  // Handle pin if it is not set then it will set in local stroage
-  const handlePin = async () => {
-    if (!tokens?.access) return;
-    try {
-      // First check if pins are available locally
-      const pins = await getPin();
-
-      if (pins) {
-        // If pins are available locally, use them
-        setshowPin(false);
-        return;
-      }
-
-      // If pins are not available locally, fetch from server
-      const data = await getPinFromSev(tokens?.access);
-
-      if (data && data?.status) {
-        await setPin(data?.data?.tpin);
-        setshowPin(false);
-      } else {
-        console.log("No valid pin data received from server");
-        setshowPin(true);
-      }
-    } catch (error) {
-      console.error("Error retrieving pin:", error);
-      setshowPin(true);
     }
   };
 
@@ -1309,6 +1200,32 @@ const NewDashboard = () => {
                 selectedAccount={souceAccount}
                 headerText={"Do you want to create ROTH IRA account?"}
                 descriptionText={`($10 + ${walletData?.TransactionFees_persentage}% Transaction fee) will be charged to create ROTH IRA account`}
+                amountText={"$10.1"}
+              />
+            )}
+          </CommonModal>
+        )}
+        {showAddTraditionalAccountConfirmation && (
+          <CommonModal
+            isVisible={showAddTraditionalAccountConfirmation}
+            onClose={() => {
+              setShowAddTraditionalAccountConfirmation(false);
+            }}
+            containerStyle={{ justifyContent: "center", alignItems: "center" }}
+          >
+            {showAddTraditionalAccountConfirmation && (
+              <ConfirmationModalComponent
+                onCancelPress={() => {
+                  setShowAddTraditionalAccountConfirmation(false);
+                }}
+                onConfirmPress={() => {
+                  setShowAddTraditionalAccountConfirmation(false);
+                  handleCreateTraditionalIRAAccount();
+                }}
+                onBankSelect={setsouceAccount}
+                selectedAccount={souceAccount}
+                headerText={"Do you want to create TRADITIONAL \nIRA account?"}
+                descriptionText={`($10 + ${walletData?.TransactionFees_persentage}% Transaction fee) will be charged to create TRADITIONAL IRA account`}
                 amountText={"$10.1"}
               />
             )}
@@ -1488,7 +1405,7 @@ const NewDashboard = () => {
           }}
         />
 
-        {isShowKYC && (
+        {/* {isShowKYC && (
           <View
             style={{
               backgroundColor: "#000",
@@ -1529,8 +1446,8 @@ const NewDashboard = () => {
               style={{ marginTop: 15, width: "80%", alignSelf: "center" }}
             />
           </View>
-        )}
-        {bankBalance?.bank_account?.usd == undefined ? (
+        )} */}
+        {isDashBoardDataPending ? (
           <CryptoCardSkeleton
             shimmerColor="rgba(255, 255, 255, 0.6)"
             baseColor="rgba(255, 255, 255, 0.2)"
@@ -1554,8 +1471,7 @@ const NewDashboard = () => {
               marginVertical: 20,
             }}
           >
-            <SvgXml
-              xml={SVGSend}
+            <SvgIcons.SendIcon
               onPress={() => {
                 navigation.navigate(
                   !isCrypto
@@ -1567,8 +1483,7 @@ const NewDashboard = () => {
                 );
               }}
             />
-            <SvgXml
-              xml={SVGReceive}
+            <SvgIcons.RecieveIcon
               onPress={() =>
                 navigation.navigate(
                   !isCrypto
@@ -1577,8 +1492,8 @@ const NewDashboard = () => {
                 )
               }
             />
-            <SvgXml
-              xml={!isCrypto ? SVGHolding : SVGAdd}
+            <SvgIcons.AddBalanceIcon
+              // xml={!isCrypto ? SVGHolding : SVGAdd}
               style={{ marginBottom: 20 }}
               onPress={() => {
                 if (!isCrypto) {
@@ -1623,7 +1538,7 @@ const NewDashboard = () => {
                     contentContainerStyle={{}}
                     style={{ marginRight: 10 }}
                   >
-                    {isLoadingAllBankAccounts ? (
+                    {isDashBoardDataPending ? (
                       // Show skeleton loading UI
                       <>
                         <SkeletonCard />
@@ -1665,7 +1580,7 @@ const NewDashboard = () => {
                                 />
                               </View>
                             ) : (
-                              <SvgXml xml={SVGUSD} width={35} height={35} />
+                              <SvgIcons.DollarIcon width={35} height={35} />
                             )}
                             <View style={{ flex: 1 }}>
                               <CustomText
@@ -1768,9 +1683,9 @@ const NewDashboard = () => {
                                     handleEyeClick(item.accountNumber)
                                   }
                                 >
-                                  <SvgXml
+                                  <SvgIcons.EyeOnGreenbg
                                     style={{ marginLeft: 10, top: 1 }}
-                                    xml={SVG_eye_on}
+                                    // xml={SVG_eye_on}
                                     width={15}
                                     height={15}
                                   />
@@ -1782,9 +1697,8 @@ const NewDashboard = () => {
                                     handleEyeClick(item.accountNumber)
                                   }
                                 >
-                                  <SvgXml
+                                  <SvgIcons.EyeOffGreenbg
                                     style={{ marginLeft: 10, top: 1 }}
-                                    xml={SVG_eye_off}
                                     width={15}
                                     height={15}
                                   />
@@ -1833,6 +1747,14 @@ const NewDashboard = () => {
                     />
                     <AddAndLinkAcountCard
                       title={"ADD ACCOUNT"}
+                      description={"Add your TRADITIONAL IRA account"}
+                      buttonText={"Add Account"}
+                      onAddPress={() => {
+                        setShowAddTraditionalAccountConfirmation(true);
+                      }}
+                    />
+                    <AddAndLinkAcountCard
+                      title={"ADD ACCOUNT"}
                       description={"Add your ROTH IRA account"}
                       buttonText={"Add Account"}
                       onAddPress={() => {
@@ -1847,7 +1769,7 @@ const NewDashboard = () => {
                     actionText="see all"
                     onActionPress={onContactSeeALl}
                   >
-                    {isLoadingAllContacts ? (
+                    {isDashBoardDataPending ? (
                       // Skeleton loading for contacts
                       <View
                         style={{
@@ -1878,9 +1800,10 @@ const NewDashboard = () => {
                           </View>
                         ))}
                       </View>
-                    ) : AllContacts && AllContacts?.allContacts.length > 0 ? (
+                    ) : DashBoardData?.data?.contacts &&
+                      DashBoardData?.data?.contacts.length > 0 ? (
                       <MemoizedStoryLists
-                        data={AllContacts?.allContacts}
+                        data={DashBoardData?.data?.contacts}
                         isVisble3={isCrypto}
                       />
                     ) : (
@@ -1929,7 +1852,7 @@ const NewDashboard = () => {
                 // style={{ marginBottom: 120 }}
                 onActionPress={() => {}}
               >
-                {isLoadingAllTransactions ? (
+                {isDashBoardDataPending ? (
                   // Skeleton loading for transactions
                   <>
                     <SkeletonTransactionCard />
@@ -1960,7 +1883,7 @@ const NewDashboard = () => {
                 title="Recent Transactions"
                 onActionPress={() => {}}
               >
-                {isLoadingAllTransactions ? (
+                {isDashBoardDataPending ? (
                   // Skeleton loading for transactions
                   <>
                     <SkeletonTransactionCard />
@@ -1988,7 +1911,7 @@ const NewDashboard = () => {
             )}
             {!isCrypto && (
               <CryptoRWASection
-                data={getRWACategory?.data}
+                data={WalletDashboardData?.data?.icon}
                 navigation={navigation}
               />
             )}

@@ -30,6 +30,8 @@ const TextInputField: FC<InputProps> = (props) => {
     maxLength,
     required = false,
     info = false,
+    rightIcon,
+    onRightIconClick,
     onInfoPress,
   } = props;
 
@@ -128,6 +130,18 @@ const TextInputField: FC<InputProps> = (props) => {
             <SvgXml
               xml={icon ?? SVGProfile3}
               style={{ position: "absolute", right: 10 }}
+            />
+          )}
+
+          {rightIcon && (
+            <SvgXml
+              width={50}
+              height={50}
+              xml={rightIcon}
+              style={{ position: "absolute", right: 10 }}
+              onPress={() => {
+                onRightIconClick();
+              }}
             />
           )}
 

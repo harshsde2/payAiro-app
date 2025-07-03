@@ -1,30 +1,31 @@
-import React, {useState} from 'react';
+import React, { useState } from "react";
 import {
   Alert,
   Image,
   Linking,
   Modal,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-import Fonts from '../constants/Fonts';
-import GenericButton from './GenericButton';
-import {SCREENS} from '../constants/SCREENS';
-import {useNavigation} from '@react-navigation/native';
-import ReactNativeBiometrics from 'react-native-biometrics';
-import useSelectorAction from '../hooks/useSelectorAction';
-import {setBiometricAvailable} from '../redux/slices/authenticationSlice';
-import useDispatchAction from '../hooks/useDispatchAction';
-import {setBiometric} from '../services/Auth';
-import {CARD_TYPE} from '../constants/constant';
-import {SvgXml} from 'react-native-svg';
+} from "react-native";
+import Fonts from "../constants/Fonts";
+import GenericButton from "./GenericButton";
+import { SCREENS } from "../constants/SCREENS";
+import { useNavigation } from "@react-navigation/native";
+import ReactNativeBiometrics from "react-native-biometrics";
+import useSelectorAction from "../hooks/useSelectorAction";
+import { setBiometricAvailable } from "../redux/slices/authenticationSlice";
+import useDispatchAction from "../hooks/useDispatchAction";
+import { setBiometric } from "../services/Auth";
+import { CARD_TYPE } from "../constants/constant";
+import { SvgXml } from "react-native-svg";
 
-const BankModal = ({isVisible, onClose, onCancel}) => {
-  const {biometricAvailable} = useSelectorAction();
+const BankModal = ({ isVisible, onClose, onCancel }) => {
+  const { biometricAvailable } = useSelectorAction();
   const rnBiometrics = new ReactNativeBiometrics({
     allowDeviceCredentials: true,
   });
@@ -36,20 +37,25 @@ const BankModal = ({isVisible, onClose, onCancel}) => {
       visible={isVisible}
       transparent={true}
       animationType="slide"
-      onRequestClose={onClose}>
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
+      onRequestClose={onClose}
+    >
+      <Pressable onPress={onClose} style={styles.modalContainer}>
+        <Pressable
+          onPress={(e) => e.stopPropagation()}
+          style={styles.modalContent}
+        >
           <Text style={styles.headerText}>Select any option</Text>
           <Text
             style={{
               fontSize: 14,
               fontFamily: Fonts.regular,
-              color: 'grey',
-              textAlign: 'center',
-            }}>
+              color: "grey",
+              textAlign: "center",
+            }}
+          >
             Subtract draft object prototype stroke.
           </Text>
-          <View style={{marginVertical: 10}}>
+          <View style={{ marginVertical: 10 }}>
             {CARD_TYPE.map((i, k) => (
               <TouchableOpacity
                 onPress={() => {
@@ -60,38 +66,41 @@ const BankModal = ({isVisible, onClose, onCancel}) => {
                 style={{
                   borderRadius: 40,
                   borderWidth: 1,
-                  backgroundColor: 'rgba(217, 217, 217, 0.07)',
-                  borderColor: 'rgba(106, 106, 106, 0.08)',
+                  backgroundColor: "rgba(217, 217, 217, 0.07)",
+                  borderColor: "rgba(106, 106, 106, 0.08)",
                   padding: -20,
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                   marginVertical: 5,
-                  marginBottom: i.name === 'Logout' ? 100 : 5,
-                }}>
+                  marginBottom: i.name === "Logout" ? 100 : 5,
+                }}
+              >
                 <View
                   style={{
-                    flexDirection: 'row',
-                    justifyContent: 'flex-start',
-                    alignItems: 'center',
+                    flexDirection: "row",
+                    justifyContent: "flex-start",
+                    alignItems: "center",
                     margin: 5,
-                  }}>
+                  }}
+                >
                   <SvgXml xml={i.icon} />
                   <Text
                     style={{
-                      color: 'rgba(29, 29, 29, 1)',
+                      color: "rgba(29, 29, 29, 1)",
                       marginLeft: 10,
                       fontSize: 16,
                       fontFamily: Fonts.regular,
-                    }}>
+                    }}
+                  >
                     {i?.name}
                   </Text>
                 </View>
               </TouchableOpacity>
             ))}
           </View>
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 };
@@ -101,13 +110,13 @@ export default BankModal;
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    backgroundColor: '#fff',
-    width: '90%',
+    backgroundColor: "#fff",
+    width: "90%",
     borderTopEndRadius: 20,
     borderTopStartRadius: 20,
     padding: 20,
@@ -115,33 +124,33 @@ const styles = StyleSheet.create({
     // height: '40%',
     // marginTop: 500,
     // flex: 1,
-    position: 'absolute',
+    position: "absolute",
     borderRadius: 30,
   },
 
   headerText: {
     fontSize: 24,
     fontFamily: Fonts.bold,
-    color: 'rgba(29, 29, 29, 1)',
-    textAlign: 'center',
+    color: "rgba(29, 29, 29, 1)",
+    textAlign: "center",
     marginBottom: 10,
     marginTop: 15,
   },
   sectionHeader: {
     fontSize: 14,
     fontFamily: Fonts.medium,
-    color: '#333',
+    color: "#333",
     marginVertical: 10,
   },
   optionContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     marginVertical: 5,
   },
   radioButton: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 8,
@@ -149,47 +158,47 @@ const styles = StyleSheet.create({
   },
   checkbox: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 10,
     paddingHorizontal: 15,
     paddingVertical: 8,
     marginVertical: 5,
   },
   selectedOption: {
-    backgroundColor: '#4F378B',
-    borderColor: '#4F378B',
+    backgroundColor: "#4F378B",
+    borderColor: "#4F378B",
   },
   optionText: {
     fontSize: 14,
     fontFamily: Fonts.medium,
-    color: '#333',
+    color: "#333",
   },
   selectedText: {
-    color: '#fff',
+    color: "#fff",
   },
   buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 20,
   },
   clearButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     padding: 10,
     borderRadius: 10,
     flex: 0.4,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 2,
-    borderColor: 'black',
+    borderColor: "black",
   },
   applyButton: {
-    backgroundColor: '#4F378B',
+    backgroundColor: "#4F378B",
     padding: 10,
     borderRadius: 10,
     flex: 0.4,
-    alignItems: 'center',
+    alignItems: "center",
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontFamily: Fonts.medium,
     fontSize: 14,
   },

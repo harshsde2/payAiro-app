@@ -5,30 +5,11 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-<string>payAiro</string>
-
-<key>CFBundleURLTypes</key>
-<array>
-  <dict>
-    <key>CFBundleURLSchemes</key>
-    <array>
-      <string>payairo</string>
-    </array>
-  </dict>
-</array>
-
-	<key>CFBundleIconName</key>
-	<string>AppIcon</string>
-	<key>NSContactsUsageDescription</key>
-	<string>This app needs access to your contacts to enhance your experience by allowing easy communication.</string>
-	<key>NSAppleMusicUsageDescription</key>
-	<string>This app needs access to your Apple Music to provide a personalized media experience.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>This app uses your location to provide better recommendations and nearby services.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string/>
+	<string>payAiro</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -41,6 +22,19 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>payairo</string>
+			</array>
+		</dict>
+	</array>
+	<key>UIDeviceFamily</key>
+	<array>
+	<integer>1</integer>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
@@ -52,14 +46,22 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>This app needs access to your Apple Music to provide a personalized media experience.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Allow to access camera</string>
+	<string>We use the camera to let users scan QR codes for sending crypto.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>This app needs access to your contacts to enhance your experience by allowing easy communication.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app uses your location to provide better recommendations and nearby services.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string></string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Your message to user when the microsphone is accessed for the first time</string>
+	<string>Microphone access is needed to record audio while capturing videos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Allow to access media</string>
+	<string>We need access to your photo library to save your KYC documents for your records.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Allow to access media</string>
+	<string>This app needs photo library access to let you upload KYC documents such as your ID or address proof.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Neue Plak Black.ttf</string>
@@ -109,11 +111,17 @@
 	<array>
 		<string>arm64</string>
 	</array>
+	<key>UIStatusBarStyle</key>
+	<string></string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
+		<string>UIInterfaceOrientationPortrait</string>
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>

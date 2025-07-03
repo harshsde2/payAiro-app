@@ -78,6 +78,7 @@ import MyRWAAssets from "screens/TSX-Screens/RWA/MyRWAAssets";
 import TransactionSuccessScreen from "screens/TSX-Screens/RWA/TransactionSuccessScreen";
 import CommonAssetsScreen from "screens/TSX-Screens/RWA/CommonAssetsScreen";
 import ComingSoon from "screens/TSX-Screens/ComingSoon";
+import AddBalance from "screens/TSX-Screens/AddBalance/AddBalance";
 
 const Stack = createNativeStackNavigator();
 
@@ -429,6 +430,11 @@ export default function AppStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.COMING_SOON}
         component={ComingSoon}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.ADD_BALANCE}
+        component={AddBalance}
       />
     </Stack.Navigator>
   );

@@ -87,4 +87,5 @@ export const NAVIGATION_SCREENS = {
   TRANSACTION_SUCCESS_SCREEN: "TransactionSuccessScreen",
   COMMON_ASSETS_SCREEN: "CommonAssetsScreen",
   COMING_SOON: "ComingSoon",
+  ADD_BALANCE: "AddBalance",
 };

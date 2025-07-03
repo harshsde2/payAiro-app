@@ -7,7 +7,7 @@ import { queryStaleTime } from "query/queryConfigs";
 // Query keys
 export const cryptoKeys = {
   all: ["crypto"] as const,
-  balance: () => [...cryptoKeys.all, "cryptoCheckBalance"] as const,
+  cryptoBalance: () => [...cryptoKeys.all, "cryptoBalance"] as const,
   trades: () => [...cryptoKeys.all, "trades"] as const,
   prices: () => [...cryptoKeys.all, "prices"] as const,
 };
@@ -16,14 +16,14 @@ export const cryptoKeys = {
  * Hook to get crypto balances
  */
 export const useCryptoBalance = () => {
-  return useQuery<ApiResponse<CryptoAsset[]>>({
-    queryKey: cryptoKeys.balance(),
+  return useQuery<ApiResponse<any>>({
+    queryKey: cryptoKeys.cryptoBalance(),
     queryFn: async () => {
-      return await apiClient.get<ApiResponse<CryptoAsset[]>>(
+      return await apiClient.get<ApiResponse<any>>(
         AUTH.BANKACCOUNT_CRYPTO_BALANCE
       );
     },
-    staleTime: queryStaleTime.NORMAL_STALE_TIME,
+    staleTime: queryStaleTime.INSTANT_STALE_TIME,
   });
 };
 
@@ -76,7 +76,7 @@ export const useCryptoTransfer = () => {
     },
     onSuccess: () => {
       // Invalidate relevant queries to trigger refetch
-      queryClient.invalidateQueries({ queryKey: cryptoKeys.balance() });
+      queryClient.invalidateQueries({ queryKey: cryptoKeys.cryptoBalance() });
       queryClient.invalidateQueries({ queryKey: cryptoKeys.trades() });
     },
   });

@@ -1,12 +1,10 @@
-import { View, Text, StyleSheet, ViewStyle } from "react-native";
-import React from "react";
-import { SvgXml } from "react-native-svg";
-import { SVGLoggo, SVGNotification, SVGProfile } from "../constants/images";
 import { useNavigation } from "@react-navigation/native";
-import { SCREENS } from "../constants/SCREENS";
-import { useTheme } from "../styles/ThemeContext";
-import { useSelector } from "react-redux";
+import { SvgIcons } from "constants/svgs";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import React from "react";
+import { StyleSheet, Text, View, ViewStyle } from "react-native";
+import { useSelector } from "react-redux";
+import { useTheme } from "../styles/ThemeContext";
 
 interface DashboardHeaderProps {
   name?: string;
@@ -27,18 +25,18 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ name, style }) => {
   const styles = createStyles(theme);
 
   // console.log('Theme spacing:', theme.spacing);
+  // console.log("PayAiorRoundIcon", PayAiorRoundIcon);
 
   return (
     <View style={[styles.container, style]}>
       <View style={styles.leftSection}>
-        <SvgXml xml={SVGLoggo} />
+        <SvgIcons.PayAiorRoundIcon />
         <View style={styles.textContainer}>
           <Text style={styles.welcomeText}>Welcome Back,</Text>
           <Text style={styles.nameText}>{walletData?.name || ""}</Text>
         </View>
       </View>
-      <SvgXml
-        xml={SVGNotification}
+      <SvgIcons.NotificationIcon
         onPress={() =>
           navigation.navigate(NAVIGATION_SCREENS.NOTIFICATION as never)
         }

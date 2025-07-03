@@ -6,6 +6,7 @@ import {
   SVGRechargeIcon,
   SVGUtilitiesIcon,
 } from "constants/images";
+import { SvgIcons } from "constants/svgs";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 
 export const size = {
@@ -40,21 +41,21 @@ export const renderFinanceIcons = [
 export const renderUtilitiesIcons = [
   {
     label: "Recharge",
-    IconName: SVGRechargeIcon,
+    IconName: SvgIcons.RechargeIcon,
     width: size.width,
     height: size.height,
     navigationScreenName: NAVIGATION_SCREENS.COMING_SOON,
   },
   {
     label: "Bill Payment",
-    IconName: SVGBillPaymentIcon,
+    IconName: SvgIcons.BillPaymentIcon,
     width: size.width,
     height: size.height,
     navigationScreenName: NAVIGATION_SCREENS.COMING_SOON,
   },
   {
     label: "Utilities",
-    IconName: SVGUtilitiesIcon,
+    IconName: SvgIcons.UtilitiesIcon,
     width: size.width,
     height: size.height,
     navigationScreenName: NAVIGATION_SCREENS.COMING_SOON,

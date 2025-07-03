@@ -11,6 +11,8 @@ export const userKeys = {
   profile: () => [...userKeys.all, "profile"] as const,
   notifications: () => [...userKeys.all, "notifications"] as const,
   pin: () => [...userKeys.all, "pin"] as const,
+  fiatDashboard: () => [...userKeys.all, "fiat_dashboard"] as const,
+  WallerDashboard: () => [...userKeys.all, "wallet_dashboard"] as const,
 };
 
 /**
@@ -98,7 +100,7 @@ export const useVerifyUserForChangePin = () => {
       return await apiClient.post<ApiResponse<any>>(
         AUTH.VERIFY_OTP_WITH_MAIL,
         {},
-        true
+        false
       );
     },
     onSuccess: () => {},
@@ -138,6 +140,32 @@ export const useUserPin = (enabled = true) => {
     queryKey: userKeys.pin(),
     queryFn: async () => {
       return await apiClient.get<ApiResponse<any>>(AUTH.GET_PIN);
+    },
+    staleTime: queryStaleTime.INSTANT_STALE_TIME,
+    enabled,
+  });
+};
+
+export const useDashBoardFiatData = (enabled = true) => {
+  return useQuery<ApiResponse<any>>({
+    queryKey: userKeys.fiatDashboard(),
+    queryFn: async () => {
+      return await apiClient.get<ApiResponse<any>>(
+        AUTH.GET_FIAT_DASHBOARD_DATA
+      );
+    },
+    staleTime: queryStaleTime.INSTANT_STALE_TIME,
+    enabled,
+  });
+};
+
+export const useWalletDashboardData = (enabled = true) => {
+  return useQuery<ApiResponse<any>>({
+    queryKey: userKeys.WallerDashboard(),
+    queryFn: async () => {
+      return await apiClient.get<ApiResponse<any>>(
+        AUTH.GET_WALLET_DASHBOARD_DATA
+      );
     },
     staleTime: queryStaleTime.INSTANT_STALE_TIME,
     enabled,

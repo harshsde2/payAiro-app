@@ -126,7 +126,7 @@ export default function SelfieScreen(props: any) {
   };
 
   const getWalletD = async () => {
-    useDispatchAction(setShowLoader(true));
+    dispatch(setShowLoader(true));
     await refetchWalletDetails();
     if (isSuccessWalletDetails) {
       console.log("handleAddBankAccount => ✅");
@@ -136,13 +136,13 @@ export default function SelfieScreen(props: any) {
       // const data2 = await addBank2(token);
       // console.log("bankAdded===>>>", data1);
       // const data = await getWallet(token);
+      dispatch(setShowLoader(false));
       console.log(data);
       dispatch(setWalletData(data?.data));
       setWalletDataAuth(data?.data);
       setItem(STORAGE_KEYS.WALLET_DATA, JSON.stringify(data?.data));
       dispatch(setLogin(true));
       dispatch(setSuccessMsg("Create Account Successfully"));
-      dispatch(setShowLoader(false));
     }
   };
 
@@ -174,22 +174,23 @@ export default function SelfieScreen(props: any) {
         console.log("handleAddBankAccount => ✅");
         // console.log("data on add bank =>", data.data);
         dispatch(setSuccessMsg("Bank Account Added Successfully"));
+        getWalletD();
         // console.log("Bank Account Added Successfully", data);
-        handleTraditionalIRABankAccountt({} as any, {
-          onSuccess: (data) => {
-            dispatch(
-              setSuccessMsg("Traditional IRA Bank Account Added Successfully")
-            );
-            console.log("handleTraditional IRA BankAccountt => ✅");
-            getWalletD();
-          },
-          onError: (error: any) => {
-            console.log("Error adding Traditional IRA Bank Account:", error);
-          },
-          onSettled: () => {
-            dispatch(setShowLoader(false));
-          },
-        });
+        // handleTraditionalIRABankAccountt({} as any, {
+        //   onSuccess: (data) => {
+        //     dispatch(
+        //       setSuccessMsg("Traditional IRA Bank Account Added Successfully")
+        //     );
+        //     console.log("handleTraditional IRA BankAccountt => ✅");
+        //     getWalletD();
+        //   },
+        //   onError: (error: any) => {
+        //     console.log("Error adding Traditional IRA Bank Account:", error);
+        //   },
+        //   onSettled: () => {
+        //     dispatch(setShowLoader(false));
+        //   },
+        // });
       },
       onError: (error: any) => {
         console.log("Error adding bank account:", error.response);

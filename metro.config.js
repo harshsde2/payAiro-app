@@ -1,22 +1,24 @@
-const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
-const {wrapWithReanimatedMetroConfig} = require('react-native-reanimated/metro-config');
-const path = require('path');
+const { getDefaultConfig, mergeConfig } = require("@react-native/metro-config");
+const {
+  wrapWithReanimatedMetroConfig,
+} = require("react-native-reanimated/metro-config");
+const path = require("path");
 
-/**
- * Metro configuration
- * https://reactnative.dev/docs/metro
- *
- * @type {import('metro-config').MetroConfig}
- */
-const config = {
+const defaultConfig = getDefaultConfig(__dirname);
+
+const customConfig = {
   resolver: {
+    assetExts: defaultConfig.resolver.assetExts.filter((ext) => ext !== "svg"),
+    sourceExts: [...defaultConfig.resolver.sourceExts, "svg"],
     extraNodeModules: {
-      '@tsx-components': path.resolve(__dirname, 'src/tsx-components'),
+      "@tsx-components": path.resolve(__dirname, "src/tsx-components"),
     },
+  },
+  transformer: {
+    babelTransformerPath: require.resolve("react-native-svg-transformer"),
   },
 };
 
-// Wrap the merged config with Reanimated's Metro config
 module.exports = wrapWithReanimatedMetroConfig(
-  mergeConfig(getDefaultConfig(__dirname), config)
+  mergeConfig(defaultConfig, customConfig)
 );

@@ -25,6 +25,7 @@ import {
   SVGUPI,
   SVGVoucher,
 } from "./images";
+import { SvgIcons } from "./svgs";
 
 export const REWARDS = [
   {
@@ -63,11 +64,23 @@ export const SETTINGS_LISTS = [
   { name: "Add Card", icon: SVGCard, isDisvled: false, route: "AddCard" },
   {
     name: "Bank Statement",
-    icon: SVGCard,
+    icon: <SvgIcons.BankStatement />,
     isDisvled: false,
     route: NAVIGATION_SCREENS.STATEMENT,
   },
   { name: "Alerts", icon: SVGNoti, isDisvled: false, route: "AlertScreen" },
+  {
+    name: "Terms & Condition",
+    icon: <SvgIcons.TermsAndConditions />,
+    isDisvled: false,
+    route: "",
+  },
+  {
+    name: "Support",
+    icon: <SvgIcons.ChatSupport />,
+    isDisvled: false,
+    route: "",
+  },
   { name: "Logout", icon: SVGLog, isDisvled: false, route: "Profile" },
   // {
   //   name: "ACH",
@@ -83,7 +96,7 @@ export const SECURITY_LISTS = [
 ];
 
 export const CARD_TYPE = [
-  { name: "ACH", icon: SVGAch, route: "AchScreen" },
+  // { name: "ACH", icon: SVGAch, route: "AchScreen" },
   { name: "Credit Card", icon: SVGCard4, route: "AddCreditCard" },
   { name: "Debit Card", icon: SVGCard4, route: "AddCard" },
 ];

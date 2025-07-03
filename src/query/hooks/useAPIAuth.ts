@@ -101,11 +101,11 @@ export const useAddBankAccount = () => {
 
 export const useAddTraditionalIRABankAccount = () => {
   return useMutation<ApiResponse<any>, Error>({
-    mutationFn: async () => {
+    mutationFn: async (payload) => {
       const data = apiClient.post<ApiResponse<any>>(
         AUTH.ADD_TRADITIONAL_IRA_BANK_ACCOUNT,
-        {},
-        false
+        payload,
+        true
       );
       return data;
     },

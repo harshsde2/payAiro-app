@@ -149,7 +149,7 @@ const ChangePinScreen = () => {
             dispatch(setSuccessMsg("OTP sent successfully"));
             setShowVerifyModal(true);
           },
-          onError: () => {
+          onError: (err) => {
             console.log("send otp", JSON.stringify(err, null, 2));
             dispatch(
               setErrorMsg(err?.data?.data?.error || "Some error occured!")
@@ -226,7 +226,7 @@ const ChangePinScreen = () => {
   };
 
   return (
-    <ScreenContainer padding={0}>
+    <ScreenContainer scrollable safeArea padding={0}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}

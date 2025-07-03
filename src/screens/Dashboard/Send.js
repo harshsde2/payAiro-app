@@ -5,7 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import Container from "../../HOC/Container";
 import Fonts from "../../constants/Fonts";
 import TextInputField from "../../components/TextInputField";
@@ -19,6 +19,12 @@ import {
   SVGProfile3,
   SVGUSD,
   SVGUpArrow,
+  SVGScan,
+  SVGAddIcon,
+  SVGPlus,
+  SVGBank1,
+  SVGBank2,
+  SVGBamkAdd,
 } from "../../constants/images";
 import GenericButton from "../../components/GenericButton";
 import { SCREENS } from "../../constants/SCREENS";
@@ -26,15 +32,26 @@ import { useNavigation } from "@react-navigation/native";
 import useSelectorAction from "../../hooks/useSelectorAction";
 import { checkUser } from "../../services/Services";
 import useDispatchAction from "../../hooks/useDispatchAction";
-import { setErrorMsg } from "../../redux/slices/authenticationSlice";
+import {
+  setActiveTab,
+  setErrorMsg,
+  setShowLoader,
+} from "../../redux/slices/authenticationSlice";
 import { CustomText } from "tsx-components";
 import { useTheme } from "styles";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { SvgIcons } from "constants/svgs";
+import { useDispatch } from "react-redux";
+import { BASE_URL } from "api/endpoints";
+import axios from "axios";
 
 export default function Send(props) {
   const { requested, type, sender: senderDetails } = props.route.params;
   const { theme } = useTheme();
+
+  const dispatch = useDispatch();
 
   // console.log('requested =>', requested)
   // console.log('type =>', type)
@@ -50,6 +67,39 @@ export default function Send(props) {
   const [selectedBank, setselectedBank] = useState(bankLists[0]);
   const [isDropdown, setisDropdown] = useState(false);
 
+  const hasKey = (bank, key) => bank.some((obj) => key in obj);
+
+  const handleOpenLink = useCallback(async () => {
+    // console.log(
+    //   "!hasKey(bankLists, bank_type) =>",
+    //   !hasKey(bankLists, "bank_type")
+    // );
+    if (!hasKey(bankLists, "bank_type")) {
+      try {
+        dispatch(setShowLoader(true));
+        const resp = await axios.get(`${BASE_URL}auth/url-external-account`, {
+          headers: {
+            Authorization: `Bearer ${tokens?.access}`, // ✅ this is the correct way to send auth header
+          },
+        });
+        const { status, data } = resp?.data;
+        if (status && data) {
+          navigation.navigate(NAVIGATION_SCREENS.MX_CONNECT_WIDGET_SCREEN, {
+            URL: data?.fortress_response.widgetUrl,
+          });
+        }
+        // console.log("handleOpenLink =>", JSON.stringify(resp.data,null,2)); // Use .data to access response body
+      } catch (e) {
+        console.error("Error fetching external account URL:", e);
+      } finally {
+        dispatch(setShowLoader(false));
+      }
+    } else {
+      // console.log("mxExternalAccountDetails =>", mxExternalAccountDetails)
+      dispatch(setErrorMsg("External account aleardy found"));
+    }
+  }, [bankLists]);
+
   console.log("send screen is rendering");
   return (
     <ScreenContainer>
@@ -58,7 +108,12 @@ export default function Send(props) {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <HeaderTitle
-          title={`${type === "requested" ? "Receive" : "Send"} Assets`}
+          title={`${
+            type === "requested"
+              ? "Receive Assets"
+              : "PayAiro to PayAiro Transfer"
+          } `}
+          titleStyle={{ fontSize: 16 }}
           leftIcon={SVGLeftArrow}
         />
         <ScrollView
@@ -83,7 +138,16 @@ export default function Send(props) {
                 }
                 label={type === "requested" ? "From" : "To"}
                 placeholder={"PayAiroTag, Phone, Email"}
-                isIcon={true}
+                // isIcon={true}
+                // icon={SVGScan}
+                rightIcon={SVGScan}
+                onRightIconClick={() => {
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: NAVIGATION_SCREENS.SCANS }], // or your screen name
+                  });
+                  useDispatchAction(setActiveTab("3"));
+                }}
                 value={sender}
                 onChange={setsender}
               />
@@ -241,6 +305,58 @@ export default function Send(props) {
                           </View>
                         </TouchableOpacity>
                       ))}
+
+                  {!hasKey(bankLists, "bank_type") && (
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        handleOpenLink();
+                      }}
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        flex: 1,
+                        marginTop: 20,
+                        //   padding: 20,
+                      }}
+                    >
+                      <View
+                        style={{
+                          flex: 1,
+                          flexDirection: "row",
+                          justifyContent: "flex-start",
+                          alignItems: "center",
+
+                          // padding: 20,
+                        }}
+                      >
+                        <SvgIcons.Bank width={40} height={40} />
+
+                        <View style={{ marginHorizontal: 10, flex: 1 }}>
+                          <Text
+                            style={{
+                              color: "black",
+                              fontSize: 16,
+                              fontFamily: Fonts.bold,
+                            }}
+                          >
+                            {"Link External Account"}
+                          </Text>
+                        </View>
+                      </View>
+                      <TouchableOpacity
+                        style={{
+                          width: 20,
+                          alignItems: "center",
+                          marginLeft: 5,
+                        }}
+                        disabled
+                      >
+                        <SvgIcons.PlusCircleIcon width={20} height={20} />
+                      </TouchableOpacity>
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
             )}

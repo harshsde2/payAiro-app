@@ -1,56 +1,41 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Clipboard,
-  Platform,
-  ToastAndroid,
-  Alert,
-  ActivityIndicator,
-} from "react-native";
 import React from "react";
-import Card from "./Card";
-import { Theme, useTheme } from "styles";
-import { useSelector } from "react-redux";
-import CustomText from "./CustomText";
-import Svg, { SvgXml } from "react-native-svg";
-
 import {
-  PayAiro_Green_logo,
-  PayAiro_White_logo,
-  SVG_eye_off,
-  SVG_eye_off_white,
-  SVG_eye_on_white,
-  SVGCopy2,
-  SVGCopy3,
-  SVGDoubleChevronGreen,
-  SVGDoubleChevronWhite,
-  SVGDownArrow3,
-  SVGLogo2,
-  SVGLogo3,
-  SVGPayairoAccountText,
-  SVGPayAirofadeLogo,
-  SVGPayAiroPatternCard,
-  SVGScurityfadeLogo,
-  SVGSecurityAccountText,
-  SVGSecurityPatternCard,
-  SVGUSD,
-} from "constants/images";
-import LottieView from "lottie-react-native";
-import { ANIMATION_CONSTANTS } from "./CryptoCard";
+  ActivityIndicator,
+  Alert,
+  Clipboard,
+  Dimensions,
+  Platform,
+  StyleSheet,
+  ToastAndroid,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useSelector } from "react-redux";
+import { Theme, useTheme } from "styles";
+import Card from "./Card";
+import CustomText from "./CustomText";
+
 import FadeWrapper from "animations/animations-components/FadeWrapper";
+import { SvgIcons } from "constants/svgs";
 import useDispatchAction from "hooks/useDispatchAction";
-import { setisCrypto } from "redux/slices/authenticationSlice";
-import { setHeaderText, setTheme } from "redux/slices/animationSlice";
-import { queryClient } from "query/queryClient";
-import { userContactKeys } from "query/queryKeys";
+import LottieView from "lottie-react-native";
 import { bankKeys } from "query/hooks";
+import { queryClient } from "query/queryClient";
+import { setTheme } from "redux/slices/animationSlice";
+import { setisCrypto } from "redux/slices/authenticationSlice";
+import { ANIMATION_CONSTANTS } from "./CryptoCard";
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
 
 const CONFIGS = {
   CARD_WIDTH: "100%",
   CARD_HEIGHT: 170,
 };
+
+const { width: screenWidth } = Dimensions.get("window");
+const leftPosition = screenWidth * 0.63; // 70% of screen width
 
 const DashboardCard = () => {
   const { headerText, theme: themeApp } = useSelector(
@@ -92,7 +77,7 @@ const DashboardCard = () => {
         },
       ]}
     >
-      <SvgXml xml={SVGUSD} width={30} height={30} />
+      <SvgIcons.DollarIcon width={35} height={35} />
       <View
         style={[
           styles.currencyTextContainer,
@@ -109,7 +94,7 @@ const DashboardCard = () => {
         >
           {"USD"}
         </CustomText>
-        {!isCrypto && <SvgXml width={15} height={15} xml={SVGDownArrow3} />}
+        {!isCrypto && <SvgIcons.ChevronDown width={15} height={15} />}
       </View>
     </TouchableOpacity>
   );
@@ -223,17 +208,17 @@ const DashboardCard = () => {
                 {!isLoading && (
                   <>
                     {showBalance ? (
-                      <SvgXml
+                      <SvgIcons.EyeOnOutlineWhite
                         onPress={() => handleShowBalance(showBalance)}
-                        xml={SVG_eye_on_white}
+                        // xml={SVG_eye_on_white}
                         color={theme.colors.palette.white}
                         width={20}
                         height={20}
                       />
                     ) : (
-                      <SvgXml
+                      <SvgIcons.EyeOffOutlineWhite
                         onPress={() => handleShowBalance(showBalance)}
-                        xml={SVG_eye_off_white}
+                        // xml={SVG_eye_off_white}
                         color={theme.colors.palette.white}
                         width={20}
                         height={20}
@@ -268,15 +253,14 @@ const DashboardCard = () => {
                     // onCopy();
                   }}
                 >
-                  <SvgXml xml={SVGCopy3} width={18} height={18} />
+                  <SvgIcons.Copy width={18} height={18} />
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         </View>
         <View style={{}}>
-          <SvgXml
-            xml={SVGPayAiroPatternCard}
+          <SvgIcons.FiatPatterncard
             width={"100%"}
             height={170}
             style={{ position: "absolute", left: -55, top: 0 }}
@@ -297,7 +281,7 @@ const DashboardCard = () => {
               position: "absolute",
               top: 69,
               transform: [{ rotate: "270deg" }],
-              right: 95,
+              left: wp("63%"),
               zIndex: 1000,
               borderRadius: 20,
             }}
@@ -311,14 +295,12 @@ const DashboardCard = () => {
               loop
             />
           </TouchableOpacity>
-          <SvgXml
-            xml={SVGSecurityAccountText}
+          <SvgIcons.SecuritiesText
             width={70}
             height={70}
             style={{ position: "absolute", right: 20, top: -10 }}
           />
-          <SvgXml
-            xml={SVGScurityfadeLogo}
+          <SvgIcons.SecurityFadeLogo
             width={70}
             height={70}
             style={{ position: "absolute", right: 5, top: 80 }}
@@ -402,15 +384,15 @@ const DashboardCard = () => {
                     // onCopy();
                   }}
                 >
-                  <SvgXml xml={SVGCopy2} width={18} height={18} />
+                  <SvgIcons.Copy width={18} height={18} />
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         </View>
         <View style={{}}>
-          <SvgXml
-            xml={SVGSecurityPatternCard}
+          <SvgIcons.SecuritiesPatternCard
+            // xml={SVGSecurityPatternCard}
             width={"100%"}
             height={170}
             style={{ position: "absolute", left: -55, top: 0 }}
@@ -431,7 +413,7 @@ const DashboardCard = () => {
               position: "absolute",
               top: 69,
               transform: [{ rotate: "270deg" }],
-              right: 95,
+              left: wp("63%"),
               zIndex: 1000,
               borderRadius: 20,
             }}
@@ -445,14 +427,11 @@ const DashboardCard = () => {
               loop
             />
           </TouchableOpacity>
-          <SvgXml
-            xml={SVGPayairoAccountText}
-            width={70}
+          <SvgIcons.PayairoText
             height={70}
             style={{ position: "absolute", right: 20, top: -10 }}
           />
-          <SvgXml
-            xml={SVGPayAirofadeLogo}
+          <SvgIcons.PayairoFadeLogo
             width={70}
             height={70}
             style={{ position: "absolute", right: 5, top: 80 }}

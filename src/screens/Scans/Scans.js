@@ -7,7 +7,7 @@ import {
   Text,
   TouchableOpacity,
 } from "react-native";
-import { Camera } from "react-native-camera-kit";
+import { Camera, CameraType } from "react-native-camera-kit";
 import Container from "../../HOC/Container";
 import BottomNavigation from "../../components/BottomNavigation";
 import Fonts from "../../constants/Fonts";
@@ -83,6 +83,7 @@ export default function Scans() {
         frameColor="rgba(243, 251, 244, 1)"
         zoomMode="on"
         zoom={2}
+        cameraType={CameraType.Back}
       />
 
       {/* Masking the rest of the screen */}

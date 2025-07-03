@@ -8,10 +8,10 @@ import {
   Platform,
   ViewStyle,
   StyleProp,
-  SafeAreaView,
+  // SafeAreaView,
 } from "react-native";
 import { useTheme } from "../styles/ThemeContext";
-// import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface ScreenContainerProps {
   children: ReactNode;

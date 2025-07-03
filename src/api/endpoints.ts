@@ -10,6 +10,8 @@ export const AUTH = {
   CONTACT_GET: "auth/contact-get/",
   VERIFY_USER: "auth/verify-user/",
   GET_PIN: "auth/get-pin/",
+  GET_FIAT_DASHBOARD_DATA: "auth/dashboard/",
+  GET_WALLET_DASHBOARD_DATA: "auth/wallet-dashboard/",
   CREATE_PIN: "auth/create-pin/",
   CHANGE_PIN: "auth/change-pin/",
   VERIFY_OTP_WITH_MAIL: "auth/verify/sendotp/",

@@ -36,16 +36,16 @@ export default function Receive() {
       const uri = await viewShotRef.current.capture();
       const shareOptions = {
         title: "PayAiro QR",
-        message: `
-        Use following credentials
-        Wallet Address:  ${walletData?.wallet_public_key} 
-        PayAiro Tag : ${walletData?.username} 
-        Email: ${walletData?.account_email}  
-        or scan QR to send crypto`,
+        message: `Use following credentials:
+  PayAiro Tag: ${walletData?.username}
+  Email: ${walletData?.account_email}
+  or 
+  scan QR to send crypto`,
         url: uri,
         type: "image/png",
       };
       const res = await Share.open(shareOptions);
+
       console.log("Share result:", res);
     } catch (err) {
       console.log("Error sharing:", err);
@@ -65,7 +65,7 @@ export default function Receive() {
     }
   };
   return (
-    <ScreenContainer padding={0}>
+    <ScreenContainer scrollable padding={0}>
       <HeaderTitle leftIcon={SVGLeftArrow} title={"QR Code"} />
 
       <View

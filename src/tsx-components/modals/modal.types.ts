@@ -20,6 +20,7 @@ export interface TermAndConditionModalProps extends ModalProps {
   onHide?: () => void;
   onAgree?: () => void;
   onDecline?: () => void;
+  isAgree?: boolean;
 }
 export interface TermAndConditionModalRef {
   showPatriotAct?: () => void;
