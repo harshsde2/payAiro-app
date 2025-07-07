@@ -9,6 +9,7 @@ import React, {
 import {
   ActivityIndicator,
   BackHandler,
+  Button,
   FlatList,
   Image,
   Modal,
@@ -93,6 +94,7 @@ import {
 } from "../../redux/slices/authenticationSlice";
 import { useTheme } from "../../styles/ThemeContext";
 import { Card, CustomText, DashboardHeader } from "../../utils/moduleAlias";
+import { REWARDS } from "constants/constant";
 
 // Lazy load non-critical components
 const LazyBankModal = lazy(() => import("components/BankModal"));
@@ -405,8 +407,10 @@ const CryptoRewardsSection = React.memo(() => {
           marginRight: 10,
         }}
       >
-        <MemoizedRewards item={{}} />
-        <MemoizedRewards
+        {REWARDS.map((item, index) => (
+          <MemoizedRewards key={index} item={item} />
+        ))}
+        {/* <MemoizedRewards
           item={{
             name: "Vouchers",
             icon: SVGVoucher,
@@ -421,7 +425,7 @@ const CryptoRewardsSection = React.memo(() => {
             route: "VouchersScreens",
             bgColor: "rgba(95, 255, 0, 0.09)",
           }}
-        />
+        /> */}
       </View>
     </MemoizedDashboardSection>
   );
@@ -1230,29 +1234,6 @@ const NewDashboard = () => {
               />
             )}
           </CommonModal>
-        )}
-
-        {isBankModalVisible && (
-          <Modal
-            animationType="fade"
-            transparent={true}
-            visible={isBankModalVisible}
-            onRequestClose={() => setisBankModalVisible(false)}
-          >
-            <View
-              style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <LazyBankModal2
-                isVisible={isBankModalVisible}
-                onClose={() => setisBankModalVisible(false)}
-                onCancel={() => {}}
-              />
-            </View>
-          </Modal>
         )}
 
         {isVisible && (

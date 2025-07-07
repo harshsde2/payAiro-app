@@ -35,7 +35,7 @@ export default function Rewards({ item }) {
           alignSelf: "center",
         }}
       >
-        <SvgXml xml={item?.icon ?? SVGReward} />
+        {item?.icon}
       </View>
 
       <Text
@@ -53,7 +53,7 @@ export default function Rewards({ item }) {
         cStyle={{
           backgroundColor: "#000",
           padding: 5,
-          width: "100%",
+          // width: "100%",
           justifyContent: "center",
           alignItems: "center",
         }}

@@ -51,10 +51,9 @@ export default function Rewards() {
           >
             {activeTab === "1" && (
               <>
-                <Rewards2 />
-                <Rewards2 />
-                <Rewards2 />
-                <Rewards2 />
+                {[1, 2, 3, 4].map((item, index) => (
+                  <Rewards2 key={index} />
+                ))}
               </>
             )}
             {activeTab === "2" && (

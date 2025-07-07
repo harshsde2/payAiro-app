@@ -227,11 +227,7 @@ export default function SettingScreen() {
                     margin: 5,
                   }}
                 >
-                  {typeof item.icon == "string" ? (
-                    <SvgXml xml={item.icon} />
-                  ) : (
-                    item.icon
-                  )}
+                  {item.icon}
                   <Text
                     style={{
                       color: "rgba(29, 29, 29, 1)",

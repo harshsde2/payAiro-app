@@ -4,6 +4,7 @@ import GenericButton from "./GenericButton";
 import Fonts from "../constants/Fonts";
 import { SvgXml } from "react-native-svg";
 import { SVGReward } from "../constants/images";
+import { SvgIcons } from "constants/svgs";
 
 export default function Rewards2() {
   return (
@@ -11,7 +12,7 @@ export default function Rewards2() {
       style={{
         borderRadius: 10,
         backgroundColor: "rgba(255, 234, 177, 0.7)",
-        padding: 20,
+        padding: 10,
         width: "100%",
         marginHorizontal: 5,
         flexDirection: "row",
@@ -42,7 +43,7 @@ export default function Rewards2() {
             alignSelf: "center",
           }}
         >
-          <SvgXml xml={SVGReward} />
+          <SvgIcons.RewardsIcon />
         </View>
         <View style={{ marginLeft: 10 }}>
           <Text

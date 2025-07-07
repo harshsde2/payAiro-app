@@ -1,16 +1,14 @@
+import { SvgIcons } from "constants/svgs";
+import React, { FC } from "react";
 import {
-  View,
-  Text,
-  TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import React, { FC } from "react";
-import Fonts from "../constants/Fonts";
-import { SvgXml } from "react-native-svg";
-import { GenericButtonProps } from "./types";
 import { Theme, useTheme } from "styles";
 import { CustomText } from "tsx-components";
+import { GenericButtonProps } from "./types";
 
 const GenericButton: FC<GenericButtonProps> = ({
   isLoading,
@@ -48,7 +46,7 @@ const GenericButton: FC<GenericButtonProps> = ({
           >
             {title}
           </CustomText>
-          {icon && <SvgXml style={{ marginLeft: 10 }} xml={icon} />}
+          {icon && <SvgIcons.Copy />}
         </View>
       )}
 

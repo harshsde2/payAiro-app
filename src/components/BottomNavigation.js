@@ -26,6 +26,7 @@ import {
   checkCameraPremission,
 } from "../helper/Permission";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { SvgIcons } from "constants/svgs";
 
 export default function BottomNavigation({ isVer }) {
   const navigation = useNavigation();
@@ -121,10 +122,7 @@ export default function BottomNavigation({ isVer }) {
         <TouchableOpacity
           onPress={() => handleTabSwitch(NAVIGATION_SCREENS.NEW_DASHBOARD)}
         >
-          <SvgXml
-            xml={SVGHomeInctive}
-            style={{ opacity: activeTab === "1" ? 1 : 0.6 }}
-          />
+          <SvgIcons.HomeIcon style={{ opacity: activeTab === "1" ? 1 : 0.6 }} />
         </TouchableOpacity>
 
         {/* Transaction Tab */}
@@ -132,8 +130,7 @@ export default function BottomNavigation({ isVer }) {
           // disabled={true}
           onPress={() => handleTabSwitch(SCREENS.Transaction)}
         >
-          <SvgXml
-            xml={SVGTransactionInactive}
+          <SvgIcons.TransactionIcon
             style={{ opacity: activeTab === "2" ? 1 : 0.6 }}
           />
           {pendingRequest && pendingRequest > 0 ? (
@@ -171,9 +168,8 @@ export default function BottomNavigation({ isVer }) {
           // disabled={true}
           onPress={() => handleTabSwitch(SCREENS.Scans)}
         >
-          <SvgXml
-            xml={SVGScan}
-            // style={{opacity: activeTab === '3' ? 1 : 0.6}}
+          <SvgIcons.ScannerIcon
+          // style={{opacity: activeTab === '3' ? 1 : 0.6}}
           />
         </TouchableOpacity>
 
@@ -182,8 +178,7 @@ export default function BottomNavigation({ isVer }) {
           // disabled={true}
           onPress={() => handleTabSwitch(NAVIGATION_SCREENS.REWARDS)}
         >
-          <SvgXml
-            xml={SVGTrustedCircle}
+          <SvgIcons.DiscountShape
             style={{ opacity: activeTab === "4" ? 1 : 0.6 }}
           />
         </TouchableOpacity>
@@ -192,8 +187,7 @@ export default function BottomNavigation({ isVer }) {
         <TouchableOpacity
           onPress={() => handleTabSwitch(NAVIGATION_SCREENS.SETTING_SCREEN)}
         >
-          <SvgXml
-            xml={SVGSettingIncative}
+          <SvgIcons.SettingIcon
             style={{ opacity: activeTab === "5" ? 1 : 0.6 }}
           />
         </TouchableOpacity>

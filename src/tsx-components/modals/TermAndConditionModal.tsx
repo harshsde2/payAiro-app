@@ -1,23 +1,21 @@
-import {
-  View,
-  Text,
-  Modal,
-  StyleSheet,
-  ScrollView,
-  SafeAreaView,
-} from "react-native";
+import GenericButton from "components/GenericButton";
+import HeaderTitle from "components/HeaderTitle";
+import { SvgIcons } from "constants/svgs";
 import React, { forwardRef, useImperativeHandle, useState } from "react";
-import { ScreenContainer } from "HOC";
+import {
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+import WebView from "react-native-webview";
+import { Theme, useTheme } from "styles";
+import CustomText from "tsx-components/CustomText";
 import {
   TermAndConditionModalProps,
   TermAndConditionModalRef,
 } from "./modal.types";
-import HeaderTitle from "components/HeaderTitle";
-import { SVGCross } from "constants/images";
-import { Theme, useTheme } from "styles";
-import CustomText from "tsx-components/CustomText";
-import GenericButton from "components/GenericButton";
-import WebView from "react-native-webview";
 
 const TermAndConditionModal = forwardRef<
   TermAndConditionModalRef,
@@ -79,7 +77,7 @@ const TermAndConditionModal = forwardRef<
       >
         {/* <View > */}
         <HeaderTitle
-          rightIcon={SVGCross}
+          rightIcon={<SvgIcons.CrossIcon />}
           title={modalHeaderTitle}
           isBack={true}
           onPressRight={() => setIsVisible(false)}

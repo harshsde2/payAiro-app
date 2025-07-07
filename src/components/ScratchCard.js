@@ -1,37 +1,44 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {Button, LayoutChangeEvent, StyleSheet, Text, View} from 'react-native';
+import { useNavigation } from "@react-navigation/native";
 import {
   Canvas,
   Group,
-  Skia,
-  Path,
-  Mask,
-  Rect,
   Image,
+  Mask,
+  Path,
+  Rect,
+  Skia,
   useImage,
-  SkPath,
-} from '@shopify/react-native-skia';
-import {Gesture, GestureDetector} from 'react-native-gesture-handler';
-import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {svgPathProperties} from 'svg-path-properties';
-import CommonHeaderv2 from '../HOC/CommonHeaderv2';
-import HeaderTitle from './HeaderTitle';
-import {SVGCross, SVGRightIcon} from '../constants/images';
-import Fonts from '../constants/Fonts';
-import {useNavigation} from '@react-navigation/native';
-import { ScreenContainer } from 'HOC';
+} from "@shopify/react-native-skia";
+import { ScreenContainer } from "HOC";
+import { SvgIcons } from "constants/svgs";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { StyleSheet, Text, View } from "react-native";
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from "react-native-gesture-handler";
+import { svgPathProperties } from "svg-path-properties";
+import Fonts from "../constants/Fonts";
+import HeaderTitle from "./HeaderTitle";
 
-const Offer = ({width, height}) => {
-  const offerImage = useImage(require('../../assets/images/scratch.jpg'));
+const Offer = ({ width, height }) => {
+  const offerImage = useImage(require("../../assets/images/scratch.jpg"));
   return (
     offerImage && (
       <Image image={offerImage} fit="contain" width={width} height={height} />
     )
   );
 };
-const ScratchPattern = ({width, height}) => {
+const ScratchPattern = ({ width, height }) => {
   const scratchPatternImage = useImage(
-    require('../../assets/images/ScratchCard1.png'),
+    require("../../assets/images/ScratchCard1.png")
   );
 
   return (
@@ -62,14 +69,14 @@ export const ScratchCard = () => {
   const navigation = useNavigation();
 
   const pan = Gesture.Pan()
-    .onStart(g => {
+    .onStart((g) => {
       const newPaths = [...paths];
       const path = Skia.Path.Make(); // Initiates a new svg path
       path.moveTo(g.x, g.y); // Starting point
       newPaths.push(path);
       setPaths(newPaths);
     })
-    .onUpdate(g => {
+    .onUpdate((g) => {
       const newPaths = [...paths];
       const path = newPaths[newPaths.length - 1]; // Gets the last added path
 
@@ -81,18 +88,18 @@ export const ScratchCard = () => {
     })
     .onEnd(() => {
       const pathProperties = new svgPathProperties(
-        paths[paths.length - 1].toSVGString(),
+        paths[paths.length - 1].toSVGString()
       );
 
       const pathArea = pathProperties.getTotalLength() * STROKE_WIDTH.current;
       totalAreaScratched.current += pathArea;
-      const {width, height} = canvasLayoutMeta;
+      const { width, height } = canvasLayoutMeta;
       const areaScratched =
         (totalAreaScratched.current / (width * height)) * 100;
 
       if (areaScratched > 70) {
         setIsScratched(true);
-        navigation.navigate('ScratchDetails');
+        navigation.navigate("ScratchDetails");
         // Do other stuff like provide a force feedback to the user (Vibration)
         // Disable the gesture handler to avoid registering more inputs (Saves computation and memory)
       }
@@ -100,9 +107,9 @@ export const ScratchCard = () => {
     .minDistance(1)
     .enabled(!isScratched);
 
-  const handleCanvasLayout = useCallback(e => {
-    const {width, height} = e.nativeEvent.layout;
-    setCanvasLayoutMeta({width, height});
+  const handleCanvasLayout = useCallback((e) => {
+    const { width, height } = e.nativeEvent.layout;
+    setCanvasLayoutMeta({ width, height });
   }, []);
 
   const handleReset = () => {
@@ -111,12 +118,12 @@ export const ScratchCard = () => {
     totalAreaScratched.current = 0;
   };
 
-  const {width, height} = useMemo(() => canvasLayoutMeta, [canvasLayoutMeta]);
+  const { width, height } = useMemo(() => canvasLayoutMeta, [canvasLayoutMeta]);
 
   return (
     <GestureHandlerRootView>
       <ScreenContainer padding={0}>
-        <HeaderTitle rightIcon={SVGCross} isBack={true} />
+        <HeaderTitle rightIcon={<SvgIcons.CrossIcon />} isBack={true} />
         <GestureDetector gesture={pan}>
           <View style={styles.container}>
             <Canvas onLayout={handleCanvasLayout} style={styles.canvas}>
@@ -134,20 +141,21 @@ export const ScratchCard = () => {
                         height={height}
                         color="white"
                       />
-                      {paths.map(p => (
+                      {paths.map((p) => (
                         <Path
                           key={p.toSVGString()}
                           path={p}
                           strokeWidth={STROKE_WIDTH.current}
                           style="stroke"
-                          strokeJoin={'round'}
-                          strokeCap={'round'}
+                          strokeJoin={"round"}
+                          strokeCap={"round"}
                           antiAlias
-                          color={'black'}
+                          color={"black"}
                         />
                       ))}
                     </Group>
-                  }>
+                  }
+                >
                   <ScratchPattern width={width} height={height} />
                 </Mask>
               ) : (
@@ -156,23 +164,25 @@ export const ScratchCard = () => {
             </Canvas>
             <Text
               style={{
-                color: '#000',
+                color: "#000",
                 fontFamily: Fonts.bold,
                 fontSize: 30,
-                textAlign: 'center',
+                textAlign: "center",
                 marginTop: 70,
-              }}>
-              Congratulations!{' '}
+              }}
+            >
+              Congratulations!{" "}
             </Text>
 
             <Text
               style={{
-                color: '#000',
+                color: "#000",
                 fontFamily: Fonts.regular,
                 fontSize: 14,
-                textAlign: 'center',
-              }}>
-              Here is your scratch card{' '}
+                textAlign: "center",
+              }}
+            >
+              Here is your scratch card{" "}
             </Text>
           </View>
         </GestureDetector>
@@ -183,16 +193,16 @@ export const ScratchCard = () => {
 
 const styles = StyleSheet.create({
   container: {
-    width: '80%',
-    height: '40%',
-    backgroundColor: 'transparent',
-    alignSelf: 'center',
+    width: "80%",
+    height: "40%",
+    backgroundColor: "transparent",
+    alignSelf: "center",
     marginTop: 100,
     borderRadius: 60,
   },
   canvas: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     borderRadius: 70,
   },
   buttonContainer: {

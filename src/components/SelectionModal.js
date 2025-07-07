@@ -1,34 +1,23 @@
-import React, {useState} from 'react';
+import { SvgIcons } from "constants/svgs";
+import React, { useState } from "react";
 import {
-  Image,
   Modal,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-import Fonts from '../constants/Fonts';
-import GenericButton from './GenericButton';
-import {SCREENS} from '../constants/SCREENS';
-import {useNavigation} from '@react-navigation/native';
-import QRCode from 'react-native-qrcode-svg';
-import useSelectorAction from '../hooks/useSelectorAction';
-import AssetsCards from './AssetsCards';
-import useDispatchAction from '../hooks/useDispatchAction';
-import {
-  setDefaultValue,
-  setSeletedCrypto,
-} from '../redux/slices/authenticationSlice';
-import {SvgXml} from 'react-native-svg';
-import {SVGUSD} from '../constants/images';
+} from "react-native";
+import Fonts from "../constants/Fonts";
+import useDispatchAction from "../hooks/useDispatchAction";
+import useSelectorAction from "../hooks/useSelectorAction";
+import { setDefaultValue } from "../redux/slices/authenticationSlice";
 
-const SelectionModal = ({isVisible, onClose, onSelected, data, type}) => {
-  const {bankBalance} = useSelectorAction();
+const SelectionModal = ({ isVisible, onClose, onSelected, data, type }) => {
+  const { bankBalance } = useSelectorAction();
   const [isEnabled, setIsEnabled] = useState(false);
   const toggleSwitch = () => {
-    setIsEnabled(previousState => !previousState);
+    setIsEnabled((previousState) => !previousState);
     useDispatchAction(setDefaultValue(isEnabled));
   };
   return (
@@ -36,17 +25,19 @@ const SelectionModal = ({isVisible, onClose, onSelected, data, type}) => {
       visible={isVisible}
       transparent={true}
       animationType="slide"
-      onRequestClose={onClose}>
+      onRequestClose={onClose}
+    >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <Text
             style={{
               fontSize: 18,
               fontFamily: Fonts.bold,
-              color: '#000',
-              textAlign: 'center',
+              color: "#000",
+              textAlign: "center",
               marginBottom: 40,
-            }}>
+            }}
+          >
             Select Your Bank
           </Text>
           <ScrollView>
@@ -60,41 +51,45 @@ const SelectionModal = ({isVisible, onClose, onSelected, data, type}) => {
                   }}
                   key={key}
                   style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-end',
-                    backgroundColor: 'rgba(217, 217, 217, 0.07)',
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "flex-end",
+                    backgroundColor: "rgba(217, 217, 217, 0.07)",
                     borderWidth: 1,
-                    borderColor: 'rgba(106, 106, 106, 0.08)',
+                    borderColor: "rgba(106, 106, 106, 0.08)",
                     borderRadius: 10,
                     padding: 10,
                     margin: 5,
-                  }}>
+                  }}
+                >
                   <View
                     style={{
-                      flexDirection: 'row',
-                      justifyContent: 'flex-start',
-                      alignItems: 'center',
-                    }}>
-                    <SvgXml xml={SVGUSD} width={40} height={40} />
-                    <View style={{marginHorizontal: 10, width: '40%'}}>
+                      flexDirection: "row",
+                      justifyContent: "flex-start",
+                      alignItems: "center",
+                    }}
+                  >
+                    <SvgIcons.DollarIcon width={40} height={40} />
+                    <View style={{ marginHorizontal: 10, width: "40%" }}>
                       <Text
                         style={{
                           fontFamily: Fonts.semibold,
-                          textTransform: 'capitalize',
-                          color: 'black',
+                          textTransform: "capitalize",
+                          color: "black",
                           fontSize: 12,
-                        }}>
+                        }}
+                      >
                         {item?.bank_name ?? item?.name} (
-                        {item?.account_type ?? 'External'})
+                        {item?.account_type ?? "External"})
                       </Text>
                       <Text
                         numberOfLines={1}
                         style={{
                           fontFamily: Fonts.semibold,
-                          color: 'rgba(106, 106, 106, 1)',
+                          color: "rgba(106, 106, 106, 1)",
                           fontSize: 10,
-                        }}>
+                        }}
+                      >
                         {item?.account_number ?? item?.account_id}
                       </Text>
                     </View>
@@ -103,17 +98,18 @@ const SelectionModal = ({isVisible, onClose, onSelected, data, type}) => {
                     numberOfLines={1}
                     style={{
                       fontFamily: Fonts.semibold,
-                      color: 'rgba(106, 106, 106, 1)',
+                      color: "rgba(106, 106, 106, 1)",
                       fontSize: 10,
                       // width: '53%',
                       // marginRight÷: 10,
-                    }}>
-                    Balance:{' '}
+                    }}
+                  >
+                    Balance:{" "}
                     {item?.balances?.available
                       ? item?.balances?.available
-                      : item?.account_type === 'rothIra'
+                      : item?.account_type === "rothIra"
                       ? bankBalance?.roth_ira_account?.usd
-                      : item?.account_type === 'traditionalIra'
+                      : item?.account_type === "traditionalIra"
                       ? bankBalance?.traditional_ira_account?.usd
                       : bankBalance?.bank_account?.usd}
                   </Text>
@@ -132,7 +128,6 @@ const SelectionModal = ({isVisible, onClose, onSelected, data, type}) => {
                 justifyContent: 'space-between',
                 alignItems: 'center',
               }}>
-              <SvgXml xml={SVGUSDT} width={40} height={40} />
               <View>
                 <Text
                   style={{
@@ -173,43 +168,43 @@ export default SelectionModal;
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    backgroundColor: '#fff',
-    width: '100%',
+    backgroundColor: "#fff",
+    width: "100%",
     borderTopEndRadius: 40,
     borderTopStartRadius: 40,
     padding: 20,
     elevation: 8,
-    height: '60%',
+    height: "60%",
     marginTop: 350,
     flex: 1,
   },
   headerText: {
     fontSize: 26,
     fontFamily: Fonts.bold,
-    color: '#fff',
-    textAlign: 'center',
+    color: "#fff",
+    textAlign: "center",
     marginBottom: 10,
   },
   sectionHeader: {
     fontSize: 16,
     fontFamily: Fonts.medium,
-    color: '#333',
+    color: "#333",
     marginVertical: 10,
   },
   optionContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     marginVertical: 5,
   },
   radioButton: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 8,
@@ -217,47 +212,47 @@ const styles = StyleSheet.create({
   },
   checkbox: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 10,
     paddingHorizontal: 15,
     paddingVertical: 8,
     marginVertical: 5,
   },
   selectedOption: {
-    backgroundColor: '#4F378B',
-    borderColor: '#4F378B',
+    backgroundColor: "#4F378B",
+    borderColor: "#4F378B",
   },
   optionText: {
     fontSize: 14,
     fontFamily: Fonts.medium,
-    color: '#333',
+    color: "#333",
   },
   selectedText: {
-    color: '#fff',
+    color: "#fff",
   },
   buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 20,
   },
   clearButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     padding: 10,
     borderRadius: 10,
     flex: 0.4,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 2,
-    borderColor: 'black',
+    borderColor: "black",
   },
   applyButton: {
-    backgroundColor: '#4F378B',
+    backgroundColor: "#4F378B",
     padding: 10,
     borderRadius: 10,
     flex: 0.4,
-    alignItems: 'center',
+    alignItems: "center",
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontFamily: Fonts.medium,
     fontSize: 14,
   },

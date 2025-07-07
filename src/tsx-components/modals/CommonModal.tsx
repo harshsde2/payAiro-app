@@ -1,19 +1,12 @@
-import { useNavigation } from "@react-navigation/native";
 import React from "react";
 import {
-  Modal,
-  StyleSheet,
-  Text,
-  View,
   GestureResponderEvent,
-  SafeAreaView,
+  Modal,
   Pressable,
+  StyleSheet,
   ViewStyle,
 } from "react-native";
-import { SvgXml } from "react-native-svg";
 import Fonts from "../../constants/Fonts";
-import { SVGCross, SVGDollerReward, SVGReward } from "../../constants/images";
-import GenericButton from "components/GenericButton";
 
 interface CommonModalProps {
   children?: React.ReactNode;

@@ -7,7 +7,7 @@ import {
   TextStyle,
   ViewStyle,
 } from "react-native";
-import React, { FC } from "react";
+import React, { FC, ReactNode } from "react";
 import Fonts from "../constants/Fonts";
 import { SvgXml } from "react-native-svg";
 import { useNavigation } from "@react-navigation/native";
@@ -19,7 +19,7 @@ interface HeaderTitleProps {
   style?: ViewStyle;
   title?: string;
   leftIcon?: string;
-  rightIcon?: string;
+  rightIcon?: ReactNode;
   isBack?: boolean;
   onPressLeft?: () => void;
   onPressRight?: () => void; // <-- optional
@@ -86,7 +86,7 @@ const HeaderTitle: FC<HeaderTitleProps> = ({
             onPress={handleRightPress}
             accessibilityRole="button"
           >
-            <SvgXml xml={rightIcon} width={50} height={50} />
+            {rightIcon}
           </TouchableOpacity>
         ) : (
           <View style={styles(theme).spacer} />

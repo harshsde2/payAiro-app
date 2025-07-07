@@ -1,36 +1,19 @@
+import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
 import {
-  Alert,
-  Image,
-  Linking,
   Modal,
-  Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import Fonts from "../constants/Fonts";
-import GenericButton from "./GenericButton";
-import { SCREENS } from "../constants/SCREENS";
-import { useNavigation } from "@react-navigation/native";
 import ReactNativeBiometrics from "react-native-biometrics";
-import useSelectorAction from "../hooks/useSelectorAction";
-import { setBiometricAvailable } from "../redux/slices/authenticationSlice";
-import useDispatchAction from "../hooks/useDispatchAction";
-import { setBiometric } from "../services/Auth";
 import { CARD_TYPE } from "../constants/constant";
-import { SvgXml } from "react-native-svg";
+import Fonts from "../constants/Fonts";
+import useSelectorAction from "../hooks/useSelectorAction";
 
 const BankModal = ({ isVisible, onClose, onCancel }) => {
-  const { biometricAvailable } = useSelectorAction();
-  const rnBiometrics = new ReactNativeBiometrics({
-    allowDeviceCredentials: true,
-  });
-  const [isEnabled, setIsEnabled] = useState(false);
-  const [enableBiometric, setenableBiometric] = useState(biometricAvailable);
   const navigation = useNavigation();
   return (
     <Modal
@@ -84,7 +67,7 @@ const BankModal = ({ isVisible, onClose, onCancel }) => {
                     margin: 5,
                   }}
                 >
-                  <SvgXml xml={i.icon} />
+                  {i.icon}
                   <Text
                     style={{
                       color: "rgba(29, 29, 29, 1)",

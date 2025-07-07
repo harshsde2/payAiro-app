@@ -1,37 +1,26 @@
-import {
-  View,
-  Text,
-  Modal,
-  TouchableOpacity,
-  SafeAreaView,
-  ActivityIndicator,
-  StyleSheet,
-} from "react-native";
-import React, { FC, forwardRef, useImperativeHandle, useState } from "react";
-import { PinScreenProps, PinScreenRef } from "./modal.types";
-import { Theme, useTheme } from "styles";
-import { SvgXml } from "react-native-svg";
-import {
-  SVG_backspace,
-  SVG_done,
-  SVG_eye_off,
-  SVG_eye_on,
-  SVGDownArrow2,
-  SVGDownArrow3,
-  SVGLeftArrow,
-  SVGLoggo,
-} from "constants/images";
 import Fonts from "constants/Fonts";
-import { useDispatch, useSelector } from "react-redux";
-import { checkUser, getBalance } from "services/Services";
 import useDispatchAction from "hooks/useDispatchAction";
-import { setErrorMsg, setSuccessMsg } from "redux/slices/authenticationSlice";
+import React, { forwardRef, useImperativeHandle, useState } from "react";
+import {
+  ActivityIndicator,
+  Modal,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useSelector } from "react-redux";
+import { setErrorMsg } from "redux/slices/authenticationSlice";
 import { useApiCall } from "screens/Dashboard/NewDashboard";
+import { getBalance } from "services/Services";
+import { Theme, useTheme } from "styles";
+import { PinScreenProps, PinScreenRef } from "./modal.types";
 // import { getPin, setPin } from "services/Auth";
 import ErrorToast from "components/ErrorToast";
-import CustomText from "tsx-components/CustomText";
-import { useCreatePin } from "query/hooks/useAPIAuth";
+import { SvgIcons } from "constants/svgs";
 import { getPin } from "storage/mmkv";
+import CustomText from "tsx-components/CustomText";
 
 const PIN_SCREEN_TASKS = {
   SHOW_BANK_BALANCE: "show_bank_balance",
@@ -203,10 +192,9 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
               },
             ]}
           >
-            <SvgXml
+            <SvgIcons.LeftArrow
               width={60}
               height={60}
-              xml={SVGLeftArrow}
               onPress={() => setIsPinModalVisible(false)}
             />
             <View style={styles.header}>
@@ -218,7 +206,7 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
                   </CustomText>
                 )}
               </View>
-              <SvgXml xml={SVGLoggo} width={55} height={55} />
+              <SvgIcons.PayairoWhiteLogo width={40} height={40} />
             </View>
           </View>
 
@@ -228,11 +216,11 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
                 <CustomText style={styles.pinEntryText}>
                   ENTER PAYAIRO PIN
                 </CustomText>
-                <SvgXml
-                  xml={!showPin ? SVG_eye_on : SVG_eye_off}
-                  width={22}
-                  height={22}
-                />
+                {!showPin ? (
+                  <SvgIcons.EyeOnGreenbg width={22} height={22} />
+                ) : (
+                  <SvgIcons.EyeOffGreenbg width={22} height={22} />
+                )}
                 <CustomText
                   onPress={handleShowAndHidePin}
                   style={styles.showText}
@@ -294,7 +282,7 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
                   style={styles.keypadButton}
                   onPress={handlePinBackspace}
                 >
-                  <SvgXml xml={SVG_backspace} width={35} height={35} />
+                  <SvgIcons.KeyboardBack width={35} height={35} />
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -315,7 +303,7 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
                     {isVerifyingPin ? (
                       <ActivityIndicator color="#FFF" size="small" />
                     ) : (
-                      <SvgXml xml={SVG_done} width={35} height={35} />
+                      <SvgIcons.DoneIcon width={35} height={35} />
                     )}
                   </TouchableOpacity>
                 </View>
@@ -447,7 +435,7 @@ const customStyles = (theme: Theme) =>
       height: 60,
       backgroundColor: enabled
         ? theme.colors.palette.green700
-        : theme.colors.palette.green300,
+        : theme.colors.palette.green400,
       borderRadius: 35,
       justifyContent: "center",
       alignItems: "center",

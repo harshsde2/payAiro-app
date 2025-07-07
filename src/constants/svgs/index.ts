@@ -41,6 +41,27 @@ import CopyOutlineBlack from "./CopyOutlineBlack.svg";
 import UnCheckbox from "./UnCheckbox.svg";
 import Checkedbox from "./Checkedbox.svg";
 import InfoNote from "./InfoNote.svg";
+import TransactionIcon from "./TransactionIcon.svg";
+import DiscountShape from "./DiscountShape.svg";
+import HomeIcon from "./HomeIcon.svg";
+import ScannerIcon from "./ScannerIcon.svg";
+import SettingIcon from "./SettingIcon.svg";
+import TrustedCircles from "./TrustedCircles.svg";
+import BuyCrypto from "./BuyCrypto.svg";
+import StocksIcon from "./StocksIcon.svg";
+import PortfolioIcon from "./PortfolioIcon.svg";
+import CrossIcon from "./CrossIcon.svg";
+import KeyboardBack from "./KeyboardBack.svg";
+import RewardsIcon from "./RewardsIcon.svg";
+import ReferralsIcon from "./ReferralsIcon.svg";
+import Vouchers from "./Vouchers.svg";
+import PayairoWhiteLogo from "./PayairoWhiteLogo.svg";
+import DoneIcon from "./DoneIcon.svg";
+import AlertIcon from "./AlertIcon.svg";
+import UserProfile from "./UserProfile.svg";
+import SecurityIcon from "./SecurityIcon.svg";
+import AddCardIcon from "./AddCardIcon.svg";
+import LogoutIcon from "./LogoutIcon.svg";
 
 export const SvgIcons = {
   PayAiorRoundIcon,
@@ -86,4 +107,25 @@ export const SvgIcons = {
   Checkedbox,
   UnCheckbox,
   InfoNote,
+  TrustedCircles,
+  ScannerIcon,
+  SettingIcon,
+  HomeIcon,
+  TransactionIcon,
+  DiscountShape,
+  BuyCrypto,
+  StocksIcon,
+  PortfolioIcon,
+  CrossIcon,
+  KeyboardBack,
+  RewardsIcon,
+  ReferralsIcon,
+  Vouchers,
+  PayairoWhiteLogo,
+  DoneIcon,
+  AlertIcon,
+  UserProfile,
+  SecurityIcon,
+  AddCardIcon,
+  LogoutIcon,
 };

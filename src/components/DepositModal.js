@@ -1,32 +1,13 @@
-import React, {useEffect, useState} from 'react';
-import {
-  Alert,
-  Image,
-  Linking,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import Fonts from '../constants/Fonts';
-import GenericButton from './GenericButton';
-import {SCREENS} from '../constants/SCREENS';
-import {useNavigation} from '@react-navigation/native';
-import ReactNativeBiometrics from 'react-native-biometrics';
-import useSelectorAction from '../hooks/useSelectorAction';
-import {setBiometricAvailable} from '../redux/slices/authenticationSlice';
-import useDispatchAction from '../hooks/useDispatchAction';
-import {setBiometric} from '../services/Auth';
-import {CARD_TYPE} from '../constants/constant';
-import {SvgXml} from 'react-native-svg';
-import {SVGCross, SVGKYC} from '../constants/images';
-import {getKYC} from '../services/Services';
-import QRCode from 'react-native-qrcode-svg';
-const DepositModal = ({isVisible, onClose, onCancel}) => {
-  const {biometricAvailable} = useSelectorAction();
+import { useNavigation } from "@react-navigation/native";
+import React, { useState } from "react";
+import { Modal, StyleSheet, Text, View } from "react-native";
+import ReactNativeBiometrics from "react-native-biometrics";
+import QRCode from "react-native-qrcode-svg";
+import Fonts from "../constants/Fonts";
+import useSelectorAction from "../hooks/useSelectorAction";
+import { SvgIcons } from "constants/svgs";
+const DepositModal = ({ isVisible, onClose, onCancel }) => {
+  const { biometricAvailable } = useSelectorAction();
   const rnBiometrics = new ReactNativeBiometrics({
     allowDeviceCredentials: true,
   });
@@ -39,41 +20,44 @@ const DepositModal = ({isVisible, onClose, onCancel}) => {
       visible={isVisible}
       transparent={true}
       animationType="slide"
-      onRequestClose={onClose}>
+      onRequestClose={onClose}
+    >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <View
             style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}>
-            <View style={{width: '25%'}} />
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <View style={{ width: "25%" }} />
             <Text style={styles.headerText}>Deposit BTC</Text>
-            <SvgXml xml={SVGCross} onPress={onClose} />
+            <SvgIcons.CrossIcon onPress={onClose} />
           </View>
           <View
             style={{
-              alignSelf: 'center',
+              alignSelf: "center",
               marginTop: 40,
-              backgroundColor: 'rgba(245, 245, 245, 1)',
+              backgroundColor: "rgba(245, 245, 245, 1)",
               padding: 20,
               borderRadius: 20,
-            }}>
-            <QRCode value={'0xdhwhdgwehgedgvgevdgvegvdgevgvfe'} size={150} />
+            }}
+          >
+            <QRCode value={"0xdhwhdgwehgedgvgevdgvegvdgevgvfe"} size={150} />
           </View>
           <View style={styles.itemContainer}>
-            <Text style={styles.label}>{'Network'}:</Text>
-            <Text style={styles.value}>{'BNB Smart Chain (BEP20)'}</Text>
+            <Text style={styles.label}>{"Network"}:</Text>
+            <Text style={styles.value}>{"BNB Smart Chain (BEP20)"}</Text>
           </View>
           <View style={styles.itemContainer}>
-            <Text style={styles.label}>{'Deposit Address'}:</Text>
+            <Text style={styles.label}>{"Deposit Address"}:</Text>
             <Text style={styles.value}>
-              {'Oxb63ad12c0636722779596558ld7b92cadce1aeIc'}
+              {"Oxb63ad12c0636722779596558ld7b92cadce1aeIc"}
             </Text>
           </View>
 
-          <View style={{marginVertical: 10}}></View>
+          <View style={{ marginVertical: 10 }}></View>
         </View>
       </View>
     </Modal>
@@ -85,13 +69,13 @@ export default DepositModal;
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    backgroundColor: '#fff',
-    width: '90%',
+    backgroundColor: "#fff",
+    width: "90%",
     borderTopEndRadius: 20,
     borderTopStartRadius: 20,
     padding: 20,
@@ -99,33 +83,33 @@ const styles = StyleSheet.create({
     // height: '40%',
     // marginTop: 500,
     // flex: 1,
-    position: 'absolute',
+    position: "absolute",
     borderRadius: 30,
   },
 
   headerText: {
     fontSize: 18,
     fontFamily: Fonts.semibold,
-    color: 'rgba(44, 106, 63, 1)',
-    textAlign: 'center',
+    color: "rgba(44, 106, 63, 1)",
+    textAlign: "center",
     // marginBottom: 10,
     // marginTop: 15,
   },
   sectionHeader: {
     fontSize: 14,
     fontFamily: Fonts.medium,
-    color: '#333',
+    color: "#333",
     marginVertical: 10,
   },
   optionContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     marginVertical: 5,
   },
   radioButton: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 8,
@@ -133,70 +117,70 @@ const styles = StyleSheet.create({
   },
   checkbox: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 10,
     paddingHorizontal: 15,
     paddingVertical: 8,
     marginVertical: 5,
   },
   selectedOption: {
-    backgroundColor: '#4F378B',
-    borderColor: '#4F378B',
+    backgroundColor: "#4F378B",
+    borderColor: "#4F378B",
   },
   optionText: {
     fontSize: 14,
     fontFamily: Fonts.medium,
-    color: '#333',
+    color: "#333",
   },
   selectedText: {
-    color: '#fff',
+    color: "#fff",
   },
   buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 20,
   },
   clearButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     padding: 10,
     borderRadius: 10,
     flex: 0.4,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 2,
-    borderColor: 'black',
+    borderColor: "black",
   },
   applyButton: {
-    backgroundColor: '#4F378B',
+    backgroundColor: "#4F378B",
     padding: 10,
     borderRadius: 10,
     flex: 0.4,
-    alignItems: 'center',
+    alignItems: "center",
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontFamily: Fonts.medium,
     fontSize: 14,
   },
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
   },
   itemContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
 
     paddingVertical: 10,
   },
   label: {
     fontSize: 12,
     fontFamily: Fonts.regular,
-    color: 'rgba(106, 106, 106, 1)',
+    color: "rgba(106, 106, 106, 1)",
   },
   value: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     fontFamily: Fonts.semibold,
-    width: '70%',
+    width: "70%",
   },
 });

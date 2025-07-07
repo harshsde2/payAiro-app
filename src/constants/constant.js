@@ -31,17 +31,20 @@ export const REWARDS = [
   {
     name: "Rewards",
     bgColor: "rgba(255, 234, 177, 0.7)",
-    image: SVGReward,
+    icon: <SvgIcons.RewardsIcon />,
+    route: NAVIGATION_SCREENS.SCRATCH,
   },
   {
     name: "Vouchers",
     bgColor: "rgba(255, 234, 177, 0.7)",
-    image: SVGVoucher,
+    icon: <SvgIcons.Vouchers />,
+    route: NAVIGATION_SCREENS.VOUCHERS_SCREENS,
   },
   {
     name: "Referrals",
     bgColor: "rgba(255, 234, 177, 0.7)",
-    image: SVGReward,
+    icon: <SvgIcons.ReferralsIcon />,
+    route: NAVIGATION_SCREENS.REWARDS,
   },
 ];
 
@@ -54,21 +57,36 @@ export const TRANSACTION_HISTORY = [
 ];
 
 export const SETTINGS_LISTS = [
-  { name: "My Profile", icon: SVGPro, isDisvled: false, route: "Personal" },
+  {
+    name: "My Profile",
+    icon: <SvgIcons.UserProfile />,
+    isDisvled: false,
+    route: "Personal",
+  },
   {
     name: "Security & privacy",
-    icon: SVGSec,
+    icon: <SvgIcons.SecurityIcon />,
     isDisvled: false,
     route: "Settings2",
   },
-  { name: "Add Card", icon: SVGCard, isDisvled: false, route: "AddCard" },
+  {
+    name: "Add Card",
+    icon: <SvgIcons.AddCardIcon />,
+    isDisvled: false,
+    route: "AddCard",
+  },
   {
     name: "Bank Statement",
     icon: <SvgIcons.BankStatement />,
     isDisvled: false,
     route: NAVIGATION_SCREENS.STATEMENT,
   },
-  { name: "Alerts", icon: SVGNoti, isDisvled: false, route: "AlertScreen" },
+  {
+    name: "Alerts",
+    icon: <SvgIcons.AlertIcon />,
+    isDisvled: false,
+    route: "AlertScreen",
+  },
   {
     name: "Terms & Condition",
     icon: <SvgIcons.TermsAndConditions />,
@@ -81,7 +99,12 @@ export const SETTINGS_LISTS = [
     isDisvled: false,
     route: NAVIGATION_SCREENS.SUPPORT_SCREEN,
   },
-  { name: "Logout", icon: SVGLog, isDisvled: false, route: "Profile" },
+  {
+    name: "Logout",
+    icon: <SvgIcons.LogoutIcon />,
+    isDisvled: false,
+    route: "Profile",
+  },
   // {
   //   name: "ACH",
   //   icon: SVGLog,
@@ -97,13 +120,13 @@ export const SECURITY_LISTS = [
 
 export const CARD_TYPE = [
   // { name: "ACH", icon: SVGAch, route: "AchScreen" },
-  { name: "Credit Card", icon: SVGCard4, route: "AddCreditCard" },
-  { name: "Debit Card", icon: SVGCard4, route: "AddCard" },
+  { name: "Credit Card", icon: <SvgIcons.DebitCard />, route: "AddCreditCard" },
+  { name: "Debit Card", icon: <SvgIcons.DebitCard />, route: "AddCard" },
 ];
 export const BANK_TYPE = [
-  { name: "Pension Account", icon: SVGAch, route: "" },
-  { name: "Salary Account", icon: SVGCard4, route: "" },
-  { name: "Savings Account", icon: SVGCard4, route: "" },
+  { name: "Pension Account", icon: "", route: "" },
+  { name: "Salary Account", icon: "", route: "" },
+  { name: "Savings Account", icon: "", route: "" },
 ];
 export const FINANCE_LISTS = [
   {

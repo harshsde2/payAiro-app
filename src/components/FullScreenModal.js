@@ -1,37 +1,13 @@
-import React, { useEffect, useState } from "react";
-import {
-  Alert,
-  Image,
-  Linking,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import Fonts from "../constants/Fonts";
-import GenericButton from "./GenericButton";
-import { SCREENS } from "../constants/SCREENS";
 import { useNavigation } from "@react-navigation/native";
+import { SvgIcons } from "constants/svgs";
+import { ScreenContainer } from "HOC";
+import React, { useState } from "react";
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ReactNativeBiometrics from "react-native-biometrics";
+import Fonts from "../constants/Fonts";
 import useSelectorAction from "../hooks/useSelectorAction";
-import { setBiometricAvailable } from "../redux/slices/authenticationSlice";
-import useDispatchAction from "../hooks/useDispatchAction";
-import { setBiometric } from "../services/Auth";
-import { CARD_TYPE } from "../constants/constant";
-import { SvgXml } from "react-native-svg";
-import {
-  SVGCross,
-  SVGBit,
-  SVGUSD,
-  SVGDowArrow2,
-  SVGUpArrow,
-  SVGBack,
-  SVGLeftArrow,
-} from "../constants/images";
-import { getKYC } from "../services/Services";
+import GenericButton from "./GenericButton";
+import HeaderTitle from "./HeaderTitle";
 
 const FullScreenModal = ({
   isVisible,
@@ -58,9 +34,9 @@ const FullScreenModal = ({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.modalContainer}>
+      <ScreenContainer padding={0}>
         <View style={styles.modalContent}>
-          <SvgXml xml={SVGLeftArrow} style={{ margin: 20 }} onPress={onClose} />
+          <HeaderTitle leftIcon="true" onPressLeft={onClose} />
           <View
             style={{
               flex: 1,
@@ -111,7 +87,7 @@ const FullScreenModal = ({
                       : bankBalance?.bank_account?.usd}
                   </Text>
                 </View>
-                <SvgXml xml={SVGUSD} />
+                <SvgIcons.DollarIcon />
               </View>
               <View
                 style={{
@@ -142,13 +118,15 @@ const FullScreenModal = ({
                 marginVertical: 30,
               }}
             >
-              <View
+              <TouchableOpacity
                 style={{
                   flexDirection: "row",
                   justifyContent: "space-between",
                   alignItems: "center",
+
                   //   padding: 20,
                 }}
+                onPress={() => setisDropdown((state) => !state)}
               >
                 <View
                   style={{
@@ -158,7 +136,7 @@ const FullScreenModal = ({
                     //   padding: 20,
                   }}
                 >
-                  <SvgXml xml={SVGUSD} width={40} height={40} />
+                  <SvgIcons.Bank width={30} height={30} />
                   <View style={{ marginHorizontal: 10 }}>
                     <Text
                       style={{
@@ -191,9 +169,13 @@ const FullScreenModal = ({
                   style={{ width: "40%", alignItems: "flex-end" }}
                   onPress={() => setisDropdown((state) => !state)}
                 >
-                  <SvgXml xml={isDropdown ? SVGUpArrow : SVGDowArrow2} />
+                  {isDropdown ? (
+                    <SvgIcons.ChevronDown width={20} height={20} />
+                  ) : (
+                    <SvgIcons.ChevronDown width={20} height={20} />
+                  )}
                 </TouchableOpacity>
-              </View>
+              </TouchableOpacity>
               {isDropdown &&
                 bankLists &&
                 bankLists?.length > 0 &&
@@ -213,7 +195,7 @@ const FullScreenModal = ({
                       //   padding: 20,
                     }}
                   >
-                    <SvgXml xml={SVGUSD} width={40} height={40} />
+                    <SvgIcons.Bank width={30} height={30} />
                     <View style={{ marginHorizontal: 10 }}>
                       <Text
                         style={{
@@ -262,7 +244,7 @@ const FullScreenModal = ({
             onPress={() => onCancel()}
           />
         </View>
-      </View>
+      </ScreenContainer>
     </Modal>
   );
 };

@@ -1,32 +1,13 @@
-import React, {useEffect, useState} from 'react';
-import {
-  Alert,
-  Image,
-  Linking,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import Fonts from '../constants/Fonts';
-import GenericButton from './GenericButton';
-import {SCREENS} from '../constants/SCREENS';
-import {useNavigation} from '@react-navigation/native';
-import ReactNativeBiometrics from 'react-native-biometrics';
-import useSelectorAction from '../hooks/useSelectorAction';
-import {setBiometricAvailable} from '../redux/slices/authenticationSlice';
-import useDispatchAction from '../hooks/useDispatchAction';
-import {setBiometric} from '../services/Auth';
-import {CARD_TYPE} from '../constants/constant';
-import {SvgXml} from 'react-native-svg';
-import {SVGCross, SVGCross2, SVGKYC} from '../constants/images';
-import {getKYC} from '../services/Services';
+import { useNavigation } from "@react-navigation/native";
+import { SvgIcons } from "constants/svgs";
+import React, { useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import ReactNativeBiometrics from "react-native-biometrics";
+import Fonts from "../constants/Fonts";
+import useSelectorAction from "../hooks/useSelectorAction";
 
-const CustomModal = ({isVisible, onClose, onCancel}) => {
-  const {biometricAvailable} = useSelectorAction();
+const CustomModal = ({ isVisible, onClose, onCancel }) => {
+  const { biometricAvailable } = useSelectorAction();
   const rnBiometrics = new ReactNativeBiometrics({
     allowDeviceCredentials: true,
   });
@@ -40,11 +21,12 @@ const CustomModal = ({isVisible, onClose, onCancel}) => {
       <View style={styles.modalContent}>
         <View
           style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-          }}>
-          <View style={{width: '70%'}}>
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+          }}
+        >
+          <View style={{ width: "70%" }}>
             <Text style={styles.headerText}>
               We are building something exciting for you Stay Tuned!
             </Text>
@@ -52,17 +34,18 @@ const CustomModal = ({isVisible, onClose, onCancel}) => {
               style={{
                 fontSize: 12,
                 fontFamily: Fonts.regular,
-                color: 'rgba(255, 255, 255, 1)',
-                textAlign: 'left',
+                color: "rgba(255, 255, 255, 1)",
+                textAlign: "left",
                 marginBottom: 10,
                 marginTop: 10,
                 opacity: 0.7,
-              }}>
-              Connection plugin italic overflow invite background text select.{' '}
+              }}
+            >
+              Connection plugin italic overflow invite background text select.{" "}
             </Text>
           </View>
 
-          <SvgXml xml={SVGCross2} onPress={onClose} />
+          <SvgIcons.CrossIcon onPress={onClose} />
         </View>
       </View>
     </View>
@@ -75,20 +58,20 @@ export default CustomModal;
 const styles = StyleSheet.create({
   modalContainer: {
     // flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'absolute',
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute",
     top: 0,
     bottom: 0,
-    width: '100%',
+    width: "100%",
     right: 0,
     left: 0,
     zIndex: 4000,
     // backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: 'rgba(44, 106, 63, 1)',
-    width: '90%',
+    backgroundColor: "rgba(44, 106, 63, 1)",
+    width: "90%",
     borderTopEndRadius: 20,
     borderTopStartRadius: 20,
     padding: 20,
@@ -96,7 +79,7 @@ const styles = StyleSheet.create({
     // height: '40%',
     // marginTop: 500,
     // flex: 1,
-    position: 'absolute',
+    position: "absolute",
     borderRadius: 30,
     // flexDirection: 'row',
   },
@@ -104,26 +87,26 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 16,
     fontFamily: Fonts.bold,
-    color: 'white',
-    textAlign: 'left',
+    color: "white",
+    textAlign: "left",
     // marginBottom: 10,
     // marginTop: 15,
   },
   sectionHeader: {
     fontSize: 14,
     fontFamily: Fonts.medium,
-    color: '#333',
+    color: "#333",
     marginVertical: 10,
   },
   optionContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     marginVertical: 5,
   },
   radioButton: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 8,
@@ -131,47 +114,47 @@ const styles = StyleSheet.create({
   },
   checkbox: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 10,
     paddingHorizontal: 15,
     paddingVertical: 8,
     marginVertical: 5,
   },
   selectedOption: {
-    backgroundColor: '#4F378B',
-    borderColor: '#4F378B',
+    backgroundColor: "#4F378B",
+    borderColor: "#4F378B",
   },
   optionText: {
     fontSize: 14,
     fontFamily: Fonts.medium,
-    color: '#333',
+    color: "#333",
   },
   selectedText: {
-    color: '#fff',
+    color: "#fff",
   },
   buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 20,
   },
   clearButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     padding: 10,
     borderRadius: 10,
     flex: 0.4,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 2,
-    borderColor: 'black',
+    borderColor: "black",
   },
   applyButton: {
-    backgroundColor: '#4F378B',
+    backgroundColor: "#4F378B",
     padding: 10,
     borderRadius: 10,
     flex: 0.4,
-    alignItems: 'center',
+    alignItems: "center",
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontFamily: Fonts.medium,
     fontSize: 14,
   },

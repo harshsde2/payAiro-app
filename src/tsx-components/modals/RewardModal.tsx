@@ -1,17 +1,17 @@
-import { useNavigation } from "@react-navigation/native";
+import GenericButton from "components/GenericButton";
+import { SvgIcons } from "constants/svgs";
 import React from "react";
 import {
+  GestureResponderEvent,
   Modal,
+  SafeAreaView,
   StyleSheet,
   Text,
   View,
-  GestureResponderEvent,
-  SafeAreaView,
 } from "react-native";
 import { SvgXml } from "react-native-svg";
 import Fonts from "../../constants/Fonts";
-import { SVGCross, SVGDollerReward, SVGReward } from "../../constants/images";
-import GenericButton from "components/GenericButton";
+import { SVGDollerReward } from "../../constants/images";
 
 interface RewardModalProps {
   isVisible: boolean;
@@ -28,8 +28,7 @@ const RewardModal: React.FC<RewardModalProps> = ({ isVisible, onClose }) => {
     >
       <SafeAreaView style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.5)" }}>
         <View style={styles.modalContainer}>
-          <SvgXml
-            xml={SVGCross}
+          <SvgIcons.CrossIcon
             style={{ alignSelf: "flex-end", position: "absolute", top: 20 }}
             onPress={onClose}
           />

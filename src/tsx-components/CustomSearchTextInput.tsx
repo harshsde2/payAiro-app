@@ -1,20 +1,14 @@
 import React, { FC, useRef } from "react";
-import {
-  View,
-  TextInput,
-  StyleSheet,
-  TextInputProps,
-  TouchableOpacity,
-} from "react-native";
-import { useTheme } from "styles/ThemeContext";
-import { SvgXml } from "react-native-svg";
+import { StyleSheet, TextInput, TextInputProps } from "react-native";
 import Animated, {
-  useSharedValue,
   useAnimatedStyle,
+  useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { SVGSearchIcon, SVGCanceled, SVGCross } from "../constants/images";
+import { SvgXml } from "react-native-svg";
 import { Theme } from "styles";
+import { useTheme } from "styles/ThemeContext";
+import { SVGSearchIcon } from "../constants/images";
 
 interface CustomSearchTextInputProps extends TextInputProps {
   value: string;
@@ -79,19 +73,6 @@ const CustomSearchTextInput: FC<CustomSearchTextInputProps> = ({
         autoFocus={autoFocus}
         {...rest}
       />
-      {/* {showClearButton && value.length > 0 && (
-        <TouchableOpacity
-          style={styles.iconRight}
-          onPress={() => {
-            if (onClearPress) onClearPress();
-            else onChangeText('');
-            inputRef.current?.focus();
-          }}
-          activeOpacity={0.7}
-        >
-          <SvgXml xml={SVGCross} width={58} height={58} />
-        </TouchableOpacity>
-      )} */}
     </Animated.View>
   );
 };

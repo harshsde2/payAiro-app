@@ -1,22 +1,10 @@
-import React from "react";
-import {
-  Image,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import Fonts from "../constants/Fonts";
-import GenericButton from "./GenericButton";
-import { SCREENS } from "../constants/SCREENS";
 import { useNavigation } from "@react-navigation/native";
+import { SvgIcons } from "constants/svgs";
+import React from "react";
+import { Modal, SafeAreaView, StyleSheet, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
+import Fonts from "../constants/Fonts";
 import useSelectorAction from "../hooks/useSelectorAction";
-import { SvgXml } from "react-native-svg";
-import { SVGCross } from "../constants/images";
 
 const QRModal = ({ isVisible, onClose, onSelected }) => {
   const navigation = useNavigation();
@@ -31,7 +19,7 @@ const QRModal = ({ isVisible, onClose, onSelected }) => {
     >
       <SafeAreaView style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <SvgXml xml={SVGCross} onPress={onClose} />
+          <SvgIcons.CrossIcon onPress={onClose} />
           <View
             style={{
               alignSelf: "center",

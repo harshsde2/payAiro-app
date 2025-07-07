@@ -1,29 +1,12 @@
-import React, { useEffect, useState } from "react";
-import {
-  Alert,
-  Image,
-  Linking,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import Fonts from "../constants/Fonts";
-import GenericButton from "./GenericButton";
-import { SCREENS } from "../constants/SCREENS";
 import { useNavigation } from "@react-navigation/native";
+import { SvgIcons } from "constants/svgs";
+import React, { useState } from "react";
+import { Modal, StyleSheet, Text, View } from "react-native";
 import ReactNativeBiometrics from "react-native-biometrics";
-import useSelectorAction from "../hooks/useSelectorAction";
-import { setBiometricAvailable } from "../redux/slices/authenticationSlice";
-import useDispatchAction from "../hooks/useDispatchAction";
-import { setBiometric } from "../services/Auth";
-import { CARD_TYPE } from "../constants/constant";
 import { SvgXml } from "react-native-svg";
-import { SVGCross, SVGKYC } from "../constants/images";
-import { getKYC } from "../services/Services";
+import Fonts from "../constants/Fonts";
+import { SVGKYC } from "../constants/images";
+import useSelectorAction from "../hooks/useSelectorAction";
 
 const KYCFailureModal = ({ isVisible, onClose, onCancel }) => {
   const { biometricAvailable } = useSelectorAction();
@@ -43,8 +26,7 @@ const KYCFailureModal = ({ isVisible, onClose, onCancel }) => {
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <SvgXml
-            xml={SVGCross}
+          <SvgIcons.CrossIcon
             style={{ alignSelf: "flex-end" }}
             onPress={onClose}
           />

@@ -2208,32 +2208,6 @@ export const SVGSuccess = `<svg xmlns="http://www.w3.org/2000/svg" width="40" he
 </g>
 </svg>
 `;
-export const SVGCross = `<svg width="72" height="60" viewBox="0 0 72 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g filter="url(#filter0_di_4427_26848)">
-<path d="M9 26C9 14.402 18.402 5 30 5H42C53.598 5 63 14.402 63 26C63 37.598 53.598 47 42 47H30C18.402 47 9 37.598 9 26Z" fill="#E2F1E3"/>
-</g>
-<path d="M31 31L41 21" stroke="#2C6A3F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M41 31L31 21" stroke="#2C6A3F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-<defs>
-<filter id="filter0_di_4427_26848" x="0" y="0" width="72" height="60" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-<feFlood flood-opacity="0" result="BackgroundImageFix"/>
-<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-<feOffset dy="4"/>
-<feGaussianBlur stdDeviation="4.5"/>
-<feComposite in2="hardAlpha" operator="out"/>
-<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.08 0"/>
-<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_4427_26848"/>
-<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_4427_26848" result="shape"/>
-<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-<feOffset dx="1" dy="1"/>
-<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
-<feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.12 0"/>
-<feBlend mode="normal" in2="shape" result="effect2_innerShadow_4427_26848"/>
-</filter>
-</defs>
-</svg>
-
-`;
 
 export const SVGUSDT = `<svg xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 48 48" width="96px" height="96px"><polygon fill="#4db6ac" points="24,44 2,22.5 10,5 38,5 46,22.5"/><path fill="#fff" d="M38,22c0-1.436-4.711-2.635-11-2.929V16h8v-6H13v6h8v3.071C14.711,19.365,10,20.564,10,22	s4.711,2.635,11,2.929V36h6V24.929C33.289,24.635,38,23.436,38,22z M24,24c-6.627,0-12-1.007-12-2.25c0-1.048,3.827-1.926,9-2.176	v3.346c0.96,0.06,1.96,0.08,3,0.08s2.04-0.02,3-0.08v-3.346c5.173,0.25,9,1.128,9,2.176C36,22.993,30.627,24,24,24z"/></svg>`;
 export const SVGPdf = `<?xml version="1.0" encoding="iso-8859-1"?>
