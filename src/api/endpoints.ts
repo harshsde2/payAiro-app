@@ -48,6 +48,7 @@ export const AUTH = {
   BUY_RWA: "/auth/rwa/buy/",
   SELL_RWA: "/auth/rwa/sell/",
   RWA_USER_HOLDINGS: "/auth/user/rwa-holdings/",
+  USER_SUPPORT: "/auth/query/",
 };
 // Wallet endpoints
 export const WALLET = {

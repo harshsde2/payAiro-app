@@ -124,6 +124,37 @@ export const useVerifyUserForChangePinOtp = () => {
 };
 
 /**
+ * Hook to Intra Account Transfer
+ */
+export const useIntraAccountTransfer = () => {
+  return useMutation<ApiResponse<any>>({
+    mutationFn: async (payload) => {
+      return await apiClient.post<ApiResponse<any>>(
+        AUTH.SELF_TRANSFER,
+        payload,
+        true
+      );
+    },
+    onSuccess: () => {},
+  });
+};
+/**
+ * Hook to add a contact
+ */
+export const useSupport = () => {
+  return useMutation<ApiResponse<any>>({
+    mutationFn: async (payload) => {
+      return await apiClient.post<ApiResponse<any>>(
+        AUTH.USER_SUPPORT,
+        payload,
+        true
+      );
+    },
+    onSuccess: () => {},
+  });
+};
+
+/**
  * Hook to get user notifications
  */
 export const useNotifications = () => {

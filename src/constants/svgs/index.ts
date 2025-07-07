@@ -29,6 +29,18 @@ import Bank from "./Bank.svg";
 import TermsAndConditions from "./Terms&Conditions.svg";
 import ChatSupport from "./ChatSupport.svg";
 import BankStatement from "./BankStatement.svg";
+import LeftArrow from "./LeftArrow.svg";
+import ChevronRight from "./ChevronRight.svg";
+import ACHTransfer from "./ACHTransfer.svg";
+import ApplePay from "./ApplePay.svg";
+import CryptoWallet from "./CryptoWallet.svg";
+import DebitCard from "./DebitCard.svg";
+import Visa from "./Visa.svg";
+import MasterCard from "./MasterCard.svg";
+import CopyOutlineBlack from "./CopyOutlineBlack.svg";
+import UnCheckbox from "./UnCheckbox.svg";
+import Checkedbox from "./Checkedbox.svg";
+import InfoNote from "./InfoNote.svg";
 
 export const SvgIcons = {
   PayAiorRoundIcon,
@@ -62,4 +74,16 @@ export const SvgIcons = {
   TermsAndConditions,
   ChatSupport,
   BankStatement,
+  LeftArrow,
+  ChevronRight,
+  ACHTransfer,
+  DebitCard,
+  ApplePay,
+  CryptoWallet,
+  MasterCard,
+  Visa,
+  CopyOutlineBlack,
+  Checkedbox,
+  UnCheckbox,
+  InfoNote,
 };

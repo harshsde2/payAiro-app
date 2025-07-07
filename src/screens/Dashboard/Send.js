@@ -102,7 +102,7 @@ export default function Send(props) {
 
   console.log("send screen is rendering");
   return (
-    <ScreenContainer>
+    <ScreenContainer padding={0}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}

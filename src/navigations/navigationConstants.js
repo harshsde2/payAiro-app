@@ -88,4 +88,7 @@ export const NAVIGATION_SCREENS = {
   COMMON_ASSETS_SCREEN: "CommonAssetsScreen",
   COMING_SOON: "ComingSoon",
   ADD_BALANCE: "AddBalance",
+  ACH_TRANSFER: "ACHTransfer",
+  DEBIT_CARD_SCREEN: "DebitCardScreen",
+  SUPPORT_SCREEN: "SupportScreen",
 };

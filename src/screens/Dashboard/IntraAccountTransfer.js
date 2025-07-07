@@ -46,6 +46,7 @@ export default function IntraAccountTransfer() {
   const [amount, setamount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigation = useNavigation();
+
   const handleSelfTransfer = async () => {
     try {
       setIsLoading(true);
@@ -100,8 +101,7 @@ export default function IntraAccountTransfer() {
           placeholder={"Source Account Type"}
           data={DROPDOWN_LISTS.filter(
             (item) => !item.value.toLowerCase().includes("ira")
-          )} // Filter out external accounts if needed
-          // Filter out external accounts if needed
+          )}
           value={souceAccount}
           search={false}
           itemTextStyle={{

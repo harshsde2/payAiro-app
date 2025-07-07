@@ -79,6 +79,9 @@ import TransactionSuccessScreen from "screens/TSX-Screens/RWA/TransactionSuccess
 import CommonAssetsScreen from "screens/TSX-Screens/RWA/CommonAssetsScreen";
 import ComingSoon from "screens/TSX-Screens/ComingSoon";
 import AddBalance from "screens/TSX-Screens/AddBalance/AddBalance";
+import ACHTransfer from "screens/TSX-Screens/AddBalance/ACHTransfer";
+import DebitCardScreen from "screens/TSX-Screens/AddBalance/DebitCardScreen";
+import SupportScreen from "screens/TSX-Screens/Settings/SupportScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -435,6 +438,21 @@ export default function AppStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.ADD_BALANCE}
         component={AddBalance}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.ACH_TRANSFER}
+        component={ACHTransfer}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.DEBIT_CARD_SCREEN}
+        component={DebitCardScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.SUPPORT_SCREEN}
+        component={SupportScreen}
       />
     </Stack.Navigator>
   );

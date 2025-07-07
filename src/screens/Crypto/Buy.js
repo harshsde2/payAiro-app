@@ -86,21 +86,27 @@ export default function Buy(props) {
         tokens?.access
       );
       console.log(
-        {
-          from_asset: "usd",
-          from_amount: Number(amount),
-          to_asset: item?.currency,
-          network: item?.network,
-          fund_source:
-            bankSelected?.account_type === "rothIra"
-              ? "roth_ira"
-              : bankSelected?.account_type === "traditionalIra"
-              ? "traditional_ira"
-              : "bank",
-        },
+        JSON.stringify(
+          [
+            {
+              from_asset: "usd",
+              from_amount: Number(amount),
+              to_asset: item?.currency,
+              network: item?.network,
+              fund_source:
+                bankSelected?.account_type === "rothIra"
+                  ? "roth_ira"
+                  : bankSelected?.account_type === "traditionalIra"
+                  ? "traditional_ira"
+                  : "bank",
+            },
+          ],
+          null,
+          2
+        ),
         "payloads"
       );
-      console.log(data?.data?.details, "datatata");
+      console.log(JSON.stringify(data, null, 2), "datatata");
       if (data && data?.data.message === "Trade successful") {
         useDispatchAction(setSuccessMsg("Trade successful"));
         navigation.goBack();
@@ -108,7 +114,8 @@ export default function Buy(props) {
         useDispatchAction(setErrorMsg("Trade failed, Some thing went wrong"));
       }
     } catch (error) {
-      console.log(error?.data?.details?.errors, "errororor");
+      // console.log(error?.data?.details?.errors, "errororor");
+      console.log(JSON.stringify(error, null, 2), "errororor");
       useDispatchAction(setErrorMsg("Trade failed, Some thing went wrong"));
     } finally {
       useDispatchAction(setShowLoader(false));

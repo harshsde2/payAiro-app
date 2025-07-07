@@ -79,7 +79,7 @@ export const SETTINGS_LISTS = [
     name: "Support",
     icon: <SvgIcons.ChatSupport />,
     isDisvled: false,
-    route: "",
+    route: NAVIGATION_SCREENS.SUPPORT_SCREEN,
   },
   { name: "Logout", icon: SVGLog, isDisvled: false, route: "Profile" },
   // {

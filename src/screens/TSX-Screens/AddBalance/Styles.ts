@@ -15,5 +15,6 @@ export const commonAddBalanceStyles = (theme: Theme) =>
       padding: theme.spacing.spacing[5],
       marginTop: theme.spacing.spacing[5],
       width: "100%",
+      flex: 1,
     },
   });

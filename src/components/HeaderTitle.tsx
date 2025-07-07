@@ -13,6 +13,7 @@ import { SvgXml } from "react-native-svg";
 import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "../styles/ThemeContext";
 import { Theme } from "styles";
+import { SvgIcons } from "constants/svgs";
 
 interface HeaderTitleProps {
   style?: ViewStyle;
@@ -65,7 +66,7 @@ const HeaderTitle: FC<HeaderTitleProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Back button"
           >
-            <SvgXml width={60} height={60} xml={leftIcon} />
+            <SvgIcons.LeftArrow width={60} height={60} />
           </TouchableOpacity>
         ) : (
           <View style={styles(theme).spacer} />

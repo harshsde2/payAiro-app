@@ -1499,9 +1499,7 @@ const NewDashboard = () => {
                 if (!isCrypto) {
                   navigation.navigate("CryptoDashboard");
                 } else {
-                  navigation.navigate(
-                    NAVIGATION_SCREENS.INTRA_ACCOUNT_TRANSFER
-                  );
+                  navigation.navigate(NAVIGATION_SCREENS.ADD_BALANCE);
                 }
               }}
             />

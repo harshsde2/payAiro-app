@@ -56,7 +56,8 @@ const TextInputField: FC<InputProps> = (props) => {
             variant={"body2"}
             style={[{ fontFamily: Fonts.semibold, padding: 10 }, lStyle]}
           >
-            {label}{" "}
+            {label}
+            {""}
           </CustomText>
           {required && (
             <CustomText color={theme.colors.palette.red500} variant={"body2"}>
