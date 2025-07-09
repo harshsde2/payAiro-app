@@ -35,7 +35,7 @@ const CONFIGS = {
 };
 
 const { width: screenWidth } = Dimensions.get("window");
-const leftPosition = screenWidth * 0.63; // 70% of screen width
+const leftPosition = screenWidth * 0.68; // 70% of screen width
 
 const DashboardCard = () => {
   const { headerText, theme: themeApp } = useSelector(
@@ -281,7 +281,7 @@ const DashboardCard = () => {
               position: "absolute",
               top: 69,
               transform: [{ rotate: "270deg" }],
-              left: wp("63%"),
+              left: "68%",
               zIndex: 1000,
               borderRadius: 20,
             }}
@@ -413,7 +413,7 @@ const DashboardCard = () => {
               position: "absolute",
               top: 69,
               transform: [{ rotate: "270deg" }],
-              left: wp("63%"),
+              left: "68%",
               zIndex: 1000,
               borderRadius: 20,
             }}

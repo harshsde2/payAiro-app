@@ -107,7 +107,7 @@ const BankDetails = (props: any) => {
         >
           <HeaderTitle
             title="Finance"
-            leftIcon={SVGLeftArrow}
+            leftIcon={"true"}
             isBack={true}
             onPressLeft={handleGoBack}
           />
@@ -161,25 +161,21 @@ const BankDetails = (props: any) => {
             </View>
           </View>
 
-          {/* <SvgXml
-            xml={SVGSlider}
-            style={styles(theme).sliderIcon}
-          /> */}
-
           <View style={styles(theme).financeContainer}>
             <ScrollView>
               <View style={styles(theme).financeItemsContainer}>
                 {FINANCE_LISTS.map((financeItem, index) => (
                   <TouchableOpacity
                     key={`finance-item-${index}`}
-                    onPress={() => handleFinanceItemPress(financeItem.route)}
+                    onPress={() =>
+                      handleFinanceItemPress(financeItem.route, {
+                        title: financeItem.name,
+                      })
+                    }
                     style={styles(theme).financeItemWrapper}
                   >
                     <View style={styles(theme).financeIconContainer}>
-                      <SvgXml
-                        xml={financeItem?.icon}
-                        style={styles(theme).financeIcon}
-                      />
+                      {financeItem?.icon}
                     </View>
                     <CustomText
                       variant="body2"
@@ -260,6 +256,8 @@ const styles = (theme: Theme) =>
       padding: theme.spacing.spacing.lg,
       borderWidth: 1,
       borderColor: theme.colors.palette.green100,
+      justifyContent: "center",
+      alignItems: "center",
     },
     financeIcon: {
       alignSelf: "center",

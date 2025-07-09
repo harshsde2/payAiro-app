@@ -131,35 +131,42 @@ export const BANK_TYPE = [
 export const FINANCE_LISTS = [
   {
     name: "Send Money",
-    icon: SVGSendMonsy,
-    route: "Send",
+    icon: <SvgIcons.SendMoneyIcon />,
+    route: NAVIGATION_SCREENS.SEND,
   },
   {
     name: "Recharge",
-    icon: SVGRecharges,
+    icon: <SvgIcons.SendMoneyIcon />,
+    route: NAVIGATION_SCREENS.COMING_SOON,
   },
   {
     name: "FastTag",
-    icon: SVGFastTag,
+    icon: <SvgIcons.FastTagIcon />,
+    route: NAVIGATION_SCREENS.COMING_SOON,
   },
   {
     name: "Accounts & FD",
-    icon: SVGAccountsFD,
+    icon: <SvgIcons.AccountsAndFDIcon />,
+    route: NAVIGATION_SCREENS.COMING_SOON,
   },
   {
     name: "Loans",
-    icon: SVGLoan,
+    icon: <SvgIcons.LoansIcon />,
+    route: NAVIGATION_SCREENS.COMING_SOON,
   },
   {
     name: "Mutual Fund",
-    icon: SVGMFund,
+    icon: <SvgIcons.DollarCircleIcon />,
+    route: NAVIGATION_SCREENS.COMING_SOON,
   },
   {
     name: "UPI",
-    icon: SVGUPI,
+    icon: <SvgIcons.UPIIcon />,
+    route: NAVIGATION_SCREENS.COMING_SOON,
   },
   {
     name: "Bills",
-    icon: SVGBills,
+    icon: <SvgIcons.BillsIcon />,
+    route: NAVIGATION_SCREENS.COMING_SOON,
   },
 ];

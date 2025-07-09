@@ -62,6 +62,13 @@ import UserProfile from "./UserProfile.svg";
 import SecurityIcon from "./SecurityIcon.svg";
 import AddCardIcon from "./AddCardIcon.svg";
 import LogoutIcon from "./LogoutIcon.svg";
+import UPIIcon from "./UPIIcon.svg";
+import BillsIcon from "./BillsIcon.svg";
+import DollarCircleIcon from "./DollarCircleIcon.svg";
+import SendMoneyIcon from "./SendMoneyIcon.svg";
+import LoansIcon from "./LoansIcon.svg";
+import AccountsAndFDIcon from "./AccountsAndFDIcon.svg";
+import FastTagIcon from "./FastTagIcon.svg";
 
 export const SvgIcons = {
   PayAiorRoundIcon,
@@ -128,4 +135,11 @@ export const SvgIcons = {
   SecurityIcon,
   AddCardIcon,
   LogoutIcon,
+  FastTagIcon,
+  DollarCircleIcon,
+  LoansIcon,
+  BillsIcon,
+  UPIIcon,
+  AccountsAndFDIcon,
+  SendMoneyIcon,
 };

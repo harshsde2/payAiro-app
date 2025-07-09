@@ -53,6 +53,7 @@ const WalletCard = ({ data, bankbalance, index }) => {
               variant={"h4"}
               color={theme.colors.palette.white}
               fontWeight={"bold"}
+              style={{ flex: 1 }}
             >
               {data?.bank_name}
             </CustomText>
@@ -118,6 +119,7 @@ const WalletCard = ({ data, bankbalance, index }) => {
             flexDirection: "row",
             justifyContent: "space-around",
             alignItems: "center",
+            marginRight: 5,
           }}
         >
           <SvgXml
@@ -136,6 +138,7 @@ const WalletCard = ({ data, bankbalance, index }) => {
             flexDirection: "row",
             justifyContent: "space-around",
             alignItems: "center",
+            marginRight: 5,
           }}
         >
           <SvgXml

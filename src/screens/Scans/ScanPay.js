@@ -170,7 +170,7 @@ export default function ScanPay(props) {
   };
 
   const handleSend = async () => {
-    // console.log(JSON.stringify(bank, null, 2), "bankkkkkkkk");
+    console.log(JSON.stringify(bank, null, 2), "bankkkkkkkk");
     setspin(true);
     try {
       const payload = {

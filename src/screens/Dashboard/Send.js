@@ -159,119 +159,54 @@ export default function Send(props) {
                 cStyle={{marginTop: 20}}
               /> */}
             </View>
-            <Text
-              style={{
-                fontFamily: Fonts.semibold,
-                color: "#000",
-                fontSize: 14,
-                textAlign: "left",
-                padding: 15,
-                marginTop: 30,
-              }}
-            >
-              {`${type === "requested" ? "" : "Send From"} `}
-            </Text>
-
-            {type !== "requested" && (
-              <View style={{}}>
-                <View
+            <View style={{ flex: 1, justifyContent: "space-between" }}>
+              <View style={{ flex: 1 }}>
+                <Text
                   style={{
-                    backgroundColor: "rgba(226, 241, 227, 0.8)",
-                    padding: 20,
-                    borderWidth: 1,
-                    borderColor: "rgba(44, 106, 63, 0.1)",
-                    borderRadius: 15,
-                    marginVBottom: 30,
+                    fontFamily: Fonts.semibold,
+                    color: "#000",
+                    fontSize: 14,
+                    textAlign: "left",
+                    padding: 15,
+                    marginTop: 30,
                   }}
                 >
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={() => setisDropdown((state) => !state)}
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      flex: 1,
-                      marginBottom: isDropdown ? 10 : 0,
-                      //   padding: 20,
-                    }}
-                  >
+                  {`${type === "requested" ? "" : "Send From"} `}
+                </Text>
+                {type !== "requested" && (
+                  <View style={{}}>
                     <View
                       style={{
-                        flex: 1,
-                        flexDirection: "row",
-                        justifyContent: "flex-start",
-                        alignItems: "center",
-                        //   padding: 20,
+                        backgroundColor: "rgba(226, 241, 227, 0.8)",
+                        padding: 20,
+                        borderWidth: 1,
+                        borderColor: "rgba(44, 106, 63, 0.1)",
+                        borderRadius: 15,
                       }}
                     >
-                      <SvgXml xml={SVGUSD} width={40} height={40} />
-                      <View style={{ marginHorizontal: 10, flex: 1 }}>
-                        <Text
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => setisDropdown((state) => !state)}
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          flex: 1,
+                          marginBottom: isDropdown ? 10 : 0,
+                          //   padding: 20,
+                        }}
+                      >
+                        <View
                           style={{
-                            color: "black",
-                            fontSize: 16,
-                            fontFamily: Fonts.bold,
-                          }}
-                        >
-                          {selectedBank?.bank_name ?? selectedBank?.name}{" "}
-                          <CustomText
-                            variant={"body2"}
-                            color={theme?.colors.palette.green700}
-                            style={{ textTransform: "capitalize" }}
-                          >{` (${selectedBank?.account_type})`}</CustomText>
-                        </Text>
-                        <Text
-                          style={{
-                            color: "rgba(106, 106, 106, 0.7)",
-                            fontFamily: Fonts.semibold,
-                            fontSize: 10,
-                          }}
-                        >
-                          $
-                          {selectedBank?.balances?.available
-                            ? selectedBank?.balances?.available
-                            : selectedBank?.account_type === "rothIra"
-                            ? bankBalance?.roth_ira_account?.usd
-                            : selectedBank?.account_type === "traditionalIra"
-                            ? bankBalance?.traditional_ira_account?.usd
-                            : bankBalance?.bank_account?.usd}
-                        </Text>
-                      </View>
-                    </View>
-                    <TouchableOpacity
-                      style={{ width: 20, alignItems: "center", marginLeft: 5 }}
-                      disabled
-                    >
-                      <SvgXml xml={isDropdown ? SVGUpArrow : SVGDowArrow2} />
-                    </TouchableOpacity>
-                  </TouchableOpacity>
-                  {isDropdown &&
-                    bankLists &&
-                    bankLists?.length > 0 &&
-                    bankLists
-                      .filter(
-                        (bank) =>
-                          !bank.account_type.toLowerCase().includes("ira")
-                      )
-                      .map((item, k) => (
-                        <TouchableOpacity
-                          onPress={() => {
-                            console.log(item, "item");
-                            setselectedBank(item);
-                            setisDropdown(false);
-                          }}
-                          key={k}
-                          style={{
+                            flex: 1,
                             flexDirection: "row",
                             justifyContent: "flex-start",
                             alignItems: "center",
-                            marginVertical: 10,
                             //   padding: 20,
                           }}
                         >
                           <SvgXml xml={SVGUSD} width={40} height={40} />
-                          <View style={{ marginHorizontal: 10 }}>
+                          <View style={{ marginHorizontal: 10, flex: 1 }}>
                             <Text
                               style={{
                                 color: "black",
@@ -279,12 +214,12 @@ export default function Send(props) {
                                 fontFamily: Fonts.bold,
                               }}
                             >
-                              {item?.bank_name ?? item?.name}
+                              {selectedBank?.bank_name ?? selectedBank?.name}{" "}
                               <CustomText
                                 variant={"body2"}
                                 color={theme?.colors.palette.green700}
                                 style={{ textTransform: "capitalize" }}
-                              >{` (${item?.account_type})`}</CustomText>
+                              >{` (${selectedBank?.account_type})`}</CustomText>
                             </Text>
                             <Text
                               style={{
@@ -294,94 +229,168 @@ export default function Send(props) {
                               }}
                             >
                               $
-                              {item?.balances?.available
-                                ? item?.balances?.available
-                                : item?.account_type === "rothIra"
+                              {selectedBank?.balances?.available
+                                ? selectedBank?.balances?.available
+                                : selectedBank?.account_type === "rothIra"
                                 ? bankBalance?.roth_ira_account?.usd
-                                : item?.account_type === "traditionalIra"
+                                : selectedBank?.account_type ===
+                                  "traditionalIra"
                                 ? bankBalance?.traditional_ira_account?.usd
                                 : bankBalance?.bank_account?.usd}
                             </Text>
                           </View>
+                        </View>
+                        <TouchableOpacity
+                          style={{
+                            width: 20,
+                            alignItems: "center",
+                            marginLeft: 5,
+                          }}
+                          disabled
+                        >
+                          <SvgXml
+                            xml={isDropdown ? SVGUpArrow : SVGDowArrow2}
+                          />
                         </TouchableOpacity>
-                      ))}
+                      </TouchableOpacity>
+                      {isDropdown &&
+                        bankLists &&
+                        bankLists?.length > 0 &&
+                        bankLists
+                          .filter(
+                            (bank) =>
+                              !bank.account_type.toLowerCase().includes("ira")
+                          )
+                          .map((item, k) => (
+                            <TouchableOpacity
+                              onPress={() => {
+                                console.log(item, "item");
+                                setselectedBank(item);
+                                setisDropdown(false);
+                              }}
+                              key={k}
+                              style={{
+                                flexDirection: "row",
+                                justifyContent: "flex-start",
+                                alignItems: "center",
+                                marginVertical: 10,
+                                //   padding: 20,
+                              }}
+                            >
+                              <SvgXml xml={SVGUSD} width={40} height={40} />
+                              <View style={{ marginHorizontal: 10 }}>
+                                <Text
+                                  style={{
+                                    color: "black",
+                                    fontSize: 16,
+                                    fontFamily: Fonts.bold,
+                                  }}
+                                >
+                                  {item?.bank_name ?? item?.name}
+                                  <CustomText
+                                    variant={"body2"}
+                                    color={theme?.colors.palette.green700}
+                                    style={{ textTransform: "capitalize" }}
+                                  >{` (${item?.account_type})`}</CustomText>
+                                </Text>
+                                <Text
+                                  style={{
+                                    color: "rgba(106, 106, 106, 0.7)",
+                                    fontFamily: Fonts.semibold,
+                                    fontSize: 10,
+                                  }}
+                                >
+                                  $
+                                  {item?.balances?.available
+                                    ? item?.balances?.available
+                                    : item?.account_type === "rothIra"
+                                    ? bankBalance?.roth_ira_account?.usd
+                                    : item?.account_type === "traditionalIra"
+                                    ? bankBalance?.traditional_ira_account?.usd
+                                    : bankBalance?.bank_account?.usd}
+                                </Text>
+                              </View>
+                            </TouchableOpacity>
+                          ))}
 
-                  {!hasKey(bankLists, "bank_type") && (
-                    <TouchableOpacity
-                      activeOpacity={0.7}
-                      onPress={() => {
-                        handleOpenLink();
-                      }}
-                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        flex: 1,
-                        marginTop: 20,
-                        //   padding: 20,
-                      }}
-                    >
-                      <View
-                        style={{
-                          flex: 1,
-                          flexDirection: "row",
-                          justifyContent: "flex-start",
-                          alignItems: "center",
-
-                          // padding: 20,
-                        }}
-                      >
-                        <SvgIcons.Bank width={40} height={40} />
-
-                        <View style={{ marginHorizontal: 10, flex: 1 }}>
-                          <Text
+                      {!hasKey(bankLists, "bank_type") && (
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={() => {
+                            handleOpenLink();
+                          }}
+                          style={{
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            flex: 1,
+                            marginTop: 20,
+                            //   padding: 20,
+                          }}
+                        >
+                          <View
                             style={{
-                              color: "black",
-                              fontSize: 16,
-                              fontFamily: Fonts.bold,
+                              flex: 1,
+                              flexDirection: "row",
+                              justifyContent: "flex-start",
+                              alignItems: "center",
+
+                              // padding: 20,
                             }}
                           >
-                            {"Link External Account"}
-                          </Text>
-                        </View>
-                      </View>
-                      <TouchableOpacity
-                        style={{
-                          width: 20,
-                          alignItems: "center",
-                          marginLeft: 5,
-                        }}
-                        disabled
-                      >
-                        <SvgIcons.PlusCircleIcon width={20} height={20} />
-                      </TouchableOpacity>
-                    </TouchableOpacity>
-                  )}
-                </View>
+                            <SvgIcons.Bank width={40} height={40} />
+
+                            <View style={{ marginHorizontal: 10, flex: 1 }}>
+                              <Text
+                                style={{
+                                  color: "black",
+                                  fontSize: 16,
+                                  fontFamily: Fonts.bold,
+                                }}
+                              >
+                                {"Link External Account"}
+                              </Text>
+                            </View>
+                          </View>
+                          <TouchableOpacity
+                            style={{
+                              width: 20,
+                              alignItems: "center",
+                              marginLeft: 5,
+                            }}
+                            disabled
+                          >
+                            <SvgIcons.PlusCircleIcon width={20} height={20} />
+                          </TouchableOpacity>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+                )}
               </View>
-            )}
-            <GenericButton
-              title={"Next"}
-              cStyle={{ marginTop: type === "requested" ? 400 : 300 }}
-              onPress={async () => {
-                const formData = new FormData();
-                formData.append("identifier", sender.trim());
-                const data = await checkUser(formData, tokens?.access);
-                // console.log(data, "datatatas");
-                if (data && data?.status) {
-                  navigation.navigate(SCREENS.ScanPay, {
-                    type:
-                      requested || type === "requested"
-                        ? "requested"
-                        : "receive",
-                    sender: sender.trim(),
-                    bank: selectedBank,
-                  });
-                } else {
-                  useDispatchAction(setErrorMsg("Recipient not found"));
-                }
-              }}
-            />
+              <GenericButton
+                title={"Next"}
+                cStyle={{ marginTop: 10 }}
+                onPress={async () => {
+                  const formData = new FormData();
+                  formData.append("identifier", sender.trim());
+                  const data = await checkUser(formData, tokens?.access);
+                  // console.log(data, "datatatas");
+                  if (data && data?.status) {
+                    navigation.navigate(SCREENS.ScanPay, {
+                      type:
+                        requested || type === "requested"
+                          ? "requested"
+                          : "receive",
+                      sender: sender.trim(),
+                      bank: selectedBank,
+                    });
+                  } else {
+                    useDispatchAction(setErrorMsg("Recipient not found"));
+                  }
+                }}
+              />
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -95,6 +95,7 @@ import {
 import { useTheme } from "../../styles/ThemeContext";
 import { Card, CustomText, DashboardHeader } from "../../utils/moduleAlias";
 import { REWARDS } from "constants/constant";
+import DeviceInfo from "react-native-device-info";
 
 // Lazy load non-critical components
 const LazyBankModal = lazy(() => import("components/BankModal"));
@@ -402,7 +403,7 @@ const CryptoRewardsSection = React.memo(() => {
       <View
         style={{
           flexDirection: "row",
-          justifyContent: "space-between",
+          justifyContent: "flex-start",
           alignItems: "center",
           marginRight: 10,
         }}
@@ -466,10 +467,10 @@ const CryptoRWASection = React.memo(({ data, navigation }: any) => {
   return (
     <MemoizedDashboardSection
       title="RWA Category"
-      actionText="see all"
-      onActionPress={() => {
-        navigation.navigate(NAVIGATION_SCREENS.RWA, {});
-      }}
+      // actionText="see all"
+      // onActionPress={() => {
+      //   // navigation.navigate(NAVIGATION_SCREENS.RWA, {});
+      // }}
     >
       <ScrollView
         horizontal
@@ -571,6 +572,9 @@ const NewDashboard = () => {
     showLoader,
   } = useSelector((state: any) => state.authenticationSlice);
 
+  const isTablet = DeviceInfo.isTablet();
+
+  console.log("is tablet =>", isTablet);
   const dispatch = useDispatch();
 
   // Example custom theme handling
@@ -1436,23 +1440,29 @@ const NewDashboard = () => {
             visible={true}
           />
         ) : (
-          <DashboardCard />
+          <View style={{ width: "100%" }}>
+            {isTablet ? (
+              <View style={{ width: 400 }}>
+                <DashboardCard />
+              </View>
+            ) : (
+              <View style={{ width: "100%" }}>
+                <DashboardCard />
+              </View>
+            )}
+          </View>
         )}
         <View style={{ marginHorizontal: 15 }}>
-          {/* {console.log("bankBalance?.bank_account?.usd", bankBalance) as any} */}
-          {/* Use a consistent height container to prevent layout shifts */}
-          {/* <View style={{ minHeight: 220 }}> */}
-          {/* </View> */}
-
           <View
             style={{
               flexDirection: "row",
-              justifyContent: "space-between",
+              justifyContent: "flex-start",
               alignItems: "center",
               marginVertical: 20,
             }}
           >
             <SvgIcons.SendIcon
+              style={{ marginRight: 15 }}
               onPress={() => {
                 navigation.navigate(
                   !isCrypto
@@ -1465,6 +1475,7 @@ const NewDashboard = () => {
               }}
             />
             <SvgIcons.RecieveIcon
+              style={{ marginRight: 15 }}
               onPress={() =>
                 navigation.navigate(
                   !isCrypto
