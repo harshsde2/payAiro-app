@@ -4,6 +4,7 @@ import {
   Pressable,
   StyleSheet,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import React, { FC, useState } from "react";
 import { Theme, useTheme } from "styles";
@@ -16,40 +17,10 @@ import Fonts from "constants/Fonts";
 import moment from "moment";
 import { SvgXml } from "react-native-svg";
 import DatePicker from "react-native-date-picker";
-import { FilteredTransactions } from "screens/Authentications/Transaction";
-
-const TIME_RANGES = [
-  { id: 0, title: "Today", isSelected: false },
-  { id: 1, title: "This Week", isSelected: false },
-  { id: 2, title: "This Month", isSelected: false },
-  { id: 3, title: "Custom Range", isSelected: false },
-];
-const CATEGORIES = [
-  {
-    id: 0,
-    isChecked: false,
-    title: "Merchants",
-    key: "Merchants",
-  },
-  {
-    id: 1,
-    isChecked: false,
-    title: "Family Friends",
-    key: "family_friends",
-  },
-  {
-    id: 2,
-    isChecked: false,
-    title: "Received",
-    key: "received",
-  },
-  {
-    id: 3,
-    isChecked: false,
-    title: "Debit",
-    key: "debit",
-  },
-];
+import {
+  FilteredTransactions,
+  TRANSACTION_FILTERS_KEYS,
+} from "screens/Authentications/Transaction";
 
 interface TransactionFilterProps {
   onApplyFilter: () => void;
@@ -57,6 +28,17 @@ interface TransactionFilterProps {
   filteredTransactions?: FilteredTransactions;
   setFilteredTransactions: (value: FilteredTransactions) => void;
   onFilterClick: (type: string, item: any, index: number) => void;
+  isPending?: boolean;
+  isLoading?: boolean;
+  isError?: boolean;
+  isFetched?: boolean;
+  isFetching?: boolean; // Added for fetching state
+  setIsCustomRangeSelected?: (value: boolean) => void;
+  isCustomRangeSelected?: boolean; // Added for custom range state
+  date?: string; // Added for start date
+  setdate?: (value: string) => void; // Added for setting start date
+  date2?: string; // Added for end date
+  setdate2?: (value: string) => void; // Added for setting end date
 }
 
 const TransactionFilter: FC<TransactionFilterProps> = ({
@@ -65,24 +47,27 @@ const TransactionFilter: FC<TransactionFilterProps> = ({
   filteredTransactions,
   setFilteredTransactions,
   onFilterClick,
+  isFetching = false, // Added for fetching state
+  setIsCustomRangeSelected = () => {},
+  isCustomRangeSelected = false, // Added for custom range state
+  date = "", // Added for start date
+  setdate = () => {}, // Added for setting start date
+  date2 = "", // Added for end date
+  setdate2 = () => {}, // Added for setting end date
 }) => {
   const { theme } = useTheme();
   const globalStyles = useGlobalStyles();
   const styles = { ...globalStyles, ...customStyles(theme) };
-  const [categories, setCategories] = useState(CATEGORIES);
-  const [timeRanges, setTimeRanges] = useState(TIME_RANGES);
-  const [date, setdate] = useState("");
+
   const [open, setOpen] = useState(false);
-  const [date2, setdate2] = useState("");
   const [open2, setOpen2] = useState(false);
-  //   const [isSelectedAll, setIsSelectedAll] = useState(false);
 
   return (
     <Pressable
       style={[styles.CommonModalContainer, { paddingHorizontal: 10 }]}
       onPress={(e) => e.stopPropagation()}
     >
-      {!filteredTransactions?.timeRange[5].isSelected ? (
+      {!isCustomRangeSelected ? (
         <View style={[styles.mainContainer]}>
           <CustomText variant={"h3"}>Filter</CustomText>
           <DashboardSection
@@ -95,7 +80,11 @@ const TransactionFilter: FC<TransactionFilterProps> = ({
               return (
                 <TouchableOpacity
                   onPress={() => {
-                    onFilterClick("time_range", item, index);
+                    onFilterClick(
+                      TRANSACTION_FILTERS_KEYS.time_range,
+                      item,
+                      index
+                    );
                   }}
                   activeOpacity={1}
                   style={[
@@ -121,6 +110,33 @@ const TransactionFilter: FC<TransactionFilterProps> = ({
                 </TouchableOpacity>
               );
             })}
+
+            <TouchableOpacity
+              onPress={() => {
+                setIsCustomRangeSelected(true);
+              }}
+              activeOpacity={1}
+              style={[
+                styles.timeRangeStyle,
+                {
+                  backgroundColor: isCustomRangeSelected
+                    ? theme?.colors?.palette?.green200
+                    : theme.colors.palette.grey100,
+                },
+              ]}
+              key="custom_range"
+            >
+              <CustomText
+                color={
+                  isCustomRangeSelected
+                    ? theme?.colors?.palette?.green700
+                    : theme.colors.palette.black
+                }
+                variant="button"
+              >
+                {"Custom Range"}
+              </CustomText>
+            </TouchableOpacity>
           </DashboardSection>
           <DashboardSection
             contentContainerStyle={[styles.dashboardSectionContainerStyle]}
@@ -133,7 +149,13 @@ const TransactionFilter: FC<TransactionFilterProps> = ({
               const { isSelected, title, id } = item;
               return (
                 <TouchableOpacity
-                  onPress={() => onFilterClick("categories", item, index)}
+                  onPress={() =>
+                    onFilterClick(
+                      TRANSACTION_FILTERS_KEYS.categories,
+                      item,
+                      index
+                    )
+                  }
                   activeOpacity={1}
                   style={[
                     styles.categoriesStyle,
@@ -163,11 +185,17 @@ const TransactionFilter: FC<TransactionFilterProps> = ({
                 </TouchableOpacity>
               );
             })}
-            {filteredTransactions?.filterType.map((item, index) => {
+            {filteredTransactions?.filter_type.map((item, index) => {
               const { isSelected, title, id } = item;
               return (
                 <TouchableOpacity
-                  onPress={() => onFilterClick("filter_type", item, index)}
+                  onPress={() =>
+                    onFilterClick(
+                      TRANSACTION_FILTERS_KEYS.filter_type,
+                      item,
+                      index
+                    )
+                  }
                   activeOpacity={1}
                   style={[
                     styles.categoriesStyle,
@@ -201,27 +229,14 @@ const TransactionFilter: FC<TransactionFilterProps> = ({
 
           <GenericButton
             onPress={() => {
-              // const selectedCats = categories
-              //   .filter((cat) => cat.isChecked)
-              //   .map((cat) => cat.title.toLowerCase().replace(" ", "_"));
-              // const selectedFilterType = selectedCats.includes("received")
-              //   ? "receive"
-              //   : selectedCats.includes("debit")
-              //   ? "send"
-              //   : null;
-              // onFilterSelect("categories", selectedCats);
-              // onFilterSelect("filter_type", selectedFilterType);
-              // if (timeRanges[3].isSelected && date && date2) {
-              //   onFilterSelect("date_range", {
-              //     start_date: date,
-              //     end_date: date2,
-              //   });
-              // }
-              // // Then trigger Apply logic in parent
-              // onApplyFilter();
+              // Then trigger Apply logic in parent
+              onApplyFilter();
             }}
             title="Apply"
             cStyle={{ marginBottom: 10 }}
+            // disabled={}
+            showLoader={true}
+            isLoading={isFetching}
           />
 
           <GenericButton
@@ -241,16 +256,27 @@ const TransactionFilter: FC<TransactionFilterProps> = ({
               open={open}
               date={new Date()}
               onConfirm={(date) => {
+                const selectedStart = moment(date).format("YYYY-MM-DD");
+
+                if (date2 && moment(selectedStart).isAfter(moment(date2))) {
+                  Alert.alert(
+                    "Invalid Date",
+                    "Start date cannot be after end date."
+                  );
+                  setOpen(false);
+                  return;
+                }
+
                 setOpen(false);
-                setdate(moment(date).format("YYYY-MM-DD"));
+                setdate(selectedStart);
                 onFilterClick(
-                  "custom_range",
+                  TRANSACTION_FILTERS_KEYS.start_date,
                   {
                     id: 0,
                     title: "Start Date",
-                    isSelected: false,
+                    isSelected: true,
                     key: "start_date",
-                    value: moment(date).format("YYYY-MM-DD"),
+                    value: selectedStart,
                   },
                   0
                 );
@@ -258,24 +284,34 @@ const TransactionFilter: FC<TransactionFilterProps> = ({
               onCancel={() => setOpen(false)}
             />
           )}
-
           {open2 && (
             <DatePicker
               modal
               mode="date"
               open={open2}
               date={new Date()}
-              onConfirm={(date) => {
+              onConfirm={(dateValue) => {
+                const selectedEnd = moment(dateValue).format("YYYY-MM-DD");
+
+                if (date && moment(selectedEnd).isBefore(moment(date))) {
+                  Alert.alert(
+                    "Invalid Date",
+                    "End date cannot be before start date."
+                  );
+                  setOpen2(false);
+                  return;
+                }
+
                 setOpen2(false);
-                setdate2(moment(date).format("YYYY-MM-DD"));
+                setdate2(selectedEnd);
                 onFilterClick(
-                  "custom_range",
+                  TRANSACTION_FILTERS_KEYS.end_date,
                   {
                     id: 1,
                     title: "End Date",
-                    isSelected: false,
+                    isSelected: true,
                     key: "end_date",
-                    value: moment(date).format("YYYY-MM-DD"),
+                    value: selectedEnd,
                   },
                   1
                 );
@@ -377,10 +413,35 @@ const TransactionFilter: FC<TransactionFilterProps> = ({
             }}
             title="Apply"
             cStyle={{ marginBottom: 10 }}
+            disabled={!date || !date2}
+            showLoader={true}
+            isLoading={isFetching}
           />
           <GenericButton
             onPress={() => {
-              onFilterClick("time_range", {}, 5);
+              setIsCustomRangeSelected(false);
+              onFilterClick(
+                TRANSACTION_FILTERS_KEYS.start_date,
+                {
+                  id: 0,
+                  title: "Start Date",
+                  isSelected: false,
+                  key: "start_date",
+                  value: "",
+                },
+                0
+              );
+              onFilterClick(
+                TRANSACTION_FILTERS_KEYS.end_date,
+                {
+                  id: 0,
+                  title: "End Date",
+                  isSelected: false,
+                  key: "end_date",
+                  value: "",
+                },
+                0
+              );
               setdate("");
               setdate2("");
             }}

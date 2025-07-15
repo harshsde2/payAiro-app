@@ -52,6 +52,14 @@ const filterType = ["recieve", "debit"];
 const daterange = ["start_data", "end_date"];
 const timeRange = ["1month", "6month", "1year", "week"];
 
+export const TRANSACTION_FILTERS_KEYS = {
+  categories: "categories",
+  time_range: "time_range",
+  filter_type: "filter_type",
+  start_date: "start_date",
+  end_date: "end_date",
+};
+
 interface TimeRangeOption {
   id: number;
   title: string;
@@ -83,8 +91,9 @@ interface DateRangeOption {
 export interface FilteredTransactions {
   timeRange: TimeRangeOption[];
   categories: CategoryOption[];
-  dateRange: DateRangeOption[];
-  filterType: CategoryOption[];
+  filter_type: CategoryOption[];
+  start_date: DateRangeOption;
+  end_date: DateRangeOption;
 }
 
 export default function Transaction() {
@@ -126,6 +135,20 @@ export default function Transaction() {
     refetch: refetchAllPendingRequests,
     isFetched: isFetchedAllPendingRequests,
   } = usePendingRequests();
+
+  const [URLString, setURLString] = useState("");
+
+  const {
+    isError: isErrorFilteredTransactions,
+    isFetching: isFetchingFilteredTransactions,
+    isFetched: isFetchedFilteredTransactions,
+    isLoading: isLoadingFilteredTransactions,
+    isPending: isPendingFilteredTransactions,
+    refetch: refetchFilteredTransactions,
+    data: filteredTransactionsData,
+  } = useFilteredTransactions(URLString);
+
+  const { filteredTxData } = filteredTransactionsData?.data?.transactions;
 
   const navigation = useNavigation<any>();
   const isFocused = useIsFocused();
@@ -206,7 +229,6 @@ export default function Transaction() {
   const [showFilter, setShowFilter] = useState(false);
   const [searchText, setSearchText] = useState("");
 
-  const [URLString, setURLString] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedFilterType, setSelectedFilterType] = useState<string | null>(
     null
@@ -225,6 +247,9 @@ export default function Transaction() {
     if (AllTransactionsSuccess && isFetchedAllTransactions) {
       getTxLists(AllTransactions.data);
     }
+    // if (filteredTxData && isFetchedFilteredTransactions) {
+    //   getTxLists(filteredTxData);
+    // }
     if (AllTradesHistorySuccess && isFetchedAllTradesHistory) {
       getCryptoTxs(AllTradesHistory.data);
     }
@@ -243,6 +268,7 @@ export default function Transaction() {
     AllUserPaymentRequests,
     AllPendingRequests,
     isFetchedAllPendingRequests,
+    isFetchedFilteredTransactions,
   ]);
 
   // console.log(isCrypto);
@@ -384,12 +410,6 @@ export default function Transaction() {
         { id: 2, title: "This Month", isSelected: false, value: "1month" },
         { id: 3, title: "Last 6 Month", isSelected: false, value: "6month" },
         { id: 4, title: "This Year", isSelected: false, value: "1year" },
-        {
-          id: 5,
-          title: "Custom Range",
-          isSelected: false,
-          value: "custom_range",
-        },
       ],
       categories: [
         {
@@ -412,35 +432,29 @@ export default function Transaction() {
           key: "miscellaneous",
         },
       ],
-      filterType: [
+      filter_type: [
         { id: 1, title: "Receive", isSelected: false, key: "receive" },
         { id: 2, title: "Debit", isSelected: false, key: "debit" },
       ],
-      dateRange: [
-        {
-          id: 0,
-          title: "Start Date",
-          isSelected: false,
-          key: "start_date",
-          value: "",
-        },
-        {
-          id: 1,
-          title: "End Date",
-          isSelected: false,
-          key: "end_date",
-          value: "",
-        },
-      ],
+      start_date: {
+        id: 0,
+        title: "Start Date",
+        isSelected: false,
+        key: "start_date",
+        value: "",
+      },
+      end_date: {
+        id: 1,
+        title: "End Date",
+        isSelected: false,
+        key: "end_date",
+        value: "",
+      },
     });
 
-  const {
-    isError: isErrorFilteredTransactions,
-    isFetched: isFetchedFilteredTransactions,
-    isLoading: isLoadingFilteredTransactions,
-    isPending: isPendingFilteredTransactions,
-    refetch: refetchFilteredTransactions,
-  } = useFilteredTransactions(URLString);
+  const [isCustomRangeSelected, setIsCustomRangeSelected] = useState(false);
+  const [date, setdate] = useState("");
+  const [date2, setdate2] = useState("");
 
   useEffect(() => {
     if (URLString) {
@@ -450,7 +464,7 @@ export default function Transaction() {
 
   const onFilterClick = (type: string, item: any, index: number) => {
     switch (type) {
-      case "categories":
+      case TRANSACTION_FILTERS_KEYS.categories:
         setFilteredTransactions((prev) => {
           const updatedCategories = prev.categories.map((cat, i) =>
             i === index ? { ...cat, isSelected: !cat.isSelected } : cat
@@ -458,28 +472,35 @@ export default function Transaction() {
           return { ...prev, categories: updatedCategories };
         });
         break;
-      case "time_range":
+      case TRANSACTION_FILTERS_KEYS.time_range:
         setFilteredTransactions((prev) => {
           const updatedTimeRange = prev.timeRange.map((range, i) =>
-            i === index ? { ...range, isSelected: !range.isSelected } : range
+            i === index
+              ? { ...range, isSelected: true }
+              : { ...range, isSelected: false }
           );
           return { ...prev, timeRange: updatedTimeRange };
         });
         break;
-      case "filter_type":
+      case TRANSACTION_FILTERS_KEYS.filter_type:
+        console.log("index =>", index);
         setFilteredTransactions((prev) => {
-          const updatedFilterType = prev.filterType.map((filter, i) =>
+          const updatedFilterType = prev.filter_type.map((filter, i) =>
             i === index ? { ...filter, isSelected: !filter.isSelected } : filter
           );
-          return { ...prev, filterType: updatedFilterType };
+          return { ...prev, filter_type: updatedFilterType };
         });
         break;
-      case "custom_range":
+      case TRANSACTION_FILTERS_KEYS.start_date:
         setFilteredTransactions((prev) => {
-          const updatedDateRange = prev.dateRange.map((range, i) =>
-            i === index ? { ...range, isSelected: !range.isSelected } : range
-          );
-          return { ...prev, dateRange: updatedDateRange };
+          const updatedStartDate = { ...prev.start_date, ...item };
+          return { ...prev, start_date: updatedStartDate };
+        });
+        break;
+      case TRANSACTION_FILTERS_KEYS.end_date:
+        setFilteredTransactions((prev) => {
+          const updatedEndDate = { ...prev.end_date, ...item };
+          return { ...prev, end_date: updatedEndDate };
         });
         break;
       default:
@@ -490,27 +511,80 @@ export default function Transaction() {
   const handleApplyFilters = () => {
     let queryParams = [];
 
-    if (selectedCategories.length > 0) {
-      queryParams.push(`categories=${selectedCategories.join(",")}`);
-    }
+    // if (selectedCategories.length > 0) {
+    //   queryParams.push(`categories=${selectedCategories.join(",")}`);
+    // }
 
-    if (selectedFilterType) {
-      queryParams.push(`filter_type=${selectedFilterType}`);
-    }
+    // if (selectedFilterType) {
+    //   queryParams.push(`filter_type=${selectedFilterType}`);
+    // }
 
-    if (startDate && endDate) {
-      queryParams.push(`start_date=${startDate}`);
-      queryParams.push(`end_date=${endDate}`);
-    }
+    // if (startDate && endDate) {
+    //   queryParams.push(`start_date=${startDate}`);
+    //   queryParams.push(`end_date=${endDate}`);
+    // }
 
+    // const finalQuery =
+    //   queryParams.length > 0 ? `?${queryParams.join("&")}` : "";
+
+    // setURLString(finalQuery);
+    // refetchFilteredTransactions(); // force fetch with new filters
+    if (
+      filteredTransactions.start_date.isSelected &&
+      filteredTransactions.end_date.isSelected
+    ) {
+      queryParams = [];
+      const startDate = filteredTransactions.start_date.value;
+      const endDate = filteredTransactions.end_date.value;
+
+      if (startDate && endDate) {
+        queryParams.push(`${TRANSACTION_FILTERS_KEYS.start_date}=${startDate}`);
+        queryParams.push(`${TRANSACTION_FILTERS_KEYS.end_date}=${endDate}`);
+      }
+    } else {
+      queryParams = [];
+      const selectedCategories = filteredTransactions.categories
+        .filter((category) => category.isSelected === true)
+        .map((category) => category.key)
+        .join(",");
+
+      queryParams.push(
+        `${TRANSACTION_FILTERS_KEYS.categories}=${selectedCategories}`
+      );
+
+      const selectedTimeRange = filteredTransactions.timeRange
+        .filter((time) => time.isSelected === true)
+        .map((time) => time.value)
+        .join(",");
+
+      queryParams.push(
+        `${TRANSACTION_FILTERS_KEYS.time_range}=${selectedTimeRange}`
+      );
+
+      const selectedFilterType = filteredTransactions.filter_type
+        .filter((filter) => filter.isSelected === true)
+        .map((filter) => filter.key)
+        .join(",");
+
+      queryParams.push(
+        `${TRANSACTION_FILTERS_KEYS.filter_type}=${selectedFilterType}`
+      );
+    }
     const finalQuery =
       queryParams.length > 0 ? `?${queryParams.join("&")}` : "";
 
     setURLString(finalQuery);
-    // refetchFilteredTransactions(); // force fetch with new filters
+    refetchFilteredTransactions(); // force fetch with new filters
+    setShowFilter(false);
+
+    // console.log("finalQuery =>", JSON.stringify(finalQuery, null, 2));
   };
 
-  // console.log("finalQuery =>", URLString);
+  console.log(
+    "filteredTransactionsData =>",
+    JSON.stringify(filteredTransactionsData?.data.transactions, null, 2)
+  );
+  console.log("txLists =>", JSON.stringify(txLists, null, 2));
 
   return (
     <ScreenContainer
@@ -526,6 +600,13 @@ export default function Transaction() {
       >
         <TransactionFilter
           filteredTransactions={filteredTransactions}
+          setIsCustomRangeSelected={setIsCustomRangeSelected}
+          isCustomRangeSelected={isCustomRangeSelected}
+          isFetching={isFetchingFilteredTransactions}
+          date={date}
+          setdate={setdate}
+          date2={date2}
+          setdate2={setdate2}
           setFilteredTransactions={setFilteredTransactions}
           onFilterClick={onFilterClick}
           onApplyFilter={() => {
@@ -620,7 +701,7 @@ export default function Transaction() {
               title="Recent Transactions"
               style={{ paddingBottom: 160 }}
             >
-              {isCrypto &&
+              {/* {isCrypto &&
                 txLists &&
                 txLists.length > 0 &&
                 txLists
@@ -667,6 +748,29 @@ export default function Transaction() {
                       key={k}
                     />
                   ))
+              ) : (
+                <Text
+                  style={{
+                    fontFamily: Fonts.bold,
+                    color: "#fff",
+                    textAlign: "center",
+                    marginTop: 100,
+                  }}
+                >
+                  No Transaction Found
+                </Text>
+              )} */}
+              {filteredTransactionsData?.data?.transactions?.length > 0 ? (
+                filteredTransactionsData.data.transactions.map(
+                  (item: any, key: any) => (
+                    <TransactionCard
+                      item={item}
+                      key={key}
+                      isMerchent={item?.order_id}
+                      isCrypto={isCrypto}
+                    />
+                  )
+                )
               ) : (
                 <Text
                   style={{
