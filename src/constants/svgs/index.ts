@@ -69,6 +69,8 @@ import SendMoneyIcon from "./SendMoneyIcon.svg";
 import LoansIcon from "./LoansIcon.svg";
 import AccountsAndFDIcon from "./AccountsAndFDIcon.svg";
 import FastTagIcon from "./FastTagIcon.svg";
+import FilterIcon from "./FilterIcon.svg";
+import CalendarIcon from "./CalendarIcon.svg";
 
 export const SvgIcons = {
   PayAiorRoundIcon,
@@ -142,4 +144,6 @@ export const SvgIcons = {
   UPIIcon,
   AccountsAndFDIcon,
   SendMoneyIcon,
+  FilterIcon,
+  CalendarIcon,
 };

@@ -4,6 +4,8 @@ export const BASE_URL = "https://app.payairo.com/api/";
 // Auth endpoints
 export const AUTH = {
   SEND_OTP: "auth/send-otp/",
+  CYBIRD_KYC: "auth/cybird-kyc/",
+  CYBIRD_BALANCE: "auth/cybrid/balance/",
   VERIFY: "auth/verify/",
   STEP_COUNT: "auth/stepcount/",
   UPDATE_ACCOUNT: "auth/update-account/",
@@ -55,6 +57,7 @@ export const WALLET = {
   DETAILS: "wallet/details/",
   BALANCE: "wallet/get_wallet_balance/",
   ALL_TRANSACTION: "wallet/alltransaction/",
+  ALL_FILTERED_TRANSACTIONS: "wallet/transaction-history/",
   PAYMENT_REQUEST: "wallet/payment-request/",
   PENDING_REQUESTS: "wallet/payment-request/pending/",
   USER_REQUESTS: "wallet/user-all-paymentrequest/",

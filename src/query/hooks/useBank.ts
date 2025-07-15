@@ -10,6 +10,7 @@ export const bankKeys = {
   accounts: () => [...bankKeys.all, "accounts"] as const,
   allAccounts: () => [...bankKeys.all, "allAccounts"] as const,
   balance: () => [...bankKeys.all, "balance"] as const,
+  cybridBalance: () => [...bankKeys.all, "cybridBalance"] as const,
   linkToken: () => [...bankKeys.all, "linkToken"] as const,
 } as any;
 
@@ -65,6 +66,19 @@ export const useBankBalances = () => {
     queryFn: async () => {
       const response = await apiClient.get<ApiResponse<any>>(
         AUTH.ALL_BANKACCOUNT_BALANCE
+      );
+      return response.data;
+    },
+    staleTime: queryStaleTime.VERY_FAST_STALE_TIME, // 5 second
+  });
+};
+
+export const useCybridBankBalances = () => {
+  return useQuery<ApiResponse<any>>({
+    queryKey: bankKeys.cybridBalance(),
+    queryFn: async () => {
+      const response = await apiClient.get<ApiResponse<any>>(
+        AUTH.CYBIRD_BALANCE
       );
       return response.data;
     },

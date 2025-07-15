@@ -26,6 +26,7 @@ import IconTextComponent from "tsx-components/IconTextComponent";
 import { SvgXml } from "react-native-svg";
 import { useCryptoPrices, useGetAllRWA } from "query/hooks";
 import { defaultCrypto, defaultImage } from "utils/configs";
+import GlobalLoader from "tsx-components/GlobalLoader";
 
 interface ItemProps {
   growth: string;
@@ -211,6 +212,7 @@ const RWA = () => {
     isPending: isAllRWAPending,
     isError: isAllRWAError,
     isSuccess: isAllRWASuccess,
+    isFetching: isAllIsFetching,
   } = useGetAllRWA();
 
   const {
@@ -221,6 +223,7 @@ const RWA = () => {
   } = useCryptoPrices();
 
   // console.log("data =>", JSON.stringify(AllRWAData, null, 2));
+  // console.log("isAllIsFetching =>", JSON.stringify(isAllIsFetching, null, 2));
 
   const [searchText, setSearchText] = useState("");
 
@@ -240,13 +243,15 @@ const RWA = () => {
     return rows;
   };
 
-  const filteredRealStates = AllRWAData?.data.filter(
-    (item: AssetData) => item.asset_type == "Realestate"
-  );
+  const filteredRealStates =
+    AllRWAData?.data.filter(
+      (item: AssetData) => item.asset_type == "Realestate"
+    ) || [];
 
-  const filteredStocks = AllRWAData?.data.filter(
-    (item: AssetData) => item.asset_type == "stock"
-  );
+  const filteredStocks =
+    AllRWAData?.data.filter((item: AssetData) => item.asset_type == "stock") ||
+    [];
+
   const sectionsData = [
     {
       title: "Real Estate",
@@ -284,15 +289,24 @@ const RWA = () => {
       },
     },
   ];
-
+  if (isAllRWAPending) {
+    return (
+      <View
+        style={{ justifyContent: "center", alignContent: "center", flex: 1 }}
+      >
+        <GlobalLoader />
+      </View>
+    );
+  }
   return (
     <ScreenContainer padding={0} backgroundColor={theme.colors.palette.green50}>
       <HeaderTitle
         title="RWA"
-        leftIcon={SVGLeftArrow}
+        // leftIcon={SVGLeftArrow}
+        leftIcon="true"
         isBack
         onPressLeft={handleGoBack}
-        rightIcon={SVGCart}
+        // rightIcon={SVGCart}
         onPressRight={() => {}}
       />
       <View style={[styles.textInputAndFilterContainer]}>
@@ -300,7 +314,9 @@ const RWA = () => {
           <CustomSearchTextInput
             placeholder="Search Name or PayAiro tag..."
             placeholderTextColor={theme.colors.palette.green700}
-            onChangeText={() => {}}
+            onChangeText={(e) => {
+              setSearchText(e);
+            }}
             value={searchText}
           />
         </View>
@@ -331,7 +347,7 @@ const RWA = () => {
           )}
           renderItem={({ item: rowItems, section }) => {
             const Component = section.renderComponent;
-
+            console.log("Section =>", section);
             if (section.type == "assets") {
               return (
                 <View style={[styles.sectionListRenderContainer]}>
@@ -490,138 +506,6 @@ export const customStyles = (theme: Theme) =>
       flex: 1,
     },
   });
-
-const array = [
-  {
-    title: "Modern Family Home",
-    author: "John Elis",
-    price_per_share: 30,
-    growth: "5%",
-    image_url:
-      "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
-  },
-  {
-    title: "Luxury Villa with Pool",
-    author: "John Elis",
-    price_per_share: 30,
-    growth: "5%",
-    image_url:
-      "https://images.pexels.com/photos/261146/pexels-photo-261146.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
-  },
-  {
-    title: "Downtown Apartment",
-    author: "John Elis",
-    price_per_share: 30,
-    growth: "5%",
-    image_url:
-      "https://images.pexels.com/photos/439391/pexels-photo-439391.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
-  },
-  {
-    title: "Modern Family Home",
-    author: "John Elis",
-    price_per_share: 30,
-    growth: "5%",
-    image_url:
-      "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
-  },
-  {
-    title: "Luxury Villa with Pool",
-    author: "John Elis",
-    price_per_share: 30,
-    growth: "5%",
-    image_url:
-      "https://images.pexels.com/photos/261146/pexels-photo-261146.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
-  },
-  {
-    title: "Downtown Apartment",
-    author: "John Elis",
-    price_per_share: 30,
-    growth: "5%",
-    image_url:
-      "https://images.pexels.com/photos/439391/pexels-photo-439391.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
-  },
-  {
-    title: "Modern Family Home",
-    author: "John Elis",
-    price_per_share: 30,
-    growth: "5%",
-    image_url:
-      "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
-  },
-  {
-    title: "Luxury Villa with Pool",
-    author: "John Elis",
-    price_per_share: 30,
-    growth: "5%",
-    image_url:
-      "https://images.pexels.com/photos/261146/pexels-photo-261146.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
-  },
-  {
-    title: "Downtown Apartment",
-    author: "John Elis",
-    price_per_share: 30,
-    growth: "5%",
-    image_url:
-      "https://images.pexels.com/photos/439391/pexels-photo-439391.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
-  },
-];
-
-const stocksArray = [
-  {
-    company: "Tesla",
-    creator: "Dermnz",
-    price_per_share: 50,
-    growth: "5.8%",
-    logo_url:
-      "https://upload.wikimedia.org/wikipedia/commons/b/bd/Tesla_Motors.svg",
-  },
-  {
-    company: "Nvidia Inc.",
-    creator: "N Corp.",
-    price_per_share: 67,
-    growth: "7.1%",
-    logo_url: "https://upload.wikimedia.org/wikipedia/en/2/21/Nvidia_logo.svg",
-  },
-  {
-    company: "Adani",
-    creator: "Swarms",
-    price_per_share: 30,
-    growth: "5%",
-    logo_url:
-      "https://upload.wikimedia.org/wikipedia/commons/0/00/Adani_logo.svg",
-  },
-  {
-    company: "R JIO",
-    creator: "Dreamz",
-    price_per_share: 56,
-    growth: "3.3%",
-    logo_url:
-      "https://upload.wikimedia.org/wikipedia/commons/2/2e/Jio_Logo.png",
-  },
-];
-
-const cryptoArray = [
-  {
-    symbol: "BTC",
-    name: "Bitcoin",
-    logo_url: "https://cryptologos.cc/logos/bitcoin-btc-logo.png?v=026",
-  },
-  {
-    symbol: "ETH",
-    name: "Ethereum",
-    logo_url: "https://cryptologos.cc/logos/ethereum-eth-logo.png?v=026",
-  },
-  {
-    symbol: "BNB",
-    name: "Binance Coin",
-    logo_url: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png?v=026",
-  },
-  {
-    symbol: "SOL",
-    name: "Solana",
-    logo_url: "https://cryptologos.cc/logos/solana-sol-logo.png?v=026",
-  },
-];
 
 const testImages: { uri: string }[] = [
   {

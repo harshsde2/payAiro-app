@@ -30,6 +30,7 @@ import { patchUser } from "../../services/Services";
 import CommonModal from "tsx-components/modals/CommonModal";
 import { useGlobalStyles } from "styles/GlobalStyles";
 import Tooltip from "react-native-walkthrough-tooltip";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 
 export default function Name(props: any) {
   const { email, data } = props.route.params || {};
@@ -88,7 +89,7 @@ export default function Name(props: any) {
       return;
     }
 
-    // console.log("handleForm called with:");
+    console.log("handleForm called with:");
     const payload = new FormData();
     payload.append("name", fname);
     payload.append("mobile_number", "+1" + phone);
@@ -101,16 +102,25 @@ export default function Name(props: any) {
         setIsPending(false);
         getCurrentStep();
         useDispatchAction(setUserData(datas?.data?.data));
+        console.log("datas =>", JSON.stringify(datas, null, 2));
         if (datas && datas?.status) {
           useDispatchAction(
             setSuccessMsg("Name & PayAiro Has Been Updated Successfully")
           );
-          (navigation as any).navigate(SCREENS.Address);
+
+          if (datas?.data?.fortress == true) {
+            (navigation as any).navigate(NAVIGATION_SCREENS.ADDRESS);
+          } else if (datas?.data?.fortress === false) {
+            (navigation as any).navigate(NAVIGATION_SCREENS.CYBRID_WEB_VIEW, {
+              URL: datas?.data?.persona_verification_url,
+            });
+          }
         } else {
           useDispatchAction(setErrorMsg("Username Already Exists"));
         }
       },
       onError: (error: any) => {
+        console.log("error =>", JSON.stringify(error, null, 2));
         setIsPending(false);
 
         if (error.response.data.data.errors.mobile_number) {
@@ -125,7 +135,6 @@ export default function Name(props: any) {
           useDispatchAction(setErrorMsg("Failed to submit details"));
         }
         // useDispatchAction(setErrorMsg("Failed to submit details"));
-        console.log("error =>", error);
       },
     });
   };

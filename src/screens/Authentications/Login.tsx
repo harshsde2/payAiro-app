@@ -26,9 +26,15 @@ import {
 } from "../../redux/slices/authenticationSlice";
 import { sendOTP } from "../../services/Services";
 import { useLogin, useStepCount } from "query/hooks/useAPIAuth";
+import MyDropdown from "tsx-components/MyDropdown";
 
 export default function Login() {
   const navigation = useNavigation();
+
+  const locations = LOCATIONS.map((location) => ({
+    label: location.charAt(0).toUpperCase() + location.slice(1),
+    value: location.toLowerCase(),
+  }));
 
   const { theme } = useTheme();
   const styles = customStyles(theme);
@@ -40,13 +46,18 @@ export default function Login() {
   const [isvisible, setisvisible] = useState(false);
   const [email, setemail] = useState("");
   const [buttonDisabled, setButtonDisabled] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState("");
 
   const { mutate: login, isPending, error } = useLogin();
   const { mutate: stepCount } = useStepCount();
 
   const handleLogin = () => {
     if (!email.trim()) {
-      useDispatchAction(setErrorMsg("Fields cannot be empty"));
+      useDispatchAction(setErrorMsg("E-Mail Fields cannot be empty"));
+      return;
+    }
+    if (!selectedMethod.trim()) {
+      useDispatchAction(setErrorMsg("Location Fields cannot be empty"));
       return;
     }
     if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
@@ -69,23 +80,26 @@ export default function Login() {
 
     setButtonDisabled(true);
 
-    login({ email: email.trim().toLowerCase() } as any, {
-      onSuccess: (data) => {
-        setButtonDisabled(false);
-        if (data?.status && data) {
-          useDispatchAction(setSuccessMsg("OTP has been sent to email"));
-          (navigation as any).navigate(SCREENS.OTP, {
-            email,
-          });
-        } else {
-          useDispatchAction(setErrorMsg("Email Address Already Exists"));
-        }
-      },
-      onError: (error) => {
-        console.log(error);
-        setButtonDisabled(false);
-      },
-    });
+    login(
+      { email: email.trim().toLowerCase(), location: selectedMethod } as any,
+      {
+        onSuccess: (data) => {
+          setButtonDisabled(false);
+          if (data?.status && data) {
+            useDispatchAction(setSuccessMsg("OTP has been sent to email"));
+            (navigation as any).navigate(SCREENS.OTP, {
+              email,
+            });
+          } else {
+            useDispatchAction(setErrorMsg("Email Address Already Exists"));
+          }
+        },
+        onError: (error) => {
+          console.log(error);
+          setButtonDisabled(false);
+        },
+      }
+    );
   };
 
   return (
@@ -125,11 +139,26 @@ export default function Login() {
           </CustomText>
         </View>
         <View style={styles.fieldAndCheckboxContainer}>
+          <MyDropdown
+            required={true}
+            label={"Select Your Location"}
+            placeholder={"Select Your Location"}
+            data={locations}
+            value={selectedMethod}
+            search={true}
+            itemTextStyle={{
+              fontSize: 14,
+              fontFamily: theme?.typography.fontFamily.montserrat,
+            }}
+            onChange={(item) => setSelectedMethod(item)}
+            maxHeight={150}
+          />
           <TextInputField
             placeholder={"joe@gmail.com"}
             value={email}
             onChange={setemail}
             label="Enter your email"
+            required={true}
           />
           <View style={styles.checkboxContainer}>
             <TouchableOpacity
@@ -228,3 +257,66 @@ const customStyles = (theme: Theme) =>
       marginVertical: 10,
     },
   });
+
+const LOCATIONS = [
+  "puerto rico",
+  "hawaii",
+  "alaska",
+  "district of columbia",
+  "washington dc",
+  "american samoa",
+  "guam",
+  "u.s. virgin islands",
+  "us virgin islands",
+  "northern mariana islands",
+  "alabama",
+  "alaska",
+  "arizona",
+  "arkansas",
+  "california",
+  "colorado",
+  "connecticut",
+  "delaware",
+  "florida",
+  "georgia",
+  "hawaii",
+  "idaho",
+  "illinois",
+  "indiana",
+  "iowa",
+  "kansas",
+  "kentucky",
+  "louisiana",
+  "maine",
+  "maryland",
+  "massachusetts",
+  "michigan",
+  "minnesota",
+  "mississippi",
+  "missouri",
+  "montana",
+  "nebraska",
+  "nevada",
+  "new hampshire",
+  "new jersey",
+  "new mexico",
+  "new york",
+  "north carolina",
+  "north dakota",
+  "ohio",
+  "oklahoma",
+  "oregon",
+  "pennsylvania",
+  "rhode island",
+  "south carolina",
+  "south dakota",
+  "tennessee",
+  "texas",
+  "utah",
+  "vermont",
+  "virginia",
+  "washington",
+  "west virginia",
+  "wisconsin",
+  "wyoming",
+];

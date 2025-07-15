@@ -22,7 +22,9 @@ const initialState = {
   showAppLock: false,
   activeTabCrypto: "1",
   bankBalance: null,
+  cybridBankBalance: null,
   bankLists: [],
+  cybridBanksList: [],
   guide: false,
   CardSwitchDetails: {
     balanceHeaderText: "PayAiro Balance",
@@ -58,6 +60,9 @@ const authenticationSlice = createSlice({
     },
     setBankLists: (state, action) => {
       state.bankLists = action.payload;
+    },
+    setCybridBanksList: (state, action) => {
+      state.cybridBanksList = action.payload;
     },
     setActiveTabCrypto: (state, action) => {
       state.activeTabCrypto = action.payload;
@@ -107,6 +112,9 @@ const authenticationSlice = createSlice({
     setBankbalances: (state, action) => {
       state.bankBalance = action.payload;
     },
+    setCybridBankbalances: (state, action) => {
+      state.cybridBankBalance = action.payload;
+    },
     setGuides: (state, action) => {
       state.guide = action.payload;
     },
@@ -153,7 +161,9 @@ export const {
   setShowApplock,
   setActiveTabCrypto,
   setBankbalances,
+  setCybridBankbalances,
   setBankLists,
+  setCybridBanksList,
   setGuides,
   setCardSwitchDetails,
   setMxExternalAccountDetails,

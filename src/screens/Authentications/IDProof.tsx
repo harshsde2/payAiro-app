@@ -62,10 +62,8 @@ export default function IDProof(props: any) {
         return;
       }
 
-      if (!/^\d{9}$/.test(ssm) || new Set(ssm).size !== 9) {
-        useDispatchAction(
-          setErrorMsg("Please enter a 9-digit number with unique digits")
-        );
+      if (!/^\d{9}$/.test(ssm)) {
+        useDispatchAction(setErrorMsg("Please enter a 9-digit number for SSN"));
         return;
       }
 
@@ -170,6 +168,7 @@ export default function IDProof(props: any) {
               label="SSN"
               placeholder="Enter SSN"
               value={ssm}
+              maxLength={9}
               keyboardType={"numeric"}
               onChange={setssm}
             />

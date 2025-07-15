@@ -61,8 +61,8 @@ export default function App() {
 
   // Get all necessary data from storage and set in Redux
   const getInitialData = async () => {
-    const token = getItem(STORAGE_KEYS.AUTH_TOKENS);
-    const guide = getItem(STORAGE_KEYS.GUIDE);
+    const token = getItem(STORAGE_KEYS.AUTH_TOKENS) || null;
+    const guide = getItem(STORAGE_KEYS.GUIDE) || null;
     // setItem(STORAGE_KEYS.GUIDE, JSON.stringify(true));
 
     // const redeem = getItem(STORAGE_KEYS.REDEEM_REWARD);
@@ -72,7 +72,7 @@ export default function App() {
     if (token && wallet) {
       // Store token in MMKV for React Query
       // setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(token));]
-      // console.log('Token:', token);
+      // console.log("Token:", token?.token);
       useDispatchAction(setTokens(JSON.parse(token)));
       useDispatchAction(setShowGuide(JSON.parse(guide)));
       useDispatchAction(setWalletData(wallet));

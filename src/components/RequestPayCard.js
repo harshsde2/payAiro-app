@@ -11,6 +11,7 @@ export default function RequestPayCard({
   amount,
   isSentRequest,
   onCancel,
+  reqId,
 }) {
   // console.log(item, "itemsmsmsmssmsm");
   return (

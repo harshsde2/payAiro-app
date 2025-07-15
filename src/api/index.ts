@@ -3,7 +3,7 @@ import axios, {
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
-import { BASE_URL } from "./endpoints";
+import { AUTH, BASE_URL } from "./endpoints";
 import { getItem, STORAGE_KEYS } from "../storage/mmkv";
 import { Tokens } from "./types";
 import { Platform } from "react-native";
@@ -103,7 +103,7 @@ api.interceptors.response.use(
     if (error.response) {
       const { status } = error.response;
 
-      // console.log("interceptors=>", error.config);
+      // console.log("requestUrl=>", requestUrl);
       // Only show this if NOT a public route
       if (status === 401 && !isPublicRoute) {
         // console.log("Token expired or unauthorized");
@@ -125,10 +125,10 @@ api.interceptors.response.use(
     } else if (error.request) {
       console.log("Network error, please check your connection", requestUrl);
     } else {
+      // throw error.response;
       console.log("Error", error.message);
     }
-
-    console.log("Error", JSON.stringify(error.response, null, 2));
+    // If the request URL matches a specific endpoint, handle it
     return Promise.reject(error);
   }
 );

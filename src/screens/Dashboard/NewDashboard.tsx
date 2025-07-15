@@ -41,6 +41,7 @@ import {
   useBankBalances,
   useCryptoBalance,
   useCryptoTrades,
+  useCybridBankBalances,
   useDashBoardFiatData,
   useGetReward,
   useRecentContacts,
@@ -83,6 +84,8 @@ import {
   setBankLists,
   setBankbalances,
   setCardSwitchDetails,
+  setCybridBankbalances,
+  setCybridBanksList,
   setErrorMsg,
   setShowGuide,
   setShowLoader,
@@ -467,10 +470,10 @@ const CryptoRWASection = React.memo(({ data, navigation }: any) => {
   return (
     <MemoizedDashboardSection
       title="RWA Category"
-      // actionText="see all"
-      // onActionPress={() => {
-      //   // navigation.navigate(NAVIGATION_SCREENS.RWA, {});
-      // }}
+      actionText="see all"
+      onActionPress={() => {
+        navigation.navigate(NAVIGATION_SCREENS.RWA, {});
+      }}
     >
       <ScrollView
         horizontal
@@ -565,6 +568,7 @@ const NewDashboard = () => {
     walletData,
     tokens,
     bankLists,
+    cybridBanksList,
     CardSwitchDetails,
     mxExternalAccountDetails,
     showRedeemReward,
@@ -574,7 +578,7 @@ const NewDashboard = () => {
 
   const isTablet = DeviceInfo.isTablet();
 
-  console.log("is tablet =>", isTablet);
+  // console.log("is tablet =>", isTablet);
   const dispatch = useDispatch();
 
   // Example custom theme handling
@@ -648,6 +652,7 @@ const NewDashboard = () => {
     isSuccess: isSuccessWalletDashboardData,
     isPending: isWalletDashboardDataPending,
     isFetched: isWalletDashboardDataFetched,
+    refetch: refectWalletDashboardData,
   } = useWalletDashboardData();
 
   // const {
@@ -661,7 +666,7 @@ const NewDashboard = () => {
       (item: any) => item.asset_type == "Realestate"
     ) ?? [];
 
-  // console.log("dataaaa =>", JSON.stringify(WalletDashboardData?.data, null, 2));
+  // console.log("dataaaa =>", JSON.stringify(walletData, null, 2));
   // console.log("token =>", tokens.access);
 
   const {
@@ -672,6 +677,20 @@ const NewDashboard = () => {
     isFetched: isBankBalanceDataFetched,
     isSuccess: isBankBalanceDataSuccess,
   } = useBankBalances();
+
+  const {
+    data: CybridBankBalances,
+    isLoading: isLoadingCybridBankBalances,
+    error: CybridBankBalancesError,
+    refetch: refetchCybridBankBalances,
+    isFetched: isCybridBankBalancesFetched,
+    isSuccess: isCybridBankBalancesSuccess,
+  } = useCybridBankBalances();
+
+  console.log(
+    JSON.stringify(CybridBankBalances, null, 2),
+    "CybridBankBalances"
+  );
 
   const {
     data: CryptoBalance,
@@ -748,6 +767,26 @@ const NewDashboard = () => {
   }, [isBankBalanceDataFetched, isBankBalanceDataSuccess]);
 
   useEffect(() => {
+    if (
+      isCybridBankBalancesFetched &&
+      isCybridBankBalancesSuccess &&
+      Object.keys(CybridBankBalances).length > 0
+    ) {
+      dispatch(setCybridBankbalances(CybridBankBalances));
+    }
+  }, [isCybridBankBalancesFetched, isCybridBankBalancesSuccess]);
+
+  useEffect(() => {
+    if (
+      !isErrorDashBoardData &&
+      isDashBoardDataFetched &&
+      DashBoardData?.data.bank
+    ) {
+      dispatch(
+        setCybridBanksList([...DashBoardData?.data?.bank?.cybrid_accounts])
+      );
+    }
+
     if (
       !isErrorDashBoardData &&
       isDashBoardDataFetched &&
@@ -847,6 +886,7 @@ const NewDashboard = () => {
     try {
       refetchBankBalanceData();
       refetchDashBoardFiatData();
+      refectWalletDashboardData();
     } catch (error) {
       console.error("Error refreshing dashboard data:", error);
     } finally {
@@ -1140,6 +1180,19 @@ const NewDashboard = () => {
         : bankBalance?.bank_account?.usd,
     }));
   }, [bankLists, bankBalance]);
+
+  const processedCybridBankAccounts = useMemo(() => {
+    if (!cybridBanksList) return [];
+
+    return cybridBanksList.map((item: any) => ({
+      ...item,
+      displayName: item?.bank_name ?? item?.name,
+      accountType: item?.account_type ?? "Personal",
+      address: item?.bank_address ?? item?.official_name,
+      accountNumber: item?.account_number ?? item?.account_id,
+      balance: "",
+    }));
+  }, [cybridBanksList]);
 
   // console.log("souceAccount =>", JSON.stringify(souceAccount, null, 2));
 
@@ -1509,7 +1562,7 @@ const NewDashboard = () => {
           borderRadius={theme.spacing.spacing[10]}
         >
           <View style={{ width: "100%", padding: 5 }}>
-            {isCrypto && (
+            {isCrypto && walletData?.fortress && (
               <>
                 <MemoizedDashboardSection
                   title="Your Accounts"
@@ -1721,6 +1774,325 @@ const NewDashboard = () => {
                           </View>
                         </View>
                       ))
+                    )}
+                    {/* <SvgXml
+                      width={250}
+                      height={130}
+                      xml={SVGNewBank}
+                      disabled={showLoader}
+                      onPress={handleOpenLink}
+                    /> */}
+                    <AddAndLinkAcountCard
+                      title={"LINK ACCOUNT"}
+                      description={"Link your external account"}
+                      buttonText={"Link Account"}
+                      onAddPress={handleOpenLink}
+                    />
+                    <AddAndLinkAcountCard
+                      title={"ADD ACCOUNT"}
+                      description={"Add your TRADITIONAL IRA account"}
+                      buttonText={"Add Account"}
+                      onAddPress={() => {
+                        setShowAddTraditionalAccountConfirmation(true);
+                      }}
+                    />
+                    <AddAndLinkAcountCard
+                      title={"ADD ACCOUNT"}
+                      description={"Add your ROTH IRA account"}
+                      buttonText={"Add Account"}
+                      onAddPress={() => {
+                        setShowAddAccountConfirmation(true);
+                      }}
+                    />
+                  </ScrollView>
+                </MemoizedDashboardSection>
+                {isCrypto && (
+                  <MemoizedDashboardSection
+                    title="PayAiro Contacts"
+                    actionText="see all"
+                    onActionPress={onContactSeeALl}
+                  >
+                    {isDashBoardDataPending ? (
+                      // Skeleton loading for contacts
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-around",
+                          marginVertical: 15,
+                        }}
+                      >
+                        {[1, 2, 3, 4].map((_, index) => (
+                          <View key={index} style={{ alignItems: "center" }}>
+                            <View
+                              style={{
+                                width: 60,
+                                height: 60,
+                                borderRadius: 30,
+                                backgroundColor: theme.colors.palette.grey200,
+                              }}
+                            />
+                            <View
+                              style={{
+                                width: 40,
+                                height: 12,
+                                backgroundColor: theme.colors.palette.grey200,
+                                borderRadius: 4,
+                                marginTop: 8,
+                              }}
+                            />
+                          </View>
+                        ))}
+                      </View>
+                    ) : DashBoardData?.data?.contacts &&
+                      DashBoardData?.data?.contacts.length > 0 ? (
+                      <MemoizedStoryLists
+                        data={DashBoardData?.data?.contacts}
+                        isVisble3={isCrypto}
+                      />
+                    ) : (
+                      <TouchableOpacity
+                        onPress={() =>
+                          navigation.navigate(NAVIGATION_SCREENS.ADD_CONTACT)
+                        }
+                        style={{
+                          backgroundColor: "rgba(44, 106, 63, 1)",
+                          paddingBottom: 10,
+                          paddingTop: 7,
+                          paddingHorizontal: 10,
+                          borderRadius: 30,
+                          alignSelf: "center",
+                          marginTop: 20,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "white",
+                            fontSize: 12,
+                            fontFamily: Fonts.semibold,
+                          }}
+                        >
+                          + Add People
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </MemoizedDashboardSection>
+                )}
+              </>
+            )}
+            {isCrypto && !walletData?.fortress && (
+              <>
+                <MemoizedDashboardSection
+                  title="Your Accounts"
+                  actionText="see all"
+                  onActionPress={() => {
+                    navigation.navigate(NAVIGATION_SCREENS.BANK_DETAILS, {
+                      item: processedCybridBankAccounts,
+                      bankbalance: processedCybridBankAccounts[0]?.balance,
+                      index: 0,
+                    });
+                  }}
+                >
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{}}
+                    style={{ marginRight: 10 }}
+                  >
+                    {isDashBoardDataPending ? (
+                      // Show skeleton loading UI
+                      <>
+                        <SkeletonCard />
+                        <SkeletonCard />
+                        <SkeletonCard />
+                      </>
+                    ) : (
+                      processedCybridBankAccounts.map(
+                        (item: any, index: number) => (
+                          <View
+                            key={index}
+                            style={{
+                              backgroundColor: theme.colors.palette.grey100,
+                              padding: 10,
+                              width: 250,
+                              borderRadius: 15,
+                              marginRight: 10,
+                            }}
+                          >
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                justifyContent: "flex-start",
+                                alignItems: "center",
+                                width: "100%",
+                                marginBottom: 10,
+                              }}
+                            >
+                              {item.medium_logo_url ? (
+                                <View>
+                                  <Image
+                                    source={{ uri: item?.medium_logo_url }}
+                                    style={{
+                                      width: 35,
+                                      height: 35,
+                                      borderRadius: 5,
+                                      backgroundColor:
+                                        theme.colors.palette.grey200,
+                                    }}
+                                  />
+                                </View>
+                              ) : (
+                                <SvgIcons.DollarIcon width={35} height={35} />
+                              )}
+                              <View style={{ flex: 1 }}>
+                                <CustomText
+                                  variant={"subtitle2"}
+                                  fontWeight={"bold"}
+                                  fontFamily={
+                                    theme.typography.fontFamily.nexaHeavy
+                                  }
+                                  style={{
+                                    marginLeft: 5,
+                                    marginTop: 2,
+                                  }}
+                                >
+                                  {item.displayName}
+                                </CustomText>
+                                <View style={{ flexDirection: "row", flex: 1 }}>
+                                  <CustomText
+                                    color={theme.colors.palette.grey600}
+                                    fontFamily={
+                                      theme.typography.fontFamily.nexaHeavy
+                                    }
+                                    style={{
+                                      marginLeft: 5,
+                                      marginTop: 2,
+                                      fontSize: 14,
+                                      fontWeight: "400",
+                                      textTransform: "capitalize",
+                                    }}
+                                  >
+                                    {`${item?.account_type}`}
+                                  </CustomText>
+                                  <CustomText
+                                    color={theme.colors.palette.grey600}
+                                    fontFamily={
+                                      theme.typography.fontFamily.nexaHeavy
+                                    }
+                                    style={{
+                                      marginLeft: 5,
+                                      marginTop: 2,
+                                      fontSize: 14,
+                                      fontWeight: "400",
+                                      // textTransform: 'capitalize'
+                                    }}
+                                  >
+                                    {`( ${BANK_TYPE} )`}
+                                  </CustomText>
+                                </View>
+                              </View>
+                            </View>
+                            <CustomText
+                              color={theme.colors.palette.grey600}
+                              fontFamily={theme.typography.fontFamily.nexaHeavy}
+                              style={{
+                                marginLeft: 5,
+                                marginTop: 2,
+                                fontSize: 12,
+                                fontWeight: "400",
+                              }}
+                            >
+                              {item?.account_number
+                                ? `${item.account_number.slice(
+                                    0,
+                                    2
+                                  )}XXXX${item.account_number.slice(-4)}`
+                                : ""}
+                            </CustomText>
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                width: "100%",
+                              }}
+                            >
+                              <View
+                                style={{
+                                  flexDirection: "row",
+                                  marginTop: 5,
+                                  alignItems: "center",
+                                  flex: 1,
+                                }}
+                              >
+                                <Text
+                                  numberOfLines={1}
+                                  style={{
+                                    color: "rgba(44, 106, 63, 1)",
+                                    fontSize: 16,
+                                    fontFamily: Fonts.bold,
+                                    marginLeft: 5,
+                                  }}
+                                >
+                                  {hiddenBalances[item.accountNumber]
+                                    ? "$••••••"
+                                    : `$${item.balance}`}
+                                </Text>
+                                {!hiddenBalances[item.accountNumber] ? (
+                                  <TouchableOpacity
+                                    style={{ padding: 10 }}
+                                    onPress={() =>
+                                      handleEyeClick(item.accountNumber)
+                                    }
+                                  >
+                                    <SvgIcons.EyeOnGreenbg
+                                      style={{ marginLeft: 10, top: 1 }}
+                                      // xml={SVG_eye_on}
+                                      width={15}
+                                      height={15}
+                                    />
+                                  </TouchableOpacity>
+                                ) : (
+                                  <TouchableOpacity
+                                    style={{ padding: 10 }}
+                                    onPress={() =>
+                                      handleEyeClick(item.accountNumber)
+                                    }
+                                  >
+                                    <SvgIcons.EyeOffGreenbg
+                                      style={{ marginLeft: 10, top: 1 }}
+                                      width={15}
+                                      height={15}
+                                    />
+                                  </TouchableOpacity>
+                                )}
+                              </View>
+
+                              <Text
+                                onPress={() =>
+                                  navigation.navigate(
+                                    NAVIGATION_SCREENS.BANK_DETAILS,
+                                    {
+                                      item: processedCybridBankAccounts,
+                                      bankbalance: item.balance,
+                                      index: index,
+                                    }
+                                  )
+                                }
+                                style={{
+                                  color: "rgba(106, 106, 106, 1)",
+                                  fontSize: 10,
+                                  fontFamily: Fonts.regular,
+                                  marginLeft: 5,
+                                  marginTop: 5,
+                                  textDecorationLine: "underline",
+                                }}
+                              >
+                                View Details
+                              </Text>
+                            </View>
+                          </View>
+                        )
+                      )
                     )}
                     {/* <SvgXml
                       width={250}

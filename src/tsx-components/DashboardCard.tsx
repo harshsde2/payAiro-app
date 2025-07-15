@@ -42,9 +42,12 @@ const DashboardCard = () => {
     (s: any) => s.animationSlice
   );
 
+  const isIOS = Platform.OS == "ios";
+
   const {
     isCrypto,
     bankBalance,
+    cybridBankBalance,
     walletData,
     totalDisbursable,
     totalDisbursablePending,
@@ -133,14 +136,26 @@ const DashboardCard = () => {
   };
 
   const handleShowBalance = async (isShowBalance: boolean) => {
-    if (!isShowBalance) {
-      setIsLoading(true);
-      await queryClient.invalidateQueries(bankKeys.balance());
-      await queryClient.refetchQueries(bankKeys.balance());
-      setShowBalance(!showBalance);
-      setIsLoading(false);
+    if (walletData?.fortress) {
+      if (!isShowBalance) {
+        setIsLoading(true);
+        await queryClient.invalidateQueries(bankKeys.balance());
+        await queryClient.refetchQueries(bankKeys.balance());
+        setShowBalance(!showBalance);
+        setIsLoading(false);
+      } else {
+        setShowBalance(!showBalance);
+      }
     } else {
-      setShowBalance(!showBalance);
+      if (!isShowBalance) {
+        setIsLoading(true);
+        await queryClient.invalidateQueries(bankKeys.cybridBalance());
+        await queryClient.refetchQueries(bankKeys.cybridBalance());
+        setShowBalance(!showBalance);
+        setIsLoading(false);
+      } else {
+        setShowBalance(!showBalance);
+      }
     }
   };
 
@@ -189,16 +204,29 @@ const DashboardCard = () => {
                   justifyContent: "center",
                 }}
               >
-                <CustomText
-                  numberOfLines={1}
-                  color={theme.colors.palette.white}
-                  variant={"h3"}
-                  style={{ textAlign: "center", textAlignVertical: "center" }}
-                >
-                  {showBalance
-                    ? `$${bankBalance?.bank_account?.usd}`
-                    : "$*****"}
-                </CustomText>
+                {walletData?.fortress ? (
+                  <CustomText
+                    numberOfLines={1}
+                    color={theme.colors.palette.white}
+                    variant={"h3"}
+                    style={{ textAlign: "center", textAlignVertical: "center" }}
+                  >
+                    {showBalance
+                      ? `$${bankBalance?.bank_account?.usd}`
+                      : "$*****"}
+                  </CustomText>
+                ) : (
+                  <CustomText
+                    numberOfLines={1}
+                    color={theme.colors.palette.white}
+                    variant={"h3"}
+                    style={{ textAlign: "center", textAlignVertical: "center" }}
+                  >
+                    {showBalance
+                      ? `$${cybridBankBalance?.platform_balance}`
+                      : "$*****"}
+                  </CustomText>
+                )}
                 {isLoading && (
                   <ActivityIndicator
                     size="small"
@@ -206,7 +234,7 @@ const DashboardCard = () => {
                   />
                 )}
                 {!isLoading && (
-                  <>
+                  <TouchableOpacity style={{ zIndex: 11 }}>
                     {showBalance ? (
                       <SvgIcons.EyeOnOutlineWhite
                         onPress={() => handleShowBalance(showBalance)}
@@ -224,7 +252,7 @@ const DashboardCard = () => {
                         height={20}
                       />
                     )}
-                  </>
+                  </TouchableOpacity>
                 )}
               </View>
             </View>
@@ -245,11 +273,11 @@ const DashboardCard = () => {
                   color={theme.colors.palette.white}
                   variant={"caption"}
                 >
-                  {walletData.username}
+                  {walletData?.username}
                 </CustomText>
                 <TouchableOpacity
                   onPress={() => {
-                    copyToClipboard(walletData.username);
+                    copyToClipboard(walletData?.username);
                     // onCopy();
                   }}
                 >
@@ -263,7 +291,7 @@ const DashboardCard = () => {
           <SvgIcons.FiatPatterncard
             width={"100%"}
             height={170}
-            style={{ position: "absolute", left: -55, top: 0 }}
+            style={{ position: "absolute", left: isIOS ? -55 : -60, top: 0 }}
           />
           <TouchableOpacity
             onPress={() => {
@@ -316,7 +344,7 @@ const DashboardCard = () => {
         style={{
           width: "100%",
           height: 170,
-          backgroundColor: themeApp.backgroundColor,
+          backgroundColor: theme.colors.palette.green700,
         }}
       >
         <View
@@ -376,11 +404,11 @@ const DashboardCard = () => {
                   color={theme.colors.palette.white}
                   variant={"caption"}
                 >
-                  {walletData.username}
+                  {walletData?.username}
                 </CustomText>
                 <TouchableOpacity
                   onPress={() => {
-                    copyToClipboard(walletData.username);
+                    copyToClipboard(walletData?.username);
                     // onCopy();
                   }}
                 >
@@ -395,7 +423,7 @@ const DashboardCard = () => {
             // xml={SVGSecurityPatternCard}
             width={"100%"}
             height={170}
-            style={{ position: "absolute", left: -55, top: 0 }}
+            style={{ position: "absolute", left: isIOS ? -55 : -60, top: 0 }}
           />
           <TouchableOpacity
             onPress={() => {
@@ -407,7 +435,7 @@ const DashboardCard = () => {
             }}
             style={{
               flex: 1,
-              backgroundColor: themeApp.inverseBackgroundColor,
+              backgroundColor: "white",
               width: 30,
               height: 30,
               position: "absolute",

@@ -65,7 +65,7 @@ export const useSubmitKYC = () => {
       return data;
     },
     onError: (error: any) => {
-      console.log("error =>", JSON.stringify(error.response, null, 2));
+      console.log("error =>", JSON.stringify(error, null, 2));
     },
     onSuccess(data, variables, context) {
       console.log("on data =>", data);
@@ -107,6 +107,15 @@ export const useAddTraditionalIRABankAccount = () => {
         payload,
         true
       );
+      return data;
+    },
+  });
+};
+
+export const useKYCCompleted = () => {
+  return useMutation<ApiResponse<any>, Error>({
+    mutationFn: async () => {
+      const data = apiClient.post<ApiResponse<any>>(AUTH.CYBIRD_KYC, {}, false);
       return data;
     },
   });

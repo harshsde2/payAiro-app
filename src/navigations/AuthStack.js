@@ -17,6 +17,7 @@ import SelfieScreen from "../screens/Authentications/SelfieScreen";
 import Biometcric from "../screens/Dashboard/Biometcric";
 import { NAVIGATION_SCREENS } from "./navigationConstants";
 import PDFViewer from "tsx-components/PDFViewer";
+import CybridWebView from "screens/Authentications/CybridWebView";
 
 const Stack = createNativeStackNavigator();
 export default function AuthStack() {
@@ -107,6 +108,11 @@ export default function AuthStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.PDF_VIEWER}
         component={PDFViewer}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.CYBRID_WEB_VIEW}
+        component={CybridWebView}
       />
     </Stack.Navigator>
   );

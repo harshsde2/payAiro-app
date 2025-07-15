@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import React, { useEffect } from "react";
+import { View, StyleSheet, ViewStyle } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -7,7 +7,7 @@ import Animated, {
   runOnJS,
   cancelAnimation,
   Easing,
-} from 'react-native-reanimated';
+} from "react-native-reanimated";
 
 type FadeWrapperProps = {
   firstComponent: React.ReactNode;
@@ -70,14 +70,15 @@ const FadeWrapper = ({
 
   const firstStyle = useAnimatedStyle(() => ({
     opacity: firstOpacity.value,
-    position: 'absolute',
-    width: '100%',
+    position: "absolute",
+    width: "100%",
+    zIndex: firstOpacity.value > 0 ? 1 : 0,
   }));
 
   const secondStyle = useAnimatedStyle(() => ({
     opacity: secondOpacity.value,
-    position: 'absolute',
-    width: '100%',
+    position: "absolute",
+    width: "100%",
   }));
 
   return (
@@ -90,8 +91,8 @@ const FadeWrapper = ({
 
 const styles = StyleSheet.create({
   container: {
-    position: 'relative',
-    width: '100%',
+    position: "relative",
+    width: "100%",
   },
 });
 

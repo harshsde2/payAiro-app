@@ -8,6 +8,7 @@ import { queryStaleTime } from "query/queryConfigs";
 export const transactionKeys = {
   all: ["transactions"] as const,
   list: () => [...transactionKeys.all, "list"] as const,
+  filter: () => [...transactionKeys.all, "filter"] as const,
   detail: (id: string) => [...transactionKeys.all, "detail", id] as const,
   pending: () => [...transactionKeys.all, "pending"] as const,
   payment: () => [...transactionKeys.all, "payment"] as const,
@@ -29,6 +30,18 @@ export const useTransactions = () => {
     queryFn: async () => {
       return await apiClient.get<ApiResponse<TransactionListResponse>>(
         WALLET.ALL_TRANSACTION
+      );
+    },
+    staleTime: queryStaleTime.VERY_FAST_STALE_TIME, // 10 minutes
+  });
+};
+
+export const useFilteredTransactions = (filterEndPoint: any) => {
+  return useQuery<ApiResponse<TransactionListResponse>>({
+    queryKey: transactionKeys.filter(),
+    queryFn: async () => {
+      return await apiClient.get<ApiResponse<TransactionListResponse>>(
+        `${WALLET.ALL_FILTERED_TRANSACTIONS}${filterEndPoint}`
       );
     },
     staleTime: queryStaleTime.VERY_FAST_STALE_TIME, // 10 minutes

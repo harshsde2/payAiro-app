@@ -44,11 +44,11 @@ import { useGetReward, useUserPin, useWalletDetails } from "query/hooks";
 export default function ConfirmOTP() {
   const getDeviceId = async () => {
     const deviceId = await DeviceInfo.getUniqueId(); // ✅ Await the Promise
-    console.log("Device ID:", deviceId); // Now prints actual string
+    // console.log("Device ID:", deviceId); // Now prints actual string
     return deviceId;
   };
 
-  console.log("deviceId =>", getDeviceId());
+  // console.log("deviceId =>", getDeviceId());
 
   const dispatch = useDispatch();
   const navigation = useNavigation();
@@ -122,7 +122,7 @@ export default function ConfirmOTP() {
   const handleGetRewardDetails = async () => {
     await refetchGetReward();
     if (isSuccessGetReward) {
-      console.log("refetchGetReward => ✅");
+      // console.log("refetchGetReward => ✅");
       if (getRewardData?.data?.length > 0) {
         if (getRewardData && getRewardData?.data?.length > 0) {
           setItem(STORAGE_KEYS.REDEEM_REWARD, JSON.stringify(false));
@@ -135,7 +135,7 @@ export default function ConfirmOTP() {
   const handleUserGuide = async () => {
     setItem(STORAGE_KEYS.GUIDE, JSON.stringify(false));
     dispatch(setShowGuide(false));
-    console.log("setShowGuide => ✅");
+    // console.log("setShowGuide => ✅");
   };
 
   const handleOtpChange = (text: any, index: any) => {
@@ -203,9 +203,9 @@ export default function ConfirmOTP() {
       onSuccess: async (data) => {
         if (data?.status) {
           const kycData = await getKYC(data?.data?.data?.access);
-          // console.log(JSON.stringify(kycData, null, 2), "kycData");
+          console.log(JSON.stringify(kycData, null, 2), "kycData");
 
-          // console.log(JSON.stringify(kycData, null, 2), "KycData");
+          console.log(JSON.stringify(data, null, 2), "data");
           const formData = new FormData();
 
           const device_id = await getDeviceId();
@@ -216,10 +216,10 @@ export default function ConfirmOTP() {
           );
           formData.append("device_id", device_id);
 
-          console.log("formData =>", JSON.stringify(formData, null, 2));
+          // console.log("formData =>", JSON.stringify(formData, null, 2));
 
           const fcmData = await addFcm(formData, data?.data?.data?.access);
-          console.log("fcmData =>", JSON.stringify(fcmData, null, 2));
+          // console.log("fcmData =>", JSON.stringify(fcmData, null, 2));
           useDispatchAction(setTokens(data?.data?.data));
           await setToken(data?.data?.data);
           setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(data?.data?.data));

@@ -244,7 +244,7 @@ export default function SelfieScreen(props: any) {
     formData.append("dob", payload?.dob);
     formData.append("consumer_disclosure_fortress_agreement", checked);
 
-    console.log(JSON.stringify(payload, null, 2));
+    // console.log(JSON.stringify(payload, null, 2));
     dispatch(setShowLoader(true));
     handlKYC(formData as any, {
       onSuccess: (data) => {
