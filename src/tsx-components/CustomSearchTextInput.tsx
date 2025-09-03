@@ -9,6 +9,7 @@ import { SvgXml } from "react-native-svg";
 import { Theme } from "styles";
 import { useTheme } from "styles/ThemeContext";
 import { SVGSearchIcon } from "../constants/images";
+import { SvgIcons } from "constants/svgs";
 
 interface CustomSearchTextInputProps extends TextInputProps {
   value: string;
@@ -54,12 +55,7 @@ const CustomSearchTextInput: FC<CustomSearchTextInputProps> = ({
 
   return (
     <Animated.View style={[styles.container, animatedStyle]}>
-      <SvgXml
-        xml={SVGSearchIcon}
-        width={25}
-        height={25}
-        style={styles.iconLeft}
-      />
+      <SvgIcons.SearchIcon width={25} height={25} style={styles.iconLeft} />
       <TextInput
         ref={inputRef}
         style={styles.input}

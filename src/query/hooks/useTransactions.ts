@@ -3,6 +3,7 @@ import { apiClient } from "../../api";
 import { WALLET, MERCHANT } from "../../api/endpoints";
 import { ApiResponse, Transaction } from "../../api/types";
 import { queryStaleTime } from "query/queryConfigs";
+import { CategoryPercentages } from "screens/Authentications/Transaction";
 
 // Query keys
 export const transactionKeys = {
@@ -19,6 +20,12 @@ export const transactionKeys = {
 interface TransactionListResponse {
   merchantTransactions: Transaction[];
   userToUserTransactions: Transaction[];
+}
+// Interface for transaction filter list response
+interface TransactionFilterListResponse {
+  transactions: Transaction[];
+  category_percentages: CategoryPercentages;
+  total_transactions: number;
 }
 
 /**
@@ -37,10 +44,10 @@ export const useTransactions = () => {
 };
 
 export const useFilteredTransactions = (filterEndPoint: any) => {
-  return useQuery<ApiResponse<TransactionListResponse>>({
+  return useQuery<ApiResponse<TransactionFilterListResponse>>({
     queryKey: transactionKeys.filter(),
     queryFn: async () => {
-      return await apiClient.get<ApiResponse<TransactionListResponse>>(
+      return await apiClient.get<ApiResponse<TransactionFilterListResponse>>(
         `${WALLET.ALL_FILTERED_TRANSACTIONS}${filterEndPoint}`
       );
     },

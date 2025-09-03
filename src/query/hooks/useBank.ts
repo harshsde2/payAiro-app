@@ -1,8 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../../api";
 import { AUTH, KYC } from "../../api/endpoints";
-import { ApiResponse, BankAccount } from "../../api/types";
+import { 
+  ApiResponse, 
+  BankAccount, 
+  PlaidLinkTokenResponse, 
+  PlaidAccessTokenRequest, 
+  PlaidAccessTokenResponse
+} from "../../api/types";
 import { queryStaleTime } from "query/queryConfigs";
+import useSelectorAction from "hooks/useSelectorAction";
 
 // Query keys
 export const bankKeys = {
@@ -12,6 +19,7 @@ export const bankKeys = {
   balance: () => [...bankKeys.all, "balance"] as const,
   cybridBalance: () => [...bankKeys.all, "cybridBalance"] as const,
   linkToken: () => [...bankKeys.all, "linkToken"] as const,
+  plaidLinkToken: () => [...bankKeys.all, "plaidLinkToken"] as const,
 } as any;
 
 /**
@@ -61,27 +69,68 @@ export const useAllBankAccounts = () => {
  * Hook to get bank account balances
  */
 export const useBankBalances = () => {
+  const { walletData } = useSelectorAction() as any;
+  const isFortress = walletData?.fortress;
+  const url = isFortress ? AUTH.ALL_BANKACCOUNT_BALANCE : AUTH.CYBIRD_BALANCE;
   return useQuery<ApiResponse<any>>({
     queryKey: bankKeys.balance(),
     queryFn: async () => {
-      const response = await apiClient.get<ApiResponse<any>>(
-        AUTH.ALL_BANKACCOUNT_BALANCE
-      );
+      const response = await apiClient.get<ApiResponse<any>>(url);
       return response.data;
     },
     staleTime: queryStaleTime.VERY_FAST_STALE_TIME, // 5 second
   });
 };
 
-export const useCybridBankBalances = () => {
-  return useQuery<ApiResponse<any>>({
-    queryKey: bankKeys.cybridBalance(),
+// export const useCybridBankBalances = () => {
+//   return useQuery<ApiResponse<any>>({
+//     queryKey: bankKeys.cybridBalance(),
+//     queryFn: async () => {
+//       const response = await apiClient.get<ApiResponse<any>>(
+//         AUTH.CYBIRD_BALANCE
+//       );
+//       return response.data;
+//     },
+//     staleTime: queryStaleTime.VERY_FAST_STALE_TIME, // 5 second
+//   });
+// };
+
+/**
+ * Hook to get Plaid link token
+ */
+export const usePlaidLinkToken = () => {
+  return useQuery<PlaidLinkTokenResponse>({
+    queryKey: bankKeys.plaidLinkToken(),
     queryFn: async () => {
-      const response = await apiClient.get<ApiResponse<any>>(
-        AUTH.CYBIRD_BALANCE
+      const response = await apiClient.post<PlaidLinkTokenResponse>(
+        AUTH.PLAID_ACCESS_TOKEN,
+        {}
       );
-      return response.data;
+      return response;
     },
-    staleTime: queryStaleTime.VERY_FAST_STALE_TIME, // 5 second
+    staleTime: queryStaleTime.FAST_STALE_TIME,
+    retry: 2,
+  });
+};
+
+/**
+ * Hook to exchange Plaid public token for access token
+ */
+export const usePlaidAccessToken = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation<PlaidAccessTokenResponse, Error, PlaidAccessTokenRequest>({
+    mutationFn: async (data: PlaidAccessTokenRequest) => {
+      const response = await apiClient.post<PlaidAccessTokenResponse>(
+        AUTH.CREATE_EXTERNAL_BANK_ACCOUNT,
+        data
+      );
+      return response;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch bank accounts after successful connection
+      queryClient.invalidateQueries({ queryKey: bankKeys.allAccounts() });
+      queryClient.invalidateQueries({ queryKey: bankKeys.balance() });
+    },
   });
 };

@@ -3,6 +3,7 @@ import { apiClient } from "../../api";
 import { AUTH } from "../../api/endpoints";
 import { ApiResponse, User } from "../../api/types";
 import { queryStaleTime } from "query/queryConfigs";
+import useSelectorAction from "hooks/useSelectorAction";
 
 // Query keys
 export const userKeys = {
@@ -42,8 +43,14 @@ export const useVerifyUser = () => {
       return await apiClient.post<ApiResponse<User>>(
         AUTH.VERIFY_USER,
         payload,
-        false
+        true
       );
+    },
+    onSuccess: (data) => {
+      console.log("data ->", data);
+    },
+    onError: (error) => {
+      console.log("error ->", JSON.stringify(error.response, null, 2));
     },
   });
 };
@@ -136,6 +143,23 @@ export const useIntraAccountTransfer = () => {
       );
     },
     onSuccess: () => {},
+  });
+};
+/**
+ * Hook to Intra Account Transfer
+ */
+export const useUserToUserTransfer = () => {
+  const { walletData } = useSelectorAction() as any;
+  const isFortress = walletData?.fortress;
+  const url = isFortress
+    ? AUTH.USER_TO_USER_FORTRESS_TRANSFER
+    : AUTH.USER_TO_USER_CYBRID_TRANSFER;
+
+  // console.log("url =>", url);
+  return useMutation<ApiResponse<any>>({
+    mutationFn: async (payload) => {
+      return await apiClient.post<ApiResponse<any>>(url, payload, true);
+    },
   });
 };
 /**

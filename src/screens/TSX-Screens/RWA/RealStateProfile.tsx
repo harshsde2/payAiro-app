@@ -162,8 +162,10 @@ const RealStateProfile = () => {
                   fontWeight={"semiBold"}
                   color={theme.colors.palette.green700}
                   variant={"h3"}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
                 >
-                  {formatAmount(data?.amount)}
+                  {isOwned ? data?.quantity : formatAmount(data?.amount)}
                 </CustomText>
               </View>
             </View>

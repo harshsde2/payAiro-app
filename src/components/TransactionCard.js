@@ -35,58 +35,33 @@ export default function TransactionCard({ item, isCrypto, isMerchent }) {
     ? isTransactionbyProject
       ? isTransactionbyProject
       : displaySender
-    : item?.network;
+    : walletData?.fortress
+    ? item?.network ?? item.token
+    : item?.payairoTag;
+
+  // console.log("displayName =>", JSON.stringify(item, null, 2));
 
   const formattedAmount = parseFloat(item?.amount ?? item?.value ?? "0");
   const sign = isSent ? "-" : "+";
   const amountColor = isSent ? "red" : "green";
+  const formatted =
+    item?.category &&
+    item?.category
+      .split("_") // Split into ['family', 'friends']
+      .map(
+        (
+          word // Capitalize each word
+        ) => word.charAt(0).toUpperCase() + word.slice(1)
+      )
+      .join(" ");
 
   // console.log("sent =>", JSON.stringify(item, null, 2));
   const handlePress = () => {
-    if (isMerchent || type) {
-      navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_SUCCESS, {
-        transactionDetails: [
-          { Amount: item?.amount },
-          type
-            ? { Type: !item?.order_id ? item?.type : "Paid" }
-            : { OrderID: item?.order_id },
-          { Merchant: item?.project_name },
-          { Date: moment(item?.created_at).format("DD-MMM-YYYY") },
-          {
-            Time: moment(item?.created_at).format("h:mm a"),
-          },
-          { Status: item?.status?.toUpperCase() },
-        ],
-      });
-    } else if (!isCrypto && item?.web3) {
-      Linking.openURL(`https://sepolia.etherscan.io/tx/0x${item?.tx_hash}`);
-    } else if (!isCrypto && !item?.web3) {
-      navigation.navigate("SendReceipt", {
-        transactionDetails: [
-          { From: item?.from_currency },
-          { To: item?.to_currency },
-          { Network: item?.network },
-          { "Trade Id": item?.trade_id },
-          { Amount: item?.amount },
-          { "Account ID": item?.account_id },
-        ],
-      });
-    } else {
-      navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_SUCCESS, {
-        transactionDetails: [
-          { "Transaction Id": item?.transaction_id },
-          {
-            "Transfer Date": moment(item?.timestamp ?? item?.created_at).format(
-              "DD MMM YYYY"
-            ),
-          },
-          { Sender: item?.sender_username },
-          { "Receiver ID": item?.recipient_username },
-          { "Requested Amount": item?.amount },
-          { "Successfully Sent": item?.amount },
-        ],
-      });
-    }
+    // Navigate to the new TransactionDetails modal for both fiat and crypto transactions
+    navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_DETAILS_MODAL, {
+      transactionData: item,
+      isCrypto: isCrypto,
+    });
   };
 
   // console.log(" item----->", JSON.stringify(displayName, null, 2));

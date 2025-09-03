@@ -52,13 +52,15 @@ const TextInputField: FC<InputProps> = (props) => {
       )}
       <View style={[cStyle]}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <CustomText
-            variant={"body2"}
-            style={[{ fontFamily: Fonts.semibold, padding: 10 }, lStyle]}
-          >
-            {label}
-            {""}
-          </CustomText>
+          {label && (
+            <CustomText
+              variant={"body2"}
+              style={[{ fontFamily: Fonts.semibold, padding: 10 }, lStyle]}
+            >
+              {label}
+              {""}
+            </CustomText>
+          )}
           {required && (
             <CustomText color={theme.colors.palette.red500} variant={"body2"}>
               *

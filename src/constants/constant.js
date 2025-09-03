@@ -81,12 +81,12 @@ export const SETTINGS_LISTS = [
     isDisvled: false,
     route: NAVIGATION_SCREENS.STATEMENT,
   },
-  {
-    name: "Alerts",
-    icon: <SvgIcons.AlertIcon />,
-    isDisvled: false,
-    route: "AlertScreen",
-  },
+  // {
+  //   name: "Alerts",
+  //   icon: <SvgIcons.AlertIcon />,
+  //   isDisvled: false,
+  //   route: "AlertScreen",
+  // },
   {
     name: "Terms & Condition",
     icon: <SvgIcons.TermsAndConditions />,

@@ -222,7 +222,7 @@ const RWA = () => {
     isSuccess: isCryptoPricesSuccess,
   } = useCryptoPrices();
 
-  // console.log("data =>", JSON.stringify(AllRWAData, null, 2));
+  console.log("data =>", JSON.stringify(AllRWAData, null, 2));
   // console.log("isAllIsFetching =>", JSON.stringify(isAllIsFetching, null, 2));
 
   const [searchText, setSearchText] = useState("");
@@ -347,7 +347,7 @@ const RWA = () => {
           )}
           renderItem={({ item: rowItems, section }) => {
             const Component = section.renderComponent;
-            console.log("Section =>", section);
+            // console.log("Section =>", section);
             if (section.type == "assets") {
               return (
                 <View style={[styles.sectionListRenderContainer]}>

@@ -16,7 +16,7 @@ export default function ErrorToast() {
     setTimeout(() => {
       useDispatchAction(setErrorMsg(null));
       useDispatchAction(setSuccessMsg(null));
-    }, 2000);
+    }, 3000);
   }, []);
   const theme = useTheme();
   return (

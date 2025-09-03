@@ -1,7 +1,9 @@
 // Navigation Screen Names
 export const NAVIGATION_SCREENS = {
   // Auth Stack Screens
+  LANDING_PAGE: "LandingPage",
   LOGIN: "Login",
+  SIGNUP: "signup",
   OTP: "OTP",
   INVITE: "Invite",
   ADDRESS: "Address",
@@ -26,6 +28,7 @@ export const NAVIGATION_SCREENS = {
   TRANSACTION: "Transaction",
   TRANSACTION_SUCCESS: "TransactionSuccess",
   TRANSACTION_DETAILS: "TransactionDetails",
+  TRANSACTION_DETAILS_MODAL: "TransactionDetailsModal",
   SCANS: "Scans",
   SCAN_PAY: "ScanPay",
   SEND: "Send",
@@ -66,6 +69,13 @@ export const NAVIGATION_SCREENS = {
   SELECT_BANK_SCREEN: "SelectBankScreen",
   CRYPTO_DASHBOARD: "CryptoDashboard",
   CRYPTO_SCREEN: "CryptoScreen",
+  CRYPTO_SCREEN_FORTRESS: "CryptoScreenFortress",
+  CRYPTO_BUY: "CryptoBuy",
+  CRYPTO_SELL: "CryptoSell",
+  SEND_AND_RECEIVE: "SendAndReceive",
+  CRYPTO_SEND: "CryptoSend",
+  CRYPTO_RECEIVE: "CryptoReceive",
+  IRA_HOLDING: "IRAHolding",
   STOCKS_SCREEN: "StocksScreen",
   HOLDINGS_SCREEN: "HoldingsScreen",
   SELL: "Sell",
@@ -92,4 +102,7 @@ export const NAVIGATION_SCREENS = {
   ACH_TRANSFER: "ACHTransfer",
   DEBIT_CARD_SCREEN: "DebitCardScreen",
   SUPPORT_SCREEN: "SupportScreen",
+  RESULT: "Result",
+  TRANSACTION_RESULT: "TransactionResult",
+  PLAID_LINK_SCREEN: "PlaidLinkScreen",
 };

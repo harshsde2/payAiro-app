@@ -4,6 +4,7 @@ export const BASE_URL = "https://app.payairo.com/api/";
 // Auth endpoints
 export const AUTH = {
   SEND_OTP: "auth/send-otp/",
+  LOGIN: "auth/login/",
   CYBIRD_KYC: "auth/cybird-kyc/",
   CYBIRD_BALANCE: "auth/cybrid/balance/",
   VERIFY: "auth/verify/",
@@ -27,11 +28,13 @@ export const AUTH = {
   ALL_BANKACCOUNT_BALANCE: "auth/all-bankaccount-balance/",
   TRADES_HISTORY: "auth/trades-history/",
   CRYPTO_PRICE_LIST: "auth/Crypto-price-list/",
+  CYBRID_CRYPTO_LIST: "auth/cybrid/prices/",
   BANKACCOUNT_CRYPTO_BALANCE: "auth/bankaccount-crypto-balance/",
   UPLOAD_DOCUMENT_LINK: "auth/upload-document-link/",
   CRYPTO_PURCHASE_QUANTITY: "auth/crypto-purchase-quantity/",
   CRYPTO_SELL_QUANTITY: "auth/crypto-sell-quantity/",
   CRYPTO_TRANSFER: "auth/crypto-transfer/",
+  CRYPTO_BUY: "auth/cybrid/buy/",
   CRYPTO_ADDRESS: "auth/crypto-adress/",
   FORTRESS_CRYPTO_BUY: "auth/fortress/crypto/buy/",
   FORTRESS_CRYPTO_SELL: "auth/fortress/crypto/sell/",
@@ -47,10 +50,17 @@ export const AUTH = {
   REDEEM_REWARD: "auth/reward-redeem/",
   RWA_LIST: "/auth/assets/",
   RWA_ALL_LIST: "/auth/assets/",
+  IRA_HOLDINGS_ALL_LIST: "/auth/user/rwa-bank-balance/",
   BUY_RWA: "/auth/rwa/buy/",
   SELL_RWA: "/auth/rwa/sell/",
   RWA_USER_HOLDINGS: "/auth/user/rwa-holdings/",
   USER_SUPPORT: "/auth/query/",
+  USER_TO_USER_FORTRESS_TRANSFER: "auth/fortreetrust-bankaccount-transfer/",
+  USER_TO_USER_CYBRID_TRANSFER: "auth/cybrid/transfer/",
+  COMBINED_CRYPTO_BALANCE: "auth/CombinedCryptoPrices/?type=",
+  PLAID_ACCESS_TOKEN: "auth/cybrid/plaid-link-token/",
+  CREATE_EXTERNAL_BANK_ACCOUNT: "auth/cybrid/create-external-bank-account/",
+
 };
 // Wallet endpoints
 export const WALLET = {
@@ -72,6 +82,8 @@ export const WALLET = {
 export const KYC = {
   SUBMISSION: "kyc/kyc-submition",
   PLAID_GET_BALANCE: "kyc/plaid-get-balance/",
+  PLAID_LINK_TOKEN: "kyc/plaid-kyc-linktoken",
+  PLAID_EXTERNAL_ACCOUNT: "kyc/plaid-external-account",
 };
 
 // Merchant endpoints

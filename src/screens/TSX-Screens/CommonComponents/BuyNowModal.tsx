@@ -59,6 +59,8 @@ const BuyNowModal: FC<BuyNowModalProps> = ({
     };
   });
 
+  // console.log("Dropdown =>", JSON.stringify(DROPDOWN_LISTS, null, 2));
+
   const styles = customStyles(theme);
   const globalStyles = useGlobalStyles();
 
@@ -99,9 +101,18 @@ const BuyNowModal: FC<BuyNowModalProps> = ({
   };
 
   const onBuyClick = async () => {
+    if (quantity == 0) {
+      useDispatchAction(setErrorMsg(`Quantity should be greater than 0`));
+      return;
+    }
+    if (souceAccount == null) {
+      useDispatchAction(setErrorMsg(`Please select the bank account`));
+      return;
+    }
     let payload = {
       amount: quantity,
       asset_type_id: data?.fortress_id,
+      fund_source: souceAccount == "personal" ? "bank" : souceAccount,
     };
 
     handleBuyRWA(payload as any, {
@@ -115,7 +126,7 @@ const BuyNowModal: FC<BuyNowModalProps> = ({
         const errors = JSON.parse(error.response.data.data.details);
         const errorsfunds = JSON.parse(error.response.data.data.details)?.title;
         // console.log("errors.  =>", errorsfunds);
-        // console.log("error ====>", JSON.stringify(error.response, null, 2));
+        console.log("error ====>", JSON.stringify(error.response, null, 2));
         dispatch(
           setErrorMsg(
             errors.errors.Funds[0] || errorsfunds || `Something went wrong!`
@@ -126,6 +137,8 @@ const BuyNowModal: FC<BuyNowModalProps> = ({
       onSettled: () => {},
     });
   };
+
+  console.log("souceAccount =>", souceAccount);
 
   const pricePerShare = data.price_per_token;
   const fee = 0.0;
@@ -169,9 +182,9 @@ const BuyNowModal: FC<BuyNowModalProps> = ({
         }
       },
       onError: (error: any) => {
+        console.log("errors=>", JSON.stringify(error, null, 2));
         onClose();
         const errors = JSON.parse(error.response.data.data.details);
-        console.log("errors=>", errors);
         useDispatchAction(setErrorMsg(`Something went wrong!`));
       },
       onSettled: () => {},
@@ -191,19 +204,6 @@ const BuyNowModal: FC<BuyNowModalProps> = ({
         }}
         containerStyle={{ justifyContent: "flex-end", alignItems: "center" }}
       >
-        {/* <ConfirmationModalComponent
-            onCancelPress={() => {
-              setShowAddAccountConfirmation(false);
-            }}
-            onConfirmPress={() => {
-              setShowAddAccountConfirmation(false);
-              handleRothBank();
-            }}
-            headerText={"Are you sure you want to add ROTH IRA account?"}
-            descriptionText={
-              "If you really want to open the ROTH IRA account then press confirmotherwsie press cancel."
-            }
-          /> */}
         <Pressable
           style={[
             globalStyles.whiteSheetContainer,
@@ -385,23 +385,25 @@ const BuyNowModal: FC<BuyNowModalProps> = ({
               </View>
             </View>
           )}
-
-          <MyDropdown
-            containerStyles={{ marginBottom: 10 }}
-            label={"Select Bank Account"}
-            placeholder={"Select Bank Account"}
-            data={DROPDOWN_LISTS.filter(
-              (item) => !item.value.toLowerCase().includes("ira")
-            )} // Filter out external accounts if needed
-            // Filter out external accounts if needed
-            value={souceAccount}
-            search={false}
-            itemTextStyle={{
-              fontSize: 14,
-              fontFamily: theme?.typography.fontFamily.montserrat,
-            }}
-            onChange={(item: any) => setsouceAccount(item)}
-          />
+          {!isSellingMode && (
+            <MyDropdown
+              required
+              containerStyles={{ marginBottom: 10 }}
+              label={"Select Bank Account"}
+              placeholder={"Select Bank Account"}
+              data={DROPDOWN_LISTS.filter(
+                (item) => !item.value.toLowerCase().includes("checking")
+              )} // Filter out external accounts if needed
+              // Filter out external accounts if needed
+              value={souceAccount}
+              search={false}
+              itemTextStyle={{
+                fontSize: 14,
+                fontFamily: theme?.typography.fontFamily.montserrat,
+              }}
+              onChange={(item: any) => setsouceAccount(item)}
+            />
+          )}
 
           <View style={styles.row}>
             <CustomText variant={"caption"} style={styles.label}>

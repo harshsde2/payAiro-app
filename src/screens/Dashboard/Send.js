@@ -100,7 +100,7 @@ export default function Send(props) {
     }
   }, [bankLists]);
 
-  console.log("send screen is rendering");
+  console.log("send screen is rendering",requested);
   return (
     <ScreenContainer padding={0}>
       <KeyboardAvoidingView
@@ -259,7 +259,7 @@ export default function Send(props) {
                         bankLists
                           .filter(
                             (bank) =>
-                              !bank.account_type.toLowerCase().includes("ira")
+                              !bank?.account_type?.toLowerCase()?.includes("ira")
                           )
                           .map((item, k) => (
                             <TouchableOpacity

@@ -258,7 +258,7 @@ export default function Receive() {
               Bank Name
             </CustomText>
             <CustomText size={15} fontWeight="semiBold" variant="caption">
-              {bankLists[0].bank_name}
+              {bankLists[0]?.bank_name}
             </CustomText>
           </View>
           <View
@@ -273,7 +273,7 @@ export default function Receive() {
               Routing number
             </CustomText>
             <CustomText size={15} fontWeight="semiBold" variant="caption">
-              {bankLists[0].ref_code}
+              {bankLists[0]?.ref_code}
             </CustomText>
           </View>
           <View
@@ -288,7 +288,7 @@ export default function Receive() {
               Account number
             </CustomText>
             <CustomText size={15} fontWeight="semiBold" variant="caption">
-              {bankLists[0].account_number}
+              {bankLists[0]?.account_number}
             </CustomText>
           </View>
         </View>

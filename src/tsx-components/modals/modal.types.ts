@@ -13,6 +13,7 @@ export interface PinScreenRef {
   toggleBalanceVisibility?: (accountId: any) => void;
   checkUserPin?: () => void;
   setUserPin?: () => void;
+  onClose?: () => void;
 }
 
 export interface TermAndConditionModalProps extends ModalProps {

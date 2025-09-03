@@ -18,21 +18,33 @@ import Biometcric from "../screens/Dashboard/Biometcric";
 import { NAVIGATION_SCREENS } from "./navigationConstants";
 import PDFViewer from "tsx-components/PDFViewer";
 import CybridWebView from "screens/Authentications/CybridWebView";
+import LandingPage from "screens/Authentications/LandingPage";
+import Signup from "screens/Authentications/Signup";
 
 const Stack = createNativeStackNavigator();
 export default function AuthStack() {
   return (
     <Stack.Navigator
       headerMode="none"
-      initialRouteName={NAVIGATION_SCREENS.LOGIN}
+      initialRouteName={NAVIGATION_SCREENS.LANDING_PAGE}
       screenOptions={{
         headerShown: false,
       }}
     >
       <Stack.Screen
         options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.LANDING_PAGE}
+        component={LandingPage}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.LOGIN}
         component={Login}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.SIGNUP}
+        component={Signup}
       />
       <Stack.Screen
         options={{ headerShown: false }}
@@ -105,7 +117,12 @@ export default function AuthStack() {
         component={Dob}
       />
       <Stack.Screen
-        options={{ headerShown: false }}
+        options={{ 
+          headerShown: false ,
+          presentation: "modal",
+          gestureEnabled: true,
+          animationTypeForReplace: "push",
+        }}
         name={NAVIGATION_SCREENS.PDF_VIEWER}
         component={PDFViewer}
       />

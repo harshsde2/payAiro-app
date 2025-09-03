@@ -141,4 +141,65 @@ export type RecentContact = {
   unread_count: number;
 };
 
+// Plaid types
+export interface PlaidLinkTokenResponse {
+  status: boolean;
+  message: string;
+  data: {
+    plaid_link_token: string;
+  };
+}
+
+export interface PlaidAccessTokenRequest {
+  plaid_public_token: string;
+  plaid_account_id: string;
+  name: string;
+}
+
+export interface PlaidAccessTokenResponse {
+  status: boolean;
+  message: string;
+  data: {
+    access_token: string;
+    item_id: string;
+  };
+}
+
+export interface PlaidAccount {
+  id: string;
+  name: string;
+  mask: string;
+  type: string;
+  subtype: string;
+  verification_status: string;
+}
+
+export interface PlaidInstitution {
+  name: string;
+  institution_id: string;
+}
+
+export interface PlaidLinkSuccess {
+  publicToken: string;
+  metadata: {
+    institution: PlaidInstitution;
+    accounts: PlaidAccount[];
+    link_session_id: string;
+    metadataJson: string;
+  };
+}
+
+export interface PlaidLinkExit {
+  error: {
+    display_message: string;
+    error_code: string;
+    error_type: string;
+  } | null;
+  metadata: {
+    status: string;
+    link_session_id: string;
+    request_id: string;
+  };
+}
+
 

@@ -27,6 +27,7 @@ import {
 import { sendOTP } from "../../services/Services";
 import { useLogin, useStepCount } from "query/hooks/useAPIAuth";
 import MyDropdown from "tsx-components/MyDropdown";
+import HeaderTitle from "components/HeaderTitle";
 
 export default function Login() {
   const navigation = useNavigation();
@@ -56,10 +57,10 @@ export default function Login() {
       useDispatchAction(setErrorMsg("E-Mail Fields cannot be empty"));
       return;
     }
-    if (!selectedMethod.trim()) {
-      useDispatchAction(setErrorMsg("Location Fields cannot be empty"));
-      return;
-    }
+    // if (!selectedMethod.trim()) {
+    //   useDispatchAction(setErrorMsg("Location Fields cannot be empty"));
+    //   return;
+    // }
     if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
       useDispatchAction(setErrorMsg("Please enter valid email address"));
       return;
@@ -80,30 +81,28 @@ export default function Login() {
 
     setButtonDisabled(true);
 
-    login(
-      { email: email.trim().toLowerCase(), location: selectedMethod } as any,
-      {
-        onSuccess: (data) => {
-          setButtonDisabled(false);
-          if (data?.status && data) {
-            useDispatchAction(setSuccessMsg("OTP has been sent to email"));
-            (navigation as any).navigate(SCREENS.OTP, {
-              email,
-            });
-          } else {
-            useDispatchAction(setErrorMsg("Email Address Already Exists"));
-          }
-        },
-        onError: (error) => {
-          console.log(error);
-          setButtonDisabled(false);
-        },
-      }
-    );
+    login({ email: email.trim().toLowerCase() } as any, {
+      onSuccess: (data) => {
+        setButtonDisabled(false);
+        if (data?.status && data) {
+          useDispatchAction(setSuccessMsg("OTP has been sent to email"));
+          (navigation as any).navigate(SCREENS.OTP, {
+            email,
+          });
+        } else {
+          useDispatchAction(setErrorMsg("Email Address Already Exists"));
+        }
+      },
+      onError: (error) => {
+        console.log(error);
+        setButtonDisabled(false);
+      },
+  });
   };
 
   return (
     <ScreenContainer avoidKeyboard scrollable={true} padding={0}>
+      <HeaderTitle title="Sign In" leftIcon="true" />
       <View style={{ flex: 1 }}>
         <AuthHeader showAuthLogo={true} />
       </View>
@@ -139,7 +138,7 @@ export default function Login() {
           </CustomText>
         </View>
         <View style={styles.fieldAndCheckboxContainer}>
-          <MyDropdown
+          {/* <MyDropdown
             required={true}
             label={"Select Your Location"}
             placeholder={"Select Your Location"}
@@ -152,7 +151,7 @@ export default function Login() {
             }}
             onChange={(item) => setSelectedMethod(item)}
             maxHeight={150}
-          />
+          /> */}
           <TextInputField
             placeholder={"joe@gmail.com"}
             value={email}

@@ -96,18 +96,17 @@ export interface FilteredTransactions {
   end_date: DateRangeOption;
 }
 
+export interface CategoryPercentages {
+  [key: string]: {
+    percentage?: number;
+    color?: string;
+  };
+}
+
 export default function Transaction() {
   const { walletData, tokens, isCrypto } = useSelectorAction();
   const { theme } = useTheme();
   const styles = customStyles(theme);
-  const {
-    data: AllTransactions,
-    isLoading: isLoadingAllTransactions,
-    error: allTransactionsError,
-    isSuccess: AllTransactionsSuccess,
-    refetch: refetchAllTransactions,
-    isFetched: isFetchedAllTransactions,
-  } = useTransactions();
 
   const {
     data: AllTradesHistory,
@@ -148,30 +147,13 @@ export default function Transaction() {
     data: filteredTransactionsData,
   } = useFilteredTransactions(URLString);
 
-  const { filteredTxData } = filteredTransactionsData?.data?.transactions;
-
   const navigation = useNavigation<any>();
   const isFocused = useIsFocused();
-
-  // Type definitions
-  interface TransactionItem {
-    status?: string;
-    created_at?: string;
-    order_id?: string;
-    [key: string]: any;
-  }
 
   interface CryptoTxItem {
     created_at?: string;
     timestamp?: string;
     [key: string]: any;
-  }
-
-  interface CategoryPercentages {
-    [key: string]: {
-      percentage?: number;
-      color?: string;
-    };
   }
 
   interface MerchantTransaction {
@@ -182,13 +164,6 @@ export default function Transaction() {
   interface UserToUserRequest {
     type?: string;
     [key: string]: any;
-  }
-
-  interface AllTransactionsData {
-    category_percentages?: CategoryPercentages;
-    total_transaction_amount?: number;
-    merchantTransactions?: TransactionItem[];
-    userToUserTransactions?: TransactionItem[];
   }
 
   interface AllTradesHistoryData {
@@ -210,31 +185,12 @@ export default function Transaction() {
     received_pending_requests?: UserToUserRequest[];
   }
 
-  type TabType = "1" | "2";
-
-  const [txLists, setTxLists] = useState<TransactionItem[] | any>([]);
   const [merchentLists, setMerchentLists] = useState<MerchantTransaction[]>([]);
   const [contactsLists, setContactsLists] = useState<UserToUserRequest[]>([]);
-  const [requestLists, setRequestLists] = useState<any[]>([]);
-  const [activeTab, setActiveTabState] = useState<TabType>("1");
-  const [activeTab2, setActiveTab2State] = useState<TabType>("1");
   const [web3TxLists, setweb3TxLists] = useState<CryptoTxItem[]>([]);
-  const [txListsWeb3, settxListsWeb3] = useState<
-    CryptoTxItem[] | TransactionItem[] | any
-  >([]);
-  const [formattedDataTx, setformattedDataTx] = useState<
-    CategoryPercentages | undefined
-  >(undefined);
-  const [totalAmount, settotalAmount] = useState<any>(0);
+
   const [showFilter, setShowFilter] = useState(false);
   const [searchText, setSearchText] = useState("");
-
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedFilterType, setSelectedFilterType] = useState<string | null>(
-    null
-  );
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
 
   // Dispatch action when screen is focused
   useEffect(() => {
@@ -244,12 +200,6 @@ export default function Transaction() {
   }, [isFocused]);
 
   useEffect(() => {
-    if (AllTransactionsSuccess && isFetchedAllTransactions) {
-      getTxLists(AllTransactions.data);
-    }
-    // if (filteredTxData && isFetchedFilteredTransactions) {
-    //   getTxLists(filteredTxData);
-    // }
     if (AllTradesHistorySuccess && isFetchedAllTradesHistory) {
       getCryptoTxs(AllTradesHistory.data);
     }
@@ -260,9 +210,7 @@ export default function Transaction() {
       getContactRequests(AllPendingRequests?.data);
     }
   }, [
-    AllTransactions,
     AllTradesHistory,
-    AllTransactionsSuccess,
     AllTradesHistorySuccess,
     AllUserPaymentRequestsSuccess,
     AllUserPaymentRequests,
@@ -270,35 +218,6 @@ export default function Transaction() {
     isFetchedAllPendingRequests,
     isFetchedFilteredTransactions,
   ]);
-
-  // console.log(isCrypto);
-  // Handle tab switching
-  useEffect(() => {
-    if (activeTab === "1") {
-      setRequestLists(merchentLists);
-    } else if (activeTab === "2") {
-      setRequestLists(contactsLists);
-    }
-  }, [activeTab, merchentLists, contactsLists]);
-
-  useEffect(() => {
-    if (activeTab2 === "1") {
-      settxListsWeb3(txLists);
-    } else if (activeTab2 === "2") {
-      settxListsWeb3(web3TxLists);
-    }
-  }, [activeTab2, txLists, web3TxLists]);
-
-  const getTxLists = async (data: AllTransactionsData) => {
-    setformattedDataTx(data?.category_percentages ?? {});
-    settotalAmount(data?.total_transaction_amount ?? 0);
-    setTxLists(
-      [
-        ...(data?.merchantTransactions ?? []),
-        ...(data?.userToUserTransactions ?? []),
-      ].filter((i) => i?.status === "success" || i?.status === "completed")
-    );
-  };
 
   const getCryptoTxs = async (data: AllTradesHistoryData | any) => {
     setweb3TxLists([
@@ -343,13 +262,6 @@ export default function Transaction() {
 
   const getContactRequests = async (data: AllPendingRequestsData | any) => {
     setContactsLists(data?.received_pending_requests ?? []);
-  };
-
-  const handleTabSwitch = (tab: TabType) => {
-    setActiveTabState(tab);
-  };
-  const handleTabSwitch2 = (tab: TabType) => {
-    setActiveTab2State(tab);
   };
 
   const formattedData = (e: CategoryPercentages | undefined) => {
@@ -397,10 +309,6 @@ export default function Transaction() {
       }
     }
   };
-  // console.log(
-  //   "formattedDataTx =>",
-  //   JSON.stringify(formattedData(formattedDataTx), null, 2)
-  // );
 
   const [filteredTransactions, setFilteredTransactions] =
     useState<FilteredTransactions>({
@@ -511,24 +419,6 @@ export default function Transaction() {
   const handleApplyFilters = () => {
     let queryParams = [];
 
-    // if (selectedCategories.length > 0) {
-    //   queryParams.push(`categories=${selectedCategories.join(",")}`);
-    // }
-
-    // if (selectedFilterType) {
-    //   queryParams.push(`filter_type=${selectedFilterType}`);
-    // }
-
-    // if (startDate && endDate) {
-    //   queryParams.push(`start_date=${startDate}`);
-    //   queryParams.push(`end_date=${endDate}`);
-    // }
-
-    // const finalQuery =
-    //   queryParams.length > 0 ? `?${queryParams.join("&")}` : "";
-
-    // setURLString(finalQuery);
-    // refetchFilteredTransactions(); // force fetch with new filters
     if (
       filteredTransactions.start_date.isSelected &&
       filteredTransactions.end_date.isSelected
@@ -577,14 +467,16 @@ export default function Transaction() {
     refetchFilteredTransactions(); // force fetch with new filters
     setShowFilter(false);
 
-    // console.log("finalQuery =>", JSON.stringify(finalQuery, null, 2));
+    console.log("finalQuery =>", JSON.stringify(finalQuery, null, 2));
   };
 
+  const { category_percentages, total_transactions } =
+    filteredTransactionsData?.data || {};
+
   console.log(
-    "filteredTransactionsData =>",
-    JSON.stringify(filteredTransactionsData?.data.transactions, null, 2)
+    "web3TxLists =>",
+    JSON.stringify(web3TxLists, null, 2)
   );
-  console.log("txLists =>", JSON.stringify(txLists, null, 2));
 
   return (
     <ScreenContainer
@@ -613,6 +505,32 @@ export default function Transaction() {
             handleApplyFilters();
           }}
           onCancel={() => {
+            setFilteredTransactions({
+              timeRange: filteredTransactions.timeRange.map((item) => ({
+                ...item,
+                isSelected: false,
+              })),
+              categories: filteredTransactions.categories.map((item) => ({
+                ...item,
+                isSelected: false,
+              })),
+              filter_type: filteredTransactions.filter_type.map((item) => ({
+                ...item,
+                isSelected: false,
+              })),
+              start_date: {
+                ...filteredTransactions.start_date,
+                isSelected: false,
+                value: "",
+              },
+              end_date: {
+                ...filteredTransactions.end_date,
+                isSelected: false,
+                value: "",
+              },
+            });
+            handleApplyFilters();
+            setURLString("");
             setShowFilter(false);
           }}
         />
@@ -637,18 +555,23 @@ export default function Transaction() {
                 value={searchText}
               />
             </View>
-            <SvgIcons.FilterIcon
-              style={{
-                justifyContent: "center",
-                alignItems: "center",
-                marginRight: 5,
-              }}
-              width={45}
-              height={45}
-              onPress={() => {
-                setShowFilter(true);
-              }}
-            />
+            {
+              isCrypto && (
+                
+                <SvgIcons.FilterIcon
+                  style={{
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginRight: 5,
+                  }}
+                  width={45}
+                  height={45}
+                  onPress={() => {
+                    setShowFilter(true);
+                  }}
+                />
+              )
+            }
           </View>
           <View
             style={{
@@ -665,8 +588,8 @@ export default function Transaction() {
                 {/* @ts-ignore */}
                 <CustomPieChart
                   isTx={true}
-                  amount={totalAmount}
-                  alloCationLists={formattedData(formattedDataTx) ?? []}
+                  amount={total_transactions}
+                  alloCationLists={formattedData(category_percentages) ?? []}
                 />
               </DashboardSection>
             )}
@@ -701,66 +624,9 @@ export default function Transaction() {
               title="Recent Transactions"
               style={{ paddingBottom: 160 }}
             >
-              {/* {isCrypto &&
-                txLists &&
-                txLists.length > 0 &&
-                txLists
-                  ?.sort((a: any, b: any) => {
-                    const dateA = a.created_at
-                      ? new Date(a.created_at).getTime()
-                      : 0;
-                    const dateB = b.created_at
-                      ? new Date(b.created_at).getTime()
-                      : 0;
-                    return dateB - dateA;
-                  })
-                  .map((item: any, key: any) => (
-                    <View key={key}>
-                      <TransactionCard
-                        item={item}
-                        isMerchent={item?.order_id ? true : false}
-                        isCrypto={item?.order_id ? true : false}
-                      />
-                    </View>
-                  ))}
-              {!isCrypto && web3TxLists.length > 0 ? (
-                web3TxLists
-                  ?.sort((a, b) => {
-                    const dateA =
-                      a?.created_at || a?.timestamp
-                        ? new Date(
-                            a?.created_at || (a?.timestamp as string)
-                          ).getTime()
-                        : 0;
-                    const dateB =
-                      b?.created_at || b?.timestamp
-                        ? new Date(
-                            b?.created_at || (b?.timestamp as string)
-                          ).getTime()
-                        : 0;
-                    return dateB - dateA;
-                  })
-                  ?.map((i, k) => (
-                    <TransactionCard
-                      isCrypto={true}
-                      isMerchent={false}
-                      item={i}
-                      key={k}
-                    />
-                  ))
-              ) : (
-                <Text
-                  style={{
-                    fontFamily: Fonts.bold,
-                    color: "#fff",
-                    textAlign: "center",
-                    marginTop: 100,
-                  }}
-                >
-                  No Transaction Found
-                </Text>
-              )} */}
-              {filteredTransactionsData?.data?.transactions?.length > 0 ? (
+              {/* Fiat Transactions */}
+              {isCrypto && filteredTransactionsData &&
+              filteredTransactionsData?.data?.transactions?.length > 0 && (
                 filteredTransactionsData.data.transactions.map(
                   (item: any, key: any) => (
                     <TransactionCard
@@ -771,18 +637,22 @@ export default function Transaction() {
                     />
                   )
                 )
-              ) : (
-                <Text
-                  style={{
-                    fontFamily: Fonts.bold,
-                    color: "#fff",
-                    textAlign: "center",
-                    marginTop: 100,
-                  }}
-                >
-                  No Transaction Found
-                </Text>
               )}
+
+              {/* Crypto Transactions */}
+              {!isCrypto && web3TxLists &&
+              web3TxLists?.length > 0 && (
+                web3TxLists.map(
+                  (item: any, key: any) => (
+                    <TransactionCard
+                      item={item}
+                      key={key}
+                      isMerchent={item?.order_id}
+                      isCrypto={isCrypto}
+                    />
+                  )
+                )
+              ) }
             </DashboardSection>
           </View>
         </ScrollView>

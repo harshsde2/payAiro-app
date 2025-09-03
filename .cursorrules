@@ -1,0 +1,46 @@
+rules:
+  # ==============================
+  # COMPONENT & DIRECTORY STRUCTURE
+  # ==============================
+  - Always use UI components only from `src/components/common-components` when available.
+  - Always use variables and colors from `src/styles` when available. And also use `theme` state from for colors , spacing, typography from `src/styles/ThemeContext`
+  - If a new reusable UI component is needed, create it inside `src/components/common-components/`.
+  - If a new Screen needed to becreate it inside `src/screens/TSX-Screens` and mention it in `src/navigations/AppStack.js` with `src/navigations/navigationConstants.js`.
+  - If a component is specific (not reusable/common), create it inside `src/components/general-components/`.
+  - Don't create Document file for a component which is created by you util I give you.
+
+  # ==============================
+  # LANGUAGE & SYNTAX
+  # ==============================
+  - Use **TypeScript only**, never JavaScript.
+  - Always use `async/await`, never `.then()`.
+
+  # ==============================
+  # COMPONENT STYLE
+  # ==============================
+  - All React components must be **functional components** with hooks.
+  - Do not use inline styles. 
+    - If styles are needed, write them in `src/styles/GlobalStyles.ts`.
+    - If they are reusable/common styles, put them in `src/styles/CommonStyles.ts`. 
+    - Create these files if they do not exist.
+
+  # ==============================
+  # TYPES & INTERFACES
+  # ==============================
+  - Do not define `types` or `interfaces` inside component files.
+    - Each folder must have a `types.ts` file for local types.
+    - Example folder structure:
+        ```
+        current-folder/
+          ├── CurrentComponent.tsx
+          ├── types.ts
+        ```
+
+  # ==============================
+  # NAMING CONVENTIONS
+  # ==============================
+  - Use **PascalCase** for React components and file names of components (e.g., `LoginForm.tsx`).
+  - Use **camelCase** for variables, functions, and non-component file names (e.g., `useAuth.ts`, `formatDate.ts`).
+  - Use **UPPER_CASE** for constants (e.g., `API_URL`, `DEFAULT_TIMEOUT`).
+  - Use `I` prefix for interfaces (e.g., `IUser`, `IProfileData`).
+  - Type aliases should be written in PascalCase (e.g., `UserId`, `ThemeColor`).

@@ -37,7 +37,7 @@ export default function Name(props: any) {
   const stepcount = "2";
 
   const globalStyles = useGlobalStyles();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const termsAndConditionRef = useRef<any>(null);
 
   const { theme } = useTheme();
@@ -50,6 +50,7 @@ export default function Name(props: any) {
   const [lname, setlname] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [checked, setchecked] = useState(false);
+  const [checkedCybridUserAgreement, setcheckedCybridUserAgreement] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [countryCode, setCountryCode] = useState({
     country: "+1",
@@ -89,6 +90,11 @@ export default function Name(props: any) {
       return;
     }
 
+    if (!checkedCybridUserAgreement) {
+      useDispatchAction(setErrorMsg("Cybrid User Agreement is required"));
+      return;
+    }
+
     console.log("handleForm called with:");
     const payload = new FormData();
     payload.append("name", fname);
@@ -102,7 +108,7 @@ export default function Name(props: any) {
         setIsPending(false);
         getCurrentStep();
         useDispatchAction(setUserData(datas?.data?.data));
-        console.log("datas =>", JSON.stringify(datas, null, 2));
+        // console.log("datas =>", JSON.stringify(datas, null, 2));
         if (datas && datas?.status) {
           useDispatchAction(
             setSuccessMsg("Name & PayAiro Has Been Updated Successfully")
@@ -120,7 +126,7 @@ export default function Name(props: any) {
         }
       },
       onError: (error: any) => {
-        console.log("error =>", JSON.stringify(error, null, 2));
+        console.log("error =>", JSON.stringify(error.response, null, 2));
         setIsPending(false);
 
         if (error.response.data.data.errors.mobile_number) {
@@ -136,6 +142,14 @@ export default function Name(props: any) {
         }
         // useDispatchAction(setErrorMsg("Failed to submit details"));
       },
+    });
+  };
+
+
+  const handlePDFViewCybridUserAgreement = () => {
+    navigation.navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
+      url: require("../../assets/pdf/Cybrid_User_Agreement.pdf"),
+      isFileFromLocal: true,
     });
   };
 
@@ -251,6 +265,40 @@ export default function Name(props: any) {
               >
                 {" "}
                 E-Sign Disclosure{" "}
+              </Text>
+            </CustomText>
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => {
+              setcheckedCybridUserAgreement(!checkedCybridUserAgreement);
+              // 
+            }}
+            style={styles.termsAndConditionContainer}
+          >
+            <SvgXml
+              xml={checkedCybridUserAgreement ? SVGChecked : SVGUnChecked}
+              // style={{ marginTop: 2, marginRight: 5, }}
+              width={15}
+              height={15}
+            />
+            <CustomText
+              // variant={"caption"}
+              style={{
+                flex: 1,
+                flexWrap: "wrap",
+              }}
+            >
+              <CustomText variant={"caption"}>
+                By clicking the button you agree with the
+              </CustomText>
+
+              <Text
+                onPress={() => handlePDFViewCybridUserAgreement()}
+                style={{ fontWeight: "700" }}
+              >
+                {" "}
+               Cybrid User Agreement{" "}
               </Text>
             </CustomText>
           </TouchableOpacity>

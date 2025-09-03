@@ -7,9 +7,7 @@ import React, {
   useState,
 } from "react";
 import {
-  ActivityIndicator,
   BackHandler,
-  Button,
   FlatList,
   Image,
   Modal,
@@ -31,40 +29,26 @@ import StoryLists from "components/StoryLists";
 import TransactionCard from "components/TransactionCard";
 import Fonts from "constants/Fonts";
 import { SCREENS } from "constants/SCREENS";
+import { REWARDS } from "constants/constant";
 import { BASE_URL } from "constants/mockData";
 import { SvgIcons } from "constants/svgs";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import {
   bankKeys,
   useAddTraditionalIRABankAccount,
-  useAllBankAccounts,
   useBankBalances,
   useCryptoBalance,
-  useCryptoTrades,
-  useCybridBankBalances,
   useDashBoardFiatData,
   useGetReward,
-  useRecentContacts,
   useRedeemReward,
-  userKeys,
-  useTransactions,
   useWalletDashboardData,
-  useWalletDetails,
+  userKeys,
 } from "query/hooks";
-import {
-  useGetAllRWA,
-  useGetRWACategory,
-  useGetUserHoldings,
-} from "query/hooks/useRWA";
 import { queryClient } from "query/queryClient";
+import DeviceInfo from "react-native-device-info";
 import { useDispatch, useSelector } from "react-redux";
 import { VIEW_TYPE } from "screens/TSX-Screens/RWA/RWA";
-import { getPin, setPin } from "services/Auth";
-import {
-  addbankAccountRoth,
-  getPinFromSev,
-  uploadKYC,
-} from "services/Services";
+import { addbankAccountRoth, uploadKYC } from "services/Services";
 import { STORAGE_KEYS, setItem } from "storage/mmkv";
 import AddAndLinkAcountCard from "tsx-components/AddAndLinkAcountCard";
 import ConfirmationModalComponent from "tsx-components/ConfirmationModalComponent";
@@ -79,13 +63,10 @@ import CommonModal from "tsx-components/modals/CommonModal";
 import PinScreen from "tsx-components/modals/PinScreen";
 import RewardModal from "tsx-components/modals/RewardModal";
 import { ScreenContainer } from "../../HOC";
-import { SVGRef, SVGVoucher } from "../../constants/images";
 import {
   setBankLists,
   setBankbalances,
-  setCardSwitchDetails,
   setCybridBankbalances,
-  setCybridBanksList,
   setErrorMsg,
   setShowGuide,
   setShowLoader,
@@ -93,12 +74,11 @@ import {
   setSuccessMsg,
   setTotalDisbursable,
   setTotalDisbursablePending,
-  setWalletData,
 } from "../../redux/slices/authenticationSlice";
 import { useTheme } from "../../styles/ThemeContext";
 import { Card, CustomText, DashboardHeader } from "../../utils/moduleAlias";
-import { REWARDS } from "constants/constant";
-import DeviceInfo from "react-native-device-info";
+import useSelectorAction from "hooks/useSelectorAction";
+import PlaidLinkButton from "tsx-components/PlaidLinkButton";
 
 // Lazy load non-critical components
 const LazyBankModal = lazy(() => import("components/BankModal"));
@@ -182,7 +162,7 @@ export const useApiCall = <T,>(
           }
 
           // Wait before retrying (exponential backoff)
-          await new Promise((resolve) =>
+          await new Promise((resolve: any) =>
             setTimeout(resolve, 1000 * Math.pow(2, attempts - 1))
           );
         }
@@ -436,6 +416,7 @@ const CryptoRewardsSection = React.memo(() => {
 });
 // No props needed for this component
 const CryptoRWASection = React.memo(({ data, navigation }: any) => {
+  const { walletData } = useSelectorAction() as any;
   const onPress = (item: any) => {
     const name = item?.name?.toLowerCase();
 
@@ -455,7 +436,11 @@ const CryptoRWASection = React.memo(({ data, navigation }: any) => {
         break;
 
       case categories.Crypto.toLowerCase():
+        // if(walletData?.fortress){
+        //   navigation.navigate(NAVIGATION_SCREENS.CRYPTO_SCREEN);
+        // } else {
         navigation.navigate(NAVIGATION_SCREENS.CRYPTO_SCREEN);
+        // }
         break;
 
       default:
@@ -563,17 +548,12 @@ const NewDashboard = () => {
   // Get data from Redux store
   const {
     isCrypto,
-    selectedCrypto,
     bankBalance,
     walletData,
     tokens,
     bankLists,
-    cybridBanksList,
-    CardSwitchDetails,
-    mxExternalAccountDetails,
     showRedeemReward,
     showGuide,
-    showLoader,
   } = useSelector((state: any) => state.authenticationSlice);
 
   const isTablet = DeviceInfo.isTablet();
@@ -617,6 +597,8 @@ const NewDashboard = () => {
 
   const [refreshing, setRefreshing] = useState(false);
   const [souceAccount, setsouceAccount] = useState("");
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [isPending, setIsPending] = useState(false);
 
   const focus = useIsFocused();
 
@@ -667,7 +649,7 @@ const NewDashboard = () => {
     ) ?? [];
 
   // console.log("dataaaa =>", JSON.stringify(walletData, null, 2));
-  // console.log("token =>", tokens.access);
+  console.log("token =>", tokens.access);
 
   const {
     data: bankBalanceData,
@@ -678,19 +660,21 @@ const NewDashboard = () => {
     isSuccess: isBankBalanceDataSuccess,
   } = useBankBalances();
 
-  const {
-    data: CybridBankBalances,
-    isLoading: isLoadingCybridBankBalances,
-    error: CybridBankBalancesError,
-    refetch: refetchCybridBankBalances,
-    isFetched: isCybridBankBalancesFetched,
-    isSuccess: isCybridBankBalancesSuccess,
-  } = useCybridBankBalances();
+  // console.log("bankBalanceData =>", JSON.stringify(bankBalanceData, null, 2));
 
-  console.log(
-    JSON.stringify(CybridBankBalances, null, 2),
-    "CybridBankBalances"
-  );
+  // const {
+  //   data: CybridBankBalances,
+  //   isLoading: isLoadingCybridBankBalances,
+  //   error: CybridBankBalancesError,
+  //   refetch: refetchCybridBankBalances,
+  //   isFetched: isCybridBankBalancesFetched,
+  //   isSuccess: isCybridBankBalancesSuccess,
+  // } = useCybridBankBalances();
+
+  // console.log(
+  //   JSON.stringify(WalletDashboardData, null, 2),
+  //   "WalletDashboardData"
+  // );
 
   const {
     data: CryptoBalance,
@@ -701,9 +685,14 @@ const NewDashboard = () => {
   } = useCryptoBalance();
 
   useEffect(() => {
+    if (pinScreenRef.current) {
+      pinScreenRef.current?.onClose();
+    }
+
     if (CryptoBalance) {
       const cryptoAssets = (CryptoBalance as any)?.data?.data;
 
+      // console.log("cryptoAssets =>", JSON.stringify(cryptoAssets, null, 2));
       if (!cryptoAssets) return;
 
       // console.log("cryptoAssets =>", cryptoAssets);
@@ -766,27 +755,17 @@ const NewDashboard = () => {
     }
   }, [isBankBalanceDataFetched, isBankBalanceDataSuccess]);
 
-  useEffect(() => {
-    if (
-      isCybridBankBalancesFetched &&
-      isCybridBankBalancesSuccess &&
-      Object.keys(CybridBankBalances).length > 0
-    ) {
-      dispatch(setCybridBankbalances(CybridBankBalances));
-    }
-  }, [isCybridBankBalancesFetched, isCybridBankBalancesSuccess]);
+  // useEffect(() => {
+  //   if (
+  //     isCybridBankBalancesFetched &&
+  //     isCybridBankBalancesSuccess &&
+  //     Object.keys(CybridBankBalances).length > 0
+  //   ) {
+  //     dispatch(setCybridBankbalances(CybridBankBalances));
+  //   }
+  // }, [isCybridBankBalancesFetched, isCybridBankBalancesSuccess]);
 
   useEffect(() => {
-    if (
-      !isErrorDashBoardData &&
-      isDashBoardDataFetched &&
-      DashBoardData?.data.bank
-    ) {
-      dispatch(
-        setCybridBanksList([...DashBoardData?.data?.bank?.cybrid_accounts])
-      );
-    }
-
     if (
       !isErrorDashBoardData &&
       isDashBoardDataFetched &&
@@ -798,6 +777,7 @@ const NewDashboard = () => {
           ...DashBoardData?.data?.bank?.roth_ira_accounts,
           ...DashBoardData?.data?.bank?.traditional_ira_accounts,
           ...DashBoardData?.data?.bank?.external_accounts,
+          ...DashBoardData?.data?.bank?.cybrid_accounts,
         ])
       );
     }
@@ -1069,7 +1049,6 @@ const NewDashboard = () => {
       },
     });
   };
-  // console.log("Final sorted contacts:", JSON.stringify(contactLists, null, 2));
 
   const handleRothBank = async () => {
     try {
@@ -1161,6 +1140,9 @@ const NewDashboard = () => {
       .slice(0, 5);
   }, [web3TxLists]);
 
+  // console.log("sortedWeb3TxLists =>", JSON.stringify(sortedWeb3TxLists, null, 2));
+  // console.log("sortedTxLists =>", JSON.stringify(sortedTxLists, null, 2));
+
   // Memoize banking data processing
   const processedBankAccounts = useMemo(() => {
     if (!bankLists) return [];
@@ -1181,25 +1163,18 @@ const NewDashboard = () => {
     }));
   }, [bankLists, bankBalance]);
 
-  const processedCybridBankAccounts = useMemo(() => {
-    if (!cybridBanksList) return [];
-
-    return cybridBanksList.map((item: any) => ({
-      ...item,
-      displayName: item?.bank_name ?? item?.name,
-      accountType: item?.account_type ?? "Personal",
-      address: item?.bank_address ?? item?.official_name,
-      accountNumber: item?.account_number ?? item?.account_id,
-      balance: "",
-    }));
-  }, [cybridBanksList]);
-
-  // console.log("souceAccount =>", JSON.stringify(souceAccount, null, 2));
+//  console.log("processedBankAccounts =>", JSON.stringify(processedBankAccounts, null, 2));
 
   const handleEyeClick = (account_id: string) => {
     if (pinScreenRef.current) {
       pinScreenRef.current.toggleBalanceVisibility(account_id);
     }
+  };
+
+  const isPendingTransactions = () => {
+    setTimeout(() => {
+      setIsPending(true);
+    }, 2000);
   };
 
   return (
@@ -1208,6 +1183,28 @@ const NewDashboard = () => {
         paddingHorizontal: 0,
       }}
     >
+      {/*
+       <Button
+        title="Go to Result"
+        onPress={() => {
+          // Handle navigation to result screen
+          setShowResultModal(true);
+          isPendingTransactions();
+        }}
+      />
+      <CommonModal
+        isVisible={showResultModal}
+        onClose={() => setShowResultModal(false)}
+      >
+        <ResultModal
+          isPending={isPending}
+          onClose={() => {
+            setShowResultModal(false);
+            setIsPending(false);
+          }}
+          data={dummyData}
+        />
+      </CommonModal> */}
       {/* Modal container with high z-index */}
       <View
         style={{
@@ -1485,6 +1482,7 @@ const NewDashboard = () => {
             />
           </View>
         )} */}
+
         {isDashBoardDataPending ? (
           <CryptoCardSkeleton
             shimmerColor="rgba(255, 255, 255, 0.6)"
@@ -1496,60 +1494,159 @@ const NewDashboard = () => {
           <View style={{ width: "100%" }}>
             {isTablet ? (
               <View style={{ width: 400 }}>
-                <DashboardCard />
+                <DashboardCard
+                  refetchBankBalanceData={refetchBankBalanceData}
+                />
               </View>
             ) : (
               <View style={{ width: "100%" }}>
-                <DashboardCard />
+                <DashboardCard
+                  refetchBankBalanceData={refetchBankBalanceData}
+                />
               </View>
             )}
           </View>
         )}
-        <View style={{ marginHorizontal: 15 }}>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "flex-start",
-              alignItems: "center",
-              marginVertical: 20,
-            }}
-          >
-            <SvgIcons.SendIcon
-              style={{ marginRight: 15 }}
-              onPress={() => {
-                navigation.navigate(
-                  !isCrypto
-                    ? NAVIGATION_SCREENS.SEND_TOKEN
-                    : NAVIGATION_SCREENS.SEND,
-                  {
-                    requested: false,
-                  }
-                );
+        {isCrypto ? (
+          <View style={{ marginHorizontal: 15 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-start",
+                alignItems: "center",
+                marginVertical: 20,
               }}
-            />
-            <SvgIcons.RecieveIcon
-              style={{ marginRight: 15 }}
-              onPress={() =>
-                navigation.navigate(
-                  !isCrypto
-                    ? NAVIGATION_SCREENS.RECEIVE_TOKEN
-                    : NAVIGATION_SCREENS.RECEIVE
-                )
-              }
-            />
-            <SvgIcons.AddBalanceIcon
-              // xml={!isCrypto ? SVGHolding : SVGAdd}
-              style={{ marginBottom: 20 }}
-              onPress={() => {
-                if (!isCrypto) {
-                  navigation.navigate("CryptoDashboard");
-                } else {
-                  navigation.navigate(NAVIGATION_SCREENS.ADD_BALANCE);
+            >
+              <SvgIcons.SendIcon
+                style={{ marginRight: 15 }}
+                onPress={() => {
+                  navigation.navigate(
+                    !isCrypto
+                      ? NAVIGATION_SCREENS.SEND_TOKEN
+                      : NAVIGATION_SCREENS.SEND,
+                    {
+                      requested: false,
+                    }
+                  );
+                }}
+              />
+              <SvgIcons.RecieveIcon
+                style={{ marginRight: 15 }}
+                onPress={() =>
+                  navigation.navigate(
+                    !isCrypto
+                      ? NAVIGATION_SCREENS.RECEIVE_TOKEN
+                      : NAVIGATION_SCREENS.RECEIVE
+                  )
                 }
-              }}
-            />
+              />
+              <SvgIcons.AddBalanceIcon
+                // xml={!isCrypto ? SVGHolding : SVGAdd}
+                style={{ marginBottom: 20 }}
+                onPress={() => {
+                  if (walletData?.fortress) {
+                    if (!isCrypto) {
+                      navigation.navigate("CryptoDashboard");
+                    } else {
+                      navigation.navigate(NAVIGATION_SCREENS.ADD_BALANCE);
+                    }
+                  } else {
+                    navigation.navigate(NAVIGATION_SCREENS.ADD_BALANCE);
+                  }
+                }}
+              />
+            </View>
           </View>
-        </View>
+        ) : (
+          <View style={{ marginHorizontal: 15 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-start",
+                alignItems: "center",
+                marginVertical: 20,
+              }}
+            >
+              <SvgIcons.SendAndReceive
+                style={{ marginRight: 15 }}
+                onPress={() => {
+                  // if (walletData?.fortress) {
+                  //   navigation.navigate(NAVIGATION_SCREENS.SEND_TOKEN, {
+                  //     requested: false,
+                  //   });
+                  // } else {
+                  navigation.navigate(NAVIGATION_SCREENS.SEND_AND_RECEIVE);
+                  // }
+                }}
+              />
+              <SvgIcons.BuyAndSell
+                style={{ marginRight: 15 }}
+                onPress={
+                  () => {
+                    if (walletData?.fortress) {
+                      navigation.navigate(
+                        NAVIGATION_SCREENS.CRYPTO_SCREEN
+                      );
+                    } else {
+                      navigation.navigate(NAVIGATION_SCREENS.CRYPTO_SCREEN);
+                    }
+                  }
+                  // navigation.navigate(
+                  //   !isCrypto
+                  //     ? NAVIGATION_SCREENS.RECEIVE_TOKEN
+                  //     : NAVIGATION_SCREENS.RECEIVE
+                  // )
+                }
+              />
+              {!walletData?.fortress ? (
+                <TouchableOpacity
+                  onPress={() => {
+                    navigation.navigate(NAVIGATION_SCREENS.COMING_SOON,{
+                      title:'RWA Holdings'
+                    });
+                  }}
+                 style={[{
+                  width: 179,
+                  flexDirection:'row',
+                  justifyContent:'flex-start',
+                  gap:10,
+                  alignItems:'center',
+                  backgroundColor:theme.colors.palette.green700,
+                  padding:5,
+                  borderRadius:theme.spacing.spacing[10],
+                  marginRight:15,
+                  marginBottom:20
+                  // marginVertical:10
+                },]}>
+
+                  <SvgIcons.RWAHoldings
+                   
+                    />
+                    <CustomText
+                      variant={"body2"}
+                      size={13}
+                      fontWeight={'semiBold'}
+                      color={theme.colors.palette.white}
+                    >
+                      RWA Holdings
+                    </CustomText>
+                </TouchableOpacity>
+              )
+              :
+              <SvgIcons.IRAHoldings
+                // xml={!isCrypto ? SVGHolding : SVGAdd}
+                style={{ marginBottom: 20 }}
+                onPress={() => {
+                  if (walletData?.fortress) {
+                    navigation.navigate(NAVIGATION_SCREENS.IRA_HOLDING);
+                  } else {
+                  }
+                }}
+              />
+              }
+            </View>
+          </View>
+        )}
         <Card
           style={{
             backgroundColor: theme.colors.palette.white,
@@ -1562,7 +1659,7 @@ const NewDashboard = () => {
           borderRadius={theme.spacing.spacing[10]}
         >
           <View style={{ width: "100%", padding: 5 }}>
-            {isCrypto && walletData?.fortress && (
+            {isCrypto && (
               <>
                 <MemoizedDashboardSection
                   title="Your Accounts"
@@ -1782,347 +1879,43 @@ const NewDashboard = () => {
                       disabled={showLoader}
                       onPress={handleOpenLink}
                     /> */}
-                    <AddAndLinkAcountCard
-                      title={"LINK ACCOUNT"}
-                      description={"Link your external account"}
-                      buttonText={"Link Account"}
-                      onAddPress={handleOpenLink}
-                    />
-                    <AddAndLinkAcountCard
-                      title={"ADD ACCOUNT"}
-                      description={"Add your TRADITIONAL IRA account"}
-                      buttonText={"Add Account"}
-                      onAddPress={() => {
-                        setShowAddTraditionalAccountConfirmation(true);
-                      }}
-                    />
-                    <AddAndLinkAcountCard
-                      title={"ADD ACCOUNT"}
-                      description={"Add your ROTH IRA account"}
-                      buttonText={"Add Account"}
-                      onAddPress={() => {
-                        setShowAddAccountConfirmation(true);
-                      }}
-                    />
-                  </ScrollView>
-                </MemoizedDashboardSection>
-                {isCrypto && (
-                  <MemoizedDashboardSection
-                    title="PayAiro Contacts"
-                    actionText="see all"
-                    onActionPress={onContactSeeALl}
-                  >
-                    {isDashBoardDataPending ? (
-                      // Skeleton loading for contacts
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-around",
-                          marginVertical: 15,
-                        }}
-                      >
-                        {[1, 2, 3, 4].map((_, index) => (
-                          <View key={index} style={{ alignItems: "center" }}>
-                            <View
-                              style={{
-                                width: 60,
-                                height: 60,
-                                borderRadius: 30,
-                                backgroundColor: theme.colors.palette.grey200,
-                              }}
-                            />
-                            <View
-                              style={{
-                                width: 40,
-                                height: 12,
-                                backgroundColor: theme.colors.palette.grey200,
-                                borderRadius: 4,
-                                marginTop: 8,
-                              }}
-                            />
-                          </View>
-                        ))}
-                      </View>
-                    ) : DashBoardData?.data?.contacts &&
-                      DashBoardData?.data?.contacts.length > 0 ? (
-                      <MemoizedStoryLists
-                        data={DashBoardData?.data?.contacts}
-                        isVisble3={isCrypto}
-                      />
-                    ) : (
-                      <TouchableOpacity
-                        onPress={() =>
-                          navigation.navigate(NAVIGATION_SCREENS.ADD_CONTACT)
-                        }
-                        style={{
-                          backgroundColor: "rgba(44, 106, 63, 1)",
-                          paddingBottom: 10,
-                          paddingTop: 7,
-                          paddingHorizontal: 10,
-                          borderRadius: 30,
-                          alignSelf: "center",
-                          marginTop: 20,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            color: "white",
-                            fontSize: 12,
-                            fontFamily: Fonts.semibold,
+                    {walletData?.fortress ? (
+                      <View style={{ flex: 1, flexDirection: "row" }}>
+                        <AddAndLinkAcountCard
+                          title={"LINK ACCOUNT"}
+                          description={"Link your external account"}
+                          buttonText={"Link Account"}
+                          onAddPress={handleOpenLink}
+                        />
+                        <AddAndLinkAcountCard
+                          title={"ADD ACCOUNT"}
+                          description={"Add your TRADITIONAL IRA account"}
+                          buttonText={"Add Account"}
+                          onAddPress={() => {
+                            setShowAddTraditionalAccountConfirmation(true);
                           }}
-                        >
-                          + Add People
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-                  </MemoizedDashboardSection>
-                )}
-              </>
-            )}
-            {isCrypto && !walletData?.fortress && (
-              <>
-                <MemoizedDashboardSection
-                  title="Your Accounts"
-                  actionText="see all"
-                  onActionPress={() => {
-                    navigation.navigate(NAVIGATION_SCREENS.BANK_DETAILS, {
-                      item: processedCybridBankAccounts,
-                      bankbalance: processedCybridBankAccounts[0]?.balance,
-                      index: 0,
-                    });
-                  }}
-                >
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{}}
-                    style={{ marginRight: 10 }}
-                  >
-                    {isDashBoardDataPending ? (
-                      // Show skeleton loading UI
-                      <>
-                        <SkeletonCard />
-                        <SkeletonCard />
-                        <SkeletonCard />
-                      </>
-                    ) : (
-                      processedCybridBankAccounts.map(
-                        (item: any, index: number) => (
-                          <View
-                            key={index}
-                            style={{
-                              backgroundColor: theme.colors.palette.grey100,
-                              padding: 10,
-                              width: 250,
-                              borderRadius: 15,
-                              marginRight: 10,
-                            }}
-                          >
-                            <View
-                              style={{
-                                flexDirection: "row",
-                                justifyContent: "flex-start",
-                                alignItems: "center",
-                                width: "100%",
-                                marginBottom: 10,
-                              }}
-                            >
-                              {item.medium_logo_url ? (
-                                <View>
-                                  <Image
-                                    source={{ uri: item?.medium_logo_url }}
-                                    style={{
-                                      width: 35,
-                                      height: 35,
-                                      borderRadius: 5,
-                                      backgroundColor:
-                                        theme.colors.palette.grey200,
-                                    }}
-                                  />
-                                </View>
-                              ) : (
-                                <SvgIcons.DollarIcon width={35} height={35} />
-                              )}
-                              <View style={{ flex: 1 }}>
-                                <CustomText
-                                  variant={"subtitle2"}
-                                  fontWeight={"bold"}
-                                  fontFamily={
-                                    theme.typography.fontFamily.nexaHeavy
-                                  }
-                                  style={{
-                                    marginLeft: 5,
-                                    marginTop: 2,
-                                  }}
-                                >
-                                  {item.displayName}
-                                </CustomText>
-                                <View style={{ flexDirection: "row", flex: 1 }}>
-                                  <CustomText
-                                    color={theme.colors.palette.grey600}
-                                    fontFamily={
-                                      theme.typography.fontFamily.nexaHeavy
-                                    }
-                                    style={{
-                                      marginLeft: 5,
-                                      marginTop: 2,
-                                      fontSize: 14,
-                                      fontWeight: "400",
-                                      textTransform: "capitalize",
-                                    }}
-                                  >
-                                    {`${item?.account_type}`}
-                                  </CustomText>
-                                  <CustomText
-                                    color={theme.colors.palette.grey600}
-                                    fontFamily={
-                                      theme.typography.fontFamily.nexaHeavy
-                                    }
-                                    style={{
-                                      marginLeft: 5,
-                                      marginTop: 2,
-                                      fontSize: 14,
-                                      fontWeight: "400",
-                                      // textTransform: 'capitalize'
-                                    }}
-                                  >
-                                    {`( ${BANK_TYPE} )`}
-                                  </CustomText>
-                                </View>
-                              </View>
-                            </View>
-                            <CustomText
-                              color={theme.colors.palette.grey600}
-                              fontFamily={theme.typography.fontFamily.nexaHeavy}
-                              style={{
-                                marginLeft: 5,
-                                marginTop: 2,
-                                fontSize: 12,
-                                fontWeight: "400",
-                              }}
-                            >
-                              {item?.account_number
-                                ? `${item.account_number.slice(
-                                    0,
-                                    2
-                                  )}XXXX${item.account_number.slice(-4)}`
-                                : ""}
-                            </CustomText>
-                            <View
-                              style={{
-                                flexDirection: "row",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                width: "100%",
-                              }}
-                            >
-                              <View
-                                style={{
-                                  flexDirection: "row",
-                                  marginTop: 5,
-                                  alignItems: "center",
-                                  flex: 1,
-                                }}
-                              >
-                                <Text
-                                  numberOfLines={1}
-                                  style={{
-                                    color: "rgba(44, 106, 63, 1)",
-                                    fontSize: 16,
-                                    fontFamily: Fonts.bold,
-                                    marginLeft: 5,
-                                  }}
-                                >
-                                  {hiddenBalances[item.accountNumber]
-                                    ? "$••••••"
-                                    : `$${item.balance}`}
-                                </Text>
-                                {!hiddenBalances[item.accountNumber] ? (
-                                  <TouchableOpacity
-                                    style={{ padding: 10 }}
-                                    onPress={() =>
-                                      handleEyeClick(item.accountNumber)
-                                    }
-                                  >
-                                    <SvgIcons.EyeOnGreenbg
-                                      style={{ marginLeft: 10, top: 1 }}
-                                      // xml={SVG_eye_on}
-                                      width={15}
-                                      height={15}
-                                    />
-                                  </TouchableOpacity>
-                                ) : (
-                                  <TouchableOpacity
-                                    style={{ padding: 10 }}
-                                    onPress={() =>
-                                      handleEyeClick(item.accountNumber)
-                                    }
-                                  >
-                                    <SvgIcons.EyeOffGreenbg
-                                      style={{ marginLeft: 10, top: 1 }}
-                                      width={15}
-                                      height={15}
-                                    />
-                                  </TouchableOpacity>
-                                )}
-                              </View>
-
-                              <Text
-                                onPress={() =>
-                                  navigation.navigate(
-                                    NAVIGATION_SCREENS.BANK_DETAILS,
-                                    {
-                                      item: processedCybridBankAccounts,
-                                      bankbalance: item.balance,
-                                      index: index,
-                                    }
-                                  )
-                                }
-                                style={{
-                                  color: "rgba(106, 106, 106, 1)",
-                                  fontSize: 10,
-                                  fontFamily: Fonts.regular,
-                                  marginLeft: 5,
-                                  marginTop: 5,
-                                  textDecorationLine: "underline",
-                                }}
-                              >
-                                View Details
-                              </Text>
-                            </View>
-                          </View>
-                        )
-                      )
-                    )}
-                    {/* <SvgXml
-                      width={250}
-                      height={130}
-                      xml={SVGNewBank}
-                      disabled={showLoader}
-                      onPress={handleOpenLink}
-                    /> */}
-                    <AddAndLinkAcountCard
-                      title={"LINK ACCOUNT"}
-                      description={"Link your external account"}
-                      buttonText={"Link Account"}
-                      onAddPress={handleOpenLink}
-                    />
-                    <AddAndLinkAcountCard
-                      title={"ADD ACCOUNT"}
-                      description={"Add your TRADITIONAL IRA account"}
-                      buttonText={"Add Account"}
-                      onAddPress={() => {
-                        setShowAddTraditionalAccountConfirmation(true);
-                      }}
-                    />
-                    <AddAndLinkAcountCard
-                      title={"ADD ACCOUNT"}
-                      description={"Add your ROTH IRA account"}
-                      buttonText={"Add Account"}
-                      onAddPress={() => {
-                        setShowAddAccountConfirmation(true);
-                      }}
-                    />
+                        />
+                        <AddAndLinkAcountCard
+                          title={"ADD ACCOUNT"}
+                          description={"Add your ROTH IRA account"}
+                          buttonText={"Add Account"}
+                          onAddPress={() => {
+                            setShowAddAccountConfirmation(true);
+                          }}
+                        />
+                      </View>
+                    ) : 
+                    (
+                      <PlaidLinkButton
+                        onSuccess={() => {
+                          console.log("Plaid link successful");
+                        }}
+                        onCancel={() => {
+                          console.log("Plaid link cancelled");
+                        }}
+                      />
+                    )
+                  }
                   </ScrollView>
                 </MemoizedDashboardSection>
                 {isCrypto && (
@@ -2271,13 +2064,13 @@ const NewDashboard = () => {
                 )}
               </MemoizedDashboardSection>
             )}
-            {!isCrypto && (
+            {walletData?.fortress && !isCrypto && (
               <CryptoRWASection
                 data={WalletDashboardData?.data?.icon}
                 navigation={navigation}
               />
             )}
-            {!isCrypto && filteredMyRWA.length > 0 && (
+            {walletData?.fortress && !isCrypto && filteredMyRWA.length > 0 && (
               <DashboardSection
                 title="My RWA Assets"
                 actionText="see all"

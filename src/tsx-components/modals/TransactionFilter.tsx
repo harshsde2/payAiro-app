@@ -142,8 +142,10 @@ const TransactionFilter: FC<TransactionFilterProps> = ({
             contentContainerStyle={[styles.dashboardSectionContainerStyle]}
             style={[styles.dashboardSectionStyle]}
             title="Categories"
-            actionText="Select All"
-            onActionPress={() => {}}
+            // actionText="Select All"
+            // onActionPress={() => {
+
+            // }}
           >
             {filteredTransactions?.categories.map((item, index) => {
               const { isSelected, title, id } = item;
@@ -243,7 +245,7 @@ const TransactionFilter: FC<TransactionFilterProps> = ({
             onPress={() => {
               onCancel();
             }}
-            title="Cancel"
+            title="Reset"
             cStyle={{ marginBottom: 10, backgroundColor: "black" }}
           />
         </View>

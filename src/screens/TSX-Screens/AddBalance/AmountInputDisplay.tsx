@@ -12,10 +12,14 @@ import { CustomText } from "tsx-components";
 interface AmountInputDisplayProps {
   amount: string;
   setAmount: (test: string) => void;
+  showDollarIcon?: boolean;
+  suffixText?: string;
 }
 const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
   amount,
   setAmount,
+  showDollarIcon = true,
+  suffixText,
 }) => {
   const { theme } = useTheme();
   const inputRef = useRef<TextInput>(null);
@@ -38,16 +42,25 @@ const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
       <CustomText variant="subtitle1" style={{ marginBottom: 5 }}>
         Enter Amount
       </CustomText>
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <Text
-          style={{
-            fontSize: 48,
-            fontWeight: "bold",
-            color: theme.colors.palette.grey900,
-          }}
-        >
-          $
-        </Text>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "flex-end",
+          // justifyContent: "center",
+          // backgroundColor: "red",
+        }}
+      >
+        {showDollarIcon && (
+          <Text
+            style={{
+              fontSize: 48,
+              fontWeight: "bold",
+              color: theme.colors.palette.grey900,
+            }}
+          >
+            $
+          </Text>
+        )}
         <TextInput
           ref={inputRef}
           value={amount}
@@ -57,7 +70,7 @@ const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
             fontSize: 48,
             fontWeight: "bold",
             color: theme.colors.palette.black,
-            minWidth: 100,
+            minWidth: 0,
           }}
           placeholder="0.00"
           placeholderTextColor={theme.colors.palette.grey400}
@@ -65,6 +78,18 @@ const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
           caretHidden={!isFocused}
           onBlur={() => setIsFocused(false)}
         />
+        {amount.length > 0 && suffixText && (
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: "bold",
+              color: theme.colors.palette.grey900,
+              marginBottom: 10,
+            }}
+          >
+            {suffixText}
+          </Text>
+        )}
       </View>
     </TouchableOpacity>
   );

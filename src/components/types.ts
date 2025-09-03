@@ -4,7 +4,7 @@ import { StyleProp, TextInputProps, TextStyle, ViewStyle } from "react-native";
 export interface InputProps extends TextInputProps {
   countryCode?: any;
   value: string;
-  onChange?: (text: any) => void;
+  onChange: (text: any) => void;
   placeholder?: string;
   onSelected?: ((value: any) => void | undefined) | any;
   label?: string;
@@ -32,8 +32,8 @@ export interface InputProps extends TextInputProps {
   maxLength?: number;
   required?: boolean;
   info?: boolean;
-  rightIcon: string;
-  onRightIconClick: () => void;
+  rightIcon?: string;
+  onRightIconClick?: () => void;
   onInfoPress?: () => void;
 }
 

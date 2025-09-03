@@ -17,7 +17,7 @@ import useSelectorAction from "../../hooks/useSelectorAction";
 import useDispatchAction from "hooks/useDispatchAction";
 import { setErrorMsg } from "redux/slices/authenticationSlice";
 
-export default function CryptoScreen() {
+export default function CryptoScreenFortess() {
   const { tokens } = useSelectorAction();
   const [activeTab, setactiveTab] = useState("1");
   const [activeCoin, setactiveCoin] = useState("1");

@@ -71,6 +71,16 @@ import AccountsAndFDIcon from "./AccountsAndFDIcon.svg";
 import FastTagIcon from "./FastTagIcon.svg";
 import FilterIcon from "./FilterIcon.svg";
 import CalendarIcon from "./CalendarIcon.svg";
+import BuyAndSell from "./BuyAndSell.svg";
+import SendAndReceive from "./SendAndReceive.svg";
+import IRAHoldings from "./IRAHoldings.svg";
+import SearchIcon from "./SearchIcon.svg";
+import Bitcoin from "./Bitcoin.svg";
+import Ethereum from "./Ethereum.svg";
+import Solana from "./Solana.svg";
+import CheckSquareIcon from "./CheckSquareIcon.svg";
+import QRCodeIcon from "./QRCodeIcon.svg";
+import RWAHoldings from "./RWAHoldings.svg";
 
 export const SvgIcons = {
   PayAiorRoundIcon,
@@ -146,4 +156,14 @@ export const SvgIcons = {
   SendMoneyIcon,
   FilterIcon,
   CalendarIcon,
+  BuyAndSell,
+  SendAndReceive,
+  IRAHoldings,
+  SearchIcon,
+  Bitcoin,
+  Solana,
+  Ethereum,
+  CheckSquareIcon,
+  QRCodeIcon,
+  RWAHoldings,
 };

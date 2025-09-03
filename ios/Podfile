@@ -51,6 +51,9 @@ target 'payAiro' do
  config = use_native_modules!
  use_frameworks! :linkage => :static
  $RNFirebaseAsStaticFramework = true
+ 
+ # Add Plaid SDK
+ pod 'Plaid', '~> 6.4.0'
 
  use_react_native!(
    :path => config[:reactNativePath],

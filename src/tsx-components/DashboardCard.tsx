@@ -1,4 +1,4 @@
-import React from "react";
+import React, { FC } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -37,7 +37,9 @@ const CONFIGS = {
 const { width: screenWidth } = Dimensions.get("window");
 const leftPosition = screenWidth * 0.68; // 70% of screen width
 
-const DashboardCard = () => {
+const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
+  refetchBankBalanceData,
+}) => {
   const { headerText, theme: themeApp } = useSelector(
     (s: any) => s.animationSlice
   );
@@ -136,27 +138,29 @@ const DashboardCard = () => {
   };
 
   const handleShowBalance = async (isShowBalance: boolean) => {
-    if (walletData?.fortress) {
-      if (!isShowBalance) {
-        setIsLoading(true);
-        await queryClient.invalidateQueries(bankKeys.balance());
-        await queryClient.refetchQueries(bankKeys.balance());
-        setShowBalance(!showBalance);
-        setIsLoading(false);
-      } else {
-        setShowBalance(!showBalance);
-      }
+    // if (walletData?.fortress) {
+    if (!isShowBalance) {
+      setIsLoading(true);
+      await queryClient.invalidateQueries(bankKeys.balance());
+      await queryClient.refetchQueries(bankKeys.balance());
+      refetchBankBalanceData();
+      setShowBalance(!showBalance);
+      setIsLoading(false);
     } else {
-      if (!isShowBalance) {
-        setIsLoading(true);
-        await queryClient.invalidateQueries(bankKeys.cybridBalance());
-        await queryClient.refetchQueries(bankKeys.cybridBalance());
-        setShowBalance(!showBalance);
-        setIsLoading(false);
-      } else {
-        setShowBalance(!showBalance);
-      }
+      setShowBalance(!showBalance);
     }
+    // }
+    // else {
+    //   if (!isShowBalance) {
+    //     setIsLoading(true);
+    //     await queryClient.invalidateQueries(bankKeys.cybridBalance());
+    //     await queryClient.refetchQueries(bankKeys.cybridBalance());
+    //     setShowBalance(!showBalance);
+    //     setIsLoading(false);
+    //   } else {
+    //     setShowBalance(!showBalance);
+    //   }
+    // }
   };
 
   const BankingCard = () => {
@@ -204,18 +208,18 @@ const DashboardCard = () => {
                   justifyContent: "center",
                 }}
               >
-                {walletData?.fortress ? (
-                  <CustomText
-                    numberOfLines={1}
-                    color={theme.colors.palette.white}
-                    variant={"h3"}
-                    style={{ textAlign: "center", textAlignVertical: "center" }}
-                  >
-                    {showBalance
-                      ? `$${bankBalance?.bank_account?.usd}`
-                      : "$*****"}
-                  </CustomText>
-                ) : (
+                {/* {walletData?.fortress ? ( */}
+                <CustomText
+                  numberOfLines={1}
+                  color={theme.colors.palette.white}
+                  variant={"h3"}
+                  style={{ textAlign: "center", textAlignVertical: "center" }}
+                >
+                  {showBalance
+                    ? `$${bankBalance?.bank_account?.usd}`
+                    : "$*****"}
+                </CustomText>
+                {/* ) : (
                   <CustomText
                     numberOfLines={1}
                     color={theme.colors.palette.white}
@@ -226,7 +230,7 @@ const DashboardCard = () => {
                       ? `$${cybridBankBalance?.platform_balance}`
                       : "$*****"}
                   </CustomText>
-                )}
+                )} */}
                 {isLoading && (
                   <ActivityIndicator
                     size="small"
@@ -338,6 +342,7 @@ const DashboardCard = () => {
     );
   };
 
+  // console.log("totalDisbursable =>", totalDisbursable);
   const CryptoCard = () => {
     return (
       <View
@@ -374,7 +379,12 @@ const DashboardCard = () => {
               <CustomText color={theme.colors.palette.black} variant={"body1"}>
                 {"Crypto Balance"}
               </CustomText>
-              <CustomText color={theme.colors.palette.black} variant={"h3"}>
+              <CustomText
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                color={theme.colors.palette.black}
+                variant={"h3"}
+              >
                 {totalDisbursable}
               </CustomText>
               {totalDisbursablePending > 0 && (

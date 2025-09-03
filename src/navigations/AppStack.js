@@ -1,87 +1,89 @@
-import { View, Text } from "react-native";
-import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import Dashboard from "../screens/Dashboard/Dashboard";
-import Transaction from "../screens/Authentications/Transaction";
-import TransactionSuccess from "../screens/Authentications/TransactionSuccess";
-import TransactionDetails from "../screens/Authentications/TransactionDetails";
-import Scans from "../screens/Scans/Scans";
-import ScanPay from "../screens/Scans/ScanPay";
-import Send from "../screens/Dashboard/Send";
-import Receive from "../screens/Dashboard/Receive";
-import Rewards from "../screens/Rewards/Rewards";
-import SettingScreen from "../screens/SettingScreen/SettingScreen";
-import Notification from "../screens/SettingScreen/Notification";
-import Personal from "../screens/SettingScreen/Personal";
-import AddCard from "../screens/SettingScreen/AddCard";
-import Widhdraw from "../screens/Authentications/Widhdraw";
-import SuccesScreen from "../screens/Authentications/SuccesScreen";
-import RequestMoney from "../screens/Authentications/RequestMoney";
-import SendToken from "../screens/Dashboard/SendToken";
-import SendReceipt from "../screens/Authentications/SendReceipt";
-import ReceiveToken from "../screens/Authentications/ReceiveToken";
-import Legal from "../screens/Authentications/Legal";
-import DebitCard from "../screens/Authentications/DebitCard";
-import Signature from "../screens/Authentications/Signature";
-import IDProof from "../screens/Authentications/IDProof";
-import Name from "../screens/Authentications/Name";
-import Address from "../screens/Authentications/Address";
-import Scratch from "../screens/Rewards/Scratch";
-import ScratchCard from "../components/ScratchCard";
-import AddContact from "../screens/Dashboard/AddContact";
-import ContactScreen from "../screens/Dashboard/ContactScreen";
-import Address2 from "../screens/Authentications/Address2";
-import IDProof2 from "../screens/Authentications/IdProof2";
-import Signature2 from "../screens/Authentications/Signature2";
-import Security from "../screens/SettingScreen/Security";
-import Dob2 from "../screens/Authentications/Dob2";
-import ContactTx from "../screens/Dashboard/ContactTx";
-import SelfieScreen from "../screens/Authentications/SelfieScreen";
-import Settings2 from "../screens/Authentications/Settings2";
-import TXViewDetails from "../screens/Dashboard/TXViewDetails";
-import Statement from "../screens/Dashboard/Statement";
-import StatementDetails from "../screens/Dashboard/StatementDetails";
-import BankDetails from "../screens/Dashboard/BankDetails";
-import ChangePinScreen from "../screens/SettingScreen/ChangePinScreen";
-import AlertScreen from "../screens/SettingScreen/AlertScreen";
-import ChatScreen from "../screens/SettingScreen/ChatScreen";
-import AchScreen from "../screens/Dashboard/AchScreen";
-import AddCreditCard from "../screens/Dashboard/AddCreditCard";
-import DeviceManagement from "../screens/SettingScreen/DeviceManagement";
-import ScratchDetails from "../components/ScratchDetails";
-import VouchersScreens from "../screens/Dashboard/VouchersScreens";
-import SelectBankScreen from "../screens/Dashboard/SelectBankScreen";
-import CryptoDashboard from "../screens/Crypto/CryptoDashboard";
-import CryptoScreen from "../screens/Crypto/CryptoScreen";
-import StocksScreen from "../screens/Crypto/StocksScreen";
-import HoldingsScreen from "../screens/Crypto/HoldingsScreen";
-import Buy from "../screens/Crypto/Buy";
-import Sell from "../screens/Crypto/Sell";
-import DepositScreen from "../screens/Crypto/DepositScreen";
-import InAppKYCBrowser from "../screens/Crypto/InAppKYCBrowser";
-import DepositScreen2 from "../screens/Crypto/DepositScreen2";
-import ChooseCurrency from "../screens/Crypto/ChooseCurrency";
-import WithdrawScreen from "../screens/Crypto/WithdrawScreen";
-import IntraAccountTransfer from "../screens/Dashboard/IntraAccountTransfer";
-import DetailsCryptoScreen from "../screens/Crypto/DetailsCryptoScreen";
-import DashboardRefactored from "../screens/Dashboard/DashboardRefactored";
-import NewDashboard from "../screens/Dashboard/NewDashboard";
-import { NAVIGATION_SCREENS } from "./navigationConstants";
+import React from "react";
+import ACHTransfer from "screens/TSX-Screens/AddBalance/ACHTransfer";
+import AddBalance from "screens/TSX-Screens/AddBalance/AddBalance";
+import DebitCardScreen from "screens/TSX-Screens/AddBalance/DebitCardScreen";
+import ComingSoon from "screens/TSX-Screens/ComingSoon";
 import ConnectWidgetTest from "screens/TSX-Screens/Fortess/ConnectWidgetTest";
-import TrustedCircle from "screens/TSX-Screens/TrustedCircle";
+import CommonAssetsScreen from "screens/TSX-Screens/RWA/CommonAssetsScreen";
+import MyRWAAssets from "screens/TSX-Screens/RWA/MyRWAAssets";
 import RWA from "screens/TSX-Screens/RWA/RWA";
 import RealState from "screens/TSX-Screens/RWA/RealState";
-import Stocks from "screens/TSX-Screens/RWA/Stocks";
 import RealStateProfile from "screens/TSX-Screens/RWA/RealStateProfile";
+import Stocks from "screens/TSX-Screens/RWA/Stocks";
 import StocksProfile from "screens/TSX-Screens/RWA/StocksProfile";
-import MyRWAAssets from "screens/TSX-Screens/RWA/MyRWAAssets";
 import TransactionSuccessScreen from "screens/TSX-Screens/RWA/TransactionSuccessScreen";
-import CommonAssetsScreen from "screens/TSX-Screens/RWA/CommonAssetsScreen";
-import ComingSoon from "screens/TSX-Screens/ComingSoon";
-import AddBalance from "screens/TSX-Screens/AddBalance/AddBalance";
-import ACHTransfer from "screens/TSX-Screens/AddBalance/ACHTransfer";
-import DebitCardScreen from "screens/TSX-Screens/AddBalance/DebitCardScreen";
 import SupportScreen from "screens/TSX-Screens/Settings/SupportScreen";
+import TrustedCircle from "screens/TSX-Screens/TrustedCircle";
+import ScratchCard from "../components/ScratchCard";
+import ScratchDetails from "../components/ScratchDetails";
+import Address2 from "../screens/Authentications/Address2";
+import Dob2 from "../screens/Authentications/Dob2";
+import IDProof2 from "../screens/Authentications/IdProof2";
+import ReceiveToken from "../screens/Authentications/ReceiveToken";
+import RequestMoney from "../screens/Authentications/RequestMoney";
+import SendReceipt from "../screens/Authentications/SendReceipt";
+import Settings2 from "../screens/Authentications/Settings2";
+import Signature2 from "../screens/Authentications/Signature2";
+import Transaction from "../screens/Authentications/Transaction";
+import TransactionDetails from "../screens/Authentications/TransactionDetails";
+import TransactionSuccess from "../screens/Authentications/TransactionSuccess";
+import Widhdraw from "../screens/Authentications/Widhdraw";
+import Buy from "../screens/Crypto/Buy";
+import ChooseCurrency from "../screens/Crypto/ChooseCurrency";
+import CryptoDashboard from "../screens/Crypto/CryptoDashboard";
+import CryptoScreen from "../screens/Crypto/CryptoScreen";
+import DepositScreen from "../screens/Crypto/DepositScreen";
+import DepositScreen2 from "../screens/Crypto/DepositScreen2";
+import DetailsCryptoScreen from "../screens/Crypto/DetailsCryptoScreen";
+import HoldingsScreen from "../screens/Crypto/HoldingsScreen";
+import InAppKYCBrowser from "../screens/Crypto/InAppKYCBrowser";
+import Sell from "../screens/Crypto/Sell";
+import StocksScreen from "../screens/Crypto/StocksScreen";
+import WithdrawScreen from "../screens/Crypto/WithdrawScreen";
+import AchScreen from "../screens/Dashboard/AchScreen";
+import AddContact from "../screens/Dashboard/AddContact";
+import AddCreditCard from "../screens/Dashboard/AddCreditCard";
+import BankDetails from "../screens/Dashboard/BankDetails";
+import ContactScreen from "../screens/Dashboard/ContactScreen";
+import ContactTx from "../screens/Dashboard/ContactTx";
+import Dashboard from "../screens/Dashboard/Dashboard";
+import DashboardRefactored from "../screens/Dashboard/DashboardRefactored";
+import IntraAccountTransfer from "../screens/Dashboard/IntraAccountTransfer";
+import NewDashboard from "../screens/Dashboard/NewDashboard";
+import Receive from "../screens/Dashboard/Receive";
+import SelectBankScreen from "../screens/Dashboard/SelectBankScreen";
+import Send from "../screens/Dashboard/Send";
+import SendToken from "../screens/Dashboard/SendToken";
+import Statement from "../screens/Dashboard/Statement";
+import StatementDetails from "../screens/Dashboard/StatementDetails";
+import TXViewDetails from "../screens/Dashboard/TXViewDetails";
+import VouchersScreens from "../screens/Dashboard/VouchersScreens";
+import Rewards from "../screens/Rewards/Rewards";
+import Scratch from "../screens/Rewards/Scratch";
+import ScanPay from "../screens/Scans/ScanPay";
+import Scans from "../screens/Scans/Scans";
+import AddCard from "../screens/SettingScreen/AddCard";
+import AlertScreen from "../screens/SettingScreen/AlertScreen";
+import ChangePinScreen from "../screens/SettingScreen/ChangePinScreen";
+import ChatScreen from "../screens/SettingScreen/ChatScreen";
+import DeviceManagement from "../screens/SettingScreen/DeviceManagement";
+import Notification from "../screens/SettingScreen/Notification";
+import Personal from "../screens/SettingScreen/Personal";
+import Security from "../screens/SettingScreen/Security";
+import SettingScreen from "../screens/SettingScreen/SettingScreen";
+import { NAVIGATION_SCREENS } from "./navigationConstants";
+import Result from "screens/TSX-Screens/Send/Result";
+import TransactionResult from "screens/TSX-Screens/Send/TransactionResult";
+import CryptoBuy from "screens/TSX-Screens/CybridCrypto/CryptoBuy";
+import CryptoSell from "screens/TSX-Screens/CybridCrypto/CryptoSell";
+import SendAndReceive from "screens/TSX-Screens/CybridCrypto/SendAndReceive";
+import CryptoSend from "screens/TSX-Screens/CybridCrypto/CryptoSend";
+import CryptoReceive from "screens/TSX-Screens/CybridCrypto/CryptoReceive";
+import IRAHolding from "screens/TSX-Screens/IRA/IRAHolding";
+import CryptoScreenFortess from "screens/Crypto/CryptoScreenFortess";
+import TransactionDetailsModal from "screens/TSX-Screens/TransactionDetails/TransactionDetails";
+import PlaidLinkScreen from "screens/TSX-Screens/AddBalance/PlaidLinkScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -326,6 +328,11 @@ export default function AppStack() {
       />
       <Stack.Screen
         options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.CRYPTO_SCREEN_FORTRESS}
+        component={CryptoScreenFortess}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.STOCKS_SCREEN}
         component={StocksScreen}
       />
@@ -453,6 +460,75 @@ export default function AppStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.SUPPORT_SCREEN}
         component={SupportScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.RESULT}
+        component={Result}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.CRYPTO_BUY}
+        component={CryptoBuy}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.CRYPTO_SELL}
+        component={CryptoSell}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.SEND_AND_RECEIVE}
+        component={SendAndReceive}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.CRYPTO_SEND}
+        component={CryptoSend}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.CRYPTO_RECEIVE}
+        component={CryptoReceive}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.IRA_HOLDING}
+        component={IRAHolding}
+      />
+      <Stack.Screen
+        options={{ 
+          headerShown: false, 
+          presentation: 'modal',
+          animationTypeForReplace: 'push',
+          animation:'slide_from_bottom',
+          gestureEnabled: false,
+         
+        }}
+        name={NAVIGATION_SCREENS.TRANSACTION_RESULT}
+        component={TransactionResult}
+      />
+      <Stack.Screen
+        options={{ 
+          headerShown: false, 
+          presentation: 'modal',
+          animationTypeForReplace: 'push',
+          animation:'slide_from_bottom',
+          gestureEnabled: true,
+        }}
+        name={NAVIGATION_SCREENS.TRANSACTION_DETAILS_MODAL}
+        component={TransactionDetailsModal}
+      />
+      <Stack.Screen
+        options={{ 
+          headerShown: false, 
+          presentation: 'modal',
+          animationTypeForReplace: 'push',
+          animation:'slide_from_bottom',
+          gestureEnabled: true,
+        }}
+        name={NAVIGATION_SCREENS.PLAID_LINK_SCREEN}
+        component={PlaidLinkScreen}
       />
     </Stack.Navigator>
   );

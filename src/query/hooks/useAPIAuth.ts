@@ -11,6 +11,14 @@ import { ApiResponse } from "api/types";
 export const useLogin = () => {
   return useMutation<ApiResponse<any>, Error>({
     mutationFn: async (payload) => {
+      return apiClient.post<ApiResponse<any>>(AUTH.LOGIN, payload, true);
+    },
+  });
+};
+
+export const useSignUp = () => {
+  return useMutation<ApiResponse<any>, Error>({
+    mutationFn: async (payload) => {
       return apiClient.post<ApiResponse<any>>(AUTH.SEND_OTP, payload, true);
     },
   });

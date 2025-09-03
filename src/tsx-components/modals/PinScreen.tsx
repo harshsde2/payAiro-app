@@ -1,5 +1,4 @@
 import Fonts from "constants/Fonts";
-import useDispatchAction from "hooks/useDispatchAction";
 import React, { forwardRef, useImperativeHandle, useState } from "react";
 import {
   ActivityIndicator,
@@ -10,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setErrorMsg } from "redux/slices/authenticationSlice";
 import { useApiCall } from "screens/Dashboard/NewDashboard";
 import { getBalance } from "services/Services";
@@ -32,6 +31,7 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
   ({ hiddenBalances, setHiddenBalances, onAction, accountNumber }, ref) => {
     const { theme } = useTheme();
     const styles = customStyles(theme);
+    const dispatch = useDispatch();
     const { tokens, errorMsg, successMsg } = useSelector(
       (state: any) => state.authenticationSlice
     );
@@ -78,6 +78,9 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
         setPinForShowBalance("");
         setIsPinModalVisible(true);
       },
+      onClose: () => {
+        setIsPinModalVisible(false);
+      },
     }));
 
     const handlePinDigit = (digit: string) => {
@@ -102,7 +105,10 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
 
       try {
         const isUserEnterCorrectPin = checkPin(pinForShowBalance);
-
+        // console.log(
+        //   "isUserEnterCorrectPin =>",
+        //   JSON.stringify(isUserEnterCorrectPin, null, 2)
+        // );
         if (isUserEnterCorrectPin) {
           await bankBalanceApi.execute(tokens?.access, true);
           setHiddenBalances((prev: any) => ({
@@ -113,12 +119,10 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
           setCurrentAccountForPin(null);
           setPinForShowBalance("");
         } else {
-          useDispatchAction(setErrorMsg("Invalid PIN. Please try again"));
+          dispatch(setErrorMsg("Invalid PIN. Please try again"));
         }
       } catch {
-        useDispatchAction(
-          setErrorMsg("Failed to verify PIN. Please try again.")
-        );
+        dispatch(setErrorMsg("Failed to verify PIN. Please try again."));
       } finally {
         setIsVerifyingPin(false);
       }
@@ -135,16 +139,15 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
           JSON.stringify(isUserEnterCorrectPin, null, 2)
         );
         if (isUserEnterCorrectPin) {
-          onAction?.(null);
-          setIsPinModalVisible(false);
           setPinForShowBalance("");
-        } else {
-          useDispatchAction(setErrorMsg("Invalid PIN. Please try again"));
+          requestAnimationFrame(() => {
+            onAction?.(null); // Triggers ResultModal
+          });
+        } else if (isUserEnterCorrectPin === false) {
+          dispatch(setErrorMsg("Invalid PIN. Please try again"));
         }
       } catch {
-        useDispatchAction(
-          setErrorMsg("Failed to verify PIN. Please try again.")
-        );
+        dispatch(setErrorMsg("Failed to verify PIN. Please try again."));
       } finally {
         setIsVerifyingPin(false);
       }
@@ -168,6 +171,8 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
     const handleShowAndHidePin = () => {
       setShowPin((prev) => !prev);
     };
+
+    // console.log("errorMsg =>", errorMsg);
 
     return (
       <Modal
@@ -214,7 +219,9 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
             <View style={styles.pinEntryContainer}>
               <View style={styles.pinEntryLabelRow}>
                 <CustomText style={styles.pinEntryText}>
-                  ENTER PAYAIRO PIN
+                  {pinScreenTask === PIN_SCREEN_TASKS.SET_USER_PIN
+                    ? "SET PAYAIRO PIN"
+                    : "ENTER PAYAIRO PIN"}
                 </CustomText>
                 {!showPin ? (
                   <SvgIcons.EyeOnGreenbg width={22} height={22} />

@@ -1,10 +1,18 @@
-import { View, Text, StyleSheet, StyleProp, ViewStyle } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  StyleProp,
+  ViewStyle,
+  TextStyle,
+} from "react-native";
 import React, { memo } from "react";
 import SectionHeader from "./SectionHeader";
 
 interface DashboardSectionProps {
   title?: string;
   actionText?: string;
+  titleStyle?: TextStyle;
   onActionPress?: () => void;
   children?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -14,6 +22,7 @@ interface DashboardSectionProps {
 const DashboardSection = ({
   title,
   actionText,
+  titleStyle,
   onActionPress,
   children,
   style,
@@ -24,6 +33,7 @@ const DashboardSection = ({
     <View style={[styles.container, style]}>
       <SectionHeader
         title={title}
+        titleStyle={titleStyle}
         actionText={actionText}
         onActionPress={onActionPress}
       />

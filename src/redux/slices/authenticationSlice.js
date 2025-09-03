@@ -38,6 +38,7 @@ const initialState = {
     useAniamationStylesForCard: {},
   },
   mxExternalAccountDetails: [],
+  isTransactionInProgress: false,
   showLoader: false,
   showRedeemReward: false,
   showGuide: false,
@@ -124,6 +125,9 @@ const authenticationSlice = createSlice({
     setMxExternalAccountDetails: (state, action) => {
       state.mxExternalAccountDetails = action.payload;
     },
+    setIsTransactionInProgress: (state, action) => {
+      state.isTransactionInProgress = action.payload;
+    },
     setShowLoader: (state, action) => {
       state.showLoader = action.payload;
     },
@@ -173,6 +177,7 @@ export const {
   setShowRedeemReward,
   setTotalDisbursable,
   setTotalDisbursablePending,
+  setIsTransactionInProgress,
 } = authenticationSlice.actions;
 
 export default authenticationSlice.reducer;

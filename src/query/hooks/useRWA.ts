@@ -10,6 +10,7 @@ export const RWAKeys = {
   rwaList: () => [...RWAKeys.all, "rwaList"] as const,
   rwaAllList: () => [...RWAKeys.all, "rwaAllList"] as const,
   rwaHoldings: () => [...RWAKeys.all, "rwarwaHoldings"] as const,
+  IRAHoldings: () => [...RWAKeys.all, "IRAHoldings"] as const,
 } as any;
 
 export const useGetRWACategory = () => {
@@ -42,6 +43,19 @@ export const useGetAllRWA = () => {
   });
 };
 
+export const useGetAllIRAHoldings = (string: any) => {
+  return useQuery<ApiResponse<any>>({
+    queryKey: RWAKeys.IRAHoldings(),
+    queryFn: async () => {
+      console.log("url =>", `${AUTH.IRA_HOLDINGS_ALL_LIST}${string}`);
+      return await apiClient.get<ApiResponse<any>>(
+        `${AUTH.IRA_HOLDINGS_ALL_LIST}${string}`
+      );
+    },
+    staleTime: queryStaleTime.INSTANT_STALE_TIME,
+  });
+};
+
 export const useGetUserHoldings = () => {
   return useQuery<ApiResponse<any>>({
     queryKey: RWAKeys.rwaHoldings(),
@@ -62,6 +76,9 @@ export const useBuyRWA = () => {
         true
       );
       return data;
+    },
+    onError: (error) => {
+      console.log("err =>", JSON.stringify(error, null, 2));
     },
   });
 };

@@ -5,6 +5,7 @@ import {
   Alert,
   ToastAndroid,
   TouchableOpacity,
+  Button,
 } from "react-native";
 import Container from "../../HOC/Container";
 import PincodeKeypad from "../../components/PincodeKeypad";
@@ -50,6 +51,9 @@ import HeaderTitle from "components/HeaderTitle";
 import { CustomText } from "tsx-components";
 import { useTheme } from "styles";
 import MyDropdown from "tsx-components/MyDropdown";
+import CommonModal from "tsx-components/modals/CommonModal";
+import ResultModal from "tsx-components/modals/ResultModal";
+import { useUserToUserTransfer } from "query/hooks";
 
 export default function ScanPay(props) {
   const { type, sender, bank } = props?.route?.params;
@@ -63,7 +67,7 @@ export default function ScanPay(props) {
     const isExternalAccount =
       item?.account_type === "checking" || item?.account_type === "savings";
     const accountType = !isExternalAccount
-      ? item?.account_type.toUpperCase()
+      ? item?.account_type?.toUpperCase()
       : "external"; // Fallback if account_type is not available
 
     return {
@@ -72,7 +76,7 @@ export default function ScanPay(props) {
     };
   });
 
-  console.log("props?.route?.params =>", JSON.stringify(props?.route?.params));
+  console.log("props.params =>", JSON.stringify(props?.route?.params, null, 2));
 
   const pinScreenRef = useRef(null);
 
@@ -96,6 +100,18 @@ export default function ScanPay(props) {
   const [selectedNetwork, setselectedNetwork] = useState([]);
   const [tokenLists, settokenLists] = useState([]);
   const [selectedToken, setselectedToken] = useState(null);
+
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [successData, setSuccessData] = useState({});
+
+  const {
+    mutate: handleUserToUserTransfer,
+    isPending: isPendingCreatePin,
+    isSuccess: isSuccessCreatePin,
+  } = useUserToUserTransfer();
+
   useEffect(() => {
     getBlockchain();
   }, []);
@@ -103,10 +119,10 @@ export default function ScanPay(props) {
   const handleContactPayment = async () => {
     setspin(true);
 
-    // console.log(
-    //   "sender?.request_details?.request_id",
-    //   sender?.request_details?.request_id
-    // );
+    console.log(
+      "sender?.request_details?.request_id",
+      sender?.request_details?.request_id
+    );
     const data = await payUserContact(
       sender?.request_details?.request_id,
       tokens?.access
@@ -122,6 +138,7 @@ export default function ScanPay(props) {
     }
     setspin(false);
   };
+
   const handleMercentPayment = async () => {
     setspin(true);
 
@@ -170,16 +187,24 @@ export default function ScanPay(props) {
   };
 
   const handleSend = async () => {
-    console.log(JSON.stringify(bank, null, 2), "bankkkkkkkk");
-    setspin(true);
-    try {
-      const payload = {
-        recipient_value: sender?.address ?? sender,
-        amount: sender?.amount ?? amount,
-      };
-      const formData = new FormData();
+    // console.log(JSON.stringify(bank, null, 2), "bankkkkkkkk");
+    if (amount < 5) {
+      useDispatchAction(setErrorMsg("Minimum amount is 5"));
+      return;
+    }
+
+    // try {
+    const payload = {
+      recipient_value: sender?.address ?? sender,
+      amount: sender?.amount ?? amount,
+    };
+
+    // console.log("sender =>", sender);
+
+    const formData = new FormData();
+
+    if (walletData?.fortress) {
       formData.append("recipient", sender?.address ?? sender);
-      formData.append("amount", sender?.amount ?? amount);
       formData.append(
         "transaction_fees",
         walletData?.TransactionFees_persentage
@@ -194,41 +219,73 @@ export default function ScanPay(props) {
           ? bank
           : "bank"
       );
-      console.log(JSON.stringify(formData, null, 2), "payload Datatat");
-      const data = await sendPayAero(formData, tokens?.access, true);
-      console.log("send resp ", JSON.stringify(data, null, 2));
-      if (data && data.status) {
-        navigation.navigate("TransactionSuccess", {
-          data: data?.data?.transaction,
-          transactionDetails: [
-            {
-              "Transfer Date": moment(data?.data?.timestamp).format(
-                "DD MMM YYYY"
-              ),
-            },
-            { Sender: data?.data?.sender_username },
-            { "Receiver ID": data?.data?.recipient_username },
-            { " Amount": data?.data?.amount },
-            { "Successfully Sent": data?.data?.final_amount },
-            {
-              "Transaction Fee Percentage": `${data?.data?.Transaction_fee_persentage} %`,
-            },
-          ],
-        });
-      } else {
-        useDispatchAction(
-          setErrorMsg(
-            data.data.error ||
-              "Operation is forbidden. Custodial account is suspended or Level 2 KYC Pending"
-          )
-        );
-      }
-      setspin(false);
-    } catch (error) {
-      console.log(error, "error");
-      setspin(false);
+      formData.append("amount", sender?.amount ?? amount);
+    } else {
+      formData.append("amount", sender?.amount ?? amount);
+      formData.append("recipient_identifier", sender?.address ?? sender);
     }
+
+    // console.log("console chal raha hai",JSON.stringify(formData,null,2));
+
+    // Navigate to TransactionResult with loading state
+    navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
+      isLoading: true,
+      transactionData: null,
+      isSuccess: false,
+      isError: false,
+    });
+
+    setspin(true);
+
+    handleUserToUserTransfer(formData, {
+      onSuccess: (data) => {
+        if (data?.data && data?.status) {
+          // Navigate to TransactionResult with success data
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
+            isLoading: false,
+            transactionData: data,
+            isSuccess: true,
+            isError: false,
+          });
+          console.log("send resp ", JSON.stringify(data, null, 2));
+        } else {
+          // Navigate to TransactionResult with error state
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
+            isLoading: false,
+            transactionData: data,
+            isSuccess: false,
+            isError: true,
+          });
+          useDispatchAction(
+            setErrorMsg(
+              data?.data?.data.error ||
+                "Operation is forbidden. Custodial account is suspended or Level 2 KYC Pending"
+            )
+          );
+        }
+      },
+      onError: (error) => {
+        console.log("error =>", JSON.stringify(error, null, 2));
+        // Navigate to TransactionResult with error state
+        navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
+          isLoading: false,
+          transactionData: null,
+          isSuccess: false,
+          isError: true,
+        });
+      },
+      onSettled: () => {
+        setspin(false);
+      },
+    });
+    // const data = await sendPayAero(formData, tokens?.access, true);
+    // } catch (error) {
+    //   console.log(error, "error");
+    //   setspin(false);
+    // }
   };
+
+  // console.log(JSON.stringify(showResultModal, null, 2), "showResultModal");
 
   const handleCrypto = async () => {
     try {
@@ -274,6 +331,7 @@ export default function ScanPay(props) {
       useDispatchAction(setErrorMsg("Something went wrong"));
     }
   };
+
   const handleKeyPress = (key) => {
     if (type !== "request") {
       setAmount((prev) => {
@@ -367,12 +425,51 @@ export default function ScanPay(props) {
     parseInt(walletData?.TransactionFees_persentage)
   );
 
-  const actualAmount = amount ? parseFloat(amount).toFixed(2) : "0.00";
 
   return (
     <ScreenContainer scrollable padding={0}>
       {/* Display the amount */}
-      <Loader spin={spin} />
+      {/* <Loader spin={spin} /> */}
+      {/* <Button
+        title="Go to Result"
+        textStyle={{ color: "red" }}
+        onPress={() => {
+          // Handle navigation to result screen
+          setShowResultModal(true);
+        }}
+      /> */}
+      {/* {showResultModal && ( */}
+      {/* <CommonModal
+        isVisible={showResultModal}
+        onClose={() => {
+          setShowResultModal(false);
+          // navigation.navigate(SCREENS.Dashboard);
+          // setspin(false);
+          // setSuccessData({});
+        }}
+        isOnOutsidePressClose={false}
+      >
+        <ResultModal
+          onClose={async () => {
+            // await navigation.reset({
+            //   index: 0,
+            //   routes: [{ name: NAVIGATION_SCREENS.NEW_DASHBOARD }], // or your screen name
+            // });
+            await navigation.navigate(NAVIGATION_SCREENS.NEW_DASHBOARD);
+            setShowResultModal(false);
+            if (pinScreenRef.current) {
+              pinScreenRef.current?.onClose();
+            }
+            setspin(false);
+            setSuccessData({});
+          }}
+          isPending={spin}
+          isError={isError}
+          isSuccess={isSuccess}
+          data={successData}
+        />
+      </CommonModal> */}
+      {/* )} */}
 
       <SelectionNetwork
         isVisible={isVisible2}
@@ -409,7 +506,11 @@ export default function ScanPay(props) {
 
       <PinScreen
         ref={pinScreenRef}
-        onAction={handleActionsAfterPinVerified}
+        onAction={() => {
+          // console.log("chal in pin");
+          setShowResultModal(true);
+          handleActionsAfterPinVerified();
+        }}
         accountNumber={bank?.account_number}
       />
 
@@ -477,7 +578,7 @@ export default function ScanPay(props) {
         </Text>
       </View>
       <View style={{ marginTop: 20, alignItems: "center" }}>
-        {amount && (
+        {amount && type !== "requested" && walletData?.fortress && (
           <View
             style={{
               justifyContent: "center",
@@ -589,79 +690,89 @@ export default function ScanPay(props) {
       )}
 
       {/* Card display */}
-
-      {/* Pincode Keypad */}
-      <PincodeKeypad
-        isTransparent={true}
-        handleBackspace={handleBackspace} // Backspace handler
-        handleKeyPress={handleKeyPress} // Keypress handler
-      />
       <View
         style={{
-          justifyContent: "space-between",
-          flexDirection: "row",
+          justifyContent: "flex-end",
           alignItems: "center",
-          marginHorizontal: 10,
+          // marginTop: 20,
+          marginBottom: 20,
+          paddingHorizontal: 10,
+          flex: 1,
         }}
       >
-        {type === "receive" && (
-          <GenericButton
-            title={"Pay"}
-            cStyle={{ width: "100%" }}
-            onPress={() => {
-              // setisVisibleBank(true);
-              // setpinvisible(true);
-              handleCheckPin();
-            }}
-          />
-        )}
-        {type === "receiveMerchent" && (
-          <GenericButton
-            title={"Pay"}
-            cStyle={{ width: "100%" }}
-            onPress={() => {
-              // setisVisibleBank(true);
-              handleCheckPin();
-            }}
-          />
-        )}
-        {type === "request" && (
-          <GenericButton
-            title={"Pay"}
-            cStyle={{ width: "100%" }}
-            onPress={() => {
-              // setisVisibleBank(true);
-              handleCheckPin();
-            }}
-          />
-        )}
-        {type === "widthdraw" && (
-          <GenericButton
-            title={"Next"}
-            cStyle={{ width: "100%", backgroundColor: "grey" }}
-            onPress={() => navigation.navigate("Widhdraw")}
-          />
-        )}
+        {/* Pincode Keypad */}
+        <PincodeKeypad
+          isTransparent={true}
+          handleBackspace={handleBackspace} // Backspace handler
+          handleKeyPress={handleKeyPress} // Keypress handler
+        />
+        <View
+          style={{
+            justifyContent: "space-between",
+            flexDirection: "row",
+            alignItems: "center",
+            marginHorizontal: 10,
+          }}
+        >
+          {type === "receive" && (
+            <GenericButton
+              title={"Pay"}
+              cStyle={{ width: "100%" }}
+              onPress={() => {
+                // setisVisibleBank(true);
+                // setpinvisible(true);
+                handleCheckPin();
+              }}
+            />
+          )}
+          {type === "receiveMerchent" && (
+            <GenericButton
+              title={"Pay"}
+              cStyle={{ width: "100%" }}
+              onPress={() => {
+                // setisVisibleBank(true);
+                handleCheckPin();
+              }}
+            />
+          )}
+          {type === "request" && (
+            <GenericButton
+              title={"Pay"}
+              cStyle={{ width: "100%" }}
+              onPress={() => {
+                // setisVisibleBank(true);
+                handleCheckPin();
+              }}
+            />
+          )}
+          {type === "widthdraw" && (
+            <GenericButton
+              title={"Next"}
+              cStyle={{ width: "100%", backgroundColor: "grey" }}
+              onPress={() => navigation.navigate("Widhdraw")}
+            />
+          )}
 
-        {type === "requested" && (
-          <GenericButton
-            title={"Request"}
-            cStyle={{ width: "100%", backgroundColor: "grey" }}
-            onPress={() => {
-              handleCheckPin();
-            }}
-          />
-        )}
+          {type === "requested" && (
+            <GenericButton
+              title={"Request"}
+              cStyle={{ width: "100%", backgroundColor: "grey" }}
+              onPress={() => {
+                handleActionsAfterPinVerified();
+              }}
+            />
+          )}
 
-        {(type === "merchantSend" || type === "crypto") && (
-          <GenericButton
-            title={"Pay"}
-            cStyle={{ width: "100%" }}
-            onPress={() => {
-              handleCheckPin();
-            }}
-          />
-        )}
+          {(type === "merchantSend" || type === "crypto") && (
+            <GenericButton
+              title={"Pay"}
+              cStyle={{ width: "100%" }}
+              onPress={() => {
+                handleCheckPin();
+              }}
+            />
+          )}
+        </View>
       </View>
     </ScreenContainer>
   );

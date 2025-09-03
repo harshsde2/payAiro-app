@@ -1,7 +1,6 @@
 // PDFViewer.js
 import { useNavigation, useRoute } from '@react-navigation/native';
 import HeaderTitle from 'components/HeaderTitle';
-import { SVGLeftArrow } from 'constants/images';
 import { ScreenContainer } from 'HOC';
 import React, { FC } from 'react';
 import { View, Dimensions } from 'react-native';
@@ -13,18 +12,18 @@ interface PDFViewerProps {
 const PDFViewer: FC<PDFViewerProps> = ({ }) => {
     const navigation = useNavigation();
     const route = useRoute();
-    const { url  } = (route as any).params;
-    console.log("url =>",url);
+    const { url , isFileFromLocal } = (route as any).params;
+    // console.log("url =>",url);
     const source = {
-        uri: url,
+        uri: isFileFromLocal ? url : url,
         cache: true,
     };
 
     return (
         <ScreenContainer padding={0} style={{ flex: 1 }}>
-            <HeaderTitle leftIcon={SVGLeftArrow} onPressLeft={()=> navigation.goBack()} title='PDF Viewer' />
+            <HeaderTitle leftIcon={'left'} onPressLeft={()=> navigation.goBack()} title='PDF Viewer' />
             <Pdf
-                source={source}
+                source={ isFileFromLocal ? url:source}
                 onLoadComplete={(numberOfPages, filePath) => {
                     console.log(`Number of pages: ${numberOfPages}`);
                 }}

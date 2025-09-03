@@ -3,11 +3,13 @@ import { apiClient } from "../../api";
 import { AUTH } from "../../api/endpoints";
 import { ApiResponse, CryptoAsset } from "../../api/types";
 import { queryStaleTime } from "query/queryConfigs";
+import useSelectorAction from "hooks/useSelectorAction";
 
 // Query keys
 export const cryptoKeys = {
   all: ["crypto"] as const,
   cryptoBalance: () => [...cryptoKeys.all, "cryptoBalance"] as const,
+  cryptoBalanceFortress: () => [...cryptoKeys.all, "cryptoBalanceFortress"] as const,
   trades: () => [...cryptoKeys.all, "trades"] as const,
   prices: () => [...cryptoKeys.all, "prices"] as const,
 };
@@ -22,6 +24,23 @@ export const useCryptoBalance = () => {
       return await apiClient.get<ApiResponse<any>>(
         AUTH.BANKACCOUNT_CRYPTO_BALANCE
       );
+    },
+    staleTime: queryStaleTime.INSTANT_STALE_TIME,
+  });
+};
+
+// fetch crypto
+export const useGetCrypto = () => {
+  const { walletData } = useSelectorAction() as any;
+  const isFortress = walletData?.fortress;
+  const url = !isFortress
+    ? `${AUTH.COMBINED_CRYPTO_BALANCE}fortress`
+    : `${AUTH.COMBINED_CRYPTO_BALANCE}cybrid`;
+
+  return useQuery<ApiResponse<any>>({
+    queryKey: cryptoKeys.cryptoBalanceFortress(),
+    queryFn: async () => {
+      return await apiClient.get<ApiResponse<any>>(url);
     },
     staleTime: queryStaleTime.INSTANT_STALE_TIME,
   });
@@ -71,13 +90,48 @@ export const useCryptoTransfer = () => {
       return await apiClient.post<ApiResponse<any>>(
         AUTH.CRYPTO_TRANSFER,
         payload,
+        true
+      );
+    },
+    onSuccess: (data) => {
+      console.log("data =>", JSON.stringify(data, null, 2));
+      // Invalidate relevant queries to trigger refetch
+      // queryClient.invalidateQueries({ queryKey: cryptoKeys.cryptoBalance() });
+      // queryClient.invalidateQueries({ queryKey: cryptoKeys.trades() });
+    },
+    onError: (error) => {
+      console.log("error =>", JSON.stringify(error, null, 2));
+      // Invalidate relevant queries to trigger refetch
+      // queryClient.invalidateQueries({ queryKey: cryptoKeys.cryptoBalance() });
+      // queryClient.invalidateQueries({ queryKey: cryptoKeys.trades() });
+    },
+  });
+};
+
+/**
+ * Hook to transfer crypto
+ */
+export const useCryptoBuy = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<ApiResponse<any>, Error, CryptoTransferPayload>({
+    mutationFn: async (payload) => {
+      console.log("payload =>", payload);
+
+      return await apiClient.post<ApiResponse<any>>(
+        AUTH.CRYPTO_BUY,
+        payload,
         false
       );
     },
-    onSuccess: () => {
-      // Invalidate relevant queries to trigger refetch
-      queryClient.invalidateQueries({ queryKey: cryptoKeys.cryptoBalance() });
-      queryClient.invalidateQueries({ queryKey: cryptoKeys.trades() });
+    onSuccess: (data) => {
+      // console.log("data =>", data);
+      // // Invalidate   relevant queries to trigger refetch
+      // queryClient.invalidateQueries({ queryKey: cryptoKeys.cryptoBalance() });
+      // queryClient.invalidateQueries({ queryKey: cryptoKeys.trades() });
+    },
+    onError: (eror) => {
+      console.log("error ====>", JSON.stringify(eror, null, 2));
     },
   });
 };

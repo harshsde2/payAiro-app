@@ -29,7 +29,7 @@ const CommonModal: React.FC<CommonModalProps> = ({
     <Modal
       visible={isVisible}
       transparent
-      //   animationType="slide"
+      animationType="slide"
       onRequestClose={onClose}
     >
       {/* <SafeAreaView style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.5)" }}> */}

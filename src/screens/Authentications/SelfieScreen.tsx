@@ -54,6 +54,7 @@ export default function SelfieScreen(props: any) {
 
   const { tokens, userData } = useSelectorAction();
   const [checked, setchecked] = useState(false);
+  const [checked2, setchecked2] = useState(false);
 
   const token = (tokens as any)?.access || "";
 
@@ -273,9 +274,17 @@ export default function SelfieScreen(props: any) {
     }
   };
 
-  const handlePDFView = () => {
+  const handlePDFViewFortressAccountAgreement = () => {
     navigation.navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
       url: "https://vault.sandbox.fortressapi.com/nft-origin/4456f8df-5def-4c3b-97e3-75ca18476da6.pdf",
+      isFileFromLocal: false,
+    });
+  };
+
+  const handlePDFViewAMLPolicy = () => {
+    navigation.navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
+      url: require("../../assets/pdf/AML_Policy_PayAiro.pdf"),
+      isFileFromLocal: true,
     });
   };
 
@@ -400,11 +409,47 @@ export default function SelfieScreen(props: any) {
               </Text>
               <CustomText variant={"caption"}>and</CustomText>
               <Text
-                onPress={() => handlePDFView()}
+                onPress={() => handlePDFViewFortressAccountAgreement()}
                 style={{ fontWeight: "700" }}
               >
                 {" "}
                 Fortress trust Account Agreement{" "}
+              </Text>
+            </CustomText>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => {
+              setchecked2((state) => !state);
+            }}
+            style={styles.termsAndConditionContainer}
+          >
+            <SvgXml
+              xml={checked2 ? SVGChecked : SVGUnChecked}
+              // style={{ marginTop: 2, marginRight: 5, }}
+              width={15}
+              height={15}
+            />
+            <CustomText
+              // variant={'caption'}
+              style={{
+                flex: 1,
+                flexWrap: "wrap",
+              }}
+            >
+              <CustomText variant={"caption"}>
+                By clicking the button you agree with the
+              </CustomText>
+
+              <Text
+                onPress={() =>
+                 handlePDFViewAMLPolicy()
+                }
+                style={{ fontWeight: "700" }}
+              >
+                {" "}
+                AML Policy{" "}
               </Text>
             </CustomText>
           </TouchableOpacity>
