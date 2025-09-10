@@ -25,6 +25,10 @@ interface TransactionData {
   recipient?: string; // For crypto transactions
   sender_username: string;
   recipient_username: string;
+  trade_id: string;
+  from_currency: string;
+  to_currency: string;
+  network: string;
   transaction_id: string;
   amount: string | number;
   asset?: string; // For crypto transactions
@@ -56,6 +60,10 @@ interface RouteParams {
 
 const keyLabels = {
   transaction_id: "Transaction ID",
+  trade_id: "Trade ID",
+  from_currency: "From Currency",
+  to_currency: "To Currency",
+  network: "Network",
   timestamp: "Transfer Date",
   sender_username: "Sender",
   recipient_username: "Receiver ID", 
@@ -64,6 +72,7 @@ const keyLabels = {
   status: "Status",
   final_amount: "Final Amount",
   Transaction_fee_persentage: "Transaction Fee",
+
 } as const;
 
 const TransactionResult: FC = () => {
@@ -258,6 +267,8 @@ const TransactionResult: FC = () => {
         style={styles.detailsContainer}
       >
         {displayArray.map((item, index) => (
+          <View key={index}>
+          {item?.value &&
           <View key={index} style={styles.detailRow}>
             <CustomText size={14} variant="caption" style={styles.detailLabel}>
               {item.label}
@@ -271,6 +282,8 @@ const TransactionResult: FC = () => {
             >
               {item.value || "N/A"}
             </CustomText>
+          </View>
+          }
           </View>
         ))}
       </ScrollView>

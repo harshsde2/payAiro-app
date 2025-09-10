@@ -648,7 +648,7 @@ const NewDashboard = () => {
       (item: any) => item.asset_type == "Realestate"
     ) ?? [];
 
-  // console.log("dataaaa =>", JSON.stringify(walletData, null, 2));
+  // console.log("dataaaa =>", JSON.stringify(DashBoardData, null, 2));
   console.log("token =>", tokens.access);
 
   const {
@@ -1736,6 +1736,7 @@ const NewDashboard = () => {
                               >
                                 {item.displayName}
                               </CustomText>
+                              { item?.account_type && 
                               <View style={{ flexDirection: "row", flex: 1 }}>
                                 <CustomText
                                   color={theme.colors.palette.grey600}
@@ -1768,6 +1769,7 @@ const NewDashboard = () => {
                                   {`( ${BANK_TYPE} )`}
                                 </CustomText>
                               </View>
+                              }
                             </View>
                           </View>
                           <CustomText

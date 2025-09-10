@@ -91,7 +91,7 @@ const WalletCard = ({ data, bankbalance, index }) => {
           </CustomText>
           <View style={{ flexDirection: "row", flex: 1, marginVertical: 5 }}>
             <CustomText variant={"body1"} color={theme.colors.palette.grey300}>
-              {`****${data?.accountNumber.slice(-4)}`}
+              {`****${data?.accountNumber?.slice(-4) || ""}`}
             </CustomText>
             <CustomText
               variant={"body1"}

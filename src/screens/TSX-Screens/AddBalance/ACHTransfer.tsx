@@ -72,15 +72,13 @@ const ACHTransfer = () => {
   // console.log("selectedAccount =>", selectedAccount);
   // console.log("paramsSouceAccount =>", paramsSouceAccount);
 
-  const selectedBank = bankLists.filter((bank) =>
-    bank?.account_type
-      .toLowerCase()
-      .includes(
-        paramsSouceAccount.toLowerCase() == "external"
+  const selectedBank = bankLists.filter((bank: any) =>
+    bank?.account_type?.toLowerCase()?.includes(
+        paramsSouceAccount?.toLowerCase() == "external"
           ? "checking"
-          : paramsSouceAccount.toLowerCase()
+          : paramsSouceAccount?.toLowerCase()
       )
-  );
+  ) as any;
 
   // console.log(
   //   "paramsSouceAccount =>",
@@ -88,47 +86,47 @@ const ACHTransfer = () => {
   // );
 
   const DROPDOWN_LISTS = bankLists.map((item: any) => {
-    const last4 = item.account_number?.slice(-4);
+    const last4 = item?.account_number?.slice(-4);
     const maskedAccount = `•••• ${last4}`;
     const isExternalAccount =
       item?.account_type === "checking" || item?.account_type === "savings";
     const accountType = !isExternalAccount
-      ? item?.account_type.toUpperCase()
+      ? item?.account_type?.toUpperCase()
       : "external";
 
     return {
-      label: `${item?.bank_name} (${maskedAccount}) ${accountType}`,
-      value: item?.account_type,
+      label: `${item?.bank_name || ""} (${maskedAccount || ""}) ${accountType || ""}`,
+      value: item?.account_type || "",
     };
   });
 
   // console.log(JSON.stringify(bankLists, null, 2));
 
   const ACCOUNT_LIST = bankLists.map((item: any, index: any) => {
-    const last4 = item.account_number?.slice(-4);
+    const last4 = item?.account_number?.slice(-4);
     const maskedAccount = `•••• ${last4}`;
     const isExternalAccount =
       item?.account_type === "checking" || item?.account_type === "savings";
     const accountType = !isExternalAccount
-      ? item?.account_type.toUpperCase()
+      ? item?.account_type?.toUpperCase()
       : "external";
 
     return {
       id: index,
-      title: `${item?.bank_name} (${maskedAccount}) ${accountType}`,
+      title: `${item?.bank_name || ""} (${maskedAccount || ""}) ${accountType || ""}`,
       icon: <SvgIcons.Bank />,
       bank_type: accountType,
-      value: accountType.toLowerCase(),
+      value: accountType?.toLowerCase() || "",
     };
   });
 
-  const [souceAccount, setsouceAccount] = useState(DROPDOWN_LISTS[0].value);
+  const [souceAccount, setsouceAccount] = useState(DROPDOWN_LISTS[0]?.value || "");
 
   const handleSelfTransfer = async () => {
     if (
       paramsAmount === "" ||
       paramsSouceAccount === "" ||
-      selectedAccount.title === ""
+      selectedAccount?.title === ""
     ) {
       useDispatchAction(setErrorMsg("One or more field are empty"));
       return;
@@ -136,7 +134,7 @@ const ACHTransfer = () => {
 
     const formData = new FormData();
     formData.append("amount", paramsAmount);
-    formData.append("source_account_type", selectedAccount.value);
+    formData.append("source_account_type", selectedAccount?.value);
     formData.append("destination_account_type", paramsSouceAccount);
 
     useDispatchAction(setShowLoader(true));
@@ -163,9 +161,9 @@ const ACHTransfer = () => {
 
   const shareOptions = {
     message: `Account Details:
-    Routing Number: ${selectedBank[0]?.ref_code}
-    Account Number: ${selectedBank[0]?.account_number}
-    Bank Name: ${selectedBank[0]?.bank_name}
+    Routing Number: ${selectedBank[0]?.ref_code || ""}
+    Account Number: ${selectedBank[0]?.account_number || ""}
+    Bank Name: ${selectedBank[0]?.bank_name || ""}
     Amount: ${paramsAmount}`,
   };
 
@@ -198,9 +196,9 @@ const ACHTransfer = () => {
   // );
   // console.log("paramsSouceAccount list =>", paramsSouceAccount);
   const dorpdownSelectedValue =
-    paramsSouceAccount.toLowerCase() == "external"
+    paramsSouceAccount?.toLowerCase() == "external"
       ? "checking"
-      : paramsSouceAccount.toLowerCase();
+      : paramsSouceAccount?.toLowerCase() || "";
   return (
     <ScreenContainer padding={0}>
       <HeaderTitle title="Account Transfer" leftIcon="true" />
@@ -227,25 +225,25 @@ const ACHTransfer = () => {
               <CustomText variant={"caption"} style={styles.label}>
                 Routing Number
               </CustomText>
-              <CustomText>{selectedBank[0]?.ref_code ?? "17147714"}</CustomText>
+                <CustomText>{selectedBank[0]?.ref_code || "17147714"}</CustomText>
             </View>
             <View style={styles.row}>
               <CustomText variant={"caption"} style={styles.label}>
                 Account Number
               </CustomText>
-              <CustomText>{selectedBank[0]?.account_number}</CustomText>
+              <CustomText>{selectedBank[0]?.account_number || ""}</CustomText>
             </View>
             <View style={styles.row}>
               <CustomText variant={"caption"} style={styles.label}>
                 Bank Name
               </CustomText>
-              <CustomText>{selectedBank[0]?.bank_name}</CustomText>
+              <CustomText>{selectedBank[0]?.bank_name || ""}</CustomText>
             </View>
             <View style={styles.row}>
               <CustomText variant={"caption"} style={styles.label}>
                 Amount
               </CustomText>
-              <CustomText>${paramsAmount}</CustomText>
+              <CustomText>${paramsAmount || ""  }</CustomText>
             </View>
 
             <View style={{ marginVertical: 20, gap: 10 }}>
@@ -277,15 +275,15 @@ const ACHTransfer = () => {
             search={false}
             itemTextStyle={{
               fontSize: 14,
-              fontFamily: theme?.typography.fontFamily.montserrat,
+              fontFamily: theme?.typography?.fontFamily?.montserrat,
             }}
             placeholderStyle={{ paddingLeft: 10 }}
             selectedTextStyle={{ paddingLeft: 10 }}
             selectedTextProps={{ numberOfLines: 1 }}
             style={{
-              borderRadius: theme.spacing.spacing[2],
+              borderRadius: theme?.spacing?.spacing[2],
               padding: 10,
-              borderColor: theme.colors.palette.grey300,
+              borderColor: theme?.colors?.palette?.grey300,
               borderWidth: 0.5,
               paddingLeft: 10,
             }}
@@ -305,18 +303,18 @@ const ACHTransfer = () => {
         <DashboardSection title="Select your Account">
           {ACCOUNT_LIST.filter(
             (item: any) =>
-              !item.title
-                .toLowerCase()
-                .includes(
-                  paramsSouceAccount.toLowerCase() == "checking"
+              !item?.title
+                ?.toLowerCase()
+                ?.includes(
+                  paramsSouceAccount?.toLowerCase() == "checking"
                     ? "external"
-                    : paramsSouceAccount.toLowerCase()
+                    : paramsSouceAccount?.toLowerCase()
                 )
           )
-            .filter((item) => !item?.title.toLowerCase().includes("ira"))
+            .filter((item) => !item?.title?.toLowerCase()?.includes("ira"))
             .map((item) => (
               <TouchableOpacity
-                key={item.id}
+                key={item?.id}
                 onPress={() => setSelectedAccount(item)}
                 style={{
                   flexDirection: "row",

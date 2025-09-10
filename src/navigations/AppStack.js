@@ -84,6 +84,7 @@ import IRAHolding from "screens/TSX-Screens/IRA/IRAHolding";
 import CryptoScreenFortess from "screens/Crypto/CryptoScreenFortess";
 import TransactionDetailsModal from "screens/TSX-Screens/TransactionDetails/TransactionDetails";
 import PlaidLinkScreen from "screens/TSX-Screens/AddBalance/PlaidLinkScreen";
+import PDFViewer from "tsx-components/PDFViewer";
 
 const Stack = createNativeStackNavigator();
 
@@ -497,38 +498,47 @@ export default function AppStack() {
         component={IRAHolding}
       />
       <Stack.Screen
-        options={{ 
-          headerShown: false, 
-          presentation: 'modal',
-          animationTypeForReplace: 'push',
-          animation:'slide_from_bottom',
+        options={{
+          headerShown: false,
+          presentation: "modal",
+          animationTypeForReplace: "push",
+          animation: "slide_from_bottom",
           gestureEnabled: false,
-         
         }}
         name={NAVIGATION_SCREENS.TRANSACTION_RESULT}
         component={TransactionResult}
       />
       <Stack.Screen
-        options={{ 
-          headerShown: false, 
-          presentation: 'modal',
-          animationTypeForReplace: 'push',
-          animation:'slide_from_bottom',
+        options={{
+          headerShown: false,
+          presentation: "modal",
+          animationTypeForReplace: "push",
+          animation: "slide_from_bottom",
           gestureEnabled: true,
         }}
         name={NAVIGATION_SCREENS.TRANSACTION_DETAILS_MODAL}
         component={TransactionDetailsModal}
       />
       <Stack.Screen
-        options={{ 
-          headerShown: false, 
-          presentation: 'modal',
-          animationTypeForReplace: 'push',
-          animation:'slide_from_bottom',
+        options={{
+          headerShown: false,
+          presentation: "modal",
+          animationTypeForReplace: "push",
+          animation: "slide_from_bottom",
           gestureEnabled: true,
         }}
         name={NAVIGATION_SCREENS.PLAID_LINK_SCREEN}
         component={PlaidLinkScreen}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: false,
+          presentation: "modal",
+          gestureEnabled: true,
+          animationTypeForReplace: "push",
+        }}
+        name={NAVIGATION_SCREENS.PDF_VIEWER}
+        component={PDFViewer}
       />
     </Stack.Navigator>
   );

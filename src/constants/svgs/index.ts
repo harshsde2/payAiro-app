@@ -81,6 +81,8 @@ import Solana from "./Solana.svg";
 import CheckSquareIcon from "./CheckSquareIcon.svg";
 import QRCodeIcon from "./QRCodeIcon.svg";
 import RWAHoldings from "./RWAHoldings.svg";
+import OutLineCheckedBox from "./OutLineCheckedBox.svg";
+import OutLineUncheckedBox from "./OutLineUncheckedBox.svg";
 
 export const SvgIcons = {
   PayAiorRoundIcon,
@@ -166,4 +168,6 @@ export const SvgIcons = {
   CheckSquareIcon,
   QRCodeIcon,
   RWAHoldings,
+  OutLineCheckedBox,
+  OutLineUncheckedBox,
 };

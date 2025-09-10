@@ -47,6 +47,7 @@ import { useDispatch } from "react-redux";
 import { resetAppState } from "utils/configs";
 import KYCBadge from "tsx-components/KYCBadge";
 import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 
 export default function SettingScreen() {
   const navigation = useNavigation();
@@ -203,7 +204,13 @@ export default function SettingScreen() {
                   } else if (item.name === "Terms & Condition") {
                     termsAndConditionRef.current.showTermsAndConditions();
                     return;
-                  }
+                  } else if (item.name === "Cybrid User Agreement") {
+                    navigation.navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
+                      url: require("../../assets/pdf/Cybrid_User_Agreement.pdf"),
+                      isFileFromLocal: true,
+                    });
+                    return;
+                  } 
                   navigation.navigate(item.route);
                 }}
                 style={{

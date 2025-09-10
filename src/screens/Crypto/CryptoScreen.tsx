@@ -36,7 +36,7 @@ export default function CryptoScreen() {
   const { data, isPending, isFetched, isSuccess, isError, isFetching } =
     useGetCrypto();
 
-  console.log("data ===> ", JSON.stringify(data, null, 2));
+  // console.log("data ===> ", JSON.stringify(data, null, 2));
   // console.log("data => ", JSON.stringify(isFetching, null, 2));
   return (
     <ScreenContainer padding={0}>
@@ -135,7 +135,6 @@ export default function CryptoScreen() {
                     style={[
                       {
                         flex: 1,
-                        // backgroundColor: "red",
                         paddingHorizontal: 10,
                         justifyContent: "center",
                         flexDirection: "row",

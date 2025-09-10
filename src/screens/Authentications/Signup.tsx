@@ -87,6 +87,7 @@ export default function Signup() {
         onSuccess: (data) => {
           setButtonDisabled(false);
           if (data?.status && data) {
+            console.log("data =>", JSON.stringify(data, null, 2));
             useDispatchAction(setSuccessMsg("OTP has been sent to email"));
             (navigation as any).navigate(SCREENS.OTP, {
               email,

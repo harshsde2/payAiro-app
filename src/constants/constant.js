@@ -94,6 +94,12 @@ export const SETTINGS_LISTS = [
     route: "",
   },
   {
+    name: "Cybrid User Agreement",
+    icon: <SvgIcons.TermsAndConditions />,
+    isDisvled: false,
+    route: "",
+  },
+  {
     name: "Support",
     icon: <SvgIcons.ChatSupport />,
     isDisvled: false,

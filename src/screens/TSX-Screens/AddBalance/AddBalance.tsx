@@ -51,12 +51,12 @@ const AddBalance = () => {
     const isExternalAccount =
       item?.account_type === "checking" || item?.account_type === "savings";
     const accountType = !isExternalAccount
-      ? item?.account_type.toUpperCase()
+      ? item?.account_type?.toUpperCase()
       : "external";
 
     return {
-      label: `${item?.bank_name} (${maskedAccount}) ${accountType}`,
-      value: accountType.toLowerCase(),
+      label: `${item?.bank_name || ""} (${maskedAccount || ""}) ${accountType || ""}`,
+      value: accountType?.toLowerCase() || "",
     };
   });
 
@@ -65,7 +65,7 @@ const AddBalance = () => {
   const customStyle = customStyles(theme);
   const styles = { ...useCommonAddBalanceStyles(), ...customStyle };
 
-  const [souceAccount, setsouceAccount] = useState(DROPDOWN_LISTS[0].value);
+  const [souceAccount, setsouceAccount] = useState(DROPDOWN_LISTS[0]?.value || "");
   const [amount, setAmount] = useState("");
 
   const current_balance = (bankBalance as any)?.bank_account?.usd;
@@ -81,21 +81,21 @@ const AddBalance = () => {
         <MyDropdown
           placeholder={"Source Account Type"}
           data={DROPDOWN_LISTS.filter(
-            (item) => !item.value.toLowerCase().includes("ira")
+            (item) => !item?.value?.toLowerCase()?.includes("ira")
           )}
           value={souceAccount}
           search={false}
           itemTextStyle={{
             fontSize: 14,
-            fontFamily: theme?.typography.fontFamily.montserrat,
+            fontFamily: theme?.typography?.fontFamily?.montserrat,
           }}
           placeholderStyle={{ paddingLeft: 10 }}
           selectedTextStyle={{ paddingLeft: 10 }}
           selectedTextProps={{ numberOfLines: 1 }}
           style={{
-            borderRadius: theme.spacing.spacing[2],
+            borderRadius: theme?.spacing?.spacing[2],
             padding: 10,
-            borderColor: theme.colors.palette.grey300,
+            borderColor: theme?.colors?.palette?.grey300,
             borderWidth: 0.5,
             paddingLeft: 10,
           }}
@@ -120,18 +120,18 @@ const AddBalance = () => {
               key={index}
               style={{
                 width: "100%",
-                borderRadius: theme.spacing.spacing[2],
+                borderRadius: theme?.spacing?.spacing[2],
                 padding: 10,
-                borderColor: theme.colors.palette.grey300,
+                borderColor: theme?.colors?.palette?.grey300,
                 borderWidth: 0.5,
-                backgroundColor: theme.colors.palette.grey250,
+                backgroundColor: theme?.colors?.palette?.grey250,
                 flexDirection: "row",
                 alignItems: "center",
                 marginBottom: 10,
                 opacity: amount === "" || parseInt(amount) <= 0 ? 0.6 : 1,
               }}
               onPress={() =>
-                navigation.navigate(method.navigation, {
+                navigation.navigate(method?.navigation, {
                   amount,
                   souceAccount,
                   title: "Add Balance",
@@ -144,7 +144,7 @@ const AddBalance = () => {
                 style={{ flex: 1, paddingLeft: 10 }}
                 variant="subtitle1"
               >
-                {method.title}
+                {method?.title}
               </CustomText>
               <SvgIcons.ChevronRight />
             </TouchableOpacity>

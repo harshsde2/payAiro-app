@@ -1,15 +1,16 @@
 import { useNavigation } from "@react-navigation/native";
+import HeaderTitle from "components/HeaderTitle";
+import { SvgIcons } from "constants/svgs";
 import { ScreenContainer } from "HOC";
+import { useLogin, useStepCount } from "query/hooks/useAPIAuth";
 import React, { useRef, useState } from "react";
 import {
-  Button,
-  KeyboardAvoidingView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
-import { SvgXml } from "react-native-svg";
+import { useDispatch } from "react-redux";
 import { Theme, useTheme } from "styles";
 import { CustomText } from "tsx-components";
 import AuthHeader from "tsx-components/AuthHeader";
@@ -17,17 +18,12 @@ import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
 import GenericButton from "../../components/GenericButton";
 import PoliticalModal from "../../components/PolitaclModal";
 import TextInputField from "../../components/TextInputField";
-import { SVGChecked, SVGUnChecked } from "../../constants/images";
 import { SCREENS } from "../../constants/SCREENS";
 import useDispatchAction from "../../hooks/useDispatchAction";
 import {
   setErrorMsg,
   setSuccessMsg,
 } from "../../redux/slices/authenticationSlice";
-import { sendOTP } from "../../services/Services";
-import { useLogin, useStepCount } from "query/hooks/useAPIAuth";
-import MyDropdown from "tsx-components/MyDropdown";
-import HeaderTitle from "components/HeaderTitle";
 
 export default function Login() {
   const navigation = useNavigation();
@@ -52,9 +48,11 @@ export default function Login() {
   const { mutate: login, isPending, error } = useLogin();
   const { mutate: stepCount } = useStepCount();
 
+  const dispatch = useDispatch();
+
   const handleLogin = () => {
     if (!email.trim()) {
-      useDispatchAction(setErrorMsg("E-Mail Fields cannot be empty"));
+      dispatch(setErrorMsg("E-Mail Fields cannot be empty"));
       return;
     }
     // if (!selectedMethod.trim()) {
@@ -62,16 +60,16 @@ export default function Login() {
     //   return;
     // }
     if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
-      useDispatchAction(setErrorMsg("Please enter valid email address"));
+      dispatch(setErrorMsg("Please enter valid email address"));
       return;
     }
     if (!checked) {
-      useDispatchAction(setErrorMsg("Terms & Conditions are required"));
+      dispatch(setErrorMsg("Terms & Conditions are required"));
       return;
     }
 
     if (checked1) {
-      useDispatchAction(
+      dispatch(
         setErrorMsg(
           "If you are politically exposed then you cant able to create account"
         )
@@ -85,6 +83,7 @@ export default function Login() {
       onSuccess: (data) => {
         setButtonDisabled(false);
         if (data?.status && data) {
+          console.log("data =>", JSON.stringify(data, null, 2));
           useDispatchAction(setSuccessMsg("OTP has been sent to email"));
           (navigation as any).navigate(SCREENS.OTP, {
             email,
@@ -165,11 +164,20 @@ export default function Login() {
               onPress={() => setisvisible(true)}
               style={styles.termsAndConditionContainer}
             >
-              <SvgXml
-                xml={checked1 ? SVGChecked : SVGUnChecked}
-                width={15}
-                height={15}
-              />
+              {
+                checked1 ? (
+                  <SvgIcons.OutLineCheckedBox
+                    width={15}
+                    height={15}
+                  />
+                ) : (
+                  <SvgIcons.OutLineUncheckedBox
+                    width={15}
+                    height={15}
+                  />
+                )
+              }
+              
               <CustomText variant={"caption"}>
                 Are you politically exposed person?
               </CustomText>
@@ -180,11 +188,19 @@ export default function Login() {
               onPress={() => setchecked((state) => !state)}
               style={styles.termsAndConditionContainer}
             >
-              <SvgXml
-                xml={checked ? SVGChecked : SVGUnChecked}
-                width={15}
-                height={15}
-              />
+              {
+                checked ? (
+                  <SvgIcons.OutLineCheckedBox
+                  width={15}
+                  height={15}
+                />
+              ) : (
+                <SvgIcons.OutLineUncheckedBox
+                  width={15}
+                  height={15}
+                />
+              )
+              }
               <CustomText>
                 <CustomText variant={"caption"}>
                   By clicking the button you agree with the

@@ -21,7 +21,6 @@ import CustomText from "../../tsx-components/CustomText";
 
 // Constants & Styles
 import { FINANCE_LISTS } from "../../constants/constant";
-import { SVGLeftArrow } from "../../constants/images";
 import { useTheme } from "../../styles/ThemeContext";
 import { Theme } from "styles";
 

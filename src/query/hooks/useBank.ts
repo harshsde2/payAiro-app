@@ -10,6 +10,7 @@ import {
 } from "../../api/types";
 import { queryStaleTime } from "query/queryConfigs";
 import useSelectorAction from "hooks/useSelectorAction";
+import { userKeys } from "./useUser";
 
 // Query keys
 export const bankKeys = {
@@ -129,8 +130,7 @@ export const usePlaidAccessToken = () => {
     },
     onSuccess: () => {
       // Invalidate and refetch bank accounts after successful connection
-      queryClient.invalidateQueries({ queryKey: bankKeys.allAccounts() });
-      queryClient.invalidateQueries({ queryKey: bankKeys.balance() });
+      queryClient.invalidateQueries({ queryKey: userKeys.fiatDashboard() });
     },
   });
 };
