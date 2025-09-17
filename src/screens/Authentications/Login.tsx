@@ -24,6 +24,7 @@ import {
   setErrorMsg,
   setSuccessMsg,
 } from "../../redux/slices/authenticationSlice";
+import { clearAll } from "storage/mmkv";
 
 export default function Login() {
   const navigation = useNavigation();
@@ -98,6 +99,7 @@ export default function Login() {
       },
   });
   };
+
 
   return (
     <ScreenContainer avoidKeyboard scrollable={true} padding={0}>

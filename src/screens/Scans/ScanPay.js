@@ -76,8 +76,6 @@ export default function ScanPay(props) {
     };
   });
 
-  console.log("props.params =>", JSON.stringify(props?.route?.params, null, 2));
-
   const pinScreenRef = useRef(null);
 
   // console.log(
@@ -101,7 +99,6 @@ export default function ScanPay(props) {
   const [tokenLists, settokenLists] = useState([]);
   const [selectedToken, setselectedToken] = useState(null);
 
-  const [showResultModal, setShowResultModal] = useState(false);
   const [isError, setIsError] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [successData, setSuccessData] = useState({});
@@ -247,7 +244,7 @@ export default function ScanPay(props) {
             isSuccess: true,
             isError: false,
           });
-          console.log("send resp ", JSON.stringify(data, null, 2));
+          // console.log("send resp ", JSON.stringify(data, null, 2));
         } else {
           // Navigate to TransactionResult with error state
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
@@ -278,11 +275,6 @@ export default function ScanPay(props) {
         setspin(false);
       },
     });
-    // const data = await sendPayAero(formData, tokens?.access, true);
-    // } catch (error) {
-    //   console.log(error, "error");
-    //   setspin(false);
-    // }
   };
 
   // console.log(JSON.stringify(showResultModal, null, 2), "showResultModal");
@@ -425,52 +417,8 @@ export default function ScanPay(props) {
     parseInt(walletData?.TransactionFees_persentage)
   );
 
-
   return (
     <ScreenContainer scrollable padding={0}>
-      {/* Display the amount */}
-      {/* <Loader spin={spin} /> */}
-      {/* <Button
-        title="Go to Result"
-        textStyle={{ color: "red" }}
-        onPress={() => {
-          // Handle navigation to result screen
-          setShowResultModal(true);
-        }}
-      /> */}
-      {/* {showResultModal && ( */}
-      {/* <CommonModal
-        isVisible={showResultModal}
-        onClose={() => {
-          setShowResultModal(false);
-          // navigation.navigate(SCREENS.Dashboard);
-          // setspin(false);
-          // setSuccessData({});
-        }}
-        isOnOutsidePressClose={false}
-      >
-        <ResultModal
-          onClose={async () => {
-            // await navigation.reset({
-            //   index: 0,
-            //   routes: [{ name: NAVIGATION_SCREENS.NEW_DASHBOARD }], // or your screen name
-            // });
-            await navigation.navigate(NAVIGATION_SCREENS.NEW_DASHBOARD);
-            setShowResultModal(false);
-            if (pinScreenRef.current) {
-              pinScreenRef.current?.onClose();
-            }
-            setspin(false);
-            setSuccessData({});
-          }}
-          isPending={spin}
-          isError={isError}
-          isSuccess={isSuccess}
-          data={successData}
-        />
-      </CommonModal> */}
-      {/* )} */}
-
       <SelectionNetwork
         isVisible={isVisible2}
         data={networkLists}
@@ -507,8 +455,6 @@ export default function ScanPay(props) {
       <PinScreen
         ref={pinScreenRef}
         onAction={() => {
-          // console.log("chal in pin");
-          setShowResultModal(true);
           handleActionsAfterPinVerified();
         }}
         accountNumber={bank?.account_number}

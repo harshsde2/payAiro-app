@@ -97,7 +97,7 @@ const categories = {
 };
 
 // Variables
-const BANK_TYPE = "FDIC Insured";
+const BANK_TYPE = "";
 
 // // API call utility with automatic retries, caching, and error handling
 export const useApiCall = <T,>(
@@ -648,7 +648,7 @@ const NewDashboard = () => {
       (item: any) => item.asset_type == "Realestate"
     ) ?? [];
 
-  // console.log("dataaaa =>", JSON.stringify(DashBoardData, null, 2));
+  console.log("dataaaa =>", JSON.stringify(DashBoardData, null, 2));
   console.log("token =>", tokens.access);
 
   const {
@@ -1766,7 +1766,8 @@ const NewDashboard = () => {
                                     // textTransform: 'capitalize'
                                   }}
                                 >
-                                  {`( ${BANK_TYPE} )`}
+                                  {``}
+                                  {/* {`( ${BANK_TYPE} )`} */}
                                 </CustomText>
                               </View>
                               }

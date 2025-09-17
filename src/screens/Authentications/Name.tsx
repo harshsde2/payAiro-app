@@ -1,36 +1,29 @@
 import { useNavigation } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import { SVGChecked, SVGUnChecked } from "constants/images";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { usePatchUserDetails, useStepCount } from "query/hooks/useAPIAuth";
 import React, { useRef, useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Pressable,
   StyleSheet,
   Text,
-  TouchableHighlight,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { SvgXml } from "react-native-svg";
 import { Theme, useTheme } from "styles";
+import { useGlobalStyles } from "styles/GlobalStyles";
 import { CustomText } from "tsx-components";
 import AuthHeader from "tsx-components/AuthHeader";
 import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
 import GenericButton from "../../components/GenericButton";
 import TextInputField from "../../components/TextInputField";
-import { SCREENS } from "../../constants/SCREENS";
 import useDispatchAction from "../../hooks/useDispatchAction";
 import {
   setErrorMsg,
   setSuccessMsg,
   setUserData,
 } from "../../redux/slices/authenticationSlice";
-import { patchUser } from "../../services/Services";
-import CommonModal from "tsx-components/modals/CommonModal";
-import { useGlobalStyles } from "styles/GlobalStyles";
-import Tooltip from "react-native-walkthrough-tooltip";
-import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 
 export default function Name(props: any) {
   const { email, data } = props.route.params || {};

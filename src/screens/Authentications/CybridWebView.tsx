@@ -30,7 +30,6 @@ const CybridWebView = () => {
   const pinScreenRef = useRef<PinScreenRef | any>();
   const { URL } = route.params as any;
 
-
   const globalStyles = useGlobalStyles();
   const webviewRef = useRef(null);
   const [isKycCompleted, setIsKycCompleted] = React.useState(false);
@@ -82,10 +81,12 @@ const CybridWebView = () => {
           setIsKYCInProgress(false);
         } else if (data?.data.status === false) {
           //   setIsKycCompleted(false);
+          console.log('data?.data?.message ->',data?.data?.message)
           dispatch(setErrorMsg(data?.data?.message || "KYC not completed"));
         }
       },
-      onError: (error:any) => {
+      onError: (error: any) => {
+        console.log("error ->",JSON.stringify(error?.response,null,2))
         dispatch(
           setErrorMsg(
             error?.response?.data?.data?.message || "KYC not completed"
@@ -183,48 +184,59 @@ const CybridWebView = () => {
           <View
             style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
           >
-            <View style={{width:'100%',height:100,justifyContent:'center',alignItems:'center'}}>
-
-            {isKYCInProgress ? (
-              <CustomText
-                variant="subtitle1"
-                color={"red"}
-                style={{ textAlign: "center", flex: 1, marginBottom: 20 }}
-              >
-                Please do not close this page. Untill KYC is completed. To make
-                sure KYC is completed, you can click on the refresh button.
-              </CustomText>
-            ) : (
-              <CustomText
-                variant="subtitle1"
-                color={isKYCInProgress ? "red" : "green"}
-                style={{ textAlign: "center", flex: 1, marginBottom: 20 }}
-              >
-                KYC has been completed successfully.
-              </CustomText>
-            )}
-            </View>
-            <View style={{flex:1,justifyContent:'center',alignItems:'center',width:'100%'}}>
+            <View
+              style={{
+                width: "100%",
+                minHeight:150,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
               {isKYCInProgress ? (
-              <View style={{ width: "100%", height: 300,marginBottom:20 }}>
-                <LottieView
-                  style={{ width: "100%", height: "100%" }}
-                  source={require("../../lottie/PendingWork.json")}
-                  autoPlay
-                  loop
-                />
-              </View>
-              ):
-              (
-              <View style={{ width: "100%", height: 300,marginBottom:50 }}>
-                <LottieView
-                  style={{ width: "100%", height: "100%" }}
-                  source={require("../../lottie/Completed.json")}
-                  
-                />
-              </View>
-              )
-              }
+                <CustomText
+                  variant="subtitle1"
+                  color={"red"}
+                  style={{ textAlign: "center", flex: 1, marginBottom: 20 }}
+                >
+                  Please do not close this page. Untill KYC is completed. To
+                  make sure KYC is completed, you can click on the refresh
+                  button.
+                </CustomText>
+              ) : (
+                <CustomText
+                  variant="subtitle1"
+                  color={isKYCInProgress ? "red" : "green"}
+                  style={{ textAlign: "center", flex: 1, marginBottom: 20 }}
+                >
+                  KYC has been completed successfully.
+                </CustomText>
+              )}
+            </View>
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                width: "100%",
+              }}
+            >
+              {isKYCInProgress ? (
+                <View style={{ width: "100%", height: 300, marginBottom: 20 }}>
+                  <LottieView
+                    style={{ width: "100%", height: "100%" }}
+                    source={require("../../lottie/PendingWork.json")}
+                    autoPlay
+                    loop
+                  />
+                </View>
+              ) : (
+                <View style={{ width: "100%", height: 300, marginBottom: 50 }}>
+                  <LottieView
+                    style={{ width: "100%", height: "100%" }}
+                    source={require("../../lottie/Completed.json")}
+                  />
+                </View>
+              )}
             </View>
             <CustomText variant="h2">
               KYC is in {isKYCInProgress ? "progress..." : "completed"}

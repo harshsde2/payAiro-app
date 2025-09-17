@@ -467,15 +467,15 @@ export default function Transaction() {
     refetchFilteredTransactions(); // force fetch with new filters
     setShowFilter(false);
 
-    console.log("finalQuery =>", JSON.stringify(finalQuery, null, 2));
+    // console.log("finalQuery =>", JSON.stringify(finalQuery, null, 2));
   };
 
   const { category_percentages, total_transactions } =
     filteredTransactionsData?.data || {};
 
   console.log(
-    "web3TxLists =>",
-    JSON.stringify(web3TxLists, null, 2)
+    "filteredTransactionsData =>",
+    JSON.stringify(filteredTransactionsData, null, 2)
   );
 
   return (

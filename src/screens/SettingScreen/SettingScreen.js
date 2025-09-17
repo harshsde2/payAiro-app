@@ -48,6 +48,7 @@ import { resetAppState } from "utils/configs";
 import KYCBadge from "tsx-components/KYCBadge";
 import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { clearAll } from "storage/mmkv";
 
 export default function SettingScreen() {
   const navigation = useNavigation();
@@ -86,6 +87,7 @@ export default function SettingScreen() {
     setWalletDataAuth(null);
     setPin(null);
     setKYCAcceopted(null);
+    clearAll();
 
     setTimeout(() => {
       useDispatchAction(setLogin(false)); // optional, already in reset
@@ -186,6 +188,7 @@ export default function SettingScreen() {
               style={{
                 color: "#000",
                 marginLeft: 10,
+                
                 fontFamily: Fonts.bold,
                 fontSize: 26,
                 marginBottom: 20,

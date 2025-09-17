@@ -47,9 +47,10 @@ export const useFilteredTransactions = (filterEndPoint: any) => {
   return useQuery<ApiResponse<TransactionFilterListResponse>>({
     queryKey: transactionKeys.filter(),
     queryFn: async () => {
-      return await apiClient.get<ApiResponse<TransactionFilterListResponse>>(
+      const rep = await apiClient.get<ApiResponse<TransactionFilterListResponse>>(
         `${WALLET.ALL_FILTERED_TRANSACTIONS}${filterEndPoint}`
       );
+      return rep
     },
     staleTime: queryStaleTime.VERY_FAST_STALE_TIME, // 10 minutes
   });
