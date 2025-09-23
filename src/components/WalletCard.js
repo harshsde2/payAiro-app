@@ -133,7 +133,7 @@ const WalletCard = ({ data, bankbalance, index }) => {
             {`Statement`}
           </CustomText>
         </TouchableOpacity>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={{
             flexDirection: "row",
             justifyContent: "space-around",
@@ -151,8 +151,8 @@ const WalletCard = ({ data, bankbalance, index }) => {
           <CustomText variant={"body1"} color={theme.colors.palette.white}>
             {`Card`}
           </CustomText>
-        </TouchableOpacity>
-        <TouchableOpacity
+        </TouchableOpacity> */}
+        {/* <TouchableOpacity
           style={{
             flexDirection: "row",
             justifyContent: "space-around",
@@ -169,7 +169,7 @@ const WalletCard = ({ data, bankbalance, index }) => {
           <CustomText variant={"body1"} color={theme.colors.palette.white}>
             {`Services`}
           </CustomText>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </View>
   );

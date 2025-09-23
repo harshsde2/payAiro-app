@@ -174,14 +174,14 @@ export default function BottomNavigation({ isVer }) {
         </TouchableOpacity>
 
         {/* Offer Tab */}
-        <TouchableOpacity
+        {/* <TouchableOpacity
           // disabled={true}
           onPress={() => handleTabSwitch(NAVIGATION_SCREENS.REWARDS)}
         >
           <SvgIcons.DiscountShape
             style={{ opacity: activeTab === "4" ? 1 : 0.6 }}
           />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Setting Tab */}
         <TouchableOpacity

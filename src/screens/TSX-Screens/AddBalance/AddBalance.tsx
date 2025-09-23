@@ -28,21 +28,21 @@ const AddBalance = () => {
       icon: <SvgIcons.ACHTransfer />,
       navigation: NAVIGATION_SCREENS.ACH_TRANSFER,
     },
-    {
-      title: "Debit Card",
-      icon: <SvgIcons.DebitCard />,
-      navigation: NAVIGATION_SCREENS.DEBIT_CARD_SCREEN,
-    },
-    {
-      title: "Apple Pay/Google Pay",
-      icon: <SvgIcons.ApplePay />,
-      navigation: NAVIGATION_SCREENS.COMING_SOON,
-    },
-    {
-      title: "Crypto Wallet",
-      icon: <SvgIcons.CryptoWallet />,
-      navigation: NAVIGATION_SCREENS.COMING_SOON,
-    },
+    // {
+    //   title: "Debit Card",
+    //   icon: <SvgIcons.DebitCard />,
+    //   navigation: NAVIGATION_SCREENS.DEBIT_CARD_SCREEN,
+    // },
+    // {
+    //   title: "Apple Pay/Google Pay",
+    //   icon: <SvgIcons.ApplePay />,
+    //   navigation: NAVIGATION_SCREENS.COMING_SOON,
+    // },
+    // {
+    //   title: "Crypto Wallet",
+    //   icon: <SvgIcons.CryptoWallet />,
+    //   navigation: NAVIGATION_SCREENS.COMING_SOON,
+    // },
   ];
 
   const DROPDOWN_LISTS = bankLists.map((item: any) => {

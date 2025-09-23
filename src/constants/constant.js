@@ -69,12 +69,12 @@ export const SETTINGS_LISTS = [
     isDisvled: false,
     route: "Settings2",
   },
-  {
-    name: "Add Card",
-    icon: <SvgIcons.AddCardIcon />,
-    isDisvled: false,
-    route: "AddCard",
-  },
+  // {
+  //   name: "Add Card",
+  //   icon: <SvgIcons.AddCardIcon />,
+  //   isDisvled: false,
+  //   route: "AddCard",
+  // },
   {
     name: "Bank Statement",
     icon: <SvgIcons.BankStatement />,
@@ -121,7 +121,7 @@ export const SETTINGS_LISTS = [
 export const SECURITY_LISTS = [
   { name: "App Lock", icon: SVG2FA, route: "2FA" },
   { name: "Change Pin", icon: SVGChangePin, route: "ChangePinScreen" },
-  { name: "Device Management", icon: SVGChangePin, route: "DeviceManagement" },
+  // { name: "Device Management", icon: SVGChangePin, route: "DeviceManagement" },
 ];
 
 export const CARD_TYPE = [
@@ -140,39 +140,39 @@ export const FINANCE_LISTS = [
     icon: <SvgIcons.SendMoneyIcon />,
     route: NAVIGATION_SCREENS.SEND,
   },
-  {
-    name: "Recharge",
-    icon: <SvgIcons.SendMoneyIcon />,
-    route: NAVIGATION_SCREENS.COMING_SOON,
-  },
-  {
-    name: "FastTag",
-    icon: <SvgIcons.FastTagIcon />,
-    route: NAVIGATION_SCREENS.COMING_SOON,
-  },
-  {
-    name: "Accounts & FD",
-    icon: <SvgIcons.AccountsAndFDIcon />,
-    route: NAVIGATION_SCREENS.COMING_SOON,
-  },
-  {
-    name: "Loans",
-    icon: <SvgIcons.LoansIcon />,
-    route: NAVIGATION_SCREENS.COMING_SOON,
-  },
-  {
-    name: "Mutual Fund",
-    icon: <SvgIcons.DollarCircleIcon />,
-    route: NAVIGATION_SCREENS.COMING_SOON,
-  },
-  {
-    name: "UPI",
-    icon: <SvgIcons.UPIIcon />,
-    route: NAVIGATION_SCREENS.COMING_SOON,
-  },
-  {
-    name: "Bills",
-    icon: <SvgIcons.BillsIcon />,
-    route: NAVIGATION_SCREENS.COMING_SOON,
-  },
+  // {
+  //   name: "Recharge",
+  //   icon: <SvgIcons.SendMoneyIcon />,
+  //   route: NAVIGATION_SCREENS.COMING_SOON,
+  // },
+  // {
+  //   name: "FastTag",
+  //   icon: <SvgIcons.FastTagIcon />,
+  //   route: NAVIGATION_SCREENS.COMING_SOON,
+  // },
+  // {
+  //   name: "Accounts & FD",
+  //   icon: <SvgIcons.AccountsAndFDIcon />,
+  //   route: NAVIGATION_SCREENS.COMING_SOON,
+  // },
+  // {
+  //   name: "Loans",
+  //   icon: <SvgIcons.LoansIcon />,
+  //   route: NAVIGATION_SCREENS.COMING_SOON,
+  // },
+  // {
+  //   name: "Mutual Fund",
+  //   icon: <SvgIcons.DollarCircleIcon />,
+  //   route: NAVIGATION_SCREENS.COMING_SOON,
+  // },
+  // {
+  //   name: "UPI",
+  //   icon: <SvgIcons.UPIIcon />,
+  //   route: NAVIGATION_SCREENS.COMING_SOON,
+  // },
+  // {
+  //   name: "Bills",
+  //   icon: <SvgIcons.BillsIcon />,
+  //   route: NAVIGATION_SCREENS.COMING_SOON,
+  // },
 ];
