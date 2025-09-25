@@ -1,113 +1,86 @@
+import { useNavigation } from "@react-navigation/native";
+import { ScreenContainer } from "HOC";
+import HeaderTitle from "components/HeaderTitle";
+import moment from "moment";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { useUserToUserTransfer } from "query/hooks";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
   Alert,
-  ToastAndroid,
+  Text,
   TouchableOpacity,
-  Button,
+  View
 } from "react-native";
-import Container from "../../HOC/Container";
-import PincodeKeypad from "../../components/PincodeKeypad";
-import { SvgXml } from "react-native-svg";
-import {
-  SVGDownArrow,
-  SVGDownArrow3,
-  SVGLeftArrow,
-  SVGProfile,
-  SVGUSD,
-} from "../../constants/images";
-import Fonts from "../../constants/Fonts";
+import { useTheme } from "styles";
+import { CustomText } from "tsx-components";
+import PinScreen from "tsx-components/modals/PinScreen";
+import FullScreenModal from "../../components/FullScreenModal";
 import GenericButton from "../../components/GenericButton";
-import { useNavigation } from "@react-navigation/native";
+import PincodeKeypad from "../../components/PincodeKeypad";
+import SelectionTokens from "../../components/SelectedTokens";
+import SelectionNetwork from "../../components/SelectionNetwork";
+import Fonts from "../../constants/Fonts";
+import { SCREENS } from "../../constants/SCREENS";
+import useDispatchAction from "../../hooks/useDispatchAction";
+import useSelectorAction from "../../hooks/useSelectorAction";
+import {
+  setErrorMsg,
+  setSuccessMsg
+} from "../../redux/slices/authenticationSlice";
 import {
   confirmPayment,
   confirmPaymentQR,
   cryptoTransfer,
   getBlockchains,
   payUserContact,
-  paymentRequested,
-  sendPayAero,
+  paymentRequested
 } from "../../services/Services";
-import useSelectorAction from "../../hooks/useSelectorAction";
-import moment from "moment";
-import PincodeScreen from "../Authentications/PincodeScreen";
-import { getPin } from "../../services/Auth";
-import { SCREENS } from "../../constants/SCREENS";
-import useDispatchAction from "../../hooks/useDispatchAction";
-import {
-  setErrorMsg,
-  setNetworkLists,
-  setSuccessMsg,
-} from "../../redux/slices/authenticationSlice";
-import Loader from "../../components/Loader";
-import FullScreenModal from "../../components/FullScreenModal";
-import SelectionNetwork from "../../components/SelectionNetwork";
-import SelectionTokens from "../../components/SelectedTokens";
-import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import PinScreen from "tsx-components/modals/PinScreen";
-import { ScreenContainer } from "HOC";
-import HeaderTitle from "components/HeaderTitle";
-import { CustomText } from "tsx-components";
-import { useTheme } from "styles";
-import MyDropdown from "tsx-components/MyDropdown";
-import CommonModal from "tsx-components/modals/CommonModal";
-import ResultModal from "tsx-components/modals/ResultModal";
-import { useUserToUserTransfer } from "query/hooks";
+import { SvgIcons } from "constants/svgs";
+import { IScanPayProps, PinScreenRef } from "./types";
 
-export default function ScanPay(props) {
+export default function ScanPay(props: IScanPayProps) {
   const { type, sender, bank } = props?.route?.params;
   const { theme } = useTheme();
 
-  const { tokens, isCrypto, walletData, bankLists } = useSelectorAction();
+  const { tokens, isCrypto, walletData, bankLists } = useSelectorAction() as any;
 
-  const DROPDOWN_LISTS = bankLists.map((item) => {
-    const last4 = item.account_number?.slice(-4); // Get last 4 digits
+  const DROPDOWN_LISTS = (bankLists || []).map((item: any) => {
+    const last4 = item?.account_number?.slice(-4);
     const maskedAccount = `•••• ${last4}`;
     const isExternalAccount =
       item?.account_type === "checking" || item?.account_type === "savings";
     const accountType = !isExternalAccount
       ? item?.account_type?.toUpperCase()
-      : "external"; // Fallback if account_type is not available
+      : "external";
 
     return {
       label: `${item?.bank_name} (${maskedAccount}) ${accountType}`,
-      value: item?.account_type, // use account_id or any unique field as value
-    };
+      value: item?.account_type,
+    } as { label: string; value: string };
   });
 
-  const pinScreenRef = useRef(null);
+  const pinScreenRef = useRef<PinScreenRef | null>(null);
 
-  // console.log(
-  //   "sender?.requester_details =>",
-  //   JSON.stringify(walletData, null, 2)
-  // );
-  const [souceAccount, setsouceAccount] = useState("");
 
-  const [amount, setAmount] = useState("0"); // State to store the input value
-  const navigation = useNavigation();
-  const [spin, setspin] = useState(false);
-  // console.log(sender, 'newSender!!!!');
-  const [pinvisible, setpinvisible] = useState(""); // State to store the input value
-  const [isVisibleBank, setisVisibleBank] = useState(false); // State to store the input value
-  const [bankSelected, setbankSelected] = useState(null); // State to store the input value
-  const [isVisible2, setisVisible2] = useState(false);
-  const [isVisible3, setisVisible3] = useState(false);
+  const [amount, setAmount] = useState<string>("0");
+  const navigation = useNavigation<any>();
+  const [spin, setspin] = useState<boolean>(false);
+  const [pinvisible, setpinvisible] = useState<boolean>(false);
+  const [isVisibleBank, setisVisibleBank] = useState<boolean>(false);
+  const [bankSelected, setbankSelected] = useState<any>(null);
+  const [isVisible2, setisVisible2] = useState<boolean>(false);
+  const [isVisible3, setisVisible3] = useState<boolean>(false);
 
-  const [networkLists, setnetworkLists] = useState([]);
-  const [selectedNetwork, setselectedNetwork] = useState([]);
-  const [tokenLists, settokenLists] = useState([]);
-  const [selectedToken, setselectedToken] = useState(null);
-
-  const [isError, setIsError] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [successData, setSuccessData] = useState({});
+  const [networkLists, setnetworkLists] = useState<any[]>([]);
+  const [selectedNetwork, setselectedNetwork] = useState<any>([]);
+  const [tokenLists, settokenLists] = useState<any[]>([]);
+  const [selectedToken, setselectedToken] = useState<any>(null);
 
   const {
     mutate: handleUserToUserTransfer,
     isPending: isPendingCreatePin,
     isSuccess: isSuccessCreatePin,
-  } = useUserToUserTransfer();
+  } = useUserToUserTransfer() as any;
 
   useEffect(() => {
     getBlockchain();
@@ -118,16 +91,15 @@ export default function ScanPay(props) {
 
     console.log(
       "sender?.request_details?.request_id",
-      sender?.request_details?.request_id
+      (sender as any)?.request_details?.request_id
     );
     const data = await payUserContact(
-      sender?.request_details?.request_id,
+      (sender as any)?.request_details?.request_id,
       tokens?.access
     );
-    // console.log(data, "datsPay");
     if (data && data?.data.status) {
       useDispatchAction(setSuccessMsg("Transaction Paid Successfully"));
-      navigation.replace(SCREENS.Dashboard);
+      navigation.replace(SCREENS.Dashboard as never);
     } else {
       useDispatchAction(
         setErrorMsg("Did Not have enough amount or some error happens")
@@ -141,15 +113,15 @@ export default function ScanPay(props) {
 
     const formData = new FormData();
     console.log(sender, "sender");
-    const order_id = sender?.order_id ?? sender?.orderID ?? sender;
-    formData.append("order_id", order_id);
+    const order_id = (sender as any)?.order_id ?? (sender as any)?.orderID ?? sender;
+    formData.append("order_id", order_id as string);
     console.log(formData, "formData");
-    let data;
-    if (sender?.qrtype === "merchant") {
+    let data: any;
+    if ((sender as any)?.qrtype === "merchant") {
       data = await confirmPaymentQR(formData, tokens?.access);
       if (data && data.status) {
         useDispatchAction(setSuccessMsg("Payment Successfully"));
-        navigation.navigate(NAVIGATION_SCREENS.NEW_DASHBOARD);
+        navigation.navigate(NAVIGATION_SCREENS.NEW_DASHBOARD as never);
       } else {
         useDispatchAction(
           setErrorMsg("Did Not have enough amount or some error happens")
@@ -163,7 +135,7 @@ export default function ScanPay(props) {
     data = await confirmPayment(formData, tokens?.access);
     console.log(data, "confirmPayment");
     if (data && data?.status) {
-      navigation.replace("TransactionSuccess", {
+      navigation.replace("TransactionSuccess" as never, {
         data: null,
         transactionDetails: [
           { "Transaction Id": data?.data?.transaction_id },
@@ -176,7 +148,7 @@ export default function ScanPay(props) {
           { "Requested Amount": data?.data?.transaction_amount },
           { "Successfully Sent": data?.data?.transaction_amount },
         ],
-      });
+      } as never);
     } else {
       Alert.alert("Something Went Wrong", "Please Check Your Balance & Status");
     }
@@ -184,92 +156,81 @@ export default function ScanPay(props) {
   };
 
   const handleSend = async () => {
-    // console.log(JSON.stringify(bank, null, 2), "bankkkkkkkk");
-    if (amount < 5) {
+    if (Number(amount) < 5) {
       useDispatchAction(setErrorMsg("Minimum amount is 5"));
       return;
     }
 
-    // try {
     const payload = {
-      recipient_value: sender?.address ?? sender,
-      amount: sender?.amount ?? amount,
+      recipient_value: (sender as any)?.address ?? sender,
+      amount: (sender as any)?.amount ?? amount,
     };
-
-    // console.log("sender =>", sender);
 
     const formData = new FormData();
 
     if (walletData?.fortress) {
-      formData.append("recipient", sender?.address ?? sender);
+      formData.append("recipient", (sender as any)?.address ?? (sender as string));
       formData.append(
         "transaction_fees",
         walletData?.TransactionFees_persentage
       );
       formData.append(
         "account_type",
-        bank?.bank_type == "external"
+        (bank as any)?.bank_type == "external"
           ? "external"
-          : bank?.account_type === "personal"
+          : (bank as any)?.account_type === "personal"
           ? "bank"
-          : bank
-          ? bank
+          : (bank as any)
+          ? (bank as any)
           : "bank"
       );
-      formData.append("amount", sender?.amount ?? amount);
+      formData.append("amount", (sender as any)?.amount ?? amount);
     } else {
-      formData.append("amount", sender?.amount ?? amount);
-      formData.append("recipient_identifier", sender?.address ?? sender);
+      formData.append("amount", (sender as any)?.amount ?? amount);
+      formData.append("recipient_identifier", (sender as any)?.address ?? (sender as string));
     }
 
-    // console.log("console chal raha hai",JSON.stringify(formData,null,2));
-
-    // Navigate to TransactionResult with loading state
-    navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
+    navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
       isLoading: true,
       transactionData: null,
       isSuccess: false,
       isError: false,
-    });
+    } as never);
 
     setspin(true);
 
     handleUserToUserTransfer(formData, {
-      onSuccess: (data) => {
+      onSuccess: (data: any) => {
         if (data?.data && data?.status) {
-          // Navigate to TransactionResult with success data
-          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
             isLoading: false,
             transactionData: data,
             isSuccess: true,
             isError: false,
-          });
-          // console.log("send resp ", JSON.stringify(data, null, 2));
+          } as never);
         } else {
-          // Navigate to TransactionResult with error state
-          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
             isLoading: false,
             transactionData: data,
             isSuccess: false,
             isError: true,
-          });
+          } as never);
           useDispatchAction(
             setErrorMsg(
-              data?.data?.data.error ||
+              data?.data?.data?.error ||
                 "Operation is forbidden. Custodial account is suspended or Level 2 KYC Pending"
             )
           );
         }
       },
-      onError: (error) => {
+      onError: (error: unknown) => {
         console.log("error =>", JSON.stringify(error, null, 2));
-        // Navigate to TransactionResult with error state
-        navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
+        navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
           isLoading: false,
           transactionData: null,
           isSuccess: false,
           isError: true,
-        });
+        } as never);
       },
       onSettled: () => {
         setspin(false);
@@ -277,27 +238,25 @@ export default function ScanPay(props) {
     });
   };
 
-  // console.log(JSON.stringify(showResultModal, null, 2), "showResultModal");
-
   const handleCrypto = async () => {
     try {
       const payload = {
         asset: selectedToken?.symbol?.toLowerCase(),
         network: selectedNetwork?.networks?.toLowerCase(),
         amount: amount,
-        account_type: !bank.account_type
+        account_type: !(bank as any).account_type
           ? "external"
-          : bank?.account_type === "personal"
+          : (bank as any)?.account_type === "personal"
           ? "bank"
-          : bank?.account_type,
+          : (bank as any)?.account_type,
         receiver: sender,
-      };
+      } as any;
       console.log(payload, "payloadssss");
       const data = await cryptoTransfer(payload, tokens?.access);
       console.log(data, "dataCrypto");
       if (data && data?.status) {
         useDispatchAction(setSuccessMsg("Succcessfully Transfered"));
-        navigation.navigate("TransactionSuccess", {
+        navigation.navigate("TransactionSuccess" as never, {
           data: data?.data?.transaction,
           transactionDetails: [
             {
@@ -313,7 +272,7 @@ export default function ScanPay(props) {
             { " Amount": data?.data?.transaction?.amount },
             { "Successfully Sent": data?.data?.transaction?.amount },
           ],
-        });
+        } as never);
       } else {
         useDispatchAction(
           setErrorMsg(data?.data?.error?.title ?? "Something went wrong")
@@ -324,14 +283,13 @@ export default function ScanPay(props) {
     }
   };
 
-  const handleKeyPress = (key) => {
+  const handleKeyPress = (key: string) => {
     if (type !== "request") {
       setAmount((prev) => {
         if (key === ".") {
-          // Prevent multiple decimals
           return prev.includes(".") ? prev : prev + key;
         }
-        return prev === "0" ? key : prev + key; // Replace initial '0' or append key
+        return prev === "0" ? key : prev + key;
       });
     }
   };
@@ -340,19 +298,19 @@ export default function ScanPay(props) {
     setspin(true);
 
     const formData = new FormData();
-    formData.append("amount", sender?.amount ?? amount);
+    formData.append("amount", (sender as any)?.amount ?? amount);
     console.log(formData, "formData");
-    if (sender?.order_id) {
-      formData.append("order_id", sender?.orderID);
+    if ((sender as any)?.order_id) {
+      formData.append("order_id", (sender as any)?.orderID);
     } else {
-      formData.append("recipient_email_or_wallet_public_key", sender);
+      formData.append("recipient_email_or_wallet_public_key", sender as string);
     }
     console.log(formData, "formData");
     const data = await paymentRequested(formData, tokens?.access);
     console.log(data, "requested");
     if (data && data?.status) {
       useDispatchAction(setSuccessMsg("Payment request created successfully."));
-      navigation.replace(SCREENS.Dashboard);
+      navigation.replace(SCREENS.Dashboard as never);
     } else {
       useDispatchAction(
         setErrorMsg("Already have pending request with this account")
@@ -362,9 +320,8 @@ export default function ScanPay(props) {
     setspin(false);
   };
 
-  // Handle backspace
   const handleBackspace = () => {
-    setAmount((prev) => (prev.length > 1 ? prev.slice(0, -1) : "0")); // Remove last character or reset to '0'
+    setAmount((prev) => (prev.length > 1 ? prev.slice(0, -1) : "0"));
   };
 
   const getBlockchain = async () => {
@@ -383,8 +340,17 @@ export default function ScanPay(props) {
   };
 
   const handleActionsAfterPinVerified = () => {
+    // Navigate to OTP screen after PIN verification
+    navigation.navigate(NAVIGATION_SCREENS.OTP_SCREEN, {
+      onOTPVerified: handleActionsAfterOTPVerified,
+      transactionType: type,
+    });
+  };
+
+  const handleActionsAfterOTPVerified = () => {
+    // Execute the actual transaction after OTP verification
     type === "request"
-      ? sender?.requester_details
+      ? (sender as any)?.requester_details
         ? handleContactPayment()
         : handleMercentPayment()
       : type === "requested"
@@ -398,23 +364,23 @@ export default function ScanPay(props) {
       : handleSend();
   };
 
-  function getAmountAfterDeduction(amount, percentage) {
-    const fee = (amount * percentage) / 100;
-    const finalAmount = amount + fee;
-    return parseFloat(finalAmount.toFixed(2)); // rounded to 2 decimal places
+  function getAmountAfterDeduction(amountVal: number, percentage: number) {
+    const fee = (amountVal * percentage) / 100;
+    const finalAmount = amountVal + fee;
+    return parseFloat(finalAmount.toFixed(2));
   }
 
-  function getAmountAfterAddition(amount, percentage) {
-    const fee = (amount * percentage) / 100;
-    const finalAmount = amount + fee;
-    return parseFloat(finalAmount.toFixed(2)); // rounded to 2 decimal places
+  function getAmountAfterAddition(amountVal: number, percentage: number) {
+    const fee = (amountVal * percentage) / 100;
+    const finalAmount = amountVal + fee;
+    return parseFloat(finalAmount.toFixed(2));
   }
 
   const isRequestMoney = type === "request" || type === "receive";
 
   const result = getAmountAfterDeduction(
-    parseInt(sender?.amount ?? amount),
-    parseInt(walletData?.TransactionFees_persentage)
+    parseInt(((sender as any)?.amount ?? amount) as string),
+    parseInt((walletData?.TransactionFees_persentage as any) as string)
   );
 
   return (
@@ -422,33 +388,37 @@ export default function ScanPay(props) {
       <SelectionNetwork
         isVisible={isVisible2}
         data={networkLists}
-        onSelected={(i) => {
+        onSelected={(i: any) => {
           setselectedNetwork(i);
           settokenLists(
-            networkLists?.filter((item) => item?.networks === i?.networks)
+            networkLists?.filter((item: any) => item?.networks === i?.networks)
           );
         }}
         onClose={() => setisVisible2(false)}
+        type={undefined as any}
       />
 
       <SelectionTokens
         isVisible={isVisible3}
         data={selectedNetwork?.tokens}
-        onSelected={(i) => {
+        onSelected={(i: any) => {
           setselectedToken(i);
         }}
         onClose={() => setisVisible3(false)}
+        type={undefined as any}
       />
       {isVisibleBank && (
         <FullScreenModal
           isVisible={isVisibleBank}
           onClose={() => setisVisibleBank(false)}
           sendAmount={amount}
-          onCancel={(e) => {
+          onCancel={(e: any) => {
             setbankSelected(e);
             setisVisibleBank(false);
             setpinvisible(true);
           }}
+          data={bankSelected}
+          onSelected={(e: any) => setbankSelected(e)}
         />
       )}
 
@@ -457,7 +427,7 @@ export default function ScanPay(props) {
         onAction={() => {
           handleActionsAfterPinVerified();
         }}
-        accountNumber={bank?.account_number}
+        accountNumber={(bank as any)?.account_number}
       />
 
       {!isCrypto && (
@@ -477,11 +447,9 @@ export default function ScanPay(props) {
             marginTop: 30,
             alignSelf: "flex-end",
             marginRight: 10,
-            // backfaceVisibility: 'hidden',
           }}
         >
-          <SvgXml xml={SVGUSD} />
-
+          <SvgIcons.DollarIcon />
           <View
             style={{
               flexDirection: "row",
@@ -500,26 +468,25 @@ export default function ScanPay(props) {
             >
               {selectedNetwork?.networks?.toUpperCase()}
             </Text>
-            <SvgXml xml={SVGDownArrow3} />
+            <SvgIcons.ChevronDown />
           </View>
         </TouchableOpacity>
       )}
 
-      <HeaderTitle title={"Payment"} leftIcon={SVGLeftArrow} />
+      <HeaderTitle title={"Payment"} leftIcon={'true'} />
       <View
         style={{
           justifyContent: "center",
           flexDirection: "row",
           alignItems: "center",
-          // marginTop: 80,
         }}
       >
         <Text style={{ color: "#000", fontSize: 72, fontFamily: Fonts.bold }}>
           $
           {type === "request"
-            ? sender?.amount || sender?.request_details?.amount
+            ? (sender as any)?.amount || (sender as any)?.request_details?.amount
             : type === "merchantSend"
-            ? sender?.amount
+            ? (sender as any)?.amount
             : amount}
         </Text>
       </View>
@@ -571,24 +538,6 @@ export default function ScanPay(props) {
             </View>
           </View>
         )}
-        {/* {type == "receive" && (
-          <MyDropdown
-            // label={"Select Bank Account"}
-            placeholder={"Select Bank Account"}
-            data={DROPDOWN_LISTS.filter(
-              (item) => !item.value.toLowerCase().includes("ira")
-            )} // Filter out external accounts if needed
-            // Filter out external accounts if needed
-            value={souceAccount}
-            containerStyles={{ marginVertical: 10, width: "90%" }}
-            search={false}
-            itemTextStyle={{
-              fontSize: 14,
-              fontFamily: theme?.typography.fontFamily.montserrat,
-            }}
-            onChange={(item) => setsouceAccount(item)}
-          />
-        )} */}
       </View>
 
       {!isCrypto && (
@@ -599,17 +548,10 @@ export default function ScanPay(props) {
             padding: 8,
             borderRadius: 40,
             elevation: 3,
-
-            // borderWidth: 1,
-            // borderColor: 'rgba(224, 239, 225, 1)',
             flexDirection: "row",
             justifyContent: "flex-start",
             alignItems: "center",
-            // minWidth: '30%',
-            // marginTop: 30,
             alignSelf: "center",
-            // marginRight: 10,
-            // backfaceVisibility: 'hidden',
           }}
         >
           <View
@@ -625,32 +567,34 @@ export default function ScanPay(props) {
                 fontSize: 12,
                 fontFamily: Fonts.semibold,
                 marginRight: 5,
-                // textAlign: 'center',
               }}
             >
               {selectedToken?.symbol?.toUpperCase()}
             </Text>
-            <SvgXml xml={SVGDownArrow} width={10} height={10} />
+            <SvgIcons.ChevronDown width={10} height={10} />
           </View>
         </TouchableOpacity>
       )}
 
-      {/* Card display */}
       <View
         style={{
           justifyContent: "flex-end",
           alignItems: "center",
-          // marginTop: 20,
           marginBottom: 20,
           paddingHorizontal: 10,
           flex: 1,
         }}
       >
-        {/* Pincode Keypad */}
         <PincodeKeypad
           isTransparent={true}
-          handleBackspace={handleBackspace} // Backspace handler
-          handleKeyPress={handleKeyPress} // Keypress handler
+          handleBackspace={handleBackspace}
+          handleKeyPress={handleKeyPress}
+          type={undefined}
+          showPin={false}
+          pincode={""}
+          error={""}
+          marginFmTop={0}
+          isNotDecimals={false}
         />
         <View
           style={{
@@ -665,8 +609,6 @@ export default function ScanPay(props) {
               title={"Pay"}
               cStyle={{ width: "100%" }}
               onPress={() => {
-                // setisVisibleBank(true);
-                // setpinvisible(true);
                 handleCheckPin();
               }}
             />
@@ -676,7 +618,6 @@ export default function ScanPay(props) {
               title={"Pay"}
               cStyle={{ width: "100%" }}
               onPress={() => {
-                // setisVisibleBank(true);
                 handleCheckPin();
               }}
             />
@@ -686,7 +627,6 @@ export default function ScanPay(props) {
               title={"Pay"}
               cStyle={{ width: "100%" }}
               onPress={() => {
-                // setisVisibleBank(true);
                 handleCheckPin();
               }}
             />
@@ -695,7 +635,7 @@ export default function ScanPay(props) {
             <GenericButton
               title={"Next"}
               cStyle={{ width: "100%", backgroundColor: "grey" }}
-              onPress={() => navigation.navigate("Widhdraw")}
+              onPress={() => navigation.navigate("Widhdraw" as never)}
             />
           )}
 
@@ -704,7 +644,10 @@ export default function ScanPay(props) {
               title={"Request"}
               cStyle={{ width: "100%", backgroundColor: "grey" }}
               onPress={() => {
-                handleActionsAfterPinVerified();
+                navigation.navigate(NAVIGATION_SCREENS.OTP_SCREEN, {
+                  onOTPVerified: handleActionsAfterOTPVerified,
+                  transactionType: type,
+                });
               }}
             />
           )}
@@ -723,3 +666,5 @@ export default function ScanPay(props) {
     </ScreenContainer>
   );
 }
+
+

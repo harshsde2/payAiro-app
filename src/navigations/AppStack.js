@@ -85,6 +85,7 @@ import CryptoScreenFortess from "screens/Crypto/CryptoScreenFortess";
 import TransactionDetailsModal from "screens/TSX-Screens/TransactionDetails/TransactionDetails";
 import PlaidLinkScreen from "screens/TSX-Screens/AddBalance/PlaidLinkScreen";
 import PDFViewer from "tsx-components/PDFViewer";
+import OTP from "screens/TSX-Screens/Modals/OTP";
 
 const Stack = createNativeStackNavigator();
 
@@ -539,6 +540,17 @@ export default function AppStack() {
         }}
         name={NAVIGATION_SCREENS.PDF_VIEWER}
         component={PDFViewer}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: false,
+          presentation: "modal",
+          gestureEnabled: true,
+          animationTypeForReplace: "push",
+          animation: "slide_from_bottom",
+        }}
+        name={NAVIGATION_SCREENS.OTP_SCREEN}
+        component={OTP}
       />
     </Stack.Navigator>
   );

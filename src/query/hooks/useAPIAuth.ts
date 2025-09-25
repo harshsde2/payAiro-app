@@ -128,3 +128,21 @@ export const useKYCCompleted = () => {
     },
   });
 };
+
+export const useSendOTP = () => {
+  return useMutation<ApiResponse<any>, Error>({
+    mutationFn: async () => {
+      const data = apiClient.post<ApiResponse<any>>(AUTH.SEND_OTP_FOR_TRANSACTION, {}, false);
+      return data;
+    },
+  });
+};
+
+export const useVerifyUserForSendOTP = () => {
+  return useMutation<ApiResponse<any>, Error>({
+    mutationFn: async (payload) => {
+      const data = apiClient.post<ApiResponse<any>>(AUTH.VERIFY_USER_FOR_SEND_OTP, payload, false);
+      return data;
+    },
+  });
+};

@@ -50,7 +50,6 @@ export const useVerifyUser = () => {
       console.log("data ->", data);
     },
     onError: (error) => {
-      console.log("error ->", JSON.stringify(error.response, null, 2));
     },
   });
 };

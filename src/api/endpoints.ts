@@ -6,6 +6,8 @@ export const AUTH = {
   SEND_OTP: "auth/send-otp/",
   LOGIN: "auth/login/",
   CYBIRD_KYC: "auth/cybird-kyc/",
+  SEND_OTP_FOR_TRANSACTION: "auth/verify/sendotp/",
+  VERIFY_USER_FOR_SEND_OTP: "auth/verify-otp-send/",
   CYBIRD_BALANCE: "auth/cybrid/balance/",
   VERIFY: "auth/verify/",
   STEP_COUNT: "auth/stepcount/",
