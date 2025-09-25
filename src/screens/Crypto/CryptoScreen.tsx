@@ -5,13 +5,15 @@ import HeaderTitle from "components/HeaderTitle";
 import useSelectorAction from "../../hooks/useSelectorAction";
 import { useGlobalStyles } from "styles/GlobalStyles";
 import { Theme, useTheme } from "styles";
-import { StyleSheet, TouchableOpacity, View, FlatList } from "react-native";
+import { StyleSheet, TouchableOpacity, View, FlatList, Image } from "react-native";
+import { SvgUri } from "react-native-svg";
 import CustomSearchTextInput from "tsx-components/CustomSearchTextInput";
 import { CustomText } from "tsx-components";
 import { useGetCrypto } from "query/hooks";
 import { SvgIcons } from "constants/svgs";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { useNavigation } from "@react-navigation/native";
+
 
 const TABS = [
   {
@@ -36,7 +38,7 @@ export default function CryptoScreen() {
   const { data, isPending, isFetched, isSuccess, isError, isFetching } =
     useGetCrypto();
 
-  // console.log("data ===> ", JSON.stringify(data, null, 2));
+  console.log("data ===> ", JSON.stringify(data, null, 2));
   // console.log("data => ", JSON.stringify(isFetching, null, 2));
   return (
     <ScreenContainer padding={0}>
@@ -130,7 +132,16 @@ export default function CryptoScreen() {
                     },
                   ]}
                 >
-                  <SvgIcons.Bitcoin />
+                  {/* Render remote SVGs with SvgUri; raster images with Image */}
+                  {item?.logo?.toLowerCase?.().endsWith(".svg") ? (
+                    <SvgUri uri={item?.logo} width={30} height={30} />
+                  ) : (
+                    <Image
+                      source={{ uri: item?.logo }}
+                      style={{ width: 30, height: 30 }}
+                      resizeMode="contain"
+                    />
+                  )}
                   <View
                     style={[
                       {
@@ -186,7 +197,15 @@ export default function CryptoScreen() {
                     },
                   ]}
                 >
-                  <SvgIcons.Bitcoin />
+                 {item?.logo?.toLowerCase?.().endsWith(".svg") ? (
+                    <SvgUri uri={item?.logo} width={30} height={30} />
+                  ) : (
+                    <Image
+                      source={{ uri: item?.logo }}
+                      style={{ width: 30, height: 30 }}
+                      resizeMode="contain"
+                    />
+                  )}
                   <View
                     style={[
                       {

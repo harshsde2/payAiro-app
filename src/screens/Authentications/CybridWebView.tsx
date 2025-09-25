@@ -86,7 +86,7 @@ const CybridWebView = () => {
         }
       },
       onError: (error: any) => {
-        console.log("error ->",JSON.stringify(error?.response,null,2))
+        console.log("error ->",JSON.stringify(error,null,2))
         dispatch(
           setErrorMsg(
             error?.response?.data?.data?.message || "KYC not completed"

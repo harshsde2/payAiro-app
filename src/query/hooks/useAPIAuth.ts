@@ -135,6 +135,12 @@ export const useSendOTP = () => {
       const data = apiClient.post<ApiResponse<any>>(AUTH.SEND_OTP_FOR_TRANSACTION, {}, false);
       return data;
     },
+    onSuccess: (data) => {
+      console.log(" otp response =>", JSON.stringify(data,null,2));
+    },
+    onError: (error) => {
+      console.log("otp error =>", error);
+    },
   });
 };
 

@@ -88,7 +88,7 @@ const CryptoBuy = () => {
         }
       },
       onError: (error: any) => {
-        console.log("error ====>", JSON.stringify(error.response, null, 2));
+        console.log("error ====>", JSON.stringify(error?.response, null, 2));
         // Navigate to TransactionResult with error state
         navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
           isLoading: false,

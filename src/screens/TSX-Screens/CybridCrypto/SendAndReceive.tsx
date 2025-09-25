@@ -18,6 +18,7 @@ import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { useNavigation } from "@react-navigation/native";
 import useSelectorAction from "hooks/useSelectorAction";
 import { defaultImage } from "utils/configs";
+import { SvgUri } from "react-native-svg";
 
 const TABS = [
   {
@@ -138,21 +139,15 @@ export default function SendAndReceive() {
                       },
                     ]}
                   >
-                    {item?.logo ? (
-                      <Image
-                        width={30}
-                        height={30}
-                        style={{ width: 30, height: 30 }}
-                        resizeMode="contain"
-                        onError={() => {
-                          isError = true;
-                          console.log("Image load error");
-                        }}
-                        source={!item.logo ? { uri: item?.logo } : defaultImage}
-                      />
-                    ) : (
-                      <SvgIcons.Bitcoin />
-                    )}
+                    {item?.logo?.toLowerCase?.().endsWith(".svg") ? (
+                    <SvgUri uri={item?.logo} width={30} height={30} />
+                  ) : (
+                    <Image
+                      source={{ uri: item?.logo }}
+                      style={{ width: 30, height: 30 }}
+                      resizeMode="contain"
+                    />
+                  )}
                     <View
                       style={[
                         {
@@ -210,7 +205,15 @@ export default function SendAndReceive() {
                     },
                   ]}
                 >
-                  <SvgIcons.Bitcoin />
+                  {item?.logo?.toLowerCase?.().endsWith(".svg") ? (
+                    <SvgUri uri={item?.logo} width={30} height={30} />
+                  ) : (
+                    <Image
+                      source={{ uri: item?.logo }}
+                      style={{ width: 30, height: 30 }}
+                      resizeMode="contain"
+                    />
+                  )}
                   <View
                     style={[
                       {

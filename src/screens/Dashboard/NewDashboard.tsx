@@ -648,8 +648,8 @@ const NewDashboard = () => {
       (item: any) => item.asset_type == "Realestate"
     ) ?? [];
 
-  console.log("dataaaa =>", JSON.stringify(DashBoardData, null, 2));
-  console.log("token =>", tokens.access);
+  // console.log("dataaaa =>", JSON.stringify(DashBoardData, null, 2));
+  // console.log("token =>", tokens.access);
 
   const {
     data: bankBalanceData,
@@ -1163,7 +1163,7 @@ const NewDashboard = () => {
     }));
   }, [bankLists, bankBalance]);
 
-//  console.log("processedBankAccounts =>", JSON.stringify(processedBankAccounts, null, 2));
+  //  console.log("processedBankAccounts =>", JSON.stringify(processedBankAccounts, null, 2));
 
   const handleEyeClick = (account_id: string) => {
     if (pinScreenRef.current) {
@@ -1562,7 +1562,7 @@ const NewDashboard = () => {
             <View
               style={{
                 flexDirection: "row",
-                justifyContent: "flex-start",
+                justifyContent: 'space-around',
                 alignItems: "center",
                 marginVertical: 20,
               }}
@@ -1584,9 +1584,7 @@ const NewDashboard = () => {
                 onPress={
                   () => {
                     if (walletData?.fortress) {
-                      navigation.navigate(
-                        NAVIGATION_SCREENS.CRYPTO_SCREEN
-                      );
+                      navigation.navigate(NAVIGATION_SCREENS.CRYPTO_SCREEN);
                     } else {
                       navigation.navigate(NAVIGATION_SCREENS.CRYPTO_SCREEN);
                     }
@@ -1598,52 +1596,63 @@ const NewDashboard = () => {
                   // )
                 }
               />
-              {!walletData?.fortress ? (
+              {/* {!walletData?.fortress ? (
                 <TouchableOpacity
                   onPress={() => {
-                    navigation.navigate(NAVIGATION_SCREENS.COMING_SOON,{
-                      title:'RWA Holdings'
+                    navigation.navigate(NAVIGATION_SCREENS.COMING_SOON, {
+                      title: "RWA Holdings",
                     });
                   }}
-                 style={[{
-                  width: 179,
-                  flexDirection:'row',
-                  justifyContent:'flex-start',
-                  gap:10,
-                  alignItems:'center',
-                  backgroundColor:theme.colors.palette.green700,
-                  padding:5,
-                  borderRadius:theme.spacing.spacing[10],
-                  marginRight:15,
-                  marginBottom:20
-                  // marginVertical:10
-                },]}>
-
-                  <SvgIcons.RWAHoldings
-                   
-                    />
-                    <CustomText
-                      variant={"body2"}
-                      size={13}
-                      fontWeight={'semiBold'}
-                      color={theme.colors.palette.white}
-                    >
-                      RWA Holdings
-                    </CustomText>
+                  style={[
+                    {
+                      width: 179,
+                      flexDirection: "row",
+                      justifyContent: "flex-start",
+                      gap: 10,
+                      alignItems: "center",
+                      backgroundColor: theme.colors.palette.green700,
+                      padding: 5,
+                      borderRadius: theme.spacing.spacing[10],
+                      marginRight: 15,
+                      marginBottom: 20,
+                      // marginVertical:10
+                    },
+                  ]}
+                >
+                  <SvgIcons.RWAHoldings />
+                  <CustomText
+                    variant={"body2"}
+                    size={13}
+                    fontWeight={"semiBold"}
+                    color={theme.colors.palette.white}
+                  >
+                    RWA Holdings
+                  </CustomText>
                 </TouchableOpacity>
-              )
-              :
-              <SvgIcons.IRAHoldings
-                // xml={!isCrypto ? SVGHolding : SVGAdd}
-                style={{ marginBottom: 20 }}
-                onPress={() => {
-                  if (walletData?.fortress) {
-                    navigation.navigate(NAVIGATION_SCREENS.IRA_HOLDING);
-                  } else {
-                  }
-                }}
-              />
-              }
+              ) : (
+                <SvgIcons.IRAHoldings
+                  // xml={!isCrypto ? SVGHolding : SVGAdd}
+                  style={{ marginBottom: 20 }}
+                  onPress={() => {
+                    if (walletData?.fortress) {
+                      navigation.navigate(NAVIGATION_SCREENS.IRA_HOLDING);
+                    } else {
+                    }
+                  }}
+                />
+              )} */}
+              {walletData?.fortress && (
+                <SvgIcons.IRAHoldings
+                  // xml={!isCrypto ? SVGHolding : SVGAdd}
+                  style={{ marginBottom: 20 }}
+                  onPress={() => {
+                    if (walletData?.fortress) {
+                      navigation.navigate(NAVIGATION_SCREENS.IRA_HOLDING);
+                    } else {
+                    }
+                  }}
+                />
+              )}
             </View>
           </View>
         )}
@@ -1736,41 +1745,41 @@ const NewDashboard = () => {
                               >
                                 {item.displayName}
                               </CustomText>
-                              { item?.account_type && 
-                              <View style={{ flexDirection: "row", flex: 1 }}>
-                                <CustomText
-                                  color={theme.colors.palette.grey600}
-                                  fontFamily={
-                                    theme.typography.fontFamily.nexaHeavy
-                                  }
-                                  style={{
-                                    marginLeft: 5,
-                                    marginTop: 2,
-                                    fontSize: 14,
-                                    fontWeight: "400",
-                                    textTransform: "capitalize",
-                                  }}
-                                >
-                                  {`${item?.account_type}`}
-                                </CustomText>
-                                <CustomText
-                                  color={theme.colors.palette.grey600}
-                                  fontFamily={
-                                    theme.typography.fontFamily.nexaHeavy
-                                  }
-                                  style={{
-                                    marginLeft: 5,
-                                    marginTop: 2,
-                                    fontSize: 14,
-                                    fontWeight: "400",
-                                    // textTransform: 'capitalize'
-                                  }}
-                                >
-                                  {``}
-                                  {/* {`( ${BANK_TYPE} )`} */}
-                                </CustomText>
-                              </View>
-                              }
+                              {item?.account_type && (
+                                <View style={{ flexDirection: "row", flex: 1 }}>
+                                  <CustomText
+                                    color={theme.colors.palette.grey600}
+                                    fontFamily={
+                                      theme.typography.fontFamily.nexaHeavy
+                                    }
+                                    style={{
+                                      marginLeft: 5,
+                                      marginTop: 2,
+                                      fontSize: 14,
+                                      fontWeight: "400",
+                                      textTransform: "capitalize",
+                                    }}
+                                  >
+                                    {`${item?.account_type}`}
+                                  </CustomText>
+                                  <CustomText
+                                    color={theme.colors.palette.grey600}
+                                    fontFamily={
+                                      theme.typography.fontFamily.nexaHeavy
+                                    }
+                                    style={{
+                                      marginLeft: 5,
+                                      marginTop: 2,
+                                      fontSize: 14,
+                                      fontWeight: "400",
+                                      // textTransform: 'capitalize'
+                                    }}
+                                  >
+                                    {``}
+                                    {/* {`( ${BANK_TYPE} )`} */}
+                                  </CustomText>
+                                </View>
+                              )}
                             </View>
                           </View>
                           <CustomText
@@ -1907,8 +1916,7 @@ const NewDashboard = () => {
                           }}
                         />
                       </View>
-                    ) : 
-                    (
+                    ) : (
                       <PlaidLinkButton
                         onSuccess={() => {
                           console.log("Plaid link successful");
@@ -1917,8 +1925,7 @@ const NewDashboard = () => {
                           console.log("Plaid link cancelled");
                         }}
                       />
-                    )
-                  }
+                    )}
                   </ScrollView>
                 </MemoizedDashboardSection>
                 {isCrypto && (
