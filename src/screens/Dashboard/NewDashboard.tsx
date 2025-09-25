@@ -336,7 +336,7 @@ const CryptoFinanceSection = React.memo(
             ))}
           </ScrollView>
         </MemoizedDashboardSection> */}
-        <MemoizedDashboardSection
+        {/* <MemoizedDashboardSection
           title="Utilities"
           actionText="see all"
           onActionPress={() => {}}
@@ -366,7 +366,7 @@ const CryptoFinanceSection = React.memo(
               );
             })}
           </ScrollView>
-        </MemoizedDashboardSection>
+        </MemoizedDashboardSection> */}
       </View>
     );
   }
@@ -2101,14 +2101,14 @@ const NewDashboard = () => {
                 />
               </DashboardSection>
             )}
-            {isCrypto && <CryptoRewardsSection />}
-            {isCrypto && (
+            {/* {isCrypto && <CryptoRewardsSection />} */}
+            {/* {isCrypto && (
               <CryptoOtherServicesSection
                 handleRothBank={handleRothBank}
                 setisCardModalVisible={setisCardModalVisible}
                 navigation={navigation}
               />
-            )}
+            )} */}
           </View>
         </Card>
       </ScrollView>

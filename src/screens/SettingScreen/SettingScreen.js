@@ -188,7 +188,7 @@ export default function SettingScreen() {
               style={{
                 color: "#000",
                 marginLeft: 10,
-                
+
                 fontFamily: Fonts.bold,
                 fontSize: 26,
                 marginBottom: 20,
@@ -196,79 +196,83 @@ export default function SettingScreen() {
             >
               My Account
             </Text>
-            {SETTINGS_LISTS.map((item, index) => (
-              <TouchableOpacity
-                key={`setting-${index}`}
-                disabled={item.isDisvled}
-                onPress={() => {
-                  if (item.name === "Logout") {
-                    setIsVisible(true);
-                    return;
-                  } else if (item.name === "Terms & Condition") {
-                    termsAndConditionRef.current.showTermsAndConditions();
-                    return;
-                  } else if (item.name === "Cybrid User Agreement") {
-                    navigation.navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
-                      url: require("../../assets/pdf/Cybrid_User_Agreement.pdf"),
-                      isFileFromLocal: true,
-                    });
-                    return;
-                  } 
-                  navigation.navigate(item.route);
-                }}
-                style={{
-                  borderRadius: 40,
-                  borderWidth: 1,
-                  backgroundColor: "rgba(217, 217, 217, 0.07)",
-                  borderColor: "rgba(106, 106, 106, 0.08)",
-                  padding: -20,
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginVertical: 5,
-                  marginBottom: item.name === "Logout" ? 100 : 5,
-                }}
-              >
-                <View
+            {SETTINGS_LISTS.map((item, index) => {
+              if (
+                item.name === "Cybrid User Agreement" &&
+                walletData?.fortress === true
+              ) {
+                return null;
+              }
+              return (
+                <TouchableOpacity
+                  key={`setting-${index}`}
+                  disabled={item.isDisvled}
+                  onPress={() => {
+                    if (item.name === "Logout") {
+                      setIsVisible(true);
+                      return;
+                    } else if (item.name === "Terms & Condition") {
+                      termsAndConditionRef.current.showTermsAndConditions();
+                      return;
+                    } else if (item.name === "Cybrid User Agreement") {
+                      navigation.navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
+                        url: require("../../assets/pdf/Cybrid_User_Agreement.pdf"),
+                        isFileFromLocal: true,
+                      });
+                      return;
+                    }
+                    navigation.navigate(item.route);
+                  }}
                   style={{
+                    borderRadius: 40,
+                    borderWidth: 1,
+                    backgroundColor: "rgba(217, 217, 217, 0.07)",
+                    borderColor: "rgba(106, 106, 106, 0.08)",
+                    padding: -20,
                     flexDirection: "row",
-                    justifyContent: "flex-start",
+                    justifyContent: "space-between",
                     alignItems: "center",
-                    margin: 5,
+                    marginVertical: 5,
+                    marginBottom: item.name === "Logout" ? 100 : 5,
                   }}
                 >
-                  {item.icon}
-                  <Text
+                  <View
                     style={{
-                      color: "rgba(29, 29, 29, 1)",
-                      marginLeft: 10,
-                      fontSize: 16,
-                      fontFamily: Fonts.regular,
+                      flexDirection: "row",
+                      justifyContent: "flex-start",
+                      alignItems: "center",
+                      margin: 5,
                     }}
                   >
-                    {item.name}
-                  </Text>
-                </View>
-                {item.name === "KYC" && (
-                  <Text
-                    style={{
-                      textAlign: "right",
-                      fontFamily: Fonts.bold,
-                      marginLeft: 40,
-                      color: kycStep === "4" ? "green" : "orange",
-                    }}
-                  >
-                    {kycStep === "4" ? "Verified" : "Pending"}
-                  </Text>
-                )}
-                <SvgXml xml={SVGRightIcon} style={{ marginRight: 20 }} />
-              </TouchableOpacity>
-            ))}
+                    {item.icon}
+                    <Text
+                      style={{
+                        color: "rgba(29, 29, 29, 1)",
+                        marginLeft: 10,
+                        fontSize: 16,
+                        fontFamily: Fonts.regular,
+                      }}
+                    >
+                      {item.name}
+                    </Text>
+                  </View>
+                  {item.name === "KYC" && (
+                    <Text
+                      style={{
+                        textAlign: "right",
+                        fontFamily: Fonts.bold,
+                        marginLeft: 40,
+                        color: kycStep === "4" ? "green" : "orange",
+                      }}
+                    >
+                      {kycStep === "4" ? "Verified" : "Pending"}
+                    </Text>
+                  )}
+                  <SvgXml xml={SVGRightIcon} style={{ marginRight: 20 }} />
+                </TouchableOpacity>
+              );
+            })}
 
-            <SvgXml
-              xml={SVGRefer}
-              style={{ marginBottom: 130, alignSelf: "center" }}
-            />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

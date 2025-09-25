@@ -47,6 +47,7 @@ import HeaderTitle from '../../components/HeaderTitle';
 import BiometricModal from '../../components/BiometricModal';
 import PincodeScreen from './PincodeScreen';
 import Pincode2 from './Pincode2';
+import { ScreenContainer } from 'HOC';
 
 export default function Settings2() {
   const {tokens} = useSelectorAction();
@@ -71,7 +72,7 @@ export default function Settings2() {
     }
   };
   return (
-    <Container>
+    <ScreenContainer padding={0} >
       {/* <BottomNavigation /> */}
       <BiometricModal
         isVisible={isVisible}
@@ -107,6 +108,7 @@ export default function Settings2() {
 
             {SECURITY_LISTS.map((i, k) => (
               <TouchableOpacity
+                key={k}
                 onPress={() => {
                   if (i.name === 'App Lock') {
                     setisVisible(true);
@@ -237,7 +239,7 @@ export default function Settings2() {
           />
         )}
       </KeyboardAvoidingView>
-    </Container>
+    </ScreenContainer>
   );
 }
 
