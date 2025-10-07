@@ -28,11 +28,13 @@ const CybridWebView = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const pinScreenRef = useRef<PinScreenRef | any>();
-  const { URL } = route.params as any;
+  const { URL, isUserAlreadyCreated } = route.params as any;
 
   const globalStyles = useGlobalStyles();
   const webviewRef = useRef(null);
-  const [isKycCompleted, setIsKycCompleted] = React.useState(false);
+  const [isKycCompleted, setIsKycCompleted] = React.useState(
+    isUserAlreadyCreated || false
+  );
   const [isKYCInProgress, setIsKYCInProgress] = React.useState(true);
 
   const { mutate: checkKYCStatus, isPending, isSuccess } = useKYCCompleted();
@@ -81,12 +83,12 @@ const CybridWebView = () => {
           setIsKYCInProgress(false);
         } else if (data?.data.status === false) {
           //   setIsKycCompleted(false);
-          console.log('data?.data?.message ->',data?.data?.message)
+          console.log("data?.data?.message ->", data?.data?.message);
           dispatch(setErrorMsg(data?.data?.message || "KYC not completed"));
         }
       },
       onError: (error: any) => {
-        console.log("error ->",JSON.stringify(error?.response,null,2))
+        console.log("error ->", JSON.stringify(error?.response, null, 2));
         dispatch(
           setErrorMsg(
             error?.response?.data?.data?.message || "KYC not completed"
@@ -187,7 +189,7 @@ const CybridWebView = () => {
             <View
               style={{
                 width: "100%",
-                minHeight:150,
+                minHeight: 150,
                 justifyContent: "center",
                 alignItems: "center",
               }}
@@ -198,9 +200,9 @@ const CybridWebView = () => {
                   color={"red"}
                   style={{ textAlign: "center", flex: 1, marginBottom: 20 }}
                 >
-                  Please do not close this page. Untill KYC is completed. To
-                  make sure KYC is completed, you can click on the refresh
-                  button.
+                  Our KYC is currently under review. Please wait for 1 to 72
+                  hours. If it is still not created after that, please contact
+                  us at dev@payairo.com.
                 </CustomText>
               ) : (
                 <CustomText
