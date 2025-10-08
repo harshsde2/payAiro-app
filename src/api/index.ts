@@ -13,7 +13,7 @@ import { setErrorMsg } from "redux/slices/authenticationSlice";
 
 // Create Axios instance
 const api = axios.create({
-  baseURL: BASE_URL.production,
+  baseURL: BASE_URL.testing,
   timeout: Infinity,
   headers: {
     "Content-Type": "application/json",
