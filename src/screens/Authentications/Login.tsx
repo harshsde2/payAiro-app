@@ -93,8 +93,9 @@ export default function Login() {
           useDispatchAction(setErrorMsg("Email Address Already Exists"));
         }
       },
-      onError: (error) => {
-        console.log(error);
+      onError: (error: any) => {
+        useDispatchAction(setErrorMsg(error?.response?.data?.data?.message));
+        // console.log("error?.response =>", JSON.stringify(error?.response,null,2));
         setButtonDisabled(false);
       },
   });

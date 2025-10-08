@@ -25,7 +25,7 @@ const CryptoSell = () => {
   const pinScreenRef = useRef<any>(null);
   
   const { details } = route.params as any;
-  const { walletData } = useSelectorAction() as any;
+  const { walletData,totalDisbursable } = useSelectorAction() as any;
   const { symbol, sell_price } = details;
   const { theme } = useTheme();
   const { spacing, colors } = theme;
@@ -39,7 +39,7 @@ const CryptoSell = () => {
     isError,
     isSuccess,
   } = useCryptoBuy();
-  const availableBalance = 49.1;
+  const availableBalance = totalDisbursable;
 
   // console.log("details =====>", JSON.stringify(details, null, 2));
 
@@ -47,6 +47,19 @@ const CryptoSell = () => {
     if (pinScreenRef.current) {
       pinScreenRef.current?.checkUserPin();
     }
+  };
+
+  const handleActionsAfterPinVerified = () => {
+    // Navigate to OTP screen after PIN verification
+    navigation.navigate(NAVIGATION_SCREENS.OTP_SCREEN, {
+      onOTPVerified: handleActionsAfterOTPVerified,
+      transactionType: 'crypto_sell',
+    });
+  };
+
+  const handleActionsAfterOTPVerified = () => {
+    // Execute the crypto sell transaction after OTP verification
+    onSellClick();
   };
 
   const onSellClick = async () => {
@@ -234,13 +247,14 @@ const CryptoSell = () => {
           onPress={() => {
             setShowConfirmationModal(true);
           }}
+          disabled={amount === ""}
         />
       </View>
 
       <PinScreen
         ref={pinScreenRef}
         onAction={() => {
-          onSellClick();
+          handleActionsAfterPinVerified();
         }}
         accountNumber={""}
       />

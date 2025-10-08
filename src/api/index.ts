@@ -125,6 +125,7 @@ api.interceptors.response.use(
     } else if (error.request) {
       console.log("Network error, please check your connection", requestUrl);
     } else {
+      throw error.response;
       // throw error.response;
       console.log("Error", error.message);
     }

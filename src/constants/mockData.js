@@ -1,6 +1,6 @@
 import {SVGBit, SVGEth, SVGFailGraph, SVGSuGrph, SVGUSDT} from './images';
-
-export const BASE_URL = `https://app.payairo.com/api/`;
+import { BASE_URL as url } from '../api/endpoints';
+export const BASE_URL = url;
 export const CRYPTO_HOLDINGS = [
   {
     name: 'Bitcoin',

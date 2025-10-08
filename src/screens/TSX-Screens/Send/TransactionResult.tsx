@@ -253,7 +253,7 @@ const TransactionResult: FC = () => {
             value = `${value} ${asset}`;
           } else {
             // For fiat, show with $ prefix
-            value = `$${value}`;
+            value = `${value}`;
           }
         }
       }

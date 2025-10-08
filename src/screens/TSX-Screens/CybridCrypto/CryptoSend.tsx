@@ -74,6 +74,19 @@ const CryptoSend = () => {
     }
   };
 
+  const handleActionsAfterPinVerified = () => {
+    // Navigate to OTP screen after PIN verification
+    navigation.navigate(NAVIGATION_SCREENS.OTP_SCREEN, {
+      onOTPVerified: handleActionsAfterOTPVerified,
+      transactionType: 'crypto_send',
+    });
+  };
+
+  const handleActionsAfterOTPVerified = () => {
+    // Execute the crypto send transaction after OTP verification
+    onSendClick();
+  };
+
   // Handle Send API and validation
   const onSendClick = async () => {
     let payload = {
@@ -288,9 +301,7 @@ const CryptoSend = () => {
       <PinScreen
         ref={pinScreenRef}
         onAction={() => {
-          // console.log("chal in pin");
-          onSendClick();
-          // handleActionsAfterPinVerified();
+          handleActionsAfterPinVerified();
         }}
         accountNumber={""}
       />

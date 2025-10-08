@@ -51,6 +51,8 @@ export const baseColors = {
   grey800: "#1F2937",
   grey900: "#111827",
 
+  overlay:'#00000068',
+
   rejectStatusDark: "#A21C1C",
   pendingStatusDark: "#E5AB00",
   rejectStatusLight: "#FFE0E0",

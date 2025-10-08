@@ -29,7 +29,14 @@ export const useVerifyOTP = () => {
     mutationFn: async (payload) => {
       console.log("paylaod =>", payload);
       const data = apiClient.post<ApiResponse<any>>(AUTH.VERIFY, payload, true);
+
       return data;
+    },
+    onError: (error) => {
+      console.log("error =>", JSON.stringify(error, null, 2));
+    },
+    onSuccess: (data) => {
+      console.log("data =>", JSON.stringify(data, null, 2));
     },
   });
 };

@@ -96,8 +96,8 @@ export default function Signup() {
             useDispatchAction(setErrorMsg("Email Address Already Exists"));
           }
         },
-        onError: (error) => {
-          console.log(error);
+        onError: (error :any) => {
+          console.log("errro. --->",error.response);
           setButtonDisabled(false);
         },
       }

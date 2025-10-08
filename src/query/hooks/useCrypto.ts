@@ -10,6 +10,7 @@ export const cryptoKeys = {
   all: ["crypto"] as const,
   cryptoBalance: () => [...cryptoKeys.all, "cryptoBalance"] as const,
   cryptoBalanceFortress: () => [...cryptoKeys.all, "cryptoBalanceFortress"] as const,
+  cryptoBalanceByAsset: (asset: string) => [...cryptoKeys.all, "cryptoBalanceByAsset", asset] as const,
   trades: () => [...cryptoKeys.all, "trades"] as const,
   prices: () => [...cryptoKeys.all, "prices"] as const,
 };
@@ -42,7 +43,23 @@ export const useGetCrypto = () => {
     queryFn: async () => {
       return await apiClient.get<ApiResponse<any>>(url);
     },
+    staleTime: queryStaleTime.VERY_VERY_VERY_VERY_SLOW_STALE_TIME,
+  });
+};
+
+/**
+ * Hook to get crypto balance by specific asset
+ */
+export const useCryptoBalanceByAsset = (asset: string) => {
+  return useQuery<ApiResponse<any>>({
+    queryKey: cryptoKeys.cryptoBalanceByAsset(asset),
+    queryFn: async () => {
+      return await apiClient.get<ApiResponse<any>>(
+        `${AUTH.CRYPTO_BALANCE_BY_ASSET}?asset=${asset}`
+      );
+    },
     staleTime: queryStaleTime.INSTANT_STALE_TIME,
+    enabled: !!asset, // Only run query if asset is provided
   });
 };
 
@@ -131,7 +148,40 @@ export const useCryptoBuy = () => {
       // queryClient.invalidateQueries({ queryKey: cryptoKeys.trades() });
     },
     onError: (eror) => {
-      console.log("error ====>", JSON.stringify(eror, null, 2));
+      console.log("error crypto ====>", JSON.stringify(eror, null, 2));
     },
   });
+};
+
+/**
+ * Hook to select crypto currency and fetch its balance
+ * This triggers a refetch of the crypto balance by asset
+ */
+export const useSelectCryptoCurrency = () => {
+  const queryClient = useQueryClient();
+
+  const selectCurrency = async (asset: string) => {
+    try {      
+      // Fetch the crypto balance for the selected asset
+      const result = await queryClient.fetchQuery({
+        queryKey: cryptoKeys.cryptoBalanceByAsset(asset),
+        queryFn: async () => {
+          return await apiClient.get<ApiResponse<any>>(
+            `${AUTH.CRYPTO_BALANCE_BY_ASSET}?asset=${asset}`
+          );
+        },
+        staleTime: queryStaleTime.INSTANT_STALE_TIME,
+      });
+
+      return result;
+    } catch (error:any) {
+      // console.log("Error fetching crypto balance ====>", JSON.stringify(error.response, null, 2));
+      throw error;
+    }
+  };
+
+  return {
+    selectCurrency,
+    isLoading: false, // We'll handle loading state in the component
+  };
 };

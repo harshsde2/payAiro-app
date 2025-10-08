@@ -1,5 +1,5 @@
 // Base URL
-export const BASE_URL = "https://app.payairo.com/api/";
+export const BASE_URL = "https://testingapp.payairo.com/api/";
 
 // Auth endpoints
 export const AUTH = {
@@ -60,6 +60,7 @@ export const AUTH = {
   USER_TO_USER_FORTRESS_TRANSFER: "auth/fortreetrust-bankaccount-transfer/",
   USER_TO_USER_CYBRID_TRANSFER: "auth/cybrid/transfer/",
   COMBINED_CRYPTO_BALANCE: "auth/CombinedCryptoPrices/?type=",
+  CRYPTO_BALANCE_BY_ASSET: "auth/cybrid/crypto-balance/",
   PLAID_ACCESS_TOKEN: "auth/cybrid/plaid-link-token/",
   CREATE_EXTERNAL_BANK_ACCOUNT: "auth/cybrid/create-external-bank-account/",
 

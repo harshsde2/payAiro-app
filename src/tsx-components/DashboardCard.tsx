@@ -4,6 +4,7 @@ import {
   Alert,
   Clipboard,
   Dimensions,
+  Image,
   Platform,
   StyleSheet,
   ToastAndroid,
@@ -28,6 +29,9 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
+import { useNavigation } from "@react-navigation/native";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { SvgUri } from "react-native-svg";
 
 const CONFIGS = {
   CARD_WIDTH: "100%",
@@ -44,6 +48,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
     (s: any) => s.animationSlice
   );
 
+  const navigation = useNavigation<any>();
   const isIOS = Platform.OS == "ios";
 
   const {
@@ -53,14 +58,76 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
     walletData,
     totalDisbursable,
     totalDisbursablePending,
+    selectedCurrency,
   } = useSelector((s: any) => s.authenticationSlice);
+
+  console.log("selected currency =>",JSON.stringify(selectedCurrency, null, 2))
 
   const { theme } = useTheme();
   const styles = customStyles(theme);
   const [showBalance, setShowBalance] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isDisable, setIsDisable] = React.useState(false);
-  const renderCurrencySelector = () => (
+
+  const renderCryptoCurrencySelector = () => (
+    <TouchableOpacity
+      style={[
+        styles.currencySelector,
+        {
+          backgroundColor: theme.colors.palette.green100,
+          padding: theme.spacing.spacing.xs,
+          borderRadius: theme.spacing.spacing[10],
+          borderWidth: 1 / 2,
+          // borderColor: theme.colors.palette.grey300,
+          width: 110,
+          shadowColor: theme.colors.palette.black,
+          shadowOffset: {
+            width: 0,
+            height: 2,
+          },
+          shadowOpacity: 0.2,
+          shadowRadius: 5,
+          elevation: 2,
+        },
+      ]}
+
+      onPress={()=>{
+        navigation.navigate(NAVIGATION_SCREENS.CRYPTO_LIST);
+      }}
+    >
+      {selectedCurrency?.logo ? (
+        <View style={{width: 30, height: 30}}>
+          <SvgUri
+            uri={selectedCurrency.logo}
+            width={30}
+            height={30}
+          />
+        </View>
+      ) : (
+        <SvgIcons.DollarIcon width={35} height={35} />
+      )}
+      <View
+        style={[
+          styles.currencyTextContainer,
+          { marginLeft: theme.spacing.spacing.xxs },
+        ]}
+      >
+        <CustomText
+          variant="button"
+          color={theme.colors.text.primary}
+          style={[
+            styles.currencyText,
+            { marginHorizontal: theme.spacing.spacing.xxs },
+          ]}
+        >
+          {selectedCurrency?.symbol || "USD"}
+        </CustomText>
+        {!isCrypto && <SvgIcons.ChevronDown width={15} height={15} />}
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderFiatCurrencySelector = () => (
     <TouchableOpacity
       style={[
         styles.currencySelector,
@@ -505,7 +572,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
         >
           {"PayAiro Account"}
         </CustomText>
-        {renderCurrencySelector()}
+        {!walletData?.isCrypto ? renderCryptoCurrencySelector() : renderFiatCurrencySelector()}
       </View>
       <Card
         borderRadius={theme.spacing.spacing[10]}

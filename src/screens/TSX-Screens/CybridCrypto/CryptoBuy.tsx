@@ -48,13 +48,27 @@ const CryptoBuy = () => {
     }
   };
 
+  const handleActionsAfterPinVerified = () => {
+    // Navigate to OTP screen after PIN verification
+    navigation.navigate(NAVIGATION_SCREENS.OTP_SCREEN, {
+      onOTPVerified: handleActionsAfterOTPVerified,
+      transactionType: 'crypto_buy',
+    });
+  };
+
+  const handleActionsAfterOTPVerified = () => {
+    // Execute the crypto buy transaction after OTP verification
+    onBuyClick();
+  };
+
   const onBuyClick = async () => {
     let payload = {
       amount: amount,
-      asset: symbol.slice(0, 3),
+      asset: symbol,
       fiat: "USD",
     };
 
+    console.log("payload =>", payload);
     // Navigate to TransactionResult with loading state
     navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
       isLoading: true,
@@ -88,7 +102,7 @@ const CryptoBuy = () => {
         }
       },
       onError: (error: any) => {
-        console.log("error ====>", JSON.stringify(error?.response, null, 2));
+        // console.log("error ====>", JSON.stringify(error?.response, null, 2));
         // Navigate to TransactionResult with error state
         navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
           isLoading: false,
@@ -226,13 +240,14 @@ const CryptoBuy = () => {
           onPress={() => {
             setShowConfirmationModal(true);
           }}
+          disabled={amount === ""}
         />
       </View>
 
       <PinScreen
         ref={pinScreenRef}
         onAction={() => {
-          onBuyClick();
+          handleActionsAfterPinVerified();
         }}
         accountNumber={""}
       />

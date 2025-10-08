@@ -12,6 +12,7 @@ const initialState = {
   pendingRequest: 0,
   networkLists: [],
   selectedCrypto: null,
+  selectedCurrency: null,
   calculatedBalance: 0,
   isCrypto: true,
   errorMsg: null,
@@ -86,6 +87,9 @@ const authenticationSlice = createSlice({
     setSeletedCrypto: (state, action) => {
       state.selectedCrypto = action.payload;
     },
+    setSelectedCurrency: (state, action) => {
+      state.selectedCurrency = action.payload;
+    },
     setCalculatedBalance: (state, action) => {
       state.calculatedBalance = action.payload;
     },
@@ -155,6 +159,7 @@ export const {
   setPendingRequest,
   setNetworkLists,
   setSeletedCrypto,
+  setSelectedCurrency,
   setCalculatedBalance,
   setisCrypto,
   setErrorMsg,

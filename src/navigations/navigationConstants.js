@@ -106,4 +106,5 @@ export const NAVIGATION_SCREENS = {
   TRANSACTION_RESULT: "TransactionResult",
   PLAID_LINK_SCREEN: "PlaidLinkScreen",
   OTP_SCREEN: "OTPScreen",
+  CRYPTO_LIST: "CryptoList",
 };
