@@ -40,6 +40,7 @@ import { CustomText } from "tsx-components";
 import { Theme, useTheme } from "styles";
 import { useLogin, useStepCount, useVerifyOTP } from "query/hooks/useAPIAuth";
 import { useGetReward, useUserPin, useWalletDetails } from "query/hooks";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 
 export default function ConfirmOTP() {
   const getDeviceId = async () => {
@@ -202,42 +203,35 @@ export default function ConfirmOTP() {
     verifyOtp({ email: email.trim().toLowerCase(), otp: enteredOtp } as any, {
       onSuccess: async (data) => {
         if (data?.status) {
-          const kycData = await getKYC(data?.data?.data?.access);
-          console.log(JSON.stringify(kycData, null, 2), "kycData");
+          console.log("data =>", JSON.stringify(data, null, 2));
 
-          console.log(JSON.stringify(data, null, 2), "data");
-          const formData = new FormData();
-
-          const device_id = await getDeviceId();
-
-          formData.append(
-            "fcm_token",
-            "e9FK8sTqTsm12n5zJYKoDe:APA91bHdG9fT6Q-WZ0s1aFVupYr9U8g3JxFoZGh7YX9MKjSFG7nYX0ROmKkXzXW3Yx8RmPB1e2B6EZK7qE2Ldd4zHGoCZnDpNmJbZ_Lq0dfdfe9OlOq9u0hYJFdjHXr8y8O123456789"
-          );
-          formData.append("device_id", device_id);
-
-          // console.log("formData =>", JSON.stringify(formData, null, 2));
-
-          const fcmData = await addFcm(formData, data?.data?.data?.access);
-          // console.log("fcmData =>", JSON.stringify(fcmData, null, 2));
           useDispatchAction(setTokens(data?.data?.data));
           await setToken(data?.data?.data);
           setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(data?.data?.data));
-
           useDispatchAction(setSuccessMsg("OTP Verified Successfully"));
-          if (kycData?.data?.is_varified) {
-            console.log("chla", kycData?.data?.is_varified);
+
+          const { step, persona_verification_url } = data?.data?.data;
+
+          if (step === 0) {
+            (navigation as any).navigate(SCREENS.Name, {
+              email,
+              data: data?.data?.data,
+            });
+          } else if (step === 1) {
+            (navigation as any).navigate(NAVIGATION_SCREENS.CYBRID_WEB_VIEW, {
+              URL: persona_verification_url,
+              isUserAlreadyCreated: true,
+            });
+          } else if (step === 2) {
             getWalletD();
-          } else {
-            getCurrentStep(data.data);
           }
         } else {
           useDispatchAction(setErrorMsg("Invalid OTP. Please Try Again."));
         }
         setIsVerifying(false);
       },
-      onError: (error) => {
-        console.log("error :--", error.response);
+      onError: (error: any) => {
+        console.log("error :--", JSON.stringify(error.response, null, 2));
         const errorMessage =
           (error as any)?.response?.data?.message ||
           error?.message ||
@@ -251,30 +245,6 @@ export default function ConfirmOTP() {
     });
   };
 
-  const getCurrentStep = (response: any) => {
-    stepCount({ stepcount: "" } as any, {
-      onSuccess: (data: any) => {
-        if (data.data?.stepcount) {
-          console.log("data.data?.stepcount =>", data.data?.stepcount);
-          if (data.data?.stepcount == "1") {
-            (navigation as any).navigate(SCREENS.Name, {
-              email,
-              data: response,
-            });
-          } else if (parseInt(data.data?.stepcount) > 1) {
-            (navigation as any).navigate(SCREENS.Address);
-          }
-        }
-      },
-      onError: (error) => {
-        const errorMessage =
-          (error as any)?.response?.data?.message ||
-          error?.message ||
-          "Something went wrong";
-        useDispatchAction(setErrorMsg(errorMessage));
-      },
-    });
-  };
 
   const getWalletD = async () => {
     try {
@@ -298,8 +268,8 @@ export default function ConfirmOTP() {
       } else {
         throw new Error("Wallet fetch failed");
       }
-    } catch (error) {
-      console.log("error =====>", JSON.stringify(error.response, null, 2));
+    } catch (error: any) {
+      console.log("error =====>", JSON.stringify(error, null, 2));
       useDispatchAction(setErrorMsg("Something went wrong!"));
     }
   };
