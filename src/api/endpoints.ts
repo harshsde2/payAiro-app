@@ -1,5 +1,8 @@
 // Base URL
-export const BASE_URL = "https://testingapp.payairo.com/api/";
+export const BASE_URL = {
+  testing: "https://testingapp.payairo.com/api/",
+  production: "https://app.payairo.com/api/",
+}
 
 // Auth endpoints
 export const AUTH = {

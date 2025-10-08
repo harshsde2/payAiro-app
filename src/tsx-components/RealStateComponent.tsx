@@ -14,7 +14,6 @@ import { SvgXml } from "react-native-svg";
 import { SVGProfile } from "constants/images";
 import { useNavigation } from "@react-navigation/native";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import { BASE_URL } from "api/endpoints";
 import { AssetData } from "screens/TSX-Screens/RWA/RWA";
 import { defaultImage } from "utils/configs";
 

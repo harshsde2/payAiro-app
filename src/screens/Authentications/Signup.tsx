@@ -78,7 +78,6 @@ export default function Signup() {
       );
       return;
     }
-
     setButtonDisabled(true);
 
     login(
