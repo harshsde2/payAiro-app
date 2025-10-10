@@ -20,6 +20,7 @@ import PDFViewer from "tsx-components/PDFViewer";
 import CybridWebView from "screens/Authentications/CybridWebView";
 import LandingPage from "screens/Authentications/LandingPage";
 import Signup from "screens/Authentications/Signup";
+import SelectStates from "tsx-components/modals/SelectStates";
 
 const Stack = createNativeStackNavigator();
 export default function AuthStack() {
@@ -125,6 +126,17 @@ export default function AuthStack() {
         }}
         name={NAVIGATION_SCREENS.PDF_VIEWER}
         component={PDFViewer}
+      />
+      <Stack.Screen
+        options={{ 
+          headerShown: false ,
+          presentation: 'transparentModal',
+          gestureEnabled: true,
+          animation:'slide_from_bottom',
+          animationTypeForReplace: "push",
+        }}
+        name={NAVIGATION_SCREENS.SELECT_STATES}
+        component={SelectStates}
       />
       <Stack.Screen
         options={{ headerShown: false }}

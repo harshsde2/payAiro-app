@@ -40,14 +40,14 @@ const LandingPage = () => {
           onPress={() => {
             navigation.navigate(NAVIGATION_SCREENS.LOGIN);
           }}
-          title="Login"
+          title="Sign In"
         />
         <GenericButton
           cStyle={{ marginVertical: 10 }}
           onPress={() => {
             navigation.navigate(NAVIGATION_SCREENS.SIGNUP);
           }}
-          title="SignUp"
+          title="Sign Up"
         />
       </View>
     </ScreenContainer>

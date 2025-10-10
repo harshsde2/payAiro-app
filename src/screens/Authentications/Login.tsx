@@ -64,20 +64,6 @@ export default function Login() {
       dispatch(setErrorMsg("Please enter valid email address"));
       return;
     }
-    if (!checked) {
-      dispatch(setErrorMsg("Terms & Conditions are required"));
-      return;
-    }
-
-    if (checked1) {
-      dispatch(
-        setErrorMsg(
-          "If you are politically exposed then you cant able to create account"
-        )
-      );
-      return;
-    }
-
     setButtonDisabled(true);
 
     login({ email: email.trim().toLowerCase() } as any, {
@@ -108,7 +94,6 @@ export default function Login() {
       <View style={{ flex: 1 }}>
         <AuthHeader showAuthLogo={true} />
       </View>
-      {/* <Button title="Press me" onPress={testStep} /> */}
       <TermAndConditionModal
         onAgree={() => {
           setchecked(true);
@@ -140,20 +125,6 @@ export default function Login() {
           </CustomText>
         </View>
         <View style={styles.fieldAndCheckboxContainer}>
-          {/* <MyDropdown
-            required={true}
-            label={"Select Your Location"}
-            placeholder={"Select Your Location"}
-            data={locations}
-            value={selectedMethod}
-            search={true}
-            itemTextStyle={{
-              fontSize: 14,
-              fontFamily: theme?.typography.fontFamily.montserrat,
-            }}
-            onChange={(item) => setSelectedMethod(item)}
-            maxHeight={150}
-          /> */}
           <TextInputField
             placeholder={"joe@gmail.com"}
             value={email}
@@ -161,65 +132,6 @@ export default function Login() {
             label="Enter your email"
             required={true}
           />
-          <View style={styles.checkboxContainer}>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => setisvisible(true)}
-              style={styles.termsAndConditionContainer}
-            >
-              {
-                checked1 ? (
-                  <SvgIcons.OutLineCheckedBox
-                    width={15}
-                    height={15}
-                  />
-                ) : (
-                  <SvgIcons.OutLineUncheckedBox
-                    width={15}
-                    height={15}
-                  />
-                )
-              }
-              
-              <CustomText variant={"caption"}>
-                Are you politically exposed person?
-              </CustomText>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => setchecked((state) => !state)}
-              style={styles.termsAndConditionContainer}
-            >
-              {
-                checked ? (
-                  <SvgIcons.OutLineCheckedBox
-                  width={15}
-                  height={15}
-                />
-              ) : (
-                <SvgIcons.OutLineUncheckedBox
-                  width={15}
-                  height={15}
-                />
-              )
-              }
-              <CustomText>
-                <CustomText variant={"caption"}>
-                  By clicking the button you agree with the
-                </CustomText>
-                <Text
-                  onPress={() =>
-                    termsAndConditionRef.current.showTermsAndConditions()
-                  }
-                  style={{ fontWeight: "700" }}
-                >
-                  {" "}
-                  Terms & Conditions
-                </Text>
-              </CustomText>
-            </TouchableOpacity>
-          </View>
           <GenericButton
             title="Next"
             cStyle={{ marginTop: 20 }}
@@ -246,12 +158,12 @@ const customStyles = (theme: Theme) =>
     },
     contentContainer: {
       width: "100%",
-      height: 500,
+      // minHeight: 300,
       backgroundColor: theme.colors.palette.white,
       borderTopEndRadius: theme?.spacing.spacing?.[8],
       borderTopStartRadius: theme?.spacing.spacing?.[8],
-      padding: theme?.spacing.spacing?.[5],
-      paddingVertical: theme?.spacing.spacing?.[10],
+      paddingHorizontal: theme?.spacing.spacing?.[5],
+      paddingVertical: theme?.spacing.spacing?.[5],
     },
     signinHeaderContainer: {
       width: "80%",

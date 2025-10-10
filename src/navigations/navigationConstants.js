@@ -19,6 +19,7 @@ export const NAVIGATION_SCREENS = {
   BIOMETRIC: "Biometcric",
   DOB: "Dob",
   PDF_VIEWER: "PDFViewer",
+  SELECT_STATES: "SelectStates",
   CYBRID_WEB_VIEW: "CybridWebView",
 
   // App Stack Screens

@@ -161,7 +161,7 @@ const TextInputField: FC<InputProps> = (props) => {
                 minHeight: 40,
               }}
               placeholder={placeholder}
-              placeholderTextColor={"#6A6A6A"}
+              placeholderTextColor={theme.colors.palette.grey500}
               onChangeText={onChange}
               value={value}
               keyboardType={keyboardType ?? "default"}

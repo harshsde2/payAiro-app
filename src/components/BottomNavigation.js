@@ -168,8 +168,8 @@ export default function BottomNavigation({ isVer }) {
           // disabled={true}
           onPress={() => handleTabSwitch(SCREENS.Scans)}
         >
-          <SvgIcons.ScannerIcon
-          // style={{opacity: activeTab === '3' ? 1 : 0.6}}
+          <SvgIcons.NewScannerIcon
+          style={{opacity: activeTab === '3' ? 1 : 0.6}}
           />
         </TouchableOpacity>
 
