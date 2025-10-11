@@ -143,6 +143,7 @@ export default function Name(props: any) {
     navigation.navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
       url: require("../../assets/pdf/Cybrid_User_Agreement.pdf"),
       isFileFromLocal: true,
+      fileName: "Cybrid_User_Agreement.pdf",
     });
   };
 

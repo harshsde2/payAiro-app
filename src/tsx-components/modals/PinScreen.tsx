@@ -142,6 +142,7 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
           setPinForShowBalance("");
           requestAnimationFrame(() => {
             onAction?.(null); // Triggers ResultModal
+            setIsPinModalVisible(false);
           });
         } else if (isUserEnterCorrectPin === false) {
           dispatch(setErrorMsg("Invalid PIN. Please try again"));

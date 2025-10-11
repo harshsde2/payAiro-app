@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "postinstall": "patch-package",
+    "postinstall": "patch-package && mkdir -p android/app/src/main/assets/pdf && cp src/assets/pdf/*.pdf android/app/src/main/assets/pdf/ || true",
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "lint": "eslint .",

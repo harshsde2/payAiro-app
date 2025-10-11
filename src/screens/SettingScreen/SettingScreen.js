@@ -218,6 +218,7 @@ export default function SettingScreen() {
                       navigation.navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
                         url: require("../../assets/pdf/Cybrid_User_Agreement.pdf"),
                         isFileFromLocal: true,
+                        fileName: "Cybrid_User_Agreement.pdf",
                       });
                       return;
                     }

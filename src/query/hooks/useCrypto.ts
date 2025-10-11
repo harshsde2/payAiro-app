@@ -34,7 +34,7 @@ export const useCryptoBalance = () => {
 export const useGetCrypto = () => {
   const { walletData } = useSelectorAction() as any;
   const isFortress = walletData?.fortress;
-  const url = !isFortress
+  const url = isFortress
     ? `${AUTH.COMBINED_CRYPTO_BALANCE}fortress`
     : `${AUTH.COMBINED_CRYPTO_BALANCE}cybrid`;
 

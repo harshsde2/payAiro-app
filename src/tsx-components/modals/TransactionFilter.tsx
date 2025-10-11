@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  ScrollView,
 } from "react-native";
 import React, { FC, useState } from "react";
 import { Theme, useTheme } from "styles";
@@ -69,185 +70,188 @@ const TransactionFilter: FC<TransactionFilterProps> = ({
     >
       {!isCustomRangeSelected ? (
         <View style={[styles.mainContainer]}>
-          <CustomText variant={"h3"}>Filter</CustomText>
-          <DashboardSection
-            contentContainerStyle={[styles.dashboardSectionContainerStyle]}
-            style={[styles.dashboardSectionStyle]}
-            title="Time Range"
-          >
-            {filteredTransactions?.timeRange.map((item, index) => {
-              const { isSelected, title, id } = item;
-              return (
-                <TouchableOpacity
-                  onPress={() => {
-                    onFilterClick(
-                      TRANSACTION_FILTERS_KEYS.time_range,
-                      item,
-                      index
-                    );
-                  }}
-                  activeOpacity={1}
-                  style={[
-                    styles.timeRangeStyle,
-                    {
-                      backgroundColor: isSelected
-                        ? theme?.colors?.palette?.green200
-                        : theme.colors.palette.grey100,
-                    },
-                  ]}
-                  key={index}
-                >
-                  <CustomText
-                    color={
-                      isSelected
-                        ? theme?.colors?.palette?.green700
-                        : theme.colors.palette.black
-                    }
-                    variant="button"
-                  >
-                    {title}
-                  </CustomText>
-                </TouchableOpacity>
-              );
-            })}
-
-            <TouchableOpacity
-              onPress={() => {
-                setIsCustomRangeSelected(true);
-              }}
-              activeOpacity={1}
-              style={[
-                styles.timeRangeStyle,
-                {
-                  backgroundColor: isCustomRangeSelected
-                    ? theme?.colors?.palette?.green200
-                    : theme.colors.palette.grey100,
-                },
-              ]}
-              key="custom_range"
+          <ScrollView contentContainerStyle={[{ alignItems: "center" }]}>
+            <CustomText variant={"h3"}>Filter</CustomText>
+            <DashboardSection
+              contentContainerStyle={[styles.dashboardSectionContainerStyle]}
+              style={[styles.dashboardSectionStyle]}
+              title="Time Range"
             >
-              <CustomText
-                color={
-                  isCustomRangeSelected
-                    ? theme?.colors?.palette?.green700
-                    : theme.colors.palette.black
-                }
-                variant="button"
+              {filteredTransactions?.timeRange.map((item, index) => {
+                const { isSelected, title, id } = item;
+                return (
+                  <TouchableOpacity
+                    onPress={() => {
+                      onFilterClick(
+                        TRANSACTION_FILTERS_KEYS.time_range,
+                        item,
+                        index
+                      );
+                    }}
+                    activeOpacity={1}
+                    style={[
+                      styles.timeRangeStyle,
+                      {
+                        backgroundColor: isSelected
+                          ? theme?.colors?.palette?.green200
+                          : theme.colors.palette.grey100,
+                      },
+                    ]}
+                    key={index}
+                  >
+                    <CustomText
+                      color={
+                        isSelected
+                          ? theme?.colors?.palette?.green700
+                          : theme.colors.palette.black
+                      }
+                      variant="button"
+                    >
+                      {title}
+                    </CustomText>
+                  </TouchableOpacity>
+                );
+              })}
+
+              <TouchableOpacity
+                onPress={() => {
+                  setIsCustomRangeSelected(true);
+                }}
+                activeOpacity={1}
+                style={[
+                  styles.timeRangeStyle,
+                  {
+                    backgroundColor: isCustomRangeSelected
+                      ? theme?.colors?.palette?.green200
+                      : theme.colors.palette.grey100,
+                  },
+                ]}
+                key="custom_range"
               >
-                {"Custom Range"}
-              </CustomText>
-            </TouchableOpacity>
-          </DashboardSection>
-          <DashboardSection
-            contentContainerStyle={[styles.dashboardSectionContainerStyle]}
-            style={[styles.dashboardSectionStyle]}
-            title="Categories"
-            // actionText="Select All"
-            // onActionPress={() => {
-
-            // }}
-          >
-            {filteredTransactions?.categories.map((item, index) => {
-              const { isSelected, title, id } = item;
-              return (
-                <TouchableOpacity
-                  onPress={() =>
-                    onFilterClick(
-                      TRANSACTION_FILTERS_KEYS.categories,
-                      item,
-                      index
-                    )
+                <CustomText
+                  color={
+                    isCustomRangeSelected
+                      ? theme?.colors?.palette?.green700
+                      : theme.colors.palette.black
                   }
-                  activeOpacity={1}
-                  style={[
-                    styles.categoriesStyle,
-                    {
-                      backgroundColor: isSelected
-                        ? theme?.colors?.palette?.green200
-                        : theme.colors.palette.grey100,
-                    },
-                  ]}
-                  key={index}
+                  variant="button"
                 >
-                  <CustomText
-                    color={
-                      isSelected
-                        ? theme?.colors?.palette?.green700
-                        : theme.colors.palette.black
-                    }
-                    variant="button"
-                  >
-                    {title}
-                  </CustomText>
-                  {isSelected ? (
-                    <SvgIcons.Checkedbox />
-                  ) : (
-                    <SvgIcons.UnCheckbox />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-            {filteredTransactions?.filter_type.map((item, index) => {
-              const { isSelected, title, id } = item;
-              return (
-                <TouchableOpacity
-                  onPress={() =>
-                    onFilterClick(
-                      TRANSACTION_FILTERS_KEYS.filter_type,
-                      item,
-                      index
-                    )
-                  }
-                  activeOpacity={1}
-                  style={[
-                    styles.categoriesStyle,
-                    {
-                      backgroundColor: isSelected
-                        ? theme?.colors?.palette?.green200
-                        : theme.colors.palette.grey100,
-                    },
-                  ]}
-                  key={index}
-                >
-                  <CustomText
-                    color={
-                      isSelected
-                        ? theme?.colors?.palette?.green700
-                        : theme.colors.palette.black
-                    }
-                    variant="button"
-                  >
-                    {title}
-                  </CustomText>
-                  {isSelected ? (
-                    <SvgIcons.Checkedbox />
-                  ) : (
-                    <SvgIcons.UnCheckbox />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </DashboardSection>
+                  {"Custom Range"}
+                </CustomText>
+              </TouchableOpacity>
+            </DashboardSection>
+            <DashboardSection
+              contentContainerStyle={[styles.dashboardSectionContainerStyle]}
+              style={[styles.dashboardSectionStyle]}
+              title="Categories"
+              // actionText="Select All"
+              // onActionPress={() => {
 
-          <GenericButton
-            onPress={() => {
-              // Then trigger Apply logic in parent
-              onApplyFilter();
-            }}
-            title="Apply"
-            cStyle={{ marginBottom: 10 }}
-            // disabled={}
-            showLoader={true}
-            isLoading={isFetching}
-          />
+              // }}
+            >
+              {filteredTransactions?.categories.map((item, index) => {
+                const { isSelected, title, id } = item;
+                return (
+                  <TouchableOpacity
+                    onPress={() =>
+                      onFilterClick(
+                        TRANSACTION_FILTERS_KEYS.categories,
+                        item,
+                        index
+                      )
+                    }
+                    activeOpacity={1}
+                    style={[
+                      styles.categoriesStyle,
+                      {
+                        backgroundColor: isSelected
+                          ? theme?.colors?.palette?.green200
+                          : theme.colors.palette.grey100,
+                      },
+                    ]}
+                    key={index}
+                  >
+                    <CustomText
+                      color={
+                        isSelected
+                          ? theme?.colors?.palette?.green700
+                          : theme.colors.palette.black
+                      }
+                      variant="button"
+                    >
+                      {title}
+                    </CustomText>
+                    {isSelected ? (
+                      <SvgIcons.Checkedbox />
+                    ) : (
+                      <SvgIcons.UnCheckbox />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+              {filteredTransactions?.filter_type.map((item, index) => {
+                const { isSelected, title, id } = item;
+                return (
+                  <TouchableOpacity
+                    onPress={() =>
+                      onFilterClick(
+                        TRANSACTION_FILTERS_KEYS.filter_type,
+                        item,
+                        index
+                      )
+                    }
+                    activeOpacity={1}
+                    style={[
+                      styles.categoriesStyle,
+                      {
+                        backgroundColor: isSelected
+                          ? theme?.colors?.palette?.green200
+                          : theme.colors.palette.grey100,
+                      },
+                    ]}
+                    key={index}
+                  >
+                    <CustomText
+                      color={
+                        isSelected
+                          ? theme?.colors?.palette?.green700
+                          : theme.colors.palette.black
+                      }
+                      variant="button"
+                    >
+                      {title}
+                    </CustomText>
+                    {isSelected ? (
+                      <SvgIcons.Checkedbox />
+                    ) : (
+                      <SvgIcons.UnCheckbox />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </DashboardSection>
+          </ScrollView>
+            {/* <View> */}
+              <GenericButton
+                onPress={() => {
+                  // Then trigger Apply logic in parent
+                  onApplyFilter();
+                }}
+                title="Apply"
+                cStyle={{ marginBottom: 10 }}
+                // disabled={}
+                showLoader={true}
+                isLoading={isFetching}
+              />
 
-          <GenericButton
-            onPress={() => {
-              onCancel();
-            }}
-            title="Reset"
-            cStyle={{ marginBottom: 10, backgroundColor: "black" }}
-          />
+              <GenericButton
+                onPress={() => {
+                  onCancel();
+                }}
+                title="Reset"
+                cStyle={{ marginBottom: 10, backgroundColor: "black" }}
+              />
+            {/* </View> */}
         </View>
       ) : (
         <View style={[styles.mainContainer]}>
