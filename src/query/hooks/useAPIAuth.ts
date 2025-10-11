@@ -13,6 +13,12 @@ export const useLogin = () => {
     mutationFn: async (payload) => {
       return apiClient.post<ApiResponse<any>>(AUTH.LOGIN, payload, true);
     },
+    onSuccess: (data) => {
+      console.log("data =>", JSON.stringify(data, null, 2));
+    },
+    onError: (error) => {
+      console.log("error =>", JSON.stringify(error, null, 2));
+    },
   });
 };
 

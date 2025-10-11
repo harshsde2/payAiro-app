@@ -84,6 +84,7 @@ import RWAHoldings from "./RWAHoldings.svg";
 import OutLineCheckedBox from "./OutLineCheckedBox.svg";
 import OutLineUncheckedBox from "./OutLineUncheckedBox.svg";
 import NewScannerIcon from "./NewScannerIcon.svg";
+import ImageIcon from "./ImageIcon.svg";
 
 export const SvgIcons = {
   PayAiorRoundIcon,
@@ -172,4 +173,5 @@ export const SvgIcons = {
   OutLineCheckedBox,
   OutLineUncheckedBox,
   NewScannerIcon,
+  ImageIcon,
 };

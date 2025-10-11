@@ -89,6 +89,11 @@ const CryptoSend = () => {
 
   // Handle Send API and validation
   const onSendClick = async () => {
+    if (Number(amount) > 100000) {
+      dispatch(setErrorMsg("Amount cannot exceed ₹1,00,000"));
+      return;
+    }
+
     let payload = {
       account_type: "",
       amount: amount,

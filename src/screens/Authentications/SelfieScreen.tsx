@@ -285,6 +285,7 @@ export default function SelfieScreen(props: any) {
     navigation.navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
       url: require("../../assets/pdf/AML_Policy_PayAiro.pdf"),
       isFileFromLocal: true,
+      fileName: "AML_Policy_PayAiro.pdf",
     });
   };
 

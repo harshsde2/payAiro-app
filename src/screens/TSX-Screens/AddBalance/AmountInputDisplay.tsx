@@ -8,22 +8,36 @@ import {
 import React, { FC, useRef, useState } from "react";
 import { useTheme } from "styles";
 import { CustomText } from "tsx-components";
+import { setErrorMsg } from "redux/slices/authenticationSlice";
+import { useDispatch } from "react-redux";
 
 interface AmountInputDisplayProps {
   amount: string;
   setAmount: (test: string) => void;
   showDollarIcon?: boolean;
   suffixText?: string;
+  maxLimit?: number;
 }
 const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
   amount,
   setAmount,
   showDollarIcon = true,
   suffixText,
+  maxLimit = 100000,
 }) => {
   const { theme } = useTheme();
+  const dispatch = useDispatch();
   const inputRef = useRef<TextInput>(null);
   const [isFocused, setIsFocused] = useState(false);
+
+  const handleAmountChange = (value: string) => {
+    const numericValue = parseFloat(value);
+    if (!isNaN(numericValue) && numericValue > maxLimit) {
+      dispatch(setErrorMsg(`Amount cannot exceed ₹${maxLimit.toLocaleString()}`));
+      return;
+    }
+    setAmount(value);
+  };
 
   return (
     <TouchableOpacity
@@ -64,7 +78,7 @@ const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
         <TextInput
           ref={inputRef}
           value={amount}
-          onChangeText={setAmount}
+          onChangeText={handleAmountChange}
           keyboardType="decimal-pad"
           style={{
             fontSize: 48,

@@ -7,6 +7,7 @@ import { useUserToUserTransfer } from "query/hooks";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Button,
   Text,
   TouchableOpacity,
   View
@@ -161,6 +162,11 @@ export default function ScanPay(props: IScanPayProps) {
       return;
     }
 
+    if (Number(amount) > 100000) {
+      useDispatchAction(setErrorMsg("Amount cannot exceed ₹1,00,000"));
+      return;
+    }
+
     const payload = {
       recipient_value: (sender as any)?.address ?? sender,
       amount: (sender as any)?.amount ?? amount,
@@ -240,6 +246,11 @@ export default function ScanPay(props: IScanPayProps) {
 
   const handleCrypto = async () => {
     try {
+      if (Number(amount) > 100000) {
+        useDispatchAction(setErrorMsg("Amount cannot exceed ₹1,00,000"));
+        return;
+      }
+
       const payload = {
         asset: selectedToken?.symbol?.toLowerCase(),
         network: selectedNetwork?.networks?.toLowerCase(),
@@ -289,12 +300,23 @@ export default function ScanPay(props: IScanPayProps) {
         if (key === ".") {
           return prev.includes(".") ? prev : prev + key;
         }
-        return prev === "0" ? key : prev + key;
+        const newAmount = prev === "0" ? key : prev + key;
+        // Limit to 1 lakh (100,000)
+        if (Number(newAmount) > 100000) {
+          useDispatchAction(setErrorMsg("Amount cannot exceed ₹1,00,000"));
+          return prev;
+        }
+        return newAmount;
       });
     }
   };
 
   const handleRequested = async () => {
+    if (Number(amount) > 100000) {
+      useDispatchAction(setErrorMsg("Amount cannot exceed ₹1,00,000"));
+      return;
+    }
+
     setspin(true);
 
     const formData = new FormData();

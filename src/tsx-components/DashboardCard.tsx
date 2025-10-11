@@ -148,6 +148,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
           elevation: 2,
         },
       ]}
+      disabled={true}
     >
       <SvgIcons.DollarIcon width={35} height={35} />
       <View
@@ -545,6 +546,8 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
       </View>
     );
   };
+
+  console.log('isCrypto =>', isCrypto)
   return (
     <Card
       padding={0}
@@ -572,7 +575,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
         >
           {"PayAiro Account"}
         </CustomText>
-        {!walletData?.isCrypto ? renderCryptoCurrencySelector() : renderFiatCurrencySelector()}
+        {!isCrypto ? renderCryptoCurrencySelector() : renderFiatCurrencySelector()}
       </View>
       <Card
         borderRadius={theme.spacing.spacing[10]}

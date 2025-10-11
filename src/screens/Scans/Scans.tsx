@@ -1,35 +1,36 @@
+import { useNavigation } from "@react-navigation/native";
+import { ScreenContainer } from "HOC";
+import { SvgIcons } from "constants/svgs";
 import React, { useState } from "react";
 import {
-  StyleSheet,
-  View,
-  Dimensions,
-  Alert,
-  Text,
-  TouchableOpacity,
+    Alert,
+    Dimensions,
+    Platform,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { Camera, CameraType } from "react-native-camera-kit";
-import Container from "../../HOC/Container";
-import BottomNavigation from "../../components/BottomNavigation";
-import Fonts from "../../constants/Fonts";
-import { SvgXml } from "react-native-svg";
-import { SVGPhoto } from "../../constants/images";
-import { useNavigation } from "@react-navigation/native";
-import { SCREENS } from "../../constants/SCREENS";
-import { launchImageLibrary } from "react-native-image-picker";
-import QRModal from "../../components/QRModal";
-import { ScreenContainer } from "HOC";
+import { ImageLibraryOptions, launchImageLibrary } from "react-native-image-picker";
 import { useTheme } from "styles";
 import { CustomText } from "tsx-components";
+import BottomNavigation from "../../components/BottomNavigation";
+import QRModal from "../../components/QRModal";
+import Fonts from "../../constants/Fonts";
+import { SCREENS } from "../../constants/SCREENS";
+import { IQRCodeEvent, ScansNavigationProp } from "./types";
+import QRCodeScanner from "react-native-qr-decode-image-camera";
 
 const { width, height } = Dimensions.get("window"); // Get device dimensions
 
-export default function Scans() {
+export default function Scans(): JSX.Element {
   const { theme } = useTheme();
 
-  const [scanned, setScanned] = useState(false);
-  const navigation = useNavigation();
-  const [isVisible, setisVisible] = useState(false);
-  const onQRCodeRead = (event) => {
+  const [scanned, setScanned] = useState<boolean>(false);
+  const navigation = useNavigation<ScansNavigationProp | any>();
+  const [isVisible, setisVisible] = useState<boolean>(false);
+  const onQRCodeRead = (event: IQRCodeEvent): void => {
     console.log(
       event.nativeEvent.codeStringValue,
       "event.nativeEvent.codeStringValue"
@@ -51,19 +52,90 @@ export default function Scans() {
     });
   };
 
-  const uploadFromGallery = async () => {
-    const result = await launchImageLibrary({
+  const uploadFromGallery = async (): Promise<void> => {
+    const options: ImageLibraryOptions = {
       mediaType: "photo",
-    });
+    };
+    
+    const result = await launchImageLibrary(options);
 
     if (result.assets && result.assets[0]) {
-      const imagePath = result.assets[0].uri;
+      let imagePath = result.assets[0].uri;
+
+      if (!imagePath) {
+        Alert.alert("Error", "Unable to access the selected image.");
+        return;
+      }
+
+      // Convert URI for Android if needed (remove file:// prefix for the library)
+      if (Platform.OS === 'android' && imagePath.startsWith('file://')) {
+        imagePath = imagePath.replace('file://', '');
+      }
 
       try {
         // Scan QR code from the selected image
-        Alert.alert("QR Code Scanned from Image");
+        console.log("Starting QR decode for image:", imagePath);
+        console.log("Original URI:", result.assets[0].uri);
+        
+        const qrData = await QRCodeScanner.decode(imagePath);
+        
+        console.log("QR Data received:", qrData);
+        console.log("QR Data type:", typeof qrData);
+        console.log("QR Data length:", typeof qrData === 'string' ? qrData.length : 'N/A');
+        
+        // Handle different return formats from the library
+        let codeStringValue: string = "";
+        
+        if (typeof qrData === 'string' && qrData.length > 0) {
+          codeStringValue = qrData;
+        } else if (typeof qrData === 'object' && qrData !== null) {
+          // The library might return an object with values array
+          const qrDataObj = qrData as any;
+          if (qrDataObj.values && Array.isArray(qrDataObj.values) && qrDataObj.values.length > 0) {
+            codeStringValue = qrDataObj.values[0];
+          } else if (qrDataObj.data) {
+            codeStringValue = qrDataObj.data;
+          }
+        }
+        
+        console.log("Extracted code value:", codeStringValue);
+        
+        if (codeStringValue && codeStringValue.length > 0) {
+          console.log("QR Code from Gallery:", codeStringValue);
+          console.log("Contains 'sending':", codeStringValue.includes("sending"));
+          
+          // Validate that it's a PayAiro QR code (contains "sending:")
+          if (!codeStringValue.includes("sending:") && 
+              !codeStringValue.includes("orderID") && 
+              !codeStringValue.includes("merchantSend")) {
+            Alert.alert("Invalid QR Code", "Please scan a valid PayAiro QR code.");
+            return;
+          }
+          
+          // Process QR code data similar to onQRCodeRead
+          setScanned(true);
+          navigation.replace(SCREENS.ScanPay, {
+            type: codeStringValue?.includes("orderID")
+              ? "request"
+              : codeStringValue.includes("merchantSend")
+              ? "merchantSend"
+              : codeStringValue.includes("sending")
+              ? "receive"
+              : "receiveMerchent",
+            sender: codeStringValue?.includes("orderID")
+              ? JSON.parse(codeStringValue)
+              : codeStringValue?.includes("merchantSend")
+              ? JSON.parse(codeStringValue)
+              : codeStringValue.replace("sending: ", ""),
+          });
+        } else {
+          console.log("QR data is empty or null");
+          Alert.alert("Error", "No QR code found in the image. Please select an image with a valid QR code.");
+        }
       } catch (error) {
-        Alert.alert("Error", "No QR code found in the image.");
+        console.log("QR Decode Error:", error);
+        console.log("Error details:", JSON.stringify(error, null, 2));
+        Alert.alert("Error", "No QR code found in the image. Please select an image with a valid QR code.");
       }
     } else {
       Alert.alert("Error", "No image selected.");
@@ -120,7 +192,7 @@ export default function Scans() {
           Scan the booking QR code or upload one from your gallery.
         </CustomText>
       </View>
-      <QRModal isVisible={isVisible} onClose={() => setisVisible(false)} />
+      <QRModal isVisible={isVisible} onClose={() => setisVisible(false)} onSelected={() => {}} />
       <View style={{ marginTop: 40 }}>
         <TouchableOpacity
           onPress={uploadFromGallery}
@@ -129,17 +201,22 @@ export default function Scans() {
             alignSelf: "center",
             backgroundColor: "rgba(255, 255, 255, 1)",
             borderRadius: 30,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 10,
             // marginTop: -130,
           }}
         >
+            <SvgIcons.ImageIcon />
           <Text style={{ color: "#000", fontFamily: Fonts.bold }}>
-            <SvgXml xml={SVGPhoto} /> Upload from Galery
+             Upload from Galery
           </Text>
         </TouchableOpacity>
       </View>
       {/* <View style={[styles.overlay, styles.leftOverlay]} /> */}
       {/* <View style={[styles.overlay, styles.rightOverlay]} /> */}
-      <BottomNavigation />
+      <BottomNavigation isVer={false} />
     </ScreenContainer>
     // </Container>
   );
@@ -207,3 +284,4 @@ const styles = StyleSheet.create({
     width: width * 0.1, // Right black area
   },
 });
+
