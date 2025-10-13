@@ -5,7 +5,7 @@ import HeaderTitle from "components/HeaderTitle";
 import { SvgIcons } from "constants/svgs";
 import useSelectorAction from "hooks/useSelectorAction";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Clipboard,
@@ -15,6 +15,7 @@ import {
   ToastAndroid,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import Share from "react-native-share";
@@ -26,6 +27,7 @@ import { CustomText } from "tsx-components";
 import CommonModal from "tsx-components/modals/CommonModal";
 import AmountInputDisplay from "../AddBalance/AmountInputDisplay";
 import TextInputField from "components/TextInputField";
+import { useDepositAddress } from "query/hooks/useCrypto";
 
 export default function Receive() {
   const route = useRoute();
@@ -46,6 +48,11 @@ export default function Receive() {
   const viewShotRef = useRef<any>(null);
   const [showShareDetailsModal, setShowShareDetailsModal] = useState(false);
   const [showQRCodeDetailsModal, setShowQRCodeDetailsModal] = useState(false);
+  const [isOnChain, setIsOnChain] = useState(false); // false = Off Chain, true = On Chain
+  const [depositAddress, setDepositAddress] = useState("");
+
+  // Deposit address mutation hook
+  const depositAddressMutation = useDepositAddress();
   const [checkedBoxArray, setcheckedBoxArray] = useState([
     {
       id: 0,
@@ -63,6 +70,45 @@ export default function Receive() {
       isChecked: false,
     },
   ]);
+
+  // Fetch deposit address when switching to On Chain
+  useEffect(() => {
+    if (isOnChain && !depositAddress) {
+      handleGetDepositAddress();
+    }
+  }, [isOnChain]);
+
+  const handleGetDepositAddress = async () => {
+    try {
+      const response = await depositAddressMutation.mutateAsync({
+        asset: symbol,
+      });
+      
+      // Check if the response indicates address is under review
+      if (response?.data?.status === false && !response?.data?.address) {
+        const message = response?.data?.message || "Your deposit address is under review. Please try again later.";
+        Alert.alert("Address Under Review", message);
+        setIsOnChain(false); // Revert to off-chain
+        return;
+      }
+      
+      // Check if address is available
+      if (response?.data?.address) {
+        setDepositAddress(response.data.address);
+      } else {
+        Alert.alert("Error", "Unable to retrieve deposit address. Please try again.");
+        setIsOnChain(false); // Revert to off-chain
+      }
+    } catch (error) {
+      console.log("Error fetching deposit address:", error);
+      Alert.alert("Error", "Failed to get deposit address. Please try again.");
+      setIsOnChain(false); // Revert to off-chain on error
+    }
+  };
+
+  const handleToggleChainType = () => {
+    setIsOnChain(!isOnChain);
+  };
 
   const handleShare = async () => {
     try {
@@ -112,15 +158,39 @@ export default function Receive() {
 
   // console.log("wallet data =>",walletData)
 
-  const copyToClipboard = (e: string) => {
-    Clipboard.setString(e);
+  const copyToClipboard = (text: string, label: string = "Text") => {
+    Clipboard.setString(text);
 
     // Display a success message
     if (Platform.OS === "android") {
-      ToastAndroid.show("PayAiro Tag copied", ToastAndroid.SHORT);
+      ToastAndroid.show(`${label} copied`, ToastAndroid.SHORT);
     } else if (Platform.OS === "ios") {
-      Alert.alert("PayAiro Tag copied");
+      Alert.alert(`${label} copied`);
     }
+  };
+
+  // Get the QR code value based on chain type
+  const getQRCodeValue = () => {
+    if (isOnChain) {
+      return depositAddress || "loading";
+    }
+    return `sending: ${walletData?.username}`;
+  };
+
+  // Get the display label based on chain type
+  const getDisplayLabel = () => {
+    if (isOnChain) {
+      return "PayAiro Wallet Address:";
+    }
+    return "PayAiro Tag:";
+  };
+
+  // Get the display value based on chain type
+  const getDisplayValue = () => {
+    if (isOnChain) {
+      return depositAddress;
+    }
+    return walletData?.username;
   };
   return (
     <ScreenContainer scrollable padding={0}>
@@ -217,15 +287,14 @@ export default function Receive() {
         onClose={() => setShowQRCodeDetailsModal(false)}
       >
         <Pressable
-          style={[styles.whiteSheetContainer, { flex: 0, height: 400 }]}
+          style={[styles.whiteSheetContainer, { flex: 0, height: 450 }]}
           onPress={(e) => e.stopPropagation()}
         >
-          <View style={[{ height: 400 }]}>
+          <View style={[{ height: 450 }]}>
             <View
               style={{
                 alignSelf: "center",
                 marginTop: 30,
-                // backgroundColor: "#000",
                 padding: 20,
                 borderRadius: 20,
               }}
@@ -234,7 +303,13 @@ export default function Receive() {
                 ref={viewShotRef}
                 options={{ format: "png", quality: 0.9 }}
               >
-                <QRCode value={`sending: ${walletData?.username}`} size={200} />
+                {depositAddressMutation.isPending || (isOnChain && !depositAddress) ? (
+                  <View style={{ width: 200, height: 200, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="large" color={theme.colors.palette.green700} />
+                  </View>
+                ) : (
+                  <QRCode value={getQRCodeValue()} size={200} />
+                )}
               </ViewShot>
             </View>
             <View
@@ -245,29 +320,68 @@ export default function Receive() {
                 alignItems: "center",
                 gap: 10,
                 marginVertical: 10,
-                // backgroundColor: themes.dark.colors.palette.grey200,
                 paddingHorizontal: 30,
                 paddingVertical: 10,
               }}
             >
-              <CustomText size={16} fontWeight="semiBold">
-                PayAiro Tag:
+              <CustomText size={14} fontWeight="semiBold">
+                {getDisplayLabel()}
               </CustomText>
               <CustomText
                 fontWeight="semiBold"
-                size={16}
+                size={14}
                 color={theme.colors.palette.green700}
+                numberOfLines={1}
+                style={{ maxWidth: 150 }}
               >
-                {walletData?.username}
+                {getDisplayValue()}
               </CustomText>
               <SvgIcons.CopyOutlineBlack
-                onPress={() => copyToClipboard(walletData?.username)}
+                onPress={() => copyToClipboard(getDisplayValue(), isOnChain ? "Wallet Address" : "PayAiro Tag")}
               />
             </View>
           </View>
         </Pressable>
       </CommonModal>
       <View style={[{ flex: 1 }]}>
+        {/* Toggle Buttons */}
+        <View style={styles.toggleContainer}>
+          <TouchableOpacity
+            style={[
+              styles.toggleButton,
+              !isOnChain && styles.toggleButtonActive,
+            ]}
+            onPress={() => {
+              if (isOnChain) {
+                setIsOnChain(false);
+              }
+            }}
+          >
+            <CustomText
+              fontWeight="semiBold"
+              size={16}
+              color={!isOnChain ? theme.colors.palette.white : theme.colors.palette.grey900}
+            >
+              Off Chain QR
+            </CustomText>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.toggleButton,
+              isOnChain && styles.toggleButtonActive,
+            ]}
+            onPress={handleToggleChainType}
+          >
+            <CustomText
+              fontWeight="semiBold"
+              size={16}
+              color={isOnChain ? theme.colors.palette.white : theme.colors.palette.grey900}
+            >
+              On Chain QR
+            </CustomText>
+          </TouchableOpacity>
+        </View>
+
         <View
           style={[{ flex: 1, alignItems: "center", justifyContent: "center" }]}
         >
@@ -275,7 +389,6 @@ export default function Receive() {
             style={[
               {
                 height: 400,
-                // backgroundColor: "red",
                 alignItems: "center",
                 justifyContent: "center",
               },
@@ -285,7 +398,6 @@ export default function Receive() {
               style={{
                 alignSelf: "center",
                 marginTop: 30,
-                // backgroundColor: "green",
                 padding: 20,
                 borderRadius: 20,
               }}
@@ -294,45 +406,43 @@ export default function Receive() {
                 ref={viewShotRef}
                 options={{ format: "png", quality: 0.9 }}
               >
-                <QRCode value={`sending: ${walletData?.username}`} size={200} />
+                {depositAddressMutation.isPending || (isOnChain && !depositAddress) ? (
+                  <View style={{ width: 200, height: 200, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="large" color={theme.colors.palette.green700} />
+                  </View>
+                ) : (
+                  <QRCode value={getQRCodeValue()} size={200} />
+                )}
               </ViewShot>
             </View>
             <View
               style={{
                 width: "100%",
                 flexDirection: "row",
-                // justifyContent: "center",
                 alignItems: "center",
                 gap: 10,
                 marginVertical: 10,
-                // backgroundColor: "blue",
-                // paddingHorizontal: 30,
                 paddingVertical: 10,
+                paddingHorizontal: 20,
               }}
             >
-              <CustomText size={16} fontWeight="semiBold">
-                PayAiro Tag:
+              <CustomText size={14} fontWeight="semiBold">
+                {getDisplayLabel()}
               </CustomText>
               <CustomText
                 fontWeight="semiBold"
-                size={16}
+                size={14}
                 color={theme.colors.palette.green700}
+                numberOfLines={1}
+                style={{ flex: 1 }}
               >
-                {walletData?.username}
+                {getDisplayValue()}
               </CustomText>
               <SvgIcons.CopyOutlineBlack
-                onPress={() => copyToClipboard(walletData?.username)}
+                onPress={() => copyToClipboard(getDisplayValue(), isOnChain ? "Wallet Address" : "PayAiro Tag")}
               />
             </View>
           </View>
-          {/* <TextInputField
-            label="To"
-            placeholder={"PayAiroTag, Phone, Email"}
-            rightIcon={""}
-            // editable={false}
-            value={recipient}
-            onChange={setRecipient}
-          /> */}
         </View>
       </View>
       <GenericButton
@@ -414,5 +524,28 @@ const customStyles = (theme: Theme) =>
       backgroundColor: theme.colors.palette.green700,
       borderRadius: theme.spacing.spacing[4],
       paddingVertical: 5,
+    },
+    toggleContainer: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      gap: 10,
+      marginHorizontal: 20,
+      marginTop: 20,
+      marginBottom: 10,
+      backgroundColor: theme.colors.palette.grey200,
+      borderRadius: theme.spacing.spacing[3],
+      padding: 4,
+    },
+    toggleButton: {
+      flex: 1,
+      paddingVertical: 12,
+      borderRadius: theme.spacing.spacing[2],
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "transparent",
+    },
+    toggleButtonActive: {
+      backgroundColor: theme.colors.palette.grey900,
     },
   });

@@ -70,8 +70,12 @@ const TransactionFilter: FC<TransactionFilterProps> = ({
     >
       {!isCustomRangeSelected ? (
         <View style={[styles.mainContainer]}>
-          <ScrollView contentContainerStyle={[{ alignItems: "center" }]}>
-            <CustomText variant={"h3"}>Filter</CustomText>
+          <CustomText variant={"h3"} style={styles.headerText}>Filter</CustomText>
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollViewContent}
+            showsVerticalScrollIndicator={true}
+          >
             <DashboardSection
               contentContainerStyle={[styles.dashboardSectionContainerStyle]}
               style={[styles.dashboardSectionStyle]}
@@ -231,30 +235,30 @@ const TransactionFilter: FC<TransactionFilterProps> = ({
               })}
             </DashboardSection>
           </ScrollView>
-            {/* <View> */}
-              <GenericButton
-                onPress={() => {
-                  // Then trigger Apply logic in parent
-                  onApplyFilter();
-                }}
-                title="Apply"
-                cStyle={{ marginBottom: 10 }}
-                // disabled={}
-                showLoader={true}
-                isLoading={isFetching}
-              />
+          <View style={styles.buttonsContainer}>
+            <GenericButton
+              onPress={() => {
+                // Then trigger Apply logic in parent
+                onApplyFilter();
+              }}
+              title="Apply"
+              cStyle={{ marginBottom: 10 }}
+              // disabled={}
+              showLoader={true}
+              isLoading={isFetching}
+            />
 
-              <GenericButton
-                onPress={() => {
-                  onCancel();
-                }}
-                title="Reset"
-                cStyle={{ marginBottom: 10, backgroundColor: "black" }}
-              />
-            {/* </View> */}
+            <GenericButton
+              onPress={() => {
+                onCancel();
+              }}
+              title="Reset"
+              cStyle={{ marginBottom: 10, backgroundColor: "black" }}
+            />
+          </View>
         </View>
       ) : (
-        <View style={[styles.mainContainer]}>
+        <View style={[styles.mainContainer, styles.customRangeContainer]}>
           {open && (
             <DatePicker
               modal
@@ -325,135 +329,94 @@ const TransactionFilter: FC<TransactionFilterProps> = ({
               onCancel={() => setOpen2(false)}
             />
           )}
-          <CustomText variant={"h3"}>Filter</CustomText>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginVertical: 20,
-            }}
+          <CustomText variant={"h3"} style={styles.headerText}>Filter</CustomText>
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollViewContent}
+            showsVerticalScrollIndicator={true}
           >
-            <TouchableOpacity
-              onPress={() => setOpen(true)}
-              style={{ width: "48%" }}
-            >
-              <Text
-                style={{
-                  fontFamily: Fonts.semibold,
-                  padding: 10,
-                  color: "rgba(29, 29, 29, 1)",
-                }}
+            <View style={styles.datePickerRow}>
+              <TouchableOpacity
+                onPress={() => setOpen(true)}
+                style={styles.datePickerItem}
               >
-                Start Date
-              </Text>
-              <View
-                style={{
-                  borderWidth: 1,
-                  borderColor: "rgba(106, 106, 106, 0.08)",
-                  paddingHorizontal: 15,
-                  paddingBottom: 15,
-                  paddingTop: 12,
-                  backgroundColor: "rgba(217, 217, 217, 0.07)",
-                  borderRadius: 30,
-                }}
-              >
-                <Text
-                  style={{
-                    fontFamily: Fonts.semibold,
-                    color: "rgba(29, 29, 29, 1)",
-                  }}
-                >
-                  {date === "" ? " MM/DD/YY" : moment(date).format("MM/DD/YY")}
+                <Text style={styles.datePickerLabel}>
+                  Start Date
                 </Text>
-                <SvgIcons.CalendarIcon
-                  style={{ position: "absolute", right: 15, top: 15 }}
-                />
-              </View>
-            </TouchableOpacity>
+                <View style={styles.datePickerInput}>
+                  <Text style={styles.datePickerText}>
+                    {date === "" ? " MM/DD/YY" : moment(date).format("MM/DD/YY")}
+                  </Text>
+                  <SvgIcons.CalendarIcon
+                    style={{ position: "absolute", right: 15, top: 15 }}
+                  />
+                </View>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => setOpen2(true)}
-              style={{ width: "48%" }}
-            >
-              <Text
-                style={{
-                  fontFamily: Fonts.semibold,
-                  padding: 10,
-                  color: "rgba(29, 29, 29, 1)",
-                }}
+              <TouchableOpacity
+                onPress={() => setOpen2(true)}
+                style={styles.datePickerItem}
               >
-                End Date
-              </Text>
-              <View
-                style={{
-                  borderWidth: 1,
-                  borderColor: "rgba(106, 106, 106, 0.08)",
-                  paddingHorizontal: 15,
-                  paddingBottom: 15,
-                  paddingTop: 12,
-                  backgroundColor: "rgba(217, 217, 217, 0.07)",
-                  borderRadius: 30,
-                }}
-              >
-                <Text
-                  style={{
-                    fontFamily: Fonts.semibold,
-                    color: "rgba(29, 29, 29, 1)",
-                  }}
-                >
-                  {date2 === ""
-                    ? " MM/DD/YY"
-                    : moment(date2).format("MM/DD/YY")}
+                <Text style={styles.datePickerLabel}>
+                  End Date
                 </Text>
-                <SvgIcons.CalendarIcon
-                  style={{ position: "absolute", right: 15, top: 15 }}
-                />
-              </View>
-            </TouchableOpacity>
+                <View style={styles.datePickerInput}>
+                  <Text style={styles.datePickerText}>
+                    {date2 === ""
+                      ? " MM/DD/YY"
+                      : moment(date2).format("MM/DD/YY")}
+                  </Text>
+                  <SvgIcons.CalendarIcon
+                    style={{ position: "absolute", right: 15, top: 15 }}
+                  />
+                </View>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+          <View style={styles.buttonsContainer}>
+            <GenericButton
+              onPress={() => {
+                // Then trigger Apply logic in parent
+                onApplyFilter();
+              }}
+              title="Apply"
+              cStyle={{ marginBottom: 10 }}
+              disabled={!date || !date2}
+              showLoader={true}
+              isLoading={isFetching}
+            />
+            <GenericButton
+              onPress={() => {
+                setIsCustomRangeSelected(false);
+                onFilterClick(
+                  TRANSACTION_FILTERS_KEYS.start_date,
+                  {
+                    id: 0,
+                    title: "Start Date",
+                    isSelected: false,
+                    key: "start_date",
+                    value: "",
+                  },
+                  0
+                );
+                onFilterClick(
+                  TRANSACTION_FILTERS_KEYS.end_date,
+                  {
+                    id: 0,
+                    title: "End Date",
+                    isSelected: false,
+                    key: "end_date",
+                    value: "",
+                  },
+                  0
+                );
+                setdate("");
+                setdate2("");
+              }}
+              title="Back"
+              cStyle={{ marginBottom: 10, backgroundColor: "black" }}
+            />
           </View>
-          <GenericButton
-            onPress={() => {
-              // Then trigger Apply logic in parent
-              onApplyFilter();
-            }}
-            title="Apply"
-            cStyle={{ marginBottom: 10 }}
-            disabled={!date || !date2}
-            showLoader={true}
-            isLoading={isFetching}
-          />
-          <GenericButton
-            onPress={() => {
-              setIsCustomRangeSelected(false);
-              onFilterClick(
-                TRANSACTION_FILTERS_KEYS.start_date,
-                {
-                  id: 0,
-                  title: "Start Date",
-                  isSelected: false,
-                  key: "start_date",
-                  value: "",
-                },
-                0
-              );
-              onFilterClick(
-                TRANSACTION_FILTERS_KEYS.end_date,
-                {
-                  id: 0,
-                  title: "End Date",
-                  isSelected: false,
-                  key: "end_date",
-                  value: "",
-                },
-                0
-              );
-              setdate("");
-              setdate2("");
-            }}
-            title="Back"
-            cStyle={{ marginBottom: 10, backgroundColor: "black" }}
-          />
         </View>
       )}
     </Pressable>
@@ -464,7 +427,29 @@ export default TransactionFilter;
 
 const customStyles = (theme: Theme) =>
   StyleSheet.create({
-    mainContainer: { width: "100%", alignItems: "center" },
+    mainContainer: { 
+      width: "100%", 
+      alignItems: "center",
+    },
+    customRangeContainer: {
+      justifyContent: 'flex-start',
+    },
+    headerText: {
+      marginBottom: theme.spacing.spacing[3],
+    },
+    scrollView: {
+      flexGrow: 1,
+      width: '100%',
+      maxHeight: 500,
+    },
+    scrollViewContent: {
+      alignItems: "center",
+      paddingBottom: theme.spacing.spacing[2],
+    },
+    buttonsContainer: {
+      width: '100%',
+      paddingTop: theme.spacing.spacing[2],
+    },
     dashboardSectionContainerStyle: {
       width: "100%",
       flexDirection: "row",
@@ -478,7 +463,9 @@ const customStyles = (theme: Theme) =>
     timeRangeStyle: {
       backgroundColor: theme.colors.palette.green200,
       paddingVertical: theme.spacing.spacing[2],
-      width: 170,
+      paddingHorizontal: theme.spacing.spacing[2],
+      minWidth: '45%',
+      maxWidth: '48%',
       borderRadius: theme.spacing.spacing[6],
       margin: theme.spacing.spacing[1],
       justifyContent: "center",
@@ -496,5 +483,33 @@ const customStyles = (theme: Theme) =>
       paddingHorizontal: 10,
       flexDirection: "row",
       alignItems: "center",
+    },
+    datePickerRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      width: '100%',
+      marginVertical: 20,
+    },
+    datePickerItem: {
+      width: "48%",
+    },
+    datePickerLabel: {
+      fontFamily: Fonts.semibold,
+      padding: 10,
+      color: theme.colors.palette.black,
+    },
+    datePickerInput: {
+      borderWidth: 1,
+      borderColor: theme.colors.palette.grey300,
+      paddingHorizontal: 15,
+      paddingBottom: 15,
+      paddingTop: 12,
+      backgroundColor: theme.colors.palette.grey100,
+      borderRadius: 30,
+    },
+    datePickerText: {
+      fontFamily: Fonts.semibold,
+      color: theme.colors.palette.black,
     },
   });

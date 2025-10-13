@@ -66,6 +66,7 @@ export const AUTH = {
   CRYPTO_BALANCE_BY_ASSET: "auth/cybrid/crypto-balance/",
   PLAID_ACCESS_TOKEN: "auth/cybrid/plaid-link-token/",
   CREATE_EXTERNAL_BANK_ACCOUNT: "auth/cybrid/create-external-bank-account/",
+  DEPOSIT_ADDRESS: "auth/depositAddress/",
 
 };
 // Wallet endpoints

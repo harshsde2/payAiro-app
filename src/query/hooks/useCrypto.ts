@@ -96,6 +96,18 @@ interface CryptoTransferPayload {
   amount: number;
 }
 
+// Interface for deposit address
+interface DepositAddressPayload {
+  asset: string;
+}
+
+interface DepositAddressResponse {
+  status: boolean;
+  message: string;
+  asset: string;
+  address: string;
+}
+
 /**
  * Hook to transfer crypto
  */
@@ -184,4 +196,25 @@ export const useSelectCryptoCurrency = () => {
     selectCurrency,
     isLoading: false, // We'll handle loading state in the component
   };
+};
+
+/**
+ * Hook to get deposit address for on-chain transactions
+ */
+export const useDepositAddress = () => {
+  return useMutation<ApiResponse<DepositAddressResponse>, Error, DepositAddressPayload>({
+    mutationFn: async (payload) => {
+      return await apiClient.post<ApiResponse<DepositAddressResponse>>(
+        AUTH.DEPOSIT_ADDRESS,
+        payload,
+        true
+      );
+    },
+    onSuccess: (data) => {
+      console.log("Deposit address retrieved =>", JSON.stringify(data, null, 2));
+    },
+    onError: (error) => {
+      console.log("Error getting deposit address =>", JSON.stringify(error, null, 2));
+    },
+  });
 };
