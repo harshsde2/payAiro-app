@@ -11,7 +11,7 @@ import AmountInputDisplay from "../AddBalance/AmountInputDisplay";
 import GenericButton from "components/GenericButton";
 import useSelectorAction from "hooks/useSelectorAction";
 import CommonModal from "tsx-components/modals/CommonModal";
-import { useCryptoBuy } from "query/hooks";
+import { useCryptoBuy, useCryptoSell } from "query/hooks";
 import { setErrorMsg, setSuccessMsg } from "redux/slices/authenticationSlice";
 import useDispatchAction from "hooks/useDispatchAction";
 import { useDispatch } from "react-redux";
@@ -34,11 +34,11 @@ const CryptoSell = () => {
   const [amount, setAmount] = useState("");
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const {
-    mutate: handleBuyCripto,
+    mutate: handleSellCripto,
     isPending,
     isError,
     isSuccess,
-  } = useCryptoBuy();
+  } = useCryptoSell();
   const availableBalance = totalDisbursable;
 
   // console.log("details =====>", JSON.stringify(details, null, 2));
@@ -77,7 +77,7 @@ const CryptoSell = () => {
       isError: false,
     });
 
-    handleBuyCripto(payload as any, {
+    handleSellCripto(payload as any, {
       onSuccess: (data) => {
         console.log("rep =>", JSON.stringify(data, null, 2));
         if (data?.status) {

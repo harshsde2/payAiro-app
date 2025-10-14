@@ -11,12 +11,14 @@ import AmountInputDisplay from "../AddBalance/AmountInputDisplay";
 import GenericButton from "components/GenericButton";
 import useSelectorAction from "hooks/useSelectorAction";
 import CommonModal from "tsx-components/modals/CommonModal";
-import { useCryptoBuy } from "query/hooks";
+import { cryptoKeys, useCryptoBuy } from "query/hooks";
 import { setErrorMsg, setSuccessMsg } from "redux/slices/authenticationSlice";
 import useDispatchAction from "hooks/useDispatchAction";
 import { useDispatch } from "react-redux";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import PinScreen from "tsx-components/modals/PinScreen";
+import { userContactKeys } from "query/queryKeys";
+import { queryClient } from "query/queryClient";
 
 const CryptoBuy = () => {
   const route = useRoute();
@@ -78,8 +80,7 @@ const CryptoBuy = () => {
     });
 
     handleBuyCripto(payload as any, {
-      onSuccess: (data) => {
-        console.log("rep =>", JSON.stringify(data, null, 2));
+      onSuccess: async(data) => {
         if (data?.status) {
           // Navigate to TransactionResult with success data
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {

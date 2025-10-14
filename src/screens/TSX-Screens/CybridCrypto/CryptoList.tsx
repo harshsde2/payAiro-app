@@ -15,7 +15,7 @@ import { useGetCrypto, useSelectCryptoCurrency } from "query/hooks";
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
 import { setTotalDisbursable, setSelectedCurrency } from "redux/slices/authenticationSlice";
-import { formatAtomicToDecimal, getAssetDecimals } from "utils/unitConversion";
+import { setItem, STORAGE_KEYS } from "storage/mmkv";
 
 const CryptoList = () => {
   const { theme } = useTheme();
@@ -34,15 +34,14 @@ const CryptoList = () => {
       setSelectedItemId(item.symbol);
       const result = await selectCurrency(item.symbol);
 
-      console.log("result", result);
-      // Store the complete currency object in Redux
+      // Save to Redux state
       dispatch(setSelectedCurrency(item));
+      dispatch(setTotalDisbursable(result?.data?.rounded_balance));
       
-      // Convert atomic balance (e.g., wei) to human-readable using asset decimals
-      const decimals = getAssetDecimals(item?.symbol);
-      console.log("decimals", decimals);
-      const humanReadable = formatAtomicToDecimal(result?.data?.platform_balance, decimals);
-      dispatch(setTotalDisbursable(humanReadable));
+      // console.log(result?.data?.rounded_balance, "result?.data?.rounded_balance");
+      // Save to MMKV storage for persistence
+      setItem(STORAGE_KEYS.SELECTED_CURRENCY, JSON.stringify(item));
+      setItem(STORAGE_KEYS.TOTAL_DISBURSABLE, JSON.stringify(result?.data?.rounded_balance));
       
       navigation.goBack();
     } catch (error) {
@@ -145,7 +144,7 @@ const CryptoList = () => {
             </View>
           )}
 
-          {isSuccess && (
+          {isSuccess && data?.data?.length > 0 && (
             <FlatList
               data={data?.data}
               showsVerticalScrollIndicator={false}

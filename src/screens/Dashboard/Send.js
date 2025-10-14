@@ -77,7 +77,7 @@ export default function Send(props) {
     if (!hasKey(bankLists, "bank_type")) {
       try {
         dispatch(setShowLoader(true));
-        const resp = await axios.get(`${BASE_URL.testing}auth/url-external-account`, {
+        const resp = await axios.get(`${BASE_URL.production}auth/url-external-account`, {
           headers: {
             Authorization: `Bearer ${tokens?.access}`, // ✅ this is the correct way to send auth header
           },

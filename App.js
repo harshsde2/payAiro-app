@@ -18,8 +18,10 @@ import {
   setFcmToken,
   setLogin,
   setPendingRequest,
+  setSelectedCurrency,
   setShowGuide,
   setTokens,
+  setTotalDisbursable,
   setWalletData,
 } from "./src/redux/slices/authenticationSlice";
 import SplashScreen from "./src/screens/Authentications/SplashScreen";
@@ -63,6 +65,8 @@ export default function App() {
   const getInitialData = async () => {
     const token = getItem(STORAGE_KEYS.AUTH_TOKENS) || null;
     const guide = getItem(STORAGE_KEYS.GUIDE) || null;
+    const selectedCurrency = getItem(STORAGE_KEYS.SELECTED_CURRENCY) || null;
+    const totalDisbursable = getItem(STORAGE_KEYS.TOTAL_DISBURSABLE) || null;
     // setItem(STORAGE_KEYS.GUIDE, JSON.stringify(true));
 
     // const redeem = getItem(STORAGE_KEYS.REDEEM_REWARD);
@@ -79,6 +83,14 @@ export default function App() {
       getMerchentRequest(token);
       useDispatchAction(setLogin(true));
       useDispatchAction(setBiometricAvailable(biometric));
+      
+      // Restore selectedCurrency and totalDisbursable from MMKV storage
+      if (selectedCurrency) {
+        useDispatchAction(setSelectedCurrency(JSON.parse(selectedCurrency)));
+      }
+      if (totalDisbursable) {
+        useDispatchAction(setTotalDisbursable(JSON.parse(totalDisbursable)));
+      }
     }
 
     setisFetching(false);

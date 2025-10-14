@@ -40,6 +40,7 @@ export const AUTH = {
   CRYPTO_SELL_QUANTITY: "auth/crypto-sell-quantity/",
   CRYPTO_TRANSFER: "auth/crypto-transfer/",
   CRYPTO_BUY: "auth/cybrid/buy/",
+  CRYPTO_SELL: "auth/cybrid/sell/",
   CRYPTO_ADDRESS: "auth/crypto-adress/",
   FORTRESS_CRYPTO_BUY: "auth/fortress/crypto/buy/",
   FORTRESS_CRYPTO_SELL: "auth/fortress/crypto/sell/",

@@ -141,14 +141,23 @@ export const useCryptoTransfer = () => {
  * Hook to transfer crypto
  */
 export const useCryptoBuy = () => {
-  const queryClient = useQueryClient();
+  return useMutation<ApiResponse<any>, Error, CryptoTransferPayload>({
+    mutationFn: async (payload) => {
+      return await apiClient.post<ApiResponse<any>>(
+        AUTH.CRYPTO_BUY,
+        payload,
+        false
+      );
+    },
+  });
+};
 
+export const useCryptoSell = () => {
   return useMutation<ApiResponse<any>, Error, CryptoTransferPayload>({
     mutationFn: async (payload) => {
       console.log("payload =>", payload);
-
       return await apiClient.post<ApiResponse<any>>(
-        AUTH.CRYPTO_BUY,
+        AUTH.CRYPTO_SELL,
         payload,
         false
       );
@@ -171,8 +180,8 @@ export const useCryptoBuy = () => {
  */
 export const useSelectCryptoCurrency = () => {
   const queryClient = useQueryClient();
-
   const selectCurrency = async (asset: string) => {
+    console.log("Assets -> ",asset);
     try {      
       // Fetch the crypto balance for the selected asset
       const result = await queryClient.fetchQuery({

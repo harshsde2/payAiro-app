@@ -15,20 +15,15 @@ import { useSelector } from "react-redux";
 import { Theme, useTheme } from "styles";
 import Card from "./Card";
 import CustomText from "./CustomText";
-
 import FadeWrapper from "animations/animations-components/FadeWrapper";
 import { SvgIcons } from "constants/svgs";
 import useDispatchAction from "hooks/useDispatchAction";
 import LottieView from "lottie-react-native";
-import { bankKeys } from "query/hooks";
+import { bankKeys, cryptoKeys } from "query/hooks";
 import { queryClient } from "query/queryClient";
 import { setTheme } from "redux/slices/animationSlice";
 import { setisCrypto } from "redux/slices/authenticationSlice";
 import { ANIMATION_CONSTANTS } from "./CryptoCard";
-import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from "react-native-responsive-screen";
 import { useNavigation } from "@react-navigation/native";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { SvgUri } from "react-native-svg";
@@ -61,11 +56,12 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
     selectedCurrency,
   } = useSelector((s: any) => s.authenticationSlice);
 
-  console.log("selected currency =>",JSON.stringify(selectedCurrency, null, 2))
+  // console.log("selected currency =>",JSON.stringify(selectedCurrency, null, 2))
 
   const { theme } = useTheme();
   const styles = customStyles(theme);
   const [showBalance, setShowBalance] = React.useState(false);
+  const [showCryptoBalance, setShowCryptoBalance] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isDisable, setIsDisable] = React.useState(false);
 
@@ -95,17 +91,25 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
         navigation.navigate(NAVIGATION_SCREENS.CRYPTO_LIST);
       }}
     >
-      {selectedCurrency?.logo ? (
-        <View style={{width: 30, height: 30}}>
-          <SvgUri
-            uri={selectedCurrency.logo}
-            width={30}
-            height={30}
-          />
-        </View>
-      ) : (
-        <SvgIcons.DollarIcon width={35} height={35} />
-      )}
+      {(() => {
+        const logoUri = selectedCurrency?.logo as string | undefined;
+        const isValidLogo = typeof logoUri === "string" && logoUri.trim().length > 0;
+        const isSvgLogo = isValidLogo && (logoUri!.toLowerCase().endsWith(".svg") || logoUri!.toLowerCase().includes("svg+xml"));
+
+        if (!isValidLogo) {
+          return <SvgIcons.DollarIcon width={35} height={35} />;
+        }
+
+        return (
+          <View style={{width: 30, height: 30}}>
+            {isSvgLogo ? (
+              <SvgUri uri={logoUri!} width={30} height={30} />
+            ) : (
+              <Image source={{ uri: logoUri! }} style={{ width: 30, height: 30 }} resizeMode="contain" />
+            )}
+          </View>
+        );
+      })()}
       <View
         style={[
           styles.currencyTextContainer,
@@ -117,8 +121,11 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
           color={theme.colors.text.primary}
           style={[
             styles.currencyText,
-            { marginHorizontal: theme.spacing.spacing.xxs },
+            { marginHorizontal: theme.spacing.spacing.xxs, maxWidth: 40 },
           ]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        
         >
           {selectedCurrency?.symbol || "USD"}
         </CustomText>
@@ -229,6 +236,19 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
     //     setShowBalance(!showBalance);
     //   }
     // }
+  };
+
+  const handleShowCryptoBalance = async (isShowCryptoBalance: boolean) => {
+    if (!isShowCryptoBalance) {
+      setIsLoading(true);
+      // Invalidate and refetch crypto balance queries
+      await queryClient.invalidateQueries(cryptoKeys.cryptoBalanceByAsset(selectedCurrency?.symbol) as any);
+      await queryClient.refetchQueries(cryptoKeys.cryptoBalanceByAsset(selectedCurrency?.symbol) as any);
+      setShowCryptoBalance(!showCryptoBalance);
+      setIsLoading(false);
+    } else {
+      setShowCryptoBalance(!showCryptoBalance);
+    }
   };
 
   const BankingCard = () => {
@@ -447,15 +467,43 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
               <CustomText color={theme.colors.palette.black} variant={"body1"}>
                 {"Crypto Balance"}
               </CustomText>
-              <CustomText
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                color={theme.colors.palette.black}
-                variant={"h3"}
-              >
-                {totalDisbursable}
-              </CustomText>
-              {totalDisbursablePending > 0 && (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                <CustomText
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  color={theme.colors.palette.black}
+                  variant={"h3"}
+                  // style={{ flex: 1 }}
+                >
+                  {showCryptoBalance ? totalDisbursable : "*****"}
+                </CustomText>
+                {!isLoading && (
+                  <TouchableOpacity style={{ zIndex: 11 }}>
+                    {showCryptoBalance ? (
+                      <SvgIcons.EyeOnGreenbg
+                        onPress={() => handleShowCryptoBalance(showCryptoBalance)}
+                        color={theme.colors.palette.black}
+                        width={20}
+                        height={20}
+                      />
+                    ) : (
+                      <SvgIcons.EyeOffGreenbg
+                        onPress={() => handleShowCryptoBalance(showCryptoBalance)}
+                        color={theme.colors.palette.black}
+                        width={20}
+                        height={20}
+                      />
+                    )}
+                  </TouchableOpacity>
+                )}
+                {isLoading && (
+                  <ActivityIndicator
+                    size="small"
+                    color={theme.colors.palette.black}
+                  />
+                )}
+              </View>
+              {totalDisbursablePending > 0 && showCryptoBalance && (
                 <CustomText
                   color={theme.colors.palette.red500}
                   size={12}
@@ -547,7 +595,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
     );
   };
 
-  console.log('isCrypto =>', isCrypto)
+  // console.log('isCrypto =>', isCrypto)
   return (
     <Card
       padding={0}

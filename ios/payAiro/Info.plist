@@ -55,7 +55,7 @@
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app uses your location to provide better recommendations and nearby services.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string>We use your location to find nearby ATMs and provide location-based financial services.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Microphone access is needed to record audio while capturing videos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

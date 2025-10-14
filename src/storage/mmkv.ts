@@ -43,4 +43,6 @@ export const STORAGE_KEYS = {
   GUIDE: "guide",
   REDEEM_REWARD: "redeem_reward",
   PIN: "pin",
+  SELECTED_CURRENCY: "selected_currency",
+  TOTAL_DISBURSABLE: "total_disbursable",
 };
