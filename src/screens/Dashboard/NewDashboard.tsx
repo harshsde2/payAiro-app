@@ -17,6 +17,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
 // Import from the module alias utility
 import { useIsFocused, useNavigation } from "@react-navigation/native";
@@ -32,10 +33,12 @@ import { SCREENS } from "constants/SCREENS";
 import { REWARDS } from "constants/constant";
 import { BASE_URL } from "constants/mockData";
 import { SvgIcons } from "constants/svgs";
+import { SvgUri } from "react-native-svg";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import {
   bankKeys,
   useAddTraditionalIRABankAccount,
+  useAllCryptoBalances,
   useBankBalances,
   useCryptoBalance,
   useDashBoardFiatData,
@@ -637,6 +640,10 @@ const NewDashboard = () => {
     refetch: refectWalletDashboardData,
   } = useWalletDashboardData();
 
+  const { data, isLoading, error, refetch } = useAllCryptoBalances();
+  const balances = data?.data?.balances || [];
+
+
   // const {
   //   data: getRWAList,
   //   isError: isErrorRWAListA,
@@ -659,22 +666,6 @@ const NewDashboard = () => {
     isFetched: isBankBalanceDataFetched,
     isSuccess: isBankBalanceDataSuccess,
   } = useBankBalances();
-
-  // console.log("bankBalanceData =>", JSON.stringify(bankBalanceData, null, 2));
-
-  // const {
-  //   data: CybridBankBalances,
-  //   isLoading: isLoadingCybridBankBalances,
-  //   error: CybridBankBalancesError,
-  //   refetch: refetchCybridBankBalances,
-  //   isFetched: isCybridBankBalancesFetched,
-  //   isSuccess: isCybridBankBalancesSuccess,
-  // } = useCybridBankBalances();
-
-  // console.log(
-  //   JSON.stringify(WalletDashboardData, null, 2),
-  //   "WalletDashboardData"
-  // );
 
   const {
     data: CryptoBalance,
@@ -741,7 +732,7 @@ const NewDashboard = () => {
     isSuccessWalletDashboardData,
   ]);
 
-  // console.log(JSON.stringify(tokens?.access, null, 2), "token");
+  console.log(JSON.stringify(tokens?.access, null, 2), "token");
 
   // Dispatched all the data into Redux store
   useEffect(() => {
@@ -1177,6 +1168,77 @@ const NewDashboard = () => {
     }, 2000);
   };
 
+  // Render function for crypto asset items
+  const renderCryptoAssetItem = ({ item, index }: { item: any; index: number }) => {
+    const { asset, rounded_balance, usd_value, logo,platform_available } = item;
+    
+    return (
+      <TouchableOpacity
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          backgroundColor: "white",
+          marginVertical: 2,
+          borderRadius: 8,
+          borderWidth: 1,
+          borderColor: "#f0f0f0",
+        }}
+        onPress={() => {
+          // Navigate to crypto details or trading screen
+          navigation.navigate(NAVIGATION_SCREENS.CRYPTO_LIST);
+        }}
+      >
+        {/* Crypto Logo */}
+        <View style={{ width: 40, height: 40, marginRight: 12 }}>
+          {(() => {
+            const logoUri = logo as string | undefined;
+            const isValidLogo = typeof logoUri === "string" && logoUri.trim().length > 0;
+            const isSvgLogo = isValidLogo && (logoUri!.toLowerCase().endsWith(".svg") || logoUri!.toLowerCase().includes("svg+xml"));
+
+            if (!isValidLogo) {
+              return <SvgIcons.DollarIcon width={40} height={40} />;
+            }
+
+            return (
+              <View style={{ width: 40, height: 40 }}>
+                {isSvgLogo ? (
+                  <SvgUri uri={logoUri!} width={40} height={40} />
+                ) : (
+                  <Image source={{ uri: logoUri! }} style={{ width: 40, height: 40 }} resizeMode="contain" />
+                )}
+              </View>
+            );
+          })()}
+        </View>
+
+        {/* Crypto Info */}
+        <View style={{ flex: 1 }}>
+          <CustomText variant="subtitle2" style={{ fontWeight: '600' }}>
+            {asset}
+          </CustomText>
+          <CustomText variant="caption" color="grey">
+            Balance: {rounded_balance}
+          </CustomText>
+          <CustomText variant="caption" color="grey">
+            Available Balance: {platform_available}
+          </CustomText>
+        </View>
+
+        {/* USD Value */}
+        <View style={{ alignItems: 'flex-end' }}>
+          <CustomText variant="subtitle2" style={{ fontWeight: '600' }}>
+            ${usd_value?.toFixed(2) || '0.00'}
+          </CustomText>
+          <CustomText variant="caption" color="grey">
+            USD
+          </CustomText>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <ScreenContainer
       style={{
@@ -1562,7 +1624,7 @@ const NewDashboard = () => {
             <View
               style={{
                 flexDirection: "row",
-                justifyContent: 'space-around',
+                justifyContent: "space-around",
                 alignItems: "center",
                 marginVertical: 20,
               }}
@@ -1807,57 +1869,60 @@ const NewDashboard = () => {
                               width: "100%",
                             }}
                           >
-                            <View
-                              style={{
-                                flexDirection: "row",
-                                marginTop: 5,
-                                alignItems: "center",
-                                flex: 1,
-                              }}
-                            >
-                              <Text
-                                numberOfLines={1}
+                            {item?.bank_type !== "external" ? (
+                              <View
                                 style={{
-                                  color: "rgba(44, 106, 63, 1)",
-                                  fontSize: 16,
-                                  fontFamily: Fonts.bold,
-                                  marginLeft: 5,
+                                  flexDirection: "row",
+                                  marginTop: 5,
+                                  alignItems: "center",
+                                  flex: 1,
                                 }}
                               >
-                                {hiddenBalances[item.accountNumber]
-                                  ? "$••••••"
-                                  : `$${item.balance}`}
-                              </Text>
-                              {!hiddenBalances[item.accountNumber] ? (
-                                <TouchableOpacity
-                                  style={{ padding: 10 }}
-                                  onPress={() =>
-                                    handleEyeClick(item.accountNumber)
-                                  }
+                                <Text
+                                  numberOfLines={1}
+                                  style={{
+                                    color: "rgba(44, 106, 63, 1)",
+                                    fontSize: 16,
+                                    fontFamily: Fonts.bold,
+                                    marginLeft: 5,
+                                  }}
                                 >
-                                  <SvgIcons.EyeOnGreenbg
-                                    style={{ marginLeft: 10, top: 1 }}
-                                    // xml={SVG_eye_on}
-                                    width={15}
-                                    height={15}
-                                  />
-                                </TouchableOpacity>
-                              ) : (
-                                <TouchableOpacity
-                                  style={{ padding: 10 }}
-                                  onPress={() =>
-                                    handleEyeClick(item.accountNumber)
-                                  }
-                                >
-                                  <SvgIcons.EyeOffGreenbg
-                                    style={{ marginLeft: 10, top: 1 }}
-                                    width={15}
-                                    height={15}
-                                  />
-                                </TouchableOpacity>
-                              )}
-                            </View>
-
+                                  {hiddenBalances[item.accountNumber]
+                                    ? "$••••••"
+                                    : `$${item.balance}`}
+                                </Text>
+                                {!hiddenBalances[item.accountNumber] ? (
+                                  <TouchableOpacity
+                                    style={{ padding: 10 }}
+                                    onPress={() =>
+                                      handleEyeClick(item.accountNumber)
+                                    }
+                                  >
+                                    <SvgIcons.EyeOnGreenbg
+                                      style={{ marginLeft: 10, top: 1 }}
+                                      // xml={SVG_eye_on}
+                                      width={15}
+                                      height={15}
+                                    />
+                                  </TouchableOpacity>
+                                ) : (
+                                  <TouchableOpacity
+                                    style={{ padding: 10 }}
+                                    onPress={() =>
+                                      handleEyeClick(item.accountNumber)
+                                    }
+                                  >
+                                    <SvgIcons.EyeOffGreenbg
+                                      style={{ marginLeft: 10, top: 1 }}
+                                      width={15}
+                                      height={15}
+                                    />
+                                  </TouchableOpacity>
+                                )}
+                              </View>
+                            ) : (
+                              <View style={{ flex: 1 }} />
+                            )}
                             <Text
                               onPress={() =>
                                 navigation.navigate(
@@ -2002,14 +2067,39 @@ const NewDashboard = () => {
               </>
             )}
             {isCrypto && <CryptoFinanceSection navigation={navigation} />}
-            {!isCrypto && (
+            {/* {!isCrypto && (
               <FiatGraphSection
                 selectedGraph={selectedGraph}
                 setselectedGraph={setselectedGraph}
                 alloCationLists={alloCationLists}
                 memoizedAllocationLists={memoizedAllocationLists}
               />
-            )}
+            )} */}
+            {
+              !isCrypto && 
+              <DashboardSection
+                title="Assets"
+              >
+                {isLoading ? (
+                  <View style={{ padding: 20, alignItems: 'center' }}>
+                    <ActivityIndicator size="small" color="#2F6B3B" />
+                    <CustomText variant="caption" style={{ marginTop: 8 }}>Loading assets...</CustomText>
+                  </View>
+                ) : balances.length > 0 ? (
+                  <FlatList
+                    data={balances}
+                    showsVerticalScrollIndicator={false}
+                    renderItem={renderCryptoAssetItem}
+                    keyExtractor={(item, index) => `${item?.asset}-${index}`}
+                    scrollEnabled={false}
+                  />
+                ) : (
+                  <View style={{ padding: 20, alignItems: 'center' }}>
+                    <CustomText variant="caption" color="grey">No crypto assets found</CustomText>
+                  </View>
+                )}
+              </DashboardSection>
+            }
 
             {isCrypto && sortedTxLists.length > 0 && (
               <MemoizedDashboardSection

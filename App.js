@@ -14,7 +14,9 @@ import { NAVIGATION_SCREENS } from "./src/navigations/navigationConstants";
 import { PersistQueryProvider } from "./src/query/index";
 import {
   setActiveTab,
+  setAllCryptoBalances,
   setBiometricAvailable,
+  setCryptoData,
   setFcmToken,
   setLogin,
   setPendingRequest,
@@ -67,6 +69,8 @@ export default function App() {
     const guide = getItem(STORAGE_KEYS.GUIDE) || null;
     const selectedCurrency = getItem(STORAGE_KEYS.SELECTED_CURRENCY) || null;
     const totalDisbursable = getItem(STORAGE_KEYS.TOTAL_DISBURSABLE) || null;
+    const cryptoData = getItem(STORAGE_KEYS.CRYPTO_DATA) || null;
+    const allCryptoBalances = getItem(STORAGE_KEYS.ALL_CRYPTO_BALANCES) || null;
     // setItem(STORAGE_KEYS.GUIDE, JSON.stringify(true));
 
     // const redeem = getItem(STORAGE_KEYS.REDEEM_REWARD);
@@ -84,12 +88,18 @@ export default function App() {
       useDispatchAction(setLogin(true));
       useDispatchAction(setBiometricAvailable(biometric));
       
-      // Restore selectedCurrency and totalDisbursable from MMKV storage
+      // Restore selectedCurrency, totalDisbursable, cryptoData, and allCryptoBalances from MMKV storage
       if (selectedCurrency) {
         useDispatchAction(setSelectedCurrency(JSON.parse(selectedCurrency)));
       }
       if (totalDisbursable) {
         useDispatchAction(setTotalDisbursable(JSON.parse(totalDisbursable)));
+      }
+      if (cryptoData) {
+        useDispatchAction(setCryptoData(JSON.parse(cryptoData)));
+      }
+      if (allCryptoBalances) {
+        useDispatchAction(setAllCryptoBalances(JSON.parse(allCryptoBalances)));
       }
     }
 

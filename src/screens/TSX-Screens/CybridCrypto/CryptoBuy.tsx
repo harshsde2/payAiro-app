@@ -129,7 +129,7 @@ const CryptoBuy = () => {
   };
 
   const total =
-    parseInt(amount) * buy_price +
+    parseFloat(amount) * buy_price +
     parseInt(walletData?.TransactionFees_persentage);
   return (
     <ScreenContainer avoidKeyboard scrollable padding={0}>
@@ -230,9 +230,9 @@ const CryptoBuy = () => {
                 // style={{ width: "auto" }}
                 color="white"
                 variant="subtitle2"
-              >{`~ ${
-                amount ? parseInt(amount) * parseInt(buy_price) : "0.00"
-              } ${symbol.slice(4)} USD`}</CustomText>
+              >{`${
+                amount ? (parseFloat(amount) * parseFloat(buy_price)).toFixed(2) : "0.00"
+              }  USD`}</CustomText>
             </View>
           </View>
         </View>

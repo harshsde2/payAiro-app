@@ -4,6 +4,9 @@ import { AUTH } from "../../api/endpoints";
 import { ApiResponse, CryptoAsset } from "../../api/types";
 import { queryStaleTime } from "query/queryConfigs";
 import useSelectorAction from "hooks/useSelectorAction";
+import { useDispatch } from "react-redux";
+import { setAllCryptoBalances } from "../../redux/slices/authenticationSlice";
+import { setItem, getItem, STORAGE_KEYS } from "../../storage/mmkv";
 
 // Query keys
 export const cryptoKeys = {
@@ -11,6 +14,7 @@ export const cryptoKeys = {
   cryptoBalance: () => [...cryptoKeys.all, "cryptoBalance"] as const,
   cryptoBalanceFortress: () => [...cryptoKeys.all, "cryptoBalanceFortress"] as const,
   cryptoBalanceByAsset: (asset: string) => [...cryptoKeys.all, "cryptoBalanceByAsset", asset] as const,
+  allCryptoBalances: () => [...cryptoKeys.all, "allCryptoBalances"] as const,
   trades: () => [...cryptoKeys.all, "trades"] as const,
   prices: () => [...cryptoKeys.all, "prices"] as const,
 };
@@ -181,7 +185,7 @@ export const useCryptoSell = () => {
 export const useSelectCryptoCurrency = () => {
   const queryClient = useQueryClient();
   const selectCurrency = async (asset: string) => {
-    console.log("Assets -> ",asset);
+    // console.log("Assets -> ",asset);
     try {      
       // Fetch the crypto balance for the selected asset
       const result = await queryClient.fetchQuery({
@@ -205,6 +209,33 @@ export const useSelectCryptoCurrency = () => {
     selectCurrency,
     isLoading: false, // We'll handle loading state in the component
   };
+};
+
+/**
+ * Hook to get all crypto balances and store in Redux + MMKV
+ */
+export const useAllCryptoBalances = () => {
+  const dispatch = useDispatch();
+  
+  return useQuery<ApiResponse<any>>({
+    queryKey: cryptoKeys.allCryptoBalances(),
+    queryFn: async () => {
+      try {
+        const result = await apiClient.get<ApiResponse<any>>(AUTH.ALL_CRYPTO_BALANCES);
+        
+        // Store in Redux
+        dispatch(setAllCryptoBalances(result?.data?.balances || []));
+        
+        console.log("All crypto balances fetched and stored =>", JSON.stringify(result?.data?.balances, null, 2));
+        
+        return result;
+      } catch (error) {
+        console.log("Error fetching all crypto balances =>", JSON.stringify(error, null, 2));
+        throw error;
+      }
+    },
+    staleTime: queryStaleTime.INSTANT_STALE_TIME,
+  });
 };
 
 /**

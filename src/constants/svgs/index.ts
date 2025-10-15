@@ -85,6 +85,7 @@ import OutLineCheckedBox from "./OutLineCheckedBox.svg";
 import OutLineUncheckedBox from "./OutLineUncheckedBox.svg";
 import NewScannerIcon from "./NewScannerIcon.svg";
 import ImageIcon from "./ImageIcon.svg";
+import CrytoToDollorConversion from "./CrytoToDollorConversion.svg";
 
 export const SvgIcons = {
   PayAiorRoundIcon,
@@ -174,4 +175,5 @@ export const SvgIcons = {
   OutLineUncheckedBox,
   NewScannerIcon,
   ImageIcon,
+  CrytoToDollorConversion,
 };

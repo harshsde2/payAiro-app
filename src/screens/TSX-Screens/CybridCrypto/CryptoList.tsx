@@ -14,7 +14,7 @@ import { SvgUri } from "react-native-svg";
 import { useGetCrypto, useSelectCryptoCurrency } from "query/hooks";
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
-import { setTotalDisbursable, setSelectedCurrency } from "redux/slices/authenticationSlice";
+import { setTotalDisbursable, setSelectedCurrency, setCryptoData } from "redux/slices/authenticationSlice";
 import { setItem, STORAGE_KEYS } from "storage/mmkv";
 
 const CryptoList = () => {
@@ -37,11 +37,14 @@ const CryptoList = () => {
       // Save to Redux state
       dispatch(setSelectedCurrency(item));
       dispatch(setTotalDisbursable(result?.data?.rounded_balance));
+      dispatch(setCryptoData(result?.data));
       
-      // console.log(result?.data?.rounded_balance, "result?.data?.rounded_balance");
+      
+      console.log(JSON.stringify(result?.data,null,2), "result?.data?.rounded_balance");
       // Save to MMKV storage for persistence
       setItem(STORAGE_KEYS.SELECTED_CURRENCY, JSON.stringify(item));
       setItem(STORAGE_KEYS.TOTAL_DISBURSABLE, JSON.stringify(result?.data?.rounded_balance));
+      setItem(STORAGE_KEYS.CRYPTO_DATA, JSON.stringify(result?.data));
       
       navigation.goBack();
     } catch (error) {

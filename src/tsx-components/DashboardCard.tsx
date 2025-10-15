@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import React, { FC, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -54,9 +54,10 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
     totalDisbursable,
     totalDisbursablePending,
     selectedCurrency,
+    cryptoData
   } = useSelector((s: any) => s.authenticationSlice);
 
-  // console.log("selected currency =>",JSON.stringify(selectedCurrency, null, 2))
+  // console.log("cryptoData =>",JSON.stringify(cryptoData, null, 2))
 
   const { theme } = useTheme();
   const styles = customStyles(theme);
@@ -64,6 +65,11 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
   const [showCryptoBalance, setShowCryptoBalance] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isDisable, setIsDisable] = React.useState(false);
+  const [displayCryptobalance,setDisplayCryptobalance] = useState(cryptoData?.rounded_balance || '')
+
+  useEffect(()=>{
+    setDisplayCryptobalance(cryptoData?.rounded_balance || "")
+  },[cryptoData])
 
   const renderCryptoCurrencySelector = () => (
     <TouchableOpacity
@@ -216,8 +222,8 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
     // if (walletData?.fortress) {
     if (!isShowBalance) {
       setIsLoading(true);
-      await queryClient.invalidateQueries(bankKeys.balance());
-      await queryClient.refetchQueries(bankKeys.balance());
+      // await queryClient.invalidateQueries(bankKeys.balance());
+      // await queryClient.refetchQueries(bankKeys.balance());
       refetchBankBalanceData();
       setShowBalance(!showBalance);
       setIsLoading(false);
@@ -242,8 +248,8 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
     if (!isShowCryptoBalance) {
       setIsLoading(true);
       // Invalidate and refetch crypto balance queries
-      await queryClient.invalidateQueries(cryptoKeys.cryptoBalanceByAsset(selectedCurrency?.symbol) as any);
-      await queryClient.refetchQueries(cryptoKeys.cryptoBalanceByAsset(selectedCurrency?.symbol) as any);
+      // await queryClient.invalidateQueries(cryptoKeys.cryptoBalanceByAsset(selectedCurrency?.symbol) as any);
+      // await queryClient.refetchQueries(cryptoKeys.cryptoBalanceByAsset(selectedCurrency?.symbol) as any);
       setShowCryptoBalance(!showCryptoBalance);
       setIsLoading(false);
     } else {
@@ -475,7 +481,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
                   variant={"h3"}
                   // style={{ flex: 1 }}
                 >
-                  {showCryptoBalance ? totalDisbursable : "*****"}
+                  {showCryptoBalance ? displayCryptobalance : "*****"}
                 </CustomText>
                 {!isLoading && (
                   <TouchableOpacity style={{ zIndex: 11 }}>
@@ -502,6 +508,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
                     color={theme.colors.palette.black}
                   />
                 )}
+                <SvgIcons.CrytoToDollorConversion onPress={()=>{setDisplayCryptobalance(displayCryptobalance == cryptoData?.usd_price ? cryptoData?.rounded_balance :cryptoData?.usd_price )}} width={30} height={30} />
               </View>
               {totalDisbursablePending > 0 && showCryptoBalance && (
                 <CustomText
@@ -509,7 +516,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
                   size={12}
                   variant={"caption"}
                 >
-                  {`(Pending ${totalDisbursablePending?.toFixed(5)})`}
+                  {`(Pending ${displayCryptobalance?.toFixed(5)})`}
                 </CustomText>
               )}
             </View>

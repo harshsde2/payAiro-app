@@ -45,6 +45,8 @@ const initialState = {
   showGuide: false,
   totalDisbursable: 0.0,
   totalDisbursablePending: 0.0,
+  cryptoData: null,
+  allCryptoBalances: [],
 };
 
 const authenticationSlice = createSlice({
@@ -147,6 +149,12 @@ const authenticationSlice = createSlice({
     setTotalDisbursable: (state, action) => {
       state.totalDisbursable = action.payload;
     },
+    setCryptoData: (state, action) => {
+      state.cryptoData = action.payload;
+    },
+    setAllCryptoBalances: (state, action) => {
+      state.allCryptoBalances = action.payload;
+    },
     resetState: () => initialState,
   },
 });
@@ -182,6 +190,8 @@ export const {
   setShowRedeemReward,
   setTotalDisbursable,
   setTotalDisbursablePending,
+  setCryptoData,
+  setAllCryptoBalances,
   setIsTransactionInProgress,
 } = authenticationSlice.actions;
 

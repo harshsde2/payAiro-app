@@ -1,4 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
 import { apiClient } from "../../api";
 import { AUTH, KYC } from "../../api/endpoints";
 import { 
@@ -10,6 +12,7 @@ import {
 } from "../../api/types";
 import { queryStaleTime } from "query/queryConfigs";
 import useSelectorAction from "hooks/useSelectorAction";
+import { setBankbalances, setCybridBankbalances } from "redux/slices/authenticationSlice";
 import { userKeys } from "./useUser";
 
 // Query keys
@@ -70,10 +73,12 @@ export const useAllBankAccounts = () => {
  * Hook to get bank account balances
  */
 export const useBankBalances = () => {
+  const dispatch = useDispatch();
   const { walletData } = useSelectorAction() as any;
   const isFortress = walletData?.fortress;
   const url = isFortress ? AUTH.ALL_BANKACCOUNT_BALANCE : AUTH.CYBIRD_BALANCE;
-  return useQuery<ApiResponse<any>>({
+
+  const query = useQuery<ApiResponse<any>>({
     queryKey: bankKeys.balance(),
     queryFn: async () => {
       const response = await apiClient.get<ApiResponse<any>>(url);
@@ -81,6 +86,28 @@ export const useBankBalances = () => {
     },
     staleTime: queryStaleTime.VERY_FAST_STALE_TIME, // 5 second
   });
+
+  // Sync essential values into Redux when data changes
+  useEffect(() => {
+    const data: any = query?.data;
+    if (!data) return;
+
+    const payload = {
+      bank_account: {
+        usd: Number((data as any)?.bank_account?.usd ?? 0),
+      },
+      platform_balance: Number((data as any)?.platform_balance ?? 0),
+      platform_available: Number((data as any)?.platform_available ?? 0),
+    };
+
+    // if (isFortress) {
+      dispatch(setBankbalances(payload));
+    // } else {
+    //   dispatch(setCybridBankbalances(payload));
+    // }
+  }, [dispatch, query?.data]);
+
+  return query;
 };
 
 // export const useCybridBankBalances = () => {

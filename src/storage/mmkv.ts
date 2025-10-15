@@ -45,4 +45,6 @@ export const STORAGE_KEYS = {
   PIN: "pin",
   SELECTED_CURRENCY: "selected_currency",
   TOTAL_DISBURSABLE: "total_disbursable",
+  CRYPTO_DATA: "crypto_data",
+  ALL_CRYPTO_BALANCES: "all_crypto_balances",
 };

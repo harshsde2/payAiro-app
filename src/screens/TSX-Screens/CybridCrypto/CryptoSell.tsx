@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { View, Text, StyleSheet, Pressable, Image } from "react-native";
 import React, { useRef, useState } from "react";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
@@ -7,11 +7,12 @@ import { Theme, useTheme } from "styles";
 import { useGlobalStyles } from "styles/GlobalStyles";
 import { CustomText } from "tsx-components";
 import { SvgIcons } from "constants/svgs";
+import { SvgUri } from "react-native-svg";
 import AmountInputDisplay from "../AddBalance/AmountInputDisplay";
 import GenericButton from "components/GenericButton";
 import useSelectorAction from "hooks/useSelectorAction";
 import CommonModal from "tsx-components/modals/CommonModal";
-import { useCryptoBuy, useCryptoSell } from "query/hooks";
+import { useCryptoBuy, useCryptoSell, useCryptoBalanceByAsset } from "query/hooks";
 import { setErrorMsg, setSuccessMsg } from "redux/slices/authenticationSlice";
 import useDispatchAction from "hooks/useDispatchAction";
 import { useDispatch } from "react-redux";
@@ -26,7 +27,7 @@ const CryptoSell = () => {
   
   const { details } = route.params as any;
   const { walletData,totalDisbursable } = useSelectorAction() as any;
-  const { symbol, sell_price } = details;
+  const { symbol, sell_price, logo } = details;
   const { theme } = useTheme();
   const { spacing, colors } = theme;
   const styles = { ...useGlobalStyles(), ...custonStyles(theme) };
@@ -39,7 +40,11 @@ const CryptoSell = () => {
     isError,
     isSuccess,
   } = useCryptoSell();
-  const availableBalance = totalDisbursable;
+
+  // Fetch crypto balance for the current asset
+  const { data: cryptoBalanceData, isLoading: isBalanceLoading } = useCryptoBalanceByAsset(symbol);
+  
+  const availableBalance = cryptoBalanceData?.data?.rounded_balance || "0.00";
 
   // console.log("details =====>", JSON.stringify(details, null, 2));
 
@@ -63,10 +68,13 @@ const CryptoSell = () => {
   };
 
   const onSellClick = async () => {
+
+    console.log(amount, "amount");
+    console.log(symbol, "symbol");
+    console.log("USD", "USD");
     let payload = {
       amount: amount,
-      asset: symbol.slice(0, 3),
-      fiat: "USD",
+      asset: symbol,
     };
 
     // Navigate to TransactionResult with loading state
@@ -128,7 +136,7 @@ const CryptoSell = () => {
   };
 
   const total =
-    parseInt(amount) * sell_price +
+    parseFloat(amount) * sell_price +
     parseInt(walletData?.TransactionFees_persentage);
   return (
     <ScreenContainer avoidKeyboard scrollable padding={0}>
@@ -210,7 +218,25 @@ const CryptoSell = () => {
       <View style={[styles.whiteSheetContainer]}>
         <View style={[{ flex: 1 }]}>
           <View style={[styles.nameContainer]}>
-            <SvgIcons.Bitcoin width={30} height={30} />
+            {(() => {
+              const logoUri = logo as string | undefined;
+              const isValidLogo = typeof logoUri === "string" && logoUri.trim().length > 0;
+              const isSvgLogo = isValidLogo && (logoUri!.toLowerCase().endsWith(".svg") || logoUri!.toLowerCase().includes("svg+xml"));
+
+              if (!isValidLogo) {
+                return <SvgIcons.DollarIcon width={30} height={30} />;
+              }
+
+              return (
+                <View style={{width: 30, height: 30}}>
+                  {isSvgLogo ? (
+                    <SvgUri uri={logoUri!} width={30} height={30} />
+                  ) : (
+                    <Image source={{ uri: logoUri! }} style={{ width: 30, height: 30 }} resizeMode="contain" />
+                  )}
+                </View>
+              );
+            })()}
             <CustomText
               size={14}
               variant={"subtitle2"}
@@ -222,23 +248,30 @@ const CryptoSell = () => {
             setAmount={setAmount}
             suffixText={` ${symbol.slice(0, 3)}`}
           />
-          <View style={[styles.maxBalanceContainer]}>
+          <Pressable 
+            style={[styles.maxBalanceContainer]}
+            onPress={() => {
+              if (!isBalanceLoading && availableBalance !== "0.00") {
+                setAmount(availableBalance);
+              }
+            }}
+          >
             <SvgIcons.CheckSquareIcon />
             <CustomText
               variant="subtitle2"
               size={10}
-            >{`Max Balance: ${availableBalance}`}</CustomText>
-          </View>
+            >{`Max Balance: ${isBalanceLoading ? "Loading..." : availableBalance} ${symbol.slice(0, 3)}`}</CustomText>
+          </Pressable>
           <View style={[styles.totalInUSDContainer]}>
             <View style={[styles.totalInUSDText]}>
-              <CustomText
+            <CustomText
                 size={12}
                 // style={{ width: "auto" }}
                 color="white"
                 variant="subtitle2"
-              >{`~ ${
-                amount ? parseInt(amount) * parseInt(sell_price) : "0.00"
-              } ${symbol.slice(4)}`}</CustomText>
+              >{`${
+                amount ? (parseFloat(amount) * parseFloat(sell_price)).toFixed(2) : "0.00"
+              }  USD`}</CustomText>
             </View>
           </View>
         </View>
