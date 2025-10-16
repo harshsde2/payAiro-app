@@ -64,11 +64,16 @@ const CryptoBuy = () => {
     onBuyClick();
   };
 
+  const total =
+  parseFloat(amount) * buy_price +
+  parseInt(walletData?.TransactionFees_persentage);
+
   const onBuyClick = async () => {
     let payload = {
       amount: amount,
       asset: symbol,
       fiat: "USD",
+      usd_amount:total,
     };
 
     console.log("payload =>", payload);
@@ -131,9 +136,7 @@ const CryptoBuy = () => {
     });
   };
 
-  const total =
-    parseFloat(amount) * buy_price +
-    parseInt(walletData?.TransactionFees_persentage);
+
   return (
     <ScreenContainer avoidKeyboard scrollable padding={0}>
       <CommonModal
@@ -244,13 +247,13 @@ const CryptoBuy = () => {
             <CustomText
               size={14}
               variant={"subtitle2"}
-            >{`${symbol} (${symbol.slice(0, 3)})`}</CustomText>
+            >{`${symbol} (${symbol})`}</CustomText>
           </View>
           <AmountInputDisplay
             showDollarIcon={false}
             amount={amount}
             setAmount={setAmount}
-            suffixText={` ${symbol.slice(0, 3)}`}
+            suffixText={` ${symbol}`}
           />
           <View style={[styles.totalInUSDContainer]}>
             <View style={[styles.totalInUSDText]}>

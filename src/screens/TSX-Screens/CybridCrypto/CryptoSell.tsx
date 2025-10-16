@@ -67,6 +67,10 @@ const CryptoSell = () => {
     onSellClick();
   };
 
+  const total =
+  parseFloat(amount) * sell_price +
+  parseInt(walletData?.TransactionFees_persentage);
+
   const onSellClick = async () => {
 
     console.log(amount, "amount");
@@ -75,6 +79,8 @@ const CryptoSell = () => {
     let payload = {
       amount: amount,
       asset: symbol,
+      fiat: "USD",
+      usd_amount:total,
     };
 
     // Navigate to TransactionResult with loading state
@@ -135,9 +141,7 @@ const CryptoSell = () => {
     });
   };
 
-  const total =
-    parseFloat(amount) * sell_price +
-    parseInt(walletData?.TransactionFees_persentage);
+
   return (
     <ScreenContainer avoidKeyboard scrollable padding={0}>
       <CommonModal

@@ -147,6 +147,7 @@ export const useCryptoTransfer = () => {
 export const useCryptoBuy = () => {
   return useMutation<ApiResponse<any>, Error, CryptoTransferPayload>({
     mutationFn: async (payload) => {
+      console.log(payload," payload ")
       return await apiClient.post<ApiResponse<any>>(
         AUTH.CRYPTO_BUY,
         payload,

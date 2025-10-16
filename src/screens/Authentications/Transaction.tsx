@@ -27,6 +27,7 @@ import CustomPieChart from "../../components/CustomPieChart";
 import HeaderTitle from "../../components/HeaderTitle";
 import RequestPayCard from "../../components/RequestPayCard";
 import TransactionCard from "../../components/TransactionCard";
+import CryptoTransactionCard from "../../components/CryptoTransactionCard";
 import Fonts from "../../constants/Fonts";
 import { SCREENS } from "../../constants/SCREENS";
 import useDispatchAction from "../../hooks/useDispatchAction";
@@ -223,7 +224,7 @@ export default function Transaction() {
     setweb3TxLists([
       ...(data?.nft_transactions ?? []),
       ...(data?.trades ?? []),
-    ]);
+    ].reverse());
   };
 
   const getMerchentRequest = async (data: AllUserPaymentRequestsData | any) => {
@@ -473,10 +474,10 @@ export default function Transaction() {
   const { category_percentages, total_transactions } =
     filteredTransactionsData?.data || {};
 
-  console.log(
-    "filteredTransactionsData =>",
-    JSON.stringify(filteredTransactionsData, null, 2)
-  );
+  // console.log(
+  //   "web3TxLists =>",
+  //   JSON.stringify(web3TxLists, null, 2)
+  // );
 
   return (
     <ScreenContainer
@@ -644,11 +645,9 @@ export default function Transaction() {
               web3TxLists?.length > 0 && (
                 web3TxLists.map(
                   (item: any, key: any) => (
-                    <TransactionCard
+                    <CryptoTransactionCard
                       item={item}
                       key={key}
-                      isMerchent={item?.order_id}
-                      isCrypto={isCrypto}
                     />
                   )
                 )

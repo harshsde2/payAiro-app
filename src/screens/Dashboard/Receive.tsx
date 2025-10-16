@@ -113,6 +113,8 @@ export default function Receive() {
       Alert.alert("PayAiro Tag copied");
     }
   };
+
+  console.log("banks list ->",JSON.stringify(bankLists,null,2))
   return (
     <ScreenContainer scrollable padding={0}>
       <HeaderTitle leftIcon={"true"} title={"QR Code"} />
@@ -258,7 +260,7 @@ export default function Receive() {
               Bank Name
             </CustomText>
             <CustomText size={15} fontWeight="semiBold" variant="caption">
-              {bankLists[0]?.bank_name}
+              {bankLists[bankLists.length-1]?.bank_name}
             </CustomText>
           </View>
           <View
@@ -273,7 +275,7 @@ export default function Receive() {
               Routing number
             </CustomText>
             <CustomText size={15} fontWeight="semiBold" variant="caption">
-              {bankLists[0]?.ref_code}
+              {bankLists[bankLists.length-1]?.ref_code}
             </CustomText>
           </View>
           <View
@@ -288,7 +290,7 @@ export default function Receive() {
               Account number
             </CustomText>
             <CustomText size={15} fontWeight="semiBold" variant="caption">
-              {bankLists[0]?.account_number}
+              {bankLists[bankLists.length-1]?.account_number}
             </CustomText>
           </View>
         </View>

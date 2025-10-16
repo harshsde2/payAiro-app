@@ -82,6 +82,7 @@ import { useTheme } from "../../styles/ThemeContext";
 import { Card, CustomText, DashboardHeader } from "../../utils/moduleAlias";
 import useSelectorAction from "hooks/useSelectorAction";
 import PlaidLinkButton from "tsx-components/PlaidLinkButton";
+import CryptoTransactionCard from "components/CryptoTransactionCard";
 
 // Lazy load non-critical components
 const LazyBankModal = lazy(() => import("components/BankModal"));
@@ -643,7 +644,6 @@ const NewDashboard = () => {
   const { data, isLoading, error, refetch } = useAllCryptoBalances();
   const balances = data?.data?.balances || [];
 
-
   // const {
   //   data: getRWAList,
   //   isError: isErrorRWAListA,
@@ -1169,9 +1169,16 @@ const NewDashboard = () => {
   };
 
   // Render function for crypto asset items
-  const renderCryptoAssetItem = ({ item, index }: { item: any; index: number }) => {
-    const { asset, rounded_balance, usd_value, logo,platform_available } = item;
-    
+  const renderCryptoAssetItem = ({
+    item,
+    index,
+  }: {
+    item: any;
+    index: number;
+  }) => {
+    const { asset, rounded_balance, usd_value, logo, platform_available } =
+      item;
+
     return (
       <TouchableOpacity
         style={{
@@ -1194,8 +1201,12 @@ const NewDashboard = () => {
         <View style={{ width: 40, height: 40, marginRight: 12 }}>
           {(() => {
             const logoUri = logo as string | undefined;
-            const isValidLogo = typeof logoUri === "string" && logoUri.trim().length > 0;
-            const isSvgLogo = isValidLogo && (logoUri!.toLowerCase().endsWith(".svg") || logoUri!.toLowerCase().includes("svg+xml"));
+            const isValidLogo =
+              typeof logoUri === "string" && logoUri.trim().length > 0;
+            const isSvgLogo =
+              isValidLogo &&
+              (logoUri!.toLowerCase().endsWith(".svg") ||
+                logoUri!.toLowerCase().includes("svg+xml"));
 
             if (!isValidLogo) {
               return <SvgIcons.DollarIcon width={40} height={40} />;
@@ -1206,7 +1217,11 @@ const NewDashboard = () => {
                 {isSvgLogo ? (
                   <SvgUri uri={logoUri!} width={40} height={40} />
                 ) : (
-                  <Image source={{ uri: logoUri! }} style={{ width: 40, height: 40 }} resizeMode="contain" />
+                  <Image
+                    source={{ uri: logoUri! }}
+                    style={{ width: 40, height: 40 }}
+                    resizeMode="contain"
+                  />
                 )}
               </View>
             );
@@ -1215,7 +1230,7 @@ const NewDashboard = () => {
 
         {/* Crypto Info */}
         <View style={{ flex: 1 }}>
-          <CustomText variant="subtitle2" style={{ fontWeight: '600' }}>
+          <CustomText variant="subtitle2" style={{ fontWeight: "600" }}>
             {asset}
           </CustomText>
           <CustomText variant="caption" color="grey">
@@ -1227,9 +1242,9 @@ const NewDashboard = () => {
         </View>
 
         {/* USD Value */}
-        <View style={{ alignItems: 'flex-end' }}>
-          <CustomText variant="subtitle2" style={{ fontWeight: '600' }}>
-            ${usd_value?.toFixed(2) || '0.00'}
+        <View style={{ alignItems: "flex-end" }}>
+          <CustomText variant="subtitle2" style={{ fontWeight: "600" }}>
+            ${usd_value?.toFixed(2) || "0.00"}
           </CustomText>
           <CustomText variant="caption" color="grey">
             USD
@@ -2075,15 +2090,14 @@ const NewDashboard = () => {
                 memoizedAllocationLists={memoizedAllocationLists}
               />
             )} */}
-            {
-              !isCrypto && 
-              <DashboardSection
-                title="Assets"
-              >
+            {!isCrypto && (
+              <DashboardSection title="Assets">
                 {isLoading ? (
-                  <View style={{ padding: 20, alignItems: 'center' }}>
+                  <View style={{ padding: 20, alignItems: "center" }}>
                     <ActivityIndicator size="small" color="#2F6B3B" />
-                    <CustomText variant="caption" style={{ marginTop: 8 }}>Loading assets...</CustomText>
+                    <CustomText variant="caption" style={{ marginTop: 8 }}>
+                      Loading assets...
+                    </CustomText>
                   </View>
                 ) : balances.length > 0 ? (
                   <FlatList
@@ -2094,12 +2108,14 @@ const NewDashboard = () => {
                     scrollEnabled={false}
                   />
                 ) : (
-                  <View style={{ padding: 20, alignItems: 'center' }}>
-                    <CustomText variant="caption" color="grey">No crypto assets found</CustomText>
+                  <View style={{ padding: 20, alignItems: "center" }}>
+                    <CustomText variant="caption" color="grey">
+                      No crypto assets found
+                    </CustomText>
                   </View>
                 )}
               </DashboardSection>
-            }
+            )}
 
             {isCrypto && sortedTxLists.length > 0 && (
               <MemoizedDashboardSection
@@ -2152,12 +2168,7 @@ const NewDashboard = () => {
                       sortedWeb3TxLists.length > 0 &&
                       sortedWeb3TxLists.map((item: any, key: any) => (
                         <View key={key}>
-                          <MemoizedTransactionCard
-                            isCrypto={true}
-                            item={item}
-                            key={key}
-                            isMerchent={item?.order_id}
-                          />
+                          <CryptoTransactionCard item={item} key={key} />
                         </View>
                       ))}
                   </>
