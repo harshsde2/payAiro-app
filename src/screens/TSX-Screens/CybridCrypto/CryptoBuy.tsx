@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { View, Text, StyleSheet, Pressable, Image } from "react-native";
 import React, { useRef, useState } from "react";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
@@ -19,16 +19,17 @@ import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import PinScreen from "tsx-components/modals/PinScreen";
 import { userContactKeys } from "query/queryKeys";
 import { queryClient } from "query/queryClient";
+import { SvgUri } from "react-native-svg";
 
 const CryptoBuy = () => {
   const route = useRoute();
   const navigation = useNavigation<any>();
   const dispatch = useDispatch();
   const pinScreenRef = useRef<any>(null);
-  
+
   const { details } = route.params as any;
   const { walletData } = useSelectorAction() as any;
-  const { symbol, buy_price } = details;
+  const { symbol, buy_price, logo } = details;
   const { theme } = useTheme();
   const { spacing, colors } = theme;
   const styles = { ...useGlobalStyles(), ...custonStyles(theme) };
@@ -54,7 +55,7 @@ const CryptoBuy = () => {
     // Navigate to OTP screen after PIN verification
     navigation.navigate(NAVIGATION_SCREENS.OTP_SCREEN, {
       onOTPVerified: handleActionsAfterOTPVerified,
-      transactionType: 'crypto_buy',
+      transactionType: "crypto_buy",
     });
   };
 
@@ -80,7 +81,7 @@ const CryptoBuy = () => {
     });
 
     handleBuyCripto(payload as any, {
-      onSuccess: async(data) => {
+      onSuccess: async (data) => {
         if (data?.status) {
           // Navigate to TransactionResult with success data
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
@@ -111,10 +112,12 @@ const CryptoBuy = () => {
           isSuccess: false,
           isError: true,
         });
-        
+
         try {
           const errors = JSON.parse(error.response.data.data.details);
-          const errorsfunds = JSON.parse(error.response.data.data.details)?.title;
+          const errorsfunds = JSON.parse(
+            error.response.data.data.details
+          )?.title;
           dispatch(
             setErrorMsg(
               errors.errors.Funds[0] || errorsfunds || `Something went wrong!`
@@ -211,7 +214,33 @@ const CryptoBuy = () => {
       <View style={[styles.whiteSheetContainer]}>
         <View style={[{ flex: 1 }]}>
           <View style={[styles.nameContainer]}>
-            <SvgIcons.Bitcoin width={30} height={30} />
+            {(() => {
+              const logoUri = logo as string | undefined;
+              const isValidLogo =
+                typeof logoUri === "string" && logoUri.trim().length > 0;
+              const isSvgLogo =
+                isValidLogo &&
+                (logoUri!.toLowerCase().endsWith(".svg") ||
+                  logoUri!.toLowerCase().includes("svg+xml"));
+
+              if (!isValidLogo) {
+                return <SvgIcons.DollarIcon width={30} height={30} />;
+              }
+
+              return (
+                <View style={{ width: 30, height: 30 }}>
+                  {isSvgLogo ? (
+                    <SvgUri uri={logoUri!} width={30} height={30} />
+                  ) : (
+                    <Image
+                      source={{ uri: logoUri! }}
+                      style={{ width: 30, height: 30 }}
+                      resizeMode="contain"
+                    />
+                  )}
+                </View>
+              );
+            })()}
             <CustomText
               size={14}
               variant={"subtitle2"}
@@ -231,7 +260,9 @@ const CryptoBuy = () => {
                 color="white"
                 variant="subtitle2"
               >{`${
-                amount ? (parseFloat(amount) * parseFloat(buy_price)).toFixed(2) : "0.00"
+                amount
+                  ? (parseFloat(amount) * parseFloat(buy_price)).toFixed(2)
+                  : "0.00"
               }  USD`}</CustomText>
             </View>
           </View>
