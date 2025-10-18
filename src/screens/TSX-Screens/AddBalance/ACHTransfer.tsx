@@ -139,11 +139,11 @@ const ACHTransfer = () => {
 
     useDispatchAction(setShowLoader(true));
 
-    console.log(formData);
+    // console.log(formData);
 
     handleIntraAccountTransfer(formData as any, {
       onSuccess: (data) => {
-        console.log("data =>", JSON.stringify(data.data, null, 2));
+        // console.log("data =>", JSON.stringify(data.data, null, 2));
         useDispatchAction(setSuccessMsg(data?.data?.message));
         navigation.reset({
           index: 0,

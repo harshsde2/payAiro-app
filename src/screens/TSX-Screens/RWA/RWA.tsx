@@ -222,7 +222,7 @@ const RWA = () => {
     isSuccess: isCryptoPricesSuccess,
   } = useCryptoPrices();
 
-  console.log("data =>", JSON.stringify(AllRWAData, null, 2));
+  // console.log("data =>", JSON.stringify(AllRWAData, null, 2));
   // console.log("isAllIsFetching =>", JSON.stringify(isAllIsFetching, null, 2));
 
   const [searchText, setSearchText] = useState("");

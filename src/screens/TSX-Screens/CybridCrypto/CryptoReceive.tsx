@@ -533,7 +533,7 @@ const customStyles = (theme: Theme) =>
       marginHorizontal: 20,
       marginTop: 20,
       marginBottom: 10,
-      backgroundColor: theme.colors.palette.grey200,
+      backgroundColor: theme.colors.palette.green200,
       borderRadius: theme.spacing.spacing[3],
       padding: 4,
     },
@@ -546,6 +546,6 @@ const customStyles = (theme: Theme) =>
       backgroundColor: "transparent",
     },
     toggleButtonActive: {
-      backgroundColor: theme.colors.palette.grey900,
+      backgroundColor: theme.colors.palette.green700,
     },
   });

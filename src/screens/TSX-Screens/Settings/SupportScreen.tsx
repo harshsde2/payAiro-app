@@ -63,7 +63,7 @@ const SupportScreen = () => {
 
     handleSubmitSupport(formData as any, {
       onSuccess: (data) => {
-        console.log("data => ✅", JSON.stringify(data, null, 2));
+        // console.log("data => ✅", JSON.stringify(data, null, 2));
         useDispatchAction(setSuccessMsg("Your Query Submit Successfully"));
         // handleAddBankAccounts();
       },

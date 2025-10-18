@@ -218,7 +218,7 @@ const TransactionDetails: FC = () => {
 
   const renderTransactionDetails = () => {
     if (isFiatTransaction(transactionData)) {
-      console.log("transactionData =>",JSON.stringify(transactionData,null,2))
+      // console.log("transactionData =>",JSON.stringify(transactionData,null,2))
       const data = transactionData as IFiatTransaction;
       const isSent = walletData?.username === data.sender_username;
       const finalAmount = data.final_amount ? parseFloat(data.final_amount) : parseFloat(data.amount);

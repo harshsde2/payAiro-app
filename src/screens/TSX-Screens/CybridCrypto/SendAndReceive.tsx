@@ -44,7 +44,7 @@ export default function SendAndReceive() {
     useGetCrypto();
 
   // console.log("data => ", JSON.stringify(data?.data, null, 2));
-  console.log("data => ", JSON.stringify(data, null, 2));
+  // console.log("data => ", JSON.stringify(data, null, 2));
   return (
     <ScreenContainer padding={0}>
       <HeaderTitle leftIcon={"true"} title={"Crypto"} rightIcon={""} />

@@ -155,16 +155,16 @@ export const useUserToUserTransfer = () => {
     ? AUTH.USER_TO_USER_FORTRESS_TRANSFER
     : AUTH.USER_TO_USER_CYBRID_TRANSFER;
 
-  console.log("url =>", url);
+  // console.log("url =>", url);
   return useMutation<ApiResponse<any>>({
     mutationFn: async (payload) => {
       return await apiClient.post<ApiResponse<any>>(url, payload, true);
     },
     onSuccess: (data) => {
-      console.log("data =>", JSON.stringify(data, null, 2));
+      // console.log("data =>", JSON.stringify(data, null, 2));
     },
     onError: (error) => {
-      console.log("error =>", JSON.stringify(error, null, 2));
+      // console.log("error =>", JSON.stringify(error, null, 2));
     },
   });
 };

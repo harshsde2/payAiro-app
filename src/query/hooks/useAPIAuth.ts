@@ -14,7 +14,7 @@ export const useLogin = () => {
       return apiClient.post<ApiResponse<any>>(AUTH.LOGIN, payload, true);
     },
     onSuccess: (data) => {
-      console.log("data =>", JSON.stringify(data, null, 2));
+      // console.log("data =>", JSON.stringify(data, null, 2));
     },
     onError: (error) => {
       console.log("error =>", JSON.stringify(error, null, 2));
@@ -42,7 +42,7 @@ export const useVerifyOTP = () => {
       console.log("error =>", JSON.stringify(error, null, 2));
     },
     onSuccess: (data) => {
-      console.log("data =>", JSON.stringify(data, null, 2));
+      // console.log("data =>", JSON.stringify(data, null, 2));
     },
   });
 };
@@ -89,7 +89,7 @@ export const useSubmitKYC = () => {
       console.log("error =>", JSON.stringify(error, null, 2));
     },
     onSuccess(data, variables, context) {
-      console.log("on data =>", data);
+      // console.log("on data =>", data);
     },
   });
 };

@@ -45,6 +45,8 @@ const CryptoTransactionCard: React.FC<CryptoTransactionCardProps> = ({
         return `Send ${item.from_currency}`;
       case 'receive':
         return `Receive ${item.to_currency}`;
+      case 'withdrawal':
+        return `${item.from_currency}`;
       default:
         return item.type;
     }

@@ -12,7 +12,7 @@ export interface CryptoTransactionData {
   network: string;
   status: string;
   created_at: string;
-  type: 'buy' | 'sell' | 'send' | 'receive';
+  type: 'buy' | 'sell' | 'send' | 'receive' | 'withdrawal';
   icon: string;
   user: string;
 }

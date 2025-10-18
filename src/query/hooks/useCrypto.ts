@@ -112,6 +112,20 @@ interface DepositAddressResponse {
   address: string;
 }
 
+// Interfaces for on-chain withdrawal
+interface CryptoWithdrawalPayload {
+  asset: string; // e.g. "USDC"
+  amount: number; // token amount (not wei)
+  usd_amount?: number; // optional, server can compute if omitted
+  withdrawal_address: string; // destination wallet address
+}
+
+interface CryptoWithdrawalResponse {
+  status: boolean;
+  message: string;
+  data: any; // keep flexible; screen handles response object
+}
+
 /**
  * Hook to transfer crypto
  */
@@ -127,13 +141,13 @@ export const useCryptoTransfer = () => {
       );
     },
     onSuccess: (data) => {
-      console.log("data =>", JSON.stringify(data, null, 2));
+      // console.log("data =>", JSON.stringify(data, null, 2));
       // Invalidate relevant queries to trigger refetch
       // queryClient.invalidateQueries({ queryKey: cryptoKeys.cryptoBalance() });
       // queryClient.invalidateQueries({ queryKey: cryptoKeys.trades() });
     },
     onError: (error) => {
-      console.log("error =>", JSON.stringify(error, null, 2));
+      // console.log("error =>", JSON.stringify(error, null, 2));
       // Invalidate relevant queries to trigger refetch
       // queryClient.invalidateQueries({ queryKey: cryptoKeys.cryptoBalance() });
       // queryClient.invalidateQueries({ queryKey: cryptoKeys.trades() });
@@ -153,6 +167,27 @@ export const useCryptoBuy = () => {
         payload,
         false
       );
+    },
+  });
+};
+
+/**
+ * Hook to initiate on-chain crypto withdrawal to an external wallet
+ */
+export const useCryptoWithdrawal = () => {
+  return useMutation<ApiResponse<CryptoWithdrawalResponse>, any, CryptoWithdrawalPayload>({
+    mutationFn: async (payload) => {
+      return await apiClient.post<ApiResponse<CryptoWithdrawalResponse>>(
+        AUTH.CRYPTO_WITHDRAWAL,
+        payload,
+        true
+      );
+    },
+    onSuccess: (data) => {
+      console.log("Withdrawal initiated =>", JSON.stringify(data, null, 2));
+    },
+    onError: (error) => {
+      console.log("Error initiating withdrawal =>", JSON.stringify(error?.response || error, null, 2));
     },
   });
 };

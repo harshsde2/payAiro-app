@@ -80,7 +80,7 @@ export default function Signup() {
         onSuccess: (data: any) => {
           setIsSubmitting(false);
           if (data?.status) {
-            console.log("data =>", JSON.stringify(data, null, 2));
+            // console.log("data =>", JSON.stringify(data, null, 2));
             useDispatchAction(setSuccessMsg("OTP has been sent to your email"));
             navigation.navigate(SCREENS.OTP, { email });
           } else {

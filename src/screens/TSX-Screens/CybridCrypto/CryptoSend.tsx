@@ -1,4 +1,11 @@
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  TouchableOpacity,
+  Image,
+} from "react-native";
 import React, { useRef, useState } from "react";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
@@ -11,7 +18,12 @@ import AmountInputDisplay from "../AddBalance/AmountInputDisplay";
 import GenericButton from "components/GenericButton";
 import useSelectorAction from "hooks/useSelectorAction";
 import CommonModal from "tsx-components/modals/CommonModal";
-import { useCryptoBuy, useCryptoTransfer, useVerifyUser } from "query/hooks";
+import {
+  useCryptoBuy,
+  useCryptoTransfer,
+  useVerifyUser,
+  useCryptoWithdrawal,
+} from "query/hooks";
 import { setErrorMsg, setSuccessMsg } from "redux/slices/authenticationSlice";
 import useDispatchAction from "hooks/useDispatchAction";
 import { useDispatch } from "react-redux";
@@ -19,6 +31,7 @@ import DashboardSection from "tsx-components/DashboardSection";
 import TextInputField from "components/TextInputField";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import PinScreen from "tsx-components/modals/PinScreen";
+import { SvgUri } from "react-native-svg";
 // import ResultModal from "tsx-components/modals/ResultModal"; // Replaced with TransactionResult screen
 
 const CryptoSend = () => {
@@ -32,7 +45,7 @@ const CryptoSend = () => {
   const { details } = route.params as any;
   const { walletData } = useSelectorAction() as any;
 
-  const { symbol, buy_price } = details;
+  const { symbol, buy_price, logo } = details;
   const chainName = symbol.slice(0, 3);
 
   const { theme } = useTheme();
@@ -43,6 +56,7 @@ const CryptoSend = () => {
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [recipient, setRecipient] = useState("");
   const [showFinalPage, setShowFinalPage] = useState(false);
+  const [isOnChain, setIsOnChain] = useState(false);
 
   // const [showResultModal, setShowResultModal] = useState(false); // No longer needed - using TransactionResult screen
   // const [isError, setIsError] = useState(false); // No longer needed - using TransactionResult screen
@@ -66,6 +80,9 @@ const CryptoSend = () => {
     isSuccess: isVerifyUserSuccess,
   } = useVerifyUser();
 
+  const { mutate: initiateWithdrawal, isPending: isWithdrawalPending } =
+    useCryptoWithdrawal();
+
   // console.log("details =====>", JSON.stringify(chainName, null, 2));
 
   const handleCheckPin = () => {
@@ -77,14 +94,20 @@ const CryptoSend = () => {
   const handleActionsAfterPinVerified = () => {
     // Navigate to OTP screen after PIN verification
     navigation.navigate(NAVIGATION_SCREENS.OTP_SCREEN, {
-      onOTPVerified: handleActionsAfterOTPVerified,
-      transactionType: 'crypto_send',
+      onOTPVerified: isOnChain
+        ? handleActionsAfterOTPVerifiedWithdrawal
+        : handleActionsAfterOTPVerified,
+      transactionType: isOnChain ? "crypto_withdrawal" : "crypto_send",
     });
   };
 
   const handleActionsAfterOTPVerified = () => {
     // Execute the crypto send transaction after OTP verification
     onSendClick();
+  };
+
+  const handleActionsAfterOTPVerifiedWithdrawal = () => {
+    onWithdrawClick();
   };
 
   // Handle Send API and validation
@@ -157,6 +180,81 @@ const CryptoSend = () => {
     });
   };
 
+  // Handle on-chain Withdrawal (external wallet)
+  const onWithdrawClick = async () => {
+    if (!recipient || recipient.trim().length < 10) {
+      dispatch(setErrorMsg("Please enter a valid wallet address"));
+      return;
+    }
+    if (!amount || Number(amount) <= 0) {
+      dispatch(setErrorMsg("Please enter a valid amount"));
+      return;
+    }
+
+    const usdAmount = Number(amount) * Number(buy_price || 0);
+
+    const payload = {
+      asset: symbol,
+      amount: Number(amount),
+      usd_amount: Number(usdAmount.toFixed(2)),
+      withdrawal_address: recipient.trim(),
+    } as any;
+
+    // Navigate to TransactionResult with loading state
+    navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
+      isLoading: true,
+      transactionData: null,
+      isSuccess: false,
+      isError: false,
+    });
+
+    setspin(true);
+    initiateWithdrawal(payload, {
+      onSuccess: (data: any) => {
+        // console.log("onSuccess ->",JSON.stringify(data,null,2))
+
+        if (data?.status) {
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
+            isLoading: false,
+            transactionData: data,
+            isSuccess: true,
+            isError: false,
+          });
+          dispatch(
+            setSuccessMsg(
+              data?.data?.message || "Withdrawal initiated successfully"
+            )
+          );
+        } else {
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
+            isLoading: false,
+            transactionData: data,
+            isSuccess: false,
+            isError: true,
+          });
+          dispatch(setErrorMsg(data?.data?.message || "Withdrawal failed"));
+        }
+      },
+      onError: (error: any) => {
+        navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
+          isLoading: false,
+          transactionData: null,
+          isSuccess: false,
+          isError: true,
+        });
+        console.log("error ->",JSON.stringify(error,null,2))
+        const message =
+          error?.response?.data?.data?.message ||
+          error?.response?.data?.message ||
+          "Something went wrong!";
+        dispatch(setErrorMsg(message));
+      },
+      onSettled: () => {
+        setspin(false);
+      },
+    });
+  };
+
   // Handle Send API and validation
   const onVerifyUser = async () => {
     console.log("onVerifyUser step 1");
@@ -190,6 +288,55 @@ const CryptoSend = () => {
     parseInt(walletData?.TransactionFees_persentage);
   return (
     <ScreenContainer avoidKeyboard scrollable padding={0}>
+      <HeaderTitle leftIcon={!showFinalPage ? "true" : ""} title="Send" />
+
+      {/* Toggle: Off Chain / On Chain */}
+      <View style={styles.toggleContainer}>
+        <TouchableOpacity
+          style={[styles.toggleButton, !isOnChain && styles.toggleButtonActive]}
+          onPress={() => {
+            if (isOnChain) {
+              setIsOnChain(false);
+              setShowFinalPage(false);
+              setRecipient("");
+            }
+          }}
+        >
+          <CustomText
+            fontWeight="semiBold"
+            size={16}
+            color={
+              !isOnChain
+                ? theme.colors.palette.white
+                : theme.colors.palette.grey900
+            }
+          >
+            Off Chain
+          </CustomText>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.toggleButton, isOnChain && styles.toggleButtonActive]}
+          onPress={() => {
+            if (!isOnChain) {
+              setIsOnChain(true);
+              setShowFinalPage(false);
+              setRecipient("");
+            }
+          }}
+        >
+          <CustomText
+            fontWeight="semiBold"
+            size={16}
+            color={
+              isOnChain
+                ? theme.colors.palette.white
+                : theme.colors.palette.grey900
+            }
+          >
+            On Chain
+          </CustomText>
+        </TouchableOpacity>
+      </View>
       {/* Common modal for summary */}
       <CommonModal
         isVisible={showConfirmationModal}
@@ -253,7 +400,7 @@ const CryptoSend = () => {
                 // isSellingMode ? onSellClick() : onBuyClick();
               }}
               showLoader={true}
-              isLoading={isPending}
+              isLoading={isOnChain ? isWithdrawalPending : isPending}
             />
             <GenericButton
               title={"Cancel"}
@@ -266,43 +413,6 @@ const CryptoSend = () => {
         </Pressable>
       </CommonModal>
 
-      {/* ResultModal replaced with TransactionResult screen navigation */}
-      {/* <CommonModal
-        isVisible={showResultModal}
-        onClose={() => {
-          setShowResultModal(false);
-          // navigation.navigate(SCREENS.Dashboard);
-          // setspin(false);
-          // setSuccessData({});
-        }}
-        isOnOutsidePressClose={false}
-      >
-        <ResultModal
-          onClose={async () => {
-            setTimeout(() => {
-              setShowResultModal(false);
-              setTimeout(() => {
-                if (pinScreenRef.current) {
-                  pinScreenRef.current?.onClose();
-                }
-                setTimeout(() => {
-                  setShowConfirmationModal(false);
-                  setspin(false);
-                  setSuccessData({});
-                  setTimeout(() => {
-                    navigation.pop(5);
-                  }, 300);
-                }, 300);
-              }, 300);
-            }, 300);
-          }}
-          isPending={spin}
-          isError={isError}
-          isSuccess={isSuccess}
-          data={successData}
-        />
-      </CommonModal> */}
-
       <PinScreen
         ref={pinScreenRef}
         onAction={() => {
@@ -310,13 +420,38 @@ const CryptoSend = () => {
         }}
         accountNumber={""}
       />
-      <HeaderTitle leftIcon={!showFinalPage ? "true" : ""} title="Send" />
       <View style={[styles.whiteSheetContainer]}>
         {showFinalPage && recipient ? (
           <View style={[{ flex: 1 }]}>
             <View style={[{ flex: 1, alignItems: "center" }]}>
               <View style={[{ alignItems: "center", gap: 5 }]}>
-                <SvgIcons.Bitcoin width={70} height={70} />
+              {(() => {
+              const logoUri = logo as string | undefined;
+              const isValidLogo =
+                typeof logoUri === "string" && logoUri.trim().length > 0;
+              const isSvgLogo =
+                isValidLogo &&
+                (logoUri!.toLowerCase().endsWith(".svg") ||
+                  logoUri!.toLowerCase().includes("svg+xml"));
+
+              if (!isValidLogo) {
+                return <SvgIcons.DollarIcon width={30} height={30} />;
+              }
+
+              return (
+                <View style={{ width: 30, height: 30 }}>
+                  {isSvgLogo ? (
+                    <SvgUri uri={logoUri!} width={30} height={30} />
+                  ) : (
+                    <Image
+                      source={{ uri: logoUri! }}
+                      style={{ width: 30, height: 30 }}
+                      resizeMode="contain"
+                    />
+                  )}
+                </View>
+              );
+            })()}
                 <CustomText variant={"subtitle2"}>
                   {symbol.slice(0, 3)}
                 </CustomText>
@@ -332,14 +467,16 @@ const CryptoSend = () => {
               />
               <View style={[styles.totalInUSDContainer]}>
                 <View style={[styles.totalInUSDText]}>
-                  <CustomText
-                    size={12}
-                    // style={{ width: "auto" }}
-                    color="white"
-                    variant="subtitle2"
-                  >{`~ ${
-                    amount ? parseInt(amount) * parseInt(buy_price) : "0.00"
-                  } ${symbol.slice(4)}`}</CustomText>
+                <CustomText
+                size={12}
+                // style={{ width: "auto" }}
+                color="white"
+                variant="subtitle2"
+              >{`${
+                amount
+                  ? (parseFloat(amount) * parseFloat(buy_price)).toFixed(2)
+                  : "0.00"
+              }  USD`}</CustomText>
                 </View>
               </View>
               <TextInputField
@@ -351,8 +488,8 @@ const CryptoSend = () => {
                 onChange={() => {}}
               />
               <TextInputField
-                label="To"
-                placeholder={"PayAiroTag, Phone, Email"}
+                label={isOnChain ? "Wallet Address" : "To"}
+                placeholder={isOnChain ? "0x..." : "PayAiroTag, Phone, Email"}
                 rightIcon={""}
                 editable={false}
                 value={recipient}
@@ -381,16 +518,45 @@ const CryptoSend = () => {
             <View style={[{ flex: 1 }]}>
               <DashboardSection titleStyle={{ fontSize: 14 }} title="Token">
                 <View style={[styles.nameContainer]}>
-                  <SvgIcons.Bitcoin width={30} height={30} />
+                {(() => {
+              const logoUri = logo as string | undefined;
+              const isValidLogo =
+                typeof logoUri === "string" && logoUri.trim().length > 0;
+              const isSvgLogo =
+                isValidLogo &&
+                (logoUri!.toLowerCase().endsWith(".svg") ||
+                  logoUri!.toLowerCase().includes("svg+xml"));
+
+              if (!isValidLogo) {
+                return <SvgIcons.DollarIcon width={30} height={30} />;
+              }
+
+              return (
+                <View style={{ width: 30, height: 30 }}>
+                  {isSvgLogo ? (
+                    <SvgUri uri={logoUri!} width={30} height={30} />
+                  ) : (
+                    <Image
+                      source={{ uri: logoUri! }}
+                      style={{ width: 30, height: 30 }}
+                      resizeMode="contain"
+                    />
+                  )}
+                </View>
+              );
+            })()}
                   <CustomText
                     size={14}
                     variant={"subtitle2"}
                   >{`${symbol} (${symbol.slice(0, 3)})`}</CustomText>
                 </View>
               </DashboardSection>
-              <DashboardSection titleStyle={{ fontSize: 14 }} title="To">
+              <DashboardSection
+                titleStyle={{ fontSize: 14 }}
+                title={isOnChain ? "Wallet Address" : "To"}
+              >
                 <TextInputField
-                  placeholder={"PayAiroTag, Phone, Email"}
+                  placeholder={isOnChain ? "0x..." : "PayAiroTag, Phone, Email"}
                   rightIcon={""}
                   value={recipient}
                   onChange={setRecipient}
@@ -400,11 +566,14 @@ const CryptoSend = () => {
             <GenericButton
               title="Next"
               onPress={() => {
-                // setShowFinalPage(true);
-                onVerifyUser();
+                if (isOnChain) {
+                  setShowFinalPage(true);
+                } else {
+                  onVerifyUser();
+                }
               }}
               showLoader={true}
-              isLoading={isPendingVerifyUser}
+              isLoading={isOnChain ? false : isPendingVerifyUser}
               disabled={!recipient}
             />
           </View>
@@ -526,5 +695,28 @@ const custonStyles = (theme: Theme) =>
       color: "#fff",
       fontWeight: "600",
       fontSize: 16,
+    },
+    toggleContainer: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      gap: 10,
+      marginHorizontal: 20,
+      marginTop: 10,
+      marginBottom: 10,
+      backgroundColor: theme.colors.palette.green200,
+      borderRadius: theme.spacing.spacing[3],
+      padding: 4,
+    },
+    toggleButton: {
+      flex: 1,
+      paddingVertical: 10,
+      borderRadius: theme.spacing.spacing[2],
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "transparent",
+    },
+    toggleButtonActive: {
+      backgroundColor: theme.colors.palette.green700,
     },
   });

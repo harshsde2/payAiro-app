@@ -24,7 +24,7 @@ const WalletCard = ({ data, bankbalance, index }) => {
   // Redux store
   const { walletData } = useSelector((state) => state.authenticationSlice);
 
-  console.log("data =>", JSON.stringify(data, null, 2));
+  // console.log("data =>", JSON.stringify(data, null, 2));
   const styles = customStyles(theme);
   theme.colors.palette.green700;
   

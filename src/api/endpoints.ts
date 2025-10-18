@@ -69,6 +69,7 @@ export const AUTH = {
   PLAID_ACCESS_TOKEN: "auth/cybrid/plaid-link-token/",
   CREATE_EXTERNAL_BANK_ACCOUNT: "auth/cybrid/create-external-bank-account/",
   DEPOSIT_ADDRESS: "auth/depositAddress/",
+  CRYPTO_WITHDRAWAL: "auth/cybrid/Withdrawal/",
 
 };
 // Wallet endpoints
