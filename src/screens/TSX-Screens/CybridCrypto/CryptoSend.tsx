@@ -23,6 +23,7 @@ import {
   useCryptoTransfer,
   useVerifyUser,
   useCryptoWithdrawal,
+  useCryptoBalanceByAsset,
 } from "query/hooks";
 import { setErrorMsg, setSuccessMsg } from "redux/slices/authenticationSlice";
 import useDispatchAction from "hooks/useDispatchAction";
@@ -32,7 +33,6 @@ import TextInputField from "components/TextInputField";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import PinScreen from "tsx-components/modals/PinScreen";
 import { SvgUri } from "react-native-svg";
-// import ResultModal from "tsx-components/modals/ResultModal"; // Replaced with TransactionResult screen
 
 const CryptoSend = () => {
   const route = useRoute();
@@ -53,25 +53,22 @@ const CryptoSend = () => {
   const styles = { ...useGlobalStyles(), ...custonStyles(theme) };
 
   const [amount, setAmount] = useState("");
+  const [selectedCurrency, setSelectedCurrency] = useState(symbol || "");
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [recipient, setRecipient] = useState("");
   const [showFinalPage, setShowFinalPage] = useState(false);
   const [isOnChain, setIsOnChain] = useState(false);
 
-  // const [showResultModal, setShowResultModal] = useState(false); // No longer needed - using TransactionResult screen
-  // const [isError, setIsError] = useState(false); // No longer needed - using TransactionResult screen
   const [isPendingVerifyUser, setIspendingverifyUser] = useState(false);
-  // const [isSuccess, setIsSuccess] = useState(false); // No longer needed - using TransactionResult screen
-  // const [successData, setSuccessData] = useState({}); // No longer needed - using TransactionResult screen
   const [spin, setspin] = useState(false);
 
-  // API hooks
   const {
     mutate: handleSendCripto,
     isPending,
-    // isError,
-    // isSuccess,
   } = useCryptoTransfer();
+
+  const { data: cryptoBalanceData, isLoading: isBalanceLoading } = useCryptoBalanceByAsset(symbol);
+  const availableBalance = cryptoBalanceData?.data?.rounded_balance || "0.00";
 
   const {
     mutate: handleVerifyUser,
@@ -83,8 +80,6 @@ const CryptoSend = () => {
   const { mutate: initiateWithdrawal, isPending: isWithdrawalPending } =
     useCryptoWithdrawal();
 
-  // console.log("details =====>", JSON.stringify(chainName, null, 2));
-
   const handleCheckPin = () => {
     if (pinScreenRef.current) {
       pinScreenRef.current?.checkUserPin();
@@ -92,7 +87,6 @@ const CryptoSend = () => {
   };
 
   const handleActionsAfterPinVerified = () => {
-    // Navigate to OTP screen after PIN verification
     navigation.navigate(NAVIGATION_SCREENS.OTP_SCREEN, {
       onOTPVerified: isOnChain
         ? handleActionsAfterOTPVerifiedWithdrawal
@@ -102,7 +96,6 @@ const CryptoSend = () => {
   };
 
   const handleActionsAfterOTPVerified = () => {
-    // Execute the crypto send transaction after OTP verification
     onSendClick();
   };
 
@@ -110,23 +103,96 @@ const CryptoSend = () => {
     onWithdrawClick();
   };
 
-  // Handle Send API and validation
+  const getCryptoAmount = () => {
+    if (!amount || amount === "" || amount === "0") return 0;
+    const parsedAmount = parseFloat(amount);
+    
+    if (isNaN(parsedAmount) || parsedAmount <= 0) return 0;
+    
+    if (selectedCurrency === "USD") {
+      return parsedAmount / buy_price;
+    }
+    return parsedAmount;
+  };
+
+  const getUSDAmount = () => {
+    if (!amount || amount === "" || amount === "0") return 0;
+    const parsedAmount = parseFloat(amount);
+    
+    if (isNaN(parsedAmount) || parsedAmount <= 0) return 0;
+    
+    if (selectedCurrency === "USD") {
+      return parsedAmount;
+    }
+    return parsedAmount * buy_price;
+  };
+
+  const cryptoAmount = getCryptoAmount();
+  const usdAmount = getUSDAmount();
+  const feePercentage = parseFloat(walletData?.TransactionFees_persentage || 0);
+  const feeAmount = (usdAmount * feePercentage) / 100;
+  const total = usdAmount + feeAmount;
+
+  const handleCurrencyChange = (newCurrency: string) => {
+    if (!amount || amount === "" || amount === "0") {
+      setSelectedCurrency(newCurrency);
+      return;
+    }
+
+    const currentAmount = parseFloat(amount);
+    if (isNaN(currentAmount) || currentAmount <= 0) {
+      setSelectedCurrency(newCurrency);
+      return;
+    }
+
+    let convertedAmount: number;
+    let formattedAmount: string;
+    
+    if (selectedCurrency === "USD" && newCurrency !== "USD") {
+      convertedAmount = currentAmount / buy_price;
+      formattedAmount = convertedAmount.toFixed(8).replace(/\.?0+$/, "");
+    } else if (selectedCurrency !== "USD" && newCurrency === "USD") {
+      convertedAmount = currentAmount * buy_price;
+      formattedAmount = convertedAmount.toFixed(2);
+    } else {
+      setSelectedCurrency(newCurrency);
+      return;
+    }
+
+    setAmount(formattedAmount);
+    setSelectedCurrency(newCurrency);
+  };
+
   const onSendClick = async () => {
-    if (Number(amount) > 100000) {
+    if (!amount || parseFloat(amount) <= 0) {
+      dispatch(setErrorMsg("Please enter a valid amount"));
+      return;
+    }
+
+    if (cryptoAmount <= 0) {
+      dispatch(setErrorMsg("Invalid crypto amount"));
+      return;
+    }
+
+    const availableBalanceNum = parseFloat(availableBalance);
+    if (cryptoAmount > availableBalanceNum) {
+      dispatch(setErrorMsg(`Insufficient balance. Available: ${availableBalance} ${symbol}`));
+      return;
+    }
+
+    if (Number(usdAmount) > 100000) {
       dispatch(setErrorMsg("Amount cannot exceed ₹1,00,000"));
       return;
     }
 
     let payload = {
       account_type: "",
-      amount: amount,
+      amount: cryptoAmount.toString(),
       asset: chainName,
       network: details?.network || "",
       receiver: recipient,
     };
-    console.log("payload =>", payload);
 
-    // Navigate to TransactionResult with loading state
     navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
       isLoading: true,
       transactionData: null,
@@ -137,9 +203,7 @@ const CryptoSend = () => {
     setspin(true);
     handleSendCripto(payload as any, {
       onSuccess: (data) => {
-        console.log("rep =>", JSON.stringify(data, null, 2));
         if (data?.status) {
-          // Navigate to TransactionResult with success data
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
             isLoading: false,
             transactionData: data,
@@ -148,7 +212,6 @@ const CryptoSend = () => {
           });
           dispatch(setSuccessMsg(data?.data?.message));
         } else {
-          // Navigate to TransactionResult with error state
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
             isLoading: false,
             transactionData: data,
@@ -164,8 +227,6 @@ const CryptoSend = () => {
         }
       },
       onError: (error: any) => {
-        console.log("errors.   eee  =>", error.response);
-        // Navigate to TransactionResult with error state
         navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
           isLoading: false,
           transactionData: null,
@@ -180,27 +241,34 @@ const CryptoSend = () => {
     });
   };
 
-  // Handle on-chain Withdrawal (external wallet)
   const onWithdrawClick = async () => {
     if (!recipient || recipient.trim().length < 10) {
       dispatch(setErrorMsg("Please enter a valid wallet address"));
       return;
     }
-    if (!amount || Number(amount) <= 0) {
+    if (!amount || parseFloat(amount) <= 0) {
       dispatch(setErrorMsg("Please enter a valid amount"));
       return;
     }
 
-    const usdAmount = Number(amount) * Number(buy_price || 0);
+    if (cryptoAmount <= 0) {
+      dispatch(setErrorMsg("Invalid crypto amount"));
+      return;
+    }
+
+    const availableBalanceNum = parseFloat(availableBalance);
+    if (cryptoAmount > availableBalanceNum) {
+      dispatch(setErrorMsg(`Insufficient balance. Available: ${availableBalance} ${symbol}`));
+      return;
+    }
 
     const payload = {
       asset: symbol,
-      amount: Number(amount),
+      amount: cryptoAmount,
       usd_amount: Number(usdAmount.toFixed(2)),
       withdrawal_address: recipient.trim(),
     } as any;
 
-    // Navigate to TransactionResult with loading state
     navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
       isLoading: true,
       transactionData: null,
@@ -211,8 +279,6 @@ const CryptoSend = () => {
     setspin(true);
     initiateWithdrawal(payload, {
       onSuccess: (data: any) => {
-        // console.log("onSuccess ->",JSON.stringify(data,null,2))
-
         if (data?.status) {
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
             isLoading: false,
@@ -242,7 +308,6 @@ const CryptoSend = () => {
           isSuccess: false,
           isError: true,
         });
-        console.log("error ->",JSON.stringify(error,null,2))
         const message =
           error?.response?.data?.data?.message ||
           error?.response?.data?.message ||
@@ -255,18 +320,13 @@ const CryptoSend = () => {
     });
   };
 
-  // Handle Send API and validation
   const onVerifyUser = async () => {
-    console.log("onVerifyUser step 1");
     const formData = new FormData();
     formData.append("identifier", recipient.trim());
-    console.log("onVerifyUser step 2");
     setIspendingverifyUser(true);
     handleVerifyUser(formData as any, {
       onSuccess: (data) => {
         setIspendingverifyUser(false);
-        console.log("onVerifyUser step 3");
-        console.log("rep =>", JSON.stringify(data, null, 2));
         if (data?.status) {
           setShowFinalPage(true);
         }
@@ -278,19 +338,16 @@ const CryptoSend = () => {
       },
       onSettled: () => {
         setIspendingverifyUser(false);
-        console.log("on settle");
       },
     });
   };
 
-  const total =
-    parseInt(amount) * buy_price +
-    parseInt(walletData?.TransactionFees_persentage);
+  const isValidAmount = amount && parseFloat(amount) > 0 && !isNaN(parseFloat(amount));
+
   return (
     <ScreenContainer avoidKeyboard scrollable padding={0}>
       <HeaderTitle leftIcon={!showFinalPage ? "true" : ""} title="Send" />
 
-      {/* Toggle: Off Chain / On Chain */}
       <View style={styles.toggleContainer}>
         <TouchableOpacity
           style={[styles.toggleButton, !isOnChain && styles.toggleButtonActive]}
@@ -337,7 +394,7 @@ const CryptoSend = () => {
           </CustomText>
         </TouchableOpacity>
       </View>
-      {/* Common modal for summary */}
+
       <CommonModal
         isVisible={showConfirmationModal}
         onClose={() => {
@@ -364,19 +421,25 @@ const CryptoSend = () => {
             <CustomText variant={"caption"} style={styles.label}>
               Amount
             </CustomText>
-            <Text>{amount.length > 0 ? amount : "0.00"}</Text>
+            <Text>{isValidAmount ? cryptoAmount.toFixed(8) : "0.00"} {symbol}</Text>
           </View>
           <View style={styles.row}>
             <CustomText variant={"caption"} style={styles.label}>
-              Fees
-            </CustomText>
-            <Text>{`${walletData?.TransactionFees_persentage}%`}</Text>
-          </View>
-          <View style={styles.row}>
-            <CustomText variant={"caption"} style={styles.label}>
-              Price
+              Price per {symbol}
             </CustomText>
             <CustomText>${buy_price}</CustomText>
+          </View>
+          <View style={styles.row}>
+            <CustomText variant={"caption"} style={styles.label}>
+              Subtotal
+            </CustomText>
+            <Text>${isValidAmount ? usdAmount.toFixed(2) : "0.00"}</Text>
+          </View>
+          <View style={styles.row}>
+            <CustomText variant={"caption"} style={styles.label}>
+              Fees ({feePercentage}%)
+            </CustomText>
+            <Text>${isValidAmount ? feeAmount.toFixed(2) : "0.00"}</Text>
           </View>
           <View style={styles.row}>
             <CustomText
@@ -387,7 +450,7 @@ const CryptoSend = () => {
               Total
             </CustomText>
             <CustomText size={14} variant={"subtitle2"} style={styles.total}>
-              ${total || "0.00"}
+              ${isValidAmount ? total.toFixed(2) : "0.00"}
             </CustomText>
           </View>
           <View style={{ marginVertical: 20, gap: 10 }}>
@@ -395,9 +458,6 @@ const CryptoSend = () => {
               title={"Pay Now"}
               onPress={() => {
                 handleCheckPin();
-
-                // setShowConfirmationModal(false);
-                // isSellingMode ? onSellClick() : onBuyClick();
               }}
               showLoader={true}
               isLoading={isOnChain ? isWithdrawalPending : isPending}
@@ -460,23 +520,33 @@ const CryptoSend = () => {
                 </CustomText>
               </View>
               <AmountInputDisplay
-                showDollarIcon={false}
+                showDollarIcon={selectedCurrency === "USD"}
                 amount={amount}
                 setAmount={setAmount}
                 suffixText={` ${symbol.slice(0, 3)}`}
+                selectedCurrency={selectedCurrency}
+                onCurrencyChange={handleCurrencyChange}
+                maxLimit={10000000}
               />
+              <Pressable 
+                style={[styles.maxBalanceContainer]}
+              >
+                <CustomText
+                  variant="subtitle2"
+                  size={10}
+                >{`Balance: ${isBalanceLoading ? "Loading..." : availableBalance} ${symbol}`}</CustomText>
+              </Pressable>
               <View style={[styles.totalInUSDContainer]}>
                 <View style={[styles.totalInUSDText]}>
-                <CustomText
-                size={12}
-                // style={{ width: "auto" }}
-                color="white"
-                variant="subtitle2"
-              >{`${
-                amount
-                  ? (parseFloat(amount) * parseFloat(buy_price)).toFixed(2)
-                  : "0.00"
-              }  USD`}</CustomText>
+                  <CustomText
+                    size={12}
+                    color="white"
+                    variant="subtitle2"
+                  >
+                    {selectedCurrency === "USD"
+                      ? `${isValidAmount ? cryptoAmount.toFixed(8) : "0.00"} ${symbol}`
+                      : `${isValidAmount ? usdAmount.toFixed(2) : "0.00"} USD`}
+                  </CustomText>
                 </View>
               </View>
               <TextInputField
@@ -501,7 +571,7 @@ const CryptoSend = () => {
               onPress={() => {
                 setShowConfirmationModal(true);
               }}
-              disabled={!amount}
+              disabled={!isValidAmount}
               cStyle={{ marginVertical: 10 }}
             />
             <GenericButton
@@ -599,6 +669,14 @@ const custonStyles = (theme: Theme) =>
       flex: 1,
       marginRight: 10,
     },
+    maxBalanceContainer: {
+      width: "100%",
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      gap: 10,
+      marginVertical: 10,
+    },
     nameContainer: {
       backgroundColor: theme.colors.palette.grey100,
       borderColor: theme.colors.palette.grey300,
@@ -615,7 +693,6 @@ const custonStyles = (theme: Theme) =>
       width: "100%",
       justifyContent: "center",
       alignItems: "center",
-      // backgroundColor: theme.colors.palette.green700,
       borderRadius: theme.spacing.spacing[4],
     },
     totalInUSDText: {
@@ -627,13 +704,11 @@ const custonStyles = (theme: Theme) =>
       paddingVertical: 5,
     },
     title: {
-      //   fontSize: 20,
       fontWeight: "bold",
       textAlign: "center",
       marginBottom: 6,
     },
     subtitle: {
-      //   fontSize: 14,
       color: "#666",
       textAlign: "center",
       marginBottom: 20,
@@ -652,15 +727,11 @@ const custonStyles = (theme: Theme) =>
       alignItems: "center",
       marginBottom: 24,
       borderWidth: 1,
-
       borderColor: theme.colors.palette.grey200,
       borderRadius: theme.spacing.spacing[3],
     },
     counterButton: {
-      //   backgroundColor: "#f1f1f1",
       borderRadius: 10,
-      //   borderWidth: 1,
-      //   borderColor: theme.colors.palette.grey200,
       padding: 10,
     },
     counterText: {

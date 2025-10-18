@@ -26,14 +26,16 @@ const CryptoSell = () => {
   const pinScreenRef = useRef<any>(null);
   
   const { details } = route.params as any;
-  const { walletData,totalDisbursable } = useSelectorAction() as any;
+  const { walletData, totalDisbursable } = useSelectorAction() as any;
   const { symbol, sell_price, logo } = details;
   const { theme } = useTheme();
   const { spacing, colors } = theme;
   const styles = { ...useGlobalStyles(), ...custonStyles(theme) };
 
   const [amount, setAmount] = useState("");
+  const [selectedCurrency, setSelectedCurrency] = useState(symbol || "");
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  
   const {
     mutate: handleSellCripto,
     isPending,
@@ -41,12 +43,9 @@ const CryptoSell = () => {
     isSuccess,
   } = useCryptoSell();
 
-  // Fetch crypto balance for the current asset
   const { data: cryptoBalanceData, isLoading: isBalanceLoading } = useCryptoBalanceByAsset(symbol);
   
   const availableBalance = cryptoBalanceData?.data?.rounded_balance || "0.00";
-
-  // console.log("details =====>", JSON.stringify(details, null, 2));
 
   const handleCheckPin = () => {
     if (pinScreenRef.current) {
@@ -55,7 +54,6 @@ const CryptoSell = () => {
   };
 
   const handleActionsAfterPinVerified = () => {
-    // Navigate to OTP screen after PIN verification
     navigation.navigate(NAVIGATION_SCREENS.OTP_SCREEN, {
       onOTPVerified: handleActionsAfterOTPVerified,
       transactionType: 'crypto_sell',
@@ -63,27 +61,93 @@ const CryptoSell = () => {
   };
 
   const handleActionsAfterOTPVerified = () => {
-    // Execute the crypto sell transaction after OTP verification
     onSellClick();
   };
 
-  const total =
-  parseFloat(amount) * sell_price +
-  parseInt(walletData?.TransactionFees_persentage);
+  const getCryptoAmount = () => {
+    if (!amount || amount === "" || amount === "0") return 0;
+    const parsedAmount = parseFloat(amount);
+    
+    if (isNaN(parsedAmount) || parsedAmount <= 0) return 0;
+    
+    if (selectedCurrency === "USD") {
+      return parsedAmount / sell_price;
+    }
+    return parsedAmount;
+  };
+
+  const getUSDAmount = () => {
+    if (!amount || amount === "" || amount === "0") return 0;
+    const parsedAmount = parseFloat(amount);
+    
+    if (isNaN(parsedAmount) || parsedAmount <= 0) return 0;
+    
+    if (selectedCurrency === "USD") {
+      return parsedAmount;
+    }
+    return parsedAmount * sell_price;
+  };
+
+  const cryptoAmount = getCryptoAmount();
+  const usdAmount = getUSDAmount();
+  const feePercentage = parseFloat(walletData?.TransactionFees_persentage || 0);
+  const feeAmount = (usdAmount * feePercentage) / 100;
+  const total = usdAmount - feeAmount;
+
+  const handleCurrencyChange = (newCurrency: string) => {
+    if (!amount || amount === "" || amount === "0") {
+      setSelectedCurrency(newCurrency);
+      return;
+    }
+
+    const currentAmount = parseFloat(amount);
+    if (isNaN(currentAmount) || currentAmount <= 0) {
+      setSelectedCurrency(newCurrency);
+      return;
+    }
+
+    let convertedAmount: number;
+    let formattedAmount: string;
+    
+    if (selectedCurrency === "USD" && newCurrency !== "USD") {
+      convertedAmount = currentAmount / sell_price;
+      formattedAmount = convertedAmount.toFixed(8).replace(/\.?0+$/, "");
+    } else if (selectedCurrency !== "USD" && newCurrency === "USD") {
+      convertedAmount = currentAmount * sell_price;
+      formattedAmount = convertedAmount.toFixed(2);
+    } else {
+      setSelectedCurrency(newCurrency);
+      return;
+    }
+
+    setAmount(formattedAmount);
+    setSelectedCurrency(newCurrency);
+  };
 
   const onSellClick = async () => {
+    if (!amount || parseFloat(amount) <= 0) {
+      dispatch(setErrorMsg("Please enter a valid amount"));
+      return;
+    }
 
-    console.log(amount, "amount");
-    console.log(symbol, "symbol");
-    console.log("USD", "USD");
+    if (cryptoAmount <= 0) {
+      dispatch(setErrorMsg("Invalid crypto amount"));
+      return;
+    }
+
+    const availableBalanceNum = parseFloat(availableBalance);
+    if (cryptoAmount > availableBalanceNum) {
+      dispatch(setErrorMsg(`Insufficient balance. Available: ${availableBalance} ${symbol}`));
+      return;
+    }
+
     let payload = {
-      amount: amount,
+      amount: cryptoAmount.toString(),
       asset: symbol,
       fiat: "USD",
-      usd_amount:total,
+      usd_amount: total,
     };
 
-    // Navigate to TransactionResult with loading state
     navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
       isLoading: true,
       transactionData: null,
@@ -93,9 +157,7 @@ const CryptoSell = () => {
 
     handleSellCripto(payload as any, {
       onSuccess: (data) => {
-        console.log("rep =>", JSON.stringify(data, null, 2));
         if (data?.status) {
-          // Navigate to TransactionResult with success data
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
             isLoading: false,
             transactionData: data,
@@ -103,10 +165,9 @@ const CryptoSell = () => {
             isError: false,
           });
           dispatch(
-            setSuccessMsg(`Successfully sold ${amount} ${symbol.slice(0, 3)}`)
+            setSuccessMsg(`Successfully sold ${cryptoAmount.toFixed(8)} ${symbol}`)
           );
         } else {
-          // Navigate to TransactionResult with error state
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
             isLoading: false,
             transactionData: data,
@@ -116,8 +177,6 @@ const CryptoSell = () => {
         }
       },
       onError: (error: any) => {
-        console.log("error ====>", JSON.stringify(error.response, null, 2));
-        // Navigate to TransactionResult with error state
         navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
           isLoading: false,
           transactionData: null,
@@ -141,6 +200,7 @@ const CryptoSell = () => {
     });
   };
 
+  const isValidAmount = amount && parseFloat(amount) > 0 && !isNaN(parseFloat(amount));
 
   return (
     <ScreenContainer avoidKeyboard scrollable padding={0}>
@@ -170,19 +230,25 @@ const CryptoSell = () => {
             <CustomText variant={"caption"} style={styles.label}>
               Amount
             </CustomText>
-            <Text>{amount.length > 0 ? amount : "0.00"}</Text>
+            <Text>{isValidAmount ? cryptoAmount.toFixed(8) : "0.00"} {symbol}</Text>
           </View>
           <View style={styles.row}>
             <CustomText variant={"caption"} style={styles.label}>
-              Fees
-            </CustomText>
-            <Text>{`${walletData?.TransactionFees_persentage}%`}</Text>
-          </View>
-          <View style={styles.row}>
-            <CustomText variant={"caption"} style={styles.label}>
-              Price
+              Price per {symbol}
             </CustomText>
             <CustomText>${sell_price}</CustomText>
+          </View>
+          <View style={styles.row}>
+            <CustomText variant={"caption"} style={styles.label}>
+              Subtotal
+            </CustomText>
+            <Text>${isValidAmount ? usdAmount.toFixed(2) : "0.00"}</Text>
+          </View>
+          <View style={styles.row}>
+            <CustomText variant={"caption"} style={styles.label}>
+              Fees ({feePercentage}%)
+            </CustomText>
+            <Text>${isValidAmount ? feeAmount.toFixed(2) : "0.00"}</Text>
           </View>
           <View style={styles.row}>
             <CustomText
@@ -190,10 +256,10 @@ const CryptoSell = () => {
               size={14}
               style={styles.labelBold}
             >
-              Total
+              You Receive
             </CustomText>
             <CustomText size={14} variant={"subtitle2"} style={styles.total}>
-              ${total || "0.00"}
+              ${isValidAmount ? total.toFixed(2) : "0.00"}
             </CustomText>
           </View>
           <View style={{ marginVertical: 20, gap: 10 }}>
@@ -244,38 +310,43 @@ const CryptoSell = () => {
             <CustomText
               size={14}
               variant={"subtitle2"}
-            >{`${symbol} (${symbol.slice(0, 3)})`}</CustomText>
+            >{`${symbol} (${symbol})`}</CustomText>
           </View>
           <AmountInputDisplay
-            showDollarIcon={false}
+            showDollarIcon={selectedCurrency === "USD"}
             amount={amount}
             setAmount={setAmount}
-            suffixText={` ${symbol.slice(0, 3)}`}
+            suffixText={` ${symbol}`}
+            selectedCurrency={selectedCurrency}
+            onCurrencyChange={handleCurrencyChange}
+            maxLimit={10000000}
           />
           <Pressable 
             style={[styles.maxBalanceContainer]}
-            onPress={() => {
-              if (!isBalanceLoading && availableBalance !== "0.00") {
-                setAmount(availableBalance);
-              }
-            }}
+            // onPress={() => {
+            //   if (!isBalanceLoading && availableBalance !== "0.00") {
+            //     setAmount(availableBalance);
+            //     setSelectedCurrency(symbol);
+            //   }
+            // }}
           >
-            <SvgIcons.CheckSquareIcon />
+            {/* <SvgIcons.CheckSquareIcon /> */}
             <CustomText
               variant="subtitle2"
               size={10}
-            >{`Max Balance: ${isBalanceLoading ? "Loading..." : availableBalance} ${symbol.slice(0, 3)}`}</CustomText>
+            >{`Balance: ${isBalanceLoading ? "Loading..." : availableBalance} ${symbol}`}</CustomText>
           </Pressable>
           <View style={[styles.totalInUSDContainer]}>
             <View style={[styles.totalInUSDText]}>
-            <CustomText
+              <CustomText
                 size={12}
-                // style={{ width: "auto" }}
                 color="white"
                 variant="subtitle2"
-              >{`${
-                amount ? (parseFloat(amount) * parseFloat(sell_price)).toFixed(2) : "0.00"
-              }  USD`}</CustomText>
+              >
+                {selectedCurrency === "USD"
+                  ? `${isValidAmount ? cryptoAmount.toFixed(8) : "0.00"} ${symbol}`
+                  : `${isValidAmount ? usdAmount.toFixed(2) : "0.00"} USD`}
+              </CustomText>
             </View>
           </View>
         </View>
@@ -284,7 +355,7 @@ const CryptoSell = () => {
           onPress={() => {
             setShowConfirmationModal(true);
           }}
-          disabled={amount === ""}
+          disabled={!isValidAmount}
         />
       </View>
 
@@ -330,20 +401,17 @@ const custonStyles = (theme: Theme) =>
     maxBalanceContainer: {
       width: "100%",
       flexDirection: "row",
-      //   backgroundColor: "red",
       justifyContent: "center",
       alignItems: "center",
       gap: 10,
       marginVertical: 10,
     },
     title: {
-      //   fontSize: 20,
       fontWeight: "bold",
       textAlign: "center",
       marginBottom: 6,
     },
     subtitle: {
-      //   fontSize: 14,
       color: "#666",
       textAlign: "center",
       marginBottom: 20,
@@ -362,7 +430,6 @@ const custonStyles = (theme: Theme) =>
       alignItems: "center",
       marginBottom: 24,
       borderWidth: 1,
-
       borderColor: theme.colors.palette.grey200,
       borderRadius: theme.spacing.spacing[3],
     },
@@ -370,7 +437,6 @@ const custonStyles = (theme: Theme) =>
       width: "100%",
       justifyContent: "center",
       alignItems: "center",
-      // backgroundColor: theme.colors.palette.green700,
       borderRadius: theme.spacing.spacing[4],
     },
     totalInUSDText: {
@@ -382,10 +448,7 @@ const custonStyles = (theme: Theme) =>
       paddingVertical: 5,
     },
     counterButton: {
-      //   backgroundColor: "#f1f1f1",
       borderRadius: 10,
-      //   borderWidth: 1,
-      //   borderColor: theme.colors.palette.grey200,
       padding: 10,
     },
     counterText: {
