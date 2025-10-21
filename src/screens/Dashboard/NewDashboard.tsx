@@ -1131,7 +1131,7 @@ const NewDashboard = () => {
       .slice(0, 5);
   }, [web3TxLists]);
 
-  console.log("sortedWeb3TxLists =>", JSON.stringify(sortedWeb3TxLists, null, 2));
+  // console.log("sortedWeb3TxLists =>", JSON.stringify(sortedWeb3TxLists, null, 2));
   // console.log("sortedTxLists =>", JSON.stringify(sortedTxLists, null, 2));
 
   // Memoize banking data processing

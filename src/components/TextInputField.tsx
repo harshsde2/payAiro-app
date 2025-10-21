@@ -9,6 +9,7 @@ import { InputProps } from "./types";
 import { CustomText } from "tsx-components";
 import { useTheme } from "styles";
 import Tooltip from "react-native-walkthrough-tooltip";
+import { SvgIcons } from "constants/svgs";
 
 const TextInputField: FC<InputProps> = (props) => {
   const {
@@ -33,8 +34,10 @@ const TextInputField: FC<InputProps> = (props) => {
     rightIcon,
     onRightIconClick,
     onInfoPress,
+    rightIconComponent,
   } = props;
 
+  console.log("---- > ",rightIconComponent)
   const [isVisible, setisVisible] = useState(false);
   const { theme } = useTheme();
   return (
@@ -143,10 +146,11 @@ const TextInputField: FC<InputProps> = (props) => {
               xml={rightIcon}
               style={{ position: "absolute", right: 10 }}
               onPress={() => {
-                onRightIconClick();
+                onRightIconClick?.();
               }}
             />
           )}
+          {rightIconComponent === "scanner" && <SvgIcons.ScannerIcon onPress={()=>onRightIconClick?.()} style={{position:'absolute',right:0,zIndex:10}} />}
 
           {!isCountry && !isMultiLine && (
             <TextInput
@@ -154,11 +158,12 @@ const TextInputField: FC<InputProps> = (props) => {
               editable={editable}
               style={{
                 color: "#000",
-                paddingRight: 10,
+                paddingRight: rightIconComponent === "scanner" ? 45 : 10,
                 paddingLeft: 15,
                 fontFamily: Fonts.semibold,
                 width: "90%",
                 minHeight: 40,
+
               }}
               placeholder={placeholder}
               placeholderTextColor={theme.colors.palette.grey500}

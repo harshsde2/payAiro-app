@@ -43,6 +43,8 @@ const CryptoSend = () => {
   const dispatch = useDispatch();
 
   const { details } = route.params as any;
+
+  console.log("details ->",details)
   const { walletData } = useSelectorAction() as any;
 
   const { symbol, buy_price, logo } = details;
@@ -344,6 +346,15 @@ const CryptoSend = () => {
 
   const isValidAmount = amount && parseFloat(amount) > 0 && !isNaN(parseFloat(amount));
 
+  const onQRScanClick = () =>{
+      navigation.navigate(NAVIGATION_SCREENS.QR_SCANNER,{
+        onScanSuccess:(id:string) =>{
+          console.log("chla ->",id)
+          setRecipient(id);
+        }
+      })
+  }
+
   return (
     <ScreenContainer avoidKeyboard scrollable padding={0}>
       <HeaderTitle leftIcon={!showFinalPage ? "true" : ""} title="Send" />
@@ -629,6 +640,8 @@ const CryptoSend = () => {
                   placeholder={isOnChain ? "0x..." : "PayAiroTag, Phone, Email"}
                   rightIcon={""}
                   value={recipient}
+                  rightIconComponent={isOnChain ? "scanner" :""}
+                  onRightIconClick={onQRScanClick}
                   onChange={setRecipient}
                 />
               </DashboardSection>

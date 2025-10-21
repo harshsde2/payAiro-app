@@ -1,17 +1,22 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
-import React, { useEffect, useRef, useState } from "react";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { useGetReward, useUserPin, useWalletDetails } from "query/hooks";
+import { useLogin, useStepCount, useVerifyOTP } from "query/hooks/useAPIAuth";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
-  KeyboardAvoidingView,
   StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
+  Clipboard
 } from "react-native";
 import DeviceInfo from "react-native-device-info";
 import { useDispatch } from "react-redux";
 import { setItem, setPin, STORAGE_KEYS } from "storage/mmkv";
+import { Theme, useTheme } from "styles";
+import { CustomText } from "tsx-components";
+import AuthHeader from "tsx-components/AuthHeader";
 import GenericButton from "../../components/GenericButton";
 import Fonts from "../../constants/Fonts";
 import { SCREENS } from "../../constants/SCREENS";
@@ -22,34 +27,17 @@ import {
   setLogin,
   setShowGuide,
   setShowLoader,
-  setShowRedeemReward,
   setSuccessMsg,
   setTokens,
-  setWalletData,
+  setWalletData
 } from "../../redux/slices/authenticationSlice";
 import { setToken, setWalletDataAuth } from "../../services/Auth";
-import {
-  addFcm,
-  getKYC,
-  getWallet,
-  sendOTP,
-  verify,
-} from "../../services/Services";
-import AuthHeader from "tsx-components/AuthHeader";
-import { CustomText } from "tsx-components";
-import { Theme, useTheme } from "styles";
-import { useLogin, useStepCount, useVerifyOTP } from "query/hooks/useAPIAuth";
-import { useGetReward, useUserPin, useWalletDetails } from "query/hooks";
-import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 
 export default function ConfirmOTP() {
   const getDeviceId = async () => {
-    const deviceId = await DeviceInfo.getUniqueId(); // ✅ Await the Promise
-    // console.log("Device ID:", deviceId); // Now prints actual string
+    const deviceId = await DeviceInfo.getUniqueId();
     return deviceId;
   };
-
-  // console.log("deviceId =>", getDeviceId());
 
   const dispatch = useDispatch();
   const navigation = useNavigation();
@@ -58,8 +46,6 @@ export default function ConfirmOTP() {
   const route = useRoute();
   const { theme } = useTheme();
   const styles = customStyles(theme);
-
-  // console.log("token =>", tokens?.access);
 
   const {
     mutate: login,
@@ -91,17 +77,15 @@ export default function ConfirmOTP() {
     refetch: refetchUserPin,
   } = useUserPin(false);
 
-  // console.log("dataUserPin =>", dataUserPin?.data);
-
   const { email } = (route as any).params;
-  // const email = "";
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]); // OTP array
-  const inputs = useRef<any>([]); // Refs for the input fields
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const inputs = useRef<any>([]);
   const [countdown, setCountdown] = useState(60);
   const [resendEnabled, setResendEnabled] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [buttonDisabled, setButtonDisabled] = useState(false);
-  const [step, setStepCount] = useState("");
+  
+  // Use ref to prevent multiple simultaneous verifications
+  const isVerifyingRef = useRef(false);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -113,7 +97,7 @@ export default function ConfirmOTP() {
   }, [countdown]);
 
   const handleResend = () => {
-    if (resendEnabled) {
+    if (resendEnabled && !isVerifying) {
       setCountdown(60);
       setResendEnabled(false);
       handleResendOTP();
@@ -123,11 +107,9 @@ export default function ConfirmOTP() {
   const handleGetRewardDetails = async () => {
     await refetchGetReward();
     if (isSuccessGetReward) {
-      // console.log("refetchGetReward => ✅");
       if (getRewardData?.data?.length > 0) {
         if (getRewardData && getRewardData?.data?.length > 0) {
           setItem(STORAGE_KEYS.REDEEM_REWARD, JSON.stringify(false));
-          // dispatch(setShowRedeemReward(true));
         }
       }
     }
@@ -136,37 +118,63 @@ export default function ConfirmOTP() {
   const handleUserGuide = async () => {
     setItem(STORAGE_KEYS.GUIDE, JSON.stringify(false));
     dispatch(setShowGuide(false));
-    // console.log("setShowGuide => ✅");
   };
 
   const handleOtpChange = (text: any, index: any) => {
+    // Check if text length is greater than 1 (paste scenario)
+    if (text.length > 1) {
+      handlePasteText(text, index);
+      return;
+    }
+
+    // Handle single character input or deletion
     if (/^[0-9]$/.test(text) || text === "") {
-      // Only allow numbers or empty text
       const newOtp = [...otp];
       newOtp[index] = text;
       setOtp(newOtp);
 
-      // Move to the next input if a number is entered
       if (text && index < otp.length - 1) {
         inputs.current[index + 1]?.focus();
       }
 
-      // Move to the previous input if backspace is pressed and field is empty
       if (!text && index > 0) {
         inputs.current[index - 1]?.focus();
       }
     }
   };
 
+  // Handle pasted text
+  const handlePasteText = (text: string, startIndex: number) => {
+    // Extract only numbers from pasted text
+    const numbers = text.replace(/[^0-9]/g, '');
+    
+    if (numbers.length > 0) {
+      const newOtp = [...otp];
+      
+      // Fill from the start index onwards
+      let currentIndex = startIndex;
+      for (let i = 0; i < numbers.length && currentIndex < 6; i++) {
+        newOtp[currentIndex] = numbers[i];
+        currentIndex++;
+      }
+      
+      setOtp(newOtp);
+      
+      // Focus on next empty field or last field
+      const nextIndex = Math.min(currentIndex, 5);
+      setTimeout(() => {
+        inputs.current[nextIndex]?.focus();
+      }, 0);
+    }
+  };
+
   const handleKeyPress = (key: any, index: any) => {
     if (key === "Backspace") {
       if (otp[index] === "") {
-        // Move to the previous input if current is empty
         if (index > 0) {
           inputs.current[index - 1]?.focus();
         }
       } else {
-        // Clear the current input
         const newOtp = [...otp];
         newOtp[index] = "";
         setOtp(newOtp);
@@ -189,62 +197,6 @@ export default function ConfirmOTP() {
       },
     });
   };
-
-  const handleVerifyOTP = () => {
-    setButtonDisabled(true);
-    setIsVerifying(true);
-    const enteredOtp = otp.join("");
-    if (enteredOtp.length < 6) {
-      setIsVerifying(false);
-      useDispatchAction(setErrorMsg("OTP Should Be 6 Digits"));
-      return;
-    }
-
-    verifyOtp({ email: email.trim().toLowerCase(), otp: enteredOtp } as any, {
-      onSuccess: async (data) => {
-        if (data?.status) {
-          console.log("data =>", JSON.stringify(data, null, 2));
-
-          useDispatchAction(setTokens(data?.data?.data));
-          await setToken(data?.data?.data);
-          setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(data?.data?.data));
-          useDispatchAction(setSuccessMsg("OTP Verified Successfully"));
-
-          const { step, persona_verification_url } = data?.data?.data;
-
-          if (step === 0) {
-            (navigation as any).navigate(SCREENS.Name, {
-              email,
-              data: data?.data?.data,
-            });
-          } else if (step === 1) {
-            (navigation as any).navigate(NAVIGATION_SCREENS.CYBRID_WEB_VIEW, {
-              URL: persona_verification_url,
-              isUserAlreadyCreated: true,
-            });
-          } else if (step === 2) {
-            getWalletD();
-          }
-        } else {
-          useDispatchAction(setErrorMsg("Invalid OTP. Please Try Again."));
-        }
-        setIsVerifying(false);
-      },
-      onError: (error: any) => {
-        console.log("error :--", JSON.stringify(error.response, null, 2));
-        const errorMessage =
-          (error as any)?.response?.data?.message ||
-          error?.message ||
-          "Something went wrong";
-        useDispatchAction(setErrorMsg(errorMessage));
-        setIsVerifying(false);
-      },
-      onSettled: () => {
-        useDispatchAction(setShowLoader(false));
-      },
-    });
-  };
-
 
   const getWalletD = async () => {
     try {
@@ -274,11 +226,76 @@ export default function ConfirmOTP() {
     }
   };
 
+  const handleVerifyOTP = useCallback(() => {
+    // Prevent multiple simultaneous verifications
+    if (isVerifyingRef.current) {
+      return;
+    }
+
+    const enteredOtp = otp.join("");
+    if (enteredOtp.length < 6) {
+      useDispatchAction(setErrorMsg("OTP Should Be 6 Digits"));
+      return;
+    }
+
+    // Set both ref and state
+    isVerifyingRef.current = true;
+    setIsVerifying(true);
+
+    verifyOtp({ email: email.trim().toLowerCase(), otp: enteredOtp } as any, {
+      onSuccess: async (data) => {
+        if (data?.status) {
+          console.log("data =>", JSON.stringify(data, null, 2));
+
+          useDispatchAction(setTokens(data?.data?.data));
+          await setToken(data?.data?.data);
+          setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(data?.data?.data));
+          useDispatchAction(setSuccessMsg("OTP Verified Successfully"));
+
+          const { step, persona_verification_url } = data?.data?.data;
+
+          if (step === 0) {
+            (navigation as any).navigate(SCREENS.Name, {
+              email,
+              data: data?.data?.data,
+            });
+          } else if (step === 1) {
+            (navigation as any).navigate(NAVIGATION_SCREENS.CYBRID_WEB_VIEW, {
+              URL: persona_verification_url,
+              isUserAlreadyCreated: true,
+            });
+          } else if (step === 2) {
+            await getWalletD();
+          }
+        } else {
+          useDispatchAction(setErrorMsg("Invalid OTP. Please Try Again."));
+          // Reset on error
+          isVerifyingRef.current = false;
+          setIsVerifying(false);
+        }
+      },
+      onError: (error: any) => {
+        console.log("error :--", JSON.stringify(error.response, null, 2));
+        const errorMessage =
+          (error as any)?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong";
+        useDispatchAction(setErrorMsg(errorMessage));
+        
+        // Reset on error
+        isVerifyingRef.current = false;
+        setIsVerifying(false);
+      },
+      onSettled: () => {
+        useDispatchAction(setShowLoader(false));
+      },
+    });
+  }, [otp, email, verifyOtp, navigation]);
+
   const isOtpComplete = otp.every((digit) => digit !== "");
 
   return (
     <ScreenContainer avoidKeyboard padding={0}>
-      {/* <AuthHeader showAuthLogo={true} /> */}
       <View style={{ flex: 1 }}>
         <AuthHeader header={resendEnabled} showAuthLogo={true} />
       </View>
@@ -303,24 +320,24 @@ export default function ConfirmOTP() {
             <TextInput
               key={index}
               style={[styles.otpInput, otp[index] && styles.otpInputActive]}
-              maxLength={1}
+              maxLength={6}
               keyboardType="number-pad"
               onChangeText={(text) => handleOtpChange(text, index)}
               onKeyPress={({ nativeEvent }) =>
                 handleKeyPress(nativeEvent.key, index)
               }
-              ref={(input) => (inputs.current[index] = input)} // Assign ref dynamically
+              ref={(input) => (inputs.current[index] = input)}
               value={otp[index]}
+              editable={!isVerifying}
+              contextMenuHidden={false}
             />
           ))}
         </View>
 
-        {/* Verify Button */}
-
         <CustomText variant={"caption"}>Didn't receive the code?</CustomText>
         <TouchableOpacity
           style={{ marginTop: 5, marginBottom: 20 }}
-          disabled={!resendEnabled}
+          disabled={!resendEnabled || isVerifying}
           onPress={handleResend}
         >
           <CustomText
