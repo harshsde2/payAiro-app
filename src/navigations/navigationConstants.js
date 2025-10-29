@@ -108,5 +108,6 @@ export const NAVIGATION_SCREENS = {
   PLAID_LINK_SCREEN: "PlaidLinkScreen",
   OTP_SCREEN: "OTPScreen",
   CRYPTO_LIST: "CryptoList",
+  BANK_SELECTION: "BankSelection",
   QR_SCANNER:'QRScanner'
 };

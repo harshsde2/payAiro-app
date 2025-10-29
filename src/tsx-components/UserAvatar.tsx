@@ -50,8 +50,8 @@ const UserAvatar: FC<UserAvatarProps> = ({
     ? null
     : imageURL
     ? isSent
-      ? `https://app.payairo.com${item.recipient_profile_photo}`
-      : `https://app.payairo.com${item.sender_profile_photo}`
+      ? item?.recipient_profile_photo != "null" ? `https://app.payairo.com${item.recipient_profile_photo}` : null
+      : item?.sender_profile_photo  != "null" ? `https://app.payairo.com${item.sender_profile_photo}` : null
     : null;
 
   const initials = isTransactionByProject
@@ -60,7 +60,8 @@ const UserAvatar: FC<UserAvatarProps> = ({
     ? item.recipient_username?.slice(0, 2)?.toUpperCase()
     : item.sender_username?.slice(0, 2)?.toUpperCase();
 
-  // console.log("avatar image ->", avatarUrl);
+  console.log("avatar image ->", avatarUrl);
+  console.log("avatar item? ->", JSON.stringify(item,null,2));
 
   return (
     <View style={styles.avatarWrapper}>
@@ -89,6 +90,7 @@ const AvatarStyles = (theme: Theme) =>
       overflow: "hidden",
       justifyContent: "center",
       alignItems: "center",
+      // backgroundColor:'red'
     },
     avatarImage: {
       width: "100%",
@@ -106,6 +108,7 @@ const AvatarStyles = (theme: Theme) =>
     initialsText: {
       color: theme.colors.palette.green700,
       fontSize: 16,
+      fontWeight:'700',
       fontFamily: theme.typography.fontWeight.semiBold,
     },
   });

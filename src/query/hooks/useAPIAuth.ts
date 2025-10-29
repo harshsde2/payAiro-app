@@ -7,6 +7,8 @@ import {
 import { apiClient } from "api";
 import { AUTH, KYC } from "api/endpoints";
 import { ApiResponse } from "api/types";
+import useDispatchAction from "hooks/useDispatchAction";
+import { setErrorMsg, setSuccessMsg, setKycStatus } from "redux/slices/authenticationSlice";
 
 export const useLogin = () => {
   return useMutation<ApiResponse<any>, Error>({
@@ -138,6 +140,35 @@ export const useKYCCompleted = () => {
     mutationFn: async () => {
       const data = apiClient.post<ApiResponse<any>>(AUTH.CYBIRD_KYC, {}, false);
       return data;
+    },
+  });
+};
+
+// Check KYC status (GET) and surface via Redux toast/messages
+export const useKYCStatus = () => {
+  return useMutation<ApiResponse<any>, Error>({
+    mutationFn: async () => {
+      const data = apiClient.post<ApiResponse<any>>(AUTH.CYBIRD_KYC_STATUS,false);
+      return data;
+    },
+    onSuccess: (data: any) => {
+      const status = data?.status ?? data?.data?.status;
+      const toast = data?.toast_message ?? data?.data?.toast_message ?? data?.message ?? data?.data?.message;
+      // persist full object in redux
+      useDispatchAction(setKycStatus(data?.data ?? data));
+      if (status === false) {
+        useDispatchAction(setErrorMsg(toast || "KYC status: not completed"));
+      } else {
+        useDispatchAction(setSuccessMsg(toast || "KYC status completed"));
+      }
+    },
+    onError: (error: any) => {
+      const toast = error?.response?.data?.toast_message || error?.response?.data?.message || "Failed to fetch KYC status";
+      // set the raw error payload as kycStatus if available
+      if (error?.response?.data) {
+        useDispatchAction(setKycStatus(error.response.data));
+      }
+      useDispatchAction(setErrorMsg(toast));
     },
   });
 };

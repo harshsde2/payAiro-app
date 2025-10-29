@@ -235,7 +235,7 @@ export default function Personal() {
               flexWrap: "wrap",
             }}
           >
-            {DETAILS_DATA.map((i, k) => (
+            {DETAILS_DATA.filter(item => item?.value && item?.value.trim() !== "").map((i, k) => (
               <View style={{ width: "40%", margin: 8 }} key={k}>
                 <Text
                   style={{

@@ -7,7 +7,12 @@ import WebView from "react-native-webview";
 import { Card, CustomText } from "tsx-components";
 import { useGlobalStyles } from "styles/GlobalStyles";
 import GenericButton from "components/GenericButton";
-import { useCreatePin, useKYCCompleted, useWalletDetails } from "query/hooks";
+import {
+  useCreatePin,
+  useKYCCompleted,
+  useKYCStatus,
+  useWalletDetails,
+} from "query/hooks";
 import { useDispatch } from "react-redux";
 import {
   setErrorMsg,
@@ -22,6 +27,7 @@ import PinScreen from "tsx-components/modals/PinScreen";
 import { PinScreenRef } from "tsx-components/modals/modal.types";
 import useDispatchAction from "hooks/useDispatchAction";
 import LottieView from "lottie-react-native";
+import useSelectorAction from "hooks/useSelectorAction";
 
 const CybridWebView = () => {
   const route = useRoute();
@@ -36,8 +42,10 @@ const CybridWebView = () => {
     isUserAlreadyCreated || false
   );
   const [isKYCInProgress, setIsKYCInProgress] = React.useState(true);
+  const [KYCMessage, setKYCMessage] = React.useState("");
 
   const { mutate: checkKYCStatus, isPending, isSuccess } = useKYCCompleted();
+
   const {
     mutate: handlPinCreation,
     isPending: isPendingCreatePin,
@@ -79,19 +87,20 @@ const CybridWebView = () => {
     checkKYCStatus({} as any, {
       onSuccess: (data) => {
         console.log("KYC Status:", JSON.stringify(data, null, 2));
-        if (data?.data.status === true) {
+
+        if (data?.status === true) {
           setIsKYCInProgress(false);
-        } else if (data?.data.status === false) {
+        } else if (data?.status === false) {
           //   setIsKycCompleted(false);
-          console.log("data?.data?.message ->", data?.data?.message);
-          dispatch(setErrorMsg(data?.data?.message || "KYC not completed"));
+          setKYCMessage(data?.message);
+          dispatch(setErrorMsg(data?.toast_message || "KYC not completed"));
         }
       },
       onError: (error: any) => {
         console.log("error ->", JSON.stringify(error?.response, null, 2));
         dispatch(
           setErrorMsg(
-            error?.response?.data?.data?.message || "KYC not completed"
+            error?.response?.data?.toast_message || "KYC not completed"
           )
         );
       },
@@ -152,6 +161,8 @@ const CybridWebView = () => {
     true;
   `;
 
+  // console.log("kuc status ->", JSON.stringify(kycStatus,null,2));
+
   return (
     <ScreenContainer padding={0}>
       <HeaderTitle
@@ -200,9 +211,9 @@ const CybridWebView = () => {
                   color={"red"}
                   style={{ textAlign: "center", flex: 1, marginBottom: 20 }}
                 >
-                  Our KYC is currently under review. Please wait for 1 to 72
-                  hours. If it is still not created after that, please contact
-                  us at dev@payairo.com.
+                  {KYCMessage
+                    ? KYCMessage
+                    : `Your KYC is currently under review. Please wait 1 to 72 hours.If it is still not completed after that, please contact us atdev@payairo.com.`}
                 </CustomText>
               ) : (
                 <CustomText
@@ -250,7 +261,7 @@ const CybridWebView = () => {
 
             <GenericButton
               cStyle={{ marginTop: 20 }}
-              title={isKYCInProgress ? "Refresh" : "Done"}
+              title={isKYCInProgress ? "Check KYC Satus" : "Done"}
               onPress={() => {
                 if (isKYCInProgress) {
                   handleKYCCheck();

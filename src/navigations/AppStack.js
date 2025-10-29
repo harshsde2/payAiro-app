@@ -87,6 +87,7 @@ import PlaidLinkScreen from "screens/TSX-Screens/AddBalance/PlaidLinkScreen";
 import PDFViewer from "tsx-components/PDFViewer";
 import OTP from "screens/TSX-Screens/Modals/OTP";
 import CryptoList from "screens/TSX-Screens/CybridCrypto/CryptoList";
+import BankSelection from "screens/TSX-Screens/AddBalance/BankSelection";
 import QRScanner from "screens/TSX-Screens/Send/QRScanner";
 
 const Stack = createNativeStackNavigator();
@@ -566,6 +567,19 @@ export default function AppStack() {
         }}
         name={NAVIGATION_SCREENS.CRYPTO_LIST}
         component={CryptoList}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: false,
+          presentation: 'containedTransparentModal',
+          gestureEnabled: true,
+          animationTypeForReplace: 'push',
+          animation: 'slide_from_bottom',
+          animationMatchesGesture:true,
+          gestureDirection:'vertical'
+        }}
+        name={NAVIGATION_SCREENS.BANK_SELECTION}
+        component={BankSelection}
       />
       <Stack.Screen
         options={{

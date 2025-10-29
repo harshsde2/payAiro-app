@@ -33,7 +33,7 @@ const CryptoSell = () => {
   const styles = { ...useGlobalStyles(), ...custonStyles(theme) };
 
   const [amount, setAmount] = useState("");
-  const [selectedCurrency, setSelectedCurrency] = useState(symbol || "");
+  const [selectedCurrency, setSelectedCurrency] = useState("USD");
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   
   const {

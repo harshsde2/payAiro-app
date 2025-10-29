@@ -27,6 +27,7 @@ export const AUTH = {
   STORE_TOKEN: "auth/store-token/",
   CONTACT_ADDING: "auth/contact-adding/",
   MY_BANK_ACCOUNTS: "auth/my-bank-accounts/",
+  CYBIRD_KYC_STATUS: "auth/cybird-kyc/status/",
   ADD_NORMAL_BANK_ACCOUNT: "auth/fortreetrust-bankaccount/",
   ADD_TRADITIONAL_IRA_BANK_ACCOUNT: "auth/fortreetrust-TraditionalIraAccount/",
   ALL_BANK_ACCOUNTS: "auth/all-bank-accounts/",

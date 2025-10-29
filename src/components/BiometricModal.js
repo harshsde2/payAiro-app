@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   Alert,
   Image,
@@ -19,7 +19,7 @@ import ReactNativeBiometrics from 'react-native-biometrics';
 import useSelectorAction from '../hooks/useSelectorAction';
 import {setBiometricAvailable} from '../redux/slices/authenticationSlice';
 import useDispatchAction from '../hooks/useDispatchAction';
-import {setBiometric} from '../services/Auth';
+import {setBiometric, getBiometric} from '../services/Auth';
 
 const BiometricModal = ({isVisible, onClose, onCancel}) => {
   const {biometricAvailable} = useSelectorAction();
@@ -28,57 +28,105 @@ const BiometricModal = ({isVisible, onClose, onCancel}) => {
   });
   const [isEnabled, setIsEnabled] = useState(false);
   const [enableBiometric, setenableBiometric] = useState(biometricAvailable);
-  const checkBiometrics = async val => {
+  const [currentBiometricStatus, setCurrentBiometricStatus] = useState(false);
+
+  useEffect(() => {
+    if (isVisible) {
+      checkCurrentBiometricStatus();
+    }
+  }, [isVisible]);
+
+  const checkCurrentBiometricStatus = async () => {
+    try {
+      const biometricData = await getBiometric();
+      setCurrentBiometricStatus(biometricData === true);
+    } catch (error) {
+      console.log('Error getting biometric status:', error);
+      setCurrentBiometricStatus(false);
+    }
+  };
+  const checkBiometrics = async (action) => {
     try {
       const {biometryType, available} = await rnBiometrics.isSensorAvailable();
       if (available) {
         if (biometryType) {
           console.log(biometryType, 'biometryType');
-          await authenticateWithBiometrics(val);
+          await authenticateWithBiometrics(action);
         } else {
-          Alert.alert('Enable Biometric', 'Allow Biometric to setup', [
+          Alert.alert('Biometric Not Available', 'Please enable biometric authentication in your device settings', [
             {title: 'Cancel', onPress: () => console.log('ok')},
-            {title: 'Allow', onPress: () => openSettings()},
+            {title: 'Settings', onPress: () => openSettings()},
           ]);
         }
       } else {
-        Alert.alert('Enable Biometric', 'Allow Biometric to setup', [
+        Alert.alert('Biometric Not Available', 'Please enable biometric authentication in your device settings', [
           {title: 'Cancel', onPress: () => console.log('ok')},
-          {title: 'Allow', onPress: () => openSettings()},
+          {title: 'Settings', onPress: () => openSettings()},
         ]);
       }
     } catch (error) {
-      Alert.alert('Enable Biometric', 'Allow Biometric to setup', [
+      Alert.alert('Biometric Not Available', 'Please enable biometric authentication in your device settings', [
         {title: 'Cancel', onPress: () => console.log('ok')},
-        {title: 'Allow', onPress: () => openSettings()},
+        {title: 'Settings', onPress: () => openSettings()},
       ]);
     }
   };
 
-  const authenticateWithBiometrics = async val => {
+  const authenticateWithBiometrics = async (action) => {
     try {
       const {success} = await rnBiometrics.simplePrompt({
-        promptMessage: 'Authenticate With PayAiro',
+        promptMessage: `Authenticate to ${action} App Lock`,
       });
 
       if (success) {
-        console.log('Biometric authentication successful', !biometricAvailable);
-        setenableBiometric(!biometricAvailable);
-        setBiometric(!biometricAvailable);
-        useDispatchAction(setBiometricAvailable(!biometricAvailable));
+        const newStatus = action === 'Enable' ? true : false;
+        console.log('Biometric authentication successful', newStatus);
+        setenableBiometric(newStatus);
+        setBiometric(newStatus);
+        useDispatchAction(setBiometricAvailable(newStatus));
         onCancel();
-        // onCfm();
-        // Proceed with secure action after successful authentication
+        Alert.alert(
+          'Success',
+          `App Lock ${action.toLowerCase()}d successfully`,
+          [{title: 'OK', onPress: () => console.log('ok')}]
+        );
       } else {
-        Alert.alert('Enable Biometric', 'Allow Biometric to setup', [
-          {title: 'Cancel', onPress: () => console.log('ok')},
-          {title: 'Allow', onPress: () => openSettings()},
+        Alert.alert('Authentication Failed', 'Please try again', [
+          {title: 'OK', onPress: () => console.log('ok')},
         ]);
       }
     } catch (error) {
-      Alert.alert('Enable Biometric', 'Allow Biometric to setup', [
-        {title: 'Cancel', onPress: () => console.log('ok')},
-        {title: 'Allow', onPress: () => openSettings()},
+      Alert.alert('Authentication Failed', 'Please try again', [
+        {title: 'OK', onPress: () => console.log('ok')},
+      ]);
+    }
+  };
+
+  const handleDisableBiometric = async () => {
+    try {
+      const {success} = await rnBiometrics.simplePrompt({
+        promptMessage: 'Authenticate to Disable App Lock',
+      });
+
+      if (success) {
+        console.log('Biometric authentication successful for disable');
+        setenableBiometric(false);
+        setBiometric(false);
+        useDispatchAction(setBiometricAvailable(false));
+        onCancel();
+        Alert.alert(
+          'Success',
+          'App Lock disabled successfully',
+          [{title: 'OK', onPress: () => console.log('ok')}]
+        );
+      } else {
+        Alert.alert('Authentication Failed', 'Please try again', [
+          {title: 'OK', onPress: () => console.log('ok')},
+        ]);
+      }
+    } catch (error) {
+      Alert.alert('Authentication Failed', 'Please try again', [
+        {title: 'OK', onPress: () => console.log('ok')},
       ]);
     }
   };
@@ -100,8 +148,17 @@ const BiometricModal = ({isVisible, onClose, onCancel}) => {
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <Text style={styles.headerText}>
-            Do you want to {biometricAvailable ? `Deny` : `Allow`} ”Payairo” to
-            use Touch ID?
+            App Lock Settings
+          </Text>
+          <Text
+            style={{
+              fontSize: 16,
+              fontFamily: Fonts.medium,
+              color: '#333',
+              textAlign: 'center',
+              marginBottom: 10,
+            }}>
+            Current Status: {currentBiometricStatus ? 'Enabled' : 'Disabled'}
           </Text>
           <Text
             style={{
@@ -109,25 +166,36 @@ const BiometricModal = ({isVisible, onClose, onCancel}) => {
               fontFamily: Fonts.regular,
               color: 'grey',
               textAlign: 'center',
+              marginBottom: 20,
             }}>
-            This app was designed to support Touch ID. It has not been updated
-            for Face ID.
+            {currentBiometricStatus 
+              ? 'App Lock is currently enabled. You can disable it by authenticating.'
+              : 'Enable App Lock to secure your app with biometric authentication.'
+            }
           </Text>
           <View style={{flexDirection: 'row'}}>
             <GenericButton
               title={`Cancel`}
-              cStyle={{marginTop: 25, width: '50%', marginRight: 5}}
+              cStyle={{marginTop: 25, width: '30%', marginRight: 5}}
               onPress={() => {
                 onCancel();
-                // navigation.navigate(SCREENS.LOGIN);
               }}
             />
-            <GenericButton
-              title={'Confirm'}
-              cStyle={{backgroundColor: '#000', marginTop: 25, width: '50%'}}
-              tStyle={{color: 'white'}}
-              onPress={checkBiometrics}
-            />
+            {currentBiometricStatus ? (
+              <GenericButton
+                title={'Disable'}
+                cStyle={{backgroundColor: '#ff4444', marginTop: 25, width: '65%'}}
+                tStyle={{color: 'white'}}
+                onPress={handleDisableBiometric}
+              />
+            ) : (
+              <GenericButton
+                title={'Enable'}
+                cStyle={{backgroundColor: '#000', marginTop: 25, width: '65%'}}
+                tStyle={{color: 'white'}}
+                onPress={() => checkBiometrics('Enable')}
+              />
+            )}
           </View>
         </View>
       </View>

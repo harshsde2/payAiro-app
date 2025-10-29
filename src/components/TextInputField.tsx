@@ -37,7 +37,7 @@ const TextInputField: FC<InputProps> = (props) => {
     rightIconComponent,
   } = props;
 
-  console.log("---- > ",rightIconComponent)
+  // console.log("---- > ",rightIconComponent)
   const [isVisible, setisVisible] = useState(false);
   const { theme } = useTheme();
   return (

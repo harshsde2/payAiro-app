@@ -23,7 +23,7 @@ const CryptoTransactionCard: React.FC<CryptoTransactionCardProps> = ({
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
+      return date?.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
@@ -36,7 +36,7 @@ const CryptoTransactionCard: React.FC<CryptoTransactionCardProps> = ({
 
   // Get transaction type display text
   const getTransactionTypeText = () => {
-    switch (item.type) {
+    switch (item?.type) {
       case 'buy':
         return `${item.to_currency}`;
       case 'sell':
@@ -54,7 +54,7 @@ const CryptoTransactionCard: React.FC<CryptoTransactionCardProps> = ({
 
   // Get status color
   const getStatusColor = () => {
-    switch (item.status.toLowerCase()) {
+    switch (item?.status?.toLowerCase()) {
       case 'complete':
         return theme.colors.palette.green700
       case 'success':
@@ -103,7 +103,7 @@ const CryptoTransactionCard: React.FC<CryptoTransactionCardProps> = ({
       return (
         <View style={styles.defaultIconContainer}>
           <CustomText variant="caption" fontWeight="bold" color={theme.colors.text.tertiary}>
-            {item.from_currency.substring(0, 2).toUpperCase()}
+            {item?.from_currency?.substring(0, 2)?.toUpperCase()}
           </CustomText>
         </View>
       );
@@ -126,6 +126,7 @@ const CryptoTransactionCard: React.FC<CryptoTransactionCardProps> = ({
 
   const handlePress = () => {
     // Navigate to the new TransactionDetails modal for both fiat and crypto transactions
+    console.log("item =>",JSON.stringify(item,null,2))
     navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_DETAILS_MODAL, {
       transactionData: item,
       isCrypto: isCryptoView,
@@ -178,13 +179,13 @@ const CryptoTransactionCard: React.FC<CryptoTransactionCardProps> = ({
                 color={getStatusColor()}
                 style={styles.statusText}
               >
-                {item.status.toUpperCase()}
+                {item?.status?.toUpperCase()}
               </CustomText>
             </View>
           </View>
 
           <CustomText variant="caption" color={theme.colors.text.tertiary} style={styles.subtitle}>
-            Trade ID: {item.trade_id.substring(0, 8)}...
+            Trade ID: {item.trade_id?.substring(0, 8)}...
           </CustomText>
 
           <CustomText variant="caption" color={theme.colors.text.tertiary} style={styles.date}>

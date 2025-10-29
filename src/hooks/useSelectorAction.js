@@ -19,6 +19,7 @@ export default function useSelectorAction() {
     biometricAvailable,
     bankBalance,
     bankLists,
+    kycStatus,
   } = store.getState().authenticationSlice;
 
   return {
@@ -39,5 +40,6 @@ export default function useSelectorAction() {
     biometricAvailable,
     bankBalance,
     bankLists,
+    kycStatus,
   };
 }

@@ -247,17 +247,17 @@ export default function ConfirmOTP() {
         if (data?.status) {
           console.log("data =>", JSON.stringify(data, null, 2));
 
-          useDispatchAction(setTokens(data?.data?.data));
-          await setToken(data?.data?.data);
-          setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(data?.data?.data));
+          useDispatchAction(setTokens(data?.data));
+          await setToken(data?.data);
+          setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(data?.data));
           useDispatchAction(setSuccessMsg("OTP Verified Successfully"));
 
-          const { step, persona_verification_url } = data?.data?.data;
+          const { step, persona_verification_url } = data?.data;
 
           if (step === 0) {
             (navigation as any).navigate(SCREENS.Name, {
               email,
-              data: data?.data?.data,
+              data: data?.data,
             });
           } else if (step === 1) {
             (navigation as any).navigate(NAVIGATION_SCREENS.CYBRID_WEB_VIEW, {
@@ -297,7 +297,7 @@ export default function ConfirmOTP() {
   return (
     <ScreenContainer avoidKeyboard padding={0}>
       <View style={{ flex: 1 }}>
-        <AuthHeader header={resendEnabled} showAuthLogo={true} />
+        <AuthHeader header={true} showAuthLogo={true} />
       </View>
       <View style={styles.content}>
         <CustomText

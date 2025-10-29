@@ -655,7 +655,7 @@ const NewDashboard = () => {
       (item: any) => item.asset_type == "Realestate"
     ) ?? [];
 
-  // console.log("dataaaa =>", JSON.stringify(DashBoardData, null, 2));
+  // console.log("balances =>", JSON.stringify(balances, null, 2));
   // console.log("token =>", tokens.access);
 
   const {
@@ -721,7 +721,6 @@ const NewDashboard = () => {
       WalletDashboardData?.data?.transactions
     ) {
       setweb3TxLists([
-        ...WalletDashboardData?.data?.transactions?.nft_transactions,
         ...WalletDashboardData?.data?.transactions?.trades,
       ]);
     }

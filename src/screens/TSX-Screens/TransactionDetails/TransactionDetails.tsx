@@ -49,6 +49,12 @@ const TransactionDetails: FC = () => {
     return 'trade_id' in data && 'type' in data && (data.type === 'buy' || data.type === 'sell');
   };
 
+  const isCryptoTransferTransaction = (data: any): data is ICryptoSendReceiveTransaction => {
+    return (
+      ('type' in data && data.type === 'send') ||
+      ('type' in data && data.type === 'receive')
+    );
+  };
 
 
   const renderStatusBadge = (status: string) => {
@@ -209,6 +215,34 @@ const TransactionDetails: FC = () => {
             </View>
             <CustomText variant="h2" style={styles.amount}>
               ${parseFloat(data.amount).toFixed(2)}
+            </CustomText>
+          </View>
+        </View>
+      );
+    }else if (isCryptoTransferTransaction(transactionData)) {
+      const data = transactionData as ICryptoBuyTransaction;
+    
+      return (
+        <View style={styles.transactionHeader}>
+          {renderStatusBadge(data.status)}
+          <CustomText variant="h2" style={styles.transactionId}>
+            Transaction ID #{data.id}
+          </CustomText>
+          <Text style={styles.transactionDate}>
+            on {moment(data.created_at).format("MMM DD, YYYY")}
+          </Text>
+          <View style={styles.userSection}>
+            <View style={styles.userInfo}>
+              <Image source={{ uri: data.icon }} style={styles.avatar} />
+              <View style={styles.userDetails}>
+                <Text style={styles.userLabel}>Sent to</Text>
+                <CustomText variant="h3" style={styles.userName}>
+                  {data?.to_user}
+                </CustomText>
+              </View>
+            </View>
+            <CustomText variant="h2" style={styles.amount}>
+              {parseFloat(data?.final_amount).toFixed(8)} {data.to_currency}
             </CustomText>
           </View>
         </View>

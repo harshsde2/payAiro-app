@@ -8,7 +8,7 @@ import {
   useTransactions,
   useUserPaymentRequests,
 } from "query/hooks";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -20,6 +20,7 @@ import {
 import { Theme, useTheme } from "styles";
 import CustomSearchTextInput from "tsx-components/CustomSearchTextInput";
 import DashboardSection from "tsx-components/DashboardSection";
+import CustomText from "tsx-components/CustomText";
 import CommonModal from "tsx-components/modals/CommonModal";
 import TransactionFilter from "tsx-components/modals/TransactionFilter";
 import BottomNavigation from "../../components/BottomNavigation";
@@ -192,6 +193,44 @@ export default function Transaction() {
 
   const [showFilter, setShowFilter] = useState(false);
   const [searchText, setSearchText] = useState("");
+
+  // Derived search filters for fiat and crypto views
+  const normalizedSearch = useMemo(() => searchText.trim().toLowerCase(), [searchText]);
+
+  const displayedFiatTransactions = useMemo(() => {
+    const txs = filteredTransactionsData?.data?.transactions ?? [];
+    if (!normalizedSearch) return txs;
+    return txs.filter((item: any) => {
+      const haystack = [
+        item?.project_name,
+        item?.recipient_username,
+        item?.sender_username,
+        item?.payairoTag,
+      ]
+        .filter(Boolean)
+        .map((v: string) => String(v).toLowerCase());
+      return haystack.some((v: string) => v.includes(normalizedSearch));
+    });
+  }, [filteredTransactionsData, normalizedSearch]);
+
+  const displayedCryptoTransactions = useMemo(() => {
+    const txs = web3TxLists ?? [];
+    if (!normalizedSearch) return txs;
+    return txs.filter((item: any) => {
+      const haystack = [
+        item?.type,
+        item?.from_currency,
+        item?.to_currency,
+        item?.status,
+        item?.trade_id,
+        item?.network,
+        item?.token,
+      ]
+        .filter(Boolean)
+        .map((v: string) => String(v).toLowerCase());
+      return haystack.some((v: string) => v.includes(normalizedSearch));
+    });
+  }, [web3TxLists, normalizedSearch]);
 
   // Dispatch action when screen is focused
   useEffect(() => {
@@ -627,8 +666,8 @@ export default function Transaction() {
             >
               {/* Fiat Transactions */}
               {isCrypto && filteredTransactionsData &&
-              filteredTransactionsData?.data?.transactions?.length > 0 && (
-                filteredTransactionsData.data.transactions.map(
+              displayedFiatTransactions?.length > 0 && (
+                displayedFiatTransactions.map(
                   (item: any, key: any) => (
                     <TransactionCard
                       item={item}
@@ -640,10 +679,18 @@ export default function Transaction() {
                 )
               )}
 
+              {isCrypto && (!filteredTransactionsData || displayedFiatTransactions?.length === 0) && (
+                <View style={{ alignItems: "center", justifyContent: "center", paddingVertical: 16 }}>
+                  <CustomText variant="body1" color={theme.colors.text.secondary}>
+                    No transactions found
+                  </CustomText>
+                </View>
+              )}
+
               {/* Crypto Transactions */}
-              {!isCrypto && web3TxLists &&
-              web3TxLists?.length > 0 && (
-                web3TxLists.map(
+              {!isCrypto && displayedCryptoTransactions &&
+              displayedCryptoTransactions?.length > 0 && (
+                displayedCryptoTransactions.map(
                   (item: any, key: any) => (
                     <CryptoTransactionCard
                       item={item}
@@ -652,6 +699,14 @@ export default function Transaction() {
                   )
                 )
               ) }
+
+              {!isCrypto && displayedCryptoTransactions?.length === 0 && (
+                <View style={{ alignItems: "center", justifyContent: "center", paddingVertical: 16 }}>
+                  <CustomText variant="body1" color={theme.colors.text.secondary}>
+                    No transactions found
+                  </CustomText>
+                </View>
+              )}
             </DashboardSection>
           </View>
         </ScrollView>

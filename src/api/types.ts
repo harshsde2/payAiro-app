@@ -2,7 +2,8 @@
 export interface ApiResponse<T> {
   status: boolean;
   data: T;
-  message?: string;
+  message: string;
+  toast_message:string
 }
 
 // User interfaces

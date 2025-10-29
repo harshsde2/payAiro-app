@@ -97,11 +97,11 @@ export default function Name(props: any) {
     payload.append("patriot_esign", checked);
     setIsPending(true);
     patchUser(payload as any, {
-      onSuccess: (datas) => {
+      onSuccess: (datas : any) => {
         setIsPending(false);
         getCurrentStep();
-        useDispatchAction(setUserData(datas?.data?.data));
-        // console.log("datas =>", JSON.stringify(datas, null, 2));
+        useDispatchAction(setUserData(datas?.data));
+        console.log("datas =>", JSON.stringify(datas, null, 2));
         if (datas && datas?.status) {
           useDispatchAction(
             setSuccessMsg("Name & PayAiro Has Been Updated Successfully")

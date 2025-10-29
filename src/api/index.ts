@@ -25,6 +25,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     try {
+      console.log("chal raha hai")
       const tokensString = getItem(STORAGE_KEYS.AUTH_TOKENS);
       if (tokensString) {
         const tokens: Tokens = JSON.parse(tokensString);

@@ -48,7 +48,7 @@ export default function SendAndReceive() {
   return (
     <ScreenContainer padding={0}>
       <HeaderTitle leftIcon={"true"} title={"Crypto"} rightIcon={""} />
-      <View style={[styles.textInputAndFilterContainer]}>
+      {/* <View style={[styles.textInputAndFilterContainer]}>
         <View style={[styles.testInputContainer]}>
           <CustomSearchTextInput
             placeholder="Search Name or PayAiro tag..."
@@ -59,7 +59,7 @@ export default function SendAndReceive() {
             value={searchText}
           />
         </View>
-      </View>
+      </View> */}
       <View style={[styles.whiteSheetContainer]}>
         <View
           style={{

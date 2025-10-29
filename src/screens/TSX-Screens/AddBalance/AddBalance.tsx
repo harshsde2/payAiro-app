@@ -11,7 +11,6 @@ import { useCommonAddBalanceStyles } from "./Styles";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
 import useSelectorAction from "hooks/useSelectorAction";
-import MyDropdown from "tsx-components/MyDropdown";
 import { SvgIcons } from "constants/svgs";
 import DashboardSection from "tsx-components/DashboardSection";
 import { CustomText } from "tsx-components";
@@ -45,7 +44,7 @@ const AddBalance = () => {
     // },
   ];
 
-  const DROPDOWN_LISTS = bankLists.map((item: any) => {
+  const BANK_LISTS = bankLists.map((item: any) => {
     const last4 = item.account_number?.slice(-4);
     const maskedAccount = `•••• ${last4}`;
     const isExternalAccount =
@@ -57,6 +56,9 @@ const AddBalance = () => {
     return {
       label: `${item?.bank_name || ""} (${maskedAccount || ""}) ${accountType || ""}`,
       value: accountType?.toLowerCase() || "",
+      bank_name: item?.bank_name || "",
+      account_number: item?.account_number || "",
+      account_type: accountType || "",
     };
   });
 
@@ -65,43 +67,51 @@ const AddBalance = () => {
   const customStyle = customStyles(theme);
   const styles = { ...useCommonAddBalanceStyles(), ...customStyle };
 
-  const [souceAccount, setsouceAccount] = useState(DROPDOWN_LISTS[0]?.value || "");
+  const [selectedBank, setSelectedBank] = useState(BANK_LISTS[0] || null);
   const [amount, setAmount] = useState("");
-
   const current_balance = (bankBalance as any)?.bank_account?.usd;
 
-  // console.log(bankBalance);
+  console.log("BANK_LISTS ->",JSON.stringify(BANK_LISTS,null,2));
 
   return (
     <ScreenContainer scrollable padding={0}>
       <HeaderTitle title="Add Balance" leftIcon="true" />
 
-      {/* Dropdown Section */}
+      {/* Bank Selection Button */}
       <View style={{ width: "100%", paddingHorizontal: 20 }}>
-        <MyDropdown
-          placeholder={"Source Account Type"}
-          data={DROPDOWN_LISTS.filter(
-            (item) => !item?.value?.toLowerCase()?.includes("ira")
-          )}
-          value={souceAccount}
-          search={false}
-          itemTextStyle={{
-            fontSize: 14,
-            fontFamily: theme?.typography?.fontFamily?.montserrat,
-          }}
-          placeholderStyle={{ paddingLeft: 10 }}
-          selectedTextStyle={{ paddingLeft: 10 }}
-          selectedTextProps={{ numberOfLines: 1 }}
+        <TouchableOpacity
           style={{
             borderRadius: theme?.spacing?.spacing[2],
-            padding: 10,
+            padding: 5,
             borderColor: theme?.colors?.palette?.grey300,
             borderWidth: 0.5,
-            paddingLeft: 10,
+            backgroundColor: theme?.colors?.palette?.grey250,
+            flexDirection: "row",
+            alignItems: "center",
           }}
-          renderLeftIcon={() => <SvgIcons.Bank />}
-          onChange={(item: any) => setsouceAccount(item)}
-        />
+          onPress={() => 
+            navigation.navigate(NAVIGATION_SCREENS.BANK_SELECTION, {
+              bankList: BANK_LISTS.filter(
+                (item) => !item?.value?.toLowerCase()?.includes("ira")
+              ),
+              selectedBank,
+              onSelectBank: setSelectedBank,
+            })
+          }
+        >
+          <SvgIcons.Bank />
+          <View style={{ flex: 1, paddingLeft: 10 }}>
+            <CustomText variant="subtitle2">
+              {selectedBank ? selectedBank.bank_name : "Select Source Account"}
+            </CustomText>
+            {selectedBank && (
+              <CustomText variant="caption">
+                {selectedBank.label.split("(")[1]?.split(")")[0]} • {selectedBank.account_type}
+              </CustomText>
+            )}
+          </View>
+          <SvgIcons.ChevronDown width={20} height={20} />
+        </TouchableOpacity>
       </View>
       <AmountInputDisplay
         amount={amount}
@@ -130,13 +140,14 @@ const AddBalance = () => {
                 marginBottom: 10,
                 opacity: amount === "" || parseInt(amount) <= 0 ? 0.6 : 1,
               }}
-              onPress={() =>
+              onPress={() => {
+                console.log("Navigating with selectedBank ->", JSON.stringify(selectedBank, null, 2));
                 navigation.navigate(method?.navigation, {
                   amount,
-                  souceAccount,
+                  selectedBank,
                   title: "Add Balance",
-                })
-              }
+                });
+              }}
               disabled={amount === "" || parseInt(amount) <= 0}
             >
               {method.icon}

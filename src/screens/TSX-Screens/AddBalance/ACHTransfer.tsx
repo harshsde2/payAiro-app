@@ -18,7 +18,6 @@ import { SvgIcons } from "constants/svgs";
 import { CustomText } from "tsx-components";
 import { Theme, useTheme } from "styles";
 import DashboardSection from "tsx-components/DashboardSection";
-import MyDropdown from "tsx-components/MyDropdown";
 import useSelectorAction from "hooks/useSelectorAction";
 import AmountInputDisplay from "./AmountInputDisplay";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -40,7 +39,7 @@ import Share from "react-native-share";
 
 const ACHTransfer = () => {
   const routes = useRoute();
-  const { amount: paramsAmount, souceAccount: paramsSouceAccount } = (
+  const { amount: paramsAmount, selectedBank: paramsSelectedBank } = (
     routes as any
   ).params;
 
@@ -61,6 +60,7 @@ const ACHTransfer = () => {
     value: "",
   });
   const [showExtenalModel, setShowExternalModal] = useState(false);
+  const [selectedBank, setSelectedBank] = useState<any>(null);
   // const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -72,33 +72,19 @@ const ACHTransfer = () => {
   // console.log("selectedAccount =>", selectedAccount);
   // console.log("paramsSouceAccount =>", paramsSouceAccount);
 
-  const selectedBank = bankLists.filter((bank: any) =>
-    bank?.account_type?.toLowerCase()?.includes(
-        paramsSouceAccount?.toLowerCase() == "external"
-          ? "checking"
-          : paramsSouceAccount?.toLowerCase()
-      )
-  ) as any;
 
-  // console.log(
-  //   "paramsSouceAccount =>",
-  //   JSON.stringify(selectedAccount[0], null, 2)
-  // );
+  // Initialize selectedBank from route parameters
+  React.useEffect(() => {
+    console.log("paramsSelectedBank ->", JSON.stringify(paramsSelectedBank, null, 2));
+    if (paramsSelectedBank) {
+      setSelectedBank(paramsSelectedBank);
+    }
+  }, [paramsSelectedBank]);
 
-  const DROPDOWN_LISTS = bankLists.map((item: any) => {
-    const last4 = item?.account_number?.slice(-4);
-    const maskedAccount = `•••• ${last4}`;
-    const isExternalAccount =
-      item?.account_type === "checking" || item?.account_type === "savings";
-    const accountType = !isExternalAccount
-      ? item?.account_type?.toUpperCase()
-      : "external";
-
-    return {
-      label: `${item?.bank_name || ""} (${maskedAccount || ""}) ${accountType || ""}`,
-      value: item?.account_type || "",
-    };
-  });
+  // Debug selectedBank state
+  React.useEffect(() => {
+    console.log("selectedBank state ->", JSON.stringify(selectedBank, null, 2));
+  }, [selectedBank]);
 
   // console.log(JSON.stringify(bankLists, null, 2));
 
@@ -120,12 +106,11 @@ const ACHTransfer = () => {
     };
   });
 
-  const [souceAccount, setsouceAccount] = useState(DROPDOWN_LISTS[0]?.value || "");
 
   const handleSelfTransfer = async () => {
     if (
       paramsAmount === "" ||
-      paramsSouceAccount === "" ||
+      !selectedBank ||
       selectedAccount?.title === ""
     ) {
       useDispatchAction(setErrorMsg("One or more field are empty"));
@@ -134,8 +119,8 @@ const ACHTransfer = () => {
 
     const formData = new FormData();
     formData.append("amount", paramsAmount);
-    formData.append("source_account_type", selectedAccount?.value);
-    formData.append("destination_account_type", paramsSouceAccount);
+    formData.append("source_account_type", selectedBank?.value); // Source: where money comes FROM
+    formData.append("destination_account_type", selectedAccount?.value); // Destination: where money goes TO
 
     useDispatchAction(setShowLoader(true));
 
@@ -161,9 +146,9 @@ const ACHTransfer = () => {
 
   const shareOptions = {
     message: `Account Details:
-    Routing Number: ${selectedBank[0]?.ref_code || ""}
-    Account Number: ${selectedBank[0]?.account_number || ""}
-    Bank Name: ${selectedBank[0]?.bank_name || ""}
+    Routing Number: ${selectedBank?.ref_code || ""}
+    Account Number: ${selectedBank?.account_number || ""}
+    Bank Name: ${selectedBank?.bank_name || ""}
     Amount: ${paramsAmount}`,
   };
 
@@ -195,10 +180,6 @@ const ACHTransfer = () => {
   //   )
   // );
   // console.log("paramsSouceAccount list =>", paramsSouceAccount);
-  const dorpdownSelectedValue =
-    paramsSouceAccount?.toLowerCase() == "external"
-      ? "checking"
-      : paramsSouceAccount?.toLowerCase() || "";
   return (
     <ScreenContainer padding={0}>
       <HeaderTitle title="Account Transfer" leftIcon="true" />
@@ -225,19 +206,19 @@ const ACHTransfer = () => {
               <CustomText variant={"caption"} style={styles.label}>
                 Routing Number
               </CustomText>
-                <CustomText>{selectedBank[0]?.ref_code || "17147714"}</CustomText>
+                <CustomText>{selectedBank?.ref_code || "17147714"}</CustomText>
             </View>
             <View style={styles.row}>
               <CustomText variant={"caption"} style={styles.label}>
                 Account Number
               </CustomText>
-              <CustomText>{selectedBank[0]?.account_number || ""}</CustomText>
+              <CustomText>{selectedBank?.account_number || ""}</CustomText>
             </View>
             <View style={styles.row}>
               <CustomText variant={"caption"} style={styles.label}>
                 Bank Name
               </CustomText>
-              <CustomText>{selectedBank[0]?.bank_name || ""}</CustomText>
+              <CustomText>{selectedBank?.bank_name || ""}</CustomText>
             </View>
             <View style={styles.row}>
               <CustomText variant={"caption"} style={styles.label}>
@@ -266,49 +247,63 @@ const ACHTransfer = () => {
         </CommonModal>
       )}
       <View style={{ paddingHorizontal: 20 }}>
-        {/* Selected Bank */}
+        {/* Source Account (Pre-selected and Disabled) */}
         <View style={{ width: "100%" }}>
-          <MyDropdown
-            placeholder={"Source Account Type"}
-            data={DROPDOWN_LISTS}
-            value={dorpdownSelectedValue}
-            search={false}
-            itemTextStyle={{
-              fontSize: 14,
-              fontFamily: theme?.typography?.fontFamily?.montserrat,
-            }}
-            placeholderStyle={{ paddingLeft: 10 }}
-            selectedTextStyle={{ paddingLeft: 10 }}
-            selectedTextProps={{ numberOfLines: 1 }}
+          <View
             style={{
               borderRadius: theme?.spacing?.spacing[2],
-              padding: 10,
+              padding: 15,
               borderColor: theme?.colors?.palette?.grey300,
               borderWidth: 0.5,
-              paddingLeft: 10,
+              backgroundColor: theme?.colors?.palette?.grey100,
+              flexDirection: "row",
+              alignItems: "center",
+              opacity: 0.6,
             }}
-            disable={true}
-            renderLeftIcon={() => <SvgIcons.Bank />}
-            onChange={(item: any) => setsouceAccount(item)}
-          />
+          >
+            <SvgIcons.Bank />
+            <View style={{ flex: 1, paddingLeft: 10 }}>
+              <CustomText variant="subtitle2">
+                {selectedBank ? selectedBank.bank_name : "Source Account"}
+              </CustomText>
+              {selectedBank && (
+                <CustomText variant="caption">
+                  {selectedBank.label.split("(")[1]?.split(")")[0]} • {selectedBank.account_type}
+                </CustomText>
+              )}
+            </View>
+            <CustomText variant="caption" style={{ color: theme?.colors?.palette?.grey500 }}>
+              From
+            </CustomText>
+          </View>
         </View>
       </View>
       <AmountInputDisplay amount={amount} setAmount={setAmount} />
       <CustomText align="center" size={14} variant="caption">
         Current Balance: ${(bankBalance as any)?.bank_account?.usd}
       </CustomText>
+      
+      {/* Transfer Flow Header */}
+      <View style={{ paddingHorizontal: 20, marginVertical: 10 }}>
+        <CustomText variant="subtitle2" align="center" style={{ marginBottom: 5 }}>
+          Transfer Flow
+        </CustomText>
+        <CustomText variant="caption" align="center" style={{ color: theme?.colors?.palette?.grey500 }}>
+          Money will be transferred FROM the source account TO the destination account
+        </CustomText>
+      </View>
 
       <View style={[styles.whiteSheetContainer]}>
         {/* {" "} */}
-        <DashboardSection title="Select your Account">
+        <DashboardSection title="Select Destination Account (Where money goes)">
           {ACCOUNT_LIST.filter(
             (item: any) =>
               !item?.title
                 ?.toLowerCase()
                 ?.includes(
-                  paramsSouceAccount?.toLowerCase() == "checking"
+                  selectedBank?.value?.toLowerCase() == "external"
                     ? "external"
-                    : paramsSouceAccount?.toLowerCase()
+                    : selectedBank?.value?.toLowerCase()
                 )
           )
             .filter((item) => !item?.title?.toLowerCase()?.includes("ira"))
@@ -358,17 +353,20 @@ const ACHTransfer = () => {
                   )}
                 </View>
                 {item.icon}
-                <CustomText
-                  color={theme.colors.palette.black}
-                  variant="subtitle1"
-                  size={12}
-                  style={{ marginLeft: 10 }}
-                >
-                  {item.title}
-                </CustomText>
+            <CustomText
+              color={theme.colors.palette.black}
+              variant="subtitle1"
+              size={12}
+              style={{ marginLeft: 10 }}
+            >
+              {item.title}
+            </CustomText>
+            <CustomText variant="caption" style={{ color: theme?.colors?.palette?.grey500 }}>
+              To
+            </CustomText>
               </TouchableOpacity>
             ))}
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={() => setShowExternalModal(true)}
             style={{
               flexDirection: "row",
@@ -418,7 +416,10 @@ const ACHTransfer = () => {
             >
               {"External Account"}
             </CustomText>
-          </TouchableOpacity>
+            <CustomText variant="caption" style={{ color: theme?.colors?.palette?.grey500 }}>
+              To
+            </CustomText>
+          </TouchableOpacity> */}
         </DashboardSection>
         <GenericButton
           title="Add Balance"

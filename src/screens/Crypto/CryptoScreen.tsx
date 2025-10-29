@@ -38,12 +38,12 @@ export default function CryptoScreen() {
   const { data, isPending, isFetched, isSuccess, isError, isFetching } =
     useGetCrypto();
 
-  // console.log("data ===> ", JSON.stringify(data, null, 2));
+  console.log("data ===> ", JSON.stringify(data, null, 2));
   // console.log("data => ", JSON.stringify(isFetching, null, 2));
   return (
     <ScreenContainer padding={0}>
       <HeaderTitle leftIcon={"true"} title={"Crypto"} rightIcon={""} />
-      <View style={[styles.textInputAndFilterContainer]}>
+      {/* <View style={[styles.textInputAndFilterContainer]}>
         <View style={[styles.testInputContainer]}>
           <CustomSearchTextInput
             placeholder="Search Name or PayAiro tag..."
@@ -54,7 +54,7 @@ export default function CryptoScreen() {
             value={searchText}
           />
         </View>
-      </View>
+      </View> */}
       <View style={[styles.whiteSheetContainer]}>
         <View
           style={{
@@ -157,9 +157,9 @@ export default function CryptoScreen() {
                       <CustomText variant={"subtitle2"}>
                         {item?.symbol}
                       </CustomText>
-                      <CustomText variant={"caption"}>
+                      {/* <CustomText variant={"caption"}>
                         {item?.symbol.slice(0, 3)}
-                      </CustomText>
+                      </CustomText> */}
                     </View>
                     <View style={[{}]}>
                       <CustomText variant={"subtitle2"}>
@@ -222,9 +222,9 @@ export default function CryptoScreen() {
                       <CustomText variant={"subtitle2"}>
                         {item?.symbol}
                       </CustomText>
-                      <CustomText variant={"caption"}>
+                      {/* <CustomText variant={"caption"}>
                         {item?.symbol.slice(0, 3)}
-                      </CustomText>
+                      </CustomText> */}
                     </View>
                     <View style={[{}]}>
                       <CustomText variant={"subtitle2"}>

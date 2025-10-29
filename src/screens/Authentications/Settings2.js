@@ -48,6 +48,7 @@ import BiometricModal from '../../components/BiometricModal';
 import PincodeScreen from './PincodeScreen';
 import Pincode2 from './Pincode2';
 import { ScreenContainer } from 'HOC';
+import {getBiometric} from '../../services/Auth';
 
 export default function Settings2() {
   const {tokens} = useSelectorAction();
@@ -60,10 +61,22 @@ export default function Settings2() {
   const [showPinOld, setshowPinOld] = useState(false);
   const [isConfirm, setisConfirm] = useState(false);
   const [pinOld, setpinOld] = useState('');
+  const [biometricStatus, setBiometricStatus] = useState(false);
 
   useEffect(() => {
     getkycStep();
+    getBiometricStatus();
   }, []);
+
+  const getBiometricStatus = async () => {
+    try {
+      const biometricData = await getBiometric();
+      setBiometricStatus(biometricData === true);
+    } catch (error) {
+      console.log('Error getting biometric status:', error);
+      setBiometricStatus(false);
+    }
+  };
 
   const getkycStep = async () => {
     const kycData = await getKYC(tokens?.access);
@@ -76,7 +89,10 @@ export default function Settings2() {
       {/* <BottomNavigation /> */}
       <BiometricModal
         isVisible={isVisible}
-        onCancel={() => setisVisible(false)}
+        onCancel={() => {
+          setisVisible(false);
+          getBiometricStatus(); // Refresh status when modal closes
+        }}
         onClose={() => console.log('object')}
       />
       <KeyboardAvoidingView
@@ -177,6 +193,16 @@ export default function Settings2() {
                       color: kycStep === '4' ? 'green' : 'orange',
                     }}>
                     {kycStep === '4' ? 'Verified' : 'Pending'}
+                  </Text>
+                ) : i?.name === 'App Lock' ? (
+                  <Text
+                    style={{
+                      textAlign: 'right',
+                      fontFamily: Fonts.bold,
+                      marginLeft: 40,
+                      color: biometricStatus ? 'green' : 'grey',
+                    }}>
+                    {biometricStatus ? 'Enabled' : 'Disabled'}
                   </Text>
                 ) : null}
                 <SvgXml xml={SVGRightIcon} style={{marginRight: 20}} />

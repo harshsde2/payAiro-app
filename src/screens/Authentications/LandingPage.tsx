@@ -47,7 +47,7 @@ const LandingPage = () => {
           onPress={() => {
             navigation.navigate(NAVIGATION_SCREENS.SIGNUP);
           }}
-          title="Sign Up"
+          title="Create an Account"
         />
       </View>
     </ScreenContainer>

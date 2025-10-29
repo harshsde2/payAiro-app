@@ -33,6 +33,7 @@ import { getItem, STORAGE_KEYS } from "./src/storage/mmkv";
 import { ThemeProvider } from "./src/styles";
 import GlobalLoader from "./src/tsx-components/GlobalLoader";
 import { LinkingPath } from "./src/utils/linking";
+import UseNet from './src/utils/UseNet';
 
 export default function App() {
   // -------------------- Redux State --------------------
@@ -329,6 +330,7 @@ export default function App() {
               dispatch(setActiveTab(activeTabs));
             }}
           >
+            <UseNet />
             {errorMsg || successMsg ? <ErrorToast /> : null}
             {/* {console.log('showLoader =>', showLoader)} */}
             {showLoader && <GlobalLoader />}
