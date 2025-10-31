@@ -66,6 +66,7 @@ const SupportScreen = () => {
         // console.log("data => ✅", JSON.stringify(data, null, 2));
         useDispatchAction(setSuccessMsg("Your Query Submit Successfully"));
         // handleAddBankAccounts();
+        navigation.goBack();
       },
       onError: (error: any) => {
         useDispatchAction(setShowLoader(false));

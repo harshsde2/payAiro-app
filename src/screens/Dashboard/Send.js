@@ -46,6 +46,7 @@ import { SvgIcons } from "constants/svgs";
 import { useDispatch } from "react-redux";
 import { BASE_URL } from "api/endpoints";
 import axios from "axios";
+import { useVerifyUserByIdentifier } from "query/hooks/useUser";
 
 export default function Send(props) {
   const { requested, type, sender: senderDetails } = props.route.params;
@@ -66,6 +67,7 @@ export default function Send(props) {
   const { biometricAvailable } = useSelectorAction();
   const [selectedBank, setselectedBank] = useState(bankLists[0]);
   const [isDropdown, setisDropdown] = useState(false);
+  const { mutateAsync: verifyUserByIdentifier, isLoading: userLoading, error: userError } = useVerifyUserByIdentifier();
 
   const hasKey = (bank, key) => bank.some((obj) => key in obj);
 
@@ -372,23 +374,31 @@ export default function Send(props) {
                 title={"Next"}
                 cStyle={{ marginTop: 10 }}
                 onPress={async () => {
-                  const formData = new FormData();
-                  formData.append("identifier", sender.trim());
-                  const data = await checkUser(formData, tokens?.access);
-                  // console.log(data, "datatatas");
-                  if (data && data?.status) {
-                    navigation.navigate(SCREENS.ScanPay, {
-                      type:
-                        requested || type === "requested"
-                          ? "requested"
-                          : "receive",
-                      sender: sender.trim(),
-                      bank: selectedBank,
-                    });
-                  } else {
-                    useDispatchAction(setErrorMsg("Recipient not found"));
+                  if (!sender.trim()) {
+                    dispatch(setErrorMsg("Please enter a valid identifier"));
+                    return;
+                  }
+                  try {
+                    dispatch(setShowLoader(true));
+                    const data = await verifyUserByIdentifier({ identifier: sender.trim() });
+                    console.log(data, "verified user data");
+                    if (data && data.status) {
+                      navigation.navigate(SCREENS.ScanPay, {
+                        type: requested || type === "requested" ? "requested" : "receive",
+                        sender: sender.trim(),
+                        bank: selectedBank,
+                      });
+                    } else {
+                      dispatch(setErrorMsg(data?.message || "Recipient not found"));
+                    }
+                  } catch (e) {
+                    console.log("User verification failed:", e);
+                    dispatch(setErrorMsg(e?.message || "Something went wrong. Please try again."));
+                  } finally {
+                    dispatch(setShowLoader(false));
                   }
                 }}
+                disabled={userLoading}
               />
             </View>
           </View>

@@ -35,7 +35,7 @@ export interface ICryptoBuyTransaction {
   trade_id: string;
   account_id: string;
   amount: string;
-  final_amount?: string;
+  final_amount: string;
   Transaction_fee_persentage?: string;
   from_currency: string;
   to_currency: string;
@@ -47,7 +47,36 @@ export interface ICryptoBuyTransaction {
   user: string;
 }
 
-export type TransactionData = IFiatTransaction | ICryptoSendReceiveTransaction | ICryptoBuyTransaction;
+// Covers on-ledger or internal crypto transfers with type "send" | "receive"
+export interface ICryptoTransferTransaction {
+  id: number;
+  usd_amount: string;
+  trade_id: string;
+  account_id: string | null;
+  amount: string; // requested amount (fiat/crypto depending on context)
+  final_amount: string; // actual crypto amount sent/received
+  Transaction_fee_persentage?: string;
+  from_currency: string; // e.g., USDT_TRX
+  to_currency: string; // e.g., USDT_TRX
+  network: string;
+  status: string; // e.g., complete, pending, failed
+  created_at: string;
+  type: 'send' | 'receive';
+  withdrawal_address: string | null;
+  recipient_email: string | null;
+  recipient_username: string | null;
+  sender_email: string | null;
+  sender_username: string | null;
+  icon: string;
+  user: string;
+  to_user: string | null;
+}
+
+export type TransactionData =
+  | IFiatTransaction
+  | ICryptoSendReceiveTransaction
+  | ICryptoBuyTransaction
+  | ICryptoTransferTransaction;
 
 export interface ITransactionDetailsProps {
   route: {

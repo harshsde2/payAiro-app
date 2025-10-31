@@ -310,7 +310,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
                   style={{ textAlign: "center", textAlignVertical: "center" }}
                 >
                   {showBalance
-                    ? `$${bankBalance?.bank_account?.usd}`
+                    ? `$${bankBalance?.bank_account?.usd || '0.00'}`
                     : "$*****"}
                 </CustomText>
                 {/* ) : (
@@ -481,7 +481,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
                   variant={"h3"}
                   // style={{ flex: 1 }}
                 >
-                  {showCryptoBalance ? displayCryptobalance : "*****"}
+                  {showCryptoBalance ? displayCryptobalance || '0.00' : "*****"}
                 </CustomText>
                 {!isLoading && (
                   <TouchableOpacity style={{ zIndex: 11 }}>

@@ -80,7 +80,7 @@ export default function Signup() {
         onSuccess: (data: any) => {
           setIsSubmitting(false);
           if (data?.status) {
-            // console.log("data =>", JSON.stringify(data, null, 2));
+            console.log("data =>", JSON.stringify(data, null, 2));
             useDispatchAction(setSuccessMsg("OTP has been sent to your email"));
             navigation.navigate(SCREENS.OTP, { email });
           } else {
@@ -191,17 +191,6 @@ export default function Signup() {
           <View style={styles.checkboxContainer}>
             <TouchableOpacity
               activeOpacity={0.7}
-              onPress={() => setIsPoliticalModalVisible(true)}
-              style={styles.termsAndConditionContainer}
-            >
-              {renderCheckbox(isPoliticallyExposed)}
-              <CustomText variant={"caption"}>
-                Are you a politically exposed person?
-              </CustomText>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              activeOpacity={0.7}
               onPress={() => setIsTermsAccepted((prev) => !prev)}
               style={styles.termsAndConditionContainer}
             >
@@ -219,6 +208,16 @@ export default function Signup() {
                   {" "}
                   Terms & Conditions
                 </Text>
+              </CustomText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => setIsPoliticalModalVisible(true)}
+              style={styles.termsAndConditionContainer}
+            >
+              {renderCheckbox(isPoliticallyExposed)}
+              <CustomText variant={"caption"}>
+                Are you a politically exposed person?
               </CustomText>
             </TouchableOpacity>
           </View>

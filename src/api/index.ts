@@ -6,7 +6,7 @@ import axios, {
 import { AUTH, BASE_URL } from "./endpoints";
 import { getItem, STORAGE_KEYS } from "../storage/mmkv";
 import { Tokens } from "./types";
-import { Platform } from "react-native";
+import { Platform, Alert } from "react-native";
 import { stat } from "react-native-fs";
 import useDispatchAction from "hooks/useDispatchAction";
 import { setErrorMsg } from "redux/slices/authenticationSlice";
@@ -25,7 +25,6 @@ const api = axios.create({
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     try {
-      console.log("chal raha hai")
       const tokensString = getItem(STORAGE_KEYS.AUTH_TOKENS);
       if (tokensString) {
         const tokens: Tokens = JSON.parse(tokensString);
@@ -34,6 +33,79 @@ api.interceptors.request.use(
         if (tokens.access) {
           config.headers.Authorization = `Bearer ${tokens.access}`;
         }
+      }
+
+      // KYC gating
+      try {
+        const { store } = require("../redux/store");
+        const { toKycMode } = require("../types/kyc");
+        const state = store.getState();
+        const kycStatus = state?.authenticationSlice?.kycStatus || null;
+        const mode = toKycMode(kycStatus);
+
+        const method = (config.method || "get").toLowerCase();
+        const url = config.url || "";
+
+        // Robust allow-list of absolutely public routes
+        // Note: we use === for exact match, not partial includes. Adjust if server might return with/without trailing slash.
+        const publicRoutes = [
+          "auth/send-otp/",
+          "auth/V1/send-otp/",
+          "auth/verify/",
+          "auth/V1/verify/",
+          "auth/verify/sendotp/",
+          "auth/verify-otp-send/",
+          "auth/cybird-kyc/status/", // allow KYC status polling even in view-only mode
+          "auth/cybird-kyc/",
+          "auth/V1/cybird-kyc/",
+          "auth/login/",
+          "auth/V1/login/",
+          "/auth/query/", // USER_SUPPORT: allow users to submit support requests even when KYC is pending
+          "auth/query/", // without leading slash variant
+        ];
+        // Find ONLY if route exactly matches (with or without a trailing slash for safety)
+        const isPublic = publicRoutes.some((route) => {
+          return url === route || url === route.replace(/\/$/, "");
+        });
+
+        console.log("[KYC] Interceptor: method =>", method);
+        console.log("[KYC] Interceptor: url =>", url);
+        console.log("[KYC] Interceptor: mode =>", mode, ", isPublic =>", isPublic);
+
+        if (mode === "expired" && !isPublic) {
+          const { resetState, setErrorMsg } = require("../redux/slices/authenticationSlice");
+          const message = "Your KYC status is expired. Please log in again.";
+          useDispatchAction(setErrorMsg(message));
+          Alert.alert("Session Expired", message);
+          useDispatchAction(resetState());
+          const err = new Error("KYC_EXPIRED") as any;
+          err.code = "KYC_EXPIRED";
+          err.kycMode = mode;
+          console.log("[KYC] BLOCKED request (expired):", method, url);
+          return Promise.reject(err);
+        }
+
+        if (mode === "pending" && !isPublic) {
+          const mutating = method === "post" || method === "patch" || method === "delete";
+          if (mutating) {
+            const { setErrorMsg } = require("../redux/slices/authenticationSlice");
+            const msg = "Your KYC is under review. You can browse in view-only mode.";
+            useDispatchAction(setErrorMsg(msg));
+            Alert.alert("KYC Under Review", msg);
+            const err = new Error("KYC_PENDING_VIEW_ONLY") as any;
+            err.code = "KYC_PENDING_VIEW_ONLY";
+            err.kycMode = mode;
+            console.log("[KYC] BLOCKED request (pending):", method, url);
+            return Promise.reject(err);
+          }
+        }
+        if (isPublic) {
+          console.log("[KYC] ALLOWED public request:", method, url);
+        } else {
+          console.log("[KYC] ALLOWED non-mutating or approved:", method, url);
+        }
+      } catch (e) {
+        // swallow gating error
       }
     } catch (error) {
       console.error("Error in request interceptor:", error);

@@ -16,7 +16,13 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import moment from "moment";
 import { Theme, useTheme } from "styles";
 import { CustomText } from "tsx-components";
-import { ITransactionDetailsProps, IFiatTransaction, ICryptoSendReceiveTransaction, ICryptoBuyTransaction } from "./types";
+import {
+  ITransactionDetailsProps,
+  IFiatTransaction,
+  ICryptoSendReceiveTransaction,
+  ICryptoBuyTransaction,
+  ICryptoTransferTransaction,
+} from "./types";
 import { defaultImage } from "utils/configs";
 import useSelectorAction from "hooks/useSelectorAction";
 import { ScreenContainer } from "HOC";
@@ -28,63 +34,74 @@ const TransactionDetails: FC = () => {
   const route = useRoute();
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
-  const styles = {...transactionDetailsStyles(theme),...useGlobalStyles()};
+  const styles = { ...transactionDetailsStyles(theme), ...useGlobalStyles() };
   const { walletData } = useSelectorAction() as any;
   const screenshotRef = useRef<ViewShot>(null);
 
-  const { transactionData, isCrypto = false } = route.params as ITransactionDetailsProps["route"]["params"];
+  const { transactionData, isCrypto = false } =
+    route.params as ITransactionDetailsProps["route"]["params"];
 
-  const isSentByMe = (transactionData as IFiatTransaction).sender_username === walletData?.username;
-  const recipient = isSentByMe ? (transactionData as IFiatTransaction).recipient_username : (transactionData as IFiatTransaction).sender_username;
+  const isSentByMe =
+    (transactionData as IFiatTransaction).sender_username ===
+    walletData?.username;
+  const recipient = isSentByMe
+    ? (transactionData as IFiatTransaction).recipient_username
+    : (transactionData as IFiatTransaction).sender_username;
   // console.log("transactionData =>",JSON.stringify(transactionData,null,2))
   const isFiatTransaction = (data: any): data is IFiatTransaction => {
-    return 'transaction_id' in data && 'sender_username' in data;
+    return "transaction_id" in data && "sender_username" in data;
   };
 
-  const isCryptoSendReceiveTransaction = (data: any): data is ICryptoSendReceiveTransaction => {
-    return 'tx_hash' in data && 'payairoTag' in data;
+  const isCryptoSendReceiveTransaction = (
+    data: any
+  ): data is ICryptoSendReceiveTransaction => {
+    return "tx_hash" in data && "payairoTag" in data;
   };
 
   const isCryptoBuyTransaction = (data: any): data is ICryptoBuyTransaction => {
-    return 'trade_id' in data && 'type' in data && (data.type === 'buy' || data.type === 'sell');
-  };
-
-  const isCryptoTransferTransaction = (data: any): data is ICryptoSendReceiveTransaction => {
     return (
-      ('type' in data && data.type === 'send') ||
-      ('type' in data && data.type === 'receive')
+      "trade_id" in data &&
+      "type" in data &&
+      (data.type === "buy" || data.type === "sell")
     );
   };
 
+  const isCryptoTransferTransaction = (
+    data: any
+  ): data is ICryptoTransferTransaction => {
+    return (
+      ("type" in data && data.type === "send") ||
+      ("type" in data && data.type === "receive")
+    );
+  };
 
   const renderStatusBadge = (status: string) => {
     const normalizedStatus = status?.toLowerCase();
-    const isSuccess = normalizedStatus === 'success';
-    const isPending = normalizedStatus === 'new' || normalizedStatus === 'pending';
-    
-    let statusText = 'Failed';
+    const isSuccess = normalizedStatus === "success" || normalizedStatus === "complete";
+    const isPending =
+      normalizedStatus === "new" || normalizedStatus === "pending";
+
+    let statusText = "Failed";
     let statusStyle = styles.failedBadge;
     let dotStyle = styles.failedDot;
     let textStyle = styles.failedText;
-    
+
     if (isSuccess) {
-      statusText = 'Successful';
+      statusText = "Successful";
       statusStyle = styles.successBadge;
       dotStyle = styles.successDot;
       textStyle = styles.successText;
     } else if (isPending) {
-      statusText = 'Pending';
+      statusText = "Pending";
       statusStyle = styles.pendingBadge;
       dotStyle = styles.pendingDot;
       textStyle = styles.pendingText;
     }
-    
+
     return (
       <View style={[styles.statusBadge, statusStyle]}>
         <View style={[styles.statusDot, dotStyle]} />
-        <Text style={[styles.statusText, textStyle]}>
-          {statusText}
-        </Text>
+        <Text style={[styles.statusText, textStyle]}>{statusText}</Text>
       </View>
     );
   };
@@ -93,15 +110,15 @@ const TransactionDetails: FC = () => {
     if (isFiatTransaction(transactionData)) {
       const data = transactionData as IFiatTransaction;
       const isSent = walletData?.username === data.sender_username;
-      
+
       return (
         <View style={styles.transactionHeader}>
           {renderStatusBadge(data.status)}
-          
+
           <CustomText variant="h2" style={styles.transactionId}>
             Transaction ID #{data.id}
           </CustomText>
-          
+
           <Text style={styles.transactionDate}>
             on {moment(data.created_at).format("MMM DD, YYYY")}
           </Text>
@@ -109,23 +126,35 @@ const TransactionDetails: FC = () => {
           <View style={styles.userSection}>
             <View style={styles.userInfo}>
               <View style={styles.avatarContainer}>
-                {(isSent ? data.recipient_profile_photo : data.sender_profile_photo) ? (
+                {(
+                  isSent
+                    ? data.recipient_profile_photo
+                    : data.sender_profile_photo
+                ) ? (
                   <Image
                     source={{
-                      uri: `https://app.payairo.com${isSent ? data.recipient_profile_photo : data.sender_profile_photo}`
+                      uri: `https://app.payairo.com${
+                        isSent
+                          ? data.recipient_profile_photo
+                          : data.sender_profile_photo
+                      }`,
                     }}
                     style={styles.avatar}
                   />
                 ) : (
                   <View style={styles.avatarPlaceholder}>
                     <Text style={styles.avatarText}>
-                      {(isSent ? data.recipient_username : data.sender_username)?.slice(0, 2)?.toUpperCase()}
+                      {(isSent ? data.recipient_username : data.sender_username)
+                        ?.slice(0, 2)
+                        ?.toUpperCase()}
                     </Text>
                   </View>
                 )}
               </View>
               <View style={styles.userDetails}>
-                <Text style={styles.userLabel}>{isSent ? 'Paid to' : 'Received from'}</Text>
+                <Text style={styles.userLabel}>
+                  {isSent ? "Paid to" : "Received from"}
+                </Text>
                 <CustomText variant="h3" style={styles.userName}>
                   {isSent ? data.recipient_username : data.sender_username}
                 </CustomText>
@@ -139,15 +168,15 @@ const TransactionDetails: FC = () => {
       );
     } else if (isCryptoSendReceiveTransaction(transactionData)) {
       const data = transactionData as ICryptoSendReceiveTransaction;
-      
+
       return (
         <View style={styles.transactionHeader}>
-          {renderStatusBadge('success')}
-          
+          {renderStatusBadge("success")}
+
           <CustomText variant="h2" style={styles.transactionId}>
             Transaction ID #{data.tx_hash.slice(0, 8)}...
           </CustomText>
-          
+
           <Text style={styles.transactionDate}>
             on {moment(data.timestamp).format("MMM DD, YYYY")}
           </Text>
@@ -157,7 +186,8 @@ const TransactionDetails: FC = () => {
               <View style={styles.avatarContainer}>
                 <View style={styles.avatarPlaceholder}>
                   <Text style={styles.avatarText}>
-                    {data.payairoTag?.slice(0, 2)?.toUpperCase() || data.token?.slice(0, 2)}
+                    {data.payairoTag?.slice(0, 2)?.toUpperCase() ||
+                      data.token?.slice(0, 2)}
                   </Text>
                 </View>
               </View>
@@ -176,16 +206,16 @@ const TransactionDetails: FC = () => {
       );
     } else if (isCryptoBuyTransaction(transactionData)) {
       const data = transactionData as ICryptoBuyTransaction;
-      const isBuy = data.type === 'buy';
-      
+      const isBuy = data.type === "buy";
+
       return (
         <View style={styles.transactionHeader}>
           {renderStatusBadge(data.status)}
-          
+
           <CustomText variant="h2" style={styles.transactionId}>
             Transaction ID #{data.id}
           </CustomText>
-          
+
           <Text style={styles.transactionDate}>
             on {moment(data.created_at).format("MMM DD, YYYY")}
           </Text>
@@ -194,10 +224,7 @@ const TransactionDetails: FC = () => {
             <View style={styles.userInfo}>
               <View style={styles.avatarContainer}>
                 {data.icon ? (
-                  <Image
-                    source={{ uri: data.icon }}
-                    style={styles.avatar}
-                  />
+                  <Image source={{ uri: data.icon }} style={styles.avatar} />
                 ) : (
                   <View style={styles.avatarPlaceholder}>
                     <Text style={styles.avatarText}>
@@ -207,7 +234,9 @@ const TransactionDetails: FC = () => {
                 )}
               </View>
               <View style={styles.userDetails}>
-                <Text style={styles.userLabel}>{isBuy ? 'Bought' : 'Sold'}</Text>
+                <Text style={styles.userLabel}>
+                  {isBuy ? "Bought" : "Sold"}
+                </Text>
                 <CustomText variant="h3" style={styles.userName}>
                   {data.to_currency?.toUpperCase()} on {data.network}
                 </CustomText>
@@ -219,9 +248,14 @@ const TransactionDetails: FC = () => {
           </View>
         </View>
       );
-    }else if (isCryptoTransferTransaction(transactionData)) {
-      const data = transactionData as ICryptoBuyTransaction;
-    
+    } else if (isCryptoTransferTransaction(transactionData)) {
+      const data = transactionData as ICryptoTransferTransaction;
+
+      const isSent = data.type === "send";
+      const receiverName = isSent
+        ? data.recipient_username || data.recipient_email || data.withdrawal_address || "Unknown"
+        : data.sender_username || data.sender_email || "Unknown";
+
       return (
         <View style={styles.transactionHeader}>
           {renderStatusBadge(data.status)}
@@ -233,17 +267,27 @@ const TransactionDetails: FC = () => {
           </Text>
           <View style={styles.userSection}>
             <View style={styles.userInfo}>
-              <Image source={{ uri: data.icon }} style={styles.avatar} />
+              <View style={styles.avatarContainer}>
+                {data.icon ? (
+                  <Image source={{ uri: data.icon }} style={styles.avatar} />
+                ) : (
+                  <View style={styles.avatarPlaceholder}>
+                    <Text style={styles.avatarText}>
+                      {data.to_currency?.slice(0, 2)?.toUpperCase()}
+                    </Text>
+                  </View>
+                )}
+              </View>
               <View style={styles.userDetails}>
-                <Text style={styles.userLabel}>Sent to</Text>
+                <Text style={styles.userLabel}>{isSent ? "Paid to" : "Received from"}</Text>
                 <CustomText variant="h3" style={styles.userName}>
-                  {data?.to_user}
+                  {receiverName}
                 </CustomText>
+            <CustomText variant="h2" style={styles.amount}>
+              {parseFloat(data.final_amount).toFixed(8)} {data.to_currency?.toUpperCase()}
+            </CustomText>
               </View>
             </View>
-            <CustomText variant="h2" style={styles.amount}>
-              {parseFloat(data?.final_amount).toFixed(8)} {data.to_currency}
-            </CustomText>
           </View>
         </View>
       );
@@ -255,9 +299,13 @@ const TransactionDetails: FC = () => {
       // console.log("transactionData =>",JSON.stringify(transactionData,null,2))
       const data = transactionData as IFiatTransaction;
       const isSent = walletData?.username === data.sender_username;
-      const finalAmount = data.final_amount ? parseFloat(data.final_amount) : parseFloat(data.amount);
-      const additionalFee = data.final_amount ? finalAmount - parseFloat(data.amount) : 0;
-      
+      const finalAmount = data.final_amount
+        ? parseFloat(data.final_amount)
+        : parseFloat(data.amount);
+      const additionalFee = data.final_amount
+        ? finalAmount - parseFloat(data.amount)
+        : 0;
+
       return (
         <View style={styles.detailsSection}>
           <View style={styles.detailRow}>
@@ -266,19 +314,19 @@ const TransactionDetails: FC = () => {
               {isSent ? data.recipient_username : data.sender_username}
             </Text>
           </View>
-          
+
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Transfer Amount</Text>
-            <Text style={styles.detailValue}>${parseFloat(data.amount).toFixed(2)}</Text>
-          </View>
-          
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Additional Fee</Text>
             <Text style={styles.detailValue}>
-              ${additionalFee.toFixed(2)}
+              ${parseFloat(data.amount).toFixed(2)}
             </Text>
           </View>
-          
+
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Additional Fee</Text>
+            <Text style={styles.detailValue}>${additionalFee.toFixed(2)}</Text>
+          </View>
+
           <View style={[styles.detailRow, styles.totalRow]}>
             <Text style={styles.totalLabel}>Total Amount</Text>
             <Text style={styles.totalValue}>${finalAmount.toFixed(2)}</Text>
@@ -287,26 +335,30 @@ const TransactionDetails: FC = () => {
       );
     } else if (isCryptoSendReceiveTransaction(transactionData)) {
       const data = transactionData as ICryptoSendReceiveTransaction;
-      
+
       return (
         <View style={styles.detailsSection}>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Receiver</Text>
-            <Text style={styles.detailValue}>{data.payairoTag || data.to_address}</Text>
+            <Text style={styles.detailValue}>
+              {data.payairoTag || data.to_address}
+            </Text>
           </View>
-          
+
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Transfer Amount</Text>
             <Text style={styles.detailValue}>
               {parseFloat(data.value).toFixed(8)} {data.token?.toUpperCase()}
             </Text>
           </View>
-          
+
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Network Fee</Text>
-            <Text style={styles.detailValue}>~0.001 {data.token?.toUpperCase()}</Text>
+            <Text style={styles.detailValue}>
+              ~0.001 {data.token?.toUpperCase()}
+            </Text>
           </View>
-          
+
           <View style={[styles.detailRow, styles.totalRow]}>
             <Text style={styles.totalLabel}>Total Amount</Text>
             <Text style={styles.totalValue}>
@@ -317,39 +369,85 @@ const TransactionDetails: FC = () => {
       );
     } else if (isCryptoBuyTransaction(transactionData)) {
       const data = transactionData as ICryptoBuyTransaction;
-      const finalAmount = data.final_amount ? parseFloat(data.final_amount) : parseFloat(data.amount);
-      const transactionFee = data.final_amount ? parseFloat(data.amount) - finalAmount : 0;
-      const isBuy = data.type === 'buy';
-      
+      const finalAmount = data.final_amount
+        ? parseFloat(data.final_amount)
+        : parseFloat(data.amount);
+      const transactionFee = data.final_amount
+        ? parseFloat(data.amount) - finalAmount
+        : 0;
+      const isBuy = data.type === "buy";
+
       return (
         <View style={styles.detailsSection}>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Transaction Type</Text>
-            <Text style={styles.detailValue}>{isBuy ? 'Buy' : 'Sell'} {data.to_currency?.toUpperCase()}</Text>
+            <Text style={styles.detailValue}>
+              {isBuy ? "Buy" : "Sell"} {data.to_currency?.toUpperCase()}
+            </Text>
           </View>
-          
+
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Network</Text>
             <Text style={styles.detailValue}>{data.network}</Text>
           </View>
-          
+
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Amount</Text>
-            <Text style={styles.detailValue}>${parseFloat(data.amount).toFixed(2)}</Text>
+            <Text style={styles.detailValue}>
+              ${parseFloat(data.amount).toFixed(2)}
+            </Text>
           </View>
-          
+
           {data.final_amount && (
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Transaction Fee</Text>
               <Text style={styles.detailValue}>
-                ${Math.abs(transactionFee).toFixed(2)} ({data.Transaction_fee_persentage || '0'}%)
+                ${Math.abs(transactionFee).toFixed(2)} (
+                {data.Transaction_fee_persentage || "0"}%)
               </Text>
             </View>
           )}
-          
+
           <View style={[styles.detailRow, styles.totalRow]}>
             <Text style={styles.totalLabel}>Final Amount</Text>
             <Text style={styles.totalValue}>${finalAmount.toFixed(2)}</Text>
+          </View>
+        </View>
+      );
+    } else if (isCryptoTransferTransaction(transactionData)) {
+      const data = transactionData as ICryptoTransferTransaction;
+      const isSent = data.type === "send";
+
+      return (
+        <View style={styles.detailsSection}>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>{isSent ? "Receiver" : "Sender"}</Text>
+            <Text style={styles.detailValue}>
+              {isSent
+                ? data.recipient_username || data.recipient_email || data.withdrawal_address || "Unknown"
+                : data.sender_username || data.sender_email || "Unknown"}
+            </Text>
+          </View>
+
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Transfer Amount</Text>
+            <Text style={styles.detailValue}>
+              {parseFloat(data.final_amount).toFixed(8)} {data.to_currency?.toUpperCase()}
+            </Text>
+          </View>
+
+          {data.network ? (
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Network</Text>
+              <Text style={styles.detailValue}>{data.network}</Text>
+            </View>
+          ) : null}
+
+          <View style={[styles.detailRow, styles.totalRow]}>
+            <Text style={styles.totalLabel}>Total Amount</Text>
+            <Text style={styles.totalValue}>
+              {parseFloat(data.final_amount).toFixed(8)} {data.to_currency?.toUpperCase()}
+            </Text>
           </View>
         </View>
       );
@@ -357,22 +455,31 @@ const TransactionDetails: FC = () => {
   };
 
   const handlePayAgain = () => {
-    navigation.replace(NAVIGATION_SCREENS.SCAN_PAY,{
-      sender:recipient,
-      type:'receive',
+    navigation.replace(NAVIGATION_SCREENS.SCAN_PAY, {
+      sender: recipient,
+      type: "receive",
     });
   };
 
   const handleShare = () => {
-    let shareText = '';
-    
+    let shareText = "";
+
     if (isFiatTransaction(transactionData)) {
       const data = transactionData as IFiatTransaction;
-      const finalAmount = data.final_amount ? parseFloat(data.final_amount) : parseFloat(data.amount);
-      const additionalFee = data.final_amount ? finalAmount - parseFloat(data.amount) : 0;
-      const statusText = data.status?.toLowerCase() === 'success' ? 'Successful' : 
-                        (data.status?.toLowerCase() === 'pending' || data.status?.toLowerCase() === 'new') ? 'Pending' : 'Failed';
-      
+      const finalAmount = data.final_amount
+        ? parseFloat(data.final_amount)
+        : parseFloat(data.amount);
+      const additionalFee = data.final_amount
+        ? finalAmount - parseFloat(data.amount)
+        : 0;
+      const statusText =
+        data.status?.toLowerCase() === "success"
+          ? "Successful"
+          : data.status?.toLowerCase() === "pending" ||
+            data.status?.toLowerCase() === "new"
+          ? "Pending"
+          : "Failed";
+
       shareText = `💳 PayAiro Transaction Receipt
       
 🔹 Status: ${statusText}
@@ -387,7 +494,7 @@ const TransactionDetails: FC = () => {
 Powered by PayAiro 🚀`;
     } else if (isCryptoSendReceiveTransaction(transactionData)) {
       const data = transactionData as ICryptoSendReceiveTransaction;
-      
+
       shareText = `₿ PayAiro Crypto Transaction Receipt
       
 🔹 Status: Successful
@@ -395,29 +502,66 @@ Powered by PayAiro 🚀`;
 🔹 Date: ${moment(data.timestamp).format("MMM DD, YYYY")}
 
 💰 Transaction Details:
-• Transfer Amount: ${parseFloat(data.value).toFixed(8)} ${data.token?.toUpperCase()}
+• Transfer Amount: ${parseFloat(data.value).toFixed(
+        8
+      )} ${data.token?.toUpperCase()}
 • Network Fee: ~0.001 ${data.token?.toUpperCase()}
-• Total Amount: ${parseFloat(data.value).toFixed(8)} ${data.token?.toUpperCase()}
+• Total Amount: ${parseFloat(data.value).toFixed(
+        8
+      )} ${data.token?.toUpperCase()}
 
 Powered by PayAiro 🚀`;
     } else if (isCryptoBuyTransaction(transactionData)) {
       const data = transactionData as ICryptoBuyTransaction;
-      const finalAmount = data.final_amount ? parseFloat(data.final_amount) : parseFloat(data.amount);
-      const statusText = data.status?.toLowerCase() === 'success' ? 'Successful' : 
-                        (data.status?.toLowerCase() === 'pending' || data.status?.toLowerCase() === 'new') ? 'Pending' : 'Failed';
-      const isBuy = data.type === 'buy';
-      
-      shareText = `₿ PayAiro Crypto ${isBuy ? 'Purchase' : 'Sale'} Receipt
+      const finalAmount = data.final_amount
+        ? parseFloat(data.final_amount)
+        : parseFloat(data.amount);
+      const statusText =
+        data.status?.toLowerCase() === "success"
+          ? "Successful"
+          : data.status?.toLowerCase() === "pending" ||
+            data.status?.toLowerCase() === "new"
+          ? "Pending"
+          : "Failed";
+      const isBuy = data.type === "buy";
+
+      shareText = `₿ PayAiro Crypto ${isBuy ? "Purchase" : "Sale"} Receipt
       
 🔹 Status: ${statusText}
 🔹 Transaction ID: #${data.id}
 🔹 Date: ${moment(data.created_at).format("MMM DD, YYYY")}
 
 💰 Transaction Details:
-• Type: ${isBuy ? 'Buy' : 'Sell'} ${data.to_currency?.toUpperCase()}
+• Type: ${isBuy ? "Buy" : "Sell"} ${data.to_currency?.toUpperCase()}
 • Network: ${data.network}
 • Amount: $${parseFloat(data.amount).toFixed(2)}
 • Final Amount: $${finalAmount.toFixed(2)}
+
+Powered by PayAiro 🚀`;
+    } else if (isCryptoTransferTransaction(transactionData)) {
+      const data = transactionData as ICryptoTransferTransaction;
+      const normalized = (data.status || "").toLowerCase();
+      const statusText =
+        normalized === "success" || normalized === "complete"
+          ? "Successful"
+          : normalized === "pending" || normalized === "new"
+          ? "Pending"
+          : "Failed";
+      const isSent = data.type === "send";
+
+      shareText = `₿ PayAiro Crypto ${isSent ? "Transfer" : "Receipt"}
+      
+🔹 Status: ${statusText}
+🔹 Transaction ID: #${data.id}
+🔹 Date: ${moment(data.created_at).format("MMM DD, YYYY")}
+
+💰 Transaction Details:
+• ${isSent ? "To" : "From"}: ${
+        isSent
+          ? data.recipient_username || data.recipient_email || data.withdrawal_address || "Unknown"
+          : data.sender_username || data.sender_email || "Unknown"
+      }
+• Amount: ${parseFloat(data.final_amount).toFixed(8)} ${data.to_currency?.toUpperCase()}
 
 Powered by PayAiro 🚀`;
     } else {
@@ -427,7 +571,7 @@ Check out my transaction details!
       
       Powered by PayAiro 🚀`;
     }
-    
+
     Linking.openURL(`https://wa.me/?text=${encodeURIComponent(shareText)}`);
   };
 
@@ -435,15 +579,15 @@ Check out my transaction details!
     try {
       if (screenshotRef.current && screenshotRef.current.capture) {
         const uri = await screenshotRef.current.capture();
-        
+
         await Share.share({
           url: uri,
-          message: 'PayAiro Transaction Receipt',
+          message: "PayAiro Transaction Receipt",
         });
       }
     } catch (error) {
-      console.error('Screenshot sharing failed:', error);
-      Alert.alert('Error', 'Failed to capture and share screenshot');
+      console.error("Screenshot sharing failed:", error);
+      Alert.alert("Error", "Failed to capture and share screenshot");
     }
   };
 
@@ -452,27 +596,38 @@ Check out my transaction details!
       <TouchableOpacity onPress={handlePayAgain} style={styles.payAgainButton}>
         <Text style={styles.payAgainText}>Pay Again</Text>
       </TouchableOpacity>
-      
-      
-      
-        <TouchableOpacity onPress={handleScreenshotShare} style={styles.shareButton}>
-          <Text style={styles.shareText}>Share Screenshot</Text>
-        </TouchableOpacity>
 
+      <TouchableOpacity
+        onPress={handleScreenshotShare}
+        style={styles.shareButton}
+      >
+        <Text style={styles.shareText}>Share Screenshot</Text>
+      </TouchableOpacity>
     </View>
   );
 
   return (
     <ScreenContainer padding={0}>
       <HeaderTitle title="Details" leftIcon="back" />
-      
-      <ScrollView style={[styles.whiteSheetContainer,{paddingHorizontal:10,paddingBottom:10,paddingTop:0,marginTop:0}]} showsVerticalScrollIndicator={false}>
-        <ViewShot 
-          ref={screenshotRef} 
-          options={{ 
-            format: "png", 
+
+      <ScrollView
+        style={[
+          styles.whiteSheetContainer,
+          {
+            paddingHorizontal: 10,
+            paddingBottom: 10,
+            paddingTop: 0,
+            marginTop: 0,
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        <ViewShot
+          ref={screenshotRef}
+          options={{
+            format: "png",
             quality: 0.9,
-            result: "tmpfile"
+            result: "tmpfile",
           }}
           style={styles.screenshotContainer}
         >
@@ -481,7 +636,6 @@ Check out my transaction details!
         </ViewShot>
         {renderActionButtons()}
       </ScrollView>
-      
     </ScreenContainer>
   );
 };
@@ -490,7 +644,6 @@ export default TransactionDetails;
 
 const transactionDetailsStyles = (theme: Theme) =>
   StyleSheet.create({
-   
     header: {
       flexDirection: "row",
       alignItems: "center",
@@ -545,7 +698,7 @@ const transactionDetailsStyles = (theme: Theme) =>
       backgroundColor: theme.colors.palette.red500,
     },
     pendingBadge: {
-      backgroundColor: '#FFF3CD',
+      backgroundColor: "#FFF3CD",
     },
     statusDot: {
       width: 6,
@@ -619,6 +772,7 @@ const transactionDetailsStyles = (theme: Theme) =>
     },
     userDetails: {
       flex: 1,
+      minWidth: 100,
     },
     userLabel: {
       fontSize: 14,

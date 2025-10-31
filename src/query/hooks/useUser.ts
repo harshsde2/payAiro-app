@@ -54,6 +54,35 @@ export const useVerifyUser = () => {
   });
 };
 
+// Identifier verification payload for /auth/verify-user/
+interface VerifyUserByIdentifierPayload {
+  identifier: string;
+}
+
+/**
+ * Hook to verify a user by identifier (username/email/phone etc)
+ */
+export const useVerifyUserByIdentifier = () => {
+  return useMutation<ApiResponse<User>, Error, VerifyUserByIdentifierPayload>({
+    mutationFn: async (payload) => {
+      try {
+        return await apiClient.post<ApiResponse<User>>(AUTH.VERIFY_USER, payload, true);
+      } catch (error: any) {
+        // Add custom error handling here if needed
+        throw error;
+      }
+    },
+    onSuccess: (data) => {
+      // Success handling can be added here
+      // e.g. show toast, update UI, etc
+    },
+    onError: (error) => {
+      // Centralized error handling for UI feedback, logging, etc
+      // console.error("VerifyUserByIdentifier error:", error);
+    },
+  });
+};
+
 // Interface for adding contact payload
 interface AddContactPayload {
   identifier_type: "username" | "email" | "phone";

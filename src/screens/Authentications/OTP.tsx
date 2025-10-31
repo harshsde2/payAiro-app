@@ -203,13 +203,16 @@ export default function ConfirmOTP() {
       const result = await refetchWalletDetails();
       const pinResp = await refetchUserPin();
 
+      console.log("result =====>", JSON.stringify(result, null, 2));
+      console.log("pinResp =====>", JSON.stringify(pinResp, null, 2));
+
       const pin = pinResp.data?.data.tpin;
 
       if (result.isSuccess && result.data?.data) {
         const walletData = result.data.data;
 
-        await handleGetRewardDetails();
-        handleUserGuide();
+        // await handleGetRewardDetails();
+        // handleUserGuide();
 
         dispatch(setWalletData(walletData));
         setWalletDataAuth(walletData);
@@ -221,7 +224,7 @@ export default function ConfirmOTP() {
         throw new Error("Wallet fetch failed");
       }
     } catch (error: any) {
-      console.log("error =====>", JSON.stringify(error, null, 2));
+      console.log("error =====>", JSON.stringify(error.response, null, 2));
       useDispatchAction(setErrorMsg("Something went wrong!"));
     }
   };
@@ -260,10 +263,11 @@ export default function ConfirmOTP() {
               data: data?.data,
             });
           } else if (step === 1) {
-            (navigation as any).navigate(NAVIGATION_SCREENS.CYBRID_WEB_VIEW, {
-              URL: persona_verification_url,
-              isUserAlreadyCreated: true,
-            });
+            // (navigation as any).navigate(NAVIGATION_SCREENS.CYBRID_WEB_VIEW, {
+            //   URL: persona_verification_url,
+            //   isUserAlreadyCreated: true,
+            // });
+            await getWalletD();
           } else if (step === 2) {
             await getWalletD();
           }

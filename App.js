@@ -34,6 +34,8 @@ import { ThemeProvider } from "./src/styles";
 import GlobalLoader from "./src/tsx-components/GlobalLoader";
 import { LinkingPath } from "./src/utils/linking";
 import UseNet from './src/utils/UseNet';
+import KycWatchdog from "./src/components/common-components/KycWatchdog";
+import KycBanner from "./src/components/common-components/KycBanner";
 
 export default function App() {
   // -------------------- Redux State --------------------
@@ -293,7 +295,7 @@ export default function App() {
     return <SplashScreen />;
   }
 
-  // console.log("isLogin =>", isLogin)
+  console.log("isLogin =>", isLogin)
   // Render main app navigation
   return (
     <SafeAreaProvider>
@@ -334,6 +336,8 @@ export default function App() {
             {errorMsg || successMsg ? <ErrorToast /> : null}
             {/* {console.log('showLoader =>', showLoader)} */}
             {showLoader && <GlobalLoader />}
+            {isLogin && <KycWatchdog />}
+            {isLogin && <KycBanner />}
             {!isLogin ? <AuthStack /> : <AppStack />}
           </NavigationContainer>
         </PersistQueryProvider>

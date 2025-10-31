@@ -80,8 +80,8 @@ export default function Login() {
         }
       },
       onError: (error: any) => {
-        useDispatchAction(setErrorMsg(error?.response?.data?.data?.message));
-        // console.log("error?.response =>", JSON.stringify(error?.response,null,2));
+        useDispatchAction(setErrorMsg(error?.response?.data?.message));
+        console.log("error?.response =>", JSON.stringify(error?.response,null,2));
         setButtonDisabled(false);
       },
   });

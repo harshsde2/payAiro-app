@@ -655,7 +655,7 @@ const NewDashboard = () => {
       (item: any) => item.asset_type == "Realestate"
     ) ?? [];
 
-  // console.log("balances =>", JSON.stringify(balances, null, 2));
+  // console.log("balances =>", JSON.stringify(data, null, 2));
   // console.log("token =>", tokens.access);
 
   const {
@@ -1175,7 +1175,7 @@ const NewDashboard = () => {
     item: any;
     index: number;
   }) => {
-    const { asset, rounded_balance, usd_value, logo, platform_available } =
+    const { asset, rounded_balance, usd_value,usd_price, logo, platform_available } =
       item;
 
     return (
@@ -1243,7 +1243,7 @@ const NewDashboard = () => {
         {/* USD Value */}
         <View style={{ alignItems: "flex-end" }}>
           <CustomText variant="subtitle2" style={{ fontWeight: "600" }}>
-            ${usd_value?.toFixed(2) || "0.00"}
+            ${usd_price?.toFixed(2) || "0.00"}
           </CustomText>
           <CustomText variant="caption" color="grey">
             USD
@@ -1771,7 +1771,7 @@ const NewDashboard = () => {
                         <SkeletonCard />
                       </>
                     ) : (
-                      processedBankAccounts.map((item: any, index: number) => (
+                      processedBankAccounts.reverse().map((item: any, index: number) => (
                         <View
                           key={index}
                           style={{
@@ -1957,7 +1957,7 @@ const NewDashboard = () => {
                                 textDecorationLine: "underline",
                               }}
                             >
-                              View Details
+                             { item?.account_type == 'external' ? "" : 'View Details'} 
                             </Text>
                           </View>
                         </View>

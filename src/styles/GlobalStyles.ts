@@ -41,4 +41,22 @@ export const globalStyles = (theme: Theme) =>
       justifyContent: "space-around",
       alignItems: "center",
     },
+    kycBannerContainer: {
+      width: "100%",
+      height:40,
+      backgroundColor: theme.colors.palette.pendingStatusLight,
+      paddingVertical: theme.spacing.spacing[3],
+      paddingHorizontal: theme.spacing.spacing[4],
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.palette.pendingStatusDark,
+      position:'absolute',
+      top:40,
+      zIndex:1000
+    },
+    kycBannerText: {
+      color: theme.colors.palette.black,
+      fontSize: 13,
+      fontWeight: "600",
+      textAlign: "center",
+    },
   });

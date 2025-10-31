@@ -121,7 +121,7 @@ const WalletCard = ({ data, bankbalance, index }) => {
       <View style={{ flex: 1, marginVertical: 5 }}>
         <View style={{ flex: 1, paddingVertical: 5 }}>
           <CustomText variant={"h2"} color={theme.colors.palette.white}>
-            {`$${bankbalance || "0.00"}`}
+            {data?.account_type == 'external' ?  '': `$${bankbalance || "0.00"}`}
           </CustomText>
         </View>
         <View style={{ flex: 1, paddingVertical: 5 }}>

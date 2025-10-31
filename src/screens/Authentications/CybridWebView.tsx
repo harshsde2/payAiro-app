@@ -62,7 +62,7 @@ const CybridWebView = () => {
 
   const yourCustomFunction = () => {
     console.log("✅ KYC completed! Calling your custom function...");
-    setIsKycCompleted(true);
+    // setIsKycCompleted(true);
     handleCreatePin();
     // Add your logic here, like:
     // navigation.navigate("NextScreen");
@@ -133,6 +133,7 @@ const CybridWebView = () => {
           //   handleKYCCheck();
           // getWalletDetails();
           // navigation.navigate("SuccesScreen");
+          getWalletDetails()
         } else {
           dispatch(setErrorMsg("Something Went Wrong"));
         }
@@ -161,7 +162,7 @@ const CybridWebView = () => {
     true;
   `;
 
-  // console.log("kuc status ->", JSON.stringify(kycStatus,null,2));
+  // console.log("kuc status ->", JSON.stringify(route.params,null,2));
 
   return (
     <ScreenContainer padding={0}>
@@ -180,7 +181,7 @@ const CybridWebView = () => {
       <Card
         style={[globalStyles.whiteSheetContainer, { flex: 1, marginTop: 10 }]}
       >
-        {!isKycCompleted ? (
+        {/* {!isKycCompleted ? ( */}
           <WebView
             ref={webviewRef}
             source={{ uri: URL }}
@@ -193,7 +194,7 @@ const CybridWebView = () => {
             javaScriptEnabled={true}
             style={{ flex: 1 }}
           />
-        ) : (
+        {/* ) : (
           <View
             style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
           >
@@ -273,7 +274,7 @@ const CybridWebView = () => {
               isLoading={isPending}
             />
           </View>
-        )}
+        )} */}
       </Card>
     </ScreenContainer>
   );

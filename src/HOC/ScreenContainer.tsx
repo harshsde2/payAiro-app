@@ -123,9 +123,13 @@ const ScreenContainer: React.FC<ScreenContainerProps> = ({
     <>
       <StatusBar backgroundColor={barColor} barStyle={barStyle} />
       {safeArea ? (
-        <SafeAreaView style={containerStyle}>{keyboardContent}</SafeAreaView>
+        <SafeAreaView style={containerStyle}>
+          {keyboardContent}
+        </SafeAreaView>
       ) : (
-        <View style={containerStyle}>{keyboardContent}</View>
+        <View style={containerStyle}>
+          {keyboardContent}
+        </View>
       )}
     </>
   );

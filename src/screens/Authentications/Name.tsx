@@ -99,7 +99,7 @@ export default function Name(props: any) {
     patchUser(payload as any, {
       onSuccess: (datas : any) => {
         setIsPending(false);
-        getCurrentStep();
+        // getCurrentStep();
         useDispatchAction(setUserData(datas?.data));
         console.log("datas =>", JSON.stringify(datas, null, 2));
         if (datas && datas?.status) {
@@ -107,11 +107,11 @@ export default function Name(props: any) {
             setSuccessMsg("Name & PayAiro Has Been Updated Successfully")
           );
 
-          if (datas?.data?.fortress == true) {
+          if (datas?.fortress == true) {
             (navigation as any).navigate(NAVIGATION_SCREENS.ADDRESS);
-          } else if (datas?.data?.fortress === false) {
+          } else if (datas?.fortress === false) {
             (navigation as any).navigate(NAVIGATION_SCREENS.CYBRID_WEB_VIEW, {
-              URL: datas?.data?.persona_verification_url,
+              URL: datas?.persona_verification_url,
             });
           }
         } else {

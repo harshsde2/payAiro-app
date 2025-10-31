@@ -262,7 +262,7 @@ export const useAllCryptoBalances = () => {
         // Store in Redux
         dispatch(setAllCryptoBalances(result?.data?.balances || []));
         
-        console.log("All crypto balances fetched and stored =>", JSON.stringify(result?.data?.balances, null, 2));
+        // console.log("All crypto balances fetched and stored =>", JSON.stringify(result?.data?.balances, null, 2));
         
         return result;
       } catch (error) {

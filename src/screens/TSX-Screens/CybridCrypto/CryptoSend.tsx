@@ -193,6 +193,7 @@ const CryptoSend = () => {
       asset: chainName,
       network: details?.network || "",
       receiver: recipient,
+      usd_amount:Number(usdAmount.toFixed(2))
     };
 
     navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
