@@ -60,8 +60,8 @@ const UserAvatar: FC<UserAvatarProps> = ({
     ? item.recipient_username?.slice(0, 2)?.toUpperCase()
     : item.sender_username?.slice(0, 2)?.toUpperCase();
 
-  console.log("avatar image ->", avatarUrl);
-  console.log("avatar item? ->", JSON.stringify(item,null,2));
+  // console.log("avatar image ->", avatarUrl);
+  // console.log("avatar item? ->", JSON.stringify(item,null,2));
 
   return (
     <View style={styles.avatarWrapper}>

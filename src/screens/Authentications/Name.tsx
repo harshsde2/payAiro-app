@@ -2,7 +2,7 @@ import { useNavigation } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import { SVGChecked, SVGUnChecked } from "constants/images";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import { usePatchUserDetails, useStepCount } from "query/hooks/useAPIAuth";
+import { useCreatePin, usePatchUserDetails, useStepCount } from "query/hooks/useAPIAuth";
 import React, { useRef, useState } from "react";
 import {
   StyleSheet,
@@ -21,13 +21,22 @@ import TextInputField from "../../components/TextInputField";
 import useDispatchAction from "../../hooks/useDispatchAction";
 import {
   setErrorMsg,
+  setLogin,
+  setShowLoader,
   setSuccessMsg,
   setUserData,
+  setWalletData,
 } from "../../redux/slices/authenticationSlice";
+import { setItem, STORAGE_KEYS } from "storage/mmkv";
+import { useDispatch } from "react-redux";
+import { useWalletDetails } from "query/hooks";
+import { setWalletDataAuth } from "services/Auth";
 
 export default function Name(props: any) {
   const { email, data } = props.route.params || {};
   const stepcount = "2";
+  const dispatch = useDispatch();
+  
 
   const globalStyles = useGlobalStyles();
   const navigation = useNavigation<any>();
@@ -53,6 +62,17 @@ export default function Name(props: any) {
 
   const { mutate: patchUser } = usePatchUserDetails();
   const { mutate: stepCount } = useStepCount();
+
+
+  const {
+    mutate: handlPinCreation,
+    isPending: isPendingCreatePin,
+    isSuccess: isSuccessCreatePin,
+  } = useCreatePin();
+
+  const {
+    refetch: refetchWalletDetails,
+  } = useWalletDetails(false);
 
   const getCurrentStep = () => {
     stepCount({ stepcount: stepcount } as any, {
@@ -110,9 +130,10 @@ export default function Name(props: any) {
           if (datas?.fortress == true) {
             (navigation as any).navigate(NAVIGATION_SCREENS.ADDRESS);
           } else if (datas?.fortress === false) {
-            (navigation as any).navigate(NAVIGATION_SCREENS.CYBRID_WEB_VIEW, {
-              URL: datas?.persona_verification_url,
-            });
+            // (navigation as any).navigate(NAVIGATION_SCREENS.CYBRID_WEB_VIEW, {
+            //   URL: datas?.persona_verification_url,
+            // });
+            getWalletDetails();
           }
         } else {
           useDispatchAction(setErrorMsg("Username Already Exists"));
@@ -136,6 +157,30 @@ export default function Name(props: any) {
         // useDispatchAction(setErrorMsg("Failed to submit details"));
       },
     });
+  };
+
+  // console.log("isPendingWalletDetails =>", JSON.stringify(isPendingWalletDetails,null,2));
+  // console.log("isSuccessWalletDetails =>", JSON.stringify(isSuccessWalletDetails,null,2));
+  const getWalletDetails = async () => {
+    dispatch(setShowLoader(true));
+    try {
+      const res = await refetchWalletDetails();
+      const payload = (res as any)?.data;
+      
+        console.log("walletData =>", JSON.stringify(payload,null,2));
+
+      if (payload?.data) {
+        dispatch(setWalletData(payload.data));
+        setWalletDataAuth(payload.data);
+        setItem(STORAGE_KEYS.WALLET_DATA, JSON.stringify(payload.data));
+        dispatch(setLogin(true));
+        dispatch(setSuccessMsg("Create Account Successfully"));
+      } else {
+        useDispatchAction(setErrorMsg("Failed to fetch wallet details"));
+      }
+    } finally {
+      dispatch(setShowLoader(false));
+    }
   };
 
 

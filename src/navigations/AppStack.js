@@ -89,6 +89,7 @@ import OTP from "screens/TSX-Screens/Modals/OTP";
 import CryptoList from "screens/TSX-Screens/CybridCrypto/CryptoList";
 import BankSelection from "screens/TSX-Screens/AddBalance/BankSelection";
 import QRScanner from "screens/TSX-Screens/Send/QRScanner";
+import CybridWebView from "screens/Authentications/CybridWebView";
 
 const Stack = createNativeStackNavigator();
 
@@ -593,6 +594,11 @@ export default function AppStack() {
         }}
         name={NAVIGATION_SCREENS.QR_SCANNER}
         component={QRScanner}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.CYBRID_WEB_VIEW}
+        component={CybridWebView}
       />
     </Stack.Navigator>
   );

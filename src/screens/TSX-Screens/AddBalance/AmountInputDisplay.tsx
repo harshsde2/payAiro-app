@@ -4,6 +4,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Platform,
 } from "react-native";
 import React, { FC, useRef, useState } from "react";
 import { useTheme } from "styles";
@@ -87,6 +88,8 @@ const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
               fontSize: 48,
               fontWeight: "bold",
               color: theme.colors.palette.grey900,
+              // position:'absolute'
+              lineHeight:Platform.OS == 'ios' ? 50 : 85
             }}
           >
             $

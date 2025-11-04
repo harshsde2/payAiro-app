@@ -119,7 +119,7 @@ export default function Signup() {
 
   return (
     <ScreenContainer avoidKeyboard scrollable={true} padding={0}>
-      <HeaderTitle title="Sign Up" leftIcon="true" />
+      <HeaderTitle title="Create an Account" leftIcon="true" />
       <View style={styles.headerContainer}>
         <AuthHeader showAuthLogo={true} />
       </View>
@@ -136,11 +136,11 @@ export default function Signup() {
       <View style={styles.contentContainer}>
         <View style={styles.signinHeaderContainer}>
           <CustomText
-            variant={"h1"}
+            variant={"h3"}
             fontFamily={theme.typography.fontFamily.montserratBold}
             style={styles.signHeaderTextStyles}
           >
-            Sign Up
+            Create an Account
           </CustomText>
           <CustomText
             variant={"caption"}

@@ -1,4 +1,4 @@
-export type KycMode = "approved" | "pending" | "expired" | "unknown";
+export type KycMode = "approved" | "pending" | "expired" | "unknown" | "not_started";
 
 export interface IKycStatusPayload {
   status?: boolean;
@@ -12,6 +12,7 @@ export interface IKycStatusPayload {
 export const toKycMode = (raw?: IKycStatusPayload | null): KycMode => {
   if (!raw) return "unknown";
   const str = (raw.kyc_status || raw.state || "").toLowerCase();
+  if (str === "not_started") return "not_started";
   if (str === "pending") return "pending";
   if (str === "expired") return "expired";
   if (str === "approved") return "approved";

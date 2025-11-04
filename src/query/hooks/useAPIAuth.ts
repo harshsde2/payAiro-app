@@ -66,6 +66,7 @@ export const useStepCount = () => {
 export const usePatchUserDetails = () => {
   return useMutation<ApiResponse<any>, Error>({
     mutationFn: async (payload) => {
+      console.log("payload =>", JSON.stringify(payload,null,2));
       const data = apiClient.patch<ApiResponse<any>>(
         AUTH.UPDATE_ACCOUNT,
         payload,

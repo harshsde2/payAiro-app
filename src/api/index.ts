@@ -6,8 +6,7 @@ import axios, {
 import { AUTH, BASE_URL } from "./endpoints";
 import { getItem, STORAGE_KEYS } from "../storage/mmkv";
 import { Tokens } from "./types";
-import { Platform, Alert } from "react-native";
-import { stat } from "react-native-fs";
+import { Alert } from "react-native";
 import useDispatchAction from "hooks/useDispatchAction";
 import { setErrorMsg } from "redux/slices/authenticationSlice";
 
@@ -20,6 +19,34 @@ const api = axios.create({
     Accept: "application/json",
   },
 });
+
+// Guard to avoid duplicate alerts within a short interval
+let lastKycAlertAt = 0;
+let lastKycAlertKey = "";
+let kycPromptOpen = false;
+const showKycAlertOnce = (
+  title: string,
+  msg: string,
+  buttons?: Array<{ text: string; style?: any; onPress?: () => void }>,
+  options?: { cancelable?: boolean }
+) => {
+  const now = Date.now();
+  const key = `${title}|${msg}`;
+  if (kycPromptOpen) return;
+  if (key === lastKycAlertKey && now - lastKycAlertAt < 2000) return;
+  lastKycAlertAt = now;
+  lastKycAlertKey = key;
+  kycPromptOpen = true;
+  const wrappedButtons = (buttons || [{ text: "OK", style: "default" }]).map((b) => ({
+    ...b,
+    onPress: () => {
+      try { b.onPress && b.onPress(); } finally {
+        setTimeout(() => { kycPromptOpen = false; }, 300);
+      }
+    },
+  }));
+  Alert.alert(title, msg, wrappedButtons, options);
+};
 
 // Request interceptor for adding auth token
 api.interceptors.request.use(
@@ -62,6 +89,7 @@ api.interceptors.request.use(
           "auth/V1/login/",
           "/auth/query/", // USER_SUPPORT: allow users to submit support requests even when KYC is pending
           "auth/query/", // without leading slash variant
+          "auth/V1/update-account/"
         ];
         // Find ONLY if route exactly matches (with or without a trailing slash for safety)
         const isPublic = publicRoutes.some((route) => {
@@ -73,11 +101,31 @@ api.interceptors.request.use(
         console.log("[KYC] Interceptor: mode =>", mode, ", isPublic =>", isPublic);
 
         if (mode === "expired" && !isPublic) {
-          const { resetState, setErrorMsg } = require("../redux/slices/authenticationSlice");
-          const message = "Your KYC status is expired. Please log in again.";
+          const { setErrorMsg, setKycStatus } = require("../redux/slices/authenticationSlice");
+          const message = "Your KYC has expired. Would you like to restart the KYC now?";
           useDispatchAction(setErrorMsg(message));
-          Alert.alert("Session Expired", message);
-          useDispatchAction(resetState());
+          // Prompt with Start KYC action similar to KycWatchdog
+          showKycAlertOnce(
+            "KYC Expired",
+            message,
+            [
+              { text: "Cancel", style: "cancel" },
+              {
+                text: "Start KYC",
+                style: "default",
+                onPress: () => {
+                  try {
+                    const { DeviceEventEmitter } = require("react-native");
+                    useDispatchAction(
+                      setKycStatus({ status: false, state: "not_started", toast_message: "Please start your KYC." })
+                    );
+                    DeviceEventEmitter.emit("NAVIGATE_TO_PERSONAL");
+                  } catch (e) {}
+                },
+              },
+            ],
+            { cancelable: false }
+          );
           const err = new Error("KYC_EXPIRED") as any;
           err.code = "KYC_EXPIRED";
           err.kycMode = mode;
@@ -85,13 +133,48 @@ api.interceptors.request.use(
           return Promise.reject(err);
         }
 
-        if (mode === "pending" && !isPublic) {
+        console.log("isPublic  ->",isPublic)
+        if ((mode === "pending" || mode === "not_started") && !isPublic) {
           const mutating = method === "post" || method === "patch" || method === "delete";
           if (mutating) {
             const { setErrorMsg } = require("../redux/slices/authenticationSlice");
-            const msg = "Your KYC is under review. You can browse in view-only mode.";
+            const msg = mode === "not_started" 
+              ? "Your KYC has not started. Please start KYC to continue."
+              : "Your KYC is under review. You can browse in view-only mode.";
             useDispatchAction(setErrorMsg(msg));
-            Alert.alert("KYC Under Review", msg);
+            const title = mode === "not_started" ? "KYC Not Started" : "KYC Under Review";
+            // For not_started → show Start KYC CTA; for pending → simple acknowledge only
+            if (mode === "not_started") {
+              showKycAlertOnce(
+                title,
+                msg,
+                [
+                  { text: "Cancel", style: "cancel" },
+                  {
+                    text: "Start KYC",
+                    style: "default",
+                    onPress: () => {
+                      try {
+                        const { DeviceEventEmitter } = require("react-native");
+                        const { setKycStatus } = require("../redux/slices/authenticationSlice");
+                        useDispatchAction(setKycStatus({ status: false, state: "not_started", toast_message: msg }));
+                        DeviceEventEmitter.emit("NAVIGATE_TO_PERSONAL");
+                      } catch (e) {}
+                    },
+                  },
+                ],
+                { cancelable: true }
+              );
+            } else {
+              showKycAlertOnce(
+                title,
+                msg,
+                [
+                  { text: "OK", style: "default" },
+                ],
+                { cancelable: true }
+              );
+            }
             const err = new Error("KYC_PENDING_VIEW_ONLY") as any;
             err.code = "KYC_PENDING_VIEW_ONLY";
             err.kycMode = mode;

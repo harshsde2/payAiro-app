@@ -57,11 +57,17 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
     cryptoData
   } = useSelector((s: any) => s.authenticationSlice);
 
-  // console.log("cryptoData =>",JSON.stringify(cryptoData, null, 2))
+  // console.log("bankBalance =>",JSON.stringify(bankBalance, null, 2))
 
   const { theme } = useTheme();
   const styles = customStyles(theme);
-  const [showBalance, setShowBalance] = React.useState(false);
+  const formatUsd = (value: unknown): string => {
+    const num = Number(value ?? 0);
+    if (!isFinite(num)) return "$0.00";
+    return `$${num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+  const [showBalance, setShowBalance] = React.useState(false); // PayAiro Balance visibility
+  const [showPlatformBalance, setShowPlatformBalance] = React.useState(false); // Platform Balance visibility
   const [showCryptoBalance, setShowCryptoBalance] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isDisable, setIsDisable] = React.useState(false);
@@ -244,6 +250,17 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
     // }
   };
 
+  const handleShowPlatformBalance = async (isShowPlatformBalance: boolean) => {
+    if (!isShowPlatformBalance) {
+      setIsLoading(true);
+      refetchBankBalanceData();
+      setShowPlatformBalance(!showPlatformBalance);
+      setIsLoading(false);
+    } else {
+      setShowPlatformBalance(!showPlatformBalance);
+    }
+  };
+
   const handleShowCryptoBalance = async (isShowCryptoBalance: boolean) => {
     if (!isShowCryptoBalance) {
       setIsLoading(true);
@@ -293,15 +310,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
               <CustomText color={theme.colors.palette.white} variant={"body1"}>
                 {"PayAiro Balance"}
               </CustomText>
-              <View
-                style={{
-                  flexDirection: "row",
-                  gap: 10,
-                  alignItems: "center",
-                  // backgroundColor: "red",
-                  justifyContent: "center",
-                }}
-              >
+              <View style={styles.balanceRow}>
                 {/* {walletData?.fortress ? ( */}
                 <CustomText
                   numberOfLines={1}
@@ -309,22 +318,8 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
                   variant={"h3"}
                   style={{ textAlign: "center", textAlignVertical: "center" }}
                 >
-                  {showBalance
-                    ? `$${bankBalance?.bank_account?.usd || '0.00'}`
-                    : "$*****"}
+                  {showBalance ? formatUsd(bankBalance?.platform_available) : "$*****"}
                 </CustomText>
-                {/* ) : (
-                  <CustomText
-                    numberOfLines={1}
-                    color={theme.colors.palette.white}
-                    variant={"h3"}
-                    style={{ textAlign: "center", textAlignVertical: "center" }}
-                  >
-                    {showBalance
-                      ? `$${cybridBankBalance?.platform_balance}`
-                      : "$*****"}
-                  </CustomText>
-                )} */}
                 {isLoading && (
                   <ActivityIndicator
                     size="small"
@@ -345,6 +340,45 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
                       <SvgIcons.EyeOffOutlineWhite
                         onPress={() => handleShowBalance(showBalance)}
                         // xml={SVG_eye_off_white}
+                        color={theme.colors.palette.white}
+                        width={20}
+                        height={20}
+                      />
+                    )}
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+              <View style={styles.platformBalanceContainer}>
+              <CustomText color={theme.colors.palette.white} variant={'caption'}>
+                {"Platform + Available Balance"}
+              </CustomText>
+              <View style={styles.platformBalanceRow}>
+                <CustomText
+                  numberOfLines={1}
+                  color={theme.colors.palette.white}
+                  variant={'subtitle1'}
+                >
+                  {showPlatformBalance ? formatUsd(bankBalance?.platform_balance) : "$*****"}
+                </CustomText>
+                {isLoading && (
+                  <ActivityIndicator
+                    size="small"
+                    color={theme.colors.palette.white}
+                  />
+                )}
+                {!isLoading && (
+                  <TouchableOpacity style={{ zIndex: 11 }}>
+                    {showPlatformBalance ? (
+                      <SvgIcons.EyeOnOutlineWhite
+                        onPress={() => handleShowPlatformBalance(showPlatformBalance)}
+                        color={theme.colors.palette.white}
+                        width={20}
+                        height={20}
+                      />
+                    ) : (
+                      <SvgIcons.EyeOffOutlineWhite
+                        onPress={() => handleShowPlatformBalance(showPlatformBalance)}
                         color={theme.colors.palette.white}
                         width={20}
                         height={20}
@@ -673,4 +707,21 @@ const customStyles = (theme: Theme) =>
       alignItems: "center",
     },
     currencyText: {},
+    balanceRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      columnGap: 10,
+    },
+    platformBalanceContainer: {
+      paddingHorizontal: 20,
+      justifyContent: "center",
+      alignItems: "flex-start",
+    },
+    platformBalanceRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      columnGap: 10,
+    },
   });

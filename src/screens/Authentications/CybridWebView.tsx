@@ -167,9 +167,8 @@ const CybridWebView = () => {
   return (
     <ScreenContainer padding={0}>
       <HeaderTitle
-        // isBack={true}
         title="Complete your KYC"
-        // leftIcon={"true"}
+        leftIcon={"true"}
         onPressLeft={() => navigation.goBack()}
       />
       <PinScreen

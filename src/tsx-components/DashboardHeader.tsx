@@ -25,7 +25,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ name, style }) => {
   const styles = createStyles(theme);
 
   // console.log('Theme spacing:', theme.spacing);
-  // console.log("PayAiorRoundIcon", PayAiorRoundIcon);
+  // console.log("PayAiorRoundIcon", JSON.stringify(walletData,null,2));
 
   return (
     <View style={[styles.container, style]}>
