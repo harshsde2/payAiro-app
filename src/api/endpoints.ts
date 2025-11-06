@@ -4,6 +4,10 @@ export const BASE_URL = {
   production: "https://app.payairo.com/api/",
 }
 
+export const LINKS = {
+  privacyPolicy: "https://payairo.com/privacy-policy.html",
+}
+
 // Auth endpoints
 export const AUTH = {
   SEND_OTP: "auth/V1/send-otp/",

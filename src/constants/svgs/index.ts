@@ -86,6 +86,10 @@ import OutLineUncheckedBox from "./OutLineUncheckedBox.svg";
 import NewScannerIcon from "./NewScannerIcon.svg";
 import ImageIcon from "./ImageIcon.svg";
 import CrytoToDollorConversion from "./CrytoToDollorConversion.svg";
+import PendingBalance from "./PendingBalance.svg";
+import Balance from "./Balance.svg";
+import BalanceTiltRight from "./BalanceTiltRight.svg";
+
 
 export const SvgIcons = {
   PayAiorRoundIcon,
@@ -176,4 +180,7 @@ export const SvgIcons = {
   NewScannerIcon,
   ImageIcon,
   CrytoToDollorConversion,
+  PendingBalance,
+  Balance,
+  BalanceTiltRight,
 };

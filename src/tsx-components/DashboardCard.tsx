@@ -54,7 +54,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
     totalDisbursable,
     totalDisbursablePending,
     selectedCurrency,
-    cryptoData
+    cryptoData,
   } = useSelector((s: any) => s.authenticationSlice);
 
   // console.log("bankBalance =>",JSON.stringify(bankBalance, null, 2))
@@ -64,18 +64,24 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
   const formatUsd = (value: unknown): string => {
     const num = Number(value ?? 0);
     if (!isFinite(num)) return "$0.00";
-    return `$${num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `$${num.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   };
   const [showBalance, setShowBalance] = React.useState(false); // PayAiro Balance visibility
   const [showPlatformBalance, setShowPlatformBalance] = React.useState(false); // Platform Balance visibility
   const [showCryptoBalance, setShowCryptoBalance] = React.useState(false);
+  const [showPendingBalance, setShowPendingBalance] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isDisable, setIsDisable] = React.useState(false);
-  const [displayCryptobalance,setDisplayCryptobalance] = useState(cryptoData?.rounded_balance || '')
+  const [displayCryptobalance, setDisplayCryptobalance] = useState(
+    cryptoData?.rounded_balance || ""
+  );
 
-  useEffect(()=>{
-    setDisplayCryptobalance(cryptoData?.rounded_balance || "")
-  },[cryptoData])
+  useEffect(() => {
+    setDisplayCryptobalance(cryptoData?.rounded_balance || "");
+  }, [cryptoData]);
 
   const renderCryptoCurrencySelector = () => (
     <TouchableOpacity
@@ -98,26 +104,33 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
           elevation: 2,
         },
       ]}
-
-      onPress={()=>{
+      onPress={() => {
         navigation.navigate(NAVIGATION_SCREENS.CRYPTO_LIST);
       }}
     >
       {(() => {
         const logoUri = selectedCurrency?.logo as string | undefined;
-        const isValidLogo = typeof logoUri === "string" && logoUri.trim().length > 0;
-        const isSvgLogo = isValidLogo && (logoUri!.toLowerCase().endsWith(".svg") || logoUri!.toLowerCase().includes("svg+xml"));
+        const isValidLogo =
+          typeof logoUri === "string" && logoUri.trim().length > 0;
+        const isSvgLogo =
+          isValidLogo &&
+          (logoUri!.toLowerCase().endsWith(".svg") ||
+            logoUri!.toLowerCase().includes("svg+xml"));
 
         if (!isValidLogo) {
           return <SvgIcons.DollarIcon width={35} height={35} />;
         }
 
         return (
-          <View style={{width: 30, height: 30}}>
+          <View style={{ width: 30, height: 30 }}>
             {isSvgLogo ? (
               <SvgUri uri={logoUri!} width={30} height={30} />
             ) : (
-              <Image source={{ uri: logoUri! }} style={{ width: 30, height: 30 }} resizeMode="contain" />
+              <Image
+                source={{ uri: logoUri! }}
+                style={{ width: 30, height: 30 }}
+                resizeMode="contain"
+              />
             )}
           </View>
         );
@@ -137,7 +150,6 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
           ]}
           numberOfLines={1}
           ellipsizeMode="tail"
-        
         >
           {selectedCurrency?.symbol || "USD"}
         </CustomText>
@@ -298,94 +310,119 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
               height: 170,
             }}
           >
-            <View
-              style={{
-                flex: 1,
-                // backgroundColor: "red",
-                paddingHorizontal: 20,
-                justifyContent: "center",
-                alignItems: "flex-start",
-              }}
-            >
-              <CustomText color={theme.colors.palette.white} variant={"body1"}>
-                {"PayAiro Balance"}
-              </CustomText>
-              <View style={styles.balanceRow}>
-                {/* {walletData?.fortress ? ( */}
-                <CustomText
-                  numberOfLines={1}
-                  color={theme.colors.palette.white}
-                  variant={"h3"}
-                  style={{ textAlign: "center", textAlignVertical: "center" }}
+            <View style={{ flex: 1, flexDirection: "row" }}>
+              {showPendingBalance ? (
+                <View
+                  style={{
+                    flex: 1,
+                    // backgroundColor: "red",
+                    paddingHorizontal: 20,
+                    justifyContent: "center",
+                    alignItems: "flex-start",
+                  }}
                 >
-                  {showBalance ? formatUsd(bankBalance?.platform_available) : "$*****"}
-                </CustomText>
-                {isLoading && (
-                  <ActivityIndicator
-                    size="small"
+                  <CustomText
                     color={theme.colors.palette.white}
-                  />
-                )}
-                {!isLoading && (
-                  <TouchableOpacity style={{ zIndex: 11 }}>
-                    {showBalance ? (
-                      <SvgIcons.EyeOnOutlineWhite
-                        onPress={() => handleShowBalance(showBalance)}
-                        // xml={SVG_eye_on_white}
+                    variant={"body1"}
+                  >
+                    {"PayAiro Balance"}
+                  </CustomText>
+                  <View style={styles.balanceRow}>
+                    {/* {walletData?.fortress ? ( */}
+                    <CustomText
+                      numberOfLines={1}
+                      color={theme.colors.palette.white}
+                      variant={"h3"}
+                      style={{
+                        textAlign: "center",
+                        textAlignVertical: "center",
+                      }}
+                    >
+                      {showBalance
+                        ? formatUsd(bankBalance?.platform_available)
+                        : "$*****"}
+                    </CustomText>
+                    {isLoading && (
+                      <ActivityIndicator
+                        size="small"
                         color={theme.colors.palette.white}
-                        width={20}
-                        height={20}
-                      />
-                    ) : (
-                      <SvgIcons.EyeOffOutlineWhite
-                        onPress={() => handleShowBalance(showBalance)}
-                        // xml={SVG_eye_off_white}
-                        color={theme.colors.palette.white}
-                        width={20}
-                        height={20}
                       />
                     )}
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-              <View style={styles.platformBalanceContainer}>
-              <CustomText color={theme.colors.palette.white} variant={'caption'}>
-                {"Platform + Available Balance"}
-              </CustomText>
-              <View style={styles.platformBalanceRow}>
-                <CustomText
-                  numberOfLines={1}
-                  color={theme.colors.palette.white}
-                  variant={'subtitle1'}
-                >
-                  {showPlatformBalance ? formatUsd(bankBalance?.platform_balance) : "$*****"}
-                </CustomText>
-                {isLoading && (
-                  <ActivityIndicator
-                    size="small"
+                    {!isLoading && (
+                      <TouchableOpacity style={{ zIndex: 11 }}>
+                        {showBalance ? (
+                          <SvgIcons.EyeOnOutlineWhite
+                            onPress={() => handleShowBalance(showBalance)}
+                            // xml={SVG_eye_on_white}
+                            color={theme.colors.palette.white}
+                            width={20}
+                            height={20}
+                          />
+                        ) : (
+                          <SvgIcons.EyeOffOutlineWhite
+                            onPress={() => handleShowBalance(showBalance)}
+                            // xml={SVG_eye_off_white}
+                            color={theme.colors.palette.white}
+                            width={20}
+                            height={20}
+                          />
+                        )}
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.platformBalanceContainer}>
+                  <CustomText
                     color={theme.colors.palette.white}
-                  />
-                )}
-                {!isLoading && (
-                  <TouchableOpacity style={{ zIndex: 11 }}>
-                    {showPlatformBalance ? (
-                      <SvgIcons.EyeOnOutlineWhite
-                        onPress={() => handleShowPlatformBalance(showPlatformBalance)}
+                    variant={"body2"}
+                  >
+                    {"Pending + Available Balance"}
+                  </CustomText>
+                  <View style={styles.platformBalanceRow}>
+                    <CustomText
+                      numberOfLines={1}
+                      color={theme.colors.palette.white}
+                      variant={"subtitle1"}
+                    >
+                      {showPlatformBalance
+                        ? formatUsd(bankBalance?.platform_balance)
+                        : "$*****"}
+                    </CustomText>
+                    {isLoading && (
+                      <ActivityIndicator
+                        size="small"
                         color={theme.colors.palette.white}
-                        width={20}
-                        height={20}
-                      />
-                    ) : (
-                      <SvgIcons.EyeOffOutlineWhite
-                        onPress={() => handleShowPlatformBalance(showPlatformBalance)}
-                        color={theme.colors.palette.white}
-                        width={20}
-                        height={20}
                       />
                     )}
-                  </TouchableOpacity>
-                )}
+                    {!isLoading && (
+                      <TouchableOpacity style={{ zIndex: 11 }}>
+                        {showPlatformBalance ? (
+                          <SvgIcons.EyeOnOutlineWhite
+                            onPress={() =>
+                              handleShowPlatformBalance(showPlatformBalance)
+                            }
+                            color={theme.colors.palette.white}
+                            width={20}
+                            height={20}
+                          />
+                        ) : (
+                          <SvgIcons.EyeOffOutlineWhite
+                            onPress={() =>
+                              handleShowPlatformBalance(showPlatformBalance)
+                            }
+                            color={theme.colors.palette.white}
+                            width={20}
+                            height={20}
+                          />
+                        )}
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              )}
+              <View style={{ padding: 10 ,position: "absolute", right: 0, top: 20, zIndex: 1000 }}>
+                {showPendingBalance ? <SvgIcons.BalanceTiltRight onPress={()=>{setShowPendingBalance(!showPendingBalance)}} width={30} height={30} /> : <SvgIcons.Balance onPress={()=>{setShowPendingBalance(!showPendingBalance)}} width={30} height={30} />}
               </View>
             </View>
             <View
@@ -505,9 +542,11 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
               }}
             >
               <CustomText color={theme.colors.palette.black} variant={"body1"}>
-                {"Crypto Balance"}
+                {"Crypto Pending + Available Balance"}
               </CustomText>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+              >
                 <CustomText
                   numberOfLines={1}
                   ellipsizeMode="tail"
@@ -515,20 +554,24 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
                   variant={"h3"}
                   // style={{ flex: 1 }}
                 >
-                  {showCryptoBalance ? displayCryptobalance || '0.00' : "*****"}
+                  {showCryptoBalance ? displayCryptobalance || "0.00" : "*****"}
                 </CustomText>
                 {!isLoading && (
                   <TouchableOpacity style={{ zIndex: 11 }}>
                     {showCryptoBalance ? (
                       <SvgIcons.EyeOnGreenbg
-                        onPress={() => handleShowCryptoBalance(showCryptoBalance)}
+                        onPress={() =>
+                          handleShowCryptoBalance(showCryptoBalance)
+                        }
                         color={theme.colors.palette.black}
                         width={20}
                         height={20}
                       />
                     ) : (
                       <SvgIcons.EyeOffGreenbg
-                        onPress={() => handleShowCryptoBalance(showCryptoBalance)}
+                        onPress={() =>
+                          handleShowCryptoBalance(showCryptoBalance)
+                        }
                         color={theme.colors.palette.black}
                         width={20}
                         height={20}
@@ -542,7 +585,17 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
                     color={theme.colors.palette.black}
                   />
                 )}
-                <SvgIcons.CrytoToDollorConversion onPress={()=>{setDisplayCryptobalance(displayCryptobalance == cryptoData?.usd_price ? cryptoData?.rounded_balance :cryptoData?.usd_price )}} width={30} height={30} />
+                <SvgIcons.CrytoToDollorConversion
+                  onPress={() => {
+                    setDisplayCryptobalance(
+                      displayCryptobalance == cryptoData?.usd_price
+                        ? cryptoData?.rounded_balance
+                        : cryptoData?.usd_price
+                    );
+                  }}
+                  width={30}
+                  height={30}
+                />
               </View>
               {totalDisbursablePending > 0 && showCryptoBalance && (
                 <CustomText
@@ -664,7 +717,9 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
         >
           {"PayAiro Account"}
         </CustomText>
-        {!isCrypto ? renderCryptoCurrencySelector() : renderFiatCurrencySelector()}
+        {!isCrypto
+          ? renderCryptoCurrencySelector()
+          : renderFiatCurrencySelector()}
       </View>
       <Card
         borderRadius={theme.spacing.spacing[10]}
@@ -714,6 +769,7 @@ const customStyles = (theme: Theme) =>
       columnGap: 10,
     },
     platformBalanceContainer: {
+      flex: 1,
       paddingHorizontal: 20,
       justifyContent: "center",
       alignItems: "flex-start",

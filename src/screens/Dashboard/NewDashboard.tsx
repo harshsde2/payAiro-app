@@ -1233,10 +1233,10 @@ const NewDashboard = () => {
             {asset}
           </CustomText>
           <CustomText variant="caption" color="grey">
-            Balance: {rounded_balance}
+            Available Balance: {platform_available}
           </CustomText>
           <CustomText variant="caption" color="grey">
-            Available Balance: {platform_available}
+           Pending Balance: {rounded_balance}
           </CustomText>
         </View>
 

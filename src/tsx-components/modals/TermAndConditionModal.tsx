@@ -16,6 +16,7 @@ import {
   TermAndConditionModalProps,
   TermAndConditionModalRef,
 } from "./modal.types";
+import { LINKS } from "api/endpoints";
 
 const TermAndConditionModal = forwardRef<
   TermAndConditionModalRef,
@@ -84,7 +85,7 @@ const TermAndConditionModal = forwardRef<
         />
         {showWebView ? (
           <WebView
-            source={{ uri: "https://www.payairo.com/privacy-policy.html" }}
+            source={{ uri: LINKS.privacyPolicy }}
             style={{ flex: 1, marginTop: 20 }}
             javaScriptEnabled={true}
             domStorageEnabled={true}
