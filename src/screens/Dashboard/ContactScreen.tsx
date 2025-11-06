@@ -9,7 +9,7 @@ import {
   Pressable,
   Keyboard,
 } from "react-native";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { SvgXml } from "react-native-svg";
 import { useNavigation } from "@react-navigation/native";
 
@@ -35,19 +35,12 @@ import LoaderComponent from "tsx-components/LoaderComponent";
 import { Theme } from "styles";
 
 export default function ContactScreen(props: any) {
-  const { isVisble3 } = props.route.params;
+  const { isVisble3 } = props.route?.params || {};
   const { tokens } = useSelectorAction();
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
 
-  // const [contactLists, setContactLists] = useState([]);
-  const [fullContactList, setFullContactList] = useState([]);
   const [searchText, setSearchText] = useState("");
-  // const [isLoading, setIsLoading] = useState(false);
-  // const [error, setError] = useState(null);
-
-  const [filteredRecentContacts, setFilteredRecentContacts] = useState([]);
-  const [filteredDeviceContacts, setFilteredDeviceContacts] = useState([]);
   const [onSearch, setOnSearch] = useState(false);
 
   const {
@@ -56,7 +49,20 @@ export default function ContactScreen(props: any) {
     error: contactError,
   } = useDeviceContacts();
   const { data, isLoading: isLoading, error } = useRecentContacts();
-  const contactLists = (data?.allContacts as any) || [];
+
+  // Memoize contact lists to prevent infinite loops
+  const contactLists = useMemo(() => {
+    if (!data?.allContacts) return [];
+    return Array.isArray(data.allContacts) ? data.allContacts : [];
+  }, [data?.allContacts]);
+
+  const deviceContactsData = useMemo(() => {
+    if (!deviceContacts?.data) return [];
+    return Array.isArray(deviceContacts.data) ? deviceContacts.data : [];
+  }, [deviceContacts?.data]);
+
+  const [filteredRecentContacts, setFilteredRecentContacts] = useState<any[]>([]);
+  const [filteredDeviceContacts, setFilteredDeviceContacts] = useState<any[]>([]);
 
   // console.log(
   //   " deviceContacts contactLists -->",
@@ -128,105 +134,132 @@ export default function ContactScreen(props: any) {
 
   // console.log("contactLists =>",JSON.stringify(contactLists,null,2))
 
-  const renderRecentContact = ({ item }: any) => (
-    <TouchableOpacity
-      onPress={() => handleContactPress(item)}
-      style={styles(theme).contactItem}
-    >
-      <View style={styles(theme).contactLeftSection}>
-        <View style={styles(theme).avatarContainer}>
-          {item?.image ? (
-            <Image source={{ uri: item.image }} style={styles(theme).avatar} />
-          ) : (
-            <Text style={styles(theme).initials}>
-              {(item?.name?.[0] || "U").toUpperCase()}
-            </Text>
-          )}
-        </View>
-        <View style={styles(theme).contactInfo}>
-          <CustomText variant="subtitle1" color={theme.colors.text.primary}>
-            {item?.nickname || "Unknown"}
-          </CustomText>
-          {item?.messages?.content && (
-            <CustomText
-              variant="body2"
-              color={theme.colors.text.secondary}
-              numberOfLines={1}
-            >
-              {item.messages.content}
-            </CustomText>
-          )}
-        </View>
-      </View>
-      {item?.unread_count > 0 && (
-        <View style={styles(theme).unreadBadge}>
-          <CustomText variant="caption" color={theme.colors.text.inverse}>
-            {item.unread_count}
-          </CustomText>
-        </View>
-      )}
-    </TouchableOpacity>
-  );
-
-  const renderDeviceContact = ({ item }: any) => (
-    <TouchableOpacity
-      style={styles(theme).contactItem}
-      activeOpacity={0.8}
-      onPress={() => {
-        /* Handle invite action */
-      }}
-    >
-      <View style={styles(theme).contactLeftSection}>
-        <View style={styles(theme).avatarContainer}>
-          <Text style={styles(theme).initials}>
-            {(item?.name?.[0] || "U").toUpperCase()}
-          </Text>
-        </View>
-        <View style={styles(theme).contactInfo}>
-          <CustomText variant="subtitle1" color={theme.colors.text.primary}>
-            {item.name}
-          </CustomText>
-          {item.phoneNumber && (
-            <CustomText variant="body2" color={theme.colors.text.secondary}>
-              {item.phoneNumber}
-            </CustomText>
-          )}
-        </View>
+  const renderRecentContact = useCallback(
+    ({ item }: any) => {
+      if (!item) return null;
+      return (
         <TouchableOpacity
-          onPress={handleAddContact}
-          style={styles(theme).addButton}
+          onPress={() => handleContactPress(item)}
+          style={styles(theme).contactItem}
         >
-          <CustomText variant="button" color={theme.colors.text.inverse}>
-            + Invite
-          </CustomText>
+          <View style={styles(theme).contactLeftSection}>
+            <View style={styles(theme).avatarContainer}>
+              {item?.image ? (
+                <Image
+                  source={{ uri: item.image }}
+                  style={styles(theme).avatar}
+                />
+              ) : (
+                <Text style={styles(theme).initials}>
+                  {(item?.name?.[0] || item?.nickname?.[0] || "U").toUpperCase()}
+                </Text>
+              )}
+            </View>
+            <View style={styles(theme).contactInfo}>
+              <CustomText variant="subtitle1" color={theme.colors.text.primary}>
+                {item?.nickname || item?.name || "Unknown"}
+              </CustomText>
+              {item?.messages?.content && (
+                <CustomText
+                  variant="body2"
+                  color={theme.colors.text.secondary}
+                  numberOfLines={1}
+                >
+                  {item?.messages?.content}
+                </CustomText>
+              )}
+            </View>
+          </View>
+          {item?.unread_count > 0 && (
+            <View style={styles(theme).unreadBadge}>
+              <CustomText variant="caption" color={theme.colors.text.inverse}>
+                {item?.unread_count}
+              </CustomText>
+            </View>
+          )}
         </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
+      );
+    },
+    [handleContactPress, theme]
   );
 
+  const renderDeviceContact = useCallback(
+    ({ item }: any) => {
+      if (!item) return null;
+      return (
+        <TouchableOpacity
+          style={styles(theme).contactItem}
+          activeOpacity={0.8}
+          onPress={() => {
+            /* Handle invite action */
+          }}
+        >
+          <View style={styles(theme).contactLeftSection}>
+            <View style={styles(theme).avatarContainer}>
+              <Text style={styles(theme).initials}>
+                {(item?.name?.[0] || "U").toUpperCase()}
+              </Text>
+            </View>
+            <View style={styles(theme).contactInfo}>
+              <CustomText variant="subtitle1" color={theme.colors.text.primary}>
+                {item?.name || "Unknown"}
+              </CustomText>
+              {item?.phoneNumber && (
+                <CustomText variant="body2" color={theme.colors.text.secondary}>
+                  {item.phoneNumber}
+                </CustomText>
+              )}
+            </View>
+            <TouchableOpacity
+              onPress={handleAddContact}
+              style={styles(theme).addButton}
+            >
+              <CustomText variant="button" color={theme.colors.text.inverse}>
+                + Invite
+              </CustomText>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      );
+    },
+    [handleAddContact, theme]
+  );
+
+  // Filter contacts based on search text
   useEffect(() => {
     if (!searchText.trim()) {
       setFilteredRecentContacts(contactLists);
-      setFilteredDeviceContacts((deviceContacts as any)?.data || []);
+      setFilteredDeviceContacts(deviceContactsData);
     } else {
       const searchLower = searchText.trim().toLowerCase();
 
-      const filteredRecent = contactLists?.filter((contact: any) =>
-        (contact?.name || contact?.nickname || contact?.username || "")
+      const filteredRecent = contactLists.filter((contact: any) => {
+        if (!contact) return false;
+        const searchableText = (
+          contact?.name ||
+          contact?.nickname ||
+          contact?.username ||
+          ""
+        )
           .toLowerCase()
-          .includes(searchLower)
-      );
-      const filteredDevice = (deviceContacts?.data || []).filter(
-        (contact: any) =>
-          (contact?.name || contact?.phoneNumber || "")
-            .toLowerCase()
-            .includes(searchLower)
-      ) as [];
+          .trim();
+        return searchableText.includes(searchLower);
+      });
+
+      const filteredDevice = deviceContactsData.filter((contact: any) => {
+        if (!contact) return false;
+        const searchableText = (
+          contact?.name || contact?.phoneNumber || ""
+        )
+          .toLowerCase()
+          .trim();
+        return searchableText.includes(searchLower);
+      });
 
       setFilteredRecentContacts(filteredRecent);
       setFilteredDeviceContacts(filteredDevice);
     }
-  }, [searchText, contactLists, deviceContacts]);
+  }, [searchText, contactLists, deviceContactsData]);
 
   const handleSearch = (text: string) => {
     setSearchText(text);
@@ -323,16 +356,27 @@ export default function ContactScreen(props: any) {
                   </View>
                   {isLoading ? (
                     <LoaderComponent
-                      // style={{ flex: 1 }}
                       loaderColor="black"
                       loaderSize={"large"}
                     />
                   ) : (
                     <FlatList
-                      data={filteredRecentContacts}
-                      keyExtractor={(item, index) => `recent-${index}`}
+                      data={filteredRecentContacts || []}
+                      keyExtractor={(item, index) =>
+                        `recent-${item?.id || item?.username || index}`
+                      }
                       renderItem={renderRecentContact}
-                      ListEmptyComponent={<Text>No recent contacts</Text>}
+                      ListEmptyComponent={
+                        <View style={{ padding: 20, alignItems: "center" }}>
+                          <CustomText
+                            variant="body2"
+                            color={theme.colors.text.secondary}
+                          >
+                            No recent contacts
+                          </CustomText>
+                        </View>
+                      }
+                      scrollEnabled={false}
                     />
                   )}
                   <View style={styles(theme).header}>
@@ -342,10 +386,21 @@ export default function ContactScreen(props: any) {
                   </View>
                 </View>
               }
-              data={filteredDeviceContacts}
-              keyExtractor={(item, index) => `device-${index}`}
+              data={filteredDeviceContacts || []}
+              keyExtractor={(item, index) =>
+                `device-${item?.id || item?.phoneNumber || index}`
+              }
               renderItem={renderDeviceContact}
-              ListEmptyComponent={<Text>No device contacts found</Text>}
+              ListEmptyComponent={
+                <View style={{ padding: 20, alignItems: "center" }}>
+                  <CustomText
+                    variant="body2"
+                    color={theme.colors.text.secondary}
+                  >
+                    No device contacts found
+                  </CustomText>
+                </View>
+              }
             />
           )}
         </View>

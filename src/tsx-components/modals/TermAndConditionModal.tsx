@@ -155,7 +155,7 @@ const TermAndConditionModal = forwardRef<
             }}
             onPress={() => {
               setIsVisible(false);
-              onAgree();
+              onAgree?.();
             }}
             tStyle={{}}
             disabled={!showButton}

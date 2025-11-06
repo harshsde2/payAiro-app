@@ -89,6 +89,8 @@ import CrytoToDollorConversion from "./CrytoToDollorConversion.svg";
 import PendingBalance from "./PendingBalance.svg";
 import Balance from "./Balance.svg";
 import BalanceTiltRight from "./BalanceTiltRight.svg";
+import HourGlass from "./HourGlass.svg";
+
 
 
 export const SvgIcons = {
@@ -183,4 +185,5 @@ export const SvgIcons = {
   PendingBalance,
   Balance,
   BalanceTiltRight,
+  HourGlass,
 };

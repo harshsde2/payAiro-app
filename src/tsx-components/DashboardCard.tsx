@@ -1,7 +1,8 @@
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useEffect, useState, useRef } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   Clipboard,
   Dimensions,
   Image,
@@ -78,6 +79,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
   const [displayCryptobalance, setDisplayCryptobalance] = useState(
     cryptoData?.rounded_balance || ""
   );
+  const hourGlassRotation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     setDisplayCryptobalance(cryptoData?.rounded_balance || "");
@@ -421,8 +423,32 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
                   </View>
                 </View>
               )}
-              <View style={{ padding: 10 ,position: "absolute", right: 0, top: 20, zIndex: 1000 }}>
-                {showPendingBalance ? <SvgIcons.BalanceTiltRight onPress={()=>{setShowPendingBalance(!showPendingBalance)}} width={30} height={30} /> : <SvgIcons.Balance onPress={()=>{setShowPendingBalance(!showPendingBalance)}} width={30} height={30} />}
+              <View style={{ padding: 10 ,position: "absolute", right: 10, top: 35, zIndex: 1000 }}>
+                <Animated.View
+                  style={{
+                    transform: [
+                      {
+                        rotate: hourGlassRotation.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['0deg', '180deg'],
+                        }),
+                      },
+                    ],
+                  }}
+                >
+                  <SvgIcons.HourGlass
+                    onPress={() => {
+                      setShowPendingBalance(!showPendingBalance);
+                      Animated.timing(hourGlassRotation, {
+                        toValue: showPendingBalance ? 0 : 1,
+                        duration: 300,
+                        useNativeDriver: true,
+                      }).start();
+                    }}
+                    width={20}
+                    height={20}
+                  />
+                </Animated.View>
               </View>
             </View>
             <View
@@ -541,8 +567,11 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
                 alignItems: "flex-start",
               }}
             >
-              <CustomText color={theme.colors.palette.black} variant={"body1"}>
-                {"Crypto Pending + Available Balance"}
+              <CustomText color={theme.colors.palette.black} variant={'body1'}>
+                {"Crypto Balance"}
+              </CustomText>
+              <CustomText color={theme.colors.palette.red500} size={8}  variant={'caption'}>
+                {"Pending + Available Balance"}
               </CustomText>
               <View
                 style={{ flexDirection: "row", alignItems: "center", gap: 10 }}

@@ -246,8 +246,8 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   camera: {
-    width: width * 0.8, // 80% of the screen width
-    height: width * 0.8, // Make it square
+    width: width * 0.95, // 80% of the screen width
+    height: width * 0.95, // Make it square
     alignSelf: "center",
     marginTop: height * 0.2, // Center vertically
   },

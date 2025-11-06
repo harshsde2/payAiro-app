@@ -1752,7 +1752,7 @@ const NewDashboard = () => {
                   onActionPress={() => {
                     navigation.navigate(NAVIGATION_SCREENS.BANK_DETAILS, {
                       item: processedBankAccounts,
-                      bankbalance: processedBankAccounts[0].balance,
+                      bankbalance: processedBankAccounts[0]?.balance,
                       index: 0,
                     });
                   }}
