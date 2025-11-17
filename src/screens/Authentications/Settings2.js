@@ -50,6 +50,7 @@ import Pincode2 from './Pincode2';
 import { ScreenContainer } from 'HOC';
 import {getBiometric} from '../../services/Auth';
 import { useSelector } from 'react-redux';
+import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 
 export default function Settings2() {
   const {tokens} = useSelectorAction();
@@ -66,6 +67,7 @@ export default function Settings2() {
 
   const kycStatus = useSelector((s) => s.authenticationSlice?.kycStatus);
 
+  console.log(kycStatus, 'kycStatus');
   useEffect(() => {
     getkycStep();
     getBiometricStatus();
@@ -134,7 +136,7 @@ export default function Settings2() {
                     return;
                   }
                   if (i.name === 'Change Pin') {
-                    if(kycStatus === 'approved') {
+                    if(kycStatus?.state === 'approved' || kycStatus?.status == true) {
                       navigation.navigate(NAVIGATION_SCREENS.CHANGE_PIN_SCREEN);
                     } else {
                       useDispatchAction(setErrorMsg('KYC is Pending'));

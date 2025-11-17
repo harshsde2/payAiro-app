@@ -55,7 +55,7 @@ export default function TransactionCard({ item, isCrypto, isMerchent }) {
       )
       .join(" ");
 
-  // console.log("sent =>", JSON.stringify(item, null, 2));
+  // console.log("item =>", JSON.stringify(item, null, 2));
   const handlePress = () => {
     // Navigate to the new TransactionDetails modal for both fiat and crypto transactions
     navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_DETAILS_MODAL, {

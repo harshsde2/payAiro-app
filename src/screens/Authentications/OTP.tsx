@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import DeviceInfo from "react-native-device-info";
 import { useDispatch } from "react-redux";
-import { setItem, setPin, STORAGE_KEYS } from "storage/mmkv";
+import { getItem, setItem, setPin, STORAGE_KEYS } from "storage/mmkv";
 import { Theme, useTheme } from "styles";
 import { CustomText } from "tsx-components";
 import AuthHeader from "tsx-components/AuthHeader";
@@ -32,6 +32,8 @@ import {
   setWalletData
 } from "../../redux/slices/authenticationSlice";
 import { setToken, setWalletDataAuth } from "../../services/Auth";
+
+const OTP_COOLDOWN_SECONDS = 60;
 
 export default function ConfirmOTP() {
   const getDeviceId = async () => {
@@ -80,25 +82,62 @@ export default function ConfirmOTP() {
   const { email } = (route as any).params;
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const inputs = useRef<any>([]);
-  const [countdown, setCountdown] = useState(60);
+  const [countdown, setCountdown] = useState(OTP_COOLDOWN_SECONDS);
   const [resendEnabled, setResendEnabled] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [lastOtpTimestamp, setLastOtpTimestamp] = useState<number | null>(null);
   
   // Use ref to prevent multiple simultaneous verifications
   const isVerifyingRef = useRef(false);
 
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    } else {
-      setResendEnabled(true);
+  const initializeOtpTimer = useCallback(() => {
+    const storedTimestamp = getItem(STORAGE_KEYS.OTP_RESEND_TIMESTAMP);
+    const parsedTimestamp = storedTimestamp ? Number(storedTimestamp) : NaN;
+    const timestampToUse = Number.isFinite(parsedTimestamp)
+      ? parsedTimestamp
+      : Date.now();
+
+    if (!Number.isFinite(parsedTimestamp)) {
+      setItem(STORAGE_KEYS.OTP_RESEND_TIMESTAMP, timestampToUse.toString());
     }
-  }, [countdown]);
+
+    setLastOtpTimestamp(timestampToUse);
+  }, []);
+
+  const updateCountdownFromTimestamp = useCallback(() => {
+    if (!lastOtpTimestamp) {
+      return;
+    }
+
+    const elapsedSeconds = Math.floor(
+      (Date.now() - lastOtpTimestamp) / 1000
+    );
+    const remaining = Math.max(0, OTP_COOLDOWN_SECONDS - elapsedSeconds);
+
+    setCountdown(remaining);
+    setResendEnabled(remaining === 0);
+  }, [lastOtpTimestamp, OTP_COOLDOWN_SECONDS]);
+
+  useEffect(() => {
+    initializeOtpTimer();
+  }, [initializeOtpTimer]);
+
+  useEffect(() => {
+    updateCountdownFromTimestamp();
+    const intervalId = setInterval(updateCountdownFromTimestamp, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [updateCountdownFromTimestamp]);
 
   const handleResend = () => {
     if (resendEnabled && !isVerifying) {
-      setCountdown(60);
+      const newTimestamp = Date.now();
+      setItem(
+        STORAGE_KEYS.OTP_RESEND_TIMESTAMP,
+        newTimestamp.toString()
+      );
+      setLastOtpTimestamp(newTimestamp);
+      setCountdown(OTP_COOLDOWN_SECONDS);
       setResendEnabled(false);
       handleResendOTP();
     }

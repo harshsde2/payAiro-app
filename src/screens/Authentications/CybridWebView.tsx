@@ -28,11 +28,12 @@ import { PinScreenRef } from "tsx-components/modals/modal.types";
 import useDispatchAction from "hooks/useDispatchAction";
 import LottieView from "lottie-react-native";
 import useSelectorAction from "hooks/useSelectorAction";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 
 const CybridWebView = () => {
   const route = useRoute();
   const dispatch = useDispatch();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const pinScreenRef = useRef<PinScreenRef | any>();
   const { URL, isUserAlreadyCreated } = route.params as any;
 
@@ -71,15 +72,29 @@ const CybridWebView = () => {
 
   const getWalletDetails = async () => {
     dispatch(setShowLoader(true));
-    await refetchWalletDetails();
-    if (isSuccessWalletDetails) {
+    try {
+      const result = await refetchWalletDetails();
+      const walletResponse = result?.data;
+
+      if (walletResponse?.data) {
+        dispatch(setWalletData(walletResponse.data));
+        setWalletDataAuth(walletResponse.data);
+        setItem(
+          STORAGE_KEYS.WALLET_DATA,
+          JSON.stringify(walletResponse.data)
+        );
+        dispatch(setLogin(true));
+        dispatch(setSuccessMsg("Create Account Successfully"));
+      }
+    } catch (error) {
+      console.log("error =>", JSON.stringify(error, null, 2));
+      // Intentionally skip user-facing error so we can still navigate away gracefully
+    } finally {
       dispatch(setShowLoader(false));
-      console.log(data);
-      dispatch(setWalletData(data?.data));
-      setWalletDataAuth(data?.data);
-      setItem(STORAGE_KEYS.WALLET_DATA, JSON.stringify(data?.data));
-      dispatch(setLogin(true));
-      dispatch(setSuccessMsg("Create Account Successfully"));
+      navigation.reset({
+        index: 0,
+        routes: [{ name: NAVIGATION_SCREENS.NEW_DASHBOARD }],
+      } as any);
     }
   };
 

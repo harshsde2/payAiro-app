@@ -47,4 +47,5 @@ export const STORAGE_KEYS = {
   TOTAL_DISBURSABLE: "total_disbursable",
   CRYPTO_DATA: "crypto_data",
   ALL_CRYPTO_BALANCES: "all_crypto_balances",
+  OTP_RESEND_TIMESTAMP: "otp_resend_timestamp",
 };

@@ -8,10 +8,10 @@ import {
   Image,
   ScrollView,
   Linking,
-  Share,
   Alert,
 } from "react-native";
 import ViewShot, { captureRef } from "react-native-view-shot";
+import Share from "react-native-share";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import moment from "moment";
 import { Theme, useTheme } from "styles";
@@ -47,9 +47,20 @@ const TransactionDetails: FC = () => {
   const recipient = isSentByMe
     ? (transactionData as IFiatTransaction).recipient_username
     : (transactionData as IFiatTransaction).sender_username;
-  // console.log("transactionData =>",JSON.stringify(transactionData,null,2))
+  console.log("transactionData =>",JSON.stringify(transactionData,null,2))
   const isFiatTransaction = (data: any): data is IFiatTransaction => {
-    return "transaction_id" in data && "sender_username" in data;
+    // Support both legacy and new fiat transaction shapes
+    const hasLegacyKeys =
+      "transaction_id" in data && "sender_username" in data;
+
+    // Newer fiat payloads may only have `id` (string/uuid) without `transaction_id`
+    const hasNewKeys =
+      "id" in data &&
+      "sender_username" in data &&
+      "recipient_username" in data &&
+      !("tx_hash" in data);
+
+    return hasLegacyKeys || hasNewKeys;
   };
 
   const isCryptoSendReceiveTransaction = (
@@ -580,12 +591,37 @@ Check out my transaction details!
       if (screenshotRef.current && screenshotRef.current.capture) {
         const uri = await screenshotRef.current.capture();
 
-        await Share.share({
-          url: uri,
+        const shareOptions = {
+          title: "PayAiro Transaction Receipt",
           message: "PayAiro Transaction Receipt",
-        });
+          url: uri,
+          type: "image/png",
+        };
+
+        await Share.open(shareOptions);
       }
-    } catch (error) {
+    } catch (error: any) {
+      // On Android, closing the native share sheet often throws a "User did not share" / cancel-style error.
+      // We silently ignore user-cancelled shares and only log real failures.
+      const raw = error ?? {};
+      const message =
+        (typeof raw === "string" ? raw : raw.message) ||
+        raw?.error?.message ||
+        raw?.error ||
+        "";
+
+      const normalizedMessage = String(message).toLowerCase();
+      const isUserCancelled =
+        normalizedMessage.includes("user did not share") ||
+        normalizedMessage.includes("cancel") ||
+        raw?.error?.code === "ECANCELED";
+
+      if (isUserCancelled) {
+        // Do nothing visible if the user just cancels sharing
+        console.log("Share cancelled by user");
+        return;
+      }
+
       console.error("Screenshot sharing failed:", error);
       Alert.alert("Error", "Failed to capture and share screenshot");
     }

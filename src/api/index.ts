@@ -9,7 +9,6 @@ import { Tokens } from "./types";
 import { Alert } from "react-native";
 import useDispatchAction from "hooks/useDispatchAction";
 import { setErrorMsg } from "redux/slices/authenticationSlice";
-
 // Create Axios instance
 const api = axios.create({
   baseURL: BASE_URL.production,
@@ -89,7 +88,9 @@ api.interceptors.request.use(
           "auth/V1/login/",
           "/auth/query/", // USER_SUPPORT: allow users to submit support requests even when KYC is pending
           "auth/query/", // without leading slash variant
-          "auth/V1/update-account/"
+          "auth/V1/update-account/",
+          "wallet/details/",
+          AUTH.CREATE_PIN,
         ];
         // Find ONLY if route exactly matches (with or without a trailing slash for safety)
         const isPublic = publicRoutes.some((route) => {
