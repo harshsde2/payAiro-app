@@ -1,6 +1,6 @@
 import {SVGBit, SVGEth, SVGFailGraph, SVGSuGrph, SVGUSDT} from './images';
 import { BASE_URL as url } from '../api/endpoints';
-export const BASE_URL = url.testing;
+export const BASE_URL = url.production;
 export const CRYPTO_HOLDINGS = [
   {
     name: 'Bitcoin',
