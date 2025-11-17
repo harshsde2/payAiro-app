@@ -720,9 +720,7 @@ const NewDashboard = () => {
       isSuccessWalletDashboardData &&
       WalletDashboardData?.data?.transactions
     ) {
-      setweb3TxLists([
-        ...WalletDashboardData?.data?.transactions?.trades,
-      ]);
+      setweb3TxLists([...WalletDashboardData?.data?.transactions?.trades]);
     }
   }, [
     WalletDashboardData,
@@ -1131,7 +1129,7 @@ const NewDashboard = () => {
   }, [web3TxLists]);
 
   // console.log("sortedWeb3TxLists =>", JSON.stringify(sortedWeb3TxLists, null, 2));
-  // console.log("sortedTxLists =>", JSON.stringify(sortedTxLists, null, 2));
+  // console.log("bankLists =>", JSON.stringify(bankLists, null, 2));
 
   // Memoize banking data processing
   const processedBankAccounts = useMemo(() => {
@@ -1175,8 +1173,14 @@ const NewDashboard = () => {
     item: any;
     index: number;
   }) => {
-    const { asset, rounded_balance, usd_value,usd_price, logo, platform_available } =
-      item;
+    const {
+      asset,
+      rounded_balance,
+      usd_value,
+      usd_price,
+      logo,
+      platform_available,
+    } = item;
 
     return (
       <TouchableOpacity
@@ -1236,7 +1240,7 @@ const NewDashboard = () => {
             Available Balance: {platform_available}
           </CustomText>
           <CustomText variant="caption" color="grey">
-           Pending Balance: {rounded_balance}
+            Pending Balance: {rounded_balance}
           </CustomText>
         </View>
 
@@ -1616,9 +1620,7 @@ const NewDashboard = () => {
                   )
                 }
               />
-              <SvgIcons.AddBalanceIcon
-                // xml={!isCrypto ? SVGHolding : SVGAdd}
-                style={{ marginBottom: 20 }}
+              <TouchableOpacity
                 onPress={() => {
                   if (walletData?.fortress) {
                     if (!isCrypto) {
@@ -1630,7 +1632,54 @@ const NewDashboard = () => {
                     navigation.navigate(NAVIGATION_SCREENS.ADD_BALANCE);
                   }
                 }}
-              />
+                style={{
+                  flex: 1,
+                  alignItems: "center",
+                  borderRadius: 10,
+                  height: 80,
+                }}
+              >
+                <View
+                  style={{
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: theme.colors.palette.green150,
+                    width: 85,
+                    height: 55,
+                    borderRadius: 25,
+                    marginBottom: 10,
+                  }}
+                >
+                  <SvgIcons.AddWallet width={30} height={30} />
+                </View>
+                <CustomText size={11}>Add Wallet</CustomText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  navigation.navigate(NAVIGATION_SCREENS.WITHDRAW_BALANCE);
+                }}
+                style={{
+                  flex: 1,
+                  alignItems: "center",
+                  borderRadius: 10,
+                  height: 80,
+                }}
+              >
+                <View
+                  style={{
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: theme.colors.palette.green150,
+                    width: 85,
+                    height: 55,
+                    borderRadius: 25,
+                    marginBottom: 10,
+                  }}
+                >
+                  <SvgIcons.WithdrawlIcon width={30} height={30} />
+                </View>
+                <CustomText size={11}>Withdraw</CustomText>
+              </TouchableOpacity>
             </View>
           </View>
         ) : (
@@ -1771,197 +1820,203 @@ const NewDashboard = () => {
                         <SkeletonCard />
                       </>
                     ) : (
-                      processedBankAccounts.reverse().map((item: any, index: number) => (
-                        <View
-                          key={index}
-                          style={{
-                            backgroundColor: theme.colors.palette.grey100,
-                            padding: 10,
-                            width: 250,
-                            borderRadius: 15,
-                            marginRight: 10,
-                          }}
-                        >
+                      processedBankAccounts
+                        .reverse()
+                        .map((item: any, index: number) => (
                           <View
+                            key={index}
                             style={{
-                              flexDirection: "row",
-                              justifyContent: "flex-start",
-                              alignItems: "center",
-                              width: "100%",
-                              marginBottom: 10,
+                              backgroundColor: theme.colors.palette.grey100,
+                              padding: 10,
+                              width: 250,
+                              borderRadius: 15,
+                              marginRight: 10,
                             }}
                           >
-                            {item.medium_logo_url ? (
-                              <View>
-                                <Image
-                                  source={{ uri: item?.medium_logo_url }}
-                                  style={{
-                                    width: 35,
-                                    height: 35,
-                                    borderRadius: 5,
-                                    backgroundColor:
-                                      theme.colors.palette.grey200,
-                                  }}
-                                />
-                              </View>
-                            ) : (
-                              <SvgIcons.DollarIcon width={35} height={35} />
-                            )}
-                            <View style={{ flex: 1 }}>
-                              <CustomText
-                                variant={"subtitle2"}
-                                fontWeight={"bold"}
-                                fontFamily={
-                                  theme.typography.fontFamily.nexaHeavy
-                                }
-                                style={{
-                                  marginLeft: 5,
-                                  marginTop: 2,
-                                }}
-                              >
-                                {item.displayName}
-                              </CustomText>
-                              {item?.account_type && (
-                                <View style={{ flexDirection: "row", flex: 1 }}>
-                                  <CustomText
-                                    color={theme.colors.palette.grey600}
-                                    fontFamily={
-                                      theme.typography.fontFamily.nexaHeavy
-                                    }
-                                    style={{
-                                      marginLeft: 5,
-                                      marginTop: 2,
-                                      fontSize: 14,
-                                      fontWeight: "400",
-                                      textTransform: "capitalize",
-                                    }}
-                                  >
-                                    {`${item?.account_type}`}
-                                  </CustomText>
-                                  <CustomText
-                                    color={theme.colors.palette.grey600}
-                                    fontFamily={
-                                      theme.typography.fontFamily.nexaHeavy
-                                    }
-                                    style={{
-                                      marginLeft: 5,
-                                      marginTop: 2,
-                                      fontSize: 14,
-                                      fontWeight: "400",
-                                      // textTransform: 'capitalize'
-                                    }}
-                                  >
-                                    {``}
-                                    {/* {`( ${BANK_TYPE} )`} */}
-                                  </CustomText>
-                                </View>
-                              )}
-                            </View>
-                          </View>
-                          <CustomText
-                            color={theme.colors.palette.grey600}
-                            fontFamily={theme.typography.fontFamily.nexaHeavy}
-                            style={{
-                              marginLeft: 5,
-                              marginTop: 2,
-                              fontSize: 12,
-                              fontWeight: "400",
-                            }}
-                          >
-                            {item?.account_number
-                              ? `${item.account_number.slice(
-                                  0,
-                                  2
-                                )}XXXX${item.account_number.slice(-4)}`
-                              : ""}
-                          </CustomText>
-                          <View
-                            style={{
-                              flexDirection: "row",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              width: "100%",
-                            }}
-                          >
-                            {item?.bank_type !== "external" ? (
-                              <View
-                                style={{
-                                  flexDirection: "row",
-                                  marginTop: 5,
-                                  alignItems: "center",
-                                  flex: 1,
-                                }}
-                              >
-                                <Text
-                                  numberOfLines={1}
-                                  style={{
-                                    color: "rgba(44, 106, 63, 1)",
-                                    fontSize: 16,
-                                    fontFamily: Fonts.bold,
-                                    marginLeft: 5,
-                                  }}
-                                >
-                                  {hiddenBalances[item.accountNumber]
-                                    ? "$••••••"
-                                    : `$${item.balance}`}
-                                </Text>
-                                {!hiddenBalances[item.accountNumber] ? (
-                                  <TouchableOpacity
-                                    style={{ padding: 10 }}
-                                    onPress={() =>
-                                      handleEyeClick(item.accountNumber)
-                                    }
-                                  >
-                                    <SvgIcons.EyeOnGreenbg
-                                      style={{ marginLeft: 10, top: 1 }}
-                                      // xml={SVG_eye_on}
-                                      width={15}
-                                      height={15}
-                                    />
-                                  </TouchableOpacity>
-                                ) : (
-                                  <TouchableOpacity
-                                    style={{ padding: 10 }}
-                                    onPress={() =>
-                                      handleEyeClick(item.accountNumber)
-                                    }
-                                  >
-                                    <SvgIcons.EyeOffGreenbg
-                                      style={{ marginLeft: 10, top: 1 }}
-                                      width={15}
-                                      height={15}
-                                    />
-                                  </TouchableOpacity>
-                                )}
-                              </View>
-                            ) : (
-                              <View style={{ flex: 1 }} />
-                            )}
-                            <Text
-                              onPress={() =>
-                                navigation.navigate(
-                                  NAVIGATION_SCREENS.BANK_DETAILS,
-                                  {
-                                    item: processedBankAccounts,
-                                    bankbalance: item.balance,
-                                    index: index,
-                                  }
-                                )
-                              }
+                            <View
                               style={{
-                                color: "rgba(106, 106, 106, 1)",
-                                fontSize: 10,
-                                fontFamily: Fonts.regular,
-                                marginLeft: 5,
-                                marginTop: 5,
-                                textDecorationLine: "underline",
+                                flexDirection: "row",
+                                justifyContent: "flex-start",
+                                alignItems: "center",
+                                width: "100%",
+                                marginBottom: 10,
                               }}
                             >
-                             { item?.account_type == 'external' ? "" : 'View Details'} 
-                            </Text>
+                              {item.medium_logo_url ? (
+                                <View>
+                                  <Image
+                                    source={{ uri: item?.medium_logo_url }}
+                                    style={{
+                                      width: 35,
+                                      height: 35,
+                                      borderRadius: 5,
+                                      backgroundColor:
+                                        theme.colors.palette.grey200,
+                                    }}
+                                  />
+                                </View>
+                              ) : (
+                                <SvgIcons.DollarIcon width={35} height={35} />
+                              )}
+                              <View style={{ flex: 1 }}>
+                                <CustomText
+                                  variant={"subtitle2"}
+                                  fontWeight={"bold"}
+                                  fontFamily={
+                                    theme.typography.fontFamily.nexaHeavy
+                                  }
+                                  style={{
+                                    marginLeft: 5,
+                                    marginTop: 2,
+                                  }}
+                                >
+                                  {item.displayName}
+                                </CustomText>
+                                {item?.account_type && (
+                                  <View
+                                    style={{ flexDirection: "row", flex: 1 }}
+                                  >
+                                    <CustomText
+                                      color={theme.colors.palette.grey600}
+                                      fontFamily={
+                                        theme.typography.fontFamily.nexaHeavy
+                                      }
+                                      style={{
+                                        marginLeft: 5,
+                                        marginTop: 2,
+                                        fontSize: 14,
+                                        fontWeight: "400",
+                                        textTransform: "capitalize",
+                                      }}
+                                    >
+                                      {`${item?.account_type}`}
+                                    </CustomText>
+                                    <CustomText
+                                      color={theme.colors.palette.grey600}
+                                      fontFamily={
+                                        theme.typography.fontFamily.nexaHeavy
+                                      }
+                                      style={{
+                                        marginLeft: 5,
+                                        marginTop: 2,
+                                        fontSize: 14,
+                                        fontWeight: "400",
+                                        // textTransform: 'capitalize'
+                                      }}
+                                    >
+                                      {``}
+                                      {/* {`( ${BANK_TYPE} )`} */}
+                                    </CustomText>
+                                  </View>
+                                )}
+                              </View>
+                            </View>
+                            <CustomText
+                              color={theme.colors.palette.grey600}
+                              fontFamily={theme.typography.fontFamily.nexaHeavy}
+                              style={{
+                                marginLeft: 5,
+                                marginTop: 2,
+                                fontSize: 12,
+                                fontWeight: "400",
+                              }}
+                            >
+                              {item?.account_number
+                                ? `${item.account_number.slice(
+                                    0,
+                                    2
+                                  )}XXXX${item.account_number.slice(-4)}`
+                                : ""}
+                            </CustomText>
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                width: "100%",
+                              }}
+                            >
+                              {item?.bank_type !== "external" ? (
+                                <View
+                                  style={{
+                                    flexDirection: "row",
+                                    marginTop: 5,
+                                    alignItems: "center",
+                                    flex: 1,
+                                  }}
+                                >
+                                  <Text
+                                    numberOfLines={1}
+                                    style={{
+                                      color: "rgba(44, 106, 63, 1)",
+                                      fontSize: 16,
+                                      fontFamily: Fonts.bold,
+                                      marginLeft: 5,
+                                    }}
+                                  >
+                                    {hiddenBalances[item.accountNumber]
+                                      ? "$••••••"
+                                      : `$${item.balance}`}
+                                  </Text>
+                                  {!hiddenBalances[item.accountNumber] ? (
+                                    <TouchableOpacity
+                                      style={{ padding: 10 }}
+                                      onPress={() =>
+                                        handleEyeClick(item.accountNumber)
+                                      }
+                                    >
+                                      <SvgIcons.EyeOnGreenbg
+                                        style={{ marginLeft: 10, top: 1 }}
+                                        // xml={SVG_eye_on}
+                                        width={15}
+                                        height={15}
+                                      />
+                                    </TouchableOpacity>
+                                  ) : (
+                                    <TouchableOpacity
+                                      style={{ padding: 10 }}
+                                      onPress={() =>
+                                        handleEyeClick(item.accountNumber)
+                                      }
+                                    >
+                                      <SvgIcons.EyeOffGreenbg
+                                        style={{ marginLeft: 10, top: 1 }}
+                                        width={15}
+                                        height={15}
+                                      />
+                                    </TouchableOpacity>
+                                  )}
+                                </View>
+                              ) : (
+                                <View style={{ flex: 1 }} />
+                              )}
+                              <Text
+                                onPress={() =>
+                                  navigation.navigate(
+                                    NAVIGATION_SCREENS.BANK_DETAILS,
+                                    {
+                                      item: processedBankAccounts,
+                                      bankbalance: item.balance,
+                                      index: index,
+                                    }
+                                  )
+                                }
+                                style={{
+                                  color: "rgba(106, 106, 106, 1)",
+                                  fontSize: 10,
+                                  fontFamily: Fonts.regular,
+                                  marginLeft: 5,
+                                  marginTop: 5,
+                                  textDecorationLine: "underline",
+                                }}
+                              >
+                                {item?.account_type == "external"
+                                  ? ""
+                                  : "View Details"}
+                              </Text>
+                            </View>
                           </View>
-                        </View>
-                      ))
+                        ))
                     )}
                     {/* <SvgXml
                       width={250}

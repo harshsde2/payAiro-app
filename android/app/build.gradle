@@ -83,8 +83,8 @@ android {
         applicationId "com.payairo"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 14
-        versionName "1.5"
+        versionCode 15
+        versionName "1.6"
         missingDimensionStrategy 'react-native-camera', 'general'
     }
     signingConfigs {

@@ -20,8 +20,6 @@ import FadeWrapper from "animations/animations-components/FadeWrapper";
 import { SvgIcons } from "constants/svgs";
 import useDispatchAction from "hooks/useDispatchAction";
 import LottieView from "lottie-react-native";
-import { bankKeys, cryptoKeys } from "query/hooks";
-import { queryClient } from "query/queryClient";
 import { setTheme } from "redux/slices/animationSlice";
 import { setisCrypto } from "redux/slices/authenticationSlice";
 import { ANIMATION_CONSTANTS } from "./CryptoCard";
@@ -440,7 +438,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
                     onPress={() => {
                       setShowPendingBalance(!showPendingBalance);
                       Animated.timing(hourGlassRotation, {
-                        toValue: showPendingBalance ? 0 : 1,
+                        toValue: !showPendingBalance ? 0 : 1,
                         duration: 300,
                         useNativeDriver: true,
                       }).start();

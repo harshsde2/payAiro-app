@@ -75,7 +75,6 @@ export const AUTH = {
   CREATE_EXTERNAL_BANK_ACCOUNT: "auth/cybrid/create-external-bank-account/",
   DEPOSIT_ADDRESS: "auth/depositAddress/",
   CRYPTO_WITHDRAWAL: "auth/cybrid/Withdrawal/",
-
 };
 // Wallet endpoints
 export const WALLET = {
@@ -91,6 +90,7 @@ export const WALLET = {
     `wallet/cancel-payment-request/pay/${id}/`,
   FILTERED_TRANSACTIONS: "wallet/filtered-transactions/",
   SEND_CRYPTO: "wallet/sendcrypto/",
+  EXTERNAL_WITHDRAWAL_CYBRID: "wallet/external-withdrawal-cybrid/",
 };
 
 // KYC endpoints

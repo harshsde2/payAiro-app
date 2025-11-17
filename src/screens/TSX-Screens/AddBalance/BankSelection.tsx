@@ -17,6 +17,7 @@ interface BankItem {
   bank_name: string;
   account_number: string;
   account_type: string;
+  guid: string;
 }
 
 interface RouteParams {
@@ -33,6 +34,7 @@ const BankSelectionScreen: React.FC = () => {
 
   const { bankList, selectedBank, onSelectBank } = route.params as RouteParams;
 
+  console.log("selectedBank ->", JSON.stringify(selectedBank, null, 2));
   const handleBankSelection = (bank: BankItem) => {
     onSelectBank(bank);
     navigation.goBack();
@@ -43,7 +45,7 @@ const BankSelectionScreen: React.FC = () => {
       onPress={() => handleBankSelection(item)}
       style={[
         styles.bankItem,
-        selectedBank?.value === item.value && styles.selectedBankItem,
+        selectedBank?.guid === item.guid && styles.selectedBankItem,
       ]}
     >
       <SvgIcons.Bank />
@@ -53,7 +55,7 @@ const BankSelectionScreen: React.FC = () => {
           {item.label.split("(")[1]?.split(")")[0]} • {item.account_type.toUpperCase()}
         </CustomText>
       </View>
-      {selectedBank?.value === item.value && (
+      {selectedBank?.guid === item.guid && (
         <SvgIcons.CheckSquareIcon color={theme.colors.palette.green700} />
       )}
     </TouchableOpacity>
@@ -85,7 +87,7 @@ const BankSelectionScreen: React.FC = () => {
             data={bankList}
             showsVerticalScrollIndicator={false}
             renderItem={renderBankItem}
-            keyExtractor={(item, index) => `${item.value}-${index}`}
+            keyExtractor={(item, index) => item.guid || `${item.value}-${index}`}
           />
         </View>
       </Pressable>

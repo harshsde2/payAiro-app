@@ -90,6 +90,7 @@ import CryptoList from "screens/TSX-Screens/CybridCrypto/CryptoList";
 import BankSelection from "screens/TSX-Screens/AddBalance/BankSelection";
 import QRScanner from "screens/TSX-Screens/Send/QRScanner";
 import CybridWebView from "screens/Authentications/CybridWebView";
+import WithdrawlBalance from "screens/TSX-Screens/AddBalance/WithdrawlBalance";
 
 const Stack = createNativeStackNavigator();
 
@@ -451,6 +452,11 @@ export default function AppStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.ADD_BALANCE}
         component={AddBalance}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.WITHDRAW_BALANCE}
+        component={WithdrawlBalance}
       />
       <Stack.Screen
         options={{ headerShown: false }}

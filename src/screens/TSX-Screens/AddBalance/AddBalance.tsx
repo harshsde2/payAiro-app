@@ -59,6 +59,7 @@ const AddBalance = () => {
       bank_name: item?.bank_name || "",
       account_number: item?.account_number || "",
       account_type: accountType || "",
+      guid: item?.guid || item?.account_guid || "",
     };
   });
 

@@ -180,6 +180,19 @@ export interface PlaidInstitution {
   institution_id: string;
 }
 
+// External Withdrawal types
+export interface ExternalWithdrawalRequest {
+  amount: number;
+  payment_type: "ach" | "rtp";
+  external_account_id: string;
+}
+
+export interface ExternalWithdrawalResponse {
+  status: boolean;
+  message: string;
+  data?: any;
+}
+
 export interface PlaidLinkSuccess {
   publicToken: string;
   metadata: {

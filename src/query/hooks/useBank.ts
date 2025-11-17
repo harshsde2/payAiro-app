@@ -2,13 +2,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { apiClient } from "../../api";
-import { AUTH, KYC } from "../../api/endpoints";
+import { AUTH, KYC, WALLET } from "../../api/endpoints";
 import { 
   ApiResponse, 
   BankAccount, 
   PlaidLinkTokenResponse, 
   PlaidAccessTokenRequest, 
-  PlaidAccessTokenResponse
+  PlaidAccessTokenResponse,
+  ExternalWithdrawalRequest,
+  ExternalWithdrawalResponse
 } from "../../api/types";
 import { queryStaleTime } from "query/queryConfigs";
 import useSelectorAction from "hooks/useSelectorAction";
@@ -161,3 +163,28 @@ export const usePlaidAccessToken = () => {
     },
   });
 };
+
+/**
+ * Hook to initiate external withdrawal
+ */
+export const useExternalWithdrawal = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation<ExternalWithdrawalResponse, Error, ExternalWithdrawalRequest>({
+    mutationFn: async (data: ExternalWithdrawalRequest) => {
+      const response = await apiClient.post<ExternalWithdrawalResponse>(
+        WALLET.EXTERNAL_WITHDRAWAL_CYBRID,
+        data
+      );
+      return response;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch bank accounts and balances after successful withdrawal
+      queryClient.invalidateQueries({ queryKey: bankKeys.allAccounts() });
+      queryClient.invalidateQueries({ queryKey: bankKeys.balance() });
+      queryClient.invalidateQueries({ queryKey: userKeys.fiatDashboard() });
+    },
+  });
+};
+
+
