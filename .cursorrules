@@ -2,33 +2,70 @@ rules:
   # ==============================
   # COMPONENT & DIRECTORY STRUCTURE
   # ==============================
-  - Always use UI components only from `src/components/common-components` when available.
-  - Always use variables and colors from `src/styles` when available. And also use `theme` state from for colors , spacing, typography from `src/styles/ThemeContext`
-  - If a new reusable UI component is needed, create it inside `src/components/common-components/`.
-  - If a new Screen needed to becreate it inside `src/screens/TSX-Screens` and mention it in `src/navigations/AppStack.js` with `src/navigations/navigationConstants.js`.
-  - If a component is specific (not reusable/common), create it inside `src/components/general-components/`.
+  - Always use UI components only from `@components/common-components` when available.
+  - Always use variables and colors from `@styles` when available. And also use `theme` state from `@styles/ThemeContext` for colors, spacing, typography.
+  - If a new reusable UI component is needed, create it inside `@components/common-components/`.
+  - If a new Screen needed to be created, create it inside `@screens/` and mention it in `@navigations/AppStack.tsx` with `@navigations/navigationConstants.ts`.
+  - Each screen must have its corresponding stylesheet in `@styles/screens/{ScreenName}/{screenName}Styles.ts`.
+  - If a component is specific (not reusable/common), create it inside `@components/general-components/`.
   - Don't create Document file for a component which is created by you util I give you.
+
+  # ==============================
+  # IMPORT & PATH ALIASES
+  # ==============================
+  - **Always use path aliases** instead of relative imports (`../../../`).
+  - **Never** use relative imports like `../../../components/` or `../../styles/`.
+  - Available path aliases:
+    - `@components/*` - For all components (`@components/common-components/CustomText`)
+    - `@screens/*` - For all screens (`@screens/Auth/Login`)
+    - `@styles/*` - For all styles (`@styles/ThemeContext`, `@styles/components/textStyles`)
+    - `@navigations/*` - For navigation files (`@navigations/navigationConstants`)
+    - `@assets/*` - For assets (`@assets/svgs`)
+    - `@api/*` - For API files (`@api/endpoints`)
+    - `@redux/*` - For Redux store and slices (`@redux/store`, `@redux/slices/authenticationSlice`)
+    - `@query/*` - For React Query hooks (`@query/hooks/useUser`)
+    - `@utils/*` - For utility functions (`@utils/formatDate`)
+  - Example of correct imports:
+    ```typescript
+    // ✅ Correct - Using path aliases
+    import CustomText from '@components/common-components/CustomText';
+    import { useTheme } from '@styles/ThemeContext';
+    import { NAVIGATION_SCREENS } from '@navigations/navigationConstants';
+    
+    // ❌ Wrong - Using relative imports
+    import CustomText from '../../../components/common-components/CustomText';
+    import { useTheme } from '../../styles/ThemeContext';
+    ```
 
   # ==============================
   # LANGUAGE & SYNTAX
   # ==============================
   - Use **TypeScript only**, never JavaScript.
   - Always use `async/await`, never `.then()`.
+  - Do not add unnecessary comments. Write clean, self-documenting code without comments.
 
   # ==============================
   # COMPONENT STYLE
   # ==============================
   - All React components must be **functional components** with hooks.
-  - Do not use inline styles. 
-    - If styles are needed, write them in `src/styles/GlobalStyles.ts`.
-    - If they are reusable/common styles, put them in `src/styles/CommonStyles.ts`. 
-    - Create these files if they do not exist.
+  - **Never** define `StyleSheet` or any style code inside `.tsx` files. All styles must be in separate files within `src/styles/` folder.
+  - Screen components (`.tsx` files) must import styles from their corresponding stylesheet files in `@styles/screens/`.
+  - Style file organization:
+    - **Screen styles**: Create in `@styles/screens/{ScreenName}/{screenName}Styles.ts` (e.g., `@styles/screens/dashboard/dashboardStyles.ts`)
+    - **Component styles**: Use `@styles/components/` for reusable component styles (textStyles, headingStyles, buttonStyles, etc.)
+    - **Common utilities**: Use `@styles/common/` for common layout and utility styles (commonStyles, layoutStyles)
+    - **Global styles**: Use `@styles/GlobalStyles.ts` for app-wide global styles
+    - **Common reusable styles**: Use `@styles/CommonStyles.ts` for shared common styles
+  - Always use `useTheme()` hook from `@styles/ThemeContext` to access theme (colors, spacing, typography, radius)
+  - All style functions must accept `theme: ITheme` as parameter and return `StyleSheet.create()` result
+  - Never use hardcoded colors, spacing, or typography values - always use theme tokens
 
   # ==============================
   # TYPES & INTERFACES
   # ==============================
-  - Do not define `types` or `interfaces` inside component files.
-    - Each folder must have a `types.ts` file for local types.
+  - **Never** define `types` or `interfaces` inside `.tsx` files. All types and interfaces must be defined in `types.ts` files and imported where needed.
+    - Each folder must have a `types.ts` file for local types when types are needed.
+    - Always import types and interfaces from the appropriate `types.ts` file.
     - Example folder structure:
         ```
         current-folder/
