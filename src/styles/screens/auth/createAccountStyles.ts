@@ -3,24 +3,11 @@ import { ITheme } from '../../themes/themeTypes';
 
 export const createAccountStyles = (theme: ITheme) => {
   return StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: theme.colors.background,
-    },
-    contentContainer: {
-      flexGrow: 1,
-      padding: theme.spacing.base,
-    },
-    backButton: {
-      alignSelf: 'flex-start',
-      padding: theme.spacing.sm,
-      marginBottom: theme.spacing.md,
-    },
-    header: {
-      marginBottom: theme.spacing.xl,
-    },
     content: {
-      flex: 1,
+      flexGrow: 1,
+      paddingHorizontal: theme.spacing.base,
+      paddingTop: theme.spacing.base,
+      paddingBottom: theme.spacing.xl,
     },
     welcomeText: {
       textAlign: 'center',

@@ -49,14 +49,14 @@ const TextInput: React.FC<ITextInputProps> = ({
   };
 
   const leftSeparatorStyle: ViewStyle = {
-    width: 1,
-    height: 24,
+    width: .2,
+    height: 35,
     backgroundColor: theme.colors.grey,
     marginRight: 12,
   };
 
   const rightSeparatorStyle: ViewStyle = {
-    width: 1,
+    width: 0.2,
     height: 24,
     backgroundColor: theme.colors.grey,
     marginLeft: 12,

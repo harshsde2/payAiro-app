@@ -8,6 +8,7 @@ import CreateAccountScreen from '@screens/Auth/CreateAccount';
 import OTPVerificationScreen from '@screens/Auth/OTPVerification';
 import ForgotPasswordScreen from '@screens/Auth/ForgotPassword';
 import ForgotPasswordVerificationScreen from '@screens/Auth/ForgotPasswordVerification';
+import CustomHeader from '@components/common-components/CustomHeader';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
@@ -15,7 +16,8 @@ const AuthStack: React.FC = () => {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerShown: false,
+        headerShown: true,
+        header: (props) => <CustomHeader {...props} />,
         animation: 'slide_from_right',
       }}
       initialRouteName={NAVIGATION_SCREENS.ONBOARDING}
@@ -23,6 +25,9 @@ const AuthStack: React.FC = () => {
       <Stack.Screen
         name={NAVIGATION_SCREENS.ONBOARDING}
         component={OnboardingScreen}
+        options={{
+          headerShown: false,
+        }}
       />
       <Stack.Screen
         name={NAVIGATION_SCREENS.LOGIN}

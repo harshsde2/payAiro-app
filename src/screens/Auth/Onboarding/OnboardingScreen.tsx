@@ -48,7 +48,7 @@ const OnboardingScreen: React.FC = () => {
       <View style={styles.textContainer}>
         <CustomText
           variant="h2"
-          fontWeight="bold"
+          fontWeight='semiBold'
           color={theme.colors.black}
           style={styles.headline}
         >
@@ -56,6 +56,7 @@ const OnboardingScreen: React.FC = () => {
         </CustomText>
         <CustomText
           variant='h6'
+          fontWeight='medium'
           color={theme.colors.primary}
           style={styles.subtitle}
         >

@@ -5,6 +5,9 @@ import Wallet from './Wallet.svg';
 import Scan from './Scan.svg';
 import OnBoardingImage from './OnBoardingImage.svg';
 import LogoWithName from './LogoWithName.svg';
+import ArrowLeft from './ArrowLeft.svg';
+import EyeOff from './EyeOff.svg';
+import Mail from './Mail.svg';
 
 export const AppIcon = {
   Home,
@@ -13,5 +16,8 @@ export const AppIcon = {
   Wallet,
   Scan,
   OnBoardingImage,
-  LogoWithName
+  LogoWithName,
+  ArrowLeft,
+  EyeOff,
+  Mail
 };
