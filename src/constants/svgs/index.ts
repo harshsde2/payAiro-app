@@ -92,6 +92,8 @@ import BalanceTiltRight from "./BalanceTiltRight.svg";
 import HourGlass from "./HourGlass.svg";
 import WithdrawlIcon from "./WithdrawlIcon.svg";
 import AddWallet from "./AddWallet.svg";
+import CryptoIcon from "./Crypto.svg";
+import UploadIcon from "./Upload.svg";
 
 
 
@@ -190,4 +192,6 @@ export const SvgIcons = {
   HourGlass,
   WithdrawlIcon,
   AddWallet,
+  CryptoIcon,
+  UploadIcon,
 };

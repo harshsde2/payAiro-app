@@ -18,7 +18,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { SCREENS } from "../constants/SCREENS";
 import useSelectorAction from "../hooks/useSelectorAction";
 import useDispatchAction from "../hooks/useDispatchAction";
-import { setActiveTab } from "../redux/slices/authenticationSlice";
+import { setActiveTab, setisCrypto } from "../redux/slices/authenticationSlice";
 import { useSelector } from "react-redux";
 import Fonts from "../constants/Fonts";
 import {
@@ -27,11 +27,14 @@ import {
 } from "../helper/Permission";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { SvgIcons } from "constants/svgs";
+import { setTheme } from "redux/slices/animationSlice";
+import { useTheme } from "styles";
 
 export default function BottomNavigation({ isVer }) {
   const navigation = useNavigation();
   const route = useRoute();
-  const { activeTab, pendingRequest } = useSelector(
+  const { theme } = useTheme();
+  const { activeTab, pendingRequest, isCrypto } = useSelector(
     (state) => state.authenticationSlice
   );
   // console.log(activeTab);
@@ -94,6 +97,47 @@ export default function BottomNavigation({ isVer }) {
         navigation.navigate(name);
       });
   };
+
+  const handleSwitchCryptoView = () => {
+    // Exact same theme values as DashboardCard handleSwitchCryptoView
+    const newTheme = {
+      backgroundColor: theme.colors.palette.white,
+      inverseBackgroundColor: theme.colors.palette.green700,
+      textColor: theme.colors.palette.white,
+    };
+
+    // Set absolute value - user confirmed line 108 (setisCrypto(false)) is correct
+    // Match DashboardCard's dispatch order: isCrypto first, then theme
+    useDispatchAction(setisCrypto(false));
+    useDispatchAction(setTheme(newTheme));
+    
+    // Update activeTab for crypto view (activeTab "7")
+    if (route.name === NAVIGATION_SCREENS.NEW_DASHBOARD) {
+      useDispatchAction(setActiveTab("7"));
+    }
+  };
+
+  const handleSwitchBankingView = () => {
+    // Exact same theme values as DashboardCard handleSwitchBankingView
+    const newTheme = {
+      backgroundColor: theme.colors.palette.green700,
+      inverseBackgroundColor: theme.colors.palette.white,
+      textColor: theme.colors.palette.black,
+    };
+
+    // Set absolute value to ensure consistent state
+    // Since crypto view uses isCrypto=false, banking view should use isCrypto=true to differentiate
+    // Match DashboardCard's dispatch order: isCrypto first, then theme
+    useDispatchAction(setisCrypto(true));
+    useDispatchAction(setTheme(newTheme));
+    
+    // Update activeTab for banking view (activeTab "1")
+    if (route.name === NAVIGATION_SCREENS.NEW_DASHBOARD) {
+      useDispatchAction(setActiveTab("1"));
+    }
+  };
+
+
   return (
     <View
       style={
@@ -120,15 +164,31 @@ export default function BottomNavigation({ isVer }) {
       >
         {/* Dashboard Tab */}
         <TouchableOpacity
-          onPress={() => handleTabSwitch(NAVIGATION_SCREENS.NEW_DASHBOARD)}
+          onPress={() => {
+            handleSwitchBankingView();
+            handleTabSwitch(NAVIGATION_SCREENS.NEW_DASHBOARD);
+          }}
         >
           <SvgIcons.HomeIcon style={{ opacity: activeTab === "1" ? 1 : 0.6 }} />
+        </TouchableOpacity>
+
+        {/* Crypto Tab */}
+        <TouchableOpacity
+          onPress={() => {
+            handleSwitchCryptoView();
+            handleTabSwitch(NAVIGATION_SCREENS.NEW_DASHBOARD);
+          }}
+        >
+          <SvgIcons.CryptoIcon width={25} height={25} style={{ opacity: activeTab === "7" ? 1 : 0.6 }} />
         </TouchableOpacity>
 
         {/* Transaction Tab */}
         <TouchableOpacity
           // disabled={true}
-          onPress={() => handleTabSwitch(SCREENS.Transaction)}
+          onPress={() => {
+            handleSwitchBankingView();
+            handleTabSwitch(SCREENS.Transaction);
+          }}
         >
           <SvgIcons.TransactionIcon
             style={{ opacity: activeTab === "2" ? 1 : 0.6 }}
@@ -166,7 +226,10 @@ export default function BottomNavigation({ isVer }) {
         {/* Scan Tab */}
         <TouchableOpacity
           // disabled={true}
-          onPress={() => handleTabSwitch(SCREENS.Scans)}
+          onPress={() => {
+            handleSwitchBankingView();
+            handleTabSwitch(SCREENS.Scans);
+          }}
         >
           <SvgIcons.NewScannerIcon
           style={{opacity: activeTab === '3' ? 1 : 0.6}}
@@ -185,7 +248,10 @@ export default function BottomNavigation({ isVer }) {
 
         {/* Setting Tab */}
         <TouchableOpacity
-          onPress={() => handleTabSwitch(NAVIGATION_SCREENS.SETTING_SCREEN)}
+          onPress={() => {
+            handleSwitchBankingView();
+            handleTabSwitch(NAVIGATION_SCREENS.SETTING_SCREEN);
+          }}
         >
           <SvgIcons.SettingIcon
             style={{ opacity: activeTab === "5" ? 1 : 0.6 }}

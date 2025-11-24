@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import DocumentPicker, {
   DocumentPickerResponse,
 } from "react-native-document-picker";
@@ -10,7 +10,6 @@ import {
   pickImageFromGallery,
 } from "utils/ImagePicker";
 import Fonts from "../constants/Fonts";
-import { SVGUpload } from "../constants/images";
 import {
   askCameraPremission,
   checkCameraPremission,
@@ -23,6 +22,7 @@ import {
 import GalleryModal from "./GalaryModal";
 import { FileObject, UploadFileProps } from "./types";
 import { useTheme } from "styles";
+import { SvgIcons } from "constants/svgs";
 
 export default function UploadFile({
   selectedFile,
@@ -30,6 +30,9 @@ export default function UploadFile({
   placeholder,
   label,
   type,
+  style,
+  boxStyle,
+  children,
 }: UploadFileProps) {
   const maxFileSize = 2 * 1024 * 1024; // 2 MB in bytes
   const [selfie, setSelfie] = useState<FileObject | null>(null);
@@ -96,7 +99,7 @@ export default function UploadFile({
   };
 
   return (
-    <View>
+    <View style={style}>
       <GalleryModal
         isVisible={isVisible}
         onConfirm={(e: string) => {
@@ -116,42 +119,58 @@ export default function UploadFile({
         {label}
       </CustomText>
 
-      <View
-        style={{
-          borderRadius: 30,
-          borderWidth: 1,
-          borderColor: "#6A6A6A33",
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-          paddingVertical: 5,
-        }}
-      >
-        <CustomText
-          numberOfLines={1}
-          variant={"body2"}
-          style={{
-            paddingRight: 10,
-            paddingLeft: 15,
-            flex: 1,
-            // width: "10%",
-          }}
-        >
-          {value
-            ? value
-            : type === "image"
-            ? "Tap to upload (.png,.jpg)"
-            : "Tap to upload (.pdf)"}
-        </CustomText>
-
-        <SvgXml
-          xml={SVGUpload}
-          style={{ marginRight: 9 }}
-          onPress={() =>
-            type === "image" ? setIsVisible(true) : handleUpload()
+      <TouchableOpacity
+        activeOpacity={children ? 0.7 : 1}
+        onPress={() => {
+          if (children) {
+            type === "image" ? setIsVisible(true) : handleUpload();
           }
-        />
-      </View>
+        }}
+        style={[
+          {
+            borderRadius: 30,
+            borderWidth: 1,
+            borderColor: "#6A6A6A33",
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingVertical: 5,
+          },
+          boxStyle,
+        ]}
+      >
+        {children ? (
+          children
+        ) : (
+          <>
+            <CustomText
+              numberOfLines={1}
+              variant={"body2"}
+              style={{
+                paddingRight: 10,
+                paddingLeft: 15,
+                flex: 1,
+                // width: "10%",
+              }}
+            >
+              {value
+                ? value
+                : type === "image"
+                ? "Tap to upload (.png,.jpg)"
+                : "Tap to upload (.pdf)"}
+            </CustomText>
+            <View
+              style={{
+                padding: 10,
+                backgroundColor: theme.colors.palette.grey200,
+                borderRadius: 50,
+              }}
+            >
+              <SvgIcons.UploadIcon width={20} height={20} />
+            </View>
+          </>
+        )}
+      </TouchableOpacity>
     </View>
   );
 }

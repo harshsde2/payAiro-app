@@ -46,6 +46,7 @@ export default function App() {
     successMsg,
     biometricAvailable,
     showLoader,
+    isCrypto,
   } = useSelector((state) => state.authenticationSlice);
 
   const dispatch = useDispatch();
@@ -310,7 +311,11 @@ export default function App() {
 
               switch (currentRoute.name) {
                 case NAVIGATION_SCREENS.NEW_DASHBOARD:
-                  activeTabs = "1";
+                  if (isCrypto) {
+                    activeTabs = "1";
+                  } else {
+                    activeTabs = "7";
+                  }
                   break;
                 case NAVIGATION_SCREENS.TRANSACTION:
                   activeTabs = "2";

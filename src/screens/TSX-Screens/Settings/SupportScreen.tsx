@@ -27,7 +27,7 @@ const SupportScreen = () => {
 
   const [message, setMessage] = useState("");
   const [subject, setSubject] = useState("");
-  const [attachment, setAttachment] = useState([]);
+  const [attachment, setAttachment] = useState<any>(null);
 
   const {
     isError,
@@ -88,9 +88,12 @@ const SupportScreen = () => {
     <ScreenContainer avoidKeyboard scrollable padding={0}>
       <HeaderTitle title="Support" leftIcon="true" />
       <View style={[styles.whiteSheetContainer]}>
-        <View style={{ width: "100%", flexDirection: "row", gap: 10 }}>
+        <View style={customStyle.infoContainer}>
           <SvgIcons.InfoNote />
-          <CustomText variant="caption">
+          <CustomText
+            variant="caption"
+            style={{ flex: 1, color: theme.colors.palette.grey600 }}
+          >
             Submit the support form below and our team will get in touch within
             48 hours.
           </CustomText>
@@ -101,40 +104,24 @@ const SupportScreen = () => {
             label="Subject"
             placeholder={"Your Subject"}
             value={subject}
-            cStyle={{}}
-            // editable={false}
+            cStyle={{ marginBottom: 15 }}
             onChange={(e) => {
               setSubject(e);
             }}
           />
-          {/* <TextInputField
-            label="Email"
-            placeholder={"Your Email"}
-            value={walletData?.account_email ?? ""}
-            cStyle={{}}
-            editable={false}
-            onChange={() => {}}
-          />
-          <TextInputField
-            label="PayAiro Tag"
-            placeholder={"Your PayAiro Tag"}
-            value={walletData?.username ?? ""}
-            cStyle={{}}
-            editable={false}
-            onChange={() => {}}
-          /> */}
+
           <TextInputField
             required
             label="Message"
             placeholder={"Write your query"}
             value={message}
-            // multiline={true}
             isMultiLine={true}
-            iStyle={
-              {
-                //   height: 170,
-              }
-            }
+            iStyle={{
+              height: 120,
+              textAlignVertical: "top",
+              paddingVertical: 10,
+            }}
+            cStyle={{ marginBottom: 15 }}
             onChange={(m) => {
               setMessage(m);
             }}
@@ -148,7 +135,53 @@ const SupportScreen = () => {
             value={attachment?.name}
             type={"image"}
             key={"asdasd"}
-          />
+            boxStyle={customStyle.uploadBox}
+          >
+            {attachment?.name ? (
+              <View style={{ alignItems: "center", padding: 10 }}>
+                <SvgIcons.UploadIcon width={40} height={40} />
+                <CustomText variant="body2" style={{ marginTop: 10 }}>
+                  {attachment.name}
+                </CustomText>
+              </View>
+            ) : (
+              <View style={{ alignItems: "center", padding: 10 }}>
+                <View
+                  style={{
+                    padding: 10,
+                    backgroundColor: theme.colors.palette.grey120,
+                    borderRadius: 50,
+                    marginBottom: 10,
+                  }}
+                >
+                  <SvgIcons.UploadIcon width={30} height={30} />
+                </View>
+                <CustomText variant="body2" style={{ textAlign: "center" }}>
+                  <CustomText
+                    variant="body2"
+                    color={theme.colors.palette.green500}
+                  >
+                    Tap to upload
+                  </CustomText>{" "}
+                  or drag and drop
+                </CustomText>
+                <CustomText
+                  variant="caption"
+                  color={theme.colors.palette.grey500}
+                  style={{ marginTop: 5 }}
+                >
+                  PNG or JPG files
+                </CustomText>
+                <CustomText
+                  variant="caption"
+                  color={theme.colors.palette.grey400}
+                  style={{ marginTop: 15 }}
+                >
+                  Accepted formats: PNG, JPG • Max size: 5MB
+                </CustomText>
+              </View>
+            )}
+          </UploadFile>
         </View>
         <GenericButton
           title="Submit"
@@ -163,4 +196,25 @@ const SupportScreen = () => {
 
 export default SupportScreen;
 
-const customStyles = (theme: Theme) => StyleSheet.create({});
+const customStyles = (theme: Theme) =>
+  StyleSheet.create({
+    infoContainer: {
+      width: "100%",
+      flexDirection: "row",
+      gap: 10,
+      backgroundColor: theme.colors.palette.green50,
+      padding: 15,
+      borderRadius: 10,
+      borderLeftWidth: 4,
+      borderLeftColor: theme.colors.palette.green500,
+      alignItems: "center",
+    },
+    uploadBox: {
+      height: 200,
+      borderStyle: "dashed",
+      borderColor: theme.colors.palette.grey400,
+      backgroundColor: theme.colors.palette.grey50,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+  });

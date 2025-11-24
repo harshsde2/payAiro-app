@@ -91,6 +91,9 @@ export interface UploadFileProps {
   placeholder?: string;
   label: string;
   type: "image" | "document";
+  style?: StyleProp<ViewStyle>;
+  boxStyle?: StyleProp<ViewStyle>;
+  children?: ReactNode;
 }
 
 export interface FileObject {

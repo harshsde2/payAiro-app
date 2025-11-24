@@ -637,7 +637,7 @@ Check out my transaction details!
         onPress={handleScreenshotShare}
         style={styles.shareButton}
       >
-        <Text style={styles.shareText}>Share Screenshot</Text>
+        <Text style={styles.shareText}>Share Receipt</Text>
       </TouchableOpacity>
     </View>
   );

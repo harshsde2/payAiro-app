@@ -1652,7 +1652,7 @@ const NewDashboard = () => {
                 >
                   <SvgIcons.AddWallet width={30} height={30} />
                 </View>
-                <CustomText size={11}>Add Wallet</CustomText>
+                <CustomText size={11}>Add Balance</CustomText>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
