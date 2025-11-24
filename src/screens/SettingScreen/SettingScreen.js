@@ -1,54 +1,45 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useNavigation } from "@react-navigation/native";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
+  Image,
   KeyboardAvoidingView,
-  TouchableOpacity,
+  Platform,
   ScrollView,
   StyleSheet,
-  Image,
-  Platform,
-  InteractionManager,
-  Button,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { SvgXml } from "react-native-svg";
-import { useNavigation } from "@react-navigation/native";
 
 // Components
 import BottomNavigation from "../../components/BottomNavigation";
-import Container from "../../HOC/Container";
 import LogoutModal from "../../components/LogoutModal";
 
 // Constants & Hooks
 import Fonts from "../../constants/Fonts";
 import { SETTINGS_LISTS } from "../../constants/constant";
-import { SVGRefer, SVGRightIcon } from "../../constants/images";
+import { SVGRightIcon } from "../../constants/images";
 import useDispatchAction from "../../hooks/useDispatchAction";
 import useSelectorAction from "../../hooks/useSelectorAction";
 
 // Services & Actions
-import { getKYC } from "../../services/Services";
+import { ScreenContainer } from "HOC";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { useDispatch } from "react-redux";
+import { clearAll } from "storage/mmkv";
+import KYCBadge from "tsx-components/KYCBadge";
+import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
+import { resetAppState } from "utils/configs";
 import {
-  resetState,
-  setLogin,
-  setTokens,
-  setUserData,
-  setWalletData,
+  setLogin
 } from "../../redux/slices/authenticationSlice";
 import {
   setKYCAcceopted,
-  setKycStep,
   setPin,
-  setUser,
-  setWalletDataAuth,
+  setWalletDataAuth
 } from "../../services/Auth";
-import { ScreenContainer } from "HOC";
-import { useDispatch } from "react-redux";
-import { resetAppState } from "utils/configs";
-import KYCBadge from "tsx-components/KYCBadge";
-import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
-import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import { clearAll } from "storage/mmkv";
+import { getKYC } from "../../services/Services";
 
 export default function SettingScreen() {
   const navigation = useNavigation();
