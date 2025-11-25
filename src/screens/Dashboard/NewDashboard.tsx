@@ -1637,6 +1637,7 @@ const NewDashboard = () => {
                   alignItems: "center",
                   borderRadius: 10,
                   height: 80,
+                  marginRight: 15
                 }}
               >
                 <View
@@ -1663,6 +1664,7 @@ const NewDashboard = () => {
                   alignItems: "center",
                   borderRadius: 10,
                   height: 80,
+                  marginRight: 15
                 }}
               >
                 <View

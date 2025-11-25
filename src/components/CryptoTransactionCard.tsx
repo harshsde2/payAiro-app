@@ -229,7 +229,7 @@ const CryptoTransactionCard: React.FC<CryptoTransactionCardProps> = ({
               color={amountColors.cryptoColor}
               style={styles.amountValue}
             >
-              {item.type === 'buy' ? '+' : '-'}{formatAmount(item.final_amount)}
+            {formatAmount(item.final_amount)}
             </CustomText>
           </View>
 
