@@ -186,7 +186,7 @@ export default function BottomNavigation({ isVer }) {
         <TouchableOpacity
           // disabled={true}
           onPress={() => {
-            handleSwitchBankingView();
+            // handleSwitchBankingView();
             handleTabSwitch(SCREENS.Transaction);
           }}
         >
@@ -227,7 +227,7 @@ export default function BottomNavigation({ isVer }) {
         <TouchableOpacity
           // disabled={true}
           onPress={() => {
-            handleSwitchBankingView();
+            // handleSwitchBankingView();
             handleTabSwitch(SCREENS.Scans);
           }}
         >
@@ -249,7 +249,7 @@ export default function BottomNavigation({ isVer }) {
         {/* Setting Tab */}
         <TouchableOpacity
           onPress={() => {
-            handleSwitchBankingView();
+            // handleSwitchBankingView();
             handleTabSwitch(NAVIGATION_SCREENS.SETTING_SCREEN);
           }}
         >
