@@ -20,16 +20,19 @@ export const loginStyles = (theme: ITheme) => {
       marginBottom: theme.spacing.md,
     },
     header: {
-      marginBottom: theme.spacing.xl,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: theme.spacing.sm,
     },
     content: {
       flex: 1,
+      marginTop: theme.spacing.sm,
     },
     welcomeText: {
       marginBottom: theme.spacing.sm,
     },
     instructionText: {
-      marginBottom: theme.spacing.xl,
+      textAlign: 'center',
     },
     inputContainer: {
       marginBottom: theme.spacing.base,

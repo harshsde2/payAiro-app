@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput as RNTextInput, TouchableOpacity, ViewStyle } from 'react-native';
+import { View, TextInput as RNTextInput, TouchableOpacity, ViewStyle, TextStyle } from 'react-native';
 import { useTheme } from '@styles/ThemeContext';
 import CustomText from '@components/common-components/CustomText';
 import { ITextInputProps } from './types';
@@ -13,6 +13,7 @@ const TextInput: React.FC<ITextInputProps> = ({
   containerStyle,
   inputStyle,
   labelStyle,
+  placeholderTextColor,
   height = 46,
   width = '100%',
   borderRadius = 8,
@@ -31,7 +32,7 @@ const TextInput: React.FC<ITextInputProps> = ({
 
   const inputContainerStyle: ViewStyle = {
     height,
-    width,
+    width: width as any,
     borderRadius,
     borderWidth,
     borderColor: finalBorderColor,
@@ -57,7 +58,7 @@ const TextInput: React.FC<ITextInputProps> = ({
 
   const rightSeparatorStyle: ViewStyle = {
     width: 0.2,
-    height: 24,
+    height: 35,
     backgroundColor: theme.colors.grey,
     marginLeft: 12,
   };
@@ -75,14 +76,15 @@ const TextInput: React.FC<ITextInputProps> = ({
     justifyContent: 'center',
   };
 
-  const textInputStyle: ViewStyle = {
+  const textInputStyle: TextStyle = {
     flex: 1,
     height: '100%',
     fontSize: theme.typography.fontSize.base,
     fontFamily: theme.typography.fontFamily.regular,
     color: theme.colors.text,
     paddingVertical: 0,
-    paddingHorizontal: leftIcon || rightIcon ? 0 : 16,
+    paddingLeft: leftIcon ? 0 : 16,
+    paddingRight: rightIcon ? 0 : 16,
   };
 
   return (
@@ -119,7 +121,7 @@ const TextInput: React.FC<ITextInputProps> = ({
         <View style={inputWrapperStyle}>
           <RNTextInput
             style={[textInputStyle, inputStyle, style]}
-            placeholderTextColor={theme.colors.grey}
+            placeholderTextColor={placeholderTextColor || theme.colors.greyDark}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             {...props}

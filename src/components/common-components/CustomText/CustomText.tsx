@@ -3,7 +3,7 @@ import { Text, TextProps, TextStyle, StyleProp } from 'react-native';
 import { useTheme } from '@styles/ThemeContext';
 import { headingStyles } from '@styles/components/headingStyles';
 import { textStyles } from '@styles/components/textStyles';
-import { ICustomTextProps, FontWeight } from './types';
+import { ICustomTextProps, FontWeight, FontFamily } from './types';
 
 const CustomText: React.FC<ICustomTextProps> = ({
   children,
@@ -21,25 +21,37 @@ const CustomText: React.FC<ICustomTextProps> = ({
   const headings = headingStyles(theme);
   const texts = textStyles(theme);
 
-  const getFontFamily = (weight?: FontWeight): string => {
-    if (fontFamily) return fontFamily;
+  const getFontFamily = (family?: FontFamily, weight?: FontWeight): string => {
+    const selectedFamily = family || 'poppins';
+    const selectedWeight = weight || 'regular';
 
-    if (weight) {
-      switch (weight) {
+    if (selectedFamily === 'inter') {
+      switch (selectedWeight) {
         case 'regular':
-          return theme.typography.fontFamily.poppinsRegular;
+          return theme.typography.fontFamily.interRegular;
         case 'medium':
-          return theme.typography.fontFamily.poppinsMedium;
+          return theme.typography.fontFamily.interMedium;
         case 'semiBold':
-          return theme.typography.fontFamily.poppinsSemiBold;
+          return theme.typography.fontFamily.interSemiBold;
         case 'bold':
-          return theme.typography.fontFamily.poppinsBold;
+          return theme.typography.fontFamily.interBold;
         default:
-          return theme.typography.fontFamily.poppinsRegular;
+          return theme.typography.fontFamily.interRegular;
       }
     }
 
-    return theme.typography.fontFamily.poppinsRegular;
+    switch (selectedWeight) {
+      case 'regular':
+        return theme.typography.fontFamily.poppinsRegular;
+      case 'medium':
+        return theme.typography.fontFamily.poppinsMedium;
+      case 'semiBold':
+        return theme.typography.fontFamily.poppinsSemiBold;
+      case 'bold':
+        return theme.typography.fontFamily.poppinsBold;
+      default:
+        return theme.typography.fontFamily.poppinsRegular;
+    }
   };
 
   const getTextColor = (): string => {
@@ -93,7 +105,7 @@ const CustomText: React.FC<ICustomTextProps> = ({
   const textStyle: StyleProp<TextStyle> = [
     getVariantStyle(),
     { color: getTextColor() },
-    fontWeight || fontFamily ? { fontFamily: getFontFamily(fontWeight) } : undefined,
+    fontWeight || fontFamily ? { fontFamily: getFontFamily(fontFamily, fontWeight) } : undefined,
     size !== undefined ? { fontSize: size } : undefined,
     align ? { textAlign: align } : undefined,
     style,

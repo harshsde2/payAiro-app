@@ -28,21 +28,13 @@ export const createAccountStyles = (theme: ITheme) => {
       alignItems: 'flex-start',
       marginBottom: theme.spacing.base,
     },
-    checkboxBox: {
-      width: 20,
-      height: 20,
-      borderWidth: 2,
-      borderColor: theme.colors.primary,
-      borderRadius: theme.radius.sm,
+    checkboxIcon: {
       marginRight: theme.spacing.sm,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    checkboxChecked: {
-      backgroundColor: theme.colors.primary,
+      marginTop: 2,
     },
     checkboxText: {
       flex: 1,
+      lineHeight: 20,
     },
     verifyButton: {
       marginBottom: theme.spacing.base,

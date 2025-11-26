@@ -26,13 +26,27 @@ export const otpVerificationStyles = (theme: ITheme) => {
       flex: 1,
     },
     instructionText: {
-      marginBottom: theme.spacing.xl,
+      textAlign: 'center',
+      // marginBottom: theme.spacing.xl,
     },
     inputContainer: {
       marginBottom: theme.spacing.base,
     },
     label: {
       marginBottom: theme.spacing.sm,
+    },
+    title: {
+      marginBottom: theme.spacing.base,
+    },
+    titleContainer: { 
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: theme.spacing.xs,
+    },
+    instructionTextContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: theme.spacing.xs,
     },
     inputWrapper: {
       flexDirection: 'row',

@@ -9,6 +9,7 @@ export interface ITextInputProps extends TextInputProps {
   containerStyle?: StyleProp<ViewStyle>;
   inputStyle?: StyleProp<TextStyle>;
   labelStyle?: StyleProp<TextStyle>;
+  placeholderTextColor?: string;
   height?: number;
   width?: string | number;
   borderRadius?: number;

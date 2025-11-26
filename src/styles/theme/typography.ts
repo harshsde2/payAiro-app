@@ -22,6 +22,10 @@ export const TYPOGRAPHY = {
     poppinsBoldItalic: 'Poppins-BoldItalic',
     poppinsExtraBoldItalic: 'Poppins-ExtraBoldItalic',
     poppinsBlackItalic: 'Poppins-BlackItalic',
+    interRegular: 'Inter_18pt-Regular',
+    interMedium: 'Inter_18pt-Medium',
+    interSemiBold: 'Inter_18pt-SemiBold',
+    interBold: 'Inter_18pt-Bold',
   },
   fontSize: {
     xs: 12,

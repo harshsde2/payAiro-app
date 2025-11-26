@@ -2,6 +2,8 @@ import { TextProps, TextStyle, StyleProp } from 'react-native';
 
 export type FontWeight = 'regular' | 'medium' | 'semiBold' | 'bold';
 
+export type FontFamily = 'poppins' | 'inter';
+
 export type TextVariant =
   | 'h1'
   | 'h2'
@@ -23,7 +25,7 @@ export interface ICustomTextProps extends TextProps {
   color?: string;
   size?: number;
   align?: 'auto' | 'left' | 'right' | 'center' | 'justify';
-  fontFamily?: string;
+  fontFamily?: FontFamily;
   useThemeColor?: boolean;
 }
 

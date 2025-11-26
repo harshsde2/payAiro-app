@@ -76,13 +76,14 @@ const OnboardingScreen: React.FC = () => {
           style={styles.loginLink}
           onPress={() => navigation.navigate(NAVIGATION_SCREENS.LOGIN)}
         >
-          <CustomText variant='label' color={theme.colors.text}>
+          <CustomText fontFamily='inter' variant='label' color={theme.colors.text}>
             Already have Account?{" "}
           </CustomText>
           <CustomText
             variant='label'
             color={theme.colors.primary}
             fontWeight="medium"
+            fontFamily='inter'
           >
             Login
           </CustomText>

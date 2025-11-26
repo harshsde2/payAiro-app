@@ -6,8 +6,17 @@ import { customHeaderStyles } from '@styles/components/customHeaderStyles';
 import CustomText from '@components/common-components/CustomText';
 import { AppIcon } from '@assets/svgs';
 import { ICustomHeaderProps } from './types';
+import { NAVIGATION_SCREENS } from '@navigations/navigationConstants';
 
 const formatScreenTitle = (routeName: string): string => {
+  if (routeName === NAVIGATION_SCREENS.OTP_VERIFICATION) {
+    return 'Create Account';
+  }
+
+  if (routeName === NAVIGATION_SCREENS.LOGIN) {
+    return 'Login Account';
+  }
+
   const title = routeName
     .replace(/([A-Z])/g, ' $1')
     .trim()

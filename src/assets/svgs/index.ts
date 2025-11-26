@@ -7,7 +7,10 @@ import OnBoardingImage from './OnBoardingImage.svg';
 import LogoWithName from './LogoWithName.svg';
 import ArrowLeft from './ArrowLeft.svg';
 import EyeOff from './EyeOff.svg';
+import EyeOn from './EyeOn.svg';
 import Mail from './Mail.svg';
+import TickCheckedBox from './TickCheckedBox.svg';
+import UntickCheckedBox from './UntickCheckedBox.svg';
 
 export const AppIcon = {
   Home,
@@ -19,5 +22,8 @@ export const AppIcon = {
   LogoWithName,
   ArrowLeft,
   EyeOff,
-  Mail
+  EyeOn,
+  Mail,
+  TickCheckedBox,
+  UntickCheckedBox
 };

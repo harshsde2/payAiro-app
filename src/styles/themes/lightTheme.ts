@@ -13,6 +13,7 @@ export const lightTheme: ITheme = {
     greenLight1: COLORS.greenLight1,
     greenLight2: COLORS.greenLight2,
     grey: COLORS.grey,
+    greyDark: COLORS.greyDark,
     white: COLORS.white,
     black: COLORS.black,
     background: COLORS.white,
