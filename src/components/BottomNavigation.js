@@ -182,6 +182,18 @@ export default function BottomNavigation({ isVer }) {
           <SvgIcons.CryptoIcon width={25} height={25} style={{ opacity: activeTab === "7" ? 1 : 0.6 }} />
         </TouchableOpacity>
 
+        {/* Scan Tab */}
+        <TouchableOpacity
+          // disabled={true}
+          onPress={() => {
+            // handleSwitchBankingView();
+            handleTabSwitch(SCREENS.Scans);
+          }}
+        >
+          <SvgIcons.NewScannerIcon
+          style={{opacity: activeTab === '3' ? 1 : 0.6}}
+          />
+        </TouchableOpacity>
         {/* Transaction Tab */}
         <TouchableOpacity
           // disabled={true}
@@ -223,18 +235,7 @@ export default function BottomNavigation({ isVer }) {
           ) : null}
         </TouchableOpacity>
 
-        {/* Scan Tab */}
-        <TouchableOpacity
-          // disabled={true}
-          onPress={() => {
-            // handleSwitchBankingView();
-            handleTabSwitch(SCREENS.Scans);
-          }}
-        >
-          <SvgIcons.NewScannerIcon
-          style={{opacity: activeTab === '3' ? 1 : 0.6}}
-          />
-        </TouchableOpacity>
+
 
         {/* Offer Tab */}
         {/* <TouchableOpacity
