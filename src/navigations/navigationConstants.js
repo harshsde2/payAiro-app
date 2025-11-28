@@ -110,5 +110,6 @@ export const NAVIGATION_SCREENS = {
   OTP_SCREEN: "OTPScreen",
   CRYPTO_LIST: "CryptoList",
   BANK_SELECTION: "BankSelection",
-  QR_SCANNER:'QRScanner'
+  QR_SCANNER:'QRScanner',
+  NEW_TRANSACTION_DETAILS: "NewTransactionDetails"
 };

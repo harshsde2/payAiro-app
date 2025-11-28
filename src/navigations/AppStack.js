@@ -91,6 +91,7 @@ import BankSelection from "screens/TSX-Screens/AddBalance/BankSelection";
 import QRScanner from "screens/TSX-Screens/Send/QRScanner";
 import CybridWebView from "screens/Authentications/CybridWebView";
 import WithdrawlBalance from "screens/TSX-Screens/AddBalance/WithdrawlBalance";
+import NewTransactionDetails from "screens/TSX-Screens/NewTransactionDetails/NewTransactionDetails";
 
 const Stack = createNativeStackNavigator();
 
@@ -529,6 +530,17 @@ export default function AppStack() {
         }}
         name={NAVIGATION_SCREENS.TRANSACTION_DETAILS_MODAL}
         component={TransactionDetailsModal}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: false,
+          presentation: "modal",
+          animationTypeForReplace: "push",
+          animation: "slide_from_bottom",
+          gestureEnabled: true,
+        }}
+        name={NAVIGATION_SCREENS.NEW_TRANSACTION_DETAILS}
+        component={NewTransactionDetails}
       />
       <Stack.Screen
         options={{
