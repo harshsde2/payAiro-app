@@ -26,6 +26,7 @@ const OTPVerificationScreen: React.FC = () => {
   const [timer, setTimer] = useState(60);
   const email = route.params?.email || "email@gmail.com";
   const type = route.params?.type || "signup";
+  const fullName = route.params?.fullName || "";
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -35,8 +36,13 @@ const OTPVerificationScreen: React.FC = () => {
   }, []);
 
   const handleSubmit = () => {
-    if (type === "login" || type === "signup") {
+    if (type === "login") {
       dispatch(setLogin(true));
+    } else if (type === "signup") {
+      navigation.navigate(NAVIGATION_SCREENS.KYC, {
+        email,
+        fullName,
+      });
     } else if (type === "forgot") {
       navigation.navigate(NAVIGATION_SCREENS.FORGOT_PASSWORD_VERIFICATION, {
         email,

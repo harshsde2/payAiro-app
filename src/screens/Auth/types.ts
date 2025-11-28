@@ -21,4 +21,6 @@ export type ForgotPasswordScreenNavigationProp = AuthScreenNavigationProp<typeof
 export type ForgotPasswordVerificationScreenNavigationProp = AuthScreenNavigationProp<typeof NAVIGATION_SCREENS.FORGOT_PASSWORD_VERIFICATION>;
 export type ForgotPasswordVerificationScreenRouteProp = AuthScreenRouteProp<typeof NAVIGATION_SCREENS.FORGOT_PASSWORD_VERIFICATION>;
 export type OnboardingScreenNavigationProp = AuthScreenNavigationProp<typeof NAVIGATION_SCREENS.ONBOARDING>;
+export type KYCScreenNavigationProp = AuthScreenNavigationProp<typeof NAVIGATION_SCREENS.KYC>;
+export type KYCScreenRouteProp = AuthScreenRouteProp<typeof NAVIGATION_SCREENS.KYC>;
 

@@ -1,16 +1,25 @@
-export interface IDashboardStats {
-  totalBalance: number;
-  cryptoBalance: number;
-  fiatBalance: number;
-  recentTransactions: ITransaction[];
-}
-
-export interface ITransaction {
+export interface IContact {
   id: string;
-  type: 'buy' | 'sell' | 'send' | 'receive';
-  amount: number;
-  currency: string;
-  timestamp: string;
-  status: 'pending' | 'completed' | 'failed';
+  name: string;
+  image?: string;
+  isAddButton?: boolean;
 }
 
+export interface ICryptoAsset {
+  id: string;
+  name: string;
+  symbol: string;
+  amount: string;
+  value: string;
+  change: string;
+  isPositive: boolean;
+  icon: string;
+  iconBgColor: string;
+}
+
+export interface IQuickAction {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  onPress: () => void;
+}

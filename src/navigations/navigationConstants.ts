@@ -5,6 +5,7 @@ export const NAVIGATION_SCREENS = {
   LOGIN: 'Login',
   CREATE_ACCOUNT: 'CreateAccount',
   OTP_VERIFICATION: 'OTPVerification',
+  KYC: 'KYC',
   FORGOT_PASSWORD: 'ForgotPassword',
   FORGOT_PASSWORD_VERIFICATION: 'ForgotPasswordVerification',
   DASHBOARD_TAB: 'DashboardTab',

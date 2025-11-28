@@ -7,11 +7,13 @@ import { SHADOWS } from '../theme/shadows';
 export interface ITheme {
   colors: {
     primary: string;
+    primaryLight: string;
     secondary: string;
     tertiary: string;
     greenLight1: string;
     greenLight2: string;
     grey: string;
+    greyLight: string;
     greyDark: string;
     white: string;
     black: string;

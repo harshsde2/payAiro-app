@@ -1,263 +1,127 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "../../api";
-import { AUTH } from "../../api/endpoints";
-import { ApiResponse, User } from "../../api/types";
-import { queryStaleTime } from "query/queryConfigs";
-import useSelectorAction from "hooks/useSelectorAction";
+import { useGet, usePost, usePatch } from "@api/hooks";
+import { AUTH } from "@api/endpoints";
+import { queryKeys } from "@query/queryKeys";
+import { queryStaleTime } from "@query/queryConfigs";
+import { User } from "@api/types";
+import { useQueryClient } from "@tanstack/react-query";
 
-// Query keys
-export const userKeys = {
-  all: ["user"] as const,
-  contacts: () => [...userKeys.all, "contacts"] as const,
-  profile: () => [...userKeys.all, "profile"] as const,
-  notifications: () => [...userKeys.all, "notifications"] as const,
-  pin: () => [...userKeys.all, "pin"] as const,
-  fiatDashboard: () => [...userKeys.all, "fiat_dashboard"] as const,
-  WallerDashboard: () => [...userKeys.all, "wallet_dashboard"] as const,
-};
-
-/**
- * Hook to get user contacts
- */
-export const useContacts = () => {
-  return useQuery<ApiResponse<User[]>>({
-    queryKey: userKeys.contacts(),
-    queryFn: async () => {
-      return await apiClient.get<ApiResponse<User[]>>(AUTH.CONTACT_GET);
-    },
-  });
-};
-
-// Interface for user verification payload
 interface VerifyUserPayload {
   identifier_type: "username" | "email" | "phone";
   identifier_value: string;
 }
 
-/**
- * Hook to verify a user exists
- */
-export const useVerifyUser = () => {
-  return useMutation<ApiResponse<User>, Error, VerifyUserPayload>({
-    mutationFn: async (payload) => {
-      return await apiClient.post<ApiResponse<User>>(
-        AUTH.VERIFY_USER,
-        payload,
-        true
-      );
-    },
-    onSuccess: (data) => {
-      console.log("data ->", data);
-    },
-    onError: (error) => {
-    },
-  });
-};
-
-// Identifier verification payload for /auth/verify-user/
 interface VerifyUserByIdentifierPayload {
   identifier: string;
 }
 
-/**
- * Hook to verify a user by identifier (username/email/phone etc)
- */
-export const useVerifyUserByIdentifier = () => {
-  return useMutation<ApiResponse<User>, Error, VerifyUserByIdentifierPayload>({
-    mutationFn: async (payload) => {
-      try {
-        return await apiClient.post<ApiResponse<User>>(AUTH.VERIFY_USER, payload, true);
-      } catch (error: any) {
-        // Add custom error handling here if needed
-        throw error;
-      }
-    },
-    onSuccess: (data) => {
-      // Success handling can be added here
-      // e.g. show toast, update UI, etc
-    },
-    onError: (error) => {
-      // Centralized error handling for UI feedback, logging, etc
-      // console.error("VerifyUserByIdentifier error:", error);
-    },
-  });
-};
-
-// Interface for adding contact payload
 interface AddContactPayload {
   identifier_type: "username" | "email" | "phone";
   identifier_value: string;
   nickname?: string;
 }
 
-/**
- * Hook to add a contact
- */
+export const useContacts = () => {
+  return useGet<User[]>({
+    queryKey: queryKeys.user.contacts(),
+    endpoint: AUTH.CONTACT_GET,
+  });
+};
+
+export const useVerifyUser = () => {
+  return usePost<User, VerifyUserPayload>({
+    endpoint: AUTH.VERIFY_USER,
+    isFormData: true,
+  });
+};
+
+export const useVerifyUserByIdentifier = () => {
+  return usePost<User, VerifyUserByIdentifierPayload>({
+    endpoint: AUTH.VERIFY_USER,
+    isFormData: true,
+  });
+};
+
 export const useAddContact = () => {
   const queryClient = useQueryClient();
-  return useMutation<ApiResponse<any>, Error, AddContactPayload>({
-    mutationFn: async (payload) => {
-      return await apiClient.post<ApiResponse<any>>(
-        AUTH.CONTACT_ADDING,
-        payload,
-        false
-      );
-    },
+  return usePost<any, AddContactPayload>({
+    endpoint: AUTH.CONTACT_ADDING,
     onSuccess: () => {
-      // Invalidate contacts query to trigger refetch
-      queryClient.invalidateQueries({ queryKey: userKeys.contacts() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.user.contacts() });
     },
   });
 };
 
-/**
- * Hook to add a contact
- */
 export const useChangePin = () => {
-  return useMutation<ApiResponse<any>, Error, AddContactPayload>({
-    mutationFn: async (payload) => {
-      return await apiClient.patch<ApiResponse<any>>(
-        AUTH.CHANGE_PIN,
-        payload,
-        true
-      );
-    },
-    onSuccess: () => {},
+  return usePatch<any, AddContactPayload>({
+    endpoint: AUTH.CHANGE_PIN,
+    isFormData: true,
   });
 };
 
-/**
- * Hook to add a contact
- */
 export const useVerifyUserForChangePin = () => {
-  return useMutation<ApiResponse<any>, Error, AddContactPayload>({
-    mutationFn: async () => {
-      return await apiClient.post<ApiResponse<any>>(
-        AUTH.VERIFY_OTP_WITH_MAIL,
-        {},
-        false
-      );
-    },
-    onSuccess: () => {},
+  return usePost<any, void>({
+    endpoint: AUTH.VERIFY_OTP_WITH_MAIL,
   });
 };
 
-/**
- * Hook to add a contact
- */
 export const useVerifyUserForChangePinOtp = () => {
-  return useMutation<ApiResponse<any>, Error, AddContactPayload>({
-    mutationFn: async (payload) => {
-      return await apiClient.post<ApiResponse<any>>(
-        AUTH.VERIFY_SEND_OTP,
-        payload,
-        true
-      );
-    },
-    onSuccess: () => {},
+  return usePost<any, AddContactPayload>({
+    endpoint: AUTH.VERIFY_SEND_OTP,
+    isFormData: true,
   });
 };
 
-/**
- * Hook to Intra Account Transfer
- */
 export const useIntraAccountTransfer = () => {
-  return useMutation<ApiResponse<any>>({
-    mutationFn: async (payload) => {
-      return await apiClient.post<ApiResponse<any>>(
-        AUTH.SELF_TRANSFER,
-        payload,
-        true
-      );
-    },
-    onSuccess: () => {},
+  return usePost<any>({
+    endpoint: AUTH.SELF_TRANSFER,
+    isFormData: true,
   });
 };
-/**
- * Hook to Intra Account Transfer
- */
+
 export const useUserToUserTransfer = () => {
-  const { walletData } = useSelectorAction() as any;
-  const isFortress = walletData?.fortress;
-
-  const url = isFortress
-    ? AUTH.USER_TO_USER_FORTRESS_TRANSFER
-    : AUTH.USER_TO_USER_CYBRID_TRANSFER;
-
-  // console.log("url =>", url);
-  return useMutation<ApiResponse<any>>({
-    mutationFn: async (payload) => {
-      return await apiClient.post<ApiResponse<any>>(url, payload, true);
-    },
-    onSuccess: (data) => {
-      // console.log("data =>", JSON.stringify(data, null, 2));
-    },
-    onError: (error) => {
-      // console.log("error =>", JSON.stringify(error, null, 2));
-    },
+  return usePost<any>({
+    endpoint: AUTH.USER_TO_USER_CYBRID_TRANSFER,
+    isFormData: true,
   });
 };
-/**
- * Hook to add a contact
- */
+
 export const useSupport = () => {
-  return useMutation<ApiResponse<any>>({
-    mutationFn: async (payload) => {
-      return await apiClient.post<ApiResponse<any>>(
-        AUTH.USER_SUPPORT,
-        payload,
-        true
-      );
-    },
-    onSuccess: () => {},
+  return usePost<any>({
+    endpoint: AUTH.USER_SUPPORT,
+    isFormData: true,
   });
 };
 
-/**
- * Hook to get user notifications
- */
 export const useNotifications = () => {
-  return useQuery<ApiResponse<any>>({
-    queryKey: userKeys.notifications(),
-    queryFn: async () => {
-      return await apiClient.get<ApiResponse<any>>(AUTH.NOTIFICATIONS);
-    },
+  return useGet<any>({
+    queryKey: queryKeys.user.notifications(),
+    endpoint: AUTH.NOTIFICATIONS,
   });
 };
 
 export const useUserPin = (enabled = true) => {
-  return useQuery<ApiResponse<any>>({
-    queryKey: userKeys.pin(),
-    queryFn: async () => {
-      return await apiClient.get<ApiResponse<any>>(AUTH.GET_PIN);
-    },
-    staleTime: queryStaleTime.INSTANT_STALE_TIME,
+  return useGet<any>({
+    queryKey: queryKeys.user.pin(),
+    endpoint: AUTH.GET_PIN,
     enabled,
+    staleTime: queryStaleTime.INSTANT_STALE_TIME,
   });
 };
 
 export const useDashBoardFiatData = (enabled = true) => {
-  return useQuery<ApiResponse<any>>({
-    queryKey: userKeys.fiatDashboard(),
-    queryFn: async () => {
-      return await apiClient.get<ApiResponse<any>>(
-        AUTH.GET_FIAT_DASHBOARD_DATA
-      );
-    },
-    staleTime: queryStaleTime.INSTANT_STALE_TIME,
+  return useGet<any>({
+    queryKey: queryKeys.user.fiatDashboard(),
+    endpoint: AUTH.GET_FIAT_DASHBOARD_DATA,
     enabled,
+    staleTime: queryStaleTime.INSTANT_STALE_TIME,
   });
 };
 
 export const useWalletDashboardData = (enabled = true) => {
-  return useQuery<ApiResponse<any>>({
-    queryKey: userKeys.WallerDashboard(),
-    queryFn: async () => {
-      return await apiClient.get<ApiResponse<any>>(
-        AUTH.GET_WALLET_DASHBOARD_DATA
-      );
-    },
-    staleTime: queryStaleTime.INSTANT_STALE_TIME,
+  return useGet<any>({
+    queryKey: queryKeys.user.walletDashboard(),
+    endpoint: AUTH.GET_WALLET_DASHBOARD_DATA,
     enabled,
+    staleTime: queryStaleTime.INSTANT_STALE_TIME,
   });
 };

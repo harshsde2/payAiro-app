@@ -5,7 +5,8 @@ export type AuthStackParamList = {
   [NAVIGATION_SCREENS.ONBOARDING]: undefined;
   [NAVIGATION_SCREENS.LOGIN]: undefined;
   [NAVIGATION_SCREENS.CREATE_ACCOUNT]: undefined;
-  [NAVIGATION_SCREENS.OTP_VERIFICATION]: { email?: string; type?: 'login' | 'signup' | 'forgot' };
+  [NAVIGATION_SCREENS.OTP_VERIFICATION]: { email?: string; type?: 'login' | 'signup' | 'forgot'; fullName?: string };
+  [NAVIGATION_SCREENS.KYC]: { fullName?: string; email?: string };
   [NAVIGATION_SCREENS.FORGOT_PASSWORD]: undefined;
   [NAVIGATION_SCREENS.FORGOT_PASSWORD_VERIFICATION]: { email?: string };
 };

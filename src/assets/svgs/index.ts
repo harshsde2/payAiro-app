@@ -11,6 +11,8 @@ import EyeOn from './EyeOn.svg';
 import Mail from './Mail.svg';
 import TickCheckedBox from './TickCheckedBox.svg';
 import UntickCheckedBox from './UntickCheckedBox.svg';
+import ChevronDown from './ChevronDown.svg';
+import ArrowRight from './ArrowRight.svg';
 
 export const AppIcon = {
   Home,
@@ -25,5 +27,7 @@ export const AppIcon = {
   EyeOn,
   Mail,
   TickCheckedBox,
-  UntickCheckedBox
+  UntickCheckedBox,
+  ChevronDown,
+  ArrowRight,
 };

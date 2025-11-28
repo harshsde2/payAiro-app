@@ -24,6 +24,7 @@ const CreateAccountScreen: React.FC = () => {
     navigation.navigate(NAVIGATION_SCREENS.OTP_VERIFICATION, {
       email,
       type: "signup",
+      fullName,
     });
   };
 

@@ -8,11 +8,13 @@ import { COLORS } from '../theme/colors';
 export const darkTheme: ITheme = {
   colors: {
     primary: COLORS.primary,
+    primaryLight: '#1A3D2A',
     secondary: COLORS.secondary,
     tertiary: COLORS.tertiary,
     greenLight1: COLORS.greenLight1,
     greenLight2: COLORS.greenLight2,
     grey: COLORS.grey,
+    greyLight: '#2C2C2E',
     greyDark: COLORS.greyDark,
     white: COLORS.white,
     black: COLORS.black,

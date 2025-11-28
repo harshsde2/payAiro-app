@@ -6,6 +6,7 @@ import OnboardingScreen from '@screens/Auth/Onboarding';
 import LoginScreen from '@screens/Auth/Login';
 import CreateAccountScreen from '@screens/Auth/CreateAccount';
 import OTPVerificationScreen from '@screens/Auth/OTPVerification';
+import KYCScreen from '@screens/Auth/KYC';
 import ForgotPasswordScreen from '@screens/Auth/ForgotPassword';
 import ForgotPasswordVerificationScreen from '@screens/Auth/ForgotPasswordVerification';
 import CustomHeader from '@components/common-components/CustomHeader';
@@ -40,6 +41,10 @@ const AuthStack: React.FC = () => {
       <Stack.Screen
         name={NAVIGATION_SCREENS.OTP_VERIFICATION}
         component={OTPVerificationScreen}
+      />
+      <Stack.Screen
+        name={NAVIGATION_SCREENS.KYC}
+        component={KYCScreen}
       />
       <Stack.Screen
         name={NAVIGATION_SCREENS.FORGOT_PASSWORD}

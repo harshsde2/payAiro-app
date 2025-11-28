@@ -1,12 +1,30 @@
-// Base API response type
-export interface ApiResponse<T> {
+export interface ApiResponse<T = any> {
   status: boolean;
   data: T;
   message: string;
-  toast_message:string
+  toast_message?: string;
 }
 
-// User interfaces
+export interface ApiError {
+  status: boolean;
+  message: string;
+  toast_message?: string;
+  errors?: Record<string, string[]>;
+  code?: string | number;
+}
+
+export interface StandardApiResponse<T = any> {
+  success: boolean;
+  data: T | null;
+  error: ApiError | null;
+  statusCode: number;
+}
+
+export interface Tokens {
+  access: string;
+  refresh: string;
+}
+
 export interface User {
   _id?: string;
   id?: string;
@@ -25,7 +43,6 @@ export interface PendingRequest {
   status: string;
 }
 
-// Wallet interfaces
 export interface Wallet {
   name?: string;
   username?: string;
@@ -42,24 +59,6 @@ export interface CryptoWallet {
   address: string;
 }
 
-// // Transaction interfaces
-// export interface Transaction {
-//   id: string;
-//   amount: number;
-//   status: string;
-//   timestamp: string;
-//   sender?: string;
-//   receiver?: string;
-//   transactionType?: string;
-// }
-
-// Auth interfaces
-export interface Tokens {
-  access: string;
-  refresh: string;
-}
-
-// Bank interfaces
 export interface BankAccount {
   id?: string;
   account_id?: string;
@@ -75,7 +74,6 @@ export interface BankAccount {
   };
 }
 
-// Balance interfaces
 export interface Balance {
   wallet_balance: number;
   bank_account?: {
@@ -89,19 +87,18 @@ export interface Balance {
   };
 }
 
-// Crypto balance interfaces
 export interface CryptoAsset {
   assetType: string;
   disbursable: number;
   pending: number;
-} 
+}
 
 export type Transaction = {
   sender__wallet_public_key: string;
   recipient__wallet_public_key: string;
   amount: number;
   status: string;
-  timestamp: string; // Could be Date if you want to work with Date objects
+  timestamp: string;
   description: string | null;
 };
 
@@ -110,7 +107,7 @@ export type Message = {
   sender_email: string;
   recipient_email: string;
   content: string;
-  timestamp: string; // Could also be Date if you'd prefer
+  timestamp: string;
   is_read: boolean;
 };
 
@@ -136,13 +133,12 @@ export type RecentContact = {
   username: string;
   profile_photo: string | null;
   transactions: Transaction;
-  pending_requests: any[]; // Assuming it's an array, you can adjust the type as needed
+  pending_requests: any[];
   messages: Message;
   nft_transactions: NFTTransaction[];
   unread_count: number;
 };
 
-// Plaid types
 export interface PlaidLinkTokenResponse {
   status: boolean;
   message: string;
@@ -180,7 +176,6 @@ export interface PlaidInstitution {
   institution_id: string;
 }
 
-// External Withdrawal types
 export interface ExternalWithdrawalRequest {
   amount: number;
   payment_type: "ach" | "rtp";
@@ -215,5 +210,3 @@ export interface PlaidLinkExit {
     request_id: string;
   };
 }
-
-
