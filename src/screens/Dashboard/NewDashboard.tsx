@@ -737,6 +737,8 @@ const NewDashboard = () => {
       isBankBalanceDataFetched &&
       isBankBalanceDataSuccess &&
       bankBalanceData &&
+      typeof bankBalanceData === 'object' &&
+      !Array.isArray(bankBalanceData) &&
       Object.keys(bankBalanceData).length > 0
     ) {
       dispatch(setBankbalances(bankBalanceData));
@@ -761,11 +763,11 @@ const NewDashboard = () => {
     ) {
       dispatch(
         setBankLists([
-          ...DashBoardData?.data?.bank?.bank_accounts,
-          ...DashBoardData?.data?.bank?.roth_ira_accounts,
-          ...DashBoardData?.data?.bank?.traditional_ira_accounts,
-          ...DashBoardData?.data?.bank?.external_accounts,
-          ...DashBoardData?.data?.bank?.cybrid_accounts,
+          ...(DashBoardData?.data?.bank?.bank_accounts || []),
+          ...(DashBoardData?.data?.bank?.roth_ira_accounts || []),
+          ...(DashBoardData?.data?.bank?.traditional_ira_accounts || []),
+          ...(DashBoardData?.data?.bank?.external_accounts || []),
+          ...(DashBoardData?.data?.bank?.cybrid_accounts || []),
         ])
       );
     }
@@ -777,7 +779,7 @@ const NewDashboard = () => {
     ) {
       settxLists(
         [
-          ...DashBoardData?.data?.transactions?.latestCombined,
+          ...(DashBoardData?.data?.transactions?.latestCombined || []),
         ].filter((i) => i?.status === "success" || i?.status === "completed") ??
           []
       );
@@ -1132,22 +1134,24 @@ const NewDashboard = () => {
 
   // Memoize banking data processing
   const processedBankAccounts = useMemo(() => {
-    if (!bankLists) return [];
+    if (!bankLists || !Array.isArray(bankLists)) return [];
 
-    return bankLists.map((item: any) => ({
-      ...item,
-      displayName: item?.bank_name ?? item?.name,
-      accountType: item?.account_type ?? "Personal",
-      address: item?.bank_address ?? item?.official_name,
-      accountNumber: item?.account_number ?? item?.account_id,
-      balance: item?.balances?.available
-        ? item?.balances?.available
-        : item?.account_type === "rothIra"
-        ? bankBalance?.roth_ira_account?.usd
-        : item?.account_type === "traditionalIra"
-        ? bankBalance?.traditional_ira_account?.usd
-        : bankBalance?.bank_account?.usd,
-    }));
+    return bankLists
+      .filter((item: any) => item && typeof item === 'object')
+      .map((item: any) => ({
+        ...item,
+        displayName: item?.bank_name ?? item?.name,
+        accountType: item?.account_type ?? "Personal",
+        address: item?.bank_address ?? item?.official_name,
+        accountNumber: item?.account_number ?? item?.account_id,
+        balance: item?.balances?.available
+          ? item?.balances?.available
+          : item?.account_type === "rothIra"
+          ? bankBalance?.roth_ira_account?.usd
+          : item?.account_type === "traditionalIra"
+          ? bankBalance?.traditional_ira_account?.usd
+          : bankBalance?.bank_account?.usd,
+      }));
   }, [bankLists, bankBalance]);
 
   //  console.log("processedBankAccounts =>", JSON.stringify(processedBankAccounts, null, 2));
