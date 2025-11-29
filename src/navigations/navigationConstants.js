@@ -111,5 +111,6 @@ export const NAVIGATION_SCREENS = {
   CRYPTO_LIST: "CryptoList",
   BANK_SELECTION: "BankSelection",
   QR_SCANNER:'QRScanner',
-  NEW_TRANSACTION_DETAILS: "NewTransactionDetails"
+  NEW_TRANSACTION_DETAILS: "NewTransactionDetails",
+  UNIFIED_TRANSACTION: "UnifiedTransaction"
 };

@@ -92,6 +92,7 @@ import QRScanner from "screens/TSX-Screens/Send/QRScanner";
 import CybridWebView from "screens/Authentications/CybridWebView";
 import WithdrawlBalance from "screens/TSX-Screens/AddBalance/WithdrawlBalance";
 import NewTransactionDetails from "screens/TSX-Screens/NewTransactionDetails/NewTransactionDetails";
+import UnifiedTransactionScreen from "screens/TSX-Screens/UnifiedTransactions/UnifiedTransactionScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -123,6 +124,11 @@ export default function AppStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.TRANSACTION}
         component={Transaction}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.UNIFIED_TRANSACTION}
+        component={UnifiedTransactionScreen}
       />
       <Stack.Screen
         options={{ headerShown: false }}

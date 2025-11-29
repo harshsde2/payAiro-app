@@ -83,6 +83,7 @@ import { Card, CustomText, DashboardHeader } from "../../utils/moduleAlias";
 import useSelectorAction from "hooks/useSelectorAction";
 import PlaidLinkButton from "tsx-components/PlaidLinkButton";
 import CryptoTransactionCard from "components/CryptoTransactionCard";
+import { UnifiedTransactionCard } from "screens/TSX-Screens/UnifiedTransactions";
 
 // Lazy load non-critical components
 const LazyBankModal = lazy(() => import("components/BankModal"));
@@ -298,7 +299,7 @@ const SkeletonTransactionCard = () => {
 
 // Memoized components for better performance
 const MemoizedStoryLists = React.memo(StoryLists);
-const MemoizedTransactionCard = React.memo(TransactionCard);
+const MemoizedTransactionCard = React.memo(UnifiedTransactionCard);
 const MemoizedRewards = React.memo(Rewards);
 const MemoizedDashboardSection = React.memo(DashboardSection);
 
@@ -777,8 +778,7 @@ const NewDashboard = () => {
     ) {
       settxLists(
         [
-          ...DashBoardData?.data?.transactions.merchantTransactions,
-          ...DashBoardData?.data?.transactions.userToUserTransactions,
+          ...DashBoardData?.data?.transactions?.latestCombined,
         ].filter((i) => i?.status === "success" || i?.status === "completed") ??
           []
       );
@@ -1592,7 +1592,7 @@ const NewDashboard = () => {
             <View
               style={{
                 flexDirection: "row",
-                justifyContent: "flex-start",
+                justifyContent: "space-between",
                 alignItems: "center",
                 marginVertical: 20,
               }}
@@ -1633,7 +1633,8 @@ const NewDashboard = () => {
                   }
                 }}
                 style={{
-                  flex: 1,
+                  // flex: 1,
+                  width: 75,
                   alignItems: "center",
                   borderRadius: 10,
                   height: 80,
@@ -1645,7 +1646,7 @@ const NewDashboard = () => {
                     alignItems: "center",
                     justifyContent: "center",
                     backgroundColor: theme.colors.palette.green150,
-                    width: 85,
+                    width: 75,
                     height: 55,
                     borderRadius: 25,
                     marginBottom: 10,
@@ -1660,7 +1661,8 @@ const NewDashboard = () => {
                   navigation.navigate(NAVIGATION_SCREENS.WITHDRAW_BALANCE);
                 }}
                 style={{
-                  flex: 1,
+                  // flex: 1,
+                  width: 75,
                   alignItems: "center",
                   borderRadius: 10,
                   height: 80,
@@ -1672,13 +1674,13 @@ const NewDashboard = () => {
                     alignItems: "center",
                     justifyContent: "center",
                     backgroundColor: theme.colors.palette.green150,
-                    width: 85,
+                    width: 75,
                     height: 55,
                     borderRadius: 25,
                     marginBottom: 10,
                   }}
                 >
-                  <SvgIcons.WithdrawlIcon width={30} height={30} />
+                  <SvgIcons.DebitCard width={60} height={60} />
                 </View>
                 <CustomText size={11}>Withdraw</CustomText>
               </TouchableOpacity>
@@ -2194,10 +2196,9 @@ const NewDashboard = () => {
                       sortedTxLists.map((item: any, key: any) => (
                         <View key={key}>
                           <MemoizedTransactionCard
-                            item={item}
+                            transaction={item}
                             key={key}
-                            isMerchent={item?.order_id}
-                            isCrypto={true}
+                           
                           />
                         </View>
                       ))}

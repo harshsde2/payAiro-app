@@ -15,8 +15,8 @@ const KycBanner: React.FC = () => {
 
   const mode = useMemo(() => toKycMode(kycStatus), [kycStatus]);
 
-  console.log("mode ->",mode)
-  console.log("kycStatus ->",kycStatus)
+  // console.log("mode ->",mode)
+  // console.log("kycStatus ->",kycStatus)
   if (mode !== "pending" && mode !== "not_started") return null;
 
   return (

@@ -21,7 +21,7 @@ import { SvgIcons } from "constants/svgs";
 import useDispatchAction from "hooks/useDispatchAction";
 import LottieView from "lottie-react-native";
 import { setTheme } from "redux/slices/animationSlice";
-import { setisCrypto } from "redux/slices/authenticationSlice";
+import { setisCrypto, setActiveTab } from "redux/slices/authenticationSlice";
 import { ANIMATION_CONSTANTS } from "./CryptoCard";
 import { useNavigation } from "@react-navigation/native";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
@@ -210,7 +210,10 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
       textColor: theme.colors.palette.white,
     };
 
+    // isCrypto true = fiat, false = crypto
+    // Switching to crypto view, so isCrypto becomes false, activeTab = "7"
     useDispatchAction(setisCrypto(!isCrypto));
+    useDispatchAction(setActiveTab("1"));
     useDispatchAction(setTheme(newTheme));
   };
 
@@ -221,7 +224,10 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
       textColor: theme.colors.palette.black,
     };
 
+    // isCrypto true = fiat, false = crypto
+    // Switching to banking/fiat view, so isCrypto becomes true, activeTab = "1"
     useDispatchAction(setisCrypto(!isCrypto));
+    useDispatchAction(setActiveTab("7"));
     useDispatchAction(setTheme(newTheme));
   };
 
@@ -263,6 +269,9 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
   };
 
   const handleShowPlatformBalance = async (isShowPlatformBalance: boolean) => {
+    // Platform balance is in fiat/banking view, so activeTab = "1"
+    useDispatchAction(setActiveTab("1"));
+    
     if (!isShowPlatformBalance) {
       setIsLoading(true);
       refetchBankBalanceData();
@@ -274,6 +283,9 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
   };
 
   const handleShowCryptoBalance = async (isShowCryptoBalance: boolean) => {
+    // Crypto balance is in crypto view, so activeTab = "7"
+    useDispatchAction(setActiveTab("7"));
+    
     if (!isShowCryptoBalance) {
       setIsLoading(true);
       // Invalidate and refetch crypto balance queries

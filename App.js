@@ -311,6 +311,7 @@ export default function App() {
 
               switch (currentRoute.name) {
                 case NAVIGATION_SCREENS.NEW_DASHBOARD:
+                  // isCrypto true = fiat (activeTab "1"), false = crypto (activeTab "7")
                   if (isCrypto) {
                     activeTabs = "1";
                   } else {
@@ -318,6 +319,7 @@ export default function App() {
                   }
                   break;
                 case NAVIGATION_SCREENS.TRANSACTION:
+                case NAVIGATION_SCREENS.UNIFIED_TRANSACTION:
                   activeTabs = "2";
                   break;
                 case NAVIGATION_SCREENS.SCANS:

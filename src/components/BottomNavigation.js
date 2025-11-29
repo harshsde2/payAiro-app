@@ -199,7 +199,7 @@ export default function BottomNavigation({ isVer }) {
           // disabled={true}
           onPress={() => {
             // handleSwitchBankingView();
-            handleTabSwitch(SCREENS.Transaction);
+            handleTabSwitch(NAVIGATION_SCREENS.UNIFIED_TRANSACTION);
           }}
         >
           <SvgIcons.TransactionIcon

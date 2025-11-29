@@ -85,7 +85,7 @@ const TermAndConditionModal = forwardRef<
         />
         {showWebView ? (
           <WebView
-            source={{ uri: LINKS.privacyPolicy }}
+            source={{ uri: LINKS.termsAndConditions }}
             style={{ flex: 1, marginTop: 20 }}
             javaScriptEnabled={true}
             domStorageEnabled={true}
