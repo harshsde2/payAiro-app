@@ -2,6 +2,7 @@ import React, { memo } from "react";
 import { View, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import moment from "moment";
+import { SvgUri } from "react-native-svg";
 import { useTheme, Theme } from "styles";
 import CustomText from "tsx-components/CustomText";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
@@ -30,6 +31,15 @@ const UnifiedTransactionCard: React.FC<IUnifiedTransactionCardProps> = ({
   const amountColor = isIncoming
     ? theme.colors.palette.success
     : theme.colors.palette.error;
+
+  // Get currency display - for crypto show token, for fiat show symbol
+  const getCurrencyDisplay = (): string => {
+    const isCrypto = transaction.transaction_category === "crypto";
+    if (isCrypto && transaction.crypto_details?.token) {
+      return transaction.crypto_details.token;
+    }
+    return transaction.currency_symbol || transaction.currency || "$";
+  };
 
   // Format date
   const formattedDate = moment(transaction.created_at).format("DD-MMM-YYYY, LT");
@@ -75,8 +85,23 @@ const UnifiedTransactionCard: React.FC<IUnifiedTransactionCardProps> = ({
         return "Merchant Payment";
       case "fiat_merchant_refund":
         return "Merchant Refund";
+      case "crypto_buy":
+        return "Crypto Purchase";
+      case "crypto_sell":
+        return "Crypto Sale";
+      case "crypto_send":
+        return "Crypto Sent";
+      case "crypto_receive":
+        return "Crypto Received";
+      case "crypto_withdrawal":
+        return "Crypto Withdrawal";
+      case "crypto_deposit":
+        return "Crypto Deposit";
+      case "crypto_swap":
+        return "Crypto Swap";
       default:
-        return transaction.transaction_type?.replace(/_/g, " ") || "Transaction";
+        const txType = transaction.transaction_type as string;
+        return txType?.replace(/_/g, " ") || "Transaction";
     }
   };
 
@@ -117,10 +142,28 @@ const UnifiedTransactionCard: React.FC<IUnifiedTransactionCardProps> = ({
 
   // Render avatar
   const renderAvatar = () => {
+    const isCrypto = transaction.transaction_category === "crypto";
+    const cryptoIcon = transaction.crypto_details?.icon_url;
     const profilePhoto = transaction.display_party?.profile_photo;
 
-    if (profilePhoto && profilePhoto !== "null") {
-      return <Image source={{ uri: profilePhoto }} style={styles.avatarImage} />;
+    // For crypto transactions, prefer crypto icon, then profile photo
+    const imageUrl = isCrypto && cryptoIcon ? cryptoIcon : profilePhoto;
+
+    if (imageUrl && imageUrl !== "null" && imageUrl !== "") {
+      // Check if it's an SVG file
+      const isSvg = imageUrl?.toLowerCase()?.endsWith(".svg");
+      
+      if (isSvg) {
+        return (
+          <SvgUri
+            uri={imageUrl}
+            width={40}
+            height={40}
+          />
+        );
+      } else {
+        return <Image source={{ uri: imageUrl }} style={styles.avatarImage} />;
+      }
     }
 
     return (
@@ -174,8 +217,7 @@ const UnifiedTransactionCard: React.FC<IUnifiedTransactionCardProps> = ({
             color={amountColor}
           >
             {sign}
-            {transaction.currency_symbol}
-            {formattedAmount}
+            {getCurrencyDisplay()} {formattedAmount}
           </CustomText>
           <CustomText variant="caption" color={theme.colors.text.tertiary}>
             {formattedDate}

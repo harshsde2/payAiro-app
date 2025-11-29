@@ -94,6 +94,7 @@ import WithdrawlIcon from "./WithdrawlIcon.svg";
 import AddWallet from "./AddWallet.svg";
 import CryptoIcon from "./Crypto.svg";
 import UploadIcon from "./Upload.svg";
+import ShareIcon from "./Share.svg";
 
 
 
@@ -194,4 +195,5 @@ export const SvgIcons = {
   AddWallet,
   CryptoIcon,
   UploadIcon,
+  ShareIcon,
 };

@@ -8,10 +8,11 @@ import {
   RefreshControl,
 } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
+import { useSelector } from "react-redux";
 import { ScreenContainer } from "HOC";
 import { SvgIcons } from "constants/svgs";
 import { useTheme, Theme } from "styles";
-import { useUnifiedTransactions } from "query/hooks";
+import { useUnifiedTransactions, useFormattedTradesHistory } from "query/hooks";
 import useDispatchAction from "hooks/useDispatchAction";
 import { setActiveTab } from "redux/slices/authenticationSlice";
 import HeaderTitle from "components/HeaderTitle";
@@ -79,6 +80,9 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
   const styles = createStyles(theme);
   const isFocused = useIsFocused();
 
+  // Get isCrypto from Redux
+  const { isCrypto } = useSelector((state: any) => state.authenticationSlice);
+
   // State
   const [filterQueryString, setFilterQueryString] = useState("");
   const [searchText, setSearchText] = useState("");
@@ -87,14 +91,25 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
   const [date, setDate] = useState("");
   const [date2, setDate2] = useState("");
 
-  // API hook
+  // API hooks - conditionally use based on isCrypto
   const {
     data: transactionsResponse,
-    isLoading,
-    isFetching,
-    refetch,
-    isSuccess,
+    isLoading: isLoadingFiat,
+    isFetching: isFetchingFiat,
+    refetch: refetchFiat,
   } = useUnifiedTransactions(filterQueryString);
+
+  const {
+    data: formattedTradesResponse,
+    isLoading: isLoadingCrypto,
+    isFetching: isFetchingCrypto,
+    refetch: refetchCrypto,
+  } = useFormattedTradesHistory();
+
+  // Determine which data to use
+  const isLoading = isCrypto ? isLoadingFiat : isLoadingCrypto;
+  const isFetching = isCrypto ? isFetchingFiat : isFetchingCrypto;
+  const refetch = isCrypto ? refetchFiat : refetchCrypto;
 
   // Set active tab when focused
   useEffect(() => {
@@ -160,33 +175,69 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
     [searchText]
   );
 
-  // Filtered transactions based on search
+  // Filtered transactions based on search - handle both fiat and crypto
   const displayedTransactions = useMemo(() => {
-    const transactions = transactionsResponse?.data?.transactions ?? [];
-    if (!normalizedSearch) return transactions;
+    if (isCrypto) {
+      // Fiat transactions from unified API
+      const transactions = transactionsResponse?.data?.transactions ?? [];
+      if (!normalizedSearch) return transactions;
 
-    return transactions.filter((item: IUnifiedTransaction) => {
-      const searchFields = [
-        item.display_party?.username,
-        item.display_party?.identifier,
-        item.sender?.username,
-        item.sender?.email,
-        item.recipient?.username,
-        item.recipient?.email,
-        item.merchant_details?.project_name,
-        item.category,
-        item.note,
-      ]
-        .filter(Boolean)
-        .map((v) => String(v).toLowerCase());
+      return transactions.filter((item: IUnifiedTransaction) => {
+        const searchFields = [
+          item.display_party?.username,
+          item.display_party?.identifier,
+          item.sender?.username,
+          item.sender?.email,
+          item.recipient?.username,
+          item.recipient?.email,
+          item.merchant_details?.project_name,
+          item.category,
+          item.note,
+        ]
+          .filter(Boolean)
+          .map((v) => String(v).toLowerCase());
 
-      return searchFields.some((v) => v.includes(normalizedSearch));
-    });
-  }, [transactionsResponse, normalizedSearch]);
+        return searchFields.some((v) => v.includes(normalizedSearch));
+      });
+    } else {
+      // Crypto transactions from formatted-trades-history API
+      // Response is already an array of IUnifiedTransaction
+      const transactions = formattedTradesResponse?.data ?? [];
+      if (!normalizedSearch) return transactions;
 
-  // Category percentages for pie chart
-  const categoryPercentages = transactionsResponse?.data?.category_percentages;
-  const totalTransactions = transactionsResponse?.data?.total_transactions;
+      return transactions.filter((item: IUnifiedTransaction) => {
+        const searchFields = [
+          item.display_party?.username,
+          item.display_party?.identifier,
+          item.crypto_details?.token,
+          item.crypto_details?.from_currency,
+          item.crypto_details?.to_currency,
+          item.sender?.username,
+          item.sender?.email,
+          item.recipient?.username,
+          item.recipient?.email,
+          item.category,
+        ]
+          .filter(Boolean)
+          .map((v) => String(v).toLowerCase());
+
+        return searchFields.some((v) => v.includes(normalizedSearch));
+      });
+    }
+  }, [
+    isCrypto,
+    transactionsResponse,
+    formattedTradesResponse,
+    normalizedSearch,
+  ]);
+
+  // Category percentages for pie chart (only for fiat)
+  const categoryPercentages = isCrypto
+    ? transactionsResponse?.data?.category_percentages
+    : null;
+  const totalTransactions = isCrypto
+    ? transactionsResponse?.data?.total_transactions
+    : formattedTradesResponse?.data?.length ?? 0;
 
   // Format category data for pie chart
   const formattedPieChartData = useMemo(() => {
@@ -385,35 +436,44 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
           <View style={styles.searchContainer}>
             <View style={styles.searchInputWrapper}>
               <CustomSearchTextInput
-                placeholder="Search Name or PayAiro tag..."
+                placeholder={
+                  isCrypto
+                    ? "Search Name or PayAiro tag..."
+                    : "Search crypto transactions..."
+                }
                 placeholderTextColor={theme.colors.palette.green700}
                 onChangeText={setSearchText}
                 value={searchText}
               />
             </View>
-            <SvgIcons.FilterIcon
-              style={styles.filterIcon}
-              width={45}
-              height={45}
-              onPress={() => setShowFilter(true)}
-            />
+            {/* Only show filter for fiat (isCrypto === true) */}
+            {isCrypto && (
+              <SvgIcons.FilterIcon
+                style={styles.filterIcon}
+                width={45}
+                height={45}
+                onPress={() => setShowFilter(true)}
+              />
+            )}
           </View>
 
           {/* Content */}
           <View style={styles.contentContainer}>
-            {/* Transaction Summary */}
-            <DashboardSection title="Transaction Summary">
-              {/* @ts-ignore */}
-              <CustomPieChart
-                isTx={true}
-                amount={totalTransactions}
-                alloCationLists={formattedPieChartData}
-              />
-            </DashboardSection>
+            {/* Transaction Summary - Only show for fiat (isCrypto === true) */}
+            {isCrypto && (
+              <DashboardSection title="Transaction Summary">
+                {/* @ts-ignore */}
+                <CustomPieChart
+                  isTx={true}
+                  amount={totalTransactions}
+                  alloCationLists={formattedPieChartData}
+                />
+              </DashboardSection>
+            )}
 
             {/* Recent Transactions */}
             <DashboardSection
-              title="Recent Transactions"
+              title={isCrypto ? "Recent Transactions" : "Crypto Transactions"}
               style={styles.transactionsSection}
             >
               {isLoading ? (

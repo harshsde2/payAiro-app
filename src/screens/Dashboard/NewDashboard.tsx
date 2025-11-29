@@ -82,7 +82,6 @@ import { useTheme } from "../../styles/ThemeContext";
 import { Card, CustomText, DashboardHeader } from "../../utils/moduleAlias";
 import useSelectorAction from "hooks/useSelectorAction";
 import PlaidLinkButton from "tsx-components/PlaidLinkButton";
-import CryptoTransactionCard from "components/CryptoTransactionCard";
 import { UnifiedTransactionCard } from "screens/TSX-Screens/UnifiedTransactions";
 
 // Lazy load non-critical components
@@ -721,7 +720,7 @@ const NewDashboard = () => {
       isSuccessWalletDashboardData &&
       WalletDashboardData?.data?.transactions
     ) {
-      setweb3TxLists([...WalletDashboardData?.data?.transactions?.trades]);
+      setweb3TxLists((WalletDashboardData?.data?.transactions || []) as any);
     }
   }, [
     WalletDashboardData,
@@ -1120,7 +1119,7 @@ const NewDashboard = () => {
 
   const sortedWeb3TxLists = useMemo(() => {
     if (!web3TxLists) return [];
-    return [...web3TxLists]
+    return (web3TxLists as any[])
       .sort(
         (a, b) =>
           (new Date(b.timestamp) as any) - (new Date(a.timestamp) as any)
@@ -2225,7 +2224,10 @@ const NewDashboard = () => {
                       sortedWeb3TxLists.length > 0 &&
                       sortedWeb3TxLists.map((item: any, key: any) => (
                         <View key={key}>
-                          <CryptoTransactionCard item={item} key={key} />
+                          <MemoizedTransactionCard
+                            transaction={item}
+                            key={key}
+                          />
                         </View>
                       ))}
                   </>
@@ -2360,30 +2362,3 @@ const createStyles = (theme: any) =>
 
 // Export memoized component for better performance
 export default React.memo(NewDashboard);
-
-const array = [
-  {
-    title: "Modern Family Home",
-    author: "John Elis",
-    price_per_share: 30,
-    growth: "5%",
-    image_url:
-      "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
-  },
-  {
-    title: "Luxury Villa with Pool",
-    author: "John Elis",
-    price_per_share: 30,
-    growth: "5%",
-    image_url:
-      "https://images.pexels.com/photos/261146/pexels-photo-261146.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
-  },
-  {
-    title: "Downtown Apartment",
-    author: "John Elis",
-    price_per_share: 30,
-    growth: "5%",
-    image_url:
-      "https://images.pexels.com/photos/439391/pexels-photo-439391.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
-  },
-];
