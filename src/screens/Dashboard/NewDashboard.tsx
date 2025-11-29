@@ -1118,8 +1118,8 @@ const NewDashboard = () => {
   }, [txLists]);
 
   const sortedWeb3TxLists = useMemo(() => {
-    if (!web3TxLists) return [];
-    return (web3TxLists as any[])
+    if (!web3TxLists || !Array.isArray(web3TxLists)) return [];
+    return [...web3TxLists]
       .sort(
         (a, b) =>
           (new Date(b.timestamp) as any) - (new Date(a.timestamp) as any)
