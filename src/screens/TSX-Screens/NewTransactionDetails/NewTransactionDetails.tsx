@@ -29,6 +29,7 @@ import { INewTransactionDetailsProps } from "./types";
 const SLIP_LABEL_VARIANT = "caption" as const;
 const SLIP_VALUE_VARIANT = "caption" as const;
 
+
 // Font size styles for transaction slip - adjust fontSize here to change size directly
 // You can also modify these in the styles function below
 const SLIP_LABEL_FONT_SIZE = 11; // Change this value to adjust label font size
