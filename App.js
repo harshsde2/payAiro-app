@@ -6,7 +6,6 @@ import { AppState, Linking, Platform } from "react-native";
 import ReactNativeBiometrics from "react-native-biometrics";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
-import ErrorToast from "./src/components/ErrorToast";
 import useDispatchAction from "./src/hooks/useDispatchAction";
 import AppStack from "./src/navigations/AppStack";
 import AuthStack from "./src/navigations/AuthStack";
@@ -36,14 +35,13 @@ import { LinkingPath } from "./src/utils/linking";
 import UseNet from './src/utils/UseNet';
 import KycWatchdog from "./src/components/common-components/KycWatchdog";
 import KycBanner from "./src/components/common-components/KycBanner";
+import Toast from "./src/components/common-components/Toast";
 
 export default function App() {
   // -------------------- Redux State --------------------
   const {
     isLogin,
     tokens,
-    errorMsg,
-    successMsg,
     biometricAvailable,
     showLoader,
     isCrypto,
@@ -340,12 +338,12 @@ export default function App() {
             }}
           >
             <UseNet />
-            {errorMsg || successMsg ? <ErrorToast /> : null}
             {/* {console.log('showLoader =>', showLoader)} */}
             {showLoader && <GlobalLoader />}
             {isLogin && <KycWatchdog />}
             {isLogin && <KycBanner />}
             {!isLogin ? <AuthStack /> : <AppStack />}
+            <Toast />
           </NavigationContainer>
         </PersistQueryProvider>
       </ThemeProvider>

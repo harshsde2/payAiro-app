@@ -14,8 +14,7 @@ import Fonts from "constants/Fonts";
 import { SvgIcons } from "constants/svgs";
 import { SCREENS } from "constants/SCREENS";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import useDispatchAction from "hooks/useDispatchAction";
-import { setErrorMsg, setSuccessMsg } from "redux/slices/authenticationSlice";
+import { showError, showSuccess } from "utils/toast";
 import { useSignUp } from "query/hooks/useAPIAuth";
 
 const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
@@ -40,29 +39,27 @@ export default function Signup() {
     const trimmedState = selectedState.trim();
 
     if (!trimmedEmail) {
-      useDispatchAction(setErrorMsg("Email field cannot be empty"));
+      showError("Email field cannot be empty");
       return false;
     }
 
     if (!EMAIL_REGEX.test(trimmedEmail)) {
-      useDispatchAction(setErrorMsg("Please enter a valid email address"));
+      showError("Please enter a valid email address");
       return false;
     }
 
     if (!trimmedState) {
-      useDispatchAction(setErrorMsg("Location field cannot be empty"));
+      showError("Location field cannot be empty");
       return false;
     }
 
     if (!isTermsAccepted) {
-      useDispatchAction(setErrorMsg("Terms & Conditions are required"));
+      showError("Terms & Conditions are required");
       return false;
     }
 
     if (isPoliticallyExposed) {
-      useDispatchAction(
-        setErrorMsg("Politically exposed persons cannot create an account")
-      );
+      showError("Politically exposed persons cannot create an account");
       return false;
     }
 
@@ -81,17 +78,15 @@ export default function Signup() {
           setIsSubmitting(false);
           if (data?.status) {
             console.log("data =>", JSON.stringify(data, null, 2));
-            useDispatchAction(setSuccessMsg("OTP has been sent to your email"));
+            showSuccess("OTP has been sent to your email");
             navigation.navigate(SCREENS.OTP, { email });
           } else {
-            useDispatchAction(setErrorMsg("Email address already exists"));
+            showError("Email address already exists");
           }
         },
         onError: () => {
           setIsSubmitting(false);
-          useDispatchAction(
-            setErrorMsg("Failed to send OTP. Please try again")
-          );
+          showError("Failed to send OTP. Please try again");
         },
       }
     );

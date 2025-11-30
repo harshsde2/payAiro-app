@@ -10,7 +10,6 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import { useDispatch } from "react-redux";
 import { Theme, useTheme } from "styles";
 import { CustomText } from "tsx-components";
 import AuthHeader from "tsx-components/AuthHeader";
@@ -19,11 +18,7 @@ import GenericButton from "../../components/GenericButton";
 import PoliticalModal from "../../components/PolitaclModal";
 import TextInputField from "../../components/TextInputField";
 import { SCREENS } from "../../constants/SCREENS";
-import useDispatchAction from "../../hooks/useDispatchAction";
-import {
-  setErrorMsg,
-  setSuccessMsg,
-} from "../../redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../../utils/toast";
 import { clearAll } from "storage/mmkv";
 
 export default function Login() {
@@ -49,19 +44,17 @@ export default function Login() {
   const { mutate: login, isPending, error } = useLogin();
   const { mutate: stepCount } = useStepCount();
 
-  const dispatch = useDispatch();
-
   const handleLogin = () => {
     if (!email.trim()) {
-      dispatch(setErrorMsg("E-Mail Fields cannot be empty"));
+      showError("E-Mail Fields cannot be empty");
       return;
     }
     // if (!selectedMethod.trim()) {
-    //   useDispatchAction(setErrorMsg("Location Fields cannot be empty"));
+    //   showError("Location Fields cannot be empty");
     //   return;
     // }
     if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
-      dispatch(setErrorMsg("Please enter valid email address"));
+      showError("Please enter valid email address");
       return;
     }
     setButtonDisabled(true);
@@ -71,16 +64,17 @@ export default function Login() {
         setButtonDisabled(false);
         if (data?.status && data) {
           console.log("data =>", JSON.stringify(data, null, 2));
-          useDispatchAction(setSuccessMsg("OTP has been sent to email"));
+          showSuccess("OTP has been sent to email");
           (navigation as any).navigate(SCREENS.OTP, {
             email,
           });
         } else {
-          useDispatchAction(setErrorMsg("Email Address Already Exists"));
+          showError("Email Address Already Exists");
         }
       },
       onError: (error: any) => {
-        useDispatchAction(setErrorMsg(error?.response?.data?.message));
+        const errorMessage = error?.response?.data?.message || "Something went wrong";
+        showError(errorMessage);
         console.log("error?.response =>", JSON.stringify(error?.response,null,2));
         setButtonDisabled(false);
       },

@@ -8,8 +8,7 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  View,
-  Clipboard
+  View
 } from "react-native";
 import DeviceInfo from "react-native-device-info";
 import { useDispatch } from "react-redux";
@@ -23,15 +22,14 @@ import { SCREENS } from "../../constants/SCREENS";
 import useDispatchAction from "../../hooks/useDispatchAction";
 import useSelectorAction from "../../hooks/useSelectorAction";
 import {
-  setErrorMsg,
   setLogin,
   setShowGuide,
   setShowLoader,
-  setSuccessMsg,
   setTokens,
   setWalletData
 } from "../../redux/slices/authenticationSlice";
 import { setToken, setWalletDataAuth } from "../../services/Auth";
+import { showError, showSuccess } from "../../utils/toast";
 
 const OTP_COOLDOWN_SECONDS = 60;
 
@@ -225,14 +223,15 @@ export default function ConfirmOTP() {
     login({ email: email.trim().toLowerCase() } as any, {
       onSuccess: (data) => {
         if (data?.status && data) {
-          useDispatchAction(setSuccessMsg("OTP has been sent to email"));
+          showSuccess("OTP has been sent to email");
         } else {
-          useDispatchAction(setErrorMsg("Something went wrong"));
+          showError("Something went wrong");
         }
       },
-      onError: (error) => {
+      onError: (error: any) => {
         console.log(error);
-        useDispatchAction(setErrorMsg(error));
+        const errorMessage = error?.response?.data?.message || error?.message || "Something went wrong";
+        showError(errorMessage);
       },
     });
   };
@@ -258,13 +257,13 @@ export default function ConfirmOTP() {
         setItem(STORAGE_KEYS.WALLET_DATA, JSON.stringify(walletData));
         setPin(pin);
         dispatch(setLogin(true));
-        dispatch(setSuccessMsg("Logged in Successfully"));
+        showSuccess("Logged in Successfully");
       } else {
         throw new Error("Wallet fetch failed");
       }
     } catch (error: any) {
       console.log("error =====>", JSON.stringify(error.response, null, 2));
-      useDispatchAction(setErrorMsg("Something went wrong!"));
+      showError("Something went wrong!");
     }
   };
 
@@ -276,7 +275,7 @@ export default function ConfirmOTP() {
 
     const enteredOtp = otp.join("");
     if (enteredOtp.length < 6) {
-      useDispatchAction(setErrorMsg("OTP Should Be 6 Digits"));
+      showError("OTP Should Be 6 Digits");
       return;
     }
 
@@ -292,7 +291,7 @@ export default function ConfirmOTP() {
           useDispatchAction(setTokens(data?.data));
           await setToken(data?.data);
           setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(data?.data));
-          useDispatchAction(setSuccessMsg("OTP Verified Successfully"));
+          showSuccess("OTP Verified Successfully");
 
           const { step, persona_verification_url } = data?.data;
 
@@ -311,7 +310,7 @@ export default function ConfirmOTP() {
             await getWalletD();
           }
         } else {
-          useDispatchAction(setErrorMsg("Invalid OTP. Please Try Again."));
+          showError("Invalid OTP. Please Try Again.");
           // Reset on error
           isVerifyingRef.current = false;
           setIsVerifying(false);
@@ -323,7 +322,7 @@ export default function ConfirmOTP() {
           (error as any)?.response?.data?.message ||
           error?.message ||
           "Something went wrong";
-        useDispatchAction(setErrorMsg(errorMessage));
+        showError(errorMessage);
         
         // Reset on error
         isVerifyingRef.current = false;

@@ -96,6 +96,13 @@ import CryptoIcon from "./Crypto.svg";
 import UploadIcon from "./Upload.svg";
 import ShareIcon from "./Share.svg";
 import ChevronDown2 from "./ChevronDown2.svg";
+import ToastCircleAlert from "./ToastCircleAlert.svg";
+import ToastCross from "./ToastCross.svg";
+import ToastDoneRing from "./ToastDoneRing.svg";
+import ToastTriangleAlert from "./ToastTriangleAlert.svg";
+import NewCross from "./NewCross.svg";
+import ToastChecked from "./ToastChecked.svg";
+
 
 
 
@@ -198,4 +205,10 @@ export const SvgIcons = {
   UploadIcon,
   ShareIcon,
   ChevronDown2,
+  ToastCircleAlert,
+  ToastCross,
+  ToastDoneRing,
+  ToastTriangleAlert,
+  NewCross,
+  ToastChecked,
 };
