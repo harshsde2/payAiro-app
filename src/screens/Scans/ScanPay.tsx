@@ -22,12 +22,8 @@ import SelectionTokens from "../../components/SelectedTokens";
 import SelectionNetwork from "../../components/SelectionNetwork";
 import Fonts from "../../constants/Fonts";
 import { SCREENS } from "../../constants/SCREENS";
-import useDispatchAction from "../../hooks/useDispatchAction";
 import useSelectorAction from "../../hooks/useSelectorAction";
-import {
-  setErrorMsg,
-  setSuccessMsg
-} from "../../redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../../utils/toast";
 import {
   confirmPayment,
   confirmPaymentQR,
@@ -99,12 +95,10 @@ export default function ScanPay(props: IScanPayProps) {
       tokens?.access
     );
     if (data && data?.data.status) {
-      useDispatchAction(setSuccessMsg("Transaction Paid Successfully"));
+      showSuccess("Transaction Paid Successfully");
       navigation.replace(SCREENS.Dashboard as never);
     } else {
-      useDispatchAction(
-        setErrorMsg("Did Not have enough amount or some error happens")
-      );
+      showError("Did Not have enough amount or some error happens");
     }
     setspin(false);
   };
@@ -121,12 +115,10 @@ export default function ScanPay(props: IScanPayProps) {
     if ((sender as any)?.qrtype === "merchant") {
       data = await confirmPaymentQR(formData, tokens?.access);
       if (data && data.status) {
-        useDispatchAction(setSuccessMsg("Payment Successfully"));
+        showSuccess("Payment Successfully");
         navigation.navigate(NAVIGATION_SCREENS.NEW_DASHBOARD as never);
       } else {
-        useDispatchAction(
-          setErrorMsg("Did Not have enough amount or some error happens")
-        );
+        showError("Did Not have enough amount or some error happens");
       }
       console.log(data, "dataatattata");
       setspin(false);
@@ -158,12 +150,12 @@ export default function ScanPay(props: IScanPayProps) {
 
   const handleSend = async () => {
     if (Number(amount) < 5) {
-      useDispatchAction(setErrorMsg("Minimum amount is 5"));
+      showError("Minimum amount is 5");
       return;
     }
 
     if (Number(amount) > 100000) {
-      useDispatchAction(setErrorMsg("Amount cannot exceed ₹1,00,000"));
+      showError("Amount cannot exceed ₹1,00,000");
       return;
     }
 
@@ -221,11 +213,9 @@ export default function ScanPay(props: IScanPayProps) {
             isSuccess: false,
             isError: true,
           } as never);
-          useDispatchAction(
-            setErrorMsg(
-              data?.data?.data?.error ||
-                "Operation is forbidden. Custodial account is suspended or Level 2 KYC Pending"
-            )
+          showError(
+            data?.data?.data?.error ||
+              "Operation is forbidden. Custodial account is suspended or Level 2 KYC Pending"
           );
         }
       },
@@ -247,7 +237,7 @@ export default function ScanPay(props: IScanPayProps) {
   const handleCrypto = async () => {
     try {
       if (Number(amount) > 100000) {
-        useDispatchAction(setErrorMsg("Amount cannot exceed ₹1,00,000"));
+        showError("Amount cannot exceed ₹1,00,000");
         return;
       }
 
@@ -266,7 +256,7 @@ export default function ScanPay(props: IScanPayProps) {
       const data = await cryptoTransfer(payload, tokens?.access);
       console.log(data, "dataCrypto");
       if (data && data?.status) {
-        useDispatchAction(setSuccessMsg("Succcessfully Transfered"));
+        showSuccess("Succcessfully Transfered");
         navigation.navigate("TransactionSuccess" as never, {
           data: data?.data?.transaction,
           transactionDetails: [
@@ -285,12 +275,10 @@ export default function ScanPay(props: IScanPayProps) {
           ],
         } as never);
       } else {
-        useDispatchAction(
-          setErrorMsg(data?.data?.error?.title ?? "Something went wrong")
-        );
+        showError(data?.data?.error?.title ?? "Something went wrong");
       }
     } catch (error) {
-      useDispatchAction(setErrorMsg("Something went wrong"));
+      showError("Something went wrong");
     }
   };
 
@@ -303,7 +291,7 @@ export default function ScanPay(props: IScanPayProps) {
         const newAmount = prev === "0" ? key : prev + key;
         // Limit to 1 lakh (100,000)
         if (Number(newAmount) > 100000) {
-          useDispatchAction(setErrorMsg("Amount cannot exceed ₹1,00,000"));
+          showError("Amount cannot exceed ₹1,00,000");
           return prev;
         }
         return newAmount;
@@ -313,7 +301,7 @@ export default function ScanPay(props: IScanPayProps) {
 
   const handleRequested = async () => {
     if (Number(amount) > 100000) {
-      useDispatchAction(setErrorMsg("Amount cannot exceed ₹1,00,000"));
+      showError("Amount cannot exceed ₹1,00,000");
       return;
     }
 
@@ -331,12 +319,10 @@ export default function ScanPay(props: IScanPayProps) {
     const data = await paymentRequested(formData, tokens?.access);
     console.log(data, "requested");
     if (data && data?.status) {
-      useDispatchAction(setSuccessMsg("Payment request created successfully."));
+      showSuccess("Payment request created successfully.");
       navigation.replace(SCREENS.Dashboard as never);
     } else {
-      useDispatchAction(
-        setErrorMsg("Already have pending request with this account")
-      );
+      showError("Already have pending request with this account");
     }
 
     setspin(false);

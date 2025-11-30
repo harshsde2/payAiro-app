@@ -12,11 +12,7 @@ import { CustomText } from "tsx-components";
 import GenericButton from "../../../components/GenericButton";
 import { Theme, useTheme } from "styles";
 import { useSendOTP, useVerifyUserForSendOTP } from "query/hooks/useAPIAuth";
-import useDispatchAction from "../../../hooks/useDispatchAction";
-import {
-  setErrorMsg,
-  setSuccessMsg,
-} from "../../../redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../../../utils/toast";
 import HeaderTitle from "components/HeaderTitle";
 
 interface ITransactionOTPRouteParams {
@@ -66,13 +62,11 @@ const OTP = () => {
     sendOTP({} as any, {
       onSuccess: (data) => {
         console.log("OTP sent successfully:", data);
-        useDispatchAction(setSuccessMsg("OTP sent to your registered email"));
+        showSuccess("OTP sent to your registered email");
       },
       onError: (error) => {
         console.log("Error sending OTP:", error);
-        useDispatchAction(
-          setErrorMsg("Failed to send OTP. Please try again.")
-        );
+        showError("Failed to send OTP. Please try again.");
       },
     });
   };
@@ -124,7 +118,7 @@ const OTP = () => {
     const enteredOtp = otp.join("");
     
     if (enteredOtp.length < 6) {
-      useDispatchAction(setErrorMsg("Please enter complete OTP"));
+      showError("Please enter complete OTP");
       setIsVerifying(false);
       return;
     }
@@ -136,7 +130,7 @@ const OTP = () => {
     verifyUserForSendOTP(payload as any, {
       onSuccess: (data) => {
         console.log("OTP verified successfully:", data);
-        useDispatchAction(setSuccessMsg("OTP verified successfully"));
+        showSuccess("OTP verified successfully");
         setIsVerifying(false);
         
         // Navigate back and execute the transaction
@@ -147,7 +141,7 @@ const OTP = () => {
       },
       onError: (error) => {
         console.log("Error verifying OTP:", error);
-        useDispatchAction(setErrorMsg("Invalid OTP. Please try again."));
+        showError("Invalid OTP. Please try again.");
         setIsVerifying(false);
       },
     });

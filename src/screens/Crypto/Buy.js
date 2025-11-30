@@ -10,11 +10,8 @@ import GenericButton from "../../components/GenericButton";
 import { buy, calculateQuantity } from "../../services/Services";
 import useSelectorAction from "../../hooks/useSelectorAction";
 import useDispatchAction from "../../hooks/useDispatchAction";
-import {
-  setErrorMsg,
-  setShowLoader,
-  setSuccessMsg,
-} from "../../redux/slices/authenticationSlice";
+import { setShowLoader } from "../../redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../../utils/toast";
 import { useNavigation } from "@react-navigation/native";
 import FullScreenModal from "../../components/FullScreenModal";
 
@@ -108,15 +105,15 @@ export default function Buy(props) {
       );
       console.log(JSON.stringify(data, null, 2), "datatata");
       if (data && data?.data.message === "Trade successful") {
-        useDispatchAction(setSuccessMsg("Trade successful"));
+        showSuccess("Trade successful");
         navigation.goBack();
       } else {
-        useDispatchAction(setErrorMsg("Trade failed, Some thing went wrong"));
+        showError("Trade failed, Some thing went wrong");
       }
     } catch (error) {
       // console.log(error?.data?.details?.errors, "errororor");
       console.log(JSON.stringify(error, null, 2), "errororor");
-      useDispatchAction(setErrorMsg("Trade failed, Some thing went wrong"));
+      showError("Trade failed, Some thing went wrong");
     } finally {
       useDispatchAction(setShowLoader(false));
     }

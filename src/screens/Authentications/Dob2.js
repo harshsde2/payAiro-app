@@ -12,12 +12,11 @@ import useSelectorAction from '../../hooks/useSelectorAction';
 import {getWallet, patchKyc} from '../../services/Services';
 import useDispatchAction from '../../hooks/useDispatchAction';
 import {
-  setErrorMsg,
   setLogin,
-  setSuccessMsg,
   setUserData,
   setWalletData,
 } from '../../redux/slices/authenticationSlice';
+import { showError, showSuccess } from '../../utils/toast';
 import DatePicker from 'react-native-date-picker';
 import moment from 'moment';
 import {
@@ -50,7 +49,7 @@ export default function Dob2(props) {
   const [open, setOpen] = useState(false);
   const handlePayTag = async () => {
     if (date.length === 0) {
-      useDispatchAction(setErrorMsg('Date of birth are Required!'));
+      showError('Date of birth are Required!');
       return;
     }
     const formData = new FormData();
@@ -59,10 +58,10 @@ export default function Dob2(props) {
     const datas = await patchKyc(formData, tokens?.access, true);
     console.log(datas, 'datats');
     if (datas) {
-      useDispatchAction(setSuccessMsg('KYC Submitted Successfully'));
+      showSuccess('KYC Submitted Successfully');
       navigation.navigate(NAVIGATION_SCREENS.NEW_DASHBOARD);
     } else {
-      useDispatchAction(setErrorMsg('Something went wrong'));
+      showError('Something went wrong');
     }
   };
   const dispatch = useDispatch();
@@ -72,7 +71,7 @@ export default function Dob2(props) {
     dispatch(setWalletData(data?.data));
     setWalletDataAuth(data?.data);
     dispatch(setLogin(true));
-    useDispatchAction(setSuccessMsg('Logged In Successfully'));
+    showSuccess('Logged In Successfully');
   };
   // const handlePayTag = async () => {
   //   console.log(payload4, 'payload');

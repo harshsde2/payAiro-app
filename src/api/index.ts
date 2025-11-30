@@ -7,11 +7,10 @@ import { AUTH, BASE_URL } from "./endpoints";
 import { getItem, STORAGE_KEYS } from "../storage/mmkv";
 import { Tokens } from "./types";
 import { Alert } from "react-native";
-import useDispatchAction from "hooks/useDispatchAction";
-import { setErrorMsg } from "redux/slices/authenticationSlice";
+import { showError } from "../utils/toast";
 // Create Axios instance
 const api = axios.create({
-  baseURL: BASE_URL.production,
+  baseURL: BASE_URL.testing,
   timeout: Infinity,
   headers: {
     "Content-Type": "application/json",
@@ -102,9 +101,9 @@ api.interceptors.request.use(
         console.log("[KYC] Interceptor: mode =>", mode, ", isPublic =>", isPublic);
 
         if (mode === "expired" && !isPublic) {
-          const { setErrorMsg, setKycStatus } = require("../redux/slices/authenticationSlice");
+          const { setKycStatus } = require("../redux/slices/authenticationSlice");
           const message = "Your KYC has expired. Would you like to restart the KYC now?";
-          useDispatchAction(setErrorMsg(message));
+          showError(message);
           // Prompt with Start KYC action similar to KycWatchdog
           showKycAlertOnce(
             "KYC Expired",
@@ -138,11 +137,10 @@ api.interceptors.request.use(
         if ((mode === "pending" || mode === "not_started") && !isPublic) {
           const mutating = method === "post" || method === "patch" || method === "delete";
           if (mutating) {
-            const { setErrorMsg } = require("../redux/slices/authenticationSlice");
             const msg = mode === "not_started" 
               ? "Your KYC has not started. Please start KYC to continue."
               : "Your KYC is under review. You can browse in view-only mode.";
-            useDispatchAction(setErrorMsg(msg));
+            showError(msg);
             const title = mode === "not_started" ? "KYC Not Started" : "KYC Under Review";
             // For not_started → show Start KYC CTA; for pending → simple acknowledge only
             if (mode === "not_started") {
@@ -264,12 +262,12 @@ api.interceptors.response.use(
       // Only show this if NOT a public route
       if (status === 401 && !isPublicRoute) {
         // console.log("Token expired or unauthorized");
-        useDispatchAction(setErrorMsg("Token expired or unauthorized"));
+        showError("Token expired or unauthorized");
       }
 
       if (status === 403 && !isPublicRoute) {
         // console.log("Forbidden access");
-        useDispatchAction(setErrorMsg("Forbidden access"));
+        showError("Forbidden access");
       }
 
       if (status >= 500) {

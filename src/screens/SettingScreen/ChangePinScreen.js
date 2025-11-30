@@ -17,12 +17,7 @@ import GenericButton from "../../components/GenericButton";
 import { getPin, setPin } from "storage/mmkv";
 import { ScreenContainer } from "HOC";
 import { globalStyles, useGlobalStyles } from "styles/GlobalStyles";
-import useDispatchAction from "hooks/useDispatchAction";
-import {
-  setErrorMsg,
-  setShowLoader,
-  setSuccessMsg,
-} from "redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../../utils/toast";
 import { useDispatch, useSelector } from "react-redux";
 import { patchPin } from "services/Services";
 import {
@@ -115,15 +110,13 @@ const ChangePinScreen = () => {
             setShowLoader(false);
             setPin(confirmPin.join(""));
             console.log(JSON.stringify(data.data, null, 2));
-            dispatch(setSuccessMsg("Pin change successfully"));
+            showSuccess("Pin change successfully");
             setConfirmPin(["", "", "", ""]);
             setCurrentPin(["", "", "", ""]);
             setNewPin(["", "", "", ""]);
           },
           onError: () => {
-            dispatch(
-              setErrorMsg(err?.data?.data?.error || "Some error occured!")
-            );
+            showError(err?.data?.data?.error || "Some error occured!");
             console.log(JSON.stringify(err, null, 2));
           },
           onSettled: () => {
@@ -131,10 +124,10 @@ const ChangePinScreen = () => {
           },
         });
       } else {
-        dispatch(setErrorMsg("New PIN does not match with confirm PIN"));
+        showError("New PIN does not match with confirm PIN");
       }
     } else {
-      dispatch(setErrorMsg("Current PIN is not correct"));
+      showError("Current PIN is not correct");
     }
   };
 
@@ -146,26 +139,24 @@ const ChangePinScreen = () => {
         {
           onSuccess: (data) => {
             console.log("step 2", data.data);
-            dispatch(setSuccessMsg("OTP sent successfully"));
+            showSuccess("OTP sent successfully");
             setShowVerifyModal(true);
           },
           onError: (err) => {
             console.log("send otp", JSON.stringify(err, null, 2));
-            dispatch(
-              setErrorMsg(err?.data?.data?.error || "Some error occured!")
-            );
+            showError(err?.data?.data?.error || "Some error occured!");
           },
           onSettled: () => {},
         }
       );
     } else {
-      dispatch(setErrorMsg("Current PIN is not correct"));
+      showError("Current PIN is not correct");
     }
   };
   const handleVerfyUserChangePinOTP = async () => {
     const enteredOtp = otp.join("");
     if (enteredOtp.length < 6) {
-      useDispatchAction(setErrorMsg("OTP Should Be 6 Digits"));
+      showError("OTP Should Be 6 Digits");
       return;
     }
     console.log("step 3 ->");
@@ -176,13 +167,11 @@ const ChangePinScreen = () => {
           console.log("step 4 ->", data.data);
           setShowVerifyModal(false);
           setIsUserVerfied(true);
-          dispatch(setSuccessMsg("User verified successfully"));
+          showSuccess("User verified successfully");
         },
         onError: () => {
           console.log("send otp", JSON.stringify(err, null, 2));
-          dispatch(
-            setErrorMsg(err?.data?.data?.error || "Some error occured!")
-          );
+          showError(err?.data?.data?.error || "Some error occured!");
         },
         onSettled: () => {},
       }

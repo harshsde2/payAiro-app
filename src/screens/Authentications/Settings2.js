@@ -26,13 +26,12 @@ import {useNavigation} from '@react-navigation/native';
 import LogoutModal from '../../components/LogoutModal';
 import useDispatchAction from '../../hooks/useDispatchAction';
 import {
-  setErrorMsg,
   setLogin,
-  setSuccessMsg,
   setTokens,
   setUserData,
   setWalletData,
 } from '../../redux/slices/authenticationSlice';
+import { showError, showSuccess } from '../../utils/toast';
 import {
   getPin,
   setKycStep,
@@ -139,7 +138,7 @@ export default function Settings2() {
                     if(kycStatus?.state === 'approved' || kycStatus?.status == true) {
                       navigation.navigate(NAVIGATION_SCREENS.CHANGE_PIN_SCREEN);
                     } else {
-                      useDispatchAction(setErrorMsg('KYC is Pending'));
+                      showError('KYC is Pending');
                     }
                     return;
                   }
@@ -234,9 +233,7 @@ export default function Settings2() {
                 setpinOld(e);
                 setshowPin(true);
               } else {
-                useDispatchAction(
-                  setErrorMsg('Old Pin not matched , Try Again'),
-                );
+                showError('Old Pin not matched , Try Again');
               }
             }}
           />
@@ -249,7 +246,7 @@ export default function Settings2() {
               console.log(f, 'fffffff');
               if (!f) {
                 if (e !== isConfirm) {
-                  useDispatchAction(setErrorMsg('Pin not matched , Try Again'));
+                  showError('Pin not matched , Try Again');
                   setpinTxt('Confirm your pin');
                   setshowPin(true);
                   return;
@@ -263,11 +260,9 @@ export default function Settings2() {
                   setPin(e);
                   setshowPin(false);
                   setpinTxt('Enter your Old Pin');
-                  useDispatchAction(
-                    setSuccessMsg('Transaction Pin updated successfully'),
-                  );
+                  showSuccess('Transaction Pin updated successfully');
                 } else {
-                  useDispatchAction(setErrorMsg('Something Went Wrong'));
+                  showError('Something Went Wrong');
                 }
               } else {
                 setisConfirm(e);

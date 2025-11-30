@@ -13,8 +13,7 @@ import GenericButton from "components/GenericButton";
 import useSelectorAction from "hooks/useSelectorAction";
 import CommonModal from "tsx-components/modals/CommonModal";
 import { useCryptoBuy, useCryptoSell, useCryptoBalanceByAsset } from "query/hooks";
-import { setErrorMsg, setSuccessMsg } from "redux/slices/authenticationSlice";
-import useDispatchAction from "hooks/useDispatchAction";
+import { showError, showSuccess } from "../../../utils/toast";
 import { useDispatch } from "react-redux";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import PinScreen from "tsx-components/modals/PinScreen";
@@ -126,18 +125,18 @@ const CryptoSell = () => {
 
   const onSellClick = async () => {
     if (!amount || parseFloat(amount) <= 0) {
-      dispatch(setErrorMsg("Please enter a valid amount"));
+      showError("Please enter a valid amount");
       return;
     }
 
     if (cryptoAmount <= 0) {
-      dispatch(setErrorMsg("Invalid crypto amount"));
+      showError("Invalid crypto amount");
       return;
     }
 
     const availableBalanceNum = parseFloat(availableBalance);
     if (cryptoAmount > availableBalanceNum) {
-      dispatch(setErrorMsg(`Insufficient balance. Available: ${availableBalance} ${symbol}`));
+      showError(`Insufficient balance. Available: ${availableBalance} ${symbol}`);
       return;
     }
 
@@ -164,9 +163,7 @@ const CryptoSell = () => {
             isSuccess: true,
             isError: false,
           });
-          dispatch(
-            setSuccessMsg(`Successfully sold ${cryptoAmount.toFixed(8)} ${symbol}`)
-          );
+          showSuccess(`Successfully sold ${cryptoAmount.toFixed(8)} ${symbol}`);
         } else {
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
             isLoading: false,
@@ -187,13 +184,9 @@ const CryptoSell = () => {
         try {
           const errors = JSON.parse(error.response.data.data.details);
           const errorsfunds = JSON.parse(error.response.data.data.details)?.title;
-          dispatch(
-            setErrorMsg(
-              errors.errors.Funds[0] || errorsfunds || `Something went wrong!`
-            )
-          );
+          showError(errors.errors.Funds[0] || errorsfunds || `Something went wrong!`);
         } catch (parseError) {
-          dispatch(setErrorMsg(`Something went wrong!`));
+          showError(`Something went wrong!`);
         }
       },
       onSettled: () => {},

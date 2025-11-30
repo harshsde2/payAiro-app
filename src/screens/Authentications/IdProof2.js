@@ -9,12 +9,11 @@ import Fonts from '../../constants/Fonts';
 import UploadFile from '../../components/UploadFile';
 import {setKycStep, setWalletDataAuth} from '../../services/Auth';
 import {
-  setErrorMsg,
   setLogin,
-  setSuccessMsg,
   setWalletData,
 } from '../../redux/slices/authenticationSlice';
 import useDispatchAction from '../../hooks/useDispatchAction';
+import { showError, showSuccess } from '../../utils/toast';
 import {getWallet, patchKyc} from '../../services/Services';
 import useSelectorAction from '../../hooks/useSelectorAction';
 import {useDispatch} from 'react-redux';
@@ -37,12 +36,12 @@ export default function IDProof2(props) {
     dispatch(setWalletData(data?.data));
     setWalletDataAuth(data?.data);
     dispatch(setLogin(true));
-    useDispatchAction(setSuccessMsg('Logged In Successfully'));
+    showSuccess('Logged In Successfully');
   };
   const handleIdProof = async () => {
     await setKycStep('2');
     if (idProof1.length === 0 || idProof2.length === 0) {
-      useDispatchAction(setErrorMsg('ID Proofs are Required!'));
+      showError('ID Proofs are Required!');
       return;
     }
     const formData = new FormData();
@@ -50,11 +49,11 @@ export default function IDProof2(props) {
     formData.append('address_pov', idProof2[0]);
     const datas = await patchKyc(formData, tokens?.access, true);
     if (datas) {
-      useDispatchAction(setSuccessMsg('ID Proof Updated Successfully'));
+      showSuccess('ID Proof Updated Successfully');
 
       navigation.navigate('Signature2');
     } else {
-      useDispatchAction(setErrorMsg('Something went wrong'));
+      showError('Something went wrong');
     }
   };
 

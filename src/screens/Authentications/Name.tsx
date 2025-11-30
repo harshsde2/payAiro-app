@@ -18,15 +18,13 @@ import AuthHeader from "tsx-components/AuthHeader";
 import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
 import GenericButton from "../../components/GenericButton";
 import TextInputField from "../../components/TextInputField";
-import useDispatchAction from "../../hooks/useDispatchAction";
 import {
-  setErrorMsg,
   setLogin,
   setShowLoader,
-  setSuccessMsg,
   setUserData,
   setWalletData,
 } from "../../redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../../utils/toast";
 import { setItem, STORAGE_KEYS } from "storage/mmkv";
 import { useDispatch } from "react-redux";
 import { useWalletDetails } from "query/hooks";
@@ -91,20 +89,20 @@ export default function Name(props: any) {
   // Handle From
   const handleForm = () => {
     if (fname.length === 0 || lname.length === 0 || uname.length === 0) {
-      useDispatchAction(setErrorMsg("Fields cannot be empty"));
+      showError("Fields cannot be empty");
       return;
     }
     if (phone.length < 10) {
-      useDispatchAction(setErrorMsg("Phone Number Must be 10 digit"));
+      showError("Phone Number Must be 10 digit");
       return;
     }
     if (!checked) {
-      useDispatchAction(setErrorMsg("Terms & Conditions are required"));
+      showError("Terms & Conditions are required");
       return;
     }
 
     if (!checkedCybridUserAgreement) {
-      useDispatchAction(setErrorMsg("Cybrid User Agreement is required"));
+      showError("Cybrid User Agreement is required");
       return;
     }
 
@@ -120,12 +118,10 @@ export default function Name(props: any) {
       onSuccess: (datas : any) => {
         setIsPending(false);
         // getCurrentStep();
-        useDispatchAction(setUserData(datas?.data));
+        dispatch(setUserData(datas?.data));
         console.log("datas =>", JSON.stringify(datas, null, 2));
         if (datas && datas?.status) {
-          useDispatchAction(
-            setSuccessMsg("Name & PayAiro Has Been Updated Successfully")
-          );
+          showSuccess("Name & PayAiro Has Been Updated Successfully");
 
           if (datas?.fortress == true) {
             (navigation as any).navigate(NAVIGATION_SCREENS.ADDRESS);
@@ -136,7 +132,7 @@ export default function Name(props: any) {
             getWalletDetails();
           }
         } else {
-          useDispatchAction(setErrorMsg("Username Already Exists"));
+          showError("Username Already Exists");
         }
       },
       onError: (error: any) => {
@@ -144,17 +140,12 @@ export default function Name(props: any) {
         setIsPending(false);
 
         if (error.response.data.data.errors.mobile_number) {
-          useDispatchAction(
-            setErrorMsg(error.response.data.data.errors.mobile_number[0])
-          );
+          showError(error.response.data.data.errors.mobile_number[0]);
         } else if (error.response.data.data.errors.usernames) {
-          useDispatchAction(
-            setErrorMsg(error.response.data.data.errors.usernames[0])
-          );
+          showError(error.response.data.data.errors.usernames[0]);
         } else {
-          useDispatchAction(setErrorMsg("Failed to submit details"));
+          showError("Failed to submit details");
         }
-        // useDispatchAction(setErrorMsg("Failed to submit details"));
       },
     });
   };
@@ -174,9 +165,9 @@ export default function Name(props: any) {
         setWalletDataAuth(payload.data);
         setItem(STORAGE_KEYS.WALLET_DATA, JSON.stringify(payload.data));
         dispatch(setLogin(true));
-        dispatch(setSuccessMsg("Create Account Successfully"));
+        showSuccess("Create Account Successfully");
       } else {
-        useDispatchAction(setErrorMsg("Failed to fetch wallet details"));
+        showError("Failed to fetch wallet details");
       }
     } finally {
       dispatch(setShowLoader(false));

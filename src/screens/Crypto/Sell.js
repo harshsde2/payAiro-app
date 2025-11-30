@@ -8,11 +8,7 @@ import Fonts from '../../constants/Fonts';
 import TextInputField from '../../components/TextInputField';
 import GenericButton from '../../components/GenericButton';
 import useSelectorAction from '../../hooks/useSelectorAction';
-import useDispatchAction from '../../hooks/useDispatchAction';
-import {
-  setErrorMsg,
-  setSuccessMsg,
-} from '../../redux/slices/authenticationSlice';
+import { showError, showSuccess } from '../../utils/toast';
 import {
   calculateAmount,
   calculateQuantity,
@@ -60,13 +56,13 @@ export default function Sell(props) {
       console.log(data, 'datatata');
 
       if (data && data?.data.message === 'Sell trade successful') {
-        useDispatchAction(setSuccessMsg('Sell trade successful'));
+        showSuccess('Sell trade successful');
         navigation.goBack();
       } else {
-        useDispatchAction(setErrorMsg('Insufficient account balanc'));
+        showError('Insufficient account balanc');
       }
     } catch (error) {
-      useDispatchAction(setErrorMsg('Insufficient account balanc'));
+      showError('Insufficient account balanc');
     }
   };
 

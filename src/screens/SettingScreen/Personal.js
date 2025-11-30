@@ -18,11 +18,8 @@ import {
 import useDispatchAction from "../../hooks/useDispatchAction";
 import useSelectorAction from "../../hooks/useSelectorAction";
 import { usePatchUserDetails } from "../../query/hooks/useAPIAuth";
-import {
-  setErrorMsg,
-  setKycStatus,
-  setSuccessMsg
-} from "../../redux/slices/authenticationSlice";
+import { setKycStatus } from "../../redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../../utils/toast";
 import { getKYC } from "../../services/Services";
 import { toKycMode } from "../../types/kyc";
 
@@ -86,19 +83,19 @@ export default function Personal() {
             navigation.navigate(NAVIGATION_SCREENS.CYBRID_WEB_VIEW, {
               URL: data?.persona_verification_url,
             });
-            useDispatchAction(setSuccessMsg("KYC started successfully"));
+            showSuccess("KYC started successfully");
             useDispatchAction(setKycStatus({ status: false, state: "pending", toast_message: "KYC started" }));
 
           } else{
-            useDispatchAction(setSuccessMsg("Your ID fetch successfully please click again to start KYC"));
+            showSuccess("Your ID fetch successfully please click again to start KYC");
           }
         },
         onError: (error) => {
-            useDispatchAction(setErrorMsg("Failed to start KYC"));
+            showError("Failed to start KYC");
         },
       });
     } catch (e) {
-      useDispatchAction(setErrorMsg("Failed to start KYC"));
+      showError("Failed to start KYC");
     }
   };
 

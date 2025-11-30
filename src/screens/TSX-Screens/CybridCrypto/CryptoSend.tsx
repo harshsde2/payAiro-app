@@ -25,8 +25,7 @@ import {
   useCryptoWithdrawal,
   useCryptoBalanceByAsset,
 } from "query/hooks";
-import { setErrorMsg, setSuccessMsg } from "redux/slices/authenticationSlice";
-import useDispatchAction from "hooks/useDispatchAction";
+import { showError, showSuccess } from "../../../utils/toast";
 import { useDispatch } from "react-redux";
 import DashboardSection from "tsx-components/DashboardSection";
 import TextInputField from "components/TextInputField";
@@ -167,23 +166,23 @@ const CryptoSend = () => {
 
   const onSendClick = async () => {
     if (!amount || parseFloat(amount) <= 0) {
-      dispatch(setErrorMsg("Please enter a valid amount"));
+      showError("Please enter a valid amount");
       return;
     }
 
     if (cryptoAmount <= 0) {
-      dispatch(setErrorMsg("Invalid crypto amount"));
+      showError("Invalid crypto amount");
       return;
     }
 
     const availableBalanceNum = parseFloat(availableBalance);
     if (cryptoAmount > availableBalanceNum) {
-      dispatch(setErrorMsg(`Insufficient balance. Available: ${availableBalance} ${symbol}`));
+      showError(`Insufficient balance. Available: ${availableBalance} ${symbol}`);
       return;
     }
 
     if (Number(usdAmount) > 100000) {
-      dispatch(setErrorMsg("Amount cannot exceed ₹1,00,000"));
+      showError("Amount cannot exceed ₹1,00,000");
       return;
     }
 
@@ -213,7 +212,7 @@ const CryptoSend = () => {
             isSuccess: true,
             isError: false,
           });
-          dispatch(setSuccessMsg(data?.data?.message));
+          showSuccess(data?.data?.message);
         } else {
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
             isLoading: false,
@@ -221,11 +220,9 @@ const CryptoSend = () => {
             isSuccess: false,
             isError: true,
           });
-          useDispatchAction(
-            setErrorMsg(
-              data?.data?.data.error ||
-                "Operation is forbidden. Custodial account is suspended or Level 2 KYC Pending"
-            )
+          showError(
+            data?.data?.data.error ||
+              "Operation is forbidden. Custodial account is suspended or Level 2 KYC Pending"
           );
         }
       },
@@ -246,22 +243,22 @@ const CryptoSend = () => {
 
   const onWithdrawClick = async () => {
     if (!recipient || recipient.trim().length < 10) {
-      dispatch(setErrorMsg("Please enter a valid wallet address"));
+      showError("Please enter a valid wallet address");
       return;
     }
     if (!amount || parseFloat(amount) <= 0) {
-      dispatch(setErrorMsg("Please enter a valid amount"));
+      showError("Please enter a valid amount");
       return;
     }
 
     if (cryptoAmount <= 0) {
-      dispatch(setErrorMsg("Invalid crypto amount"));
+      showError("Invalid crypto amount");
       return;
     }
 
     const availableBalanceNum = parseFloat(availableBalance);
     if (cryptoAmount > availableBalanceNum) {
-      dispatch(setErrorMsg(`Insufficient balance. Available: ${availableBalance} ${symbol}`));
+      showError(`Insufficient balance. Available: ${availableBalance} ${symbol}`);
       return;
     }
 
@@ -289,11 +286,7 @@ const CryptoSend = () => {
             isSuccess: true,
             isError: false,
           });
-          dispatch(
-            setSuccessMsg(
-              data?.data?.message || "Withdrawal initiated successfully"
-            )
-          );
+          showSuccess(data?.data?.message || "Withdrawal initiated successfully");
         } else {
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
             isLoading: false,
@@ -301,7 +294,7 @@ const CryptoSend = () => {
             isSuccess: false,
             isError: true,
           });
-          dispatch(setErrorMsg(data?.data?.message || "Withdrawal failed"));
+          showError(data?.data?.message || "Withdrawal failed");
         }
       },
       onError: (error: any) => {
@@ -315,7 +308,7 @@ const CryptoSend = () => {
           error?.response?.data?.data?.message ||
           error?.response?.data?.message ||
           "Something went wrong!";
-        dispatch(setErrorMsg(message));
+        showError(message);
       },
       onSettled: () => {
         setspin(false);
@@ -337,7 +330,7 @@ const CryptoSend = () => {
       onError: (error: any) => {
         setIspendingverifyUser(false);
         const errors = error.response.data.data.message;
-        dispatch(setErrorMsg(errors || `Something went wrong!`));
+        showError(errors || `Something went wrong!`);
       },
       onSettled: () => {
         setIspendingverifyUser(false);

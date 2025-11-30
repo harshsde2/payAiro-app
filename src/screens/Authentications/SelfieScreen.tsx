@@ -29,14 +29,13 @@ import GenericButton from "../../components/GenericButton";
 import Fonts from "../../constants/Fonts";
 import useSelectorAction from "../../hooks/useSelectorAction";
 import {
-  setErrorMsg,
   setLogin,
   setShowGuide,
   setShowLoader,
   setShowRedeemReward,
-  setSuccessMsg,
   setWalletData,
 } from "../../redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../../utils/toast";
 import { addBank, addBank2, getWallet } from "services/Services";
 import { useGetReward, useWalletDetails } from "query/hooks";
 import { setWalletDataAuth } from "services/Auth";
@@ -143,7 +142,7 @@ export default function SelfieScreen(props: any) {
       setWalletDataAuth(data?.data);
       setItem(STORAGE_KEYS.WALLET_DATA, JSON.stringify(data?.data));
       dispatch(setLogin(true));
-      dispatch(setSuccessMsg("Create Account Successfully"));
+      showSuccess("Create Account Successfully");
     }
   };
 
@@ -159,10 +158,10 @@ export default function SelfieScreen(props: any) {
       setWalletDataAuth(data?.data);
       setItem(STORAGE_KEYS.WALLET_DATA, JSON.stringify(data?.data));
       dispatch(setLogin(true));
-      dispatch(setSuccessMsg("Logged In Successfully"));
+      showSuccess("Logged In Successfully");
     } catch (error) {
       console.error("Error fetching wallet details:", error);
-      dispatch(setErrorMsg("Failed to fetch wallet details"));
+      showError("Failed to fetch wallet details");
     } finally {
       dispatch(setShowLoader(false));
     }
@@ -174,7 +173,7 @@ export default function SelfieScreen(props: any) {
       onSuccess: (data) => {
         console.log("handleAddBankAccount => ✅");
         // console.log("data on add bank =>", data.data);
-        dispatch(setSuccessMsg("Bank Account Added Successfully"));
+        showSuccess("Bank Account Added Successfully");
         getWalletD();
         // console.log("Bank Account Added Successfully", data);
         // handleTraditionalIRABankAccountt({} as any, {
@@ -212,7 +211,7 @@ export default function SelfieScreen(props: any) {
 
   const handleImage = async () => {
     if (!selfie) {
-      dispatch(setErrorMsg("Selfie is Required!"));
+      showError("Selfie is Required!");
       return;
     }
     if (!checked) {
@@ -250,7 +249,7 @@ export default function SelfieScreen(props: any) {
     handlKYC(formData as any, {
       onSuccess: (data) => {
         console.log("handlKYC => ✅");
-        dispatch(setSuccessMsg("KYC Updated Successfully"));
+        showSuccess("KYC Updated Successfully");
         // handleAddBankAccounts();
         handleCreatePin();
       },
@@ -260,7 +259,7 @@ export default function SelfieScreen(props: any) {
         const errors = getErrors(error.response);
 
         console.log("Error uploading selfie:", errors);
-        dispatch(setErrorMsg(errors));
+        showError(errors);
       },
       onSettled: () => {
         dispatch(setShowLoader(false));
@@ -292,7 +291,7 @@ export default function SelfieScreen(props: any) {
   const handleSetUserPin = (pin: any) => {
     console.log("Pin entered:", pin);
     if (pin.length < 4) {
-      dispatch(setErrorMsg("Pin should be 4 digit"));
+      showError("Pin should be 4 digit");
       return;
     }
     const formData = new FormData();
@@ -305,19 +304,19 @@ export default function SelfieScreen(props: any) {
         if (data && data?.status) {
           console.log("handlPinCreation => ✅");
           setPin(pin);
-          dispatch(setSuccessMsg("Transaction Pin created successfully"));
+          showSuccess("Transaction Pin created successfully");
           handleAddBankAccounts();
 
           // getWalletDetails();
           // navigation.navigate("SuccesScreen");
         } else {
-          dispatch(setErrorMsg("Something Went Wrong"));
+          showError("Something Went Wrong");
         }
       },
       onError: (error: any) => {
         console.log("Error creating pin:", error);
-        dispatch(
-          setErrorMsg(Object.values(error?.data?.data?.details?.errors)[0]) ??
+        showError(
+          Object.values(error?.data?.data?.details?.errors)[0] as string ??
             "Something went wrong"
         );
       },

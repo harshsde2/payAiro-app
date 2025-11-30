@@ -10,14 +10,12 @@ import UploadFile from "../../components/UploadFile";
 import SignaturePad from "../../components/SignaturePad";
 import useSelectorAction from "../../hooks/useSelectorAction";
 import { getWallet, patchKyc } from "../../services/Services";
-import useDispatchAction from "../../hooks/useDispatchAction";
 import {
-  setErrorMsg,
   setLogin,
-  setSuccessMsg,
   setUserData,
   setWalletData,
 } from "../../redux/slices/authenticationSlice";
+import { showError } from "../../utils/toast";
 import DatePicker from "react-native-date-picker";
 import moment from "moment";
 import {
@@ -48,7 +46,7 @@ export default function Dob(props: any) {
 
   const handlePayTag = async () => {
     if (date.length === 0) {
-      useDispatchAction(setErrorMsg("Date of birth are Required!"));
+      showError("Date of birth are Required!");
       return;
     }
 

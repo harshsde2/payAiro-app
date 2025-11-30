@@ -13,11 +13,7 @@ import { SCREENS } from "../../constants/SCREENS";
 import PincodeKeypad from "../../components/PincodeKeypad";
 import Fonts from "../../constants/Fonts";
 import { setPin } from "../../services/Auth";
-import useDispatchAction from "../../hooks/useDispatchAction";
-import {
-  setErrorMsg,
-  setSuccessMsg,
-} from "../../redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../../utils/toast";
 import { createPin, getKYC, getWallet } from "../../services/Services";
 import useSelectorAction from "../../hooks/useSelectorAction";
 import KYCFailureModal from "../../components/KYCFailureModal";
@@ -161,7 +157,7 @@ export default function Pincode() {
           cStyle={{ width: "100%" }}
           onPress={async () => {
             if (otp.join("").length < 4) {
-              useDispatchAction(setErrorMsg("Pin should be 4 digit"));
+              showError("Pin should be 4 digit");
               return;
             }
 
@@ -171,13 +167,11 @@ export default function Pincode() {
             console.log(data, "pinAddeed");
             if (data && data?.status) {
               setPin(otp.join(""));
-              useDispatchAction(
-                setSuccessMsg("Transaction Pin created successfully")
-              );
+              showSuccess("Transaction Pin created successfully");
               getCurrentStep()
               navigation.navigate("SuccesScreen");
             } else {
-              useDispatchAction(setErrorMsg("Something Went Wrong"));
+              showError("Something Went Wrong");
             }
           }}
         />

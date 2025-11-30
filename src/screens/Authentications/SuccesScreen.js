@@ -12,9 +12,9 @@ import useSelectorAction from "../../hooks/useSelectorAction";
 import useDispatchAction from "../../hooks/useDispatchAction";
 import {
   setLogin,
-  setSuccessMsg,
   setWalletData,
 } from "../../redux/slices/authenticationSlice";
+import { showSuccess } from "../../utils/toast";
 import { setWalletDataAuth } from "../../services/Auth";
 import { useDispatch } from "react-redux";
 import KYCFailureModal from "../../components/KYCFailureModal";
@@ -34,7 +34,7 @@ export default function SuccesScreen() {
     useDispatchAction(setWalletData(data?.data));
     setWalletDataAuth(data?.data);
     dispatch(setLogin(true));
-    useDispatchAction(setSuccessMsg("Logged In Successfully"));
+    showSuccess("Logged In Successfully");
   };
 
   const getkycStep = async () => {

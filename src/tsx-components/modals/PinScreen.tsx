@@ -10,13 +10,12 @@ import {
   View,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { setErrorMsg } from "redux/slices/authenticationSlice";
 import { useApiCall } from "screens/Dashboard/NewDashboard";
 import { getBalance } from "services/Services";
 import { Theme, useTheme } from "styles";
 import { PinScreenProps, PinScreenRef } from "./modal.types";
 // import { getPin, setPin } from "services/Auth";
-import ErrorToast from "components/ErrorToast";
+import { showError } from "../../utils/toast";
 import { SvgIcons } from "constants/svgs";
 import { getPin } from "storage/mmkv";
 import CustomText from "tsx-components/CustomText";
@@ -31,8 +30,7 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
   ({ hiddenBalances, setHiddenBalances, onAction, accountNumber }, ref) => {
     const { theme } = useTheme();
     const styles = customStyles(theme);
-    const dispatch = useDispatch();
-    const { tokens, errorMsg, successMsg } = useSelector(
+    const { tokens } = useSelector(
       (state: any) => state.authenticationSlice
     );
 
@@ -119,10 +117,10 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
           setCurrentAccountForPin(null);
           setPinForShowBalance("");
         } else {
-          dispatch(setErrorMsg("Invalid PIN. Please try again"));
+          showError("Invalid PIN. Please try again");
         }
       } catch {
-        dispatch(setErrorMsg("Failed to verify PIN. Please try again."));
+        showError("Failed to verify PIN. Please try again.");
       } finally {
         setIsVerifyingPin(false);
       }
@@ -145,10 +143,10 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
             setIsPinModalVisible(false);
           });
         } else if (isUserEnterCorrectPin === false) {
-          dispatch(setErrorMsg("Invalid PIN. Please try again"));
+          showError("Invalid PIN. Please try again");
         }
       } catch {
-        dispatch(setErrorMsg("Failed to verify PIN. Please try again."));
+        showError("Failed to verify PIN. Please try again.");
       } finally {
         setIsVerifyingPin(false);
       }
@@ -182,8 +180,6 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
         visible={isPinModalVisible}
         onRequestClose={() => setIsPinModalVisible(false)}
       >
-        {errorMsg || successMsg ? <ErrorToast /> : null}
-
         <SafeAreaView style={styles.modalContainer}>
           <View
             style={[

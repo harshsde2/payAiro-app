@@ -9,12 +9,11 @@ import Fonts from '../../constants/Fonts';
 import {setKycStep, setWalletDataAuth} from '../../services/Auth';
 import {getWallet, patchKyc} from '../../services/Services';
 import {
-  setErrorMsg,
   setLogin,
-  setSuccessMsg,
   setWalletData,
 } from '../../redux/slices/authenticationSlice';
 import useDispatchAction from '../../hooks/useDispatchAction';
+import { showError, showSuccess } from '../../utils/toast';
 import useSelectorAction from '../../hooks/useSelectorAction';
 import {useDispatch} from 'react-redux';
 
@@ -43,7 +42,7 @@ export default function Address2() {
       !residentialAddress.trim() ||
       !postalCode.trim()
     ) {
-      useDispatchAction(setErrorMsg('Fields cannot be empty!'));
+      showError('Fields cannot be empty!');
       return;
     }
     const formData = new FormData();
@@ -61,9 +60,9 @@ export default function Address2() {
     if (datas) {
       await setKycStep('1');
       navigation.navigate('IDProof2');
-      useDispatchAction(setSuccessMsg('Address Updated Successfully'));
+      showSuccess('Address Updated Successfully');
     } else {
-      useDispatchAction(setErrorMsg('Something went wrong'));
+      showError('Something went wrong');
     }
   };
   const dispatch = useDispatch();
@@ -76,7 +75,7 @@ export default function Address2() {
     setTimeout(() => {
       navigation.replace(NAVIGATION_SCREENS.NEW_DASHBOARD);
     }, 1000);
-    useDispatchAction(setSuccessMsg('Logged In Successfully'));
+    showSuccess('Logged In Successfully');
   };
   return (
     <CommonContainer style={{marginVertical: 30}}>

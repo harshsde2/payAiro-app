@@ -8,8 +8,7 @@ import AuthHeader from "tsx-components/AuthHeader";
 import GenericButton from "../../components/GenericButton";
 import TextInputField from "../../components/TextInputField";
 import { SCREENS } from "../../constants/SCREENS";
-import useDispatchAction from "../../hooks/useDispatchAction";
-import { setErrorMsg } from "../../redux/slices/authenticationSlice";
+import { showError } from "../../utils/toast";
 
 export default function Address() {
   const navigation = useNavigation<any>();
@@ -41,13 +40,11 @@ export default function Address() {
       !postalCode.trim() ||
       !locality.trim()
     ) {
-      useDispatchAction(setErrorMsg("Fields cannot be empty!"));
+      showError("Fields cannot be empty!");
       return;
     }
     if (postalCode?.length < 5) {
-      useDispatchAction(
-        setErrorMsg("Postal Code cannot be less than 5 digit!")
-      );
+      showError("Postal Code cannot be less than 5 digit!");
       return;
     }
     try {
@@ -76,7 +73,7 @@ export default function Address() {
       return;
     } catch (error) {
       console.log(error);
-      useDispatchAction(setErrorMsg("Something went wrong"));
+      showError("Something went wrong");
     }
   };
 

@@ -13,11 +13,8 @@ import useSelectorAction from "hooks/useSelectorAction";
 import GenericButton from "components/GenericButton";
 import { useSupport } from "query/hooks";
 import useDispatchAction from "hooks/useDispatchAction";
-import {
-  setErrorMsg,
-  setShowLoader,
-  setSuccessMsg,
-} from "redux/slices/authenticationSlice";
+import { setShowLoader } from "redux/slices/authenticationSlice";
+import { showError, showSuccess } from "utils/toast";
 
 const SupportScreen = () => {
   const { theme } = useTheme();
@@ -40,11 +37,11 @@ const SupportScreen = () => {
 
   const handleSubmit = () => {
     if (subject.length == 0) {
-      useDispatchAction(setErrorMsg("Subject is Empty"));
+      showError("Subject is Empty");
       return;
     }
     if (message.length == 0) {
-      useDispatchAction(setErrorMsg("Message is Empty"));
+      showError("Message is Empty");
       return;
     }
 
@@ -64,7 +61,7 @@ const SupportScreen = () => {
     handleSubmitSupport(formData as any, {
       onSuccess: (data) => {
         // console.log("data => ✅", JSON.stringify(data, null, 2));
-        useDispatchAction(setSuccessMsg("Your Query Submit Successfully"));
+        showSuccess("Your Query Submit Successfully");
         // handleAddBankAccounts();
         navigation.goBack();
       },
@@ -72,7 +69,7 @@ const SupportScreen = () => {
         useDispatchAction(setShowLoader(false));
 
         // console.log("Error uploading selfie:", errors);
-        useDispatchAction(setErrorMsg("Something went wrong!"));
+        showError("Something went wrong!");
       },
       onSettled: () => {
         useDispatchAction(setShowLoader(false));

@@ -1,7 +1,6 @@
 import { useNavigation } from "@react-navigation/native";
 import GenericButton from "components/GenericButton";
 import { SVGMinus, SVGPlus } from "constants/images";
-import useDispatchAction from "hooks/useDispatchAction";
 import useSelectorAction from "hooks/useSelectorAction";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { RWAKeys, useBuyRWA, useSellRWA } from "query/hooks";
@@ -18,7 +17,8 @@ import {
 } from "react-native";
 import { SvgXml } from "react-native-svg";
 import { useDispatch } from "react-redux";
-import { setErrorMsg, setSuccessMsg } from "redux/slices/authenticationSlice";
+import { setErrorMsg } from "redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../../../utils/toast";
 import { Theme, useTheme } from "styles";
 import { useGlobalStyles } from "styles/GlobalStyles";
 import { CustomText } from "tsx-components";
@@ -89,9 +89,9 @@ const BuyNowModal: FC<BuyNowModalProps> = ({
 
   const onSuccess = async (data: any) => {
     if (isSellingMode) {
-      useDispatchAction(setSuccessMsg(`Successfully Sell ${quantity} Share`));
+      showSuccess(`Successfully Sell ${quantity} Share`);
     } else {
-      useDispatchAction(setSuccessMsg(`Successfully buy ${quantity} Share`));
+      showSuccess(`Successfully buy ${quantity} Share`);
     }
     onClose();
     navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_SUCCESS_SCREEN, {
@@ -102,11 +102,11 @@ const BuyNowModal: FC<BuyNowModalProps> = ({
 
   const onBuyClick = async () => {
     if (quantity == 0) {
-      useDispatchAction(setErrorMsg(`Quantity should be greater than 0`));
+      showError(`Quantity should be greater than 0`);
       return;
     }
     if (souceAccount == null) {
-      useDispatchAction(setErrorMsg(`Please select the bank account`));
+      showError(`Please select the bank account`);
       return;
     }
     let payload = {
@@ -185,7 +185,7 @@ const BuyNowModal: FC<BuyNowModalProps> = ({
         console.log("errors=>", JSON.stringify(error, null, 2));
         onClose();
         const errors = JSON.parse(error.response.data.data.details);
-        useDispatchAction(setErrorMsg(`Something went wrong!`));
+        showError(`Something went wrong!`);
       },
       onSettled: () => {},
     });

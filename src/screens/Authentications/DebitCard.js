@@ -10,11 +10,11 @@ import UploadFile from '../../components/UploadFile';
 import SignaturePad from '../../components/SignaturePad';
 import {getWallet} from '../../services/Services';
 import {
-  setSuccessMsg,
   setWalletData,
 } from '../../redux/slices/authenticationSlice';
 import {setWalletDataAuth} from '../../services/Auth';
 import useDispatchAction from '../../hooks/useDispatchAction';
+import { showSuccess } from '../../utils/toast';
 import {useDispatch} from 'react-redux';
 
 export default function DebitCard(props) {
@@ -36,7 +36,7 @@ export default function DebitCard(props) {
     dispatch(setWalletData(data?.data));
     setWalletDataAuth(data?.data);
     dispatch(setLogin(true));
-    useDispatchAction(setSuccessMsg('Logged In Successfully'));
+    showSuccess('Logged In Successfully');
   };
   return (
     <CommonContainer style={{marginVertical: 80}}>

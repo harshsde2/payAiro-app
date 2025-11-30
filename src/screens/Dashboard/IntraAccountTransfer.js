@@ -7,11 +7,7 @@ import TextInputField from "../../components/TextInputField";
 import GenericButton from "../../components/GenericButton";
 import { selfTransfer } from "../../services/Services";
 import useSelectorAction from "../../hooks/useSelectorAction";
-import useDispatchAction from "../../hooks/useDispatchAction";
-import {
-  setErrorMsg,
-  setSuccessMsg,
-} from "../../redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../../utils/toast";
 import { useNavigation } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
@@ -51,12 +47,12 @@ export default function IntraAccountTransfer() {
     try {
       setIsLoading(true);
       if (amount === "" || destinationAccount === "" || souceAccount === "") {
-        useDispatchAction(setErrorMsg("One or more field are empty"));
+        showError("One or more field are empty");
         return;
       }
       console.log("condition:", souceAccount === destinationAccount);
       if (destinationAccount === souceAccount) {
-        useDispatchAction(setErrorMsg("Cannot keep the same account type"));
+        showError("Cannot keep the same account type");
         return;
       }
 
@@ -75,16 +71,14 @@ export default function IntraAccountTransfer() {
         tokens?.access
       );
       if (data && data?.status) {
-        useDispatchAction(setSuccessMsg(data?.data?.message));
+        showSuccess(data?.data?.message);
         navigation.goBack();
       } else {
-        useDispatchAction(
-          setErrorMsg(data?.data?.error ?? "Something went wrong")
-        );
+        showError(data?.data?.error ?? "Something went wrong");
       }
     } catch (error) {
       console.log(error);
-      useDispatchAction(setErrorMsg(error?.message ?? "Something went wrong"));
+      showError(error?.message ?? "Something went wrong");
     } finally {
       setIsLoading(false);
     }

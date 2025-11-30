@@ -19,9 +19,8 @@ import TextInputField from "../../components/TextInputField";
 import UploadFile from "../../components/UploadFile";
 import { SCREENS } from "../../constants/SCREENS";
 import { SVGDropDown } from "../../constants/images";
-import useDispatchAction from "../../hooks/useDispatchAction";
 import useSelectorAction from "../../hooks/useSelectorAction";
-import { setErrorMsg } from "../../redux/slices/authenticationSlice";
+import { showError } from "../../utils/toast";
 import { setKycStep } from "../../services/Auth";
 
 export default function IDProof(props: any) {
@@ -53,17 +52,17 @@ export default function IDProof(props: any) {
       formData2.append("ssm", ssm);
 
       if (idProof1.length == 0) {
-        useDispatchAction(setErrorMsg("Please select front image"));
+        showError("Please select front image");
         return;
       }
 
       if (idProof2.length == 0) {
-        useDispatchAction(setErrorMsg("Please select back image"));
+        showError("Please select back image");
         return;
       }
 
       if (!/^\d{9}$/.test(ssm)) {
-        useDispatchAction(setErrorMsg("Please enter a 9-digit number for SSN"));
+        showError("Please enter a 9-digit number for SSN");
         return;
       }
 
@@ -80,9 +79,7 @@ export default function IDProof(props: any) {
       return;
     } catch (error) {
       console.log(error, "error");
-      useDispatchAction(
-        setErrorMsg("Invalid Document , Try To Upload Correct Document")
-      );
+      showError("Invalid Document , Try To Upload Correct Document");
     } finally {
     }
   };

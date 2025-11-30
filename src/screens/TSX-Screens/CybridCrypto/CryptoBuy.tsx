@@ -12,8 +12,7 @@ import GenericButton from "components/GenericButton";
 import useSelectorAction from "hooks/useSelectorAction";
 import CommonModal from "tsx-components/modals/CommonModal";
 import { cryptoKeys, useCryptoBuy } from "query/hooks";
-import { setErrorMsg, setSuccessMsg } from "redux/slices/authenticationSlice";
-import useDispatchAction from "hooks/useDispatchAction";
+import { showError, showSuccess } from "../../../utils/toast";
 import { useDispatch } from "react-redux";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import PinScreen from "tsx-components/modals/PinScreen";
@@ -124,12 +123,12 @@ const CryptoBuy = () => {
 
   const onBuyClick = async () => {
     if (!amount || parseFloat(amount) <= 0) {
-      dispatch(setErrorMsg("Please enter a valid amount"));
+      showError("Please enter a valid amount");
       return;
     }
 
     if (cryptoAmount <= 0) {
-      dispatch(setErrorMsg("Invalid crypto amount"));
+      showError("Invalid crypto amount");
       return;
     }
 
@@ -156,9 +155,7 @@ const CryptoBuy = () => {
             isSuccess: true,
             isError: false,
           });
-          dispatch(
-            setSuccessMsg(`Successfully bought ${cryptoAmount.toFixed(8)} ${symbol}`)
-          );
+          showSuccess(`Successfully bought ${cryptoAmount.toFixed(8)} ${symbol}`);
         } else {
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
             isLoading: false,
@@ -181,13 +178,9 @@ const CryptoBuy = () => {
           const errorsfunds = JSON.parse(
             error.response.data.data.details
           )?.title;
-          dispatch(
-            setErrorMsg(
-              errors.errors.Funds[0] || errorsfunds || `Something went wrong!`
-            )
-          );
+          showError(errors.errors.Funds[0] || errorsfunds || `Something went wrong!`);
         } catch (parseError) {
-          dispatch(setErrorMsg(`Something went wrong!`));
+          showError(`Something went wrong!`);
         }
       },
       onSettled: () => {},

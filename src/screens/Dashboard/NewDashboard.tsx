@@ -70,14 +70,13 @@ import {
   setBankLists,
   setBankbalances,
   setCybridBankbalances,
-  setErrorMsg,
   setShowGuide,
   setShowLoader,
   setShowRedeemReward,
-  setSuccessMsg,
   setTotalDisbursable,
   setTotalDisbursablePending,
 } from "../../redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../../utils/toast";
 import { useTheme } from "../../styles/ThemeContext";
 import { Card, CustomText, DashboardHeader } from "../../utils/moduleAlias";
 import useSelectorAction from "hooks/useSelectorAction";
@@ -914,110 +913,13 @@ const NewDashboard = () => {
     }
   };
 
-  const kycHandleUrl = async () => {
-    dispatch(setShowLoader(true));
-    try {
-      const data = await uploadKYC(tokens?.access);
-      // console.log(data, 'kycHandle');
-      if (data?.data?.status === 400) {
-        if (data?.data?.title === "Identity suspended") {
-          dispatch(
-            setErrorMsg(
-              "Operation is forbidden. Custodial account is suspended"
-            )
-          );
-        }
-      } else {
-        navigation.navigate(NAVIGATION_SCREENS.IN_APP_KYC_BROWSER, {
-          url: data?.data?.url,
-        });
-      }
-    } catch (error) {
-      console.error("Error handling KYC URL:", error);
-      dispatch(setErrorMsg("Failed to handle KYC URL"));
-    } finally {
-      dispatch(setShowLoader(false));
-    }
-  };
-
-  const handleContacts = async (contactsData: any) => {
-    try {
-      if (!contactsData || !Array.isArray(contactsData)) {
-        console.error("Could not find valid contacts data in response:");
-        return;
-      }
-
-      const sampleContact = contactsData[0];
-
-      const pendingRequestsField = sampleContact?.pending_requests
-        ? "pending_requests"
-        : sampleContact?.pendingRequests
-        ? "pendingRequests"
-        : null;
-
-      if (!pendingRequestsField) {
-        console.warn(
-          "Could not determine pending requests field, using data as is"
-        );
-        setcontactLists(contactsData);
-        return;
-      }
-
-      // Function to get earliest timestamp - adapted to work with variable field names
-      const getEarliestTimestamp = (contact: any) => {
-        const requests = contact[pendingRequestsField];
-        if (!requests || !Array.isArray(requests) || requests.length === 0)
-          return null;
-
-        // Check if timestamp or created_at is used
-        const timestampField = requests[0]?.timestamp
-          ? "timestamp"
-          : requests[0]?.created_at
-          ? "created_at"
-          : null;
-
-        if (!timestampField) return null;
-
-        try {
-          return new Date(
-            Math.min(
-              ...requests.map((request) =>
-                new Date(request[timestampField]).getTime()
-              )
-            )
-          );
-        } catch (err) {
-          console.error("Error processing timestamps:", err);
-          return null;
-        }
-      };
-
-      // Sort contacts by timestamp
-      const sortedContacts = [...contactsData].sort((a, b) => {
-        const timestampA = getEarliestTimestamp(a);
-        const timestampB = getEarliestTimestamp(b);
-
-        if (timestampA === null && timestampB === null) return 0;
-        if (timestampA === null) return 1;
-        if (timestampB === null) return -1;
-        return timestampA.getTime() - timestampB.getTime();
-      });
-
-      setcontactLists(sortedContacts);
-    } catch (error) {
-      console.error("Error fetching contacts:", error);
-    }
-  };
-
   const handleCreateTraditionalIRAAccount = () => {
     dispatch(setShowLoader(true));
     const formdata = new FormData();
     formdata.append("account_type", souceAccount.toLowerCase());
     handleTraditionalIRABankAccountt(formdata as any, {
       onSuccess: async (data) => {
-        dispatch(
-          setSuccessMsg("Traditional IRA Bank Account Added Successfully")
-        );
+        showSuccess("Bank Account Created Successfully");
         setsouceAccount("");
         await queryClient.invalidateQueries({
           queryKey: userKeys.fiatDashboard(),
@@ -1048,7 +950,7 @@ const NewDashboard = () => {
       );
       // console.log(data?.data, 'royjir');
       if (data && data?.data && !data?.data?.error) {
-        dispatch(setSuccessMsg("Bank Account Created Successfully"));
+        showSuccess("Bank Account Created Successfully");
         dispatch(setShowLoader(false));
         setsouceAccount("");
         await queryClient.invalidateQueries({
@@ -1059,7 +961,7 @@ const NewDashboard = () => {
         });
         // fetchBankAccounts();
       } else {
-        dispatch(setErrorMsg(data?.data?.error ?? "Something went wrong"));
+        showError(data?.data?.error ?? "Something went wrong");
       }
     } catch (error) {
       console.log("error =>", error);
@@ -1097,7 +999,7 @@ const NewDashboard = () => {
       }
     } else {
       // console.log("mxExternalAccountDetails =>", mxExternalAccountDetails)
-      dispatch(setErrorMsg("External account aleardy found"));
+      showError("External account aleardy found");
     }
   }, [bankLists]);
 

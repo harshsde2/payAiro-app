@@ -14,11 +14,7 @@ import {
   askCameraPremission,
   checkCameraPremission,
 } from "../helper/Permission";
-import useDispatchAction from "../hooks/useDispatchAction";
-import {
-  setErrorMsg,
-  setSuccessMsg,
-} from "../redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../utils/toast";
 import GalleryModal from "./GalaryModal";
 import { FileObject, UploadFileProps } from "./types";
 import { useTheme } from "styles";
@@ -59,14 +55,14 @@ export default function UploadFile({
         ],
       })) as any;
       if ((result[0] as any).size > maxFileSize) {
-        useDispatchAction(setErrorMsg("File Size should be less than 2MB"));
+        showError("File Size should be less than 2MB");
       } else {
         selectedFile(result);
-        useDispatchAction(setSuccessMsg("File Uploaded Successfully"));
+        showSuccess("File Uploaded Successfully");
       }
     } catch (error) {
       if (!DocumentPicker.isCancel(error)) {
-        useDispatchAction(setErrorMsg("Error picking document"));
+        showError("Error picking document");
       }
     }
   };

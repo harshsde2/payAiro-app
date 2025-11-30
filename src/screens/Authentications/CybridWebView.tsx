@@ -15,12 +15,11 @@ import {
 } from "query/hooks";
 import { useDispatch } from "react-redux";
 import {
-  setErrorMsg,
   setLogin,
   setShowLoader,
-  setSuccessMsg,
   setWalletData,
 } from "redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../../utils/toast";
 import { setWalletDataAuth } from "services/Auth";
 import { setItem, setPin, STORAGE_KEYS } from "storage/mmkv";
 import PinScreen from "tsx-components/modals/PinScreen";
@@ -84,7 +83,7 @@ const CybridWebView = () => {
           JSON.stringify(walletResponse.data)
         );
         dispatch(setLogin(true));
-        dispatch(setSuccessMsg("Create Account Successfully"));
+        showSuccess("Create Account Successfully");
       }
     } catch (error) {
       console.log("error =>", JSON.stringify(error, null, 2));
@@ -108,16 +107,12 @@ const CybridWebView = () => {
         } else if (data?.status === false) {
           //   setIsKycCompleted(false);
           setKYCMessage(data?.message);
-          dispatch(setErrorMsg(data?.toast_message || "KYC not completed"));
+          showError(data?.toast_message || "KYC not completed");
         }
       },
       onError: (error: any) => {
         console.log("error ->", JSON.stringify(error?.response, null, 2));
-        dispatch(
-          setErrorMsg(
-            error?.response?.data?.toast_message || "KYC not completed"
-          )
-        );
+        showError(error?.response?.data?.toast_message || "KYC not completed");
       },
     });
   };
@@ -131,7 +126,7 @@ const CybridWebView = () => {
   const handleSetUserPin = (pin: any) => {
     console.log("Pin entered:", pin);
     if (pin.length < 4) {
-      dispatch(setErrorMsg("Pin should be 4 digit"));
+      showError("Pin should be 4 digit");
       return;
     }
     const formData = new FormData();
@@ -144,19 +139,19 @@ const CybridWebView = () => {
         if (data && data?.status) {
           console.log("handlPinCreation => ✅");
           setPin(pin);
-          dispatch(setSuccessMsg("Transaction Pin created successfully"));
+          showSuccess("Transaction Pin created successfully");
           //   handleKYCCheck();
           // getWalletDetails();
           // navigation.navigate("SuccesScreen");
           getWalletDetails()
         } else {
-          dispatch(setErrorMsg("Something Went Wrong"));
+          showError("Something Went Wrong");
         }
       },
       onError: (error: any) => {
         console.log("Error creating pin:", error);
-        dispatch(
-          setErrorMsg(Object.values(error?.data?.data?.details?.errors)[0]) ??
+        showError(
+          Object.values(error?.data?.data?.details?.errors)[0] as string ??
             "Something went wrong"
         );
       },

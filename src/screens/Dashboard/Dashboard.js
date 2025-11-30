@@ -70,14 +70,13 @@ import {
   setBankbalances,
   setBiometricAvailable,
   setCalculatedBalance,
-  setErrorMsg,
   setGuides,
   setNetworkLists,
   setSeletedCrypto,
-  setSuccessMsg,
   setWalletData,
   setisCrypto,
 } from "../../redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../../utils/toast";
 import {
   getGuide,
   getKYCAccpted,
@@ -757,12 +756,10 @@ export default function Dashboard(props) {
       const data = await addbankAccountRoth(tokens?.access);
       // console.log(data?.data, 'royjir');
       if (data && data?.data && !data?.data?.error) {
-        useDispatchAction(setSuccessMsg("Bank Account Created Successfully"));
+        showSuccess("Bank Account Created Successfully");
         getBank();
       } else {
-        useDispatchAction(
-          setErrorMsg(data?.data?.error ?? "Something went wrong")
-        );
+        showError(data?.data?.error ?? "Something went wrong");
       }
     } catch (error) {}
   };
@@ -1915,7 +1912,7 @@ export default function Dashboard(props) {
 
             if (!f) {
               if (e !== isConfirm) {
-                useDispatchAction(setErrorMsg("Pin not matched , Try Again"));
+                showError("Pin not matched , Try Again");
                 setpinTxt("Confirm your pin");
                 setshowPin(true);
                 return;
@@ -1925,11 +1922,9 @@ export default function Dashboard(props) {
               const data = await createPin(formData, tokens?.access);
               if (data && data?.status) {
                 setPin(e);
-                useDispatchAction(
-                  setSuccessMsg("Transaction Pin created successfully")
-                );
+                showSuccess("Transaction Pin created successfully");
               } else {
-                useDispatchAction(setErrorMsg("Something Went Wrong"));
+                showError("Something Went Wrong");
               }
             } else {
               setisConfirm(e);

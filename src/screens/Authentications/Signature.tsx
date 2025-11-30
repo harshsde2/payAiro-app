@@ -13,7 +13,6 @@ import SignaturePad from "../../components/SignaturePad";
 import UploadFile from "../../components/UploadFile";
 import Fonts from "../../constants/Fonts";
 import { SCREENS } from "../../constants/SCREENS";
-import useDispatchAction from "../../hooks/useDispatchAction";
 import useSelectorAction from "../../hooks/useSelectorAction";
 import { patchKyc } from "../../services/Services";
 
@@ -22,10 +21,7 @@ import { useDispatch } from "react-redux";
 import { Theme, useTheme } from "styles";
 import { CustomText } from "tsx-components";
 import AuthHeader from "tsx-components/AuthHeader";
-import {
-  setErrorMsg,
-  setSuccessMsg,
-} from "../../redux/slices/authenticationSlice";
+import { showError } from "../../utils/toast";
 
 export default function Signature(props: any) {
   const { payload } = props.route.params || {};
@@ -73,7 +69,7 @@ export default function Signature(props: any) {
 
   const handleSignature = async () => {
     if (!uploadedSignature && !drawnSignature) {
-      useDispatchAction(setErrorMsg("Signature is required!"));
+      showError("Signature is required!");
       return;
     }
     try {
@@ -98,9 +94,7 @@ export default function Signature(props: any) {
         },
       });
     } catch (error) {
-      useDispatchAction(
-        setErrorMsg("Entity Too Large , Try To Upload Small File")
-      );
+      showError("Entity Too Large , Try To Upload Small File");
     }
   };
 

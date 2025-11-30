@@ -23,11 +23,7 @@ import { SCREENS } from "../../constants/SCREENS";
 import useSelectorAction from "../../hooks/useSelectorAction";
 import SelectionModal from "../../components/SelectionModal";
 import { sendCrypto } from "../../services/Services";
-import useDispatchAction from "../../hooks/useDispatchAction";
-import {
-  setErrorMsg,
-  setSuccessMsg,
-} from "../../redux/slices/authenticationSlice";
+import { showError } from "../../utils/toast";
 import PincodeScreen from "../Authentications/PincodeScreen";
 import { getPin } from "../../services/Auth";
 import HeaderTitle2 from "../../components/HeaderTitle2";
@@ -62,7 +58,7 @@ export default function SendToken(props) {
   console.log(balanceAssetsUSDT);
   const handleCrypto = async () => {
     if (!address.trim()) {
-      useDispatchAction(setErrorMsg("Amount & Address are required"));
+      showError("Amount & Address are required");
       return;
     }
     // if (data && data?.status) {
@@ -103,9 +99,7 @@ export default function SendToken(props) {
                 handleCrypto();
               }
             } else {
-              useDispatchAction(
-                setErrorMsg("Please enter correct pin to proceed for payment")
-              );
+              showError("Please enter correct pin to proceed for payment");
             }
 
             // setshowPin(false);

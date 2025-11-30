@@ -20,8 +20,7 @@ import {
 import Fonts from "constants/Fonts";
 import { useDispatch, useSelector } from "react-redux";
 import { checkUser, getBalance } from "services/Services";
-import useDispatchAction from "hooks/useDispatchAction";
-import { setErrorMsg, setSuccessMsg } from "redux/slices/authenticationSlice";
+import { showError } from "../../utils/toast";
 import { useApiCall } from "screens/Dashboard/NewDashboard";
 import { getPin } from "services/Auth";
 import ErrorToast from "components/ErrorToast";
@@ -142,13 +141,11 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
         } else {
           // PIN is incorrect
           // console.log("agya")
-          useDispatchAction(setErrorMsg("Invalid PIN. Please try again"));
+          showError("Invalid PIN. Please try again");
         }
       } catch (error) {
         // console.error('Error verifying PIN:', error);
-        useDispatchAction(
-          setErrorMsg("Failed to verify PIN. Please try again.")
-        );
+        showError("Failed to verify PIN. Please try again.");
       } finally {
         setIsVerifyingPin(false);
       }
@@ -171,12 +168,10 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
         } else {
           // PIN is incorrect
           // console.log("agya")
-          useDispatchAction(setErrorMsg("Invalid PIN. Please try again"));
+          showError("Invalid PIN. Please try again");
         }
       } catch {
-        useDispatchAction(
-          setErrorMsg("Failed to verify PIN. Please try again.")
-        );
+        showError("Failed to verify PIN. Please try again.");
       } finally {
         setIsVerifyingPin(false);
       }

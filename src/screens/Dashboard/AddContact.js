@@ -14,11 +14,7 @@ import { SVGLeftArrow } from "../../constants/images";
 import { SCREENS } from "../../constants/SCREENS";
 import { addContact } from "../../services/Services";
 import useSelectorAction from "../../hooks/useSelectorAction";
-import useDispatchAction from "../../hooks/useDispatchAction";
-import {
-  setErrorMsg,
-  setSuccessMsg,
-} from "../../redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../../utils/toast";
 import { useTheme } from "../../styles/ThemeContext";
 import { getItem, setItem, STORAGE_KEYS } from "storage/mmkv";
 import { queryClient } from "query/queryClient";
@@ -145,12 +141,10 @@ export default function AddContact() {
       onSuccess: async (data) => {
         if (data?.status === false) {
           // backend responded with failure
-          useDispatchAction(
-            setErrorMsg(data?.message || "Failed to add contact.")
-          );
+          showError(data?.message || "Failed to add contact.");
           return;
         }
-        useDispatchAction(setSuccessMsg("Contact added successfully"));
+        showSuccess("Contact added successfully");
         navigation.navigate(SCREENS.Dashboard);
         setIsSubmitting(false);
 
@@ -162,9 +156,7 @@ export default function AddContact() {
           "Error adding contact:",
           JSON.stringify(error?.response, null, 2) || error
         );
-        useDispatchAction(
-          setErrorMsg("Failed to add contact. Please try again.")
-        );
+        showError("Failed to add contact. Please try again.");
       },
       onSettled: () => {
         setIsSubmitting(false);

@@ -21,11 +21,8 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useCommonAddBalanceStyles } from "./Styles";
 import GenericButton from "components/GenericButton";
 import useDispatchAction from "hooks/useDispatchAction";
-import {
-  setErrorMsg,
-  setShowLoader,
-  setSuccessMsg,
-} from "redux/slices/authenticationSlice";
+import { setShowLoader } from "redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../../../utils/toast";
 import { selfTransfer } from "services/Services";
 import { useIntraAccountTransfer } from "query/hooks";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
@@ -123,7 +120,7 @@ const DebitCardScreen = () => {
       paramsSouceAccount === "" ||
       selectedAccount.title === ""
     ) {
-      useDispatchAction(setErrorMsg("One or more field are empty"));
+      showError("One or more field are empty");
       return;
     }
 
@@ -139,14 +136,14 @@ const DebitCardScreen = () => {
     handleIntraAccountTransfer(formData as any, {
       onSuccess: (data) => {
         console.log("data =>", JSON.stringify(data.data, null, 2));
-        useDispatchAction(setSuccessMsg(data?.data?.message));
+        showSuccess(data?.data?.message);
         navigation.reset({
           index: 0,
           routes: [{ name: NAVIGATION_SCREENS.NEW_DASHBOARD }],
         });
       },
       onError: (error: any) => {
-        useDispatchAction(setErrorMsg("Something went wrong"));
+        showError("Something went wrong");
       },
       onSettled: () => {
         useDispatchAction(setShowLoader(false));

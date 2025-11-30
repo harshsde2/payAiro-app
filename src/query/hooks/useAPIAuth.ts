@@ -8,7 +8,8 @@ import { apiClient } from "api";
 import { AUTH, KYC } from "api/endpoints";
 import { ApiResponse } from "api/types";
 import useDispatchAction from "hooks/useDispatchAction";
-import { setErrorMsg, setSuccessMsg, setKycStatus } from "redux/slices/authenticationSlice";
+import { setKycStatus } from "redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../../utils/toast";
 
 export const useLogin = () => {
   return useMutation<ApiResponse<any>, Error>({
@@ -158,9 +159,9 @@ export const useKYCStatus = () => {
       // persist full object in redux
       useDispatchAction(setKycStatus(data?.data ?? data));
       if (status === false) {
-        useDispatchAction(setErrorMsg(toast || "KYC status: not completed"));
+        showError(toast || "KYC status: not completed");
       } else {
-        useDispatchAction(setSuccessMsg(toast || "KYC status completed"));
+        showSuccess(toast || "KYC status completed");
       }
     },
     onError: (error: any) => {
@@ -169,7 +170,7 @@ export const useKYCStatus = () => {
       if (error?.response?.data) {
         useDispatchAction(setKycStatus(error.response.data));
       }
-      useDispatchAction(setErrorMsg(toast));
+      showError(toast);
     },
   });
 };

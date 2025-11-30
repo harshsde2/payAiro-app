@@ -35,10 +35,9 @@ import useDispatchAction from "../../hooks/useDispatchAction";
 import useSelectorAction from "../../hooks/useSelectorAction";
 import {
   setActiveTab,
-  setErrorMsg,
   setPendingRequest,
-  setSuccessMsg,
 } from "../../redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../../utils/toast";
 import { cancelMerchent, cancelUser } from "../../services/Services";
 
 // Define the categories, filter types, date ranges, and time ranges
@@ -325,13 +324,13 @@ export default function Transaction() {
       data = await cancelMerchent(formData, (tokens as any)?.access);
       // console.log(data, "cancelPayment");
       if (data && data?.status) {
-        useDispatchAction(setSuccessMsg(data?.data?.message));
+        showSuccess(data?.data?.message);
         if (AllUserPaymentRequests)
           getMerchentRequest(
             AllUserPaymentRequests as AllUserPaymentRequestsData
           );
       } else {
-        useDispatchAction(setErrorMsg("Failed to cancel a payment"));
+        showError("Failed to cancel a payment");
       }
     } else {
       data = await cancelUser(
@@ -339,13 +338,13 @@ export default function Transaction() {
         (tokens as any)?.access
       );
       if (data && data?.status) {
-        useDispatchAction(setSuccessMsg("Payment request has been cancelled."));
+        showSuccess("Payment request has been cancelled.");
         if (AllUserPaymentRequests)
           getMerchentRequest(
             AllUserPaymentRequests as AllUserPaymentRequestsData
           );
       } else {
-        useDispatchAction(setErrorMsg("Failed to cancel a payment"));
+        showError("Failed to cancel a payment");
       }
     }
   };

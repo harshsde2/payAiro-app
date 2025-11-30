@@ -34,9 +34,9 @@ import { checkUser } from "../../services/Services";
 import useDispatchAction from "../../hooks/useDispatchAction";
 import {
   setActiveTab,
-  setErrorMsg,
   setShowLoader,
 } from "../../redux/slices/authenticationSlice";
+import { showError } from "../../utils/toast";
 import { CustomText } from "tsx-components";
 import { useTheme } from "styles";
 import { ScreenContainer } from "HOC";
@@ -79,7 +79,7 @@ export default function Send(props) {
     if (!hasKey(bankLists, "bank_type")) {
       try {
         dispatch(setShowLoader(true));
-        const resp = await axios.get(`${BASE_URL.production}auth/url-external-account`, {
+        const resp = await axios.get(`${BASE_URL.testing}auth/url-external-account`, {
           headers: {
             Authorization: `Bearer ${tokens?.access}`, // ✅ this is the correct way to send auth header
           },
@@ -98,7 +98,7 @@ export default function Send(props) {
       }
     } else {
       // console.log("mxExternalAccountDetails =>", mxExternalAccountDetails)
-      dispatch(setErrorMsg("External account aleardy found"));
+      showError("External account aleardy found");
     }
   }, [bankLists]);
 
@@ -375,7 +375,7 @@ export default function Send(props) {
                 cStyle={{ marginTop: 10 }}
                 onPress={async () => {
                   if (!sender.trim()) {
-                    dispatch(setErrorMsg("Please enter a valid identifier"));
+                    showError("Please enter a valid identifier");
                     return;
                   }
                   try {
@@ -389,11 +389,11 @@ export default function Send(props) {
                         bank: selectedBank,
                       });
                     } else {
-                      dispatch(setErrorMsg(data?.message || "Recipient not found"));
+                      showError(data?.message || "Recipient not found");
                     }
                   } catch (e) {
                     console.log("User verification failed:", e);
-                    dispatch(setErrorMsg(e?.message || "Something went wrong. Please try again."));
+                    showError(e?.message || "Something went wrong. Please try again.");
                   } finally {
                     dispatch(setShowLoader(false));
                   }
