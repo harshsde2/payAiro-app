@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -12,6 +12,8 @@ import {
 } from "react-native";
 import { useTheme } from "../styles/ThemeContext";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useSelector } from "react-redux";
+import { toKycMode } from "../types/kyc";
 
 interface ScreenContainerProps {
   children: ReactNode;
@@ -47,6 +49,16 @@ const ScreenContainer: React.FC<ScreenContainerProps> = ({
   backgroundColor,
 }) => {
   const { theme } = useTheme();
+  
+  // Check if KYC banner is visible to determine safe area edges
+  const kycStatus = useSelector((s: any) => s.authenticationSlice?.kycStatus);
+  const kycMode = useMemo(() => toKycMode(kycStatus), [kycStatus]);
+  const isBannerVisible = kycMode === "pending" || kycMode === "not_started";
+  
+  // Determine safe area edges: exclude top if banner is visible, include it if not
+  const safeAreaEdges: ("top" | "bottom" | "left" | "right")[] = isBannerVisible 
+    ? ["bottom", "left", "right"] 
+    : ["top", "bottom", "left", "right"];
 
   // Set up status bar style based on theme
   const barStyle =
@@ -119,11 +131,13 @@ const ScreenContainer: React.FC<ScreenContainerProps> = ({
     );
 
   // Add safe area if enabled
+  // Conditionally exclude top edge: if KYC banner is visible, it handles top safe area
+  // If banner is hidden (KYC approved), ScreenContainer should handle top safe area
   return (
     <>
       <StatusBar backgroundColor={barColor} barStyle={barStyle} />
       {safeArea ? (
-        <SafeAreaView style={containerStyle}>
+        <SafeAreaView style={containerStyle} edges={safeAreaEdges}>
           {keyboardContent}
         </SafeAreaView>
       ) : (

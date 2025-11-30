@@ -95,6 +95,7 @@ import AddWallet from "./AddWallet.svg";
 import CryptoIcon from "./Crypto.svg";
 import UploadIcon from "./Upload.svg";
 import ShareIcon from "./Share.svg";
+import ChevronDown2 from "./ChevronDown2.svg";
 
 
 
@@ -196,4 +197,5 @@ export const SvgIcons = {
   CryptoIcon,
   UploadIcon,
   ShareIcon,
+  ChevronDown2,
 };

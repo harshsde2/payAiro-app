@@ -141,13 +141,13 @@ export const useCryptoTransfer = () => {
       );
     },
     onSuccess: (data) => {
-      // console.log("data =>", JSON.stringify(data, null, 2));
+      console.log("data =>", JSON.stringify(data, null, 2));
       // Invalidate relevant queries to trigger refetch
       // queryClient.invalidateQueries({ queryKey: cryptoKeys.cryptoBalance() });
       // queryClient.invalidateQueries({ queryKey: cryptoKeys.trades() });
     },
     onError: (error) => {
-      // console.log("error =>", JSON.stringify(error, null, 2));
+      console.log("error =>", JSON.stringify(error, null, 2));
       // Invalidate relevant queries to trigger refetch
       // queryClient.invalidateQueries({ queryKey: cryptoKeys.cryptoBalance() });
       // queryClient.invalidateQueries({ queryKey: cryptoKeys.trades() });
