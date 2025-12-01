@@ -5,6 +5,7 @@ import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { useCreatePin, usePatchUserDetails, useStepCount } from "query/hooks/useAPIAuth";
 import React, { useRef, useState } from "react";
 import {
+  Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -16,6 +17,8 @@ import { useGlobalStyles } from "styles/GlobalStyles";
 import { CustomText } from "tsx-components";
 import AuthHeader from "tsx-components/AuthHeader";
 import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
+import CommonModal from "tsx-components/modals/CommonModal";
+import { SvgIcons } from "constants/svgs";
 import GenericButton from "../../components/GenericButton";
 import TextInputField from "../../components/TextInputField";
 import {
@@ -189,6 +192,35 @@ export default function Name(props: any) {
         <AuthHeader showAuthLogo={true} />
       </View>
       <TermAndConditionModal ref={termsAndConditionRef} />
+      <CommonModal
+        isVisible={showInfo}
+        onClose={() => setShowInfo(false)}
+        containerStyle={{ justifyContent: "center" }}
+      >
+        <Pressable onPress={(e) => e.stopPropagation()}>
+          <View style={styles.infoModalContainer}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowInfo(false)}
+            >
+              <SvgIcons.CrossIcon width={55} height={55} />
+            </TouchableOpacity>
+            <CustomText
+              variant="h2"
+              fontFamily={theme.typography.fontFamily.montserratBold}
+              style={styles.infoModalTitle}
+            >
+              PayAiro Tag
+            </CustomText>
+            <CustomText
+              variant="body1"
+              style={styles.infoModalText}
+            >
+              Your PayAiro tag is like a username for payments. Share it with others so they can send you money quickly and securely, without needing your account details.
+            </CustomText>
+          </View>
+        </Pressable>
+      </CommonModal>
       <View style={styles.conntentContainer}>
         <View style={[styles.headerContainer]}>
           <CustomText
@@ -387,5 +419,28 @@ const customStyles = (theme: Theme) =>
       justifyContent: "space-between",
       alignItems: "center",
       width: "100%",
+    },
+    infoModalContainer: {
+      backgroundColor: theme.colors.palette.white,
+      borderRadius: 20,
+      padding: 24,
+      marginHorizontal: 20,
+      maxWidth: "90%",
+      alignSelf: "center",
+    },
+    closeButton: {
+      alignSelf: "flex-end",
+      padding: 4,
+      marginBottom: 8,
+    },
+    infoModalTitle: {
+      marginBottom: 16,
+      textAlign: "center",
+      color: theme.colors.text.primary,
+    },
+    infoModalText: {
+      textAlign: "center",
+      color: theme.colors.text.secondary,
+      lineHeight: 22,
     },
   });

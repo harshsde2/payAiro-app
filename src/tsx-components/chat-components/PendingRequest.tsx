@@ -52,7 +52,7 @@ const PendingRequest: FC<PendingRequestProps> = ({
         }}
       >
         <CustomText variant="caption">Payment to {userName}</CustomText>
-        <SvgXml xml={SVGInfo} style={{ marginLeft: -30 }} />
+        {/* <SvgXml xml={SVGInfo} style={{ marginLeft: -30 }} /> */}
       </View>
       <View>
         <CustomText size={theme.typography.fontSize.xxl} fontWeight={"medium"}>

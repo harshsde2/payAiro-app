@@ -379,7 +379,6 @@ export default function Send(props) {
                     return;
                   }
                   try {
-                    dispatch(setShowLoader(true));
                     const data = await verifyUserByIdentifier({ identifier: sender.trim() });
                     console.log(data, "verified user data");
                     if (data && data.status) {
@@ -395,7 +394,6 @@ export default function Send(props) {
                     console.log("User verification failed:", e);
                     showError(e?.message || "Something went wrong. Please try again.");
                   } finally {
-                    dispatch(setShowLoader(false));
                   }
                 }}
                 disabled={userLoading}

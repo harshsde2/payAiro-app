@@ -18,6 +18,7 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  useWindowDimensions,
 } from "react-native";
 // Import from the module alias utility
 import { useIsFocused, useNavigation } from "@react-navigation/native";
@@ -560,6 +561,7 @@ const NewDashboard = () => {
   } = useSelector((state: any) => state.authenticationSlice);
 
   const isTablet = DeviceInfo.isTablet();
+  const { width: screenWidth } = useWindowDimensions();
 
   // console.log("is tablet =>", isTablet);
   const dispatch = useDispatch();
@@ -1494,102 +1496,156 @@ const NewDashboard = () => {
         )}
         {isCrypto ? (
           <View style={{ marginHorizontal: 15 }}>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginVertical: 20,
-              }}
-            >
-              <SvgIcons.SendIcon
-                style={{ marginRight: 15 }}
-                onPress={() => {
-                  navigation.navigate(
-                    !isCrypto
-                      ? NAVIGATION_SCREENS.SEND_TOKEN
-                      : NAVIGATION_SCREENS.SEND,
-                    {
-                      requested: false,
-                    }
-                  );
-                }}
-              />
-              <SvgIcons.RecieveIcon
-                style={{ marginRight: 15 }}
-                onPress={() =>
-                  navigation.navigate(
-                    !isCrypto
-                      ? NAVIGATION_SCREENS.RECEIVE_TOKEN
-                      : NAVIGATION_SCREENS.RECEIVE
-                  )
-                }
-              />
-              <TouchableOpacity
-                onPress={() => {
-                  if (walletData?.fortress) {
-                    if (!isCrypto) {
-                      navigation.navigate("CryptoDashboard");
-                    } else {
-                      navigation.navigate(NAVIGATION_SCREENS.ADD_BALANCE);
-                    }
-                  } else {
-                    navigation.navigate(NAVIGATION_SCREENS.ADD_BALANCE);
-                  }
-                }}
-                style={{
-                  // flex: 1,
-                  width: 75,
-                  alignItems: "center",
-                  borderRadius: 10,
-                  height: 80,
-                  marginRight: 15
-                }}
-              >
+            {(() => {
+              // Calculate responsive sizes based on screen width
+              const horizontalPadding = 30; // 15 * 2 (left + right margins)
+              const iconSpacing = screenWidth < 350 ? 8 : 12; // Smaller spacing on small devices
+              const numberOfIcons = 4;
+              const availableWidth = screenWidth - horizontalPadding;
+              const totalSpacing = iconSpacing * (numberOfIcons - 1);
+              const iconContainerWidth = (availableWidth - totalSpacing) / numberOfIcons;
+              const iconSize = Math.min(iconContainerWidth * 0.4, 30); // Icon size proportional to container, max 30
+              const iconBackgroundSize = Math.min(iconContainerWidth * 0.73, 55); // Background size proportional to container, max 55
+              const iconBackgroundHeight = Math.min(iconBackgroundSize * 0.73, 40); // Height proportional to width
+
+              return (
                 <View
                   style={{
+                    flexDirection: "row",
+                    justifyContent: "flex-start",
                     alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: theme.colors.palette.green150,
-                    width: 75,
-                    height: 55,
-                    borderRadius: 25,
-                    marginBottom: 10,
+                    marginVertical: 20,
                   }}
                 >
-                  <SvgIcons.AddWallet width={30} height={30} />
+                  <TouchableOpacity
+                    onPress={() => {
+                      navigation.navigate(
+                        !isCrypto
+                          ? NAVIGATION_SCREENS.SEND_TOKEN
+                          : NAVIGATION_SCREENS.SEND,
+                        {
+                          requested: false,
+                        }
+                      );
+                    }}
+                    style={{
+                      width: iconContainerWidth,
+                      alignItems: "center",
+                      borderRadius: 10,
+                      height: 80,
+                      marginRight: iconSpacing,
+                    }}
+                  >
+                    <View
+                      style={{
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: theme.colors.palette.green150,
+                        width: iconBackgroundSize,
+                        height: iconBackgroundHeight,
+                        borderRadius: iconBackgroundHeight / 2,
+                        marginBottom: 10,
+                      }}
+                    >
+                      <SvgIcons.MoneySendIcon width={iconSize-5} height={iconSize-5} />
+                    </View>
+                    <CustomText size={11}>Send</CustomText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate(
+                        !isCrypto
+                          ? NAVIGATION_SCREENS.RECEIVE_TOKEN
+                          : NAVIGATION_SCREENS.RECEIVE
+                      )
+                    }
+                    style={{
+                      width: iconContainerWidth,
+                      alignItems: "center",
+                      borderRadius: 10,
+                      height: 80,
+                      marginRight: iconSpacing,
+                    }}
+                  >
+                    <View
+                      style={{
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: theme.colors.palette.green150,
+                        width: iconBackgroundSize,
+                        height: iconBackgroundHeight,
+                        borderRadius: iconBackgroundHeight / 2,
+                        marginBottom: 10,
+                      }}
+                    >
+                      <SvgIcons.MoneyReciveIcon width={iconSize-5} height={iconSize-5} />
+                    </View>
+                    <CustomText size={11}>Receive</CustomText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (walletData?.fortress) {
+                        if (!isCrypto) {
+                          navigation.navigate("CryptoDashboard");
+                        } else {
+                          navigation.navigate(NAVIGATION_SCREENS.ADD_BALANCE);
+                        }
+                      } else {
+                        navigation.navigate(NAVIGATION_SCREENS.ADD_BALANCE);
+                      }
+                    }}
+                    style={{
+                      width: iconContainerWidth,
+                      alignItems: "center",
+                      borderRadius: 10,
+                      height: 80,
+                      marginRight: iconSpacing,
+                    }}
+                  >
+                    <View
+                      style={{
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: theme.colors.palette.green150,
+                        width: iconBackgroundSize,
+                        height: iconBackgroundHeight,
+                        borderRadius: iconBackgroundHeight / 2,
+                        marginBottom: 10,
+                      }}
+                    >
+                      <SvgIcons.AddWallet width={iconSize-5} height={iconSize-5} />
+                    </View>
+                    <CustomText size={11}>Add Balance</CustomText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => {
+                      navigation.navigate(NAVIGATION_SCREENS.WITHDRAW_BALANCE);
+                    }}
+                    style={{
+                      width: iconContainerWidth,
+                      alignItems: "center",
+                      borderRadius: 10,
+                      height: 80,
+                    }}
+                  >
+                    <View
+                      style={{
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: theme.colors.palette.green150,
+                        width: iconBackgroundSize,
+                        height: iconBackgroundHeight,
+                        borderRadius: iconBackgroundHeight / 2,
+                        marginBottom: 10,
+                      }}
+                    >
+                      <SvgIcons.DebitCard width={iconSize+20} height={iconSize+20} />
+                    </View>
+                    <CustomText size={11}>Withdraw</CustomText>
+                  </TouchableOpacity>
                 </View>
-                <CustomText size={11}>Add Balance</CustomText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  navigation.navigate(NAVIGATION_SCREENS.WITHDRAW_BALANCE);
-                }}
-                style={{
-                  // flex: 1,
-                  width: 75,
-                  alignItems: "center",
-                  borderRadius: 10,
-                  height: 80,
-                  marginRight: 15
-                }}
-              >
-                <View
-                  style={{
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: theme.colors.palette.green150,
-                    width: 75,
-                    height: 55,
-                    borderRadius: 25,
-                    marginBottom: 10,
-                  }}
-                >
-                  <SvgIcons.DebitCard width={60} height={60} />
-                </View>
-                <CustomText size={11}>Withdraw</CustomText>
-              </TouchableOpacity>
-            </View>
+              );
+            })()}
           </View>
         ) : (
           <View style={{ marginHorizontal: 15 }}>

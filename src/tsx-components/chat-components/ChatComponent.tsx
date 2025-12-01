@@ -2,8 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList } from 'r
 import React, { FC, useState, useEffect, useRef, memo } from 'react'
 import { Theme, useTheme } from 'styles'
 import Fonts from 'constants/Fonts';
-import { SvgXml } from 'react-native-svg';
-import { SVGSend2 } from '../../constants/images';
+
 import { useSelector } from 'react-redux';
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 import { useNavigation, NavigationProp, ParamListBase } from '@react-navigation/native';
@@ -11,6 +10,7 @@ import { scale } from '@shopify/react-native-skia';
 import { ContactData, Interaction, MessageData, TransactionData, WalletData } from './chat.types';
 import ChatItemComponent from './ChatItemComponent';
 import { sendMessage } from '../../services/Services';
+import { SvgIcons } from 'constants/svgs';
 
 interface ChatComponentProps {
     currentUser: {},
@@ -33,7 +33,7 @@ const ChatComponent: FC<ChatComponentProps> = ({
         tokens,
         walletData
     } = useSelector((state: any) => state.authenticationSlice);
-    const navigation = useNavigation<NavigationProp<ParamListBase>>();
+    const navigation = useNavigation<any>();
     const styles = customStyles(theme);
 
     let MyEmail = (walletData as WalletData)?.account_email || '';
@@ -210,7 +210,7 @@ const ChatComponent: FC<ChatComponentProps> = ({
                         onPress={handleSendMessage}
                         disabled={!messageText.trim() || isSending}
                     >
-                        <SvgXml xml={SVGSend2} />
+                        <SvgIcons.SendMessageIcon width={20} height={20} />
                     </TouchableOpacity>
                 </View>
             </View>

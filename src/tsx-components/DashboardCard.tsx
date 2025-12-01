@@ -70,6 +70,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
   };
   const [showBalance, setShowBalance] = React.useState(false); // PayAiro Balance visibility
   const [showPlatformBalance, setShowPlatformBalance] = React.useState(false); // Platform Balance visibility
+  const [selectedTab, setSelectedTab] = useState<"Available" | "Pending" | "Total">("Available");
   const [showCryptoBalance, setShowCryptoBalance] = React.useState(false);
   const [showPendingBalance, setShowPendingBalance] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -157,6 +158,76 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
       </View>
     </TouchableOpacity>
   );
+
+  const renderAvailabelPendingTotalFiatTab = () => {
+    const tabs = [
+      {
+        id: "Available",
+        label: "Available",
+        icon: SvgIcons.OutLineCheckedBox,
+      },
+      { id: "Pending", label: "Pending", icon: SvgIcons.PendingBalance },
+      { id: "Total", label: "Total", icon: SvgIcons.DollarIcon },
+    ];
+
+    return (
+      <View
+        style={{
+          flexDirection: "row",
+          // backgroundColor: 'red', // Dark background for container
+          borderTopRightRadius: 20,
+          width: "100%",
+          // padding: 4,
+          marginBottom:0,
+          // marginLeft,
+          marginTop:0,
+          // alignSelf: 'center',
+          justifyContent: 'center',
+          // borderWidth: 1,
+          // borderBottomLeftRadius:0,
+          // borderBottomRightRadius:0,
+          // borderColor: theme.colors.palette.grey700,
+        }}
+      >
+        {tabs.map((tab) => {
+          const isSelected = selectedTab === tab.id;
+          const Icon = tab.icon;
+          return (
+            <TouchableOpacity
+              key={tab.id}
+              onPress={() => setSelectedTab(tab.id as any)}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: isSelected
+                  ? theme.colors.palette.green500
+                  : "transparent",
+                paddingVertical: 6,
+                paddingHorizontal: 12,
+                borderRadius: 20,
+                // borderBottomLeftRadius:0,
+              }}
+            >
+              <Icon
+                width={16}
+                height={16}
+                color={theme.colors.palette.white}
+                style={{ marginRight: 6 }}
+              />
+              <CustomText
+                variant="caption"
+                size={9}
+                color={theme.colors.palette.white}
+                style={{ fontWeight: isSelected ? "700" : "400" }}
+              >
+                {tab.label}
+              </CustomText>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    );
+  };
 
   const renderFiatCurrencySelector = () => (
     <TouchableOpacity
@@ -322,149 +393,100 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
               height: 170,
             }}
           >
-            <View style={{ flex: 1, flexDirection: "row" }}>
-              {showPendingBalance ? (
-                <View
-                  style={{
-                    flex: 1,
-                    // backgroundColor: "red",
-                    paddingHorizontal: 20,
-                    justifyContent: "center",
-                    alignItems: "flex-start",
-                  }}
+            <View style={{ flex: 1, flexDirection: 'column'}}>
+              {renderAvailabelPendingTotalFiatTab()}
+              <View
+                style={{
+                  flex: 1,
+                  // backgroundColor: "red",
+                  paddingHorizontal: 20,
+                  justifyContent: "center",
+                  alignItems: "flex-start",
+                }}
+              >
+                <CustomText
+                  color={theme.colors.palette.white}
+                  variant={"body1"}
                 >
+                  {selectedTab === "Available"
+                    ? "PayAiro Balance"
+                    : selectedTab === "Total"
+                    ? "Total Balance"
+                    : "Pending Balance"}
+                </CustomText>
+                <View style={styles.balanceRow}>
                   <CustomText
+                    numberOfLines={1}
                     color={theme.colors.palette.white}
-                    variant={"body1"}
-                  >
-                    {"PayAiro Balance"}
-                  </CustomText>
-                  <View style={styles.balanceRow}>
-                    {/* {walletData?.fortress ? ( */}
-                    <CustomText
-                      numberOfLines={1}
-                      color={theme.colors.palette.white}
-                      variant={"h3"}
-                      style={{
-                        textAlign: "center",
-                        textAlignVertical: "center",
-                      }}
-                    >
-                      {showBalance
-                        ? formatUsd(bankBalance?.platform_available)
-                        : "$*****"}
-                    </CustomText>
-                    {isLoading && (
-                      <ActivityIndicator
-                        size="small"
-                        color={theme.colors.palette.white}
-                      />
-                    )}
-                    {!isLoading && (
-                      <TouchableOpacity style={{ zIndex: 11 }}>
-                        {showBalance ? (
-                          <SvgIcons.EyeOnOutlineWhite
-                            onPress={() => handleShowBalance(showBalance)}
-                            // xml={SVG_eye_on_white}
-                            color={theme.colors.palette.white}
-                            width={20}
-                            height={20}
-                          />
-                        ) : (
-                          <SvgIcons.EyeOffOutlineWhite
-                            onPress={() => handleShowBalance(showBalance)}
-                            // xml={SVG_eye_off_white}
-                            color={theme.colors.palette.white}
-                            width={20}
-                            height={20}
-                          />
-                        )}
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </View>
-              ) : (
-                <View style={styles.platformBalanceContainer}>
-                  <CustomText
-                    color={theme.colors.palette.white}
-                    variant={"body2"}
-                  >
-                    {"Pending + Available Balance"}
-                  </CustomText>
-                  <View style={styles.platformBalanceRow}>
-                    <CustomText
-                      numberOfLines={1}
-                      color={theme.colors.palette.white}
-                      variant={"subtitle1"}
-                    >
-                      {showPlatformBalance
-                        ? formatUsd(bankBalance?.platform_balance)
-                        : "$*****"}
-                    </CustomText>
-                    {isLoading && (
-                      <ActivityIndicator
-                        size="small"
-                        color={theme.colors.palette.white}
-                      />
-                    )}
-                    {!isLoading && (
-                      <TouchableOpacity style={{ zIndex: 11 }}>
-                        {showPlatformBalance ? (
-                          <SvgIcons.EyeOnOutlineWhite
-                            onPress={() =>
-                              handleShowPlatformBalance(showPlatformBalance)
-                            }
-                            color={theme.colors.palette.white}
-                            width={20}
-                            height={20}
-                          />
-                        ) : (
-                          <SvgIcons.EyeOffOutlineWhite
-                            onPress={() =>
-                              handleShowPlatformBalance(showPlatformBalance)
-                            }
-                            color={theme.colors.palette.white}
-                            width={20}
-                            height={20}
-                          />
-                        )}
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </View>
-              )}
-              <View style={{ padding: 10 ,position: "absolute", right: 10, top: 35, zIndex: 1000 }}>
-                <Animated.View
-                  style={{
-                    transform: [
-                      {
-                        rotate: hourGlassRotation.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: ['0deg', '180deg'],
-                        }),
-                      },
-                    ],
-                  }}
-                >
-                  <SvgIcons.HourGlass
-                    onPress={() => {
-                      setShowPendingBalance(!showPendingBalance);
-                      Animated.timing(hourGlassRotation, {
-                        toValue: !showPendingBalance ? 0 : 1,
-                        duration: 300,
-                        useNativeDriver: true,
-                      }).start();
+                    variant={"h3"}
+                    style={{
+                      textAlign: "center",
+                      textAlignVertical: "center",
                     }}
-                    width={20}
-                    height={20}
-                  />
-                </Animated.View>
+                  >
+                    {(() => {
+                      const isVisible =
+                        selectedTab === "Total"
+                          ? showPlatformBalance
+                          : showBalance;
+                      if (!isVisible) return "$*****";
+
+                      if (selectedTab === "Available")
+                        return formatUsd(bankBalance?.platform_available);
+                      if (selectedTab === "Total")
+                        return formatUsd(bankBalance?.platform_balance);
+                      if (selectedTab === "Pending") {
+                        const pending =
+                          (Number(bankBalance?.platform_balance) || 0) -
+                          (Number(bankBalance?.platform_available) || 0);
+                        return formatUsd(pending);
+                      }
+                      return "$0.00";
+                    })()}
+                  </CustomText>
+                  {isLoading && (
+                    <ActivityIndicator
+                      size="small"
+                      color={theme.colors.palette.white}
+                    />
+                  )}
+                  {!isLoading && (
+                    <TouchableOpacity style={{ zIndex: 11 }}>
+                      {(() => {
+                        const isVisible =
+                          selectedTab === "Total"
+                            ? showPlatformBalance
+                            : showBalance;
+                        const handlePress = () =>
+                          selectedTab === "Total"
+                            ? handleShowPlatformBalance(showPlatformBalance)
+                            : handleShowBalance(showBalance);
+
+                        return isVisible ? (
+                          <SvgIcons.EyeOnOutlineWhite
+                            onPress={handlePress}
+                            color={theme.colors.palette.white}
+                            width={20}
+                            height={20}
+                          />
+                        ) : (
+                          <SvgIcons.EyeOffOutlineWhite
+                            onPress={handlePress}
+                            color={theme.colors.palette.white}
+                            width={20}
+                            height={20}
+                          />
+                        );
+                      })()}
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
             </View>
             <View
               style={{
                 flex: 1,
-                // backgroundColor: "red",
+                // backgroundColor: "green",
                 paddingHorizontal: 20,
                 justifyContent: "center",
                 alignItems: "flex-start",

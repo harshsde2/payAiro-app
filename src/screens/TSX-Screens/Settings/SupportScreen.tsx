@@ -124,7 +124,7 @@ const SupportScreen = () => {
             }}
           />
           <UploadFile
-            label={"Upload Front"}
+            label={"Upload file"}
             selectedFile={(result: any) => {
               //   setidProof1(result);
               setAttachment(result[0]);

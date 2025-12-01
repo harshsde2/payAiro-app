@@ -1452,7 +1452,8 @@ const styles = (theme: Theme) =>
     fontWeight: "800",
     marginBottom: 8,
     marginTop: 4,
-      fontFamily: "System",
+    fontFamily: "System",
+    textAlign: "center",
   },
   statusBadge: {
     paddingHorizontal: 16,

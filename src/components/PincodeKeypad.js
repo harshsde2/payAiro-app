@@ -107,7 +107,7 @@ const PincodeKeypad = ({
             onPress={handleBackspace}
             style={styles.keypadButton}
           >
-            <SvgIcons.KeyboardBack />
+            <SvgIcons.KeyboardBack width={20} height={20} />
           </TouchableOpacity>
         </View>
       </View>

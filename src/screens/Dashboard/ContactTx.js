@@ -114,7 +114,10 @@ const PaidTransaction = ({ amount, date }) => (
 );
 
 // Dropdown Menu component
-const DropdownMenu = ({ onSelectItem }) => (
+const DropdownMenu = ({ onSelectItem }) => 
+  {
+  const navigation = useNavigation();
+  return (
   <View style={styles.dropdownMenu}>
     <TouchableOpacity
       style={styles.menuItem}
@@ -125,12 +128,13 @@ const DropdownMenu = ({ onSelectItem }) => (
     <View style={styles.menuDivider} />
     <TouchableOpacity
       style={styles.menuItem}
-      onPress={() => onSelectItem("Help")}
+      onPress={() => navigation.navigate('SupportScreen')}
     >
-      <Text style={styles.menuItemText}>Help</Text>
+      <Text style={styles.menuItemText}>Support</Text>
     </TouchableOpacity>
   </View>
 );
+}
 
 // Let's try a simple placeholder component first to verify the component area is rendering
 const PlaceholderChatComponent = ({ onTestPress }) => (

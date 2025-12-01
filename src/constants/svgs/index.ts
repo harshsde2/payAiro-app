@@ -102,9 +102,13 @@ import ToastDoneRing from "./ToastDoneRing.svg";
 import ToastTriangleAlert from "./ToastTriangleAlert.svg";
 import NewCross from "./NewCross.svg";
 import ToastChecked from "./ToastChecked.svg";
-
-
-
+import DownloadIcon from "./DowloadIcon.svg";
+import ShareWhiteIcon from "./ShareWhite.svg";
+import TransactionReciveIcon from "./TransactionRecive.svg";
+import TransactionSentIcon from "./TransactionSent.svg";
+import SendMessageIcon from "./SendMessageIcon.svg";
+import MoneyReciveIcon from "./MoneyRecive.svg";
+import MoneySendIcon from "./MoneySend.svg";
 
 export const SvgIcons = {
   PayAiorRoundIcon,
@@ -211,4 +215,11 @@ export const SvgIcons = {
   ToastTriangleAlert,
   NewCross,
   ToastChecked,
+  DownloadIcon,
+  ShareWhiteIcon,
+  TransactionReciveIcon,
+  TransactionSentIcon,
+  SendMessageIcon,
+  MoneyReciveIcon,
+  MoneySendIcon,
 };

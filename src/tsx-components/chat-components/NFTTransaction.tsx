@@ -98,7 +98,7 @@ const NFTTransaction: FC<NFTTransactionProps> = ({
                 }}>
 
                 <CustomText variant='caption' >Payment to {userName}</CustomText>
-                <SvgXml
+                {/* <SvgXml
                     xml={SVGInfo}
                     style={{ marginLeft: -30 }}
                     onPress={() => {
@@ -126,7 +126,7 @@ const NFTTransaction: FC<NFTTransactionProps> = ({
                           isCrypto: (item as any)?.token,
                         });
                       }}
-                />
+                /> */}
             </View>
             <View>
                 <CustomText size={theme.typography.fontSize.xxl} fontWeight={'medium'} >{value}</CustomText>

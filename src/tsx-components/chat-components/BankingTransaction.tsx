@@ -97,7 +97,7 @@ const BankingTransaction: FC<BankingTransactionProps> = ({
                 }}>
 
                 <CustomText variant='caption' >Payment to {userName}</CustomText>
-                <SvgXml
+                {/* <SvgXml
                     xml={SVGInfo}
                     style={{ marginLeft: -30 }}
                     onPress={() => {
@@ -125,7 +125,7 @@ const BankingTransaction: FC<BankingTransactionProps> = ({
                           isCrypto: (item as any)?.token,
                         });
                       }}
-                />
+                /> */}
             </View>
             <View>
                 <CustomText size={theme.typography.fontSize.xxl} fontWeight={'medium'} >{amount}</CustomText>
