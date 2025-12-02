@@ -10,7 +10,7 @@ import { Alert } from "react-native";
 import { showError } from "../utils/toast";
 // Create Axios instance
 const api = axios.create({
-  baseURL: BASE_URL.testing,
+  baseURL: BASE_URL.production,
   timeout: Infinity,
   headers: {
     "Content-Type": "application/json",
@@ -116,7 +116,9 @@ api.interceptors.request.use(
                 onPress: () => {
                   try {
                     const { DeviceEventEmitter } = require("react-native");
-                    useDispatchAction(
+                    const { store } = require("../redux/store");
+                    const { setKycStatus } = require("../redux/slices/authenticationSlice");
+                    store.dispatch(
                       setKycStatus({ status: false, state: "not_started", toast_message: "Please start your KYC." })
                     );
                     DeviceEventEmitter.emit("NAVIGATE_TO_PERSONAL");
@@ -155,8 +157,9 @@ api.interceptors.request.use(
                     onPress: () => {
                       try {
                         const { DeviceEventEmitter } = require("react-native");
+                        const { store } = require("../redux/store");
                         const { setKycStatus } = require("../redux/slices/authenticationSlice");
-                        useDispatchAction(setKycStatus({ status: false, state: "not_started", toast_message: msg }));
+                        store.dispatch(setKycStatus({ status: false, state: "not_started", toast_message: msg }));
                         DeviceEventEmitter.emit("NAVIGATE_TO_PERSONAL");
                       } catch (e) {}
                     },
