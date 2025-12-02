@@ -149,9 +149,21 @@ export default function StatementDetails() {
       }
     } catch (error: any) {
       console.log("PDF Generation Error:", error);
-      const errorMessage =
-        error?.message || "Failed to generate PDF. Please try again.";
-      showError("PDF Generation Failed", errorMessage);
+      
+      // Check if user cancelled the share action
+      const isUserCancelled =
+        error?.message?.toLowerCase().includes("user did not share") ||
+        error?.message?.toLowerCase().includes("user cancelled") ||
+        error?.message?.toLowerCase().includes("cancelled") ||
+        error?.code === "ECANCELLED" ||
+        error?.message === "User did not share";
+
+      // Only show error if it's not a user cancellation
+      if (!isUserCancelled) {
+        const errorMessage =
+          error?.message || "Failed to generate PDF. Please try again.";
+        showError("PDF Generation Failed", errorMessage);
+      }
     } finally {
       setIsGeneratingPDF(false);
       setIsDownloading(false);

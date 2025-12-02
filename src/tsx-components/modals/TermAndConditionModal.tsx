@@ -94,73 +94,80 @@ const TermAndConditionModal = forwardRef<
             originWhitelist={["*"]}
           />
         ) : (
-          <ScrollView
-            onScroll={({ nativeEvent }) => {
-              const { layoutMeasurement, contentOffset, contentSize } =
-                nativeEvent;
-              const isEndReached =
-                layoutMeasurement.height + contentOffset.y >=
-                contentSize.height - 20; // adjust buffer
+          <View style={styles.contentWrapper}>
+            <ScrollView
+              onScroll={({ nativeEvent }) => {
+                const { layoutMeasurement, contentOffset, contentSize } =
+                  nativeEvent;
+                const isEndReached =
+                  layoutMeasurement.height + contentOffset.y >=
+                  contentSize.height - 20; // adjust buffer
 
-              if (isEndReached) {
-                setShowButton(true);
-              } else {
-                setShowButton(false);
-              }
-            }}
-            scrollEventThrottle={16}
-            style={styles.container}
-          >
-            {conditionArray.length > 0 && (
-              <View>
-                {conditionArray.map((item: any, index: number) => (
-                  <View
-                    key={index}
-                    style={{ marginBottom: theme.spacing.spacing.sm }}
-                  >
-                    {item?.mainHeading && (
-                      <CustomText
-                        variant="h3"
-                        style={{
-                          marginBottom: theme.spacing.spacing.sm,
-                          textDecorationLine: "underline",
-                        }}
-                      >
-                        {item.mainHeading}
-                      </CustomText>
-                    )}
-
-                    <CustomText
-                      variant="h4"
+                if (isEndReached) {
+                  setShowButton(true);
+                } else {
+                  setShowButton(false);
+                }
+              }}
+              scrollEventThrottle={16}
+              style={styles.scrollView}
+              contentContainerStyle={[
+                styles.container,
+                isAgree && styles.scrollViewContent,
+              ]}
+            >
+              {conditionArray.length > 0 && (
+                <View>
+                  {conditionArray.map((item: any, index: number) => (
+                    <View
+                      key={index}
                       style={{ marginBottom: theme.spacing.spacing.sm }}
                     >
-                      {item.heading}
-                    </CustomText>
+                      {item?.mainHeading && (
+                        <CustomText
+                          variant="h3"
+                          style={{
+                            marginBottom: theme.spacing.spacing.sm,
+                            textDecorationLine: "underline",
+                          }}
+                        >
+                          {item.mainHeading}
+                        </CustomText>
+                      )}
 
-                    <CustomText variant="body2">{item.text}</CustomText>
-                  </View>
-                ))}
-              </View>
+                      <CustomText
+                        variant="h4"
+                        style={{ marginBottom: theme.spacing.spacing.sm }}
+                      >
+                        {item.heading}
+                      </CustomText>
+
+                      <CustomText variant="body2">{item.text}</CustomText>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </ScrollView>
+            {isAgree && (
+              <GenericButton
+                title="I Agree"
+                cStyle={{
+                  marginTop: 10,
+                  marginHorizontal: 20,
+                  marginBottom: 10,
+                  opacity: showButton ? 1 : 0.7,
+                  width: "90%",
+                }}
+                onPress={() => {
+                  setIsVisible(false);
+                  onAgree?.();
+                }}
+                tStyle={{}}
+                disabled={!showButton}
+                icon={false}
+              />
             )}
-          </ScrollView>
-        )}
-        {isAgree && (
-          <GenericButton
-            title="I Agree"
-            cStyle={{
-              marginTop: 10,
-              marginHorizontal: 20,
-              opacity: showButton ? 1 : 0.7,
-              width: "90%",
-            }}
-            onPress={() => {
-              setIsVisible(false);
-              onAgree?.();
-            }}
-            tStyle={{}}
-            disabled={!showButton}
-            icon={false}
-          />
+          </View>
         )}
         {/* </View> */}
       </SafeAreaView>
@@ -177,14 +184,22 @@ const customStyles = (theme: Theme) =>
       // backgroundColor: colors.green100,
     },
     headerContainer: {},
-    container: {
+    contentWrapper: {
       flex: 1,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    container: {
       backgroundColor: theme.colors.palette.white,
       borderTopEndRadius: 32,
       borderTopStartRadius: 32,
       padding: theme.spacing.layout.screenPadding,
       marginTop: theme.spacing.spacing.md,
       paddingVertical: theme.spacing.spacing.xl,
+    },
+    scrollViewContent: {
+      paddingBottom: 100,
     },
   });
 

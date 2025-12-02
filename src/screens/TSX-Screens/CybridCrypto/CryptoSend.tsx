@@ -69,8 +69,8 @@ const CryptoSend = () => {
   } = useCryptoTransfer();
 
   const { data: cryptoBalanceData, isLoading: isBalanceLoading } = useCryptoBalanceByAsset(symbol);
-  const availableBalance = cryptoBalanceData?.data?.rounded_balance || "0.00";
-
+  const availableBalance = cryptoBalanceData?.data?.platform_available || "0.00";
+  // console.log("availableBalance ->",JSON.stringify(cryptoBalanceData,null,2))
   const {
     mutate: handleVerifyUser,
     isPending: isVerifyUserPending,
@@ -339,6 +339,10 @@ const CryptoSend = () => {
   };
 
   const isValidAmount = amount && parseFloat(amount) > 0 && !isNaN(parseFloat(amount));
+  
+  const availableBalanceNum = parseFloat(availableBalance);
+  const hasInsufficientBalance = isValidAmount && cryptoAmount > 0 && cryptoAmount > availableBalanceNum;
+  const canProceed = isValidAmount && !hasInsufficientBalance;
 
   const onQRScanClick = () =>{
       navigation.navigate(NAVIGATION_SCREENS.QR_SCANNER,{
@@ -518,10 +522,7 @@ const CryptoSend = () => {
               );
             })()}
                 <CustomText variant={"subtitle2"}>
-                  {symbol.slice(0, 3)}
-                </CustomText>
-                <CustomText size={10} variant={"caption"}>
-                  {symbol.slice(4)}
+                  {symbol}
                 </CustomText>
               </View>
               <AmountInputDisplay
@@ -576,7 +577,7 @@ const CryptoSend = () => {
               onPress={() => {
                 setShowConfirmationModal(true);
               }}
-              disabled={!isValidAmount}
+              disabled={!canProceed}
               cStyle={{ marginVertical: 10 }}
             />
             <GenericButton
