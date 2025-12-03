@@ -70,7 +70,9 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
   };
   const [showBalance, setShowBalance] = React.useState(false); // PayAiro Balance visibility
   const [showPlatformBalance, setShowPlatformBalance] = React.useState(false); // Platform Balance visibility
-  const [selectedTab, setSelectedTab] = useState<"Available" | "Pending" | "Total">("Available");
+  const [selectedTab, setSelectedTab] = useState<
+    "Available" | "Pending" | "Total"
+  >("Available");
   const [showCryptoBalance, setShowCryptoBalance] = React.useState(false);
   const [showPendingBalance, setShowPendingBalance] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -164,7 +166,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
       {
         id: "Available",
         label: "Available",
-        icon: SvgIcons.OutLineCheckedBox,
+        icon: SvgIcons.ToastChecked,
       },
       { id: "Pending", label: "Pending", icon: SvgIcons.PendingBalance },
       { id: "Total", label: "Total", icon: SvgIcons.DollarIcon },
@@ -178,11 +180,11 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
           borderTopRightRadius: 20,
           width: "100%",
           // padding: 4,
-          marginBottom:0,
+          marginBottom: 0,
           // marginLeft,
-          marginTop:0,
+          marginTop: 0,
           // alignSelf: 'center',
-          justifyContent: 'center',
+          // justifyContent: "center",
           // borderWidth: 1,
           // borderBottomLeftRadius:0,
           // borderBottomRightRadius:0,
@@ -216,7 +218,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
               />
               <CustomText
                 variant="caption"
-                size={9}
+                size={8}
                 color={theme.colors.palette.white}
                 style={{ fontWeight: isSelected ? "700" : "400" }}
               >
@@ -342,7 +344,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
   const handleShowPlatformBalance = async (isShowPlatformBalance: boolean) => {
     // Platform balance is in fiat/banking view, so activeTab = "1"
     useDispatchAction(setActiveTab("1"));
-    
+
     if (!isShowPlatformBalance) {
       setIsLoading(true);
       refetchBankBalanceData();
@@ -356,7 +358,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
   const handleShowCryptoBalance = async (isShowCryptoBalance: boolean) => {
     // Crypto balance is in crypto view, so activeTab = "7"
     useDispatchAction(setActiveTab("7"));
-    
+
     if (!isShowCryptoBalance) {
       setIsLoading(true);
       // Invalidate and refetch crypto balance queries
@@ -393,8 +395,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
               height: 170,
             }}
           >
-            <View style={{ flex: 1, flexDirection: 'column'}}>
-              {renderAvailabelPendingTotalFiatTab()}
+            <View style={{ flex: 1, flexDirection: "column" }}>
               <View
                 style={{
                   flex: 1,
@@ -483,33 +484,39 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
                 </View>
               </View>
             </View>
-            <View
-              style={{
-                flex: 1,
-                // backgroundColor: "green",
-                paddingHorizontal: 20,
-                justifyContent: "center",
-                alignItems: "flex-start",
-              }}
-            >
-              <CustomText color={theme.colors.palette.white} variant={"body1"}>
-                {"PayAiro ID"}
-              </CustomText>
-              <View style={{ flexDirection: "row", gap: 10 }}>
+            <View style={{ flex: 1, flexDirection: "column" }}>
+              {renderAvailabelPendingTotalFiatTab()}
+              <View
+                style={{
+                  flex: 1,
+                  // backgroundColor: "green",
+                  paddingHorizontal: 20,
+                  justifyContent: "center",
+                  alignItems: "flex-start",
+                }}
+              >
                 <CustomText
                   color={theme.colors.palette.white}
-                  variant={"caption"}
+                  variant={"body1"}
                 >
-                  {walletData?.username}
+                  {"PayAiro ID"}
                 </CustomText>
-                <TouchableOpacity
-                  onPress={() => {
-                    copyToClipboard(walletData?.username);
-                    // onCopy();
-                  }}
-                >
-                  <SvgIcons.Copy width={18} height={18} />
-                </TouchableOpacity>
+                <View style={{ flexDirection: "row", gap: 10 }}>
+                  <CustomText
+                    color={theme.colors.palette.white}
+                    variant={"caption"}
+                  >
+                    {walletData?.username}
+                  </CustomText>
+                  <TouchableOpacity
+                    onPress={() => {
+                      copyToClipboard(walletData?.username);
+                      // onCopy();
+                    }}
+                  >
+                    <SvgIcons.Copy width={18} height={18} />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </View>
@@ -599,10 +606,14 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
                 alignItems: "flex-start",
               }}
             >
-              <CustomText color={theme.colors.palette.black} variant={'body1'}>
+              <CustomText color={theme.colors.palette.black} variant={"body1"}>
                 {"Crypto Balance"}
               </CustomText>
-              <CustomText color={theme.colors.palette.red500} size={8}  variant={'caption'}>
+              <CustomText
+                color={theme.colors.palette.red500}
+                size={8}
+                variant={"caption"}
+              >
                 {"Pending + Available Balance"}
               </CustomText>
               <View

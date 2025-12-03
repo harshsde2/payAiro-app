@@ -237,12 +237,13 @@ const customStyles = (theme: Theme) =>
     },
     contentContainer: {
       width: "100%",
-      height: 500,
+      minHeight: 450,
       backgroundColor: theme.colors.palette.white,
       borderTopEndRadius: theme.spacing.spacing[8],
       borderTopStartRadius: theme.spacing.spacing[8],
       padding: theme.spacing.spacing[5],
       paddingVertical: theme.spacing.spacing[10],
+      paddingBottom: theme.spacing.spacing[8],
     },
     signinHeaderContainer: {
       width: "80%",

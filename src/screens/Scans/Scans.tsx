@@ -43,7 +43,7 @@ export default function Scans(): JSX.Element {
         ? "merchantSend"
         : event.nativeEvent.codeStringValue.includes("sending")
         ? "receive"
-        : "receiveMerchent",
+        : "receiveMerchant",
       sender: event.nativeEvent.codeStringValue?.includes("orderID")
         ? JSON.parse(event.nativeEvent.codeStringValue)
         : event.nativeEvent.codeStringValue?.includes("merchantSend")
@@ -121,7 +121,7 @@ export default function Scans(): JSX.Element {
               ? "merchantSend"
               : codeStringValue.includes("sending")
               ? "receive"
-              : "receiveMerchent",
+              : "receiveMerchant",
             sender: codeStringValue?.includes("orderID")
               ? JSON.parse(codeStringValue)
               : codeStringValue?.includes("merchantSend")
@@ -189,7 +189,7 @@ export default function Scans(): JSX.Element {
         </TouchableOpacity>
         <CustomText variant="h3">Scan QR Code</CustomText>
         <CustomText style={{ textAlign: "center" }} variant="subtitle1">
-          Scan the booking QR code or upload one from your gallery.
+          Scan a payment QR code to send or receive money securely.
         </CustomText>
       </View>
       <QRModal isVisible={isVisible} onClose={() => setisVisible(false)} onSelected={() => {}} />
@@ -210,7 +210,7 @@ export default function Scans(): JSX.Element {
         >
             <SvgIcons.ImageIcon />
           <Text style={{ color: "#000", fontFamily: Fonts.bold }}>
-             Upload from Galery
+             Upload from Gallery
           </Text>
         </TouchableOpacity>
       </View>

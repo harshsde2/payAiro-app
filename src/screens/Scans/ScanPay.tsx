@@ -365,7 +365,7 @@ export default function ScanPay(props: IScanPayProps) {
       ? handleRequested()
       : type === "merchantSend"
       ? handleSend()
-      : type === "receiveMerchent"
+      : type === "receiveMerchant"
       ? handleMercentPayment()
       : type === "crypto"
       ? handleCrypto()

@@ -7,7 +7,7 @@ export interface IQRCodeEvent {
 }
 
 export interface IScanPayParams {
-  type: 'request' | 'merchantSend' | 'receive' | 'receiveMerchent';
+  type: 'request' | 'merchantSend' | 'receive' | 'receiveMerchant';
   sender: string | object;
 }
 

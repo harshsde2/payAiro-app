@@ -8,6 +8,7 @@ import {
   Platform,
   ViewStyle,
   StyleProp,
+  Dimensions,
   // SafeAreaView,
 } from "react-native";
 import { useTheme } from "../styles/ThemeContext";
@@ -109,6 +110,8 @@ const ScreenContainer: React.FC<ScreenContainerProps> = ({
       nestedScrollEnabled
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
     >
       {content}
     </ScrollView>
@@ -116,13 +119,39 @@ const ScreenContainer: React.FC<ScreenContainerProps> = ({
     content
   );
 
+  // Determine keyboard handling strategy based on platform and screen dimensions
+  // - iOS: Always use KeyboardAvoidingView with "padding"
+  // - Android tall screens (aspect ratio > 1.7): Use KeyboardAvoidingView with "padding"
+  //   because adjustResize alone may not push content up enough
+  // - Android short/square screens (aspect ratio <= 1.7): Don't use KeyboardAvoidingView
+  //   because it causes double-adjustment conflicts that block touches (e.g., 1080x1280)
+  const keyboardConfig = useMemo(() => {
+    const { height: screenHeight, width: screenWidth } = Dimensions.get("window");
+    const aspectRatio = screenHeight / screenWidth;
+
+    if (Platform.OS === "ios") {
+      return { enabled: true, behavior: "padding" as const, offset: 0 };
+    }
+
+    // For tall Android screens (like 1080x2320, aspect ratio ~2.15)
+    // Use KeyboardAvoidingView with "padding" behavior
+    if (aspectRatio > 1.7) {
+      return { enabled: true, behavior: "padding" as const, offset: 0 };
+    }
+
+    // For short/square Android screens (like 1080x1280, aspect ratio ~1.18)
+    // Don't use KeyboardAvoidingView - rely on native adjustResize
+    return { enabled: false, behavior: "padding" as const, offset: 0 };
+  }, []);
+
   // Add keyboard avoiding if enabled
   const keyboardContent =
-    Platform.OS === "ios" && avoidKeyboard ? (
+    avoidKeyboard && keyboardConfig.enabled ? (
       <KeyboardAvoidingView
         style={styles.keyboardView}
-        behavior="padding"
-        keyboardVerticalOffset={0}
+        behavior={keyboardConfig.behavior}
+        keyboardVerticalOffset={keyboardConfig.offset}
+        enabled={true}
       >
         {scrollContent}
       </KeyboardAvoidingView>
