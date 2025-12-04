@@ -83,9 +83,16 @@ android {
         applicationId "com.payairo"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 17
-        versionName "1.8"
+        versionCode 22
+        versionName "2.3"
         missingDimensionStrategy 'react-native-camera', 'general'
+    }
+
+    // Enable 16 KB page size support
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
     signingConfigs {
         debug {

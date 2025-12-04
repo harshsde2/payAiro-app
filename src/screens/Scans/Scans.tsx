@@ -189,7 +189,7 @@ export default function Scans(): JSX.Element {
         </TouchableOpacity>
         <CustomText variant="h3">Scan QR Code</CustomText>
         <CustomText style={{ textAlign: "center" }} variant="subtitle1">
-          Scan a payment QR code to send or receive money securely.
+          Scan a payment QR code to send money securely.
         </CustomText>
       </View>
       <QRModal isVisible={isVisible} onClose={() => setisVisible(false)} onSelected={() => {}} />
