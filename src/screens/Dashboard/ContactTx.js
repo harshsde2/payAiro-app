@@ -228,16 +228,7 @@ const ContactTx = ({ route }) => {
     return true;
   }, [navigation, isLoading]);
 
-  // Use a proper back handler
-  useEffect(() => {
-    // Add back press listener when component mounts
-    BackHandler.addEventListener("hardwareBackPress", handleBackPress);
-
-    // Return cleanup function
-    return () => {
-      BackHandler.removeEventListener("hardwareBackPress", handleBackPress);
-    };
-  }, [handleBackPress]);
+ 
 
   // Use a wrapper for safe SVG rendering
   const SafeSvgBackButton = ({ onPress }) => {
