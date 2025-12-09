@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { Button, View } from "react-native";
+import { Button, Platform, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
@@ -202,6 +202,18 @@ const CybridWebView = () => {
             }}
             javaScriptEnabled={true}
             style={{ flex: 1 }}
+            // iOS specific props for camera/media access
+            allowsInlineMediaPlayback={true}
+            mediaPlaybackRequiresUserAction={false}
+            mediaCapturePermissionGrantType="grantIfSameHostElsePrompt"
+            allowsFullscreenVideo={false}
+            // Enable getUserMedia for camera access
+            allowsProtectedMedia={true}
+            // Additional iOS WebView settings
+            {...(Platform.OS === "ios" && {
+              allowsLinkPreview: false,
+              bounces: false,
+            })}
           />
         {/* ) : (
           <View
