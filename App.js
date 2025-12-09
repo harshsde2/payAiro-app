@@ -26,7 +26,7 @@ import {
   setWalletData,
 } from "./src/redux/slices/authenticationSlice";
 import SplashScreen from "./src/screens/Authentications/SplashScreen";
-import { getBiometric, getWalletDataAuth } from "./src/services/Auth";
+import { getWalletDataAuth } from "./src/services/Auth";
 import { getMechentPay } from "./src/services/Services";
 import { getItem, STORAGE_KEYS } from "./src/storage/mmkv";
 import { ThemeProvider } from "./src/styles";
@@ -77,7 +77,9 @@ export default function App() {
 
     // const redeem = getItem(STORAGE_KEYS.REDEEM_REWARD);
     const wallet = await getWalletDataAuth();
-    const biometric = await getBiometric();
+    // App Lock feature has been removed - always set biometric to false
+    // This ensures users who had it enabled don't get stuck
+    const biometric = false;
 
     if (token && wallet) {
       // Store token in MMKV for React Query
