@@ -32,6 +32,7 @@ import { getItem, STORAGE_KEYS } from "./src/storage/mmkv";
 import { ThemeProvider } from "./src/styles";
 import GlobalLoader from "./src/tsx-components/GlobalLoader";
 import { LinkingPath } from "./src/utils/linking";
+import { initializeDeepLinking } from "./src/utils/deepLinkHandler";
 import UseNet from './src/utils/UseNet';
 import KycWatchdog from "./src/components/common-components/KycWatchdog";
 import KycBanner from "./src/components/common-components/KycBanner";
@@ -63,6 +64,13 @@ export default function App() {
   // Fetch initial data when app loads
   useEffect(() => {
     getInitialData();
+  }, []);
+
+  // -------------------- Deep Link Initialization --------------------
+  // Initialize deep linking for referral codes
+  useEffect(() => {
+    const cleanup = initializeDeepLinking();
+    return cleanup;
   }, []);
 
   // Get all necessary data from storage and set in Redux

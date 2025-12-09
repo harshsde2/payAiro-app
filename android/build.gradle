@@ -19,4 +19,21 @@ buildscript {
     }
 }
 
+allprojects {
+    repositories {
+        maven { url "https://jitpack.io" }
+    }
+}
+
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.dependencies {
+                // Required for react-native-freshchat-sdk (LocalBroadcastManager)
+                implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.1.0'
+            }
+        }
+    }
+}
+
 apply plugin: "com.facebook.react.rootproject"

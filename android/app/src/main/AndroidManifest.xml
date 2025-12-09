@@ -32,6 +32,20 @@
           <category android:name="android.intent.category.BROWSABLE" />
           <data android:scheme="payairo" />
         </intent-filter>
+        <!-- Deep link for referral: payairo://ref/CODE -->
+        <intent-filter>
+          <action android:name="android.intent.action.VIEW" />
+          <category android:name="android.intent.category.DEFAULT" />
+          <category android:name="android.intent.category.BROWSABLE" />
+          <data android:scheme="payairo" android:host="ref" android:pathPrefix="/" />
+        </intent-filter>
+        <!-- Universal link for referral: https://payairo.app/ref/CODE -->
+        <intent-filter android:autoVerify="true">
+          <action android:name="android.intent.action.VIEW" />
+          <category android:name="android.intent.category.DEFAULT" />
+          <category android:name="android.intent.category.BROWSABLE" />
+          <data android:scheme="https" android:host="payairo.app" android:pathPrefix="/ref" />
+        </intent-filter>
       </activity>
   </application>
 </manifest>

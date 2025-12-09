@@ -106,6 +106,12 @@ export const SETTINGS_LISTS = [
     route: NAVIGATION_SCREENS.SUPPORT_SCREEN,
   },
   {
+    name: "Chat Support",
+    icon: <SvgIcons.ChatSupport />,
+    isDisvled: false,
+    route: NAVIGATION_SCREENS.FRESHCHAT_SCREEN,
+  },
+  {
     name: "Logout",
     icon: <SvgIcons.LogoutIcon />,
     isDisvled: false,
