@@ -1,6 +1,6 @@
 import { useNavigation } from "@react-navigation/native";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { Text, View, TouchableOpacity, StyleSheet, LayoutChangeEvent } from "react-native";
 import { useSelector } from "react-redux";
 import { useTheme } from "styles/ThemeContext";
@@ -25,6 +25,49 @@ const KycBanner: React.FC = () => {
   const kycStatus = useSelector((s: any) => s.authenticationSlice?.kycStatus);
   const [isExpanded, setIsExpanded] = useState(false);
   const [contentHeight, setContentHeight] = useState(0);
+  const [currentRouteName, setCurrentRouteName] = useState<string | null>(null);
+
+  // Helper function to get the focused route recursively (handles nested navigators)
+  const getFocusedRoute = useCallback((navState: any): any => {
+    if (!navState) return null;
+    
+    const route = navState.routes[navState.index];
+    if (!route) return null;
+    
+    // If this route has nested state, get the focused route from it
+    if (route.state) {
+      const nestedRoute = getFocusedRoute(route.state);
+      if (nestedRoute) return nestedRoute;
+    }
+    
+    return route;
+  }, []);
+
+  // Track current route using navigation state
+  useEffect(() => {
+    const updateRoute = () => {
+      try {
+        const state = navigation.getState();
+        if (state) {
+          const focusedRoute = getFocusedRoute(state);
+          setCurrentRouteName(focusedRoute?.name || null);
+        }
+      } catch (error) {
+        // Navigation state not available yet
+        setCurrentRouteName(null);
+      }
+    };
+
+    // Get initial route
+    updateRoute();
+
+    // Set up interval to check route changes (since we're outside a screen)
+    const interval = setInterval(updateRoute, 200);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [navigation, getFocusedRoute]);
 
   const mode = useMemo(() => toKycMode(kycStatus), [kycStatus]);
 
@@ -128,6 +171,16 @@ const KycBanner: React.FC = () => {
   const styles = getStyles(theme, textColor, isNotStarted, COLLAPSED_HEIGHT);
 
   // Early return AFTER all hooks have been called
+  // Hide banner on Personal or CybridWebView screens
+  if (
+    currentRouteName &&
+    (currentRouteName === NAVIGATION_SCREENS.PERSONAL ||
+      currentRouteName === NAVIGATION_SCREENS.CYBRID_WEB_VIEW)
+  ) {
+    return null;
+  }
+
+  // Early return if KYC is not pending or not started
   if (mode !== "pending" && mode !== "not_started") return null;
 
   return (
