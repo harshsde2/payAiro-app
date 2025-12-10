@@ -36,6 +36,7 @@ const CybridWebView = () => {
   const pinScreenRef = useRef<PinScreenRef | any>();
   const { URL, isUserAlreadyCreated } = route.params as any;
 
+  console.log("URL ->", URL);
   const globalStyles = useGlobalStyles();
   const webviewRef = useRef(null);
   const [isKycCompleted, setIsKycCompleted] = React.useState(

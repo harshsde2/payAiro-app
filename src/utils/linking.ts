@@ -7,7 +7,7 @@ import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 // type RootStackParamList = { ... };
 
 export const LinkingPath: LinkingOptions<any> = {
-  prefixes: ["payairo://", "https://payairo.com"],
+  prefixes: ["payairo://", "https://payairo.com", "https://payairo.app"],
   config: {
     screens: {
       [NAVIGATION_SCREENS.NEW_DASHBOARD]: "dashboard",

@@ -104,6 +104,7 @@ export const NAVIGATION_SCREENS = {
   ACH_TRANSFER: "ACHTransfer",
   DEBIT_CARD_SCREEN: "DebitCardScreen",
   SUPPORT_SCREEN: "SupportScreen",
+  FRESHCHAT_SCREEN: "FreshchatScreen",
   RESULT: "Result",
   TRANSACTION_RESULT: "TransactionResult",
   PLAID_LINK_SCREEN: "PlaidLinkScreen",

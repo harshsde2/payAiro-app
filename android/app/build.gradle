@@ -128,6 +128,9 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    
+    // Required for react-native-freshchat-sdk (LocalBroadcastManager)
+    implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.1.0'
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
