@@ -26,6 +26,8 @@ import {
   SVGVoucher,
 } from "./images";
 import { SvgIcons } from "./svgs";
+import { View } from "react-native";
+import { themes } from "styles";
 
 export const REWARDS = [
   {
@@ -33,18 +35,20 @@ export const REWARDS = [
     bgColor: "rgba(255, 234, 177, 0.7)",
     icon: <SvgIcons.RewardsIcon />,
     route: NAVIGATION_SCREENS.SCRATCH,
+    earned: 100,
   },
-  {
-    name: "Vouchers",
-    bgColor: "rgba(255, 234, 177, 0.7)",
-    icon: <SvgIcons.Vouchers />,
-    route: NAVIGATION_SCREENS.VOUCHERS_SCREENS,
-  },
+  // {
+  //   name: "Vouchers",
+  //   bgColor: "rgba(255, 234, 177, 0.7)",
+  //   icon: <SvgIcons.Vouchers />,
+  //   route: NAVIGATION_SCREENS.VOUCHERS_SCREENS,
+  // },
   {
     name: "Referrals",
-    bgColor: "rgba(255, 234, 177, 0.7)",
+    bgColor: "rgba(206, 177, 255, 0.7)",
     icon: <SvgIcons.ReferralsIcon />,
-    route: NAVIGATION_SCREENS.REWARDS,
+    route: NAVIGATION_SCREENS.REFERRAL_SCREEN,
+    earned: 5,
   },
 ];
 
@@ -80,6 +84,14 @@ export const SETTINGS_LISTS = [
     icon: <SvgIcons.BankStatement />,
     isDisvled: false,
     route: NAVIGATION_SCREENS.STATEMENT,
+  },
+  {
+    name: "Rewards & Referrals",
+    icon: <View style={{backgroundColor: themes.dark.colors.palette.green700, justifyContent: 'center', alignItems: 'center',borderRadius: 25,width: 55,height:45}}>
+      <SvgIcons.Refferal width={25} height={25} />
+    </View>,
+    isDisvled: false,
+    route: NAVIGATION_SCREENS.REWARDS,
   },
   // {
   //   name: "Alerts",

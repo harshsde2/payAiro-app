@@ -46,7 +46,7 @@ const GenericButton: FC<GenericButtonProps> = ({
           >
             {title}
           </CustomText>
-          {icon && <SvgIcons.Copy />}
+          {icon && <SvgIcons.Copy style={{ marginLeft: 10 }} />}
         </View>
       )}
 

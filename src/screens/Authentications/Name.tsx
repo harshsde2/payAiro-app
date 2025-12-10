@@ -3,7 +3,7 @@ import { ScreenContainer } from "HOC";
 import { SVGChecked, SVGUnChecked } from "constants/images";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { useCreatePin, usePatchUserDetails, useStepCount } from "query/hooks/useAPIAuth";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -28,7 +28,7 @@ import {
   setWalletData,
 } from "../../redux/slices/authenticationSlice";
 import { showError, showSuccess } from "../../utils/toast";
-import { getItem, removeItem, setItem, STORAGE_KEYS } from "storage/mmkv";
+import { setItem, STORAGE_KEYS } from "storage/mmkv";
 import { useDispatch } from "react-redux";
 import { useWalletDetails } from "query/hooks";
 import { setWalletDataAuth } from "services/Auth";
@@ -55,7 +55,6 @@ export default function Name(props: any) {
   const [checked, setchecked] = useState(false);
   const [checkedCybridUserAgreement, setcheckedCybridUserAgreement] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
-  const [referralCode, setReferralCode] = useState("");
   const [countryCode, setCountryCode] = useState({
     country: "+1",
     code: "+1",
@@ -75,15 +74,6 @@ export default function Name(props: any) {
   const {
     refetch: refetchWalletDetails,
   } = useWalletDetails(false);
-
-  // Check for stored referral code from deep link on mount
-  useEffect(() => {
-    const storedReferralCode = getItem(STORAGE_KEYS.REFERRAL_CODE);
-    if (storedReferralCode) {
-      console.log("Auto-filling referral code:", storedReferralCode);
-      setReferralCode(storedReferralCode);
-    }
-  }, []);
 
   const getCurrentStep = () => {
     stepCount({ stepcount: stepcount } as any, {
@@ -126,12 +116,6 @@ export default function Name(props: any) {
     payload.append("usernames", uname);
     payload.append("lastname", lname);
     payload.append("patriot_esign", checked);
-    
-    // Include referral code if present
-    if (referralCode && referralCode.trim().length > 0) {
-      payload.append("referral_code", referralCode.trim());
-    }
-    
     setIsPending(true);
     patchUser(payload as any, {
       onSuccess: (datas : any) => {
@@ -141,9 +125,6 @@ export default function Name(props: any) {
         console.log("datas =>", JSON.stringify(datas, null, 2));
         if (datas && datas?.status) {
           showSuccess("Name & PayAiro Has Been Updated Successfully");
-          
-          // Clear referral code from storage after successful submission
-          removeItem(STORAGE_KEYS.REFERRAL_CODE);
 
           if (datas?.fortress == true) {
             (navigation as any).navigate(NAVIGATION_SCREENS.ADDRESS);
@@ -306,13 +287,6 @@ export default function Name(props: any) {
               maxLength={10}
             />
           </View>
-          <TextInputField
-            label="Referral Code (Optional)"
-            placeholder="Enter referral code"
-            value={referralCode}
-            onChange={setReferralCode}
-            cStyle={{}}
-          />
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => {

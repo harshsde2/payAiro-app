@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
@@ -16,6 +16,7 @@ import { SCREENS } from "constants/SCREENS";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { showError, showSuccess } from "utils/toast";
 import { useSignUp } from "query/hooks/useAPIAuth";
+import { getItem, removeItem, STORAGE_KEYS } from "storage/mmkv";
 
 const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
 
@@ -31,8 +32,18 @@ export default function Signup() {
   const [isPoliticallyExposed, setIsPoliticallyExposed] = useState(false);
   const [isPoliticalModalVisible, setIsPoliticalModalVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [referralCode, setReferralCode] = useState("");
 
   const { mutate: signUp, isPending } = useSignUp();
+
+  // Check for stored referral code from deep link on mount
+  useEffect(() => {
+    const storedReferralCode = getItem(STORAGE_KEYS.REFERRAL_CODE);
+    if (storedReferralCode) {
+      console.log("Auto-filling referral code:", storedReferralCode);
+      setReferralCode(storedReferralCode);
+    }
+  }, []);
 
   const validateForm = (): boolean => {
     const trimmedEmail = email.trim();
@@ -71,25 +82,36 @@ export default function Signup() {
 
     setIsSubmitting(true);
 
-    signUp(
-      { email: email.trim().toLowerCase(), location: selectedState } as any,
-      {
-        onSuccess: (data: any) => {
-          setIsSubmitting(false);
-          if (data?.status) {
-            console.log("data =>", JSON.stringify(data, null, 2));
-            showSuccess("OTP has been sent to your email");
-            navigation.navigate(SCREENS.OTP, { email });
-          } else {
-            showError("Email address already exists");
-          }
-        },
-        onError: () => {
-          setIsSubmitting(false);
-          showError("Failed to send OTP. Please try again");
-        },
-      }
-    );
+    const payload: any = {
+      email: email.trim().toLowerCase(),
+      location: selectedState,
+    };
+
+    // Include referral code if present
+    if (referralCode && referralCode.trim().length > 0) {
+      payload.ref_code = referralCode.trim();
+    }
+
+    signUp(payload, {
+      onSuccess: (data: any) => {
+        setIsSubmitting(false);
+        if (data?.status) {
+          console.log("data =>", JSON.stringify(data, null, 2));
+          showSuccess("OTP has been sent to your email");
+          
+          // Clear referral code from storage after successful submission
+          removeItem(STORAGE_KEYS.REFERRAL_CODE);
+          
+          navigation.navigate(SCREENS.OTP, { email });
+        } else {
+          showError("Email address already exists");
+        }
+      },
+      onError: () => {
+        setIsSubmitting(false);
+        showError("Failed to send OTP. Please try again");
+      },
+    });
   };
 
   const handleStateSelection = (state: string) => {
@@ -182,6 +204,12 @@ export default function Signup() {
             onChange={setEmail}
             label="Enter your email"
             required={true}
+          />
+          <TextInputField
+            placeholder="Enter referral code"
+            value={referralCode}
+            onChange={setReferralCode}
+            label="Referral Code (Optional)"
           />
           <View style={styles.checkboxContainer}>
             <TouchableOpacity

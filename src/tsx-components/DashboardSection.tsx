@@ -49,6 +49,7 @@ export default memo(DashboardSection);
 const styles = StyleSheet.create({
   container: {
     // flex:1,
+  marginVertical:5,
   },
   contentContainer: {
     // flex: 1,

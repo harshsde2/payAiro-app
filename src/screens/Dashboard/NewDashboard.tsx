@@ -83,6 +83,7 @@ import { Card, CustomText, DashboardHeader } from "../../utils/moduleAlias";
 import useSelectorAction from "hooks/useSelectorAction";
 import PlaidLinkButton from "tsx-components/PlaidLinkButton";
 import { UnifiedTransactionCard } from "screens/TSX-Screens/UnifiedTransactions";
+import ReferralCard from "tsx-components/ReferralCard";
 
 // Lazy load non-critical components
 const LazyBankModal = lazy(() => import("components/BankModal"));
@@ -1011,6 +1012,10 @@ const NewDashboard = () => {
       isVisble3: isCrypto,
     });
   }, [navigation, isCrypto]);
+
+  const onRewardSeeALl = useCallback(() => {
+    navigation.navigate(NAVIGATION_SCREENS.REWARDS);
+  }, [navigation]);
 
   // Memoize expensive calculations and derived state
   const sortedTxLists = useMemo(() => {
@@ -2098,6 +2103,23 @@ const NewDashboard = () => {
                     )}
                   </MemoizedDashboardSection>
                 )}
+                {isCrypto && (
+                  <MemoizedDashboardSection
+                    title="Rewards & Referrals"
+                    actionText="see all"
+                    onActionPress={onRewardSeeALl}
+                    contentContainerStyle={{
+                      flexDirection: "row",
+                      justifyContent: "flex-start",
+                      alignItems: "center",
+                      gap: 10,
+                    }}
+                  >
+                    {REWARDS.map((item, index) => (
+                      <MemoizedRewards key={index} item={item} />
+                    ))}
+                  </MemoizedDashboardSection>
+                )}
               </>
             )}
             {isCrypto && <CryptoFinanceSection navigation={navigation} />}
@@ -2223,6 +2245,7 @@ const NewDashboard = () => {
                 />
               </DashboardSection>
             )}
+            <ReferralCard />
             {/* {isCrypto && <CryptoRewardsSection />} */}
             {/* {isCrypto && (
               <CryptoOtherServicesSection

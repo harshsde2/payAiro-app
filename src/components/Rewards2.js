@@ -5,13 +5,15 @@ import Fonts from "../constants/Fonts";
 import { SvgXml } from "react-native-svg";
 import { SVGReward } from "../constants/images";
 import { SvgIcons } from "constants/svgs";
+import { useNavigation } from "@react-navigation/native";
 
-export default function Rewards2() {
+export default function Rewards2({ item }) {
+  const navigation = useNavigation();
   return (
     <View
       style={{
         borderRadius: 10,
-        backgroundColor: "rgba(255, 234, 177, 0.7)",
+        backgroundColor: item?.bgColor ?? "rgba(255, 234, 177, 0.7)",
         padding: 10,
         width: "100%",
         marginHorizontal: 5,
@@ -43,7 +45,7 @@ export default function Rewards2() {
             alignSelf: "center",
           }}
         >
-          <SvgIcons.RewardsIcon />
+          {item?.icon}
         </View>
         <View style={{ marginLeft: 10 }}>
           <Text
@@ -53,7 +55,7 @@ export default function Rewards2() {
               //   marginBottom: 10,
             }}
           >
-            Reffral
+            {item?.name ?? ""}
           </Text>
           <Text
             style={{
@@ -63,13 +65,16 @@ export default function Rewards2() {
               fontSize: 12,
             }}
           >
-            Earned $115 from Referral
+            Earned ${item?.earned ?? 0} from {item?.name ?? "Rewards"}
           </Text>
         </View>
       </View>
 
       <GenericButton
         title={"Explore "}
+        onPress={() => {
+          navigation.navigate(item?.route ?? "");
+        }}
         cStyle={{
           backgroundColor: "#000",
           paddingHorizontal: 10,

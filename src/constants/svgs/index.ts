@@ -109,6 +109,8 @@ import TransactionSentIcon from "./TransactionSent.svg";
 import SendMessageIcon from "./SendMessageIcon.svg";
 import MoneyReciveIcon from "./MoneyRecive.svg";
 import MoneySendIcon from "./MoneySend.svg";
+import Refferal from "./Refferal.svg";
+import ReferAndEarn from "./ReferAndEarn.svg";
 
 export const SvgIcons = {
   PayAiorRoundIcon,
@@ -222,4 +224,6 @@ export const SvgIcons = {
   SendMessageIcon,
   MoneyReciveIcon,
   MoneySendIcon,
+  Refferal,
+  ReferAndEarn,
 };

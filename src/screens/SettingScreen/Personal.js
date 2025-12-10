@@ -91,6 +91,7 @@ export default function Personal() {
           }
         },
         onError: (error) => {
+          console.log(JSON.stringify(error.response, null, 2), "error");
             showError("Failed to start KYC");
         },
       });

@@ -15,47 +15,48 @@ export default function Rewards({ item }) {
       onPress={() =>
         navigation.navigate(item?.route ?? NAVIGATION_SCREENS.SCRATCH)
       }
+      activeOpacity={0.7}
       style={{
         borderRadius: 10,
         backgroundColor: item?.bgColor ?? "rgba(255, 234, 177, 0.7)",
-        padding: 20,
+        padding: 10,
         width: 110,
         marginRight: 5,
       }}
     >
-      <View
-        style={{
-          width: 60,
-          height: 60,
-          borderRadius: 35,
-          justifyContent: "center",
-          alignItems: "center",
-          overflow: "hidden",
-          backgroundColor: "#fff",
-          alignSelf: "center",
-        }}
-      >
-        {item?.icon}
-      </View>
+      <View style={{ width: '100%',marginBottom: 10 }}>
+        <View
+          style={{
+            width: 60,
+            height: 60,
+            borderRadius: 35,
+            justifyContent: "center",
+            alignItems: "center",
+            overflow: "hidden",
+            backgroundColor: "#fff",
+            alignSelf: "center",
+          }}
+        >
+          {item?.icon}
+        </View>
 
-      <Text
-        style={{
-          textAlign: "center",
-          fontFamily: Fonts.semibold,
-          marginBottom: 10,
-        }}
-      >
-        {item?.name ?? "Rewards"}
-      </Text>
+        <Text
+          style={{
+            textAlign: "center",
+            fontFamily: Fonts.semibold,
+            marginBottom: 10,
+          }}
+        >
+          {item?.name ?? "Rewards"}
+        </Text>
+      </View>
 
       <GenericButton
         title={"Explore"}
+        tStyle={{ fontSize: 10 }}
         cStyle={{
           backgroundColor: "#000",
-          padding: 5,
-          // width: "100%",
-          justifyContent: "center",
-          alignItems: "center",
+          padding: 3,
         }}
         // tStyle={{color: 'white', fontSize: 10}}
         disabled={true}

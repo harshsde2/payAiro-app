@@ -181,6 +181,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
           width: "100%",
           // padding: 4,
           marginBottom: 0,
+          marginLeft:10,
           // marginLeft,
           marginTop: 0,
           // alignSelf: 'center',
@@ -201,9 +202,9 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                backgroundColor: isSelected
-                  ? theme.colors.palette.green500
-                  : "transparent",
+                // backgroundColor: isSelected
+                //   ? theme.colors.palette.green500
+                //   : "transparent",
                 paddingVertical: 6,
                 paddingHorizontal: 12,
                 borderRadius: 20,
@@ -218,7 +219,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
               />
               <CustomText
                 variant="caption"
-                size={8}
+                size={isSelected ? 10 : 8}
                 color={theme.colors.palette.white}
                 style={{ fontWeight: isSelected ? "700" : "400" }}
               >
@@ -395,10 +396,11 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
               height: 170,
             }}
           >
+            {renderAvailabelPendingTotalFiatTab()}
             <View style={{ flex: 1, flexDirection: "column" }}>
               <View
                 style={{
-                  flex: 1,
+                  // flex: 1,
                   // backgroundColor: "red",
                   paddingHorizontal: 20,
                   justifyContent: "center",
@@ -485,7 +487,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
               </View>
             </View>
             <View style={{ flex: 1, flexDirection: "column" }}>
-              {renderAvailabelPendingTotalFiatTab()}
+              
               <View
                 style={{
                   flex: 1,

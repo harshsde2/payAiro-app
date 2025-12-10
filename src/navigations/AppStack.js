@@ -15,6 +15,7 @@ import StocksProfile from "screens/TSX-Screens/RWA/StocksProfile";
 import TransactionSuccessScreen from "screens/TSX-Screens/RWA/TransactionSuccessScreen";
 import SupportScreen from "screens/TSX-Screens/Settings/SupportScreen";
 import FreshchatScreen from "screens/TSX-Screens/Settings/FreshchatScreen";
+import ReferralScreen from "screens/TSX-Screens/Settings/ReferralScreen";
 import TrustedCircle from "screens/TSX-Screens/TrustedCircle";
 import ScratchCard from "../components/ScratchCard";
 import ScratchDetails from "../components/ScratchDetails";
@@ -485,6 +486,11 @@ export default function AppStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.FRESHCHAT_SCREEN}
         component={FreshchatScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.REFERRAL_SCREEN}
+        component={ReferralScreen}
       />
       <Stack.Screen
         options={{ headerShown: false }}

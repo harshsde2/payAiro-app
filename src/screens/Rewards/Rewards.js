@@ -16,6 +16,8 @@ import useDispatchAction from "../../hooks/useDispatchAction";
 import { setActiveTab } from "../../redux/slices/authenticationSlice";
 import Fonts from "../../constants/Fonts";
 import { ScreenContainer } from "HOC";
+import { REWARDS } from "constants/constant";
+import ReferralCard from "tsx-components/ReferralCard";
 
 export default function Rewards() {
   const isFoucused = useIsFocused();
@@ -37,7 +39,7 @@ export default function Rewards() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ flexGrow: 1 }}
         >
-          <HeaderTitle title={"Offer & Rewards"} />
+          <HeaderTitle title={"Offer & Rewards"} leftIcon={"true"} />
           <View
             style={{
               flex: 1,
@@ -49,37 +51,13 @@ export default function Rewards() {
               paddingBottom: 100,
             }}
           >
-            {activeTab === "1" && (
               <>
-                {[1, 2, 3, 4].map((item, index) => (
-                  <Rewards2 key={index} />
+                {REWARDS.map((item, index) => (
+                  <Rewards2 key={index} item={item} />
                 ))}
               </>
-            )}
-            {activeTab === "2" && (
-              <>
-                <Image
-                  source={require("../../../assets/images/coupn1.png")}
-                  style={{ resizeMode: "contain", width: "100%", height: 140 }}
-                />
-                <Image
-                  source={require("../../../assets/images/coupn2.png")}
-                  style={{ resizeMode: "contain", width: "100%", height: 140 }}
-                />
-                <Image
-                  source={require("../../../assets/images/coupn3.png")}
-                  style={{ resizeMode: "contain", width: "100%", height: 140 }}
-                />
-                <Image
-                  source={require("../../../assets/images/coupn4.png")}
-                  style={{ resizeMode: "contain", width: "100%", height: 140 }}
-                />
-                <Image
-                  source={require("../../../assets/images/coupn5.png")}
-                  style={{ resizeMode: "contain", width: "100%", height: 140 }}
-                />
-              </>
-            )}
+
+          <ReferralCard />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
