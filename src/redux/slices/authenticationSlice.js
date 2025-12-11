@@ -48,6 +48,7 @@ const initialState = {
   cryptoData: null,
   allCryptoBalances: [],
   kycStatus: null,
+  currentRoute: null,
 };
 
 const authenticationSlice = createSlice({
@@ -159,6 +160,9 @@ const authenticationSlice = createSlice({
     setKycStatus: (state, action) => {
       state.kycStatus = action.payload;
     },
+    setCurrentRoute: (state, action) => {
+      state.currentRoute = action.payload;
+    },
     resetState: () => initialState,
   },
 });
@@ -198,6 +202,7 @@ export const {
   setAllCryptoBalances,
   setKycStatus,
   setIsTransactionInProgress,
+  setCurrentRoute,
 } = authenticationSlice.actions;
 
 export default authenticationSlice.reducer;

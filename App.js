@@ -16,6 +16,7 @@ import {
   setAllCryptoBalances,
   setBiometricAvailable,
   setCryptoData,
+  setCurrentRoute,
   setFcmToken,
   setLogin,
   setPendingRequest,
@@ -313,6 +314,28 @@ export default function App() {
           <NavigationContainer
             linking={LinkingPath}
             onStateChange={(state) => {
+              // Helper function to get the focused route recursively (handles nested navigators)
+              const getFocusedRoute = (navState) => {
+                if (!navState) return null;
+                const route = navState.routes[navState.index];
+                if (!route) return null;
+                
+                // If this route has nested state, get the focused route from it
+                if (route.state) {
+                  const nestedRoute = getFocusedRoute(route.state);
+                  if (nestedRoute) return nestedRoute;
+                }
+                
+                return route;
+              };
+
+              const focusedRoute = getFocusedRoute(state);
+              const currentRouteName = focusedRoute?.name || null;
+              
+              // Dispatch current route to Redux
+              dispatch(setCurrentRoute(currentRouteName));
+
+              // Existing logic for active tabs
               const currentRoute = state.routes[state.index];
               // console.log('Current Screen:', currentRoute.name);
               let activeTabs = "1"; // Default to home (or whichever default)

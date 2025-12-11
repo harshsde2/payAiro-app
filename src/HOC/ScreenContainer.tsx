@@ -15,6 +15,7 @@ import { useTheme } from "../styles/ThemeContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSelector } from "react-redux";
 import { toKycMode } from "../types/kyc";
+import { NAVIGATION_SCREENS } from "../navigations/navigationConstants";
 
 interface ScreenContainerProps {
   children: ReactNode;
@@ -53,8 +54,14 @@ const ScreenContainer: React.FC<ScreenContainerProps> = ({
   
   // Check if KYC banner is visible to determine safe area edges
   const kycStatus = useSelector((s: any) => s.authenticationSlice?.kycStatus);
+  const currentRoute = useSelector((s: any) => s.authenticationSlice?.currentRoute);
   const kycMode = useMemo(() => toKycMode(kycStatus), [kycStatus]);
-  const isBannerVisible = kycMode === "pending" || kycMode === "not_started";
+  
+  // Banner is visible if KYC is pending/not_started AND not on screens where banner is hidden
+  const isBannerVisible = 
+    (kycMode === "pending" || kycMode === "not_started") &&
+    currentRoute !== NAVIGATION_SCREENS.PERSONAL &&
+    currentRoute !== NAVIGATION_SCREENS.CYBRID_WEB_VIEW;
   
   // Determine safe area edges: exclude top if banner is visible, include it if not
   const safeAreaEdges: ("top" | "bottom" | "left" | "right")[] = isBannerVisible 
