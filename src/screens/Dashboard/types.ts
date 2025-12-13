@@ -15,6 +15,9 @@ export interface ITransactionItem {
   type: "credit" | "debit";
   option?: string;
   transaction_id?: string;
+  account_holder?: string;
+  account_number?: string;
+  routing_number?: string;
 }
 
 export interface IStatementDetailsRouteParams {

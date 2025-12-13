@@ -5,8 +5,9 @@ import { ApiResponse, CryptoAsset } from "../../api/types";
 import { queryStaleTime } from "query/queryConfigs";
 import useSelectorAction from "hooks/useSelectorAction";
 import { useDispatch } from "react-redux";
-import { setAllCryptoBalances } from "../../redux/slices/authenticationSlice";
+import { setAllCryptoBalances, setTotalDisbursable, setCryptoData } from "../../redux/slices/authenticationSlice";
 import { setItem, getItem, STORAGE_KEYS } from "../../storage/mmkv";
+import { useSelector } from "react-redux";
 
 // Query keys
 export const cryptoKeys = {
@@ -293,4 +294,50 @@ export const useDepositAddress = () => {
       console.log("Error getting deposit address =>", JSON.stringify(error, null, 2));
     },
   });
+};
+
+/**
+ * Hook to refresh crypto balance for the currently selected currency
+ * This updates Redux state and MMKV storage with the latest balance
+ */
+export const useRefreshCryptoBalance = () => {
+  const dispatch = useDispatch();
+  const { selectCurrency } = useSelectCryptoCurrency();
+  const selectedCurrency = useSelector((state: any) => state.authenticationSlice.selectedCurrency);
+
+  const refreshBalance = async (currencySymbol?: string) => {
+    try {
+      // Use provided symbol or fall back to selectedCurrency from Redux
+      const symbol = currencySymbol || selectedCurrency?.symbol;
+      
+      if (!symbol) {
+        console.log("No currency symbol provided for balance refresh");
+        return null;
+      }
+
+      // Fetch the updated balance
+      const result = await selectCurrency(symbol);
+
+      if (result?.data) {
+        // Update Redux state
+        dispatch(setTotalDisbursable(result.data.rounded_balance));
+        dispatch(setCryptoData(result.data));
+
+        // Update MMKV storage for persistence
+        setItem(STORAGE_KEYS.TOTAL_DISBURSABLE, JSON.stringify(result.data.rounded_balance));
+        setItem(STORAGE_KEYS.CRYPTO_DATA, JSON.stringify(result.data));
+
+        return result.data;
+      }
+
+      return null;
+    } catch (error) {
+      console.log("Error refreshing crypto balance:", error);
+      throw error;
+    }
+  };
+
+  return {
+    refreshBalance,
+  };
 };

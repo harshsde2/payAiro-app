@@ -1305,7 +1305,7 @@ const NewTransactionDetails: FC = () => {
                   )}
 
                   {/* From Address */}
-                  {fromAddress && (
+                  {/* {fromAddress && (
                     <View style={styles(theme).detailRow}>
                       <CustomText 
                         variant={SLIP_LABEL_VARIANT} 
@@ -1334,7 +1334,7 @@ const NewTransactionDetails: FC = () => {
                         />
                       </TouchableOpacity>
                     </View>
-                  )}
+                  )} */}
 
                   {/* To Address (External Address) */}
                   {toAddress && (

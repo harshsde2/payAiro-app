@@ -80,6 +80,13 @@ const OTP = () => {
   };
 
   const handleOtpChange = (text: string, index: number) => {
+    // Check if text length is greater than 1 (paste scenario)
+    if (text.length > 1) {
+      handlePasteText(text, index);
+      return;
+    }
+
+    // Handle single character input or deletion
     if (/^[0-9]$/.test(text) || text === "") {
       const newOtp = [...otp];
       newOtp[index] = text;
@@ -94,6 +101,31 @@ const OTP = () => {
       if (!text && index > 0) {
         inputs.current[index - 1]?.focus();
       }
+    }
+  };
+
+  // Handle pasted text
+  const handlePasteText = (text: string, startIndex: number) => {
+    // Extract only numbers from pasted text
+    const numbers = text.replace(/[^0-9]/g, '');
+    
+    if (numbers.length > 0) {
+      const newOtp = [...otp];
+      
+      // Fill from the start index onwards
+      let currentIndex = startIndex;
+      for (let i = 0; i < numbers.length && currentIndex < 6; i++) {
+        newOtp[currentIndex] = numbers[i];
+        currentIndex++;
+      }
+      
+      setOtp(newOtp);
+      
+      // Focus on next empty field or last field
+      const nextIndex = Math.min(currentIndex, 5);
+      setTimeout(() => {
+        inputs.current[nextIndex]?.focus();
+      }, 0);
     }
   };
 
@@ -179,7 +211,7 @@ const OTP = () => {
               <TextInput
                 key={index}
                 style={[styles.otpInput, digit && styles.otpInputActive]}
-                maxLength={1}
+                maxLength={6}
                 keyboardType="number-pad"
                 onChangeText={(text) => handleOtpChange(text, index)}
                 onKeyPress={({ nativeEvent }) =>
@@ -187,6 +219,8 @@ const OTP = () => {
                 }
                 ref={(input) => (inputs.current[index] = input)}
                 value={digit}
+                editable={!isVerifying}
+                contextMenuHidden={false}
                 selectTextOnFocus
               />
             ))}

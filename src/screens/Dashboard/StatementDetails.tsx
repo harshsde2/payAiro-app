@@ -41,6 +41,7 @@ export default function StatementDetails() {
   const { data } = (route.params as IStatementDetailsRouteParams) || {
     data: [],
   };
+  console.log(JSON.stringify(data, null, 2), "data");
 
   const filteredData = data.filter((item) => {
     if (!searchText.trim()) return true;
@@ -49,7 +50,10 @@ export default function StatementDetails() {
       item.sender?.toLowerCase().includes(searchLower) ||
       item.amount?.toLowerCase().includes(searchLower) ||
       item.status?.toLowerCase().includes(searchLower) ||
-      item.transaction_id?.toLowerCase().includes(searchLower)
+      item.transaction_id?.toLowerCase().includes(searchLower) ||
+      item.account_holder?.toLowerCase().includes(searchLower) ||
+      item.account_number?.toLowerCase().includes(searchLower) ||
+      item.routing_number?.toLowerCase().includes(searchLower)
     );
   });
 
@@ -86,12 +90,15 @@ export default function StatementDetails() {
             <table>
               <thead>
                 <tr>
-                  <th>Amount</th>
                   <th>Date & Time</th>
+                  <th>Amount</th>
                   <th>Sender</th>
                   <th>Transaction Type</th>
                   <th>Status</th>
                   <th>Transaction ID</th>
+                  <th>Account Holder</th>
+                  <th>Account Number</th>
+                  <th>Routing Number</th>
                 </tr>
               </thead>
               <tbody>
@@ -99,12 +106,20 @@ export default function StatementDetails() {
                   .map(
                     (item) => `
                       <tr>
+                        <td>${moment(item.datetime).format("YYYY-MMM-DD , LT")}</td>
                         <td>${item.amount}</td>
-                        <td>${item.datetime}</td>
                         <td>${item.sender}</td>
-                        <td>${item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : "N/A"}</td>
+                        <td>${
+                          item.type
+                            ? item.type.charAt(0).toUpperCase() +
+                              item.type.slice(1)
+                            : "N/A"
+                        }</td>
                         <td>${item.status}</td>
                         <td>${item.transaction_id || item.option || ""}</td>
+                        <td>${item.account_holder || "N/A"}</td>
+                        <td>${item.account_number || "N/A"}</td>
+                        <td>${item.routing_number || "N/A"}</td>
                       </tr>
                     `
                   )
@@ -149,7 +164,7 @@ export default function StatementDetails() {
       }
     } catch (error: any) {
       console.log("PDF Generation Error:", error);
-      
+
       // Check if user cancelled the share action
       const isUserCancelled =
         error?.message?.toLowerCase().includes("user did not share") ||
@@ -204,6 +219,37 @@ export default function StatementDetails() {
                     >
                       {moment(item?.datetime).format("YYYY-MMM-DD , LT")}
                     </CustomText>
+                    {(item?.account_holder || item?.account_number || item?.routing_number) && (
+                      <View style={styles.accountDetailsContainer}>
+                        {item?.account_holder && (
+                          <CustomText
+                            variant="caption"
+                            color={theme.colors.text.tertiary}
+                            style={styles.accountDetailText}
+                          >
+                            Account Holder: {item.account_holder}
+                          </CustomText>
+                        )}
+                        {item?.account_number && (
+                          <CustomText
+                            variant="caption"
+                            color={theme.colors.text.tertiary}
+                            style={styles.accountDetailText}
+                          >
+                            Account Number: {item.account_number}
+                          </CustomText>
+                        )}
+                        {item?.routing_number && (
+                          <CustomText
+                            variant="caption"
+                            color={theme.colors.text.tertiary}
+                            style={styles.accountDetailText}
+                          >
+                            Routing Number: {item.routing_number}
+                          </CustomText>
+                        )}
+                      </View>
+                    )}
                   </View>
                   <View style={styles.transactionRight}>
                     <CustomText
@@ -221,7 +267,10 @@ export default function StatementDetails() {
                       {item.type === "credit" ? (
                         <SvgIcons.TransactionSentIcon width={16} height={16} />
                       ) : (
-                        <SvgIcons.TransactionReciveIcon width={16} height={16} />
+                        <SvgIcons.TransactionReciveIcon
+                          width={16}
+                          height={16}
+                        />
                       )}
                       <CustomText
                         variant="body1"
@@ -264,7 +313,9 @@ export default function StatementDetails() {
               color={theme.colors.palette.green700}
             />
           </View>
-          <CustomText variant="body2"  color={theme.colors.text.primary}>Support</CustomText>
+          <CustomText variant="body2" color={theme.colors.text.primary}>
+            Support
+          </CustomText>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.actionButton}
@@ -278,7 +329,9 @@ export default function StatementDetails() {
               color={theme.colors.palette.green700}
             />
           </View>
-          <CustomText variant="body2"  color={theme.colors.text.primary}>Download</CustomText>
+          <CustomText variant="body2" color={theme.colors.text.primary}>
+            Download
+          </CustomText>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.actionButton}
@@ -293,7 +346,9 @@ export default function StatementDetails() {
               strokeWidth={1.5}
             />
           </View>
-          <CustomText variant="body2"  color={theme.colors.text.primary}>Share</CustomText>
+          <CustomText variant="body2" color={theme.colors.text.primary}>
+            Share
+          </CustomText>
         </TouchableOpacity>
       </View>
     </ScreenContainer>
@@ -343,6 +398,13 @@ const customStyles = (theme: Theme) =>
       fontSize: 16,
       textAlign: "right",
     },
+    accountDetailsContainer: {
+      marginTop: theme.spacing.spacing[1],
+      gap: theme.spacing.spacing[1],
+    },
+    accountDetailText: {
+      fontSize: 11,
+    },
     emptyContainer: {
       paddingVertical: theme.spacing.spacing[8],
       alignItems: "center",
@@ -358,7 +420,7 @@ const customStyles = (theme: Theme) =>
       margin: theme.spacing.spacing[2],
       padding: theme.spacing.spacing[1],
       paddingHorizontal: theme.spacing.spacing[5],
-    //   backgroundColor: theme.colors.palette.white,
+      //   backgroundColor: theme.colors.palette.white,
       borderRadius: 32,
     },
     actionButton: {

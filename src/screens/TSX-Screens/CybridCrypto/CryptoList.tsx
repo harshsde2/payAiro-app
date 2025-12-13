@@ -11,10 +11,10 @@ import {
 import { Theme, useTheme } from "styles";
 import { CustomText } from "tsx-components";
 import { SvgUri } from "react-native-svg";
-import { useGetCrypto, useSelectCryptoCurrency } from "query/hooks";
+import { useGetCrypto, useSelectCryptoCurrency, useRefreshCryptoBalance } from "query/hooks";
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
-import { setTotalDisbursable, setSelectedCurrency, setCryptoData } from "redux/slices/authenticationSlice";
+import { setSelectedCurrency } from "redux/slices/authenticationSlice";
 import { setItem, STORAGE_KEYS } from "storage/mmkv";
 
 const CryptoList = () => {
@@ -27,24 +27,26 @@ const CryptoList = () => {
   const { data, isPending, isFetched, isSuccess, isError, isFetching } =
     useGetCrypto();
 
+  console.log(JSON.stringify(data,null,2), "data");
+
   const { selectCurrency } = useSelectCryptoCurrency();
+  const { refreshBalance } = useRefreshCryptoBalance();
 
   const handleCurrencySelection = async (item: any) => {
     try {
       setSelectedItemId(item.symbol);
       const result = await selectCurrency(item.symbol);
 
-      // Save to Redux state
+      // Save selected currency to Redux state
       dispatch(setSelectedCurrency(item));
-      dispatch(setTotalDisbursable(result?.data?.rounded_balance));
-      dispatch(setCryptoData(result?.data));
       
-      
-      console.log(JSON.stringify(result?.data,null,2), "result?.data?.rounded_balance");
-      // Save to MMKV storage for persistence
+      // Save selected currency to MMKV storage for persistence
       setItem(STORAGE_KEYS.SELECTED_CURRENCY, JSON.stringify(item));
-      setItem(STORAGE_KEYS.TOTAL_DISBURSABLE, JSON.stringify(result?.data?.rounded_balance));
-      setItem(STORAGE_KEYS.CRYPTO_DATA, JSON.stringify(result?.data));
+      
+      // Refresh balance using the reusable hook (updates Redux and MMKV)
+      await refreshBalance(item.symbol);
+      
+      console.log(JSON.stringify(result?.data, null, 2), "result?.data?.rounded_balance");
       
       navigation.goBack();
     } catch (error) {

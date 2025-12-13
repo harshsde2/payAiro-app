@@ -52,57 +52,16 @@ export default function Send(props) {
   const { requested, type, sender: senderDetails } = props.route.params;
   const { theme } = useTheme();
 
-  const dispatch = useDispatch();
 
-  // console.log('requested =>', requested)
-  // console.log('type =>', type)
-  // console.log('senderDetails =>', senderDetails)
-
-  const { walletData, tokens } = useSelectorAction();
   const navigation = useNavigation();
   const [sender, setsender] = useState(props.route.params?.sender ?? "");
-  const [isVisible, setisVisible] = useState();
-  const [text, settext] = useState(" Vay via Bank");
+
   const { bankLists, bankBalance } = useSelectorAction();
-  const { biometricAvailable } = useSelectorAction();
   const [selectedBank, setselectedBank] = useState(bankLists[0]);
   const [isDropdown, setisDropdown] = useState(false);
   const { mutateAsync: verifyUserByIdentifier, isLoading: userLoading, error: userError } = useVerifyUserByIdentifier();
 
-  const hasKey = (bank, key) => bank.some((obj) => key in obj);
-
-  const handleOpenLink = useCallback(async () => {
-    // console.log(
-    //   "!hasKey(bankLists, bank_type) =>",
-    //   !hasKey(bankLists, "bank_type")
-    // );
-    if (!hasKey(bankLists, "bank_type")) {
-      try {
-        dispatch(setShowLoader(true));
-        const resp = await axios.get(`${BASE_URL.production}auth/url-external-account`, {
-          headers: {
-            Authorization: `Bearer ${tokens?.access}`, // ✅ this is the correct way to send auth header
-          },
-        });
-        const { status, data } = resp?.data;
-        if (status && data) {
-          navigation.navigate(NAVIGATION_SCREENS.MX_CONNECT_WIDGET_SCREEN, {
-            URL: data?.fortress_response.widgetUrl,
-          });
-        }
-        // console.log("handleOpenLink =>", JSON.stringify(resp.data,null,2)); // Use .data to access response body
-      } catch (e) {
-        console.error("Error fetching external account URL:", e);
-      } finally {
-        dispatch(setShowLoader(false));
-      }
-    } else {
-      // console.log("mxExternalAccountDetails =>", mxExternalAccountDetails)
-      showError("External account aleardy found");
-    }
-  }, [bankLists]);
-
-  console.log("send screen is rendering",requested);
+  // console.log("send screen is rendering",requested);
   return (
     <ScreenContainer padding={0}>
       <KeyboardAvoidingView
@@ -144,10 +103,7 @@ export default function Send(props) {
                 // icon={SVGScan}
                 rightIcon={SVGScan}
                 onRightIconClick={() => {
-                  navigation.reset({
-                    index: 0,
-                    routes: [{ name: NAVIGATION_SCREENS.SCANS }], // or your screen name
-                  });
+                  navigation.navigate(NAVIGATION_SCREENS.SCANS);
                   useDispatchAction(setActiveTab("3"));
                 }}
                 value={sender}
@@ -227,7 +183,7 @@ export default function Send(props) {
                               style={{
                                 color: "rgba(106, 106, 106, 0.7)",
                                 fontFamily: Fonts.semibold,
-                                fontSize: 10,
+                                fontSize: 16,
                               }}
                             >
                               $
@@ -242,7 +198,7 @@ export default function Send(props) {
                             </Text>
                           </View>
                         </View>
-                        <TouchableOpacity
+                        {/* <TouchableOpacity
                           style={{
                             width: 20,
                             alignItems: "center",
@@ -253,9 +209,9 @@ export default function Send(props) {
                           <SvgXml
                             xml={isDropdown ? SVGUpArrow : SVGDowArrow2}
                           />
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
                       </TouchableOpacity>
-                      {isDropdown &&
+                      {/* {isDropdown &&
                         bankLists &&
                         bankLists?.length > 0 &&
                         bankLists
@@ -313,9 +269,9 @@ export default function Send(props) {
                                 </Text>
                               </View>
                             </TouchableOpacity>
-                          ))}
+                          ))} */}
 
-                      {!hasKey(bankLists, "bank_type") && (
+                      {/* {!hasKey(bankLists, "bank_type") && (
                         <TouchableOpacity
                           activeOpacity={0.7}
                           onPress={() => {
@@ -365,7 +321,7 @@ export default function Send(props) {
                             <SvgIcons.PlusCircleIcon width={20} height={20} />
                           </TouchableOpacity>
                         </TouchableOpacity>
-                      )}
+                      )} */}
                     </View>
                   </View>
                 )}

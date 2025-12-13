@@ -11,7 +11,7 @@ import AmountInputDisplay from "../AddBalance/AmountInputDisplay";
 import GenericButton from "components/GenericButton";
 import useSelectorAction from "hooks/useSelectorAction";
 import CommonModal from "tsx-components/modals/CommonModal";
-import { cryptoKeys, useCryptoBuy } from "query/hooks";
+import { cryptoKeys, useCryptoBuy, useRefreshCryptoBalance } from "query/hooks";
 import { showError, showSuccess } from "../../../utils/toast";
 import { useDispatch } from "react-redux";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
@@ -43,6 +43,8 @@ const CryptoBuy = () => {
     isError,
     isSuccess,
   } = useCryptoBuy();
+
+  const { refreshBalance } = useRefreshCryptoBalance();
 
   const handleCheckPin = () => {
     if (pinScreenRef.current) {
@@ -149,6 +151,13 @@ const CryptoBuy = () => {
     handleBuyCripto(payload as any, {
       onSuccess: async (data) => {
         if (data?.status) {
+          // Refresh the crypto balance after successful purchase
+          try {
+            await refreshBalance(symbol);
+          } catch (error) {
+            console.log("Error refreshing balance after purchase:", error);
+          }
+
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
             isLoading: false,
             transactionData: data,

@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Platform } from "react-native";
 import Animated, { FadeInDown, FadeInUp, FadeOutDown, FadeOutUp } from "react-native-reanimated";
 import ToastManager from "toastify-react-native";
 import { useTheme } from "styles";
@@ -239,6 +239,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 6,
+    ...(Platform.OS === "ios" && {
+      zIndex: 9999,
+    }),
   },
   iconContainer: {
     width: 36,

@@ -149,16 +149,7 @@ export default function ScanPay(props: IScanPayProps) {
   };
 
   const handleSend = async () => {
-    if (Number(amount) < 5) {
-      showError("Minimum amount is 5");
-      return;
-    }
-
-    if (Number(amount) > 100000) {
-      showError("Amount cannot exceed ₹1,00,000");
-      return;
-    }
-
+    // Validation is now done before PIN/OTP flow, so we can proceed directly
     const payload = {
       recipient_value: (sender as any)?.address ?? sender,
       amount: (sender as any)?.amount ?? amount,
@@ -236,11 +227,7 @@ export default function ScanPay(props: IScanPayProps) {
 
   const handleCrypto = async () => {
     try {
-      if (Number(amount) > 100000) {
-        showError("Amount cannot exceed ₹1,00,000");
-        return;
-      }
-
+      // Validation is now done before PIN/OTP flow, so we can proceed directly
       const payload = {
         asset: selectedToken?.symbol?.toLowerCase(),
         network: selectedNetwork?.networks?.toLowerCase(),
@@ -300,11 +287,7 @@ export default function ScanPay(props: IScanPayProps) {
   };
 
   const handleRequested = async () => {
-    if (Number(amount) > 100000) {
-      showError("Amount cannot exceed ₹1,00,000");
-      return;
-    }
-
+    // Validation is now done before PIN/OTP flow, so we can proceed directly
     setspin(true);
 
     const formData = new FormData();
@@ -341,7 +324,65 @@ export default function ScanPay(props: IScanPayProps) {
     }
   };
 
+  const validateBeforeTransaction = (): boolean => {
+    // Determine which handler will be called based on handleActionsAfterOTPVerified logic
+    // Looking at handleActionsAfterOTPVerified:
+    // - "request" -> handleContactPayment/handleMercentPayment (no validation needed)
+    // - "requested" -> handleRequested (needs validation)
+    // - "merchantSend" -> handleSend (needs validation)
+    // - "receiveMerchant" -> handleMercentPayment (no validation needed)
+    // - "crypto" -> handleCrypto (needs validation)
+    // - default (including "receive") -> handleSend (needs validation)
+    
+    const willCallHandleSend = 
+      type === "merchantSend" || 
+      type === "receive" ||
+      (!type || (type !== "request" && type !== "requested" && type !== "crypto" && type !== "receiveMerchent"));
+    const willCallHandleCrypto = type === "crypto";
+    const willCallHandleRequested = type === "requested";
+    
+    // If none of the handlers that need validation will be called, skip validation
+    if (!willCallHandleSend && !willCallHandleCrypto && !willCallHandleRequested) {
+      return true;
+    }
+    
+    // Get the correct amount based on which handler will be called
+    // For manual entry, prioritize amount state over sender.amount
+    let transactionAmount: number;
+    if (willCallHandleCrypto) {
+      // Crypto always uses amount state directly
+      transactionAmount = Number(amount) || 0;
+    } else if (willCallHandleSend) {
+      // For handleSend: if amount state is not "0" and not empty (user has entered amount), use it
+      // Otherwise, use sender amount if available
+      const amountValue = amount && amount !== "0" && amount.trim() !== "" ? amount : ((sender as any)?.amount ?? amount);
+      transactionAmount = Number(amountValue) || 0;
+    } else {
+      // For handleRequested: use sender amount or amount state
+      transactionAmount = Number((sender as any)?.amount ?? amount) || 0;
+    }
+    
+    // Validate minimum amount for handleSend cases only
+    if (willCallHandleSend && transactionAmount < 1) {
+      showError("Minimum amount is 0.60");
+      return false;
+    }
+    
+    // Validate maximum amount for all cases
+    if (transactionAmount > 100000) {
+      showError("Amount cannot exceed ₹1,00,000");
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleCheckPin = () => {
+    // Validate before proceeding with PIN/OTP flow
+    if (!validateBeforeTransaction()) {
+      return;
+    }
+    
     if (pinScreenRef.current) {
       pinScreenRef.current?.checkUserPin();
     }
@@ -652,6 +693,10 @@ export default function ScanPay(props: IScanPayProps) {
               title={"Request"}
               cStyle={{ width: "100%", backgroundColor: "grey" }}
               onPress={() => {
+                // Validate before proceeding with OTP flow
+                if (!validateBeforeTransaction()) {
+                  return;
+                }
                 navigation.navigate(NAVIGATION_SCREENS.OTP_SCREEN, {
                   onOTPVerified: handleActionsAfterOTPVerified,
                   transactionType: type,

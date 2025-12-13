@@ -24,6 +24,7 @@ import {
   useVerifyUser,
   useCryptoWithdrawal,
   useCryptoBalanceByAsset,
+  useRefreshCryptoBalance,
 } from "query/hooks";
 import { showError, showSuccess } from "../../../utils/toast";
 import { useDispatch } from "react-redux";
@@ -71,6 +72,9 @@ const CryptoSend = () => {
   const { data: cryptoBalanceData, isLoading: isBalanceLoading } = useCryptoBalanceByAsset(symbol);
   const availableBalance = cryptoBalanceData?.data?.platform_available || "0.00";
   // console.log("availableBalance ->",JSON.stringify(cryptoBalanceData,null,2))
+  
+  const { refreshBalance } = useRefreshCryptoBalance();
+
   const {
     mutate: handleVerifyUser,
     isPending: isVerifyUserPending,
@@ -204,8 +208,15 @@ const CryptoSend = () => {
 
     setspin(true);
     handleSendCripto(payload as any, {
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         if (data?.status) {
+          // Refresh the crypto balance after successful send
+          try {
+            await refreshBalance(symbol);
+          } catch (error) {
+            console.log("Error refreshing balance after send:", error);
+          }
+
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
             isLoading: false,
             transactionData: data,
@@ -278,8 +289,15 @@ const CryptoSend = () => {
 
     setspin(true);
     initiateWithdrawal(payload, {
-      onSuccess: (data: any) => {
+      onSuccess: async (data: any) => {
         if (data?.status) {
+          // Refresh the crypto balance after successful withdrawal
+          try {
+            await refreshBalance(symbol);
+          } catch (error) {
+            console.log("Error refreshing balance after withdrawal:", error);
+          }
+
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
             isLoading: false,
             transactionData: data,

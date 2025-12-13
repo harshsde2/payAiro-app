@@ -15,6 +15,7 @@ import { useSupport } from "query/hooks";
 import useDispatchAction from "hooks/useDispatchAction";
 import { setShowLoader } from "redux/slices/authenticationSlice";
 import { showError, showSuccess } from "utils/toast";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 
 const SupportScreen = () => {
   const { theme } = useTheme();
@@ -83,10 +84,12 @@ const SupportScreen = () => {
 
   return (
     <ScreenContainer avoidKeyboard scrollable padding={0}>
-      <HeaderTitle title="Support" leftIcon="true" />
+      <HeaderTitle title="Support" leftIcon="true" rightIcon={<SvgIcons.ChatWithAi width={30} height={30} />} onPressRight={() => {
+        navigation.navigate(NAVIGATION_SCREENS.FRESHCHAT_SCREEN);
+      }} />
       <View style={[styles.whiteSheetContainer]}>
         <View style={customStyle.infoContainer}>
-          <SvgIcons.InfoNote />
+          {/* <SvgIcons.InfoNote /> */}
           <CustomText
             variant="caption"
             style={{ flex: 1, color: theme.colors.palette.grey600 }}
@@ -148,7 +151,7 @@ const SupportScreen = () => {
                     padding: 10,
                     backgroundColor: theme.colors.palette.grey120,
                     borderRadius: 50,
-                    marginBottom: 10,
+                    // marginBottom: 10,
                   }}
                 >
                   <SvgIcons.UploadIcon width={30} height={30} />
@@ -180,12 +183,21 @@ const SupportScreen = () => {
             )}
           </UploadFile>
         </View>
+        <View style={{ gap: 10 }}>
+
         <GenericButton
           title="Submit"
           onPress={() => {
             handleSubmit();
           }}
         />
+        <GenericButton
+          title="Chat with Us"
+          onPress={() => {
+            navigation.navigate(NAVIGATION_SCREENS.FRESHCHAT_SCREEN);
+          }}
+        />
+        </View>
       </View>
     </ScreenContainer>
   );
@@ -207,7 +219,7 @@ const customStyles = (theme: Theme) =>
       alignItems: "center",
     },
     uploadBox: {
-      height: 200,
+      height: 150,
       borderStyle: "dashed",
       borderColor: theme.colors.palette.grey400,
       backgroundColor: theme.colors.palette.grey50,

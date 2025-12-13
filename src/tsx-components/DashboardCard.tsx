@@ -56,7 +56,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
     cryptoData,
   } = useSelector((s: any) => s.authenticationSlice);
 
-  // console.log("bankBalance =>",JSON.stringify(bankBalance, null, 2))
+  // console.log("cryptoData =>",JSON.stringify(cryptoData, null, 2))
 
   const { theme } = useTheme();
   const styles = customStyles(theme);
@@ -71,6 +71,9 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
   const [showBalance, setShowBalance] = React.useState(false); // PayAiro Balance visibility
   const [showPlatformBalance, setShowPlatformBalance] = React.useState(false); // Platform Balance visibility
   const [selectedTab, setSelectedTab] = useState<
+    "Available" | "Pending" | "Total"
+  >("Available");
+  const [selectedCryptoTab, setSelectedCryptoTab] = useState<
     "Available" | "Pending" | "Total"
   >("Available");
   const [showCryptoBalance, setShowCryptoBalance] = React.useState(false);
@@ -221,6 +224,75 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
                 variant="caption"
                 size={isSelected ? 10 : 8}
                 color={theme.colors.palette.white}
+                style={{ fontWeight: isSelected ? "700" : "400" }}
+              >
+                {tab.label}
+              </CustomText>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    );
+  };
+
+  const renderAvailabelPendingTotalCryptoTab = () => {
+    const tabs = [
+      {
+        id: "Available",
+        label: "Available",
+        icon: SvgIcons.DoneCrypto,
+      },
+      { id: "Pending", label: "Pending", icon: SvgIcons.PendingCrypto },
+      { id: "Total", label: "Total", icon: SvgIcons.DollarIcon },
+    ];
+
+    return (
+      <View
+        style={{
+          flexDirection: "row",
+          borderTopRightRadius: 20,
+          width: "100%",
+          marginBottom: 0,
+          marginLeft: 10,
+          marginTop: 0,
+        }}
+      >
+        {tabs.map((tab) => {
+          const isSelected = selectedCryptoTab === tab.id;
+          const Icon = tab.icon;
+          return (
+            <TouchableOpacity
+              key={tab.id}
+              onPress={() => setSelectedCryptoTab(tab.id as any)}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                // backgroundColor: isSelected
+                //   ? theme.colors.palette.black
+                //   : "transparent",
+                paddingVertical: 6,
+                paddingHorizontal: 12,
+                borderRadius: 20,
+              }}
+            >
+              <Icon
+                width={16}
+                height={16}
+                color={
+                  isSelected
+                    ? theme.colors.palette.green700
+                    : theme.colors.palette.black
+                }
+                style={{ marginRight: 6 }}
+              />
+              <CustomText
+                variant="caption"
+                size={isSelected ? 10 : 8}
+                color={
+                  isSelected
+                    ? theme.colors.palette.green700
+                    : theme.colors.palette.black
+                }
                 style={{ fontWeight: isSelected ? "700" : "400" }}
               >
                 {tab.label}
@@ -599,87 +671,133 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
               height: 170,
             }}
           >
-            <View
-              style={{
-                flex: 1,
-                // backgroundColor: "red",
-                paddingHorizontal: 20,
-                justifyContent: "center",
-                alignItems: "flex-start",
-              }}
-            >
-              <CustomText color={theme.colors.palette.black} variant={"body1"}>
-                {"Crypto Balance"}
-              </CustomText>
-              <CustomText
-                color={theme.colors.palette.red500}
-                size={8}
-                variant={"caption"}
-              >
-                {"Pending + Available Balance"}
-              </CustomText>
+            {renderAvailabelPendingTotalCryptoTab()}
+            <View style={{ flex: 1, flexDirection: "column" }}>
               <View
-                style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+                style={{
+                  // flex: 1,
+                  // backgroundColor: "red",
+                  paddingHorizontal: 20,
+                  justifyContent: "center",
+                  alignItems: "flex-start",
+                }}
               >
-                <CustomText
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  color={theme.colors.palette.black}
-                  variant={"h3"}
-                  // style={{ flex: 1 }}
-                >
-                  {showCryptoBalance ? displayCryptobalance || "0.00" : "*****"}
+                <CustomText color={theme.colors.palette.black} variant={"body1"}>
+                  {selectedCryptoTab === "Available"
+                    ? "Crypto Balance"
+                    : selectedCryptoTab === "Total"
+                    ? "Total Crypto Balance"
+                    : "Pending Crypto Balance"}
                 </CustomText>
-                {!isLoading && (
-                  <TouchableOpacity style={{ zIndex: 11 }}>
-                    {showCryptoBalance ? (
-                      <SvgIcons.EyeOnGreenbg
-                        onPress={() =>
-                          handleShowCryptoBalance(showCryptoBalance)
-                        }
-                        color={theme.colors.palette.black}
-                        width={20}
-                        height={20}
-                      />
-                    ) : (
-                      <SvgIcons.EyeOffGreenbg
-                        onPress={() =>
-                          handleShowCryptoBalance(showCryptoBalance)
-                        }
-                        color={theme.colors.palette.black}
-                        width={20}
-                        height={20}
-                      />
-                    )}
-                  </TouchableOpacity>
-                )}
-                {isLoading && (
-                  <ActivityIndicator
-                    size="small"
+                <View
+                  style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+                >
+                  <CustomText
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
                     color={theme.colors.palette.black}
+                    variant={"h3"}
+                    // style={{ flex: 1 }}
+                  >
+                    {(() => {
+                      if (!showCryptoBalance) return "*****";
+                      
+                      // Safely check if in USD mode
+                      const isUsdMode = cryptoData?.usd_price != null && 
+                        displayCryptobalance != null && 
+                        Number(displayCryptobalance) === Number(cryptoData?.usd_price);
+                      
+                      // Safely convert to numbers with fallback to 0
+                      const availableCrypto = Number(cryptoData?.platform_available) || 0;
+                      const platformBalance = Number(cryptoData?.platform_balance) || 0;
+                      const pendingCrypto = Math.abs(availableCrypto - platformBalance);
+                      const totalCrypto = platformBalance;
+                      const availableUsd = Number(cryptoData?.usd_price) || 0;
+                      
+                      // Calculate conversion rate: USD per crypto unit (with safety check)
+                      const conversionRate = availableCrypto > 0 && availableUsd > 0
+                        ? availableUsd / availableCrypto 
+                        : 0;
+                      
+                      if (selectedCryptoTab === "Available") {
+                        // Handle null/undefined/empty string, but preserve 0 as valid value
+                        return displayCryptobalance != null && displayCryptobalance !== "" 
+                          ? String(displayCryptobalance) 
+                          : "0.00";
+                      }
+                      if (selectedCryptoTab === "Total") {
+                        if (isUsdMode) {
+                          const totalUsd = availableUsd + (pendingCrypto * conversionRate);
+                          return isNaN(totalUsd) ? "0.00" : totalUsd.toFixed(2);
+                        } else {
+                          return isNaN(totalCrypto) ? "0.00" : totalCrypto.toFixed(5);
+                        }
+                      }
+                      if (selectedCryptoTab === "Pending") {
+                        if (isUsdMode) {
+                          const pendingUsd = pendingCrypto * conversionRate;
+                          return isNaN(pendingUsd) ? "0.00" : pendingUsd.toFixed(2);
+                        } else {
+                          return isNaN(pendingCrypto) ? "0.00" : pendingCrypto.toFixed(5);
+                        }
+                      }
+                      // Fallback: handle null/undefined/empty string, but preserve 0 as valid value
+                      return displayCryptobalance != null && displayCryptobalance !== "" 
+                        ? String(displayCryptobalance) 
+                        : "0.00";
+                    })()}
+                  </CustomText>
+                  {!isLoading && (
+                    <TouchableOpacity style={{ zIndex: 11 }}>
+                      {showCryptoBalance ? (
+                        <SvgIcons.EyeOnGreenbg
+                          onPress={() =>
+                            handleShowCryptoBalance(showCryptoBalance)
+                          }
+                          color={theme.colors.palette.black}
+                          width={20}
+                          height={20}
+                        />
+                      ) : (
+                        <SvgIcons.EyeOffGreenbg
+                          onPress={() =>
+                            handleShowCryptoBalance(showCryptoBalance)
+                          }
+                          color={theme.colors.palette.black}
+                          width={20}
+                          height={20}
+                        />
+                      )}
+                    </TouchableOpacity>
+                  )}
+                  {isLoading && (
+                    <ActivityIndicator
+                      size="small"
+                      color={theme.colors.palette.black}
+                    />
+                  )}
+                  <SvgIcons.CrytoToDollorConversion
+                    onPress={() => {
+                      setDisplayCryptobalance(
+                        displayCryptobalance == cryptoData?.usd_price
+                          ? cryptoData?.rounded_balance
+                          : cryptoData?.usd_price
+                      );
+                    }}
+                    width={30}
+                    height={30}
                   />
+                </View>
+                {totalDisbursablePending > 0 && showCryptoBalance && selectedCryptoTab === "Available" && (
+                  <CustomText
+                    color={theme.colors.palette.red500}
+                    size={12}
+                    variant={"caption"}
+                  >
+                    {`(Pending ${(totalDisbursablePending || 0).toFixed(5)})`}
+                  </CustomText>
                 )}
-                <SvgIcons.CrytoToDollorConversion
-                  onPress={() => {
-                    setDisplayCryptobalance(
-                      displayCryptobalance == cryptoData?.usd_price
-                        ? cryptoData?.rounded_balance
-                        : cryptoData?.usd_price
-                    );
-                  }}
-                  width={30}
-                  height={30}
-                />
               </View>
-              {totalDisbursablePending > 0 && showCryptoBalance && (
-                <CustomText
-                  color={theme.colors.palette.red500}
-                  size={12}
-                  variant={"caption"}
-                >
-                  {`(Pending ${displayCryptobalance?.toFixed(5)})`}
-                </CustomText>
-              )}
             </View>
             <View
               style={{
