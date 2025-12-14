@@ -37,6 +37,7 @@ import { initializeDeepLinking } from "./src/utils/deepLinkHandler";
 import UseNet from './src/utils/UseNet';
 import KycWatchdog from "./src/components/common-components/KycWatchdog";
 import KycBanner from "./src/components/common-components/KycBanner";
+import AppLockScreen from "./src/components/common-components/AppLockScreen";
 import Toast from "./src/components/common-components/Toast";
 
 export default function App() {
@@ -375,6 +376,7 @@ export default function App() {
             {showLoader && <GlobalLoader />}
             {isLogin && <KycWatchdog />}
             {isLogin && <KycBanner />}
+            {isLogin && <AppLockScreen />}
             {!isLogin ? <AuthStack /> : <AppStack />}
             <Toast />
           </NavigationContainer>

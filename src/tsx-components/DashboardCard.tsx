@@ -719,6 +719,11 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
                         ? availableUsd / availableCrypto 
                         : 0;
                       
+                      // Determine decimal places: 5 for ETH/BTC, 2 for others
+                      const currencySymbol = selectedCurrency?.symbol?.toUpperCase() || "";
+                      const isEthOrBtc = currencySymbol === "ETH" || currencySymbol === "BTC";
+                      const cryptoDecimals = isEthOrBtc ? 5 : 2;
+                      
                       if (selectedCryptoTab === "Available") {
                         // Handle null/undefined/empty string, but preserve 0 as valid value
                         return displayCryptobalance != null && displayCryptobalance !== "" 
@@ -730,7 +735,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
                           const totalUsd = availableUsd + (pendingCrypto * conversionRate);
                           return isNaN(totalUsd) ? "0.00" : totalUsd.toFixed(2);
                         } else {
-                          return isNaN(totalCrypto) ? "0.00" : totalCrypto.toFixed(5);
+                          return isNaN(totalCrypto) ? "0.00" : totalCrypto.toFixed(cryptoDecimals);
                         }
                       }
                       if (selectedCryptoTab === "Pending") {
@@ -738,7 +743,7 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
                           const pendingUsd = pendingCrypto * conversionRate;
                           return isNaN(pendingUsd) ? "0.00" : pendingUsd.toFixed(2);
                         } else {
-                          return isNaN(pendingCrypto) ? "0.00" : pendingCrypto.toFixed(5);
+                          return isNaN(pendingCrypto) ? "0.00" : pendingCrypto.toFixed(cryptoDecimals);
                         }
                       }
                       // Fallback: handle null/undefined/empty string, but preserve 0 as valid value

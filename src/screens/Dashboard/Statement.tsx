@@ -57,9 +57,10 @@ export default function Statement() {
       console.log("Final Query →", filterQuery);
 
       const data = await getStatementsTX(filterQuery, (tokens as any)?.access);
-
+      console.log("Statement Data =>", JSON.stringify(data, null, 2));
       navigation.navigate("StatementDetails", {
         data: data?.data?.transactions,
+        statementData: data?.data,
       });
     } catch (error) {
       console.log(error, "handleTX error");

@@ -345,7 +345,7 @@ export default function Receive() {
       </CommonModal>
       <View style={[{ flex: 1 }]}>
         {/* Toggle Buttons */}
-        <View style={styles.toggleContainer}>
+        {/* <View style={styles.toggleContainer}>
           <TouchableOpacity
             style={[
               styles.toggleButton,
@@ -380,7 +380,7 @@ export default function Receive() {
               On Chain QR
             </CustomText>
           </TouchableOpacity>
-        </View>
+        </View> */}
 
         <View
           style={[{ flex: 1, alignItems: "center", justifyContent: "center" }]}
