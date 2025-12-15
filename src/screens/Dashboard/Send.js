@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import React, { useCallback, useState } from "react";
 import Container from "../../HOC/Container";
@@ -47,6 +48,8 @@ import { useDispatch } from "react-redux";
 import { BASE_URL } from "api/endpoints";
 import axios from "axios";
 import { useVerifyUserByIdentifier } from "query/hooks/useUser";
+import { detectBlockchainNameService } from "../../utils/blockchainNameService";
+import BlockchainNameServiceTermsModal from "../../components/common-components/BlockchainNameServiceTermsModal";
 
 export default function Send(props) {
   const { requested, type, sender: senderDetails } = props.route.params;
@@ -60,8 +63,47 @@ export default function Send(props) {
   const [selectedBank, setselectedBank] = useState(bankLists[0]);
   const [isDropdown, setisDropdown] = useState(false);
   const { mutateAsync: verifyUserByIdentifier, isLoading: userLoading, error: userError } = useVerifyUserByIdentifier();
+  
+  // Blockchain Name Service modal state
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [blockchainServiceType, setBlockchainServiceType] = useState(null);
+  const [pendingVerification, setPendingVerification] = useState(false);
 
-  // console.log("send screen is rendering",requested);
+  // Handle user verification (used for both normal and blockchain name service addresses)
+  const handleUserVerification = async () => {
+    if (!sender.trim()) {
+      showError("Please enter a valid identifier");
+      return;
+    }
+
+    setPendingVerification(true);
+    try {
+      const data = await verifyUserByIdentifier({ identifier: sender.trim() });
+      console.log(data, "verified user data");
+      if (data && data.status) {
+        navigation.navigate(SCREENS.ScanPay, {
+          type: requested || type === "requested" ? "requested" : "receive",
+          sender: sender.trim(),
+          bank: selectedBank,
+        });
+      } else {
+        showError(data?.message || "Recipient not found");
+      }
+    } catch (e) {
+      console.log("User verification failed:", e);
+      showError(e?.message || "Something went wrong. Please try again.");
+    } finally {
+      setPendingVerification(false);
+    }
+  };
+
+  // Handle terms agreement for blockchain name service
+  const handleTermsAgree = () => {
+    setShowTermsModal(false);
+    // Proceed with verification after user agrees
+    handleUserVerification();
+  };
+
   return (
     <ScreenContainer padding={0}>
       <KeyboardAvoidingView
@@ -98,7 +140,7 @@ export default function Send(props) {
                   props.route.params?.sender === undefined
                 }
                 label={type === "requested" ? "From" : "To"}
-                placeholder={"PayAiroTag, Phone, Email"}
+                placeholder={"PayAiroTag, Phone, Email, ENS (.eth), SNS (.sol)"}
                 // isIcon={true}
                 // icon={SVGScan}
                 rightIcon={SVGScan}
@@ -109,13 +151,6 @@ export default function Send(props) {
                 value={sender}
                 onChange={setsender}
               />
-              {/* 
-              <TextInputField
-                label={'Note (optional)'}
-                placeholder={'Mention for which reason your sending this'}
-                isMultiLine={true}
-                cStyle={{marginTop: 20}}
-              /> */}
             </View>
             <View style={{ flex: 1, justifyContent: "space-between" }}>
               <View style={{ flex: 1 }}>
@@ -198,130 +233,7 @@ export default function Send(props) {
                             </Text>
                           </View>
                         </View>
-                        {/* <TouchableOpacity
-                          style={{
-                            width: 20,
-                            alignItems: "center",
-                            marginLeft: 5,
-                          }}
-                          disabled
-                        >
-                          <SvgXml
-                            xml={isDropdown ? SVGUpArrow : SVGDowArrow2}
-                          />
-                        </TouchableOpacity> */}
                       </TouchableOpacity>
-                      {/* {isDropdown &&
-                        bankLists &&
-                        bankLists?.length > 0 &&
-                        bankLists
-                          .filter(
-                            (bank) =>
-                              !bank?.account_type?.toLowerCase()?.includes("ira")
-                          )
-                          .map((item, k) => (
-                            <TouchableOpacity
-                              onPress={() => {
-                                console.log(item, "item");
-                                setselectedBank(item);
-                                setisDropdown(false);
-                              }}
-                              key={k}
-                              style={{
-                                flexDirection: "row",
-                                justifyContent: "flex-start",
-                                alignItems: "center",
-                                marginVertical: 10,
-                                //   padding: 20,
-                              }}
-                            >
-                              <SvgXml xml={SVGUSD} width={40} height={40} />
-                              <View style={{ marginHorizontal: 10 }}>
-                                <Text
-                                  style={{
-                                    color: "black",
-                                    fontSize: 16,
-                                    fontFamily: Fonts.bold,
-                                  }}
-                                >
-                                  {item?.bank_name ?? item?.name}
-                                  <CustomText
-                                    variant={"body2"}
-                                    color={theme?.colors.palette.green700}
-                                    style={{ textTransform: "capitalize" }}
-                                  >{` (${item?.account_type})`}</CustomText>
-                                </Text>
-                                <Text
-                                  style={{
-                                    color: "rgba(106, 106, 106, 0.7)",
-                                    fontFamily: Fonts.semibold,
-                                    fontSize: 10,
-                                  }}
-                                >
-                                  $
-                                  {item?.balances?.available
-                                    ? item?.balances?.available
-                                    : item?.account_type === "rothIra"
-                                    ? bankBalance?.roth_ira_account?.usd
-                                    : item?.account_type === "traditionalIra"
-                                    ? bankBalance?.traditional_ira_account?.usd
-                                    : bankBalance?.bank_account?.usd}
-                                </Text>
-                              </View>
-                            </TouchableOpacity>
-                          ))} */}
-
-                      {/* {!hasKey(bankLists, "bank_type") && (
-                        <TouchableOpacity
-                          activeOpacity={0.7}
-                          onPress={() => {
-                            handleOpenLink();
-                          }}
-                          style={{
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            flex: 1,
-                            marginTop: 20,
-                            //   padding: 20,
-                          }}
-                        >
-                          <View
-                            style={{
-                              flex: 1,
-                              flexDirection: "row",
-                              justifyContent: "flex-start",
-                              alignItems: "center",
-
-                              // padding: 20,
-                            }}
-                          >
-                            <SvgIcons.Bank width={40} height={40} />
-
-                            <View style={{ marginHorizontal: 10, flex: 1 }}>
-                              <Text
-                                style={{
-                                  color: "black",
-                                  fontSize: 16,
-                                  fontFamily: Fonts.bold,
-                                }}
-                              >
-                                {"Link External Account"}
-                              </Text>
-                            </View>
-                          </View>
-                          <TouchableOpacity
-                            style={{
-                              width: 20,
-                              alignItems: "center",
-                              marginLeft: 5,
-                            }}
-                            disabled
-                          >
-                            <SvgIcons.PlusCircleIcon width={20} height={20} />
-                          </TouchableOpacity>
-                        </TouchableOpacity>
-                      )} */}
                     </View>
                   </View>
                 )}
@@ -334,30 +246,39 @@ export default function Send(props) {
                     showError("Please enter a valid identifier");
                     return;
                   }
-                  try {
-                    const data = await verifyUserByIdentifier({ identifier: sender.trim() });
-                    console.log(data, "verified user data");
-                    if (data && data.status) {
-                      navigation.navigate(SCREENS.ScanPay, {
-                        type: requested || type === "requested" ? "requested" : "receive",
-                        sender: sender.trim(),
-                        bank: selectedBank,
-                      });
-                    } else {
-                      showError(data?.message || "Recipient not found");
-                    }
-                  } catch (e) {
-                    console.log("User verification failed:", e);
-                    showError(e?.message || "Something went wrong. Please try again.");
-                  } finally {
+
+                  // Check if the identifier is a blockchain name service address
+                  const { isBlockchainNameService, type: serviceType } = detectBlockchainNameService(sender.trim());
+                  
+                  if (isBlockchainNameService && serviceType) {
+                    // Show terms modal for blockchain name service addresses
+                    setBlockchainServiceType(serviceType);
+                    setShowTermsModal(true);
+                    return;
                   }
+
+                  // Proceed with normal verification for PayAiroTag, Phone, Email
+                  await handleUserVerification();
                 }}
-                disabled={userLoading}
+                disabled={userLoading || pendingVerification}
               />
             </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      
+      {/* Blockchain Name Service Terms Modal */}
+      {blockchainServiceType && (
+        <BlockchainNameServiceTermsModal
+          isVisible={showTermsModal}
+          onClose={() => {
+            setShowTermsModal(false);
+            setBlockchainServiceType(null);
+          }}
+          onAgree={handleTermsAgree}
+          serviceType={blockchainServiceType}
+        />
+      )}
     </ScreenContainer>
   );
 }

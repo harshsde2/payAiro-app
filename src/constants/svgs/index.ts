@@ -114,6 +114,10 @@ import ReferAndEarn from "./ReferAndEarn.svg";
 import ChatWithAi from "./ChatWithAi.svg";
 import PendingCrypto from "./PendingCrypto.svg";
 import DoneCrypto from "./DoneCrypto.svg";
+import RewardsContainer from "./RewardsContainer.svg";
+import RewardsGifts from "./RewardsGifts.svg";
+import RewardsDollar from "./RewardsDollar.svg";
+import Points from "./Points.svg";
 
 export const SvgIcons = {
   PayAiorRoundIcon,
@@ -232,4 +236,8 @@ export const SvgIcons = {
   ChatWithAi,
   PendingCrypto,
   DoneCrypto,
+  RewardsContainer,
+  RewardsGifts,
+  RewardsDollar,
+  Points,
 };
