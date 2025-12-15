@@ -18,7 +18,7 @@ const Scratch: React.FC = () => {
   const [showHowToEarnPoints, setShowHowToEarnPoints] = useState(false);
 
   const balanceData: IBalanceData = {
-    points: 600,
+    points: 0,
     rewards: 0,
   };
 

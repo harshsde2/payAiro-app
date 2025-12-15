@@ -140,7 +140,7 @@ export default function Send(props) {
                   props.route.params?.sender === undefined
                 }
                 label={type === "requested" ? "From" : "To"}
-                placeholder={"PayAiroTag, Phone, Email, ENS (.eth), SNS (.sol)"}
+                placeholder={"PayAiroTag, Phone, Email"}
                 // isIcon={true}
                 // icon={SVGScan}
                 rightIcon={SVGScan}

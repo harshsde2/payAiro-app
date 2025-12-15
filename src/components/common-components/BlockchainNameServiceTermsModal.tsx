@@ -20,7 +20,7 @@ const BlockchainNameServiceTermsModal: React.FC<IBlockchainNameServiceTermsModal
   serviceType,
 }) => {
   const { theme } = useTheme();
-  const [isAgreed, setIsAgreed] = useState(false);
+  const [isAgreed, setIsAgreed] = useState(true);
 
   const serviceName = serviceType === 'ens' ? 'Ethereum Name Service (ENS)' : 'Solana Name Service (SNS)';
   const networkName = serviceType === 'ens' ? 'Ethereum' : 'Solana';
@@ -30,22 +30,22 @@ const BlockchainNameServiceTermsModal: React.FC<IBlockchainNameServiceTermsModal
       heading: `Important Notice: ${serviceName} Transfer`,
       text: `You are about to send funds to a ${serviceName} address. This address will be resolved to a ${networkName} blockchain wallet address.`,
     },
-    {
-      heading: "Understanding Blockchain Name Services",
-      text: `• ${serviceName} addresses are human-readable names that resolve to blockchain wallet addresses.\n• The recipient will receive funds on the ${networkName} network.\n• Ensure the recipient has access to the ${networkName} wallet associated with this ${serviceType.toUpperCase()} address.`,
-    },
-    {
-      heading: "Transaction Risks",
-      text: `• Once sent, transactions on the ${networkName} blockchain are irreversible.\n• Verify the ${serviceType.toUpperCase()} address belongs to the intended recipient.\n• Double-check the address before confirming the transaction.\n• PayAiro is not responsible for funds sent to incorrect addresses.`,
-    },
-    {
-      heading: "Network Fees",
-      text: `• Transactions on the ${networkName} network may incur gas/transaction fees.\n• These fees are separate from any PayAiro transaction fees.\n• Fees will be deducted from your account balance.`,
-    },
-    {
-      heading: "Your Responsibility",
-      text: `By proceeding, you acknowledge that:\n• You understand the risks associated with blockchain transactions.\n• You have verified the ${serviceType.toUpperCase()} address belongs to the intended recipient.\n• You accept that transactions cannot be reversed once confirmed on the blockchain.\n• You are responsible for any losses due to incorrect addresses.`,
-    },
+    // {
+    //   heading: "Understanding Blockchain Name Services",
+    //   text: `• ${serviceName} addresses are human-readable names that resolve to blockchain wallet addresses.\n• The recipient will receive funds on the ${networkName} network.\n• Ensure the recipient has access to the ${networkName} wallet associated with this ${serviceType.toUpperCase()} address.`,
+    // },
+    // {
+    //   heading: "Transaction Risks",
+    //   text: `• Once sent, transactions on the ${networkName} blockchain are irreversible.\n• Verify the ${serviceType.toUpperCase()} address belongs to the intended recipient.\n• Double-check the address before confirming the transaction.\n• PayAiro is not responsible for funds sent to incorrect addresses.`,
+    // },
+    // {
+    //   heading: "Network Fees",
+    //   text: `• Transactions on the ${networkName} network may incur gas/transaction fees.\n• These fees are separate from any PayAiro transaction fees.\n• Fees will be deducted from your account balance.`,
+    // },
+    // {
+    //   heading: "Your Responsibility",
+    //   text: `By proceeding, you acknowledge that:\n• You understand the risks associated with blockchain transactions.\n• You have verified the ${serviceType.toUpperCase()} address belongs to the intended recipient.\n• You accept that transactions cannot be reversed once confirmed on the blockchain.\n• You are responsible for any losses due to incorrect addresses.`,
+    // },
   ];
 
   const handleAgree = () => {
@@ -120,7 +120,7 @@ const BlockchainNameServiceTermsModal: React.FC<IBlockchainNameServiceTermsModal
             ))}
           </ScrollView>
 
-          <View style={styles(theme).checkboxContainer}>
+          {/* <View style={styles(theme).checkboxContainer}>
             <TouchableOpacity
               style={styles(theme).checkboxRow}
               onPress={() => setIsAgreed(!isAgreed)}
@@ -143,7 +143,7 @@ const BlockchainNameServiceTermsModal: React.FC<IBlockchainNameServiceTermsModal
                 I have read and agree to the terms and conditions
               </CustomText>
             </TouchableOpacity>
-          </View>
+          </View> */}
 
           <GenericButton
             title="I Agree"
@@ -171,7 +171,7 @@ const styles = (theme: any) =>
     modalContainer: {
       flex: 1,
       width: "90%",
-      maxHeight: "85%",
+      maxHeight: "35%",
       backgroundColor: theme.colors.palette.white,
       borderRadius: 16,
       padding: theme.spacing.spacing[5],
