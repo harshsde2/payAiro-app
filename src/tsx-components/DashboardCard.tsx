@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Theme, useTheme } from "styles";
 import Card from "./Card";
 import CustomText from "./CustomText";
@@ -21,11 +21,13 @@ import { SvgIcons } from "constants/svgs";
 import useDispatchAction from "hooks/useDispatchAction";
 import LottieView from "lottie-react-native";
 import { setTheme } from "redux/slices/animationSlice";
-import { setisCrypto, setActiveTab } from "redux/slices/authenticationSlice";
+import { setisCrypto, setActiveTab, setSelectedCurrency } from "redux/slices/authenticationSlice";
 import { ANIMATION_CONSTANTS } from "./CryptoCard";
 import { useNavigation } from "@react-navigation/native";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { SvgUri } from "react-native-svg";
+import { useGetCrypto, useSelectCryptoCurrency, useRefreshCryptoBalance } from "query/hooks";
+import { setItem, STORAGE_KEYS } from "storage/mmkv";
 
 const CONFIGS = {
   CARD_WIDTH: "100%",
@@ -58,8 +60,14 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
 
   // console.log("cryptoData =>",JSON.stringify(cryptoData, null, 2))
 
+  const dispatch = useDispatch();
   const { theme } = useTheme();
   const styles = customStyles(theme);
+  
+  // Hooks for crypto operations
+  const { data: cryptoListData, isSuccess: isCryptoListSuccess } = useGetCrypto();
+  const { selectCurrency } = useSelectCryptoCurrency();
+  const { refreshBalance } = useRefreshCryptoBalance();
   const formatUsd = (value: unknown): string => {
     const num = Number(value ?? 0);
     if (!isFinite(num)) return "$0.00";
@@ -80,14 +88,78 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
   const [showPendingBalance, setShowPendingBalance] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isDisable, setIsDisable] = React.useState(false);
+  const [isAutoSelectingBTC, setIsAutoSelectingBTC] = React.useState(false);
   const [displayCryptobalance, setDisplayCryptobalance] = useState(
     cryptoData?.rounded_balance || ""
   );
   const hourGlassRotation = useRef(new Animated.Value(0)).current;
+  const prevIsCryptoRef = useRef(isCrypto);
 
   useEffect(() => {
     setDisplayCryptobalance(cryptoData?.rounded_balance || "");
   }, [cryptoData]);
+
+  // Auto-select BTC when isCrypto becomes false (only if no currency is already selected)
+  useEffect(() => {
+    const autoSelectBTC = async () => {
+      // Only proceed if isCrypto changed from true to false (switching to crypto view)
+      // and we have crypto list data available
+      const isCryptoChangedToFalse = prevIsCryptoRef.current === true && isCrypto === false;
+      
+      if (isCryptoChangedToFalse && isCryptoListSuccess && cryptoListData?.data?.length > 0) {
+        // Only auto-select BTC if no currency is already selected
+        // If user has already selected a currency (like ETH), keep it selected
+        const hasSelectedCurrency = selectedCurrency && selectedCurrency.symbol;
+        
+        if (!hasSelectedCurrency) {
+          try {
+            setIsAutoSelectingBTC(true);
+            
+            // Find BTC in the crypto list
+            const btcCurrency = cryptoListData.data.find(
+              (item: any) => item?.symbol?.toUpperCase() === "BTC"
+            );
+
+            if (btcCurrency) {
+              // Select BTC currency
+              await selectCurrency(btcCurrency.symbol);
+
+              // Save selected currency to Redux state
+              dispatch(setSelectedCurrency(btcCurrency));
+              
+              // Save selected currency to MMKV storage for persistence
+              setItem(STORAGE_KEYS.SELECTED_CURRENCY, JSON.stringify(btcCurrency));
+              
+              // Refresh balance using the reusable hook (updates Redux and MMKV)
+              await refreshBalance(btcCurrency.symbol);
+              
+              console.log("BTC auto-selected as default currency");
+            } else {
+              console.log("BTC not found in crypto list");
+            }
+          } catch (error) {
+            console.log("Error auto-selecting BTC:", error);
+          } finally {
+            setIsAutoSelectingBTC(false);
+          }
+        } else {
+          // If a currency is already selected, just refresh its balance
+          try {
+            if (selectedCurrency?.symbol) {
+              await refreshBalance(selectedCurrency.symbol);
+            }
+          } catch (error) {
+            console.log("Error refreshing selected currency balance:", error);
+          }
+        }
+      }
+      
+      // Update the ref to track current isCrypto value
+      prevIsCryptoRef.current = isCrypto;
+    };
+
+    autoSelectBTC();
+  }, [isCrypto, isCryptoListSuccess, cryptoListData, selectedCurrency, selectCurrency, refreshBalance, dispatch]);
 
   const renderCryptoCurrencySelector = () => (
     <TouchableOpacity
@@ -113,54 +185,64 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
       onPress={() => {
         navigation.navigate(NAVIGATION_SCREENS.CRYPTO_LIST);
       }}
+      disabled={isAutoSelectingBTC}
     >
-      {(() => {
-        const logoUri = selectedCurrency?.logo as string | undefined;
-        const isValidLogo =
-          typeof logoUri === "string" && logoUri.trim().length > 0;
-        const isSvgLogo =
-          isValidLogo &&
-          (logoUri!.toLowerCase().endsWith(".svg") ||
-            logoUri!.toLowerCase().includes("svg+xml"));
+      {isAutoSelectingBTC ? (
+        <ActivityIndicator
+          size="small"
+          color={theme.colors.palette.green700}
+        />
+      ) : (
+        <>
+          {(() => {
+            const logoUri = selectedCurrency?.logo as string | undefined;
+            const isValidLogo =
+              typeof logoUri === "string" && logoUri.trim().length > 0;
+            const isSvgLogo =
+              isValidLogo &&
+              (logoUri!.toLowerCase().endsWith(".svg") ||
+                logoUri!.toLowerCase().includes("svg+xml"));
 
-        if (!isValidLogo) {
-          return <SvgIcons.DollarIcon width={35} height={35} />;
-        }
+            if (!isValidLogo) {
+              return <SvgIcons.DollarIcon width={35} height={35} />;
+            }
 
-        return (
-          <View style={{ width: 30, height: 30 }}>
-            {isSvgLogo ? (
-              <SvgUri uri={logoUri!} width={30} height={30} />
-            ) : (
-              <Image
-                source={{ uri: logoUri! }}
-                style={{ width: 30, height: 30 }}
-                resizeMode="contain"
-              />
-            )}
+            return (
+              <View style={{ width: 30, height: 30 }}>
+                {isSvgLogo ? (
+                  <SvgUri uri={logoUri!} width={30} height={30} />
+                ) : (
+                  <Image
+                    source={{ uri: logoUri! }}
+                    style={{ width: 30, height: 30 }}
+                    resizeMode="contain"
+                  />
+                )}
+              </View>
+            );
+          })()}
+          <View
+            style={[
+              styles.currencyTextContainer,
+              { marginLeft: theme.spacing.spacing.xxs },
+            ]}
+          >
+            <CustomText
+              variant="button"
+              color={theme.colors.text.primary}
+              style={[
+                styles.currencyText,
+                { marginHorizontal: theme.spacing.spacing.xxs, maxWidth: 40 },
+              ]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {selectedCurrency?.symbol || "USD"}
+            </CustomText>
+            {!isCrypto && <SvgIcons.ChevronDown width={15} height={15} />}
           </View>
-        );
-      })()}
-      <View
-        style={[
-          styles.currencyTextContainer,
-          { marginLeft: theme.spacing.spacing.xxs },
-        ]}
-      >
-        <CustomText
-          variant="button"
-          color={theme.colors.text.primary}
-          style={[
-            styles.currencyText,
-            { marginHorizontal: theme.spacing.spacing.xxs, maxWidth: 40 },
-          ]}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {selectedCurrency?.symbol || "USD"}
-        </CustomText>
-        {!isCrypto && <SvgIcons.ChevronDown width={15} height={15} />}
-      </View>
+        </>
+      )}
     </TouchableOpacity>
   );
 

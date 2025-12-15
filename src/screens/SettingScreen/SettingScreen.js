@@ -119,7 +119,7 @@ export default function SettingScreen() {
               marginTop: 10,
             }}
           >
-            <View
+            <TouchableOpacity onPress={() => navigation.navigate(NAVIGATION_SCREENS.PERSONAL)}
               style={[
                 styles.circle,
                 { backgroundColor: "rgba(255, 172, 37, 1)" },
@@ -139,7 +139,7 @@ export default function SettingScreen() {
                   {walletData?.name?.charAt(0)?.toUpperCase()}
                 </Text>
               )}
-            </View>
+            </TouchableOpacity>
             <View
               style={{ flexDirection: "row", flex: 1, alignItems: "center" }}
             >

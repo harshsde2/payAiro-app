@@ -739,7 +739,7 @@ const NewDashboard = () => {
       isBankBalanceDataFetched &&
       isBankBalanceDataSuccess &&
       bankBalanceData &&
-      typeof bankBalanceData === 'object' &&
+      typeof bankBalanceData === "object" &&
       !Array.isArray(bankBalanceData) &&
       Object.keys(bankBalanceData).length > 0
     ) {
@@ -780,10 +780,9 @@ const NewDashboard = () => {
       DashBoardData?.data?.transactions
     ) {
       settxLists(
-        [
-          ...(DashBoardData?.data?.transactions?.latestCombined || []),
-        ].filter((i) => i?.status === "success" || i?.status === "completed") ??
-          []
+        [...(DashBoardData?.data?.transactions?.latestCombined || [])].filter(
+          (i) => i?.status === "success" || i?.status === "completed"
+        ) ?? []
       );
     }
   }, [isDashBoardDataFetched, DashBoardData]);
@@ -1038,7 +1037,7 @@ const NewDashboard = () => {
       .slice(0, 5);
   }, [web3TxLists]);
 
-  // console.log("sortedWeb3TxLists =>", JSON.stringify(sortedWeb3TxLists, null, 2));
+  // console.log("DashBoardData =>", JSON.stringify(DashBoardData, null, 2));
   // console.log("bankLists =>", JSON.stringify(bankLists, null, 2));
 
   // Memoize banking data processing
@@ -1046,7 +1045,7 @@ const NewDashboard = () => {
     if (!bankLists || !Array.isArray(bankLists)) return [];
 
     return bankLists
-      .filter((item: any) => item && typeof item === 'object')
+      .filter((item: any) => item && typeof item === "object")
       .map((item: any) => ({
         ...item,
         displayName: item?.bank_name ?? item?.name,
@@ -1508,10 +1507,17 @@ const NewDashboard = () => {
               const numberOfIcons = 4;
               const availableWidth = screenWidth - horizontalPadding;
               const totalSpacing = iconSpacing * (numberOfIcons - 1);
-              const iconContainerWidth = (availableWidth - totalSpacing) / numberOfIcons;
+              const iconContainerWidth =
+                (availableWidth - totalSpacing) / numberOfIcons;
               const iconSize = Math.min(iconContainerWidth * 0.4, 30); // Icon size proportional to container, max 30
-              const iconBackgroundSize = Math.min(iconContainerWidth * 0.73, 55); // Background size proportional to container, max 55
-              const iconBackgroundHeight = Math.min(iconBackgroundSize * 0.73, 40); // Height proportional to width
+              const iconBackgroundSize = Math.min(
+                iconContainerWidth * 0.73,
+                55
+              ); // Background size proportional to container, max 55
+              const iconBackgroundHeight = Math.min(
+                iconBackgroundSize * 0.73,
+                40
+              ); // Height proportional to width
 
               return (
                 <View
@@ -1552,7 +1558,10 @@ const NewDashboard = () => {
                         marginBottom: 10,
                       }}
                     >
-                      <SvgIcons.MoneySendIcon width={iconSize-5} height={iconSize-5} />
+                      <SvgIcons.MoneySendIcon
+                        width={iconSize - 5}
+                        height={iconSize - 5}
+                      />
                     </View>
                     <CustomText size={11}>Send</CustomText>
                   </TouchableOpacity>
@@ -1583,7 +1592,10 @@ const NewDashboard = () => {
                         marginBottom: 10,
                       }}
                     >
-                      <SvgIcons.MoneyReciveIcon width={iconSize-5} height={iconSize-5} />
+                      <SvgIcons.MoneyReciveIcon
+                        width={iconSize - 5}
+                        height={iconSize - 5}
+                      />
                     </View>
                     <CustomText size={11}>Receive</CustomText>
                   </TouchableOpacity>
@@ -1618,7 +1630,10 @@ const NewDashboard = () => {
                         marginBottom: 10,
                       }}
                     >
-                      <SvgIcons.AddWallet width={iconSize-5} height={iconSize-5} />
+                      <SvgIcons.AddWallet
+                        width={iconSize - 5}
+                        height={iconSize - 5}
+                      />
                     </View>
                     <CustomText size={11}>Add Balance</CustomText>
                   </TouchableOpacity>
@@ -1644,7 +1659,10 @@ const NewDashboard = () => {
                         marginBottom: 10,
                       }}
                     >
-                      <SvgIcons.DebitCard width={iconSize+20} height={iconSize+20} />
+                      <SvgIcons.DebitCard
+                        width={iconSize + 20}
+                        height={iconSize + 20}
+                      />
                     </View>
                     <CustomText size={11}>Withdraw</CustomText>
                   </TouchableOpacity>
@@ -1829,19 +1847,39 @@ const NewDashboard = () => {
                                 <SvgIcons.DollarIcon width={35} height={35} />
                               )}
                               <View style={{ flex: 1 }}>
-                                <CustomText
-                                  variant={"subtitle2"}
-                                  fontWeight={"bold"}
-                                  fontFamily={
-                                    theme.typography.fontFamily.nexaHeavy
-                                  }
+                                <View
                                   style={{
-                                    marginLeft: 5,
-                                    marginTop: 2,
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
                                   }}
                                 >
-                                  {item.displayName}
-                                </CustomText>
+                                  <CustomText
+                                    variant={"subtitle2"}
+                                    fontWeight={"bold"}
+                                    fontFamily={
+                                      theme.typography.fontFamily.nexaHeavy
+                                    }
+                                    style={{
+                                      marginLeft: 5,
+                                      marginTop: 2,
+                                    }}
+                                  >
+                                    {item.displayName}
+                                  </CustomText>
+                                  <View
+                                    style={{
+                                      backgroundColor: theme.colors.palette.green700,
+                                      padding: 5,
+                                      paddingHorizontal: 10,
+                                      borderRadius: 10,
+                                    }}
+                                  >
+                                    <CustomText color={theme.colors.palette.white} fontWeight={"bold"} fontFamily={theme.typography.fontFamily.nexaHeavy} style={{ fontSize: 12 }}>
+                                      {item.account_status}
+                                    </CustomText>
+                                  </View>
+                                </View>
                                 {item?.account_type && (
                                   <View
                                     style={{ flexDirection: "row", flex: 1 }}
@@ -2181,7 +2219,6 @@ const NewDashboard = () => {
                           <MemoizedTransactionCard
                             transaction={item}
                             key={key}
-                           
                           />
                         </View>
                       ))}

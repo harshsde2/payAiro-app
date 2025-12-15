@@ -90,7 +90,11 @@ export default function Statement() {
 
   return (
     <ScreenContainer scrollable padding={0}>
-      <HeaderTitle title={"Statement Details"} leftIcon={'true'} onPressLeft={() => navigation.goBack()} />
+      <HeaderTitle
+        title={"Statement Details"}
+        leftIcon={"true"}
+        onPressLeft={() => navigation.goBack()}
+      />
 
       {open && (
         <DatePicker
@@ -139,7 +143,15 @@ export default function Statement() {
           cStyle={styles.inputContainer}
         />
 
-        <View style={styles.orDivider}><CustomText variant="body2" fontWeight="semiBold" color={theme.colors.text.primary}>OR</CustomText></View>
+        <View style={styles.orDivider}>
+          <CustomText
+            variant="body2"
+            fontWeight="semiBold"
+            color={theme.colors.text.primary}
+          >
+            OR
+          </CustomText>
+        </View>
         <CustomText
           variant="subtitle1"
           fontWeight="bold"
@@ -276,15 +288,15 @@ export default function Statement() {
           ))}
         </View>
 
-        <GenericButton
-          title={"View Statement"}
-          cStyle={styles.submitButton}
-          tStyle={styles.submitButtonText}
-          onPress={handleTX}
-          showLoader={true}
-          isLoading={isLoading}
-          disabled={!isButtonEnabled}
-        />
+        <View style={{ marginTop: theme.spacing.spacing[8] }}>
+          <GenericButton
+            title={"View Statement"}
+            onPress={handleTX}
+            showLoader={true}
+            isLoading={isLoading}
+            disabled={!isButtonEnabled}
+          />
+        </View>
       </View>
     </ScreenContainer>
   );
@@ -305,7 +317,6 @@ const customStyles = (theme: Theme) =>
     orDivider: {
       marginVertical: theme.spacing.spacing[3],
       alignSelf: "center",
-
     },
     sectionLabel: {
       padding: theme.spacing.spacing[2],
@@ -396,4 +407,3 @@ const customStyles = (theme: Theme) =>
       textAlign: "center",
     },
   });
-

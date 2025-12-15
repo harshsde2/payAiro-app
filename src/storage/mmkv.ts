@@ -49,4 +49,5 @@ export const STORAGE_KEYS = {
   ALL_CRYPTO_BALANCES: "all_crypto_balances",
   OTP_RESEND_TIMESTAMP: "otp_resend_timestamp",
   REFERRAL_CODE: "referral_code",
+  APP_BACKGROUND_FLAG: "app_background_flag",
 };

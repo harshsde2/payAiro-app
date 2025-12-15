@@ -41,12 +41,9 @@ const LogoutModal: React.FC<ILogoutModalProps> = ({
             title="Yes, Logout"
             cStyle={{
               marginTop: theme.spacing.spacing[6],
-              paddingHorizontal: theme.spacing.spacing[4],
-              minHeight: 48,
+              // paddingHorizontal: theme.spacing.spacing[4],
             }}
-            tStyle={{
-              flexShrink: 0,
-            }}
+           
             onPress={() => {
               onClose();
             }}

@@ -15,7 +15,13 @@ import { useSelector } from "react-redux";
 import { Theme, useTheme } from "styles";
 import { showError } from "utils/toast";
 import { SvgIcons } from "constants/svgs";
-import { getPin } from "storage/mmkv";
+import {
+  getPin,
+  getItem,
+  setItem,
+  removeItem,
+  STORAGE_KEYS,
+} from "storage/mmkv";
 import CustomText from "tsx-components/CustomText";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -35,10 +41,12 @@ const AppLockScreen: React.FC = () => {
   );
   const lastBackgroundTimeRef = useRef<number | null>(null);
   const appStateSubscriptionRef = useRef<any>(null);
+  const pinVerifiedInSessionRef = useRef<boolean>(false);
 
   // Check if PIN exists
   const hasPin = () => {
     const storedPin = getPin();
+    console.log("storedPin =>", storedPin);
     return storedPin && storedPin.length > 0;
   };
 
@@ -80,6 +88,9 @@ const AppLockScreen: React.FC = () => {
         setPin("");
         setIsLockScreenVisible(false);
         lastBackgroundTimeRef.current = null;
+        pinVerifiedInSessionRef.current = true;
+        // Clear the app background flag since PIN is verified
+        removeItem(STORAGE_KEYS.APP_BACKGROUND_FLAG);
       } else {
         // PIN is incorrect
         showError("Invalid PIN. Please try again");
@@ -100,8 +111,31 @@ const AppLockScreen: React.FC = () => {
 
   // Monitor app state changes
   useEffect(() => {
+    console.log("appState =>", appState);
+    console.log("isLogin =>", isLogin);
+    console.log("hasPin =>", hasPin());
     if (!isLogin || !hasPin()) {
+      // Clear flag if user logs out or doesn't have PIN
+      removeItem(STORAGE_KEYS.APP_BACKGROUND_FLAG);
       return;
+    }
+
+    // Check on mount if app was killed and reopened
+    // Detection logic:
+    // - If APP_BACKGROUND_FLAG doesn't exist: First time or was cleared (show PIN)
+    // - If APP_BACKGROUND_FLAG exists BUT lastBackgroundTimeRef is null: App was killed (refs don't persist, MMKV does)
+    // - If both exist: App was just backgrounded (normal resume, handled by foreground event)
+    // Only show if PIN hasn't been verified in this session yet
+    if (!pinVerifiedInSessionRef.current && appState === "active") {
+      const appBackgroundFlag = getItem(STORAGE_KEYS.APP_BACKGROUND_FLAG);
+      const wasAppKilled = appBackgroundFlag && lastBackgroundTimeRef.current === null;
+      const isFirstOpen = !appBackgroundFlag;
+      
+      if (wasAppKilled || isFirstOpen) {
+        // App was killed and reopened or first opened - show PIN lock immediately
+        setIsLockScreenVisible(true);
+        setPin("");
+      }
     }
 
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
@@ -111,11 +145,17 @@ const AppLockScreen: React.FC = () => {
         nextAppState.match(/inactive|background/)
       ) {
         lastBackgroundTimeRef.current = new Date().getTime();
+        // Set flag to indicate app was backgrounded (not killed)
+        setItem(
+          STORAGE_KEYS.APP_BACKGROUND_FLAG,
+          new Date().getTime().toString()
+        );
       }
 
       // App is coming to foreground
       if (appState.match(/inactive|background/) && nextAppState === "active") {
-        // Show lock screen when app comes to foreground
+        // Show lock screen when app comes to foreground (app was minimized/closed)
+        // Only if we have a background time (app was backgrounded, not killed)
         if (lastBackgroundTimeRef.current !== null) {
           setIsLockScreenVisible(true);
           setPin("");
