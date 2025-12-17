@@ -118,6 +118,12 @@ import RewardsContainer from "./RewardsContainer.svg";
 import RewardsGifts from "./RewardsGifts.svg";
 import RewardsDollar from "./RewardsDollar.svg";
 import Points from "./Points.svg";
+import ReceiveIcon from "./ReceiveIcon.svg";
+import SendIcon2 from "./SendIcon2.svg";
+import BankIcon2 from "./BankIcon2.svg";
+import CryptoIcon2 from "./CryptoIcon.svg";
+import RightArrow from "./RightArrow.svg";
+import WithdrawIcon2  from "./WithdrawIcon2.svg";
 
 export const SvgIcons = {
   PayAiorRoundIcon,
@@ -240,4 +246,10 @@ export const SvgIcons = {
   RewardsGifts,
   RewardsDollar,
   Points,
+  ReceiveIcon,
+  SendIcon2,
+  BankIcon2,
+  CryptoIcon2,
+  RightArrow,
+  WithdrawIcon2
 };

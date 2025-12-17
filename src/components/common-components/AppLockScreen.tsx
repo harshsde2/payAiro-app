@@ -1,56 +1,37 @@
 import Fonts from "constants/Fonts";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ActivityIndicator,
-  AppState,
-  AppStateStatus,
   Modal,
-  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  BackHandler,
 } from "react-native";
-import { useSelector } from "react-redux";
 import { Theme, useTheme } from "styles";
 import { showError } from "utils/toast";
 import { SvgIcons } from "constants/svgs";
-import {
-  getPin,
-  getItem,
-  setItem,
-  removeItem,
-  STORAGE_KEYS,
-} from "storage/mmkv";
+import { getPin } from "storage/mmkv";
 import CustomText from "tsx-components/CustomText";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAppLock } from "hooks/useAppLock";
+import { LOCK_CONFIG } from "types/appLock.types";
 
 const AppLockScreen: React.FC = () => {
   const { theme } = useTheme();
   const styles = customStyles(theme);
-  const isLogin = useSelector(
-    (state: any) => state.authenticationSlice?.isLogin
-  );
+  const { isLocked, unlockApp, shouldShowLock } = useAppLock();
 
   const [pin, setPin] = useState("");
   const [isVerifyingPin, setIsVerifyingPin] = useState(false);
   const [showPin, setShowPin] = useState(false);
-  const [isLockScreenVisible, setIsLockScreenVisible] = useState(false);
-  const [appState, setAppState] = useState<AppStateStatus>(
-    AppState.currentState
-  );
-  const lastBackgroundTimeRef = useRef<number | null>(null);
-  const appStateSubscriptionRef = useRef<any>(null);
-  const pinVerifiedInSessionRef = useRef<boolean>(false);
+  const [attempts, setAttempts] = useState(0);
+  const [error, setError] = useState("");
 
-  // Check if PIN exists
-  const hasPin = () => {
-    const storedPin = getPin();
-    console.log("storedPin =>", storedPin);
-    return storedPin && storedPin.length > 0;
-  };
+  const MAX_ATTEMPTS = LOCK_CONFIG.MAX_PIN_ATTEMPTS;
 
-  // Verify PIN
+  // Verify PIN against stored PIN
   const verifyPin = (enteredPin: string): boolean => {
     const correctPin = getPin();
     return enteredPin === correctPin;
@@ -58,9 +39,10 @@ const AppLockScreen: React.FC = () => {
 
   // Handle PIN digit input
   const handlePinDigit = (digit: string) => {
-    if (pin.length < 4) {
+    if (pin.length < 4 && attempts < MAX_ATTEMPTS) {
       const newPin = pin + digit;
       setPin(newPin);
+      setError(""); // Clear error on new input
 
       // Auto-verify when 4 digits are entered
       if (newPin.length === 4) {
@@ -72,6 +54,7 @@ const AppLockScreen: React.FC = () => {
   // Handle backspace
   const handlePinBackspace = () => {
     setPin((prev) => prev.slice(0, -1));
+    setError(""); // Clear error on backspace
   };
 
   // Verify PIN and unlock app
@@ -79,25 +62,38 @@ const AppLockScreen: React.FC = () => {
     const pinToCheck = pinToVerify || pin;
     if (pinToCheck.length < 4) return;
 
+    if (attempts >= MAX_ATTEMPTS) {
+      setError("Too many attempts. Please try again later.");
+      return;
+    }
+
     setIsVerifyingPin(true);
+    setError("");
 
     try {
       const isValid = verifyPin(pinToCheck);
       if (isValid) {
         // PIN is correct, unlock the app
         setPin("");
-        setIsLockScreenVisible(false);
-        lastBackgroundTimeRef.current = null;
-        pinVerifiedInSessionRef.current = true;
-        // Clear the app background flag since PIN is verified
-        removeItem(STORAGE_KEYS.APP_BACKGROUND_FLAG);
+        setAttempts(0);
+        setError("");
+        unlockApp();
       } else {
         // PIN is incorrect
-        showError("Invalid PIN. Please try again");
+        const newAttempts = attempts + 1;
+        setAttempts(newAttempts);
+
+        if (newAttempts >= MAX_ATTEMPTS) {
+          setError("Too many attempts. Please try again later.");
+        } else {
+          setError(
+            `Incorrect PIN. ${MAX_ATTEMPTS - newAttempts} attempts remaining.`
+          );
+        }
         setPin("");
       }
     } catch (error) {
-      showError("Failed to verify PIN. Please try again.");
+      setError("Failed to verify PIN. Please try again.");
       setPin("");
     } finally {
       setIsVerifyingPin(false);
@@ -109,98 +105,45 @@ const AppLockScreen: React.FC = () => {
     setShowPin((prev) => !prev);
   };
 
-  // Monitor app state changes
+  // Reset PIN and error when lock screen becomes visible
   useEffect(() => {
-    console.log("appState =>", appState);
-    console.log("isLogin =>", isLogin);
-    console.log("hasPin =>", hasPin());
-    if (!isLogin || !hasPin()) {
-      // Clear flag if user logs out or doesn't have PIN
-      removeItem(STORAGE_KEYS.APP_BACKGROUND_FLAG);
-      return;
+    if (isLocked) {
+      setPin("");
+      setError("");
+      setAttempts(0);
     }
+  }, [isLocked]);
 
-    // Check on mount if app was killed and reopened
-    // Detection logic:
-    // - If APP_BACKGROUND_FLAG doesn't exist: First time or was cleared (show PIN)
-    // - If APP_BACKGROUND_FLAG exists BUT lastBackgroundTimeRef is null: App was killed (refs don't persist, MMKV does)
-    // - If both exist: App was just backgrounded (normal resume, handled by foreground event)
-    // Only show if PIN hasn't been verified in this session yet
-    if (!pinVerifiedInSessionRef.current && appState === "active") {
-      const appBackgroundFlag = getItem(STORAGE_KEYS.APP_BACKGROUND_FLAG);
-      const wasAppKilled = appBackgroundFlag && lastBackgroundTimeRef.current === null;
-      const isFirstOpen = !appBackgroundFlag;
-      
-      if (wasAppKilled || isFirstOpen) {
-        // App was killed and reopened or first opened - show PIN lock immediately
-        setIsLockScreenVisible(true);
-        setPin("");
-      }
-    }
-
-    const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      // App is going to background
-      if (
-        appState.match(/active/) &&
-        nextAppState.match(/inactive|background/)
-      ) {
-        lastBackgroundTimeRef.current = new Date().getTime();
-        // Set flag to indicate app was backgrounded (not killed)
-        setItem(
-          STORAGE_KEYS.APP_BACKGROUND_FLAG,
-          new Date().getTime().toString()
-        );
-      }
-
-      // App is coming to foreground
-      if (appState.match(/inactive|background/) && nextAppState === "active") {
-        // Show lock screen when app comes to foreground (app was minimized/closed)
-        // Only if we have a background time (app was backgrounded, not killed)
-        if (lastBackgroundTimeRef.current !== null) {
-          setIsLockScreenVisible(true);
-          setPin("");
+  // Block Android hardware back button when locked
+  useEffect(() => {
+    if (isLocked && shouldShowLock) {
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        () => {
+          // Prevent going back when locked
+          return true;
         }
-      }
+      );
 
-      setAppState(nextAppState);
-    };
-
-    // Subscribe to app state changes
-    appStateSubscriptionRef.current = AppState.addEventListener(
-      "change",
-      handleAppStateChange
-    );
-
-    // Check initial state - if app is already active and we have a background time, show lock
-    if (appState === "active" && lastBackgroundTimeRef.current !== null) {
-      setIsLockScreenVisible(true);
+      return () => backHandler.remove();
     }
+  }, [isLocked, shouldShowLock]);
 
-    return () => {
-      if (appStateSubscriptionRef.current) {
-        appStateSubscriptionRef.current.remove();
-      }
-    };
-  }, [appState, isLogin]);
-
-  // Don't render if user is not logged in or doesn't have PIN
-  if (!isLogin || !hasPin()) {
+  // Don't render if user doesn't have PIN or not logged in, or not locked
+  if (!shouldShowLock || !isLocked) {
     return null;
   }
 
   return (
-    <SafeAreaView
-      edges={[]}
-      style={styles.modalContainer}
-    >
+    <SafeAreaView edges={[]} style={styles.modalContainer}>
       <Modal
         animationType="fade"
         transparent={false}
-        visible={isLockScreenVisible}
+        visible={isLocked}
         onRequestClose={() => {
           // Prevent closing without PIN
         }}
-        style={{flex:1}}
+        style={{ flex: 1 }}
         presentationStyle="fullScreen"
       >
         <View
@@ -220,7 +163,7 @@ const AppLockScreen: React.FC = () => {
             <View>
               <CustomText style={styles.appTitle}>PayAiro App</CustomText>
               <CustomText style={styles.subtitleText}>
-                Enter PIN to continue
+                Enter Transaction PIN to unlock
               </CustomText>
             </View>
             <SvgIcons.PayairoWhiteLogo width={40} height={40} />
@@ -271,6 +214,21 @@ const AppLockScreen: React.FC = () => {
                 </View>
               ))}
             </View>
+
+            {error ? (
+              <View style={styles.errorContainer}>
+                <CustomText style={styles.errorText}>{error}</CustomText>
+              </View>
+            ) : null}
+
+            {isVerifyingPin ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator
+                  size="small"
+                  color={theme.colors.palette.green700}
+                />
+              </View>
+            ) : null}
           </View>
 
           <View style={styles.keypadContainer}>
@@ -285,6 +243,7 @@ const AppLockScreen: React.FC = () => {
                     key={num}
                     style={styles.keypadButton}
                     onPress={() => handlePinDigit(num)}
+                    disabled={attempts >= MAX_ATTEMPTS || isVerifyingPin}
                   >
                     <Text style={styles.keypadNumber}>{num}</Text>
                   </TouchableOpacity>
@@ -296,6 +255,7 @@ const AppLockScreen: React.FC = () => {
               <TouchableOpacity
                 style={styles.keypadButton}
                 onPress={handlePinBackspace}
+                disabled={attempts >= MAX_ATTEMPTS || isVerifyingPin}
               >
                 <SvgIcons.KeyboardBack width={35} height={35} />
               </TouchableOpacity>
@@ -303,15 +263,22 @@ const AppLockScreen: React.FC = () => {
               <TouchableOpacity
                 style={styles.keypadButton}
                 onPress={() => handlePinDigit("0")}
+                disabled={attempts >= MAX_ATTEMPTS || isVerifyingPin}
               >
                 <Text style={styles.keypadNumber}>0</Text>
               </TouchableOpacity>
 
               <View style={styles.actionButtonWrapper}>
                 <TouchableOpacity
-                  style={(styles as any).actionButton(pin.length === 4)}
+                  style={(styles as any).actionButton(
+                    pin.length === 4 && attempts < MAX_ATTEMPTS
+                  )}
                   onPress={() => handleVerifyPin()}
-                  disabled={pin.length !== 4 || isVerifyingPin}
+                  disabled={
+                    pin.length !== 4 ||
+                    isVerifyingPin ||
+                    attempts >= MAX_ATTEMPTS
+                  }
                 >
                   {isVerifyingPin ? (
                     <ActivityIndicator color="#FFF" size="small" />
@@ -334,7 +301,6 @@ const customStyles = (theme: Theme) =>
   StyleSheet.create({
     modalContainer: {
       backgroundColor: "#FFFFFF",
-      
     },
     header: {
       flex: 1,
@@ -391,6 +357,7 @@ const customStyles = (theme: Theme) =>
       flexDirection: "row",
       justifyContent: "space-between",
       width: "80%",
+      marginBottom: 20,
     },
     pinDotWrapper: {
       width: "22%",
@@ -410,6 +377,19 @@ const customStyles = (theme: Theme) =>
       bottom: 0,
       width: "100%",
       height: 2,
+    },
+    errorContainer: {
+      marginTop: 20,
+      paddingHorizontal: 20,
+    },
+    errorText: {
+      fontSize: 14,
+      color: theme.colors.palette.error || "#FF0000",
+      fontFamily: theme.typography.fontFamily.montserrat,
+      textAlign: "center",
+    },
+    loadingContainer: {
+      marginTop: 20,
     },
     keypadContainer: {
       width: "90%",

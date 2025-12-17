@@ -85,9 +85,9 @@ const BlockchainNameServiceTermsModal: React.FC<IBlockchainNameServiceTermsModal
             >
               Terms and Conditions
             </CustomText>
-            <Pressable onPress={handleClose} style={styles(theme).closeButton}>
-              <SvgIcons.CrossIcon width={54} height={54} />
-            </Pressable>
+            {/* <Pressable onPress={handleClose} style={styles(theme).closeButton}>
+              <SvgIcons.CrossIcon width={44} height={44} />
+            </Pressable> */}
           </View>
 
           <ScrollView
@@ -174,20 +174,22 @@ const styles = (theme: any) =>
       maxHeight: "35%",
       backgroundColor: theme.colors.palette.white,
       borderRadius: 16,
-      padding: theme.spacing.spacing[5],
+      paddingHorizontal: theme.spacing.spacing[5],
+      paddingBottom: theme.spacing.spacing[5],
+      paddingTop: theme.spacing.spacing[2],
     },
     headerContainer: {
       flexDirection: "row",
-      justifyContent: "space-between",
+      justifyContent: 'center',
       alignItems: "center",
-      marginBottom: theme.spacing.spacing[4],
+      // backgroundColor: "red",
     },
     title: {
-      flex: 1,
+      // flex: 1,
       fontSize: 20,
     },
     closeButton: {
-      padding: theme.spacing.spacing[1],
+      // padding: theme.spacing.spacing[1],
     },
     scrollView: {
       flex: 1,
@@ -245,7 +247,7 @@ const styles = (theme: any) =>
       color: theme.colors.palette.grey900,
     },
     continueButton: {
-      marginTop: theme.spacing.spacing[2],
+      marginTop: theme.spacing.spacing[5],
     },
     continueButtonDisabled: {
       opacity: 0.5,

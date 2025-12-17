@@ -766,10 +766,10 @@ const DashboardCard: FC<{ refetchBankBalanceData: () => void }> = ({
               >
                 <CustomText color={theme.colors.palette.black} variant={"body1"}>
                   {selectedCryptoTab === "Available"
-                    ? "Crypto Balance"
+                    ? `${selectedCurrency?.symbol?.toUpperCase()} Balance`
                     : selectedCryptoTab === "Total"
-                    ? "Total Crypto Balance"
-                    : "Pending Crypto Balance"}
+                    ? `Total ${selectedCurrency?.symbol?.toUpperCase()} Balance`
+                    : `Pending ${selectedCurrency?.symbol?.toUpperCase()} Balance`}
                 </CustomText>
                 <View
                   style={{ flexDirection: "row", alignItems: "center", gap: 10 }}

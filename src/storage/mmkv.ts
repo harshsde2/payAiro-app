@@ -50,4 +50,6 @@ export const STORAGE_KEYS = {
   OTP_RESEND_TIMESTAMP: "otp_resend_timestamp",
   REFERRAL_CODE: "referral_code",
   APP_BACKGROUND_FLAG: "app_background_flag",
+  APP_LOCK_LAST_ACTIVE_TIME: "app.lock.last_active_time",
+  APP_LOCK_TIMEOUT: "app.lock.timeout",
 };

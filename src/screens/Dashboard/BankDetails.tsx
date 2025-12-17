@@ -11,8 +11,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SvgXml } from "react-native-svg";
-
 // Components
 import { ScreenContainer } from "../../HOC";
 import HeaderTitle from "../../components/HeaderTitle";

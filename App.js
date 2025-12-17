@@ -39,6 +39,7 @@ import KycWatchdog from "./src/components/common-components/KycWatchdog";
 import KycBanner from "./src/components/common-components/KycBanner";
 import AppLockScreen from "./src/components/common-components/AppLockScreen";
 import Toast from "./src/components/common-components/Toast";
+import { AppLockProvider } from "./src/contexts/AppLockContext";
 
 export default function App() {
   // -------------------- Redux State --------------------
@@ -312,74 +313,75 @@ export default function App() {
     <SafeAreaProvider>
       <ThemeProvider>
         <PersistQueryProvider>
-          <NavigationContainer
-            linking={LinkingPath}
-            onStateChange={(state) => {
-              // Helper function to get the focused route recursively (handles nested navigators)
-              const getFocusedRoute = (navState) => {
-                if (!navState) return null;
-                const route = navState.routes[navState.index];
-                if (!route) return null;
-                
-                // If this route has nested state, get the focused route from it
-                if (route.state) {
-                  const nestedRoute = getFocusedRoute(route.state);
-                  if (nestedRoute) return nestedRoute;
-                }
-                
-                return route;
-              };
-
-              const focusedRoute = getFocusedRoute(state);
-              const currentRouteName = focusedRoute?.name || null;
-              
-              // Dispatch current route to Redux
-              dispatch(setCurrentRoute(currentRouteName));
-
-              // Existing logic for active tabs
-              const currentRoute = state.routes[state.index];
-              // console.log('Current Screen:', currentRoute.name);
-              let activeTabs = "1"; // Default to home (or whichever default)
-
-              switch (currentRoute.name) {
-                case NAVIGATION_SCREENS.NEW_DASHBOARD:
-                  // isCrypto true = fiat (activeTab "1"), false = crypto (activeTab "7")
-                  if (isCrypto) {
-                    activeTabs = "1";
-                  } else {
-                    activeTabs = "7";
+          <AppLockProvider>
+            <NavigationContainer
+              linking={LinkingPath}
+              onStateChange={(state) => {
+                // Helper function to get the focused route recursively (handles nested navigators)
+                const getFocusedRoute = (navState) => {
+                  if (!navState) return null;
+                  const route = navState.routes[navState.index];
+                  if (!route) return null;
+                  
+                  // If this route has nested state, get the focused route from it
+                  if (route.state) {
+                    const nestedRoute = getFocusedRoute(route.state);
+                    if (nestedRoute) return nestedRoute;
                   }
-                  break;
-                case NAVIGATION_SCREENS.TRANSACTION:
-                case NAVIGATION_SCREENS.UNIFIED_TRANSACTION:
-                  activeTabs = "2";
-                  break;
-                case NAVIGATION_SCREENS.SCANS:
-                  activeTabs = "3";
-                  break;
-                case NAVIGATION_SCREENS.REWARDS:
-                  activeTabs = "4";
-                  break;
-                case NAVIGATION_SCREENS.SETTING_SCREEN:
-                  activeTabs = "5";
-                  break;
-                default:
-                  activeTabs = "1"; // Default to home
-              }
+                  
+                  return route;
+                };
 
-              // Dispatch to update Redux store
-              dispatch(setActiveTab(activeTabs));
-            }}
-          >
-            <UseNet />
-            {/* {console.log('showLoader =>', showLoader)} */}
-            {showLoader && <GlobalLoader />}
-            {isLogin && <KycWatchdog />}
-            {isLogin && <KycBanner />}
-            {isLogin && <AppLockScreen />}
-            {!isLogin ? <AuthStack /> : <AppStack />}
-            <Toast />
-          </NavigationContainer>
+                const focusedRoute = getFocusedRoute(state);
+                const currentRouteName = focusedRoute?.name || null;
+                
+                // Dispatch current route to Redux
+                dispatch(setCurrentRoute(currentRouteName));
+
+                // Existing logic for active tabs
+                const currentRoute = state.routes[state.index];
+                // console.log('Current Screen:', currentRoute.name);
+                let activeTabs = "1"; // Default to home (or whichever default)
+
+                switch (currentRoute.name) {
+                  case NAVIGATION_SCREENS.NEW_DASHBOARD:
+                    // isCrypto true = fiat (activeTab "1"), false = crypto (activeTab "7")
+                    if (isCrypto) {
+                      activeTabs = "1";
+                    } else {
+                      activeTabs = "7";
+                    }
+                    break;
+                  case NAVIGATION_SCREENS.TRANSACTION:
+                  case NAVIGATION_SCREENS.UNIFIED_TRANSACTION:
+                    activeTabs = "2";
+                    break;
+                  case NAVIGATION_SCREENS.SCANS:
+                    activeTabs = "3";
+                    break;
+                  case NAVIGATION_SCREENS.REWARDS:
+                    activeTabs = "4";
+                    break;
+                  case NAVIGATION_SCREENS.SETTING_SCREEN:
+                    activeTabs = "5";
+                    break;
+                  default:
+                    activeTabs = "1"; // Default to home
+                }
+
+                // Dispatch to update Redux store
+                dispatch(setActiveTab(activeTabs));
+              }}
+            >
+              <UseNet />
+              {showLoader && <GlobalLoader />}
+              {isLogin && <KycWatchdog />}
+              {isLogin && <KycBanner />}
+              <AppLockScreen />
+              {!isLogin ? <AuthStack /> : <AppStack />}
+              <Toast />
+            </NavigationContainer>
+          </AppLockProvider>
         </PersistQueryProvider>
       </ThemeProvider>
     </SafeAreaProvider>

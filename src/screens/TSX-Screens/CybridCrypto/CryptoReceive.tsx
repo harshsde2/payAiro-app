@@ -13,6 +13,7 @@ import {
   ToastAndroid,
   View,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import ViewShot from "react-native-view-shot";
@@ -20,15 +21,38 @@ import { Theme, useTheme } from "styles";
 import { useGlobalStyles } from "styles/GlobalStyles";
 import { CustomText } from "tsx-components";
 import { useDepositAddress } from "query/hooks/useCrypto";
+import { SvgUri } from "react-native-svg";
 
 export default function Receive() {
   const route = useRoute();
   const { details } = route.params as any;
   const { walletData } = useSelectorAction() as any;
-  const { symbol, buy_price } = details;
+  const { symbol, buy_price, logo } = details;
   const { theme } = useTheme();
   const { spacing, colors } = theme;
   const styles = { ...useGlobalStyles(), ...customStyles(theme) };
+
+  // Extract crypto name and network from symbol
+  const getCryptoInfo = () => {
+    // Examples: "USDC_SOL-USD" -> crypto: "USDC", network: "SOL"
+    //           "USDC-USD" -> crypto: "USDC", network: null
+    //           "BTC-USD" -> crypto: "BTC", network: null
+    const parts = symbol.split("-")[0]; // Get part before "-USD"
+    const networkParts = parts.split("_");
+
+    if (networkParts.length > 1) {
+      return {
+        cryptoName: networkParts[0],
+        network: networkParts[1],
+      };
+    }
+    return {
+      cryptoName: parts,
+      network: null,
+    };
+  };
+
+  const { cryptoName, network } = getCryptoInfo();
 
   const viewShotRef = useRef<any>(null);
   const [isOnChain, setIsOnChain] = useState(false); // false = Off Chain, true = On Chain
@@ -105,7 +129,7 @@ export default function Receive() {
   // Get the display label based on chain type
   const getDisplayLabel = () => {
     if (isOnChain) {
-      return "PayAiro Wallet Address:";
+      return `${cryptoName} Wallet Address:`;
     }
     return "PayAiro Tag:";
   };
@@ -164,6 +188,46 @@ export default function Receive() {
         </View>
       </View>
       <View style={styles.container}>
+        {/* Crypto Name and Network Display */}
+        <View style={styles.cryptoInfoContainer}>
+          <View style={styles.cryptoIconContainer}>
+            {logo?.toLowerCase?.().endsWith(".svg") ? (
+              <SvgUri uri={logo} width={30} height={30} />
+            ) : (
+              <Image
+                source={{ uri: logo }}
+                style={styles.cryptoIcon}
+                resizeMode="contain"
+              />
+            )}
+            {network && (
+              <View style={styles.networkIconOverlay}>
+                <SvgIcons.Solana width={16} height={16} />
+              </View>
+            )}
+          </View>
+          <View style={styles.cryptoTextContainer}>
+            <CustomText
+              size={20}
+              fontWeight="bold"
+              color={theme.colors.palette.grey900}
+            >
+              {cryptoName}
+            </CustomText>
+            {network && (
+              <View style={styles.networkBadge}>
+                <CustomText
+                  size={12}
+                  fontWeight="medium"
+                  color={theme.colors.palette.grey700}
+                >
+                  {network === "SOL" ? "Solana" : network}
+                </CustomText>
+              </View>
+            )}
+          </View>
+        </View>
+
         <View style={styles.qrCard}>
           <ViewShot ref={viewShotRef} options={{ format: "png", quality: 0.9 }}>
             {depositAddressMutation.isPending ||
@@ -180,28 +244,69 @@ export default function Receive() {
           </ViewShot>
         </View>
 
-        <View style={styles.qrInfoRow}>
-          <CustomText size={14} fontWeight="semiBold">
-            {getDisplayLabel()}
-          </CustomText>
-          <CustomText
-            fontWeight="semiBold"
-            size={14}
-            color={theme.colors.palette.green700}
-            numberOfLines={1}
-            style={styles.qrInfoValue}
-          >
-            {getDisplayValue()}
-          </CustomText>
-          <SvgIcons.CopyOutlineBlack
-            onPress={() =>
-              copyToClipboard(
-                getDisplayValue(),
-                isOnChain ? "Wallet Address" : "PayAiro Tag"
-              )
-            }
-          />
+        <View
+          style={{
+            width: "100%",
+            // backgroundColor: "red",
+            justifyContent: "center",
+            alignItems: "center",
+            marginVertical: theme.spacing.spacing[4],
+
+          }}
+        >
+          <View style={styles.qrInfoRow}>
+            <CustomText size={14} fontWeight="semiBold">
+              {getDisplayLabel()}
+            </CustomText>
+            <CustomText
+              fontWeight="semiBold"
+              size={14}
+              color={theme.colors.palette.green700}
+              numberOfLines={1}
+              style={styles.qrInfoValue}
+            >
+              {getDisplayValue()}
+            </CustomText>
+            <SvgIcons.CopyOutlineBlack
+              onPress={() =>
+                copyToClipboard(
+                  getDisplayValue(),
+                  isOnChain ? "Wallet Address" : "PayAiro Tag"
+                )
+              }
+            />
+          </View>
         </View>
+
+        {isOnChain && depositAddress && (
+          <View style={styles.noticeContainer}>
+            <View style={styles.noticeIconContainer}>
+              <CustomText
+                size={16}
+                fontWeight="bold"
+                color={theme.colors.palette.white}
+              >
+                i
+              </CustomText>
+            </View>
+            <View style={styles.noticeTextContainer}>
+              <CustomText
+                size={13}
+                color={theme.colors.palette.white}
+                style={styles.noticeText}
+              >
+                Only send {symbol} assets to this address.
+              </CustomText>
+              <CustomText
+                size={13}
+                color={theme.colors.palette.white}
+                style={styles.noticeText}
+              >
+                Other assets will be lost forever.
+              </CustomText>
+            </View>
+          </View>
+        )}
       </View>
     </ScreenContainer>
   );
@@ -308,6 +413,49 @@ const customStyles = (theme: Theme) =>
       backgroundColor: theme.colors.palette.green700,
       borderColor: theme.colors.palette.green700,
     },
+    cryptoInfoContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: theme.spacing.spacing[4],
+      gap: theme.spacing.spacing[3],
+    },
+    cryptoIconContainer: {
+      position: "relative",
+      justifyContent: "center",
+      alignItems: "center",
+      width: 30,
+      height: 30,
+    },
+    cryptoIcon: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+    },
+    networkIconOverlay: {
+      position: "absolute",
+      bottom: -2,
+      right: -2,
+      width: 18,
+      height: 18,
+      borderRadius: 9,
+      backgroundColor: theme.colors.palette.grey900,
+      justifyContent: "center",
+      alignItems: "center",
+      borderWidth: 1.5,
+      borderColor: theme.colors.palette.white,
+    },
+    cryptoTextContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: theme.spacing.spacing[2],
+    },
+    networkBadge: {
+      paddingHorizontal: theme.spacing.spacing[2],
+      paddingVertical: 4,
+      borderRadius: theme.spacing.spacing[2],
+      backgroundColor: theme.colors.palette.grey200,
+    },
     qrCard: {
       marginTop: theme.spacing.spacing[2],
       alignItems: "center",
@@ -322,10 +470,36 @@ const customStyles = (theme: Theme) =>
     qrInfoRow: {
       flexDirection: "row",
       alignItems: "center",
-      marginTop: theme.spacing.spacing[4],
       columnGap: 8,
+      width: "80%",
     },
     qrInfoValue: {
       flex: 1,
+    },
+    noticeContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: theme.spacing.spacing[4],
+      padding: theme.spacing.spacing[4],
+      backgroundColor: "rgba(137, 123, 83, 0.85)", // Dark olive green with overlay transparency
+      borderRadius: theme.spacing.spacing[3],
+      columnGap: theme.spacing.spacing[3],
+    },
+    noticeIconContainer: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: theme.colors.palette.yellow500,
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: 2,
+    },
+    noticeTextContainer: {
+      flex: 1,
+      gap: 4,
+    },
+    noticeText: {
+      lineHeight: 18,
     },
   });

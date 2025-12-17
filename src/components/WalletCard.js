@@ -24,9 +24,7 @@ const WalletCard = ({ data, bankbalance, index }) => {
   // Redux store
   const { walletData } = useSelector((state) => state.authenticationSlice);
 
-  // console.log("data =>", JSON.stringify(data, null, 2));
   const styles = customStyles(theme);
-  theme.colors.palette.green700;
   
   // Function to mask numbers - show only last 4 digits
   const maskNumber = (number) => {
@@ -34,7 +32,7 @@ const WalletCard = ({ data, bankbalance, index }) => {
     const numStr = String(number);
     if (numStr.length <= 4) return numStr;
     const lastFour = numStr.slice(-4);
-    const masked = "*".repeat(numStr.length - 4);
+    const masked = "*".repeat(Math.max(0, numStr.length - 4));
     return masked + lastFour;
   };
   
@@ -43,72 +41,67 @@ const WalletCard = ({ data, bankbalance, index }) => {
     setIsNumbersVisible(!isNumbersVisible);
   };
   
+  // Format balance for display
+  const formatBalance = (balance) => {
+    if (!balance) return "0.00";
+    const num = parseFloat(balance);
+    return num.toFixed(1);
+  };
+  
+  const displayBalance = data?.account_type === 'external' 
+    ? '' 
+    : isNumbersVisible 
+      ? `$${formatBalance(bankbalance)}` 
+      : '$****';
+  
   return (
     <View style={styles.card}>
-      <View
-        style={{
-          flexDirection: "row",
-          width: "100%",
-          flex: 1,
-          alignItems: "center",
-        }}
-      >
-        <View style={{ flex: 1 }}>
-          <View
-            style={{
-              flexDirection: "row",
-              flex: 1,
-              alignItems: "center",
-              justifyContent: "flex-start",
-            }}
+      {/* Top Section: Bank Name, MAIN button, and Open status */}
+      <View style={styles.headerSection}>
+        <View style={styles.bankNameContainer}>
+          <SvgIcons.BankIcon2 width={20} height={20} />
+          <CustomText
+            variant={"h4"}
+            color={theme.colors.palette.white}
+            fontWeight={"bold"}
+            style={styles.bankName}
           >
-            <SvgXml
-              style={{ marginRight: 10 }}
-              color={theme.colors.palette.white}
-              xml={SVGBankLogo}
-              width={20}
-              height={20}
-            />
+            {data?.bank_name || "Payairo Bank"}
+          </CustomText>
+        </View>
+        <View style={styles.headerRight}>
+          <View style={styles.mainButton}>
             <CustomText
-              variant={"h4"}
+              variant={"caption"}
               color={theme.colors.palette.white}
               fontWeight={"bold"}
-              style={{ flex: 1 }}
+              style={styles.mainButtonText}
             >
-              {data?.bank_name}
+              MAIN
+            </CustomText>
+          </View>
+          <View style={styles.statusContainer}>
+            <View style={styles.statusDot} />
+            <CustomText
+              variant={"caption"}
+              color={theme.colors.palette.white}
+              style={styles.statusText}
+            >
+              Open
             </CustomText>
           </View>
         </View>
-        <View style={{ flexDirection: "row", gap: 10 }}>
-          <View
-            style={{
-              width: 100,
-              paddingVertical: 5,
-              justifyContent: "center",
-              alignItems: "center",
-              borderRadius: 20,
-              backgroundColor: "rgba(255, 255, 255, 0.3)",
-            }}
-          >
-            <CustomText
-              size={9}
-              variant={"subtitle2"}
-              color={theme.colors.palette.white}
-              style={{ textTransform: "uppercase" }}
-            >
-              {data?.account_type}
-            </CustomText>
-          </View>
+      </View>
+
+      {/* Middle Section: Balance with Eye Icon */}
+      <View style={styles.balanceSection}>
+        <View style={styles.balanceContainer}>
+          <CustomText variant={"h2"} color={theme.colors.palette.white} fontWeight={"bold"}>
+            {displayBalance}
+          </CustomText>
           <TouchableOpacity
             onPress={toggleNumbersVisibility}
-            style={{
-              paddingVertical: 5,
-              paddingHorizontal: 10,
-              justifyContent: "center",
-              alignItems: "center",
-              borderRadius: 20,
-              backgroundColor: "rgba(255, 255, 255, 0.3)",
-            }}
+            style={styles.eyeButton}
           >
             {isNumbersVisible ? (
               <SvgIcons.EyeOnOutlineWhite width={20} height={20} />
@@ -118,124 +111,64 @@ const WalletCard = ({ data, bankbalance, index }) => {
           </TouchableOpacity>
         </View>
       </View>
-      <View style={{ flex: 1, marginVertical: 5 }}>
-        <View style={{ flex: 1, paddingVertical: 5 }}>
-          <CustomText variant={"h2"} color={theme.colors.palette.white}>
-            {data?.account_type == 'external' ?  '': `$${bankbalance || "0.00"}`}
-          </CustomText>
-        </View>
-        <View style={{ flex: 1, paddingVertical: 5 }}>
-          <View style={{ flexDirection: "row", flex: 1, marginVertical: 5 }}>
-            <View style={{ flex: 1 }}>
-              <CustomText
-                variant={"subtitle2"}
-                color={theme.colors.palette.grey300}
-              >
-                {`Account No: `}
-              </CustomText>
-              <CustomText
-                variant={"body1"}
-                color={theme.colors.palette.grey300}
-              >
-                {isNumbersVisible
-                  ? `${data?.accountNumber || ""}`
-                  : maskNumber(data?.accountNumber)}
-              </CustomText>
-            </View>
-            <View
-              style={{
-                marginHorizontal: 10,
-                height: "100%",
-                width: 1,
-                backgroundColor: theme.colors.palette.grey300,
-              }}
-            />
-            <View style={{ flex: 1 }}>
-              <CustomText
-                variant={"subtitle2"}
-                color={theme.colors.palette.grey300}
-              >
-                {`Routing No `}
-              </CustomText>
-              <CustomText
-                variant={"body1"}
-                color={theme.colors.palette.grey300}
-              >
-                {isNumbersVisible
-                  ? `${data?.ref_code ?? ""}`
-                  : maskNumber(data?.ref_code)}
-              </CustomText>
-            </View>
+
+      {/* Account Details Section */}
+      <View style={styles.accountDetailsSection}>
+        <View style={styles.accountInfoRow}>
+          <View style={styles.accountInfoItem}>
+            <CustomText
+              variant={"caption"}
+              color={theme.colors.palette.white}
+              style={styles.accountLabel}
+            >
+              Account No:
+            </CustomText>
+            <CustomText
+              variant={"body1"}
+              color={theme.colors.palette.white}
+              fontWeight={"medium"}
+            >
+              {isNumbersVisible
+                ? `${data?.accountNumber || ""}`
+                : maskNumber(data?.accountNumber || "")}
+            </CustomText>
           </View>
-          <CustomText variant={"caption"} color={theme.colors.palette.grey300}>
-            {`${data?.bank_address ?? ""}`}
-          </CustomText>
+          <View style={styles.separator} />
+          <View style={styles.accountInfoItem}>
+            <CustomText
+              variant={"caption"}
+              color={theme.colors.palette.white}
+              style={styles.accountLabel}
+            >
+              Routing No
+            </CustomText>
+            <CustomText
+              variant={"body1"}
+              color={theme.colors.palette.white}
+              fontWeight={"medium"}
+            >
+              {isNumbersVisible
+                ? `${data?.ref_code ?? ""}`
+                : maskNumber(data?.ref_code || "")}
+            </CustomText>
+          </View>
         </View>
       </View>
-      <View
-        style={{
-          width: "100%",
-          flexDirection: "row",
-          justifyContent: "space-between",
-        }}
-      >
+
+      {/* Bottom Section: Statement */}
+      <View style={styles.bottomSection}>
         <TouchableOpacity
           onPress={() => navigation.navigate(NAVIGATION_SCREENS.STATEMENT)}
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-around",
-            alignItems: "center",
-            marginRight: 5,
-          }}
+          style={styles.statementButton}
         >
-          <SvgXml
-            style={{ marginRight: 10 }}
-            color={theme.colors.palette.white}
-            xml={SVGStatements}
-            width={20}
-            height={20}
-          />
-          <CustomText variant={"body1"} color={theme.colors.palette.white}>
-            {`Statement`}
-          </CustomText>
+          <View style={styles.statementLeft}>
+            <SvgIcons.WithdrawlIcon width={20} height={20} />
+            <CustomText variant={"body1"} color={theme.colors.palette.green700} fontWeight={"medium"}>
+              Statement
+            </CustomText>
+          </View>
+          <SvgIcons.RightArrow width={20} height={20} />
         </TouchableOpacity>
-        {/* <TouchableOpacity
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-around",
-            alignItems: "center",
-            marginRight: 5,
-          }}
-        >
-          <SvgXml
-            style={{ marginRight: 10 }}
-            color={theme.colors.palette.white}
-            xml={SVGCreditCard}
-            width={20}
-            height={20}
-          />
-          <CustomText variant={"body1"} color={theme.colors.palette.white}>
-            {`Card`}
-          </CustomText>
-        </TouchableOpacity> */}
-        {/* <TouchableOpacity
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-around",
-            alignItems: "center",
-          }}
-        >
-          <SvgXml
-            style={{ marginRight: 10 }}
-            color={theme.colors.palette.white}
-            xml={SVGCreditCard}
-            width={20}
-            height={20}
-          />
-          <CustomText variant={"body1"} color={theme.colors.palette.white}>
-            {`Services`}
-          </CustomText>
-        </TouchableOpacity> */}
       </View>
     </View>
   );
@@ -250,44 +183,107 @@ const customStyles = (theme) =>
       paddingHorizontal: 20,
       width: "90%",
       alignSelf: "center",
+      overflow: "hidden",
     },
-    walletText: {
-      color: "white",
+    headerSection: {
+      flexDirection: "row",
+      width: "100%",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 20,
+    },
+    bankNameContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      flex: 1,
+    },
+    bankName: {
+      marginLeft: 10,
+    },
+    headerRight: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+    },
+    mainButton: {
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      borderRadius: 20,
+      backgroundColor: theme.colors.palette.green800, // Slightly darker green
+    },
+    mainButtonText: {
+      textTransform: "uppercase",
+      fontSize: 10,
+    },
+    statusContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+    },
+    statusDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: theme.colors.palette.black,
+    },
+    statusText: {
       fontSize: 12,
-      marginBottom: 5,
-      fontFamily: Fonts.regular,
     },
-    bankOverview: {
-      color: "white",
-      fontSize: 16,
-      fontFamily: Fonts.semibold,
-      alignSelf: "center",
-      textAlign: "center",
+    balanceSection: {
+      marginBottom: 20,
     },
-    balance: {
-      color: "white",
-      fontSize: 36,
-      fontFamily: Fonts.bold,
-      marginVertical: 10,
-      textAlign: "center",
+    balanceContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
     },
-    decimal: {
-      fontSize: 20,
-      fontFamily: Fonts.regular,
+    eyeButton: {
+      padding: 4,
+    },
+    accountDetailsSection: {
+      marginBottom: 16,
+    },
+    accountInfoRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+    },
+    accountInfoItem: {
+      flex: 1,
+    },
+    accountLabel: {
+      marginBottom: 4,
+      opacity: 0.9,
     },
     separator: {
-      borderBottomWidth: 1,
-      borderBottomColor: "rgba(255, 255, 255, 0.3)",
-      marginVertical: 10,
+      width: 1,
+      height: 40,
+      backgroundColor: theme.colors.palette.white,
+      marginHorizontal: 12,
+      opacity: 0.3,
+      alignSelf: "flex-start",
+      marginTop: 4,
     },
-    options: {
+    bottomSection: {
+      backgroundColor: theme.colors.palette.green200, // Lighter green
+      marginHorizontal: -20,
+      marginBottom: -20,
+      paddingVertical: 16,
+      paddingHorizontal: 20,
+      borderBottomLeftRadius: 20,
+      borderBottomRightRadius: 20,
+    },
+    statementButton: {
       flexDirection: "row",
+      alignItems: "center",
       justifyContent: "space-between",
     },
-    optionText: {
-      color: "white",
-      fontSize: 12,
-      fontFamily: Fonts.semibold,
+    statementLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+    },
+    statementIcon: {
+      marginRight: 10,
     },
   });
 

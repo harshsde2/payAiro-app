@@ -155,29 +155,29 @@ export const BANK_TYPE = [
 export const FINANCE_LISTS = [
   {
     name: "Send Money",
-    icon: <SvgIcons.SendMoneyIcon />,
+    icon: <SvgIcons.SendIcon2 />,
     route: NAVIGATION_SCREENS.SEND,
   },
-  // {
-  //   name: "Recharge",
-  //   icon: <SvgIcons.SendMoneyIcon />,
-  //   route: NAVIGATION_SCREENS.COMING_SOON,
-  // },
-  // {
-  //   name: "FastTag",
-  //   icon: <SvgIcons.FastTagIcon />,
-  //   route: NAVIGATION_SCREENS.COMING_SOON,
-  // },
-  // {
-  //   name: "Accounts & FD",
-  //   icon: <SvgIcons.AccountsAndFDIcon />,
-  //   route: NAVIGATION_SCREENS.COMING_SOON,
-  // },
-  // {
-  //   name: "Loans",
-  //   icon: <SvgIcons.LoansIcon />,
-  //   route: NAVIGATION_SCREENS.COMING_SOON,
-  // },
+  {
+    name: "Receive Money",
+    icon: <SvgIcons.ReceiveIcon />,
+    route: NAVIGATION_SCREENS.COMING_SOON,
+  },
+  {
+    name: "Add Money",
+    icon: <SvgIcons.AddWallet width={20} height={20} />,
+    route: NAVIGATION_SCREENS.COMING_SOON,
+  },
+  {
+    name: "Withdraw Money",
+    icon: <SvgIcons.WithdrawIcon2 />,
+    route: NAVIGATION_SCREENS.COMING_SOON,
+  },
+  {
+    name: "Buy / Sell Crypto",
+    icon: <SvgIcons.CryptoIcon2 width={20} height={20} />,
+    route: NAVIGATION_SCREENS.COMING_SOON,
+  },
   // {
   //   name: "Mutual Fund",
   //   icon: <SvgIcons.DollarCircleIcon />,
