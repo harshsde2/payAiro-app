@@ -8,3 +8,10 @@
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
 # Add any project specific keep options here:
+
+# Keep BuildConfig for react-native-config
+# Prevents ProGuard from renaming or removing BuildConfig class
+-keep class com.payairo.BuildConfig { *; }
+
+# Keep react-native-config resources
+-keepresources string/build_config_package

@@ -66,13 +66,41 @@ target 'payAiro' do
    # Pods for testing
  end
 
- post_install do |installer|
-   # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
-   react_native_post_install(
-     installer,
-     config[:reactNativePath],
-     :mac_catalyst_enabled => false,
-     # :ccache_enabled => true
-   )
- end
+  # React Native Config - Environment file configuration
+  # NOTE: We rely on ENVFILE environment variable from npm scripts
+  # The ENVFILE env var (e.g., ENVFILE=.env.production) is passed to Metro bundler
+  # which reads the correct .env file at JavaScript runtime
+  # This allows:
+  #   - npm run ios:production:debug → uses .env.production
+  #   - npm run ios:staging:debug → uses .env.staging
+  #
+  # The Podfile ENVFILES mapping is commented out to allow ENVFILE env var to work
+  # If you want automatic defaults based on build config, uncomment below:
+  # ENVFILES = {
+  #   'Debug' => '$(PODS_ROOT)/../../.env.staging',
+  #   'Release' => '$(PODS_ROOT)/../../.env.production',
+  # }
+
+  post_install do |installer|
+    # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
+    react_native_post_install(
+      installer,
+      config[:reactNativePath],
+      :mac_catalyst_enabled => false,
+      # :ccache_enabled => true
+    )
+    
+    # NOTE: react-native-config reads .env file at JavaScript runtime via Metro
+    # The ENVFILE environment variable from npm scripts controls which file is used
+    # No Podfile configuration needed - react-native-config will use ENVFILE env var
+    #
+    # If you need native code to access env vars, uncomment below:
+    # installer.pods_project.targets.each do |target|
+    #   target.build_configurations.each do |config|
+    #     if target.name == 'react-native-config'
+    #       config.build_settings['ENVFILE'] = ENVFILES[config.name]
+    #     end
+    #   end
+    # end
+  end
 end

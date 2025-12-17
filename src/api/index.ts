@@ -3,15 +3,18 @@ import axios, {
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
-import { AUTH, BASE_URL } from "./endpoints";
+import { AUTH } from "./endpoints";
 import { getItem, STORAGE_KEYS } from "../storage/mmkv";
 import { Tokens } from "./types";
 import { Alert } from "react-native";
 import { showError } from "../utils/toast";
-// Create Axios instance
+import { EnvConfig, getApiBaseUrl } from "../config/env.config";
+
+
+// Create Axios instance using environment configuration
 const api = axios.create({
-  baseURL: BASE_URL.production,
-  timeout: Infinity,
+  baseURL: getApiBaseUrl(),
+  timeout: EnvConfig.API_TIMEOUT,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",

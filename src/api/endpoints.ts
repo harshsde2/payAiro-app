@@ -1,12 +1,19 @@
-// Base URL
-export const BASE_URL = {
-  testing: "https://testingapp.payairo.com/api/",
-  production: "https://app.payairo.com/api/",
-}
+/**
+ * External Links
+ * These are now loaded from environment configuration for consistency
+ */
+import { EnvConfig } from "../config/env.config";
 
 export const LINKS = {
-  privacyPolicy: "https://payairo.com/privacy-policy.html",
-  termsAndConditions: "https://www.payairo.com/terms-of-Use.html",
+  privacyPolicy: EnvConfig.PRIVACY_POLICY_URL,
+  termsAndConditions: EnvConfig.TERMS_AND_CONDITIONS_URL,
+}
+
+// Legacy BASE_URL export kept for backward compatibility during migration
+// Will be removed after all references are updated
+export const BASE_URL = {
+  testing: EnvConfig.API_BASE_URL,
+  production: EnvConfig.API_BASE_URL,
 }
 
 // Auth endpoints

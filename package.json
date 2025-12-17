@@ -14,7 +14,19 @@
     "getAPK": "cd android && ./gradlew assembleRelease && cd ../",
     "android:build:release:bundle": "cd android && ./gradlew bundleRelease && cd ../",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "android:staging:debug": "ENVFILE=.env.staging react-native run-android --variant=stagingDebug",
+    "android:staging:release": "cd android && ENVFILE=.env.staging ./gradlew assembleStagingRelease && cd ../",
+    "android:production:debug": "ENVFILE=.env.production react-native run-android --variant=productionDebug",
+    "android:production:release": "cd android && ENVFILE=.env.production ./gradlew assembleProductionRelease && cd ../",
+    "ios:staging:debug": "ENVFILE=.env.staging react-native run-ios --scheme=payAiro",
+    "ios:staging:release": "ENVFILE=.env.staging react-native run-ios --scheme=payAiro --configuration=Release",
+    "ios:production:debug": "ENVFILE=.env.production react-native run-ios --scheme=payAiro",
+    "ios:production:release": "ENVFILE=.env.production react-native run-ios --scheme=payAiro --configuration=Release",
+    "build:android:staging": "cd android && ENVFILE=.env.staging ./gradlew assembleStagingRelease && cd ../",
+    "build:android:production": "cd android && ENVFILE=.env.production ./gradlew assembleProductionRelease && cd ../",
+    "build:ios:staging": "ENVFILE=.env.staging react-native run-ios --scheme=payAiro --configuration=Release",
+    "build:ios:production": "ENVFILE=.env.production react-native run-ios --scheme=payAiro --configuration=Release"
   },
   "dependencies": {
     "@legendapp/list": "^1.0.14",
@@ -45,6 +57,7 @@
     "react-native-camera-kit": "^14.1.0",
     "react-native-chart-kit": "^6.12.0",
     "react-native-collapsible-tab-view": "^8.0.1",
+    "react-native-config": "^1.6.1",
     "react-native-contacts": "^8.0.4",
     "react-native-date-picker": "^5.0.8",
     "react-native-device-info": "^14.0.2",

@@ -40,8 +40,22 @@ import KycBanner from "./src/components/common-components/KycBanner";
 import AppLockScreen from "./src/components/common-components/AppLockScreen";
 import Toast from "./src/components/common-components/Toast";
 import { AppLockProvider } from "./src/contexts/AppLockContext";
+// Import config for verification (remove after testing)
+import { EnvConfig } from "./src/config/env.config";
 
 export default function App() {
+  // ========== ENVIRONMENT CONFIG VERIFICATION ==========
+  // This log helps verify environment configuration is working
+  // Remove or comment out after verification
+  if (__DEV__) {
+    console.log("=== ENVIRONMENT CONFIG TEST ===");
+    console.log("ENV_NAME:", EnvConfig.ENV_NAME);
+    console.log("ENV_TYPE:", EnvConfig.ENV_TYPE);
+    console.log("API_BASE_URL:", EnvConfig.API_BASE_URL);
+    console.log("APP_NAME:", EnvConfig.APP_NAME);
+    console.log("=================================");
+  }
+  // ====================================================
   // -------------------- Redux State --------------------
   const {
     isLogin,

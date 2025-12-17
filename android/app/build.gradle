@@ -4,6 +4,21 @@ apply plugin: "com.facebook.react"
 apply plugin: 'com.google.gms.google-services'
 
 /**
+ * React Native Config - Environment Configuration
+ * Maps build variants to environment files (.env.staging, .env.production)
+ * Must be defined BEFORE the apply from dotenv.gradle line
+ */
+project.ext.envConfigFiles = [
+    stagingdebug: ".env.staging",
+    stagingrelease: ".env.staging",
+    productiondebug: ".env.production",
+    productionrelease: ".env.production",
+]
+
+// Apply react-native-config plugin
+apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
+
+/**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
  */
@@ -86,6 +101,40 @@ android {
         versionCode 23
         versionName "2.4"
         missingDimensionStrategy 'react-native-camera', 'general'
+        
+        // Required for react-native-config when using different package names
+        resValue "string", "build_config_package", "com.payairo"
+    }
+    
+    /**
+     * Product Flavors Configuration
+     * Defines staging and production variants with different configurations
+     */
+    flavorDimensions "environment"
+    productFlavors {
+        staging {
+            dimension "environment"
+            applicationIdSuffix ".staging"
+            versionNameSuffix "-staging"
+            resValue "string", "app_name", "PayAiro Staging"
+            resValue "string", "env_name", "staging"
+            
+            // Manifest placeholders can be used for environment-specific values
+            manifestPlaceholders = [
+                appName: "PayAiro Staging"
+            ]
+        }
+        
+        production {
+            dimension "environment"
+            resValue "string", "app_name", "PayAiro"
+            resValue "string", "env_name", "production"
+            
+            // Manifest placeholders
+            manifestPlaceholders = [
+                appName: "PayAiro"
+            ]
+        }
     }
 
     // Enable 16 KB page size support

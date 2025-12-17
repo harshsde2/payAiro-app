@@ -1351,6 +1351,29 @@ PODS:
     - React-Core
   - react-native-camera/RN (4.2.1):
     - React-Core
+  - react-native-config (1.6.1):
+    - react-native-config/App (= 1.6.1)
+  - react-native-config/App (1.6.1):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.11.18.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - react-native-contacts (8.0.7):
     - DoubleConversion
     - glog
@@ -2373,6 +2396,7 @@ DEPENDENCIES:
   - react-native-blob-util (from `../node_modules/react-native-blob-util`)
   - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
   - react-native-camera (from `../node_modules/react-native-camera`)
+  - react-native-config (from `../node_modules/react-native-config`)
   - react-native-contacts (from `../node_modules/react-native-contacts`)
   - react-native-date-picker (from `../node_modules/react-native-date-picker`)
   - react-native-document-picker (from `../node_modules/react-native-document-picker`)
@@ -2540,6 +2564,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-community/blur"
   react-native-camera:
     :path: "../node_modules/react-native-camera"
+  react-native-config:
+    :path: "../node_modules/react-native-config"
   react-native-contacts:
     :path: "../node_modules/react-native-contacts"
   react-native-date-picker:
@@ -2718,6 +2744,7 @@ SPEC CHECKSUMS:
   react-native-blob-util: 704c431102d7a8f0692eaaae656b84eebe97a33a
   react-native-blur: 6782cb12b39a0200ad2a782fb9a5529c2c83c33b
   react-native-camera: 3eae183c1d111103963f3dd913b65d01aef8110f
+  react-native-config: 388661c9d708334bed70994b550005e4f06a2dab
   react-native-contacts: a9b0fcc6951611329f80dcf98080de83a40d66eb
   react-native-date-picker: 88d5c7fc7a0e9f27edd698e35b8365c8bc2a8fc6
   react-native-document-picker: 6d3991d663e28714988c41696490e6fb1c525fbc
@@ -2781,6 +2808,6 @@ SPEC CHECKSUMS:
   TOCropViewController: 80b8985ad794298fb69d3341de183f33d1853654
   Yoga: ed2784b3aef64a3976473f554ac4c08ee8443691
 
-PODFILE CHECKSUM: 1ac5573257169b0ff172cfbcefa6791a60164a35
+PODFILE CHECKSUM: 1fa1c40a636582c28caf85d6a45b8e4aafc4c47d
 
 COCOAPODS: 1.16.2

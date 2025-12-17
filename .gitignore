@@ -84,3 +84,14 @@ android/app/.cxx/tools/release/arm64-v8a/compile_commands.json
 android/app/.cxx/tools/release/armeabi-v7a/compile_commands.json
 android/app/.cxx/tools/release/x86/compile_commands.json
 android/app/.cxx/tools/release/x86_64/compile_commands.json
+
+# Environment variables - DO NOT COMMIT
+.env
+.env.local
+.env.staging
+.env.production
+.env.development
+!.env.example
+
+# react-native-config codegen
+ios/tmp.xcconfig
