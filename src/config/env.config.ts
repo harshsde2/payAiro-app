@@ -321,6 +321,17 @@ function buildConfig(): IEnvConfig {
 let appConfig: IEnvConfig;
 
 try {
+  // Check if Config is available from react-native-config
+  if (!Config || typeof Config !== 'object') {
+    const errorMessage = '[EnvConfig] react-native-config is not properly linked. Config object is undefined. Please ensure the native module is properly linked and rebuild the app.';
+    console.error(errorMessage);
+    console.error('[EnvConfig] To fix this issue:');
+    console.error('  1. Clean build: cd android && ./gradlew clean');
+    console.error('  2. Clear Metro cache: npm start -- --reset-cache');
+    console.error('  3. Rebuild the app completely');
+    throw new Error(errorMessage);
+  }
+  
   appConfig = buildConfig();
   
   // Log configuration in development mode only

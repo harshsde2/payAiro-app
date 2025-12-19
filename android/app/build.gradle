@@ -16,7 +16,7 @@ project.ext.envConfigFiles = [
 ]
 
 // Apply react-native-config plugin
-apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
+apply from: "../../node_modules/react-native-config/android/dotenv.gradle"
 
 /**
  * This is the configuration block to customize your React Native Android app.
