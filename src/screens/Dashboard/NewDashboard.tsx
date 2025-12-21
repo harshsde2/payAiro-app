@@ -84,6 +84,7 @@ import useSelectorAction from "hooks/useSelectorAction";
 import PlaidLinkButton from "tsx-components/PlaidLinkButton";
 import { UnifiedTransactionCard } from "screens/TSX-Screens/UnifiedTransactions";
 import ReferralCard from "tsx-components/ReferralCard";
+import NewDashboardCard from "tsx-components/NewDashboardCard";
 
 // Lazy load non-critical components
 const LazyBankModal = lazy(() => import("components/BankModal"));
@@ -1496,7 +1497,7 @@ const NewDashboard = () => {
           />
         ) : (
           <View style={{ width: "100%" }}>
-            {isTablet ? (
+            {/* {isTablet ? (
               <View style={{ width: 400 }}>
                 <DashboardCard
                   refetchBankBalanceData={refetchBankBalanceData}
@@ -1508,7 +1509,8 @@ const NewDashboard = () => {
                   refetchBankBalanceData={refetchBankBalanceData}
                 />
               </View>
-            )}
+            )} */}
+            <NewDashboardCard />
           </View>
         )}
         {isCrypto ? (
