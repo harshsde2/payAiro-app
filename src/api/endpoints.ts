@@ -79,11 +79,12 @@ export const AUTH = {
   USER_TO_USER_CYBRID_TRANSFER: "auth/cybrid/transfer/",
   COMBINED_CRYPTO_BALANCE: "auth/CombinedCryptoPrices/?type=",
   CRYPTO_BALANCE_BY_ASSET: "auth/cybrid/crypto-balance/",
-  ALL_CRYPTO_BALANCES: "auth/cybrid/crypto-balance/",
+  ALL_CRYPTO_BALANCES: "auth/cybrid/V1/crypto-balance/",
   PLAID_ACCESS_TOKEN: "auth/cybrid/plaid-link-token/",
   CREATE_EXTERNAL_BANK_ACCOUNT: "auth/cybrid/create-external-bank-account/",
   DEPOSIT_ADDRESS: "auth/depositAddress/",
   CRYPTO_WITHDRAWAL: "auth/cybrid/Withdrawal/",
+  CRYPTO_MARKET_DATA: "auth/coingecko/markets/",
 };
 // Wallet endpoints
 export const WALLET = {

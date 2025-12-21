@@ -1,0 +1,76 @@
+import { ICryptoDetails } from './types';
+
+export const mockCryptoDetails: ICryptoDetails = {
+  name: 'Ethereum',
+  symbol: 'ETH',
+  currentPrice: 2920.43,
+  priceChange: -1.22,
+  about:
+    'Ethereum is an open-source, decentralized blockchain platform that supports smart contracts and decentralized applications (DApps). It was proposed in 2013 by Vitalik Buterin and launched in 2015. Ethereum enables developers to build and deploy smart contracts and DApps without downtime, fraud, control, or interference from third parties.',
+  balances: [
+    {
+      id: '1',
+      name: 'Ethereum',
+      symbol: 'ETH',
+      quantity: '0.25 ETH',
+      value: '$825.84',
+      changePercentage: 0.75,
+    },
+    {
+      id: '2',
+      name: 'Ethereum',
+      symbol: 'ETH',
+      quantity: '0.15 ETH',
+      value: '$495.50',
+      changePercentage: -0.05,
+    },
+  ],
+  info: {
+    marketCap: '473.04B',
+    marketVol: '14.84%',
+    totalVol: '70.20B',
+    circulatingSupply: '120.44M',
+    allTimeHigh: '$4,878.01',
+    allTimeLow: '$0.43',
+    fullyDiluted: '120.44M',
+    tokenDecimal: '18',
+  },
+  recentActivity: [
+    {
+      id: '1',
+      type: 'received',
+      description: 'Received from Elly',
+      date: '04 Apr. 25',
+      time: '02:45pm',
+      amount: '+$450.00',
+      isPositive: true,
+    },
+    {
+      id: '2',
+      type: 'transfer',
+      description: 'Transfer to John',
+      date: '03 Apr. 25',
+      time: '11:35am',
+      amount: '-$8.00',
+      isPositive: false,
+    },
+    {
+      id: '3',
+      type: 'payment',
+      description: 'Payment from @Davide',
+      date: '01 Apr. 25',
+      time: '08:30am',
+      amount: '+$250.00',
+      isPositive: true,
+    },
+    {
+      id: '4',
+      type: 'payment',
+      description: 'Payment from @Davide',
+      date: '23 Mar. 25',
+      time: '08:30am',
+      amount: '+$250.00',
+      isPositive: true,
+    },
+  ],
+};

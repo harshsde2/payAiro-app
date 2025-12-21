@@ -645,13 +645,14 @@ const NewDashboard = () => {
 
   const { data, isLoading, error, refetch } = useAllCryptoBalances();
   const balances = data?.data?.balances || [];
+  // console.log("balances =>", JSON.stringify(data, null, 2));
 
   // const {
   //   data: getRWAList,
   //   isError: isErrorRWAListA,
   //   isSuccess: isSuccessRWAList,
   // } = useGetUserHoldings();
-
+ 
   const filteredMyRWA =
     WalletDashboardData?.data?.holdings.filter(
       (item: any) => item.asset_type == "Realestate"
@@ -1087,11 +1088,21 @@ const NewDashboard = () => {
     const {
       asset,
       rounded_balance,
-      usd_value,
+      platform_available,
+      platform_pending,
+      platform_total_balance,
+      usd_value_total,
+      usd_value_available,
+      usd_value_pending,
       usd_price,
       logo,
-      platform_available,
     } = item;
+
+    // Use new field names with fallback for backward compatibility
+    const availableBalance = platform_available ?? 0;
+    const pendingBalance = platform_pending ?? 0;
+    const totalBalance = platform_total_balance ?? rounded_balance ?? 0;
+    const usdValue = usd_value_total ?? usd_value_available ?? 0;
 
     return (
       <TouchableOpacity
@@ -1108,7 +1119,9 @@ const NewDashboard = () => {
         }}
         onPress={() => {
           // Navigate to crypto details or trading screen
-          navigation.navigate(NAVIGATION_SCREENS.CRYPTO_LIST);
+          if(item?.asset != 'Bank Balance'){
+            navigation.navigate(NAVIGATION_SCREENS.CRYPTO_DETAILS,{ item: item });
+          }
         }}
       >
         {/* Crypto Logo */}
@@ -1148,17 +1161,17 @@ const NewDashboard = () => {
             {asset}
           </CustomText>
           <CustomText variant="caption" color="grey">
-            Available Balance: {platform_available}
+            Available Balance: {availableBalance}
           </CustomText>
           <CustomText variant="caption" color="grey">
-            Pending Balance: {rounded_balance}
+            Pending Balance: {pendingBalance}
           </CustomText>
         </View>
 
         {/* USD Value */}
         <View style={{ alignItems: "flex-end" }}>
           <CustomText variant="subtitle2" style={{ fontWeight: "600" }}>
-            ${usd_price?.toFixed(2) || "0.00"}
+            ${typeof usdValue === 'number' ? usdValue.toFixed(2) : "0.00"}
           </CustomText>
           <CustomText variant="caption" color="grey">
             USD

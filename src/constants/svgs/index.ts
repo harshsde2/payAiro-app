@@ -124,11 +124,23 @@ import BankIcon2 from "./BankIcon2.svg";
 import CryptoIcon2 from "./CryptoIcon.svg";
 import RightArrow from "./RightArrow.svg";
 import WithdrawIcon2  from "./WithdrawIcon2.svg";
+import NewReceiveIcon from "./NewReceiveIcon.svg";
+import NewSendIcon from "./NewSendIcon.svg";
+import NewDollarIcon from "./NewDollarIcon.svg";
+import NewSellIcon from "./NewSellIcon.svg";
+import MarketCap from "./MarketCap.svg";
+import MarketValue from "./MarketValue.svg";
+import AllTimeHigh from "./AllTimeHigh.svg";
+import AllTimeLow from "./AllTimeLow.svg";
+import FullyDiluted from "./FullyDilluted.svg";
+import CirculatingSupply from "./CirculatingSupply.svg";
+import TokenDecimal from "./TokenDecimal.svg";
+import TotalValue from "./TotalValue.svg";
 
 export const SvgIcons = {
   PayAiorRoundIcon,
   NotificationIcon,
-  AddBalanceIcon,
+  AddBalanceIcon, 
   RecieveIcon,
   SendIcon,
   LinkDebitCard,
@@ -251,5 +263,17 @@ export const SvgIcons = {
   BankIcon2,
   CryptoIcon2,
   RightArrow,
-  WithdrawIcon2
+  WithdrawIcon2,
+  NewReceiveIcon,
+  NewSendIcon,
+  NewDollarIcon,
+  NewSellIcon,
+  MarketCap,
+  MarketValue,
+  AllTimeHigh,
+  AllTimeLow,
+  FullyDiluted,
+  CirculatingSupply,
+  TokenDecimal,
+  TotalValue
 };

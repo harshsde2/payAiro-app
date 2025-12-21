@@ -21,7 +21,7 @@ export const NAVIGATION_SCREENS = {
   PDF_VIEWER: "PDFViewer",
   SELECT_STATES: "SelectStates",
   CYBRID_WEB_VIEW: "CybridWebView",
-
+  CRYPTO_DETAILS: "CryptoDetails",
   // App Stack Screens
   DASHBOARD: "Dashboard",
   NEW_DASHBOARD: "NewDashboard",

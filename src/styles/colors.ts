@@ -13,6 +13,7 @@ export const greenPalette = {
   green400: "#69BF82",
   green500: "#45A261",
   green600: "#34854D",
+  green650: "#00793F",
   green700: "#2C6A3F",
   green800: "#275435",
   green900: "#21462E",

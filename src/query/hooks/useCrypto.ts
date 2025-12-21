@@ -18,6 +18,7 @@ export const cryptoKeys = {
   allCryptoBalances: () => [...cryptoKeys.all, "allCryptoBalances"] as const,
   trades: () => [...cryptoKeys.all, "trades"] as const,
   prices: () => [...cryptoKeys.all, "prices"] as const,
+  cryptoMarketData: () => [...cryptoKeys.all, "cryptoMarketData"] as const,
 };
 
 /**
@@ -341,3 +342,15 @@ export const useRefreshCryptoBalance = () => {
     refreshBalance,
   };
 };
+
+export const useCryptoMarketData = (vs_currency: string, ids: string) => {
+  return useQuery<ApiResponse<any> | any[]>({
+    queryKey: [...cryptoKeys.cryptoMarketData(), vs_currency, ids], // Include parameters in query key for unique caching
+    queryFn: async () => {
+      const response = await apiClient.get<any>(`${AUTH.CRYPTO_MARKET_DATA}?vs_currency=${vs_currency}&ids=${ids}` );
+      return response;
+    },
+    enabled: !!ids && !!vs_currency, // Only run query if both parameters are provided
+  });
+};
+

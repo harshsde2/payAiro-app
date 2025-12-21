@@ -95,6 +95,7 @@ import CybridWebView from "screens/Authentications/CybridWebView";
 import WithdrawlBalance from "screens/TSX-Screens/AddBalance/WithdrawlBalance";
 import NewTransactionDetails from "screens/TSX-Screens/NewTransactionDetails/NewTransactionDetails";
 import UnifiedTransactionScreen from "screens/TSX-Screens/UnifiedTransactions/UnifiedTransactionScreen";
+import CyrptoDetails from "screens/TSX-Screens/CybridCrypto/CyrptoDetails";
 
 const Stack = createNativeStackNavigator();
 
@@ -635,6 +636,12 @@ export default function AppStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.CYBRID_WEB_VIEW}
         component={CybridWebView}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.CRYPTO_DETAILS}
+        component={CyrptoDetails}
+        
       />
     </Stack.Navigator>
   );

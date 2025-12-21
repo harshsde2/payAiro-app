@@ -27,6 +27,7 @@ const CryptoBuy = () => {
   const pinScreenRef = useRef<any>(null);
 
   const { details } = route.params as any;
+  console.log("details =>", JSON.stringify(details, null, 2));
   const { walletData } = useSelectorAction() as any;
   const { symbol, buy_price, logo } = details;
   const { theme } = useTheme();
