@@ -6,6 +6,7 @@
     "postinstall": "patch-package",
     "android": "react-native run-android",
     "ios": "react-native run-ios",
+    "pod": "cd ios && pod install && cd ..",
     "lint": "eslint .",
     "clear": "cd android && ./gradlew clean && cd ../",
     "prebuild": "npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res",

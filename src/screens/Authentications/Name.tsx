@@ -142,10 +142,10 @@ export default function Name(props: any) {
         console.log("error =>", JSON.stringify(error.response, null, 2));
         setIsPending(false);
 
-        if (error.response.data.data.errors.mobile_number) {
-          showError(error.response.data.data.errors.mobile_number[0]);
-        } else if (error.response.data.data.errors.usernames) {
-          showError(error.response.data.data.errors.usernames[0]);
+        if (error?.response?.data?.errors?.mobile_number. length > 0) {
+          showError(error.response.data.errors.mobile_number[0]);
+        } else if (error?.response?.data?.errors?.usernames. length > 0) {
+          showError(error.response.data.errors.usernames[0]);
         } else {
           showError("Failed to submit details");
         }

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, Pressable, StyleSheet, ScrollView } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Pressable, StyleSheet, ActivityIndicator, ScrollView } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "../../components/HeaderTitle";
@@ -8,7 +8,13 @@ import CustomText from "../../tsx-components/CustomText";
 import { SvgIcons } from "../../constants/svgs";
 import CongratulationsModal from "../../components/common-components/CongratulationsModal";
 import HowToEarnPointsModal from "../../components/common-components/HowToEarnPointsModal";
-import { IBalanceData, IRewardCard } from "./types";
+import { IBalanceData, IRewardCard, IScratchCardHistory } from "./types";
+import {
+  useScratchCards,
+  useScratchCard,
+  useClaimScratchReward,
+} from "../../query/hooks/useRewards";
+import { showError } from "../../utils/toast";
 
 const Scratch: React.FC = () => {
   const navigation = useNavigation();
@@ -16,34 +22,153 @@ const Scratch: React.FC = () => {
   const [showCongratulations, setShowCongratulations] = useState(false);
   const [selectedReward, setSelectedReward] = useState<number>(0);
   const [showHowToEarnPoints, setShowHowToEarnPoints] = useState(false);
+  const [scratchingCardId, setScratchingCardId] = useState<number | null>(null);
+  const [showClaimCongratulations, setShowClaimCongratulations] = useState(false);
+  const [claimedAmount, setClaimedAmount] = useState<number>(0);
 
-  const balanceData: IBalanceData = {
-    points: 0,
-    rewards: 0,
-  };
+  const {
+    data: scratchCardsData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useScratchCards();
 
-  const rewardCard: IRewardCard = {
-    id: "1",
-    title: "Reward",
-    pointsRequired: 500,
-    rewardAmount: 5,
-  };
+  const scratchCardMutation = useScratchCard();
+  const claimRewardMutation = useClaimScratchReward();
 
-  const handleScratchCardPress = () => {
-    // Simulate winning
-    setSelectedReward(rewardCard.rewardAmount);
-    setShowCongratulations(true);
-  };
+  // Extract data from API response
+  const balanceData: IBalanceData = scratchCardsData?.data?.points_info
+    ? {
+        points: scratchCardsData.data.points_info.available_points,
+        rewards:
+          scratchCardsData.data.scratch_rewards?.available_scratch_reward || 0,
+      }
+    : {
+        points: 0,
+        rewards: 0,
+      };
+
+  // Get scratch rewards data
+  const scratchRewards = scratchCardsData?.data?.scratch_rewards;
+
+  // Get history data
+  const history: IScratchCardHistory[] =
+    scratchCardsData?.data?.history || [];
+
+  // Handle API errors
+  useEffect(() => {
+    if (isError) {
+      const errorMessage =
+        (error as any)?.response?.data?.message ||
+        (error as any)?.message ||
+        "Failed to load scratch cards. Please try again.";
+      showError(errorMessage);
+    }
+  }, [isError, error]);
+
+  // handleScratchCardPress is now inline in the card map function
 
   const handleCloseCongratulations = () => {
     setShowCongratulations(false);
+    setScratchingCardId(null);
+    // Refetch data after closing modal to update card states
+    refetch();
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <ScreenContainer padding={0} scrollable={true}>
+        <HeaderTitle title="Rewards" leftIcon={"true"} />
+        <View style={[styles(theme).container, styles(theme).loadingContainer]}>
+          <ActivityIndicator
+            size="large"
+            color={theme.colors.palette.green700}
+          />
+          <CustomText
+            variant="body1"
+            color={theme.colors.text.secondary}
+            style={styles(theme).loadingText}
+          >
+            Loading scratch cards...
+          </CustomText>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  // Error state with retry option
+  if (isError && !scratchCardsData) {
+    return (
+      <ScreenContainer padding={0} scrollable={true}>
+        <HeaderTitle title="Rewards" leftIcon={"true"} />
+        <View style={[styles(theme).container, styles(theme).errorContainer]}>
+          <CustomText
+            variant="h4"
+            fontWeight="semiBold"
+            color={theme.colors.text.primary}
+            style={styles(theme).errorTitle}
+          >
+            Failed to load scratch cards
+          </CustomText>
+          <CustomText
+            variant="body2"
+            color={theme.colors.text.secondary}
+            style={styles(theme).errorMessage}
+          >
+            {(error as any)?.response?.data?.message ||
+              (error as any)?.message ||
+              "Please try again"}
+          </CustomText>
+          <Pressable
+            style={styles(theme).retryButton}
+            onPress={() => refetch()}
+          >
+            <CustomText
+              variant="button"
+              fontWeight="semiBold"
+              color={theme.colors.palette.white}
+            >
+              Retry
+            </CustomText>
+          </Pressable>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  // Empty state
+  if (!scratchCardsData?.data?.cards || scratchCardsData.data.cards.length === 0) {
+    return (
+      <ScreenContainer padding={0} scrollable={true}>
+        <HeaderTitle title="Rewards" leftIcon={"true"} />
+        <View style={[styles(theme).container, styles(theme).emptyContainer]}>
+          <CustomText
+            variant="h4"
+            fontWeight="semiBold"
+            color={theme.colors.text.primary}
+            style={styles(theme).emptyTitle}
+          >
+            No scratch cards available
+          </CustomText>
+          <CustomText
+            variant="body2"
+            color={theme.colors.text.secondary}
+            style={styles(theme).emptyMessage}
+          >
+            Check back later for new rewards
+          </CustomText>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
   return (
-    <ScreenContainer padding={0} scrollable={true}>
+    <ScreenContainer padding={0} >
       <HeaderTitle title="Rewards" leftIcon={"true"} />
 
-      <View style={styles(theme).container}>
+      <ScrollView style={styles(theme).container}>
         {/* Your Balances Section */}
         <View style={styles(theme).balancesContainer}>
           <View style={styles(theme).balancesHeader}>
@@ -78,7 +203,7 @@ const Scratch: React.FC = () => {
                 fontWeight="bold"
                 color={theme.colors.palette.white}
               >
-                {balanceData.points}
+                {balanceData.points.toFixed(2)}
               </CustomText>
             </View>
             <View style={styles(theme).balanceItem}>
@@ -97,7 +222,7 @@ const Scratch: React.FC = () => {
                 fontWeight="bold"
                 color={theme.colors.palette.white}
               >
-                ${balanceData.rewards}
+                ${balanceData.rewards.toFixed(2)}
               </CustomText>
             </View>
           </View>
@@ -120,60 +245,368 @@ const Scratch: React.FC = () => {
             Use your points to unlock rewards
           </CustomText>
 
-          {/* Reward Card */}
-          <Pressable
-            style={styles(theme).rewardCard}
-            onPress={handleScratchCardPress}
-          >
-            <View style={styles(theme).rewardCardHeader}>
-              <View style={styles(theme).rewardIconContainer}>
-                <SvgIcons.RewardsGifts width={24} height={24} />
-              </View>
-              <CustomText
-                variant="h4"
-                fontWeight="semiBold"
-                style={styles(theme).rewardCardTitle}
-              >
-                Reward
-              </CustomText>
-            </View>
-            <View style={styles(theme).rewardCardInner}>
-              <View style={styles(theme).dotsContainer}>
-                <View style={styles(theme).dot} />
-                <View style={styles(theme).dot} />
-                <View style={styles(theme).dot} />
-              </View>
-              <CustomText
-                variant="body1"
-                color={theme.colors.palette.white}
-                style={styles(theme).unlockText}
-              >
-                Unlock a reward with
-              </CustomText>
-              <CustomText
-                variant="h2"
-                fontWeight="bold"
-                color={theme.colors.palette.white}
-                style={styles(theme).pointsText}
-              >
-                {rewardCard.pointsRequired} Points
-              </CustomText>
+          {/* Reward Cards - Horizontal Scrolling */}
+          {scratchCardsData?.data?.cards && scratchCardsData.data.cards.length > 0 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles(theme).cardsScrollContainer}
+              style={styles(theme).cardsScrollView}
+            >
+              {scratchCardsData.data.cards.map((card) => {
+                const isCurrentlyScratching =
+                  scratchCardMutation.isPending && scratchingCardId === card.id;
+
+                return (
+                  <Pressable
+                    key={card.id}
+                    style={[
+                      styles(theme).rewardCard,
+                      (!card.can_scratch || isCurrentlyScratching) &&
+                        styles(theme).rewardCardDisabled,
+                    ]}
+                    onPress={() => {
+                      if (card.can_scratch && !scratchCardMutation.isPending) {
+                        setScratchingCardId(card.id);
+                        scratchCardMutation.mutate(
+                          { card_id: card.id },
+                          {
+                            onSuccess: (data) => {
+                              setSelectedReward(card.reward_amount);
+                              setShowCongratulations(true);
+                              setScratchingCardId(null);
+                            },
+                            onError: () => {
+                              setShowCongratulations(false);
+                              setScratchingCardId(null);
+                            },
+                          }
+                        );
+                      } else if (!card.can_scratch) {
+                        showError("This card cannot be scratched yet");
+                      }
+                    }}
+                    disabled={!card.can_scratch || isCurrentlyScratching}
+                  >
+                    <View style={styles(theme).rewardCardHeader}>
+                      <View style={styles(theme).rewardIconContainer}>
+                        <SvgIcons.RewardsGifts width={24} height={24} />
+                      </View>
+                      <CustomText
+                        variant="h4"
+                        fontWeight="semiBold"
+                        style={styles(theme).rewardCardTitle}
+                      >
+                        {card.title}
+                      </CustomText>
+                    </View>
+                    <View style={styles(theme).rewardCardInner}>
+                      {isCurrentlyScratching ? (
+                        <View style={styles(theme).scratchingContainer}>
+                          <ActivityIndicator
+                            size="large"
+                            color={theme.colors.palette.yellow500}
+                          />
+                          <CustomText
+                            variant="body1"
+                            color={theme.colors.palette.white}
+                            style={styles(theme).scratchingText}
+                          >
+                            Scratching...
+                          </CustomText>
+                        </View>
+                      ) : (
+                        <>
+                          <View style={styles(theme).dotsContainer}>
+                            <View style={styles(theme).dot} />
+                            <View style={styles(theme).dot} />
+                            <View style={styles(theme).dot} />
+                          </View>
+                          <CustomText
+                            variant="body1"
+                            color={theme.colors.palette.white}
+                            style={styles(theme).unlockText}
+                          >
+                            Unlock a reward with
+                          </CustomText>
+                          <CustomText
+                            variant="h2"
+                            fontWeight="bold"
+                            color={theme.colors.palette.white}
+                            style={styles(theme).pointsText}
+                          >
+                            {card.points_required} Points
+                          </CustomText>
+                          <CustomText
+                            variant="body2"
+                            color={theme.colors.palette.yellow200}
+                            style={styles(theme).scratchText}
+                          >
+                            {card.is_scratched
+                              ? "Already scratched"
+                              : card.can_scratch
+                              ? "Scratch to reveal your prize"
+                              : "Not enough points"}
+                          </CustomText>
+                          {card.is_scratched && (
+                            <CustomText
+                              variant="body2"
+                              color={theme.colors.palette.white}
+                              style={styles(theme).rewardAmountText}
+                            >
+                              Reward: ${card.reward_amount.toFixed(2)}
+                            </CustomText>
+                          )}
+                        </>
+                      )}
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          ) : (
+            <View style={styles(theme).noCardContainer}>
               <CustomText
                 variant="body2"
-                color={theme.colors.palette.yellow200}
-                style={styles(theme).scratchText}
+                color={theme.colors.text.secondary}
+                style={styles(theme).noCardText}
               >
-                Scratch to reveal your prize
+                No reward cards available
               </CustomText>
             </View>
-          </Pressable>
+          )}
         </View>
-      </View>
+
+        {/* History Section */}
+        {history.length > 0 && (
+          <View style={styles(theme).historySection}>
+            <CustomText
+              variant="h4"
+              fontWeight="semiBold"
+              style={styles(theme).sectionTitle}
+            >
+              Scratch History
+            </CustomText>
+            <CustomText
+              variant="body2"
+              color={theme.colors.text.secondary}
+              style={styles(theme).sectionSubtitle}
+            >
+              Your past scratch card activities
+            </CustomText>
+
+            {history.map((item) => (
+              <View key={item.id} style={styles(theme).historyItem}>
+                <View style={styles(theme).historyItemHeader}>
+                  <View style={styles(theme).historyIconContainer}>
+                    <SvgIcons.RewardsGifts width={20} height={20} />
+                  </View>
+                  <View style={styles(theme).historyItemContent}>
+                    <CustomText
+                      variant="body1"
+                      fontWeight="semiBold"
+                      color={theme.colors.text.primary}
+                    >
+                      {item.scratch_card.title}
+                    </CustomText>
+                    <CustomText
+                      variant="body2"
+                      color={theme.colors.text.secondary}
+                      style={styles(theme).historyDate}
+                    >
+                      {new Date(item.scratched_at).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </CustomText>
+                  </View>
+                </View>
+                <View style={styles(theme).historyItemDetails}>
+                  <View style={styles(theme).historyDetailRow}>
+                    <CustomText
+                      variant="body2"
+                      color={theme.colors.text.secondary}
+                    >
+                      Points Used:
+                    </CustomText>
+                    <CustomText
+                      variant="body2"
+                      fontWeight="semiBold"
+                      color={theme.colors.text.primary}
+                    >
+                      {item.points_used}
+                    </CustomText>
+                  </View>
+                  <View style={styles(theme).historyDetailRow}>
+                    <CustomText
+                      variant="body2"
+                      color={theme.colors.text.secondary}
+                    >
+                      Reward Received:
+                    </CustomText>
+                    <CustomText
+                      variant="body2"
+                      fontWeight="semiBold"
+                      color={
+                        item.reward_received
+                          ? theme.colors.palette.green700
+                          : theme.colors.text.secondary
+                      }
+                    >
+                      ${item.scratch_card.reward_amount.toFixed(2)}
+                    </CustomText>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Scratch Rewards Summary */}
+        {scratchRewards && (
+          <View style={styles(theme).rewardsSummarySection}>
+            <CustomText
+              variant="h4"
+              fontWeight="semiBold"
+              style={styles(theme).sectionTitle}
+            >
+              Scratch Rewards Summary
+            </CustomText>
+            <View style={styles(theme).summaryContainer}>
+              <View style={styles(theme).summaryItem}>
+                <CustomText
+                  variant="body2"
+                  color={theme.colors.text.secondary}
+                  style={styles(theme).summaryLabel}
+                >
+                  Total Scratched
+                </CustomText>
+                <CustomText
+                  variant="h3"
+                  fontWeight="bold"
+                  color={theme.colors.text.primary}
+                >
+                  {scratchRewards.total_scratched}
+                </CustomText>
+              </View>
+              <View style={styles(theme).summaryItem}>
+                <CustomText
+                  variant="body2"
+                  color={theme.colors.text.secondary}
+                  style={styles(theme).summaryLabel}
+                >
+                  Total Rewards
+                </CustomText>
+                <CustomText
+                  variant="h3"
+                  fontWeight="bold"
+                  color={theme.colors.text.primary}
+                >
+                  ${scratchRewards.total_scratched_reward.toFixed(2)}
+                </CustomText>
+              </View>
+              <View style={styles(theme).summaryItem}>
+                <CustomText
+                  variant="body2"
+                  color={theme.colors.text.secondary}
+                  style={styles(theme).summaryLabel}
+                >
+                  Claimed
+                </CustomText>
+                <CustomText
+                  variant="h3"
+                  fontWeight="bold"
+                  color={theme.colors.text.primary}
+                >
+                  ${scratchRewards.scratch_reward_claimed.toFixed(2)}
+                </CustomText>
+              </View>
+              <View style={styles(theme).summaryItem}>
+                <CustomText
+                  variant="body2"
+                  color={theme.colors.text.secondary}
+                  style={styles(theme).summaryLabel}
+                >
+                  Available
+                </CustomText>
+                <CustomText
+                  variant="h3"
+                  fontWeight="bold"
+                  color={theme.colors.palette.green700}
+                >
+                  ${scratchRewards.available_scratch_reward.toFixed(2)}
+                </CustomText>
+              </View>
+            </View>
+          </View>
+        )}
+      </ScrollView>
+
+      {/* Floating Claim Button */}
+      {scratchRewards &&
+        scratchRewards.available_scratch_reward > 0 &&
+        scratchRewards.can_claim && (
+          <View style={styles(theme).floatingButtonContainer}>
+            <Pressable
+              style={[
+                styles(theme).floatingButton,
+                claimRewardMutation.isPending && styles(theme).claimButtonDisabled,
+              ]}
+              onPress={() => {
+                if (!claimRewardMutation.isPending) {
+                  claimRewardMutation.mutate(undefined, {
+                    onSuccess: (data) => {
+                      // Extract claim amount from response
+                      const claimAmount =
+                        data?.data?.data?.claim_amount ||
+                        data?.data?.claim_amount ||
+                        scratchRewards.available_scratch_reward;
+                      setClaimedAmount(claimAmount);
+                      setShowClaimCongratulations(true);
+                    },
+                    onError: () => {
+                      // Error toast is already handled in the mutation hook
+                    },
+                  });
+                }
+              }}
+              disabled={claimRewardMutation.isPending}
+            >
+              {claimRewardMutation.isPending ? (
+                <ActivityIndicator
+                  size="small"
+                  color={theme.colors.palette.white}
+                />
+              ) : (
+                <CustomText
+                  variant="button"
+                  fontWeight="semiBold"
+                  color={theme.colors.palette.white}
+                >
+                  Claim ${scratchRewards.available_scratch_reward.toFixed(2)}
+                </CustomText>
+              )}
+            </Pressable>
+          </View>
+        )}
 
       <CongratulationsModal
         isVisible={showCongratulations}
         onClose={handleCloseCongratulations}
         rewardAmount={selectedReward}
+      />
+      <CongratulationsModal
+        isVisible={showClaimCongratulations}
+        onClose={() => {
+          setShowClaimCongratulations(false);
+          setClaimedAmount(0);
+          // Refetch data after closing modal to update rewards
+          refetch();
+        }}
+        rewardAmount={claimedAmount}
       />
       <HowToEarnPointsModal
         isVisible={showHowToEarnPoints}
@@ -192,11 +625,11 @@ const styles = (theme: any) =>
     },
     container: {
       flex: 1,
-
       backgroundColor: theme.colors.palette.white,
       borderTopEndRadius: 32,
       borderTopStartRadius: 32,
       padding: theme.spacing.layout.screenPadding,
+      paddingBottom: 100, // Add bottom padding to prevent content from being hidden behind floating button
       // marginTop: theme.spacing.spacing.md,
     },
     balancesContainer: {
@@ -243,11 +676,19 @@ const styles = (theme: any) =>
       marginBottom: theme.spacing.spacing[4],
       fontSize: 14,
     },
+    cardsScrollView: {
+      marginHorizontal: -theme.spacing.spacing[5],
+    },
+    cardsScrollContainer: {
+      paddingHorizontal: theme.spacing.spacing[5],
+      paddingVertical: theme.spacing.spacing[2],
+    },
     rewardCard: {
       backgroundColor: theme.colors.palette.yellow500,
       borderRadius: 20,
       padding: theme.spacing.spacing[4],
-      marginTop: theme.spacing.spacing[2],
+      width: 280,
+      marginRight: theme.spacing.spacing[3],
     },
     rewardCardHeader: {
       flexDirection: "row",
@@ -293,6 +734,177 @@ const styles = (theme: any) =>
     },
     scratchText: {
       fontSize: 14,
+    },
+    rewardAmountText: {
+      marginTop: theme.spacing.spacing[2],
+      fontSize: 14,
+      fontWeight: "600",
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingVertical: theme.spacing.spacing[10],
+    },
+    loadingText: {
+      marginTop: theme.spacing.spacing[4],
+    },
+    errorContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingVertical: theme.spacing.spacing[10],
+      paddingHorizontal: theme.spacing.spacing[5],
+    },
+    errorTitle: {
+      marginBottom: theme.spacing.spacing[2],
+      textAlign: "center",
+    },
+    errorMessage: {
+      marginBottom: theme.spacing.spacing[6],
+      textAlign: "center",
+    },
+    retryButton: {
+      backgroundColor: theme.colors.palette.green700,
+      paddingHorizontal: theme.spacing.spacing[6],
+      paddingVertical: theme.spacing.spacing[3],
+      borderRadius: 20,
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingVertical: theme.spacing.spacing[10],
+    },
+    emptyTitle: {
+      marginBottom: theme.spacing.spacing[2],
+      textAlign: "center",
+    },
+    emptyMessage: {
+      textAlign: "center",
+    },
+    noCardContainer: {
+      padding: theme.spacing.spacing[5],
+      alignItems: "center",
+    },
+    noCardText: {
+      textAlign: "center",
+    },
+    rewardCardDisabled: {
+      opacity: 0.6,
+    },
+    scratchingContainer: {
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: theme.spacing.spacing[4],
+    },
+    scratchingText: {
+      marginTop: theme.spacing.spacing[3],
+      fontSize: 16,
+    },
+    historySection: {
+      paddingHorizontal: theme.spacing.spacing[5],
+      marginTop: theme.spacing.spacing[6],
+    },
+    historyItem: {
+      backgroundColor: theme.colors.palette.white,
+      borderRadius: 16,
+      padding: theme.spacing.spacing[4],
+      marginTop: theme.spacing.spacing[3],
+      borderWidth: 1,
+      borderColor: theme.colors.palette.gray200 || "#E5E5E5",
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: 1,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+      elevation: 2,
+    },
+    historyItemHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: theme.spacing.spacing[3],
+    },
+    historyIconContainer: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: theme.colors.palette.green700,
+      justifyContent: "center",
+      alignItems: "center",
+      marginRight: theme.spacing.spacing[3],
+    },
+    historyItemContent: {
+      flex: 1,
+    },
+    historyDate: {
+      marginTop: theme.spacing.spacing[1],
+      fontSize: 12,
+    },
+    historyItemDetails: {
+      gap: theme.spacing.spacing[2],
+    },
+    historyDetailRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    rewardsSummarySection: {
+      paddingHorizontal: theme.spacing.spacing[5],
+      marginTop: theme.spacing.spacing[6],
+      marginBottom: theme.spacing.spacing[4],
+    },
+    summaryContainer: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+      marginTop: theme.spacing.spacing[3],
+      gap: theme.spacing.spacing[3],
+    },
+    summaryItem: {
+      width: "48%",
+      backgroundColor: theme.colors.palette.gray100 || "#F5F5F5",
+      borderRadius: 12,
+      padding: theme.spacing.spacing[3],
+      alignItems: "center",
+    },
+    summaryLabel: {
+      marginBottom: theme.spacing.spacing[1],
+      fontSize: 12,
+      textAlign: "center",
+    },
+    floatingButtonContainer: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      padding: theme.spacing.spacing[3],
+      paddingBottom: theme.spacing.spacing[2],
+      backgroundColor: theme.colors.palette.white,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.palette.gray200 || "#E5E5E5",
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: -2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 5,
+    },
+    floatingButton: {
+      backgroundColor: theme.colors.palette.green700,
+      borderRadius: 20,
+      padding: theme.spacing.spacing[3],
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: 40,
+      width: "100%",
+    },
+    claimButtonDisabled: {
+      opacity: 0.7,
     },
   });
 

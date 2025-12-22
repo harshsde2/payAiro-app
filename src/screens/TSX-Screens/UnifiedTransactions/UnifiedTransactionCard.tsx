@@ -25,8 +25,22 @@ const UnifiedTransactionCard: React.FC<IUnifiedTransactionCardProps> = ({
     transaction.display_party?.identifier ||
     "Unknown";
 
+  // Get decimal places based on crypto type
+  const getDecimalPlaces = (): number => {
+    const isCrypto = transaction.transaction_category === "crypto";
+    if (isCrypto) {
+      const token = transaction.crypto_details?.token?.toUpperCase();
+      // BTC and ETH show 5 decimal places, others show 2
+      if (token === "BTC" || token === "ETH") {
+        return 5;
+      }
+      return 2;
+    }
+    return 2;
+  };
+
   // Format amount
-  const formattedAmount = parseFloat(transaction.amount || "0").toFixed(2);
+  const formattedAmount = parseFloat(transaction.amount || "0").toFixed(getDecimalPlaces());
   const sign = isIncoming ? "+" : "-";
   const amountColor = isIncoming
     ? theme.colors.palette.success

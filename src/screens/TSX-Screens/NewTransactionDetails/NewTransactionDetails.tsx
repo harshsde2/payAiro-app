@@ -29,7 +29,6 @@ import { INewTransactionDetailsProps } from "./types";
 const SLIP_LABEL_VARIANT = "caption" as const;
 const SLIP_VALUE_VARIANT = "caption" as const;
 
-
 // Font size styles for transaction slip - adjust fontSize here to change size directly
 // You can also modify these in the styles function below
 const SLIP_LABEL_FONT_SIZE = 11; // Change this value to adjust label font size
@@ -39,7 +38,7 @@ const NewTransactionDetails: FC = () => {
   const route = useRoute();
   const { theme } = useTheme();
   const screenshotRef = useRef<ViewShot>(null);
-  
+
   const { transactionData } =
     route.params as INewTransactionDetailsProps["route"]["params"];
 
@@ -62,7 +61,8 @@ const NewTransactionDetails: FC = () => {
   let statusBg = theme.colors.palette.green700;
 
   if (isPending) {
-    statusText = status?.charAt(0).toUpperCase() + status?.slice(1) || "Pending";
+    statusText =
+      status?.charAt(0).toUpperCase() + status?.slice(1) || "Pending";
     statusBg = theme.colors.palette.orange500;
   } else if (isFailed) {
     statusText = status === "cancelled" ? "Cancelled" : "Failed";
@@ -151,29 +151,44 @@ const NewTransactionDetails: FC = () => {
     if (isCryptoSend) return `To ${displayUsername}`;
     if (isCryptoReceive) return `From ${displayUsername}`;
     if (isCryptoWithdrawal) {
-      return displayUsername === "External Wallet" 
-        ? "To External Wallet" 
+      return displayUsername === "External Wallet"
+        ? "To External Wallet"
         : `To ${displayUsername}`;
     }
     return null; // No subtitle for Buy/Sell
+  };
+
+  // Get decimal places based on crypto type - BTC and ETH show 5, others show 2
+  const getCryptoDecimalPlaces = (token: string | null | undefined): number => {
+    const upperToken = token?.toUpperCase();
+    if (upperToken === "BTC" || upperToken === "ETH") {
+      return 5;
+    }
+    return 2;
   };
 
   // Get amount display for crypto transactions
   const getCryptoAmount = (): { amount: string; currency: string } => {
     if (isCryptoBuy) {
       // Show final_amount (crypto received)
+      const token = toCurrency || cryptoAsset || "Crypto";
+      const decimals = getCryptoDecimalPlaces(token);
       return {
-        amount: parseFloat(transactionData.final_amount || transactionData.amount || "0").toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 8,
+        amount: parseFloat(
+          transactionData.final_amount || transactionData.amount || "0"
+        ).toLocaleString("en-US", {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals,
         }),
-        currency: toCurrency || cryptoAsset || "Crypto",
+        currency: token,
       };
     }
     if (isCryptoSell) {
       // Show final_amount in USD
       return {
-        amount: parseFloat(transactionData.final_amount || transactionData.amount || "0").toLocaleString("en-US", {
+        amount: parseFloat(
+          transactionData.final_amount || transactionData.amount || "0"
+        ).toLocaleString("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         }),
@@ -181,11 +196,15 @@ const NewTransactionDetails: FC = () => {
       };
     }
     // For Send, Receive, Withdrawal - show amount with currency
+    const decimals = getCryptoDecimalPlaces(cryptoAsset);
     return {
-      amount: parseFloat(transactionData.amount || "0").toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 8,
-      }),
+      amount: parseFloat(transactionData.amount || "0").toLocaleString(
+        "en-US",
+        {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals,
+        }
+      ),
       currency: currencySymbol,
     };
   };
@@ -255,17 +274,21 @@ const NewTransactionDetails: FC = () => {
         // Define the save directory
         let saveDir: string;
         let locationInfo: string;
-        
+
         if (Platform.OS === "android") {
           saveDir = `${RNFS.DownloadDirectoryPath}/${fileName}`;
-          locationInfo = "Downloads folder\n\nYou can find it in:\n• Files app > Downloads\n• Or use a file manager app";
+          locationInfo =
+            "Downloads folder\n\nYou can find it in:\n• Files app > Downloads\n• Or use a file manager app";
         } else {
           saveDir = `${RNFS.DocumentDirectoryPath}/${fileName}`;
-          locationInfo = "Files app > On My iPhone > PayAiro\n\nOr connect to iTunes/Finder to access";
+          locationInfo =
+            "Files app > On My iPhone > PayAiro\n\nOr connect to iTunes/Finder to access";
         }
 
         // Process the URI - remove file:// prefix if present for RNFS operations
-        const sourcePath = uri.startsWith("file://") ? uri.replace("file://", "") : uri;
+        const sourcePath = uri.startsWith("file://")
+          ? uri.replace("file://", "")
+          : uri;
 
         // Copy the captured image to the save directory
         await RNFS.copyFile(sourcePath, saveDir);
@@ -274,7 +297,7 @@ const NewTransactionDetails: FC = () => {
         if (Platform.OS === "android") {
           try {
             // Use react-native's Linking to trigger media scan
-            const { NativeModules } = require('react-native');
+            const { NativeModules } = require("react-native");
             if (NativeModules.MediaScanner) {
               NativeModules.MediaScanner.scanFile(saveDir);
             }
@@ -294,7 +317,9 @@ const NewTransactionDetails: FC = () => {
       console.error("Download failed:", error);
       Alert.alert(
         "Error",
-        `Failed to download transaction receipt.\n\nError: ${error.message || "Unknown error"}\n\nPlease check app permissions.`,
+        `Failed to download transaction receipt.\n\nError: ${
+          error.message || "Unknown error"
+        }\n\nPlease check app permissions.`,
         [{ text: "OK" }]
       );
     }
@@ -377,21 +402,22 @@ const NewTransactionDetails: FC = () => {
   // Render avatar for header
   const renderHeaderAvatar = () => {
     // isCrypto === false means crypto transaction
-    const imageUrl = !isCrypto && isValidPhoto(cryptoIconUrl) ? cryptoIconUrl : displayProfilePhoto;
+    const imageUrl =
+      !isCrypto && isValidPhoto(cryptoIconUrl)
+        ? cryptoIconUrl
+        : displayProfilePhoto;
 
     if (isValidPhoto(imageUrl) && imageUrl) {
       if (imageUrl.toLowerCase().endsWith(".svg")) {
         return (
           <View style={styles(theme).avatarBig}>
-            <SvgUri
-              uri={imageUrl}
-              width={80}
-              height={80}
-            />
+            <SvgUri uri={imageUrl} width={80} height={80} />
           </View>
         );
       }
-      return <Image source={{ uri: imageUrl }} style={styles(theme).avatarBig} />;
+      return (
+        <Image source={{ uri: imageUrl }} style={styles(theme).avatarBig} />
+      );
     }
 
     return (
@@ -429,15 +455,13 @@ const NewTransactionDetails: FC = () => {
 
   return (
     <ScreenContainer padding={0} backgroundColor={theme.colors.palette.green50}>
-      <HeaderTitle 
-        title="Transaction Details" 
+      <HeaderTitle
+        title="Transaction Details"
         leftIcon="back"
-        rightIcon={
-          <SvgIcons.ShareIcon width={30} height={30} />
-        }
+        rightIcon={<SvgIcons.ShareIcon width={30} height={30} />}
         onPressRight={handleScreenshotShare}
       />
-      
+
       <ScrollView showsVerticalScrollIndicator={false}>
         <ViewShot
           ref={screenshotRef}
@@ -451,166 +475,101 @@ const NewTransactionDetails: FC = () => {
           {/* Header / Summary Block */}
           <View style={styles(theme).headerSection}>
             <View style={styles(theme).avatarContainerBig}>
-            {renderHeaderAvatar()}
-          </View>
+              {renderHeaderAvatar()}
+            </View>
 
-          {/* Title - Dynamic based on crypto scenario */}
-          {!isCrypto ? (
-            <>
-              <CustomText
-                variant="h2"
-                color={theme.colors.text.primary}
-                style={{ marginBottom: 4, fontSize: 20, fontWeight: "600" }}
-              >
-                {getCryptoTitle()}
-              </CustomText>
-              {/* Subtitle for Send/Receive/Withdrawal */}
-              {getCryptoSubtitle() && (
+            {/* Title - Dynamic based on crypto scenario */}
+            {!isCrypto ? (
+              <>
                 <CustomText
-                  variant="body1"
-                  color={theme.colors.text.secondary}
-                  style={{ marginBottom: 8, fontSize: 14 }}
+                  variant="h2"
+                  color={theme.colors.text.primary}
+                  style={{ marginBottom: 4, fontSize: 20, fontWeight: "600" }}
                 >
-                  {getCryptoSubtitle()}
-                  </CustomText>
-              )}
-            </>
-          ) : (
-            <CustomText
-              variant="body1"
-              color={theme.colors.text.primary}
-              style={{ marginBottom: 4, fontSize: 16 }}
-            >
-              {isIncoming ? "From" : "To"} {displayUsername}
-            </CustomText>
-          )}
-
-          {/* Amount - Dynamic based on crypto scenario */}
-          {!isCrypto ? (
-            <CustomText
-              variant="h1"
-              style={[
-                styles(theme).amountText,
-                { color: theme.colors.palette.black },
-              ]}
-            >
-              {getCryptoAmount().amount} {getCryptoAmount().currency}
-            </CustomText>
-          ) : (
-            <CustomText
-              variant="h1"
-              style={[
-                styles(theme).amountText,
-                { color: isIncoming ? theme.colors.palette.green700 : theme.colors.palette.black },
-              ]}
-            >
-              {currencySymbol} {formattedAmount}
-            </CustomText>
-          )}
-
-            <View style={[styles(theme).statusBadge, { backgroundColor: statusBg }]}>
-                <CustomText 
-                variant="caption" 
-                fontWeight="semiBold" 
-                style={{ color: theme.colors.palette.white }}
-                >
-                {statusText}
+                  {getCryptoTitle()}
                 </CustomText>
-            </View>
+                {/* Subtitle for Send/Receive/Withdrawal */}
+                {getCryptoSubtitle() && (
+                  <CustomText
+                    variant="body1"
+                    color={theme.colors.text.secondary}
+                    style={{ marginBottom: 8, fontSize: 14 }}
+                  >
+                    {getCryptoSubtitle()}
+                  </CustomText>
+                )}
+              </>
+            ) : (
+              <CustomText
+                variant="body1"
+                color={theme.colors.text.primary}
+                style={{ marginBottom: 4, fontSize: 16 }}
+              >
+                {isIncoming ? "From" : "To"} {displayUsername}
+              </CustomText>
+            )}
 
-          {/* Transaction Type Badge - Only for fiat */}
-          {isCrypto && (
-            <CustomText
-              variant="caption"
-              color={theme.colors.text.secondary}
-              style={{ marginTop: 8 }}
-            >
-              {getTransactionTypeLabel()}
-            </CustomText>
-          )}
-        </View>
+            {/* Amount - Dynamic based on crypto scenario */}
+            {!isCrypto ? (
+              <CustomText
+                variant="h1"
+                style={[
+                  styles(theme).amountText,
+                  { color: theme.colors.palette.black },
+                ]}
+              >
+                {getCryptoAmount().amount} {getCryptoAmount().currency}
+              </CustomText>
+            ) : (
+              <CustomText
+                variant="h1"
+                style={[
+                  styles(theme).amountText,
+                  {
+                    color: isIncoming
+                      ? theme.colors.palette.green700
+                      : theme.colors.palette.black,
+                  },
+                ]}
+              >
+                {currencySymbol} {formattedAmount}
+              </CustomText>
+            )}
 
-        {/* White Card Section */}
-        <View style={styles(theme).whiteCard}>
-          {/* Date - Dynamic label based on scenario */}
-          <View style={styles(theme).detailRow}>
-            <CustomText 
-              variant={SLIP_LABEL_VARIANT} 
-              color={theme.colors.text.secondary}
-              style={slipStyles.slipLabelText}
-            >
-              {!isCrypto ? getDateLabel() : "Transfer Date"}
-            </CustomText>
-            <CustomText
-              variant={SLIP_VALUE_VARIANT}
-              fontWeight="semiBold"
-              color={theme.colors.text.primary}
-              style={slipStyles.slipValueText}
-            >
-              {moment(transactionData.created_at).format("DD MMM YYYY")}
-            </CustomText>
-          </View>
-
-          {/* Time - Dynamic label based on scenario */}
-          <View style={styles(theme).detailRow}>
-            <CustomText 
-              variant={SLIP_LABEL_VARIANT} 
-              color={theme.colors.text.secondary}
-              style={slipStyles.slipLabelText}
-            >
-              {!isCrypto ? getTimeLabel() : "Transfer Time"}
-            </CustomText>
-            <CustomText
-              variant={SLIP_VALUE_VARIANT}
-              fontWeight="semiBold"
-              color={theme.colors.text.primary}
-              style={slipStyles.slipValueText}
-            >
-              {moment(transactionData.created_at).format("h:mm a")}
-            </CustomText>
-          </View>
-
-          {/* Transaction ID / Order ID - Dynamic label based on scenario */}
-          <View style={styles(theme).detailRow}>
-            <CustomText 
-              variant={SLIP_LABEL_VARIANT} 
-              color={theme.colors.text.secondary}
-              style={slipStyles.slipLabelText}
-            >
-              {!isCrypto ? getTransactionIdLabel() : "Transaction ID"}
-            </CustomText>
-            <TouchableOpacity
-              onPress={handleCopyTransactionId}
-              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            <View
+              style={[styles(theme).statusBadge, { backgroundColor: statusBg }]}
             >
               <CustomText
-                variant={SLIP_VALUE_VARIANT}
+                variant="caption"
                 fontWeight="semiBold"
-                color={theme.colors.text.primary}
-                numberOfLines={1}
-                style={[slipStyles.slipValueText, { maxWidth: 150 }]}
+                style={{ color: theme.colors.palette.white }}
               >
-                {transactionData.transaction_id.length > 16
-                  ? `${transactionData.transaction_id.substring(0, 16)}...`
-                  : transactionData.transaction_id}
+                {statusText}
               </CustomText>
-              <SvgIcons.CopyOutlineBlack
-                width={14}
-                height={14}
-                // color={theme.colors.text.primary}
-              />
-            </TouchableOpacity>
+            </View>
+
+            {/* Transaction Type Badge - Only for fiat */}
+            {isCrypto && (
+              <CustomText
+                variant="caption"
+                color={theme.colors.text.secondary}
+                style={{ marginTop: 8 }}
+              >
+                {getTransactionTypeLabel()}
+              </CustomText>
+            )}
           </View>
 
-          {/* Sender - Only for fiat transactions */}
-          {isCrypto && (
+          {/* White Card Section */}
+          <View style={styles(theme).whiteCard}>
+            {/* Date - Dynamic label based on scenario */}
             <View style={styles(theme).detailRow}>
-              <CustomText 
-                variant={SLIP_LABEL_VARIANT} 
+              <CustomText
+                variant={SLIP_LABEL_VARIANT}
                 color={theme.colors.text.secondary}
                 style={slipStyles.slipLabelText}
               >
-                Sender
+                {!isCrypto ? getDateLabel() : "Transfer Date"}
               </CustomText>
               <CustomText
                 variant={SLIP_VALUE_VARIANT}
@@ -618,20 +577,18 @@ const NewTransactionDetails: FC = () => {
                 color={theme.colors.text.primary}
                 style={slipStyles.slipValueText}
               >
-                {senderUsername}
+                {moment(transactionData.created_at).format("DD MMM YYYY")}
               </CustomText>
             </View>
-          )}
 
-          {/* Receiver - Only for fiat transactions */}
-          {isCrypto && transactionData.recipient && (
+            {/* Time - Dynamic label based on scenario */}
             <View style={styles(theme).detailRow}>
-              <CustomText 
-                variant={SLIP_LABEL_VARIANT} 
+              <CustomText
+                variant={SLIP_LABEL_VARIANT}
                 color={theme.colors.text.secondary}
                 style={slipStyles.slipLabelText}
               >
-                Receiver
+                {!isCrypto ? getTimeLabel() : "Transfer Time"}
               </CustomText>
               <CustomText
                 variant={SLIP_VALUE_VARIANT}
@@ -639,64 +596,118 @@ const NewTransactionDetails: FC = () => {
                 color={theme.colors.text.primary}
                 style={slipStyles.slipValueText}
               >
-                {recipientUsername}
+                {moment(transactionData.created_at).format("h:mm a")}
               </CustomText>
             </View>
-          )}
 
-          {/* Category - Only for fiat transactions */}
-          {isCrypto && transactionData.category && (
+            {/* Transaction ID / Order ID - Dynamic label based on scenario */}
             <View style={styles(theme).detailRow}>
-              <CustomText 
-                variant={SLIP_LABEL_VARIANT} 
+              <CustomText
+                variant={SLIP_LABEL_VARIANT}
                 color={theme.colors.text.secondary}
                 style={slipStyles.slipLabelText}
               >
-                Category
+                {!isCrypto ? getTransactionIdLabel() : "Transaction ID"}
               </CustomText>
-              <CustomText
-                variant={SLIP_VALUE_VARIANT}
-                fontWeight="semiBold"
-                color={theme.colors.text.primary}
-                style={slipStyles.slipValueText}
+              <TouchableOpacity
+                onPress={handleCopyTransactionId}
+                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
               >
-                {transactionData.category
-                  .split("_")
-                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                  .join(" ")}
-              </CustomText>
+                <CustomText
+                  variant={SLIP_VALUE_VARIANT}
+                  fontWeight="semiBold"
+                  color={theme.colors.text.primary}
+                  numberOfLines={1}
+                  style={[slipStyles.slipValueText, { maxWidth: 150 }]}
+                >
+                  {transactionData.transaction_id.length > 16
+                    ? `${transactionData.transaction_id.substring(0, 16)}...`
+                    : transactionData.transaction_id}
+                </CustomText>
+                <SvgIcons.CopyOutlineBlack
+                  width={14}
+                  height={14}
+                  // color={theme.colors.text.primary}
+                />
+              </TouchableOpacity>
             </View>
-          )}
 
-          {/* Bank Details (for fiat only) */}
-          {isCrypto && (
-            <>
-             <View style={styles(theme).detailRow}>
-                <CustomText 
-                  variant={SLIP_LABEL_VARIANT} 
+            {/* Sender - Only for fiat transactions */}
+            {isCrypto && (
+              <View style={styles(theme).detailRow}>
+                <CustomText
+                  variant={SLIP_LABEL_VARIANT}
                   color={theme.colors.text.secondary}
                   style={slipStyles.slipLabelText}
                 >
-                  Bank
-                    </CustomText>
+                  Sender
+                </CustomText>
                 <CustomText
                   variant={SLIP_VALUE_VARIANT}
                   fontWeight="semiBold"
                   color={theme.colors.text.primary}
                   style={slipStyles.slipValueText}
                 >
-                  {bankName}
+                  {senderUsername}
                 </CustomText>
-            </View>
+              </View>
+            )}
 
-              {accountNumberMasked && (
+            {/* Receiver - Only for fiat transactions */}
+            {isCrypto && transactionData.recipient && (
+              <View style={styles(theme).detailRow}>
+                <CustomText
+                  variant={SLIP_LABEL_VARIANT}
+                  color={theme.colors.text.secondary}
+                  style={slipStyles.slipLabelText}
+                >
+                  Receiver
+                </CustomText>
+                <CustomText
+                  variant={SLIP_VALUE_VARIANT}
+                  fontWeight="semiBold"
+                  color={theme.colors.text.primary}
+                  style={slipStyles.slipValueText}
+                >
+                  {recipientUsername}
+                </CustomText>
+              </View>
+            )}
+
+            {/* Category - Only for fiat transactions */}
+            {isCrypto && transactionData.category && (
+              <View style={styles(theme).detailRow}>
+                <CustomText
+                  variant={SLIP_LABEL_VARIANT}
+                  color={theme.colors.text.secondary}
+                  style={slipStyles.slipLabelText}
+                >
+                  Category
+                </CustomText>
+                <CustomText
+                  variant={SLIP_VALUE_VARIANT}
+                  fontWeight="semiBold"
+                  color={theme.colors.text.primary}
+                  style={slipStyles.slipValueText}
+                >
+                  {transactionData.category
+                    .split("_")
+                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(" ")}
+                </CustomText>
+              </View>
+            )}
+
+            {/* Bank Details (for fiat only) */}
+            {isCrypto && (
+              <>
                 <View style={styles(theme).detailRow}>
-                  <CustomText 
-                    variant={SLIP_LABEL_VARIANT} 
+                  <CustomText
+                    variant={SLIP_LABEL_VARIANT}
                     color={theme.colors.text.secondary}
                     style={slipStyles.slipLabelText}
                   >
-                    Account Number
+                    Bank
                   </CustomText>
                   <CustomText
                     variant={SLIP_VALUE_VARIANT}
@@ -704,90 +715,214 @@ const NewTransactionDetails: FC = () => {
                     color={theme.colors.text.primary}
                     style={slipStyles.slipValueText}
                   >
-                    {accountNumberMasked}
+                    {bankName}
                   </CustomText>
                 </View>
-              )}
-            </>
-          )}
 
-          {/* Fee - Only for fiat transactions (crypto Send shows fee in its own section) */}
-          {isCrypto && feeAmount > 0 && (
-            <View style={styles(theme).detailRow}>
-              <CustomText 
-                variant={SLIP_LABEL_VARIANT} 
-                color={theme.colors.text.secondary}
-                style={slipStyles.slipLabelText}
-              >
-                Fee
-              </CustomText>
-              <CustomText
-                variant={SLIP_VALUE_VARIANT}
-                fontWeight="semiBold"
-                color={theme.colors.text.primary}
-                style={slipStyles.slipValueText}
-              >
-                {currencySymbol} {feeAmount.toFixed(2)}
-              </CustomText>
-            </View>
-          )}
+                {accountNumberMasked && (
+                  <View style={styles(theme).detailRow}>
+                    <CustomText
+                      variant={SLIP_LABEL_VARIANT}
+                      color={theme.colors.text.secondary}
+                      style={slipStyles.slipLabelText}
+                    >
+                      Account Number
+                    </CustomText>
+                    <CustomText
+                      variant={SLIP_VALUE_VARIANT}
+                      fontWeight="semiBold"
+                      color={theme.colors.text.primary}
+                      style={slipStyles.slipValueText}
+                    >
+                      {accountNumberMasked}
+                    </CustomText>
+                  </View>
+                )}
+              </>
+            )}
 
-          {/* Crypto Details Section - Scenario-based display */}
-          {!isCrypto && (
-            <>
-              {/* ========== CRYPTO BUY ========== */}
-              {isCryptoBuy && (
-                <>
-                  {/* Asset Purchased */}
-                  {cryptoAsset && (
-                    <View style={styles(theme).detailRow}>
-                      <CustomText 
-                        variant={SLIP_LABEL_VARIANT} 
-                        color={theme.colors.text.secondary}
-                        style={slipStyles.slipLabelText}
-                      >
-                        Asset Purchased
-                      </CustomText>
-                      <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        {renderCryptoAssetIcon(cryptoIconUrl)}
+            {/* Fee - Only for fiat transactions (crypto Send shows fee in its own section) */}
+            {isCrypto && feeAmount > 0 && (
+              <View style={styles(theme).detailRow}>
+                <CustomText
+                  variant={SLIP_LABEL_VARIANT}
+                  color={theme.colors.text.secondary}
+                  style={slipStyles.slipLabelText}
+                >
+                  Fee
+                </CustomText>
+                <CustomText
+                  variant={SLIP_VALUE_VARIANT}
+                  fontWeight="semiBold"
+                  color={theme.colors.text.primary}
+                  style={slipStyles.slipValueText}
+                >
+                  {currencySymbol} {feeAmount.toFixed(2)}
+                </CustomText>
+              </View>
+            )}
+
+            {/* Crypto Details Section - Scenario-based display */}
+            {!isCrypto && (
+              <>
+                {/* ========== CRYPTO BUY ========== */}
+                {isCryptoBuy && (
+                  <>
+                    {/* Asset Purchased */}
+                    {cryptoAsset && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
+                        >
+                          Asset Purchased
+                        </CustomText>
+                        <View
+                          style={{ flexDirection: "row", alignItems: "center" }}
+                        >
+                          {renderCryptoAssetIcon(cryptoIconUrl)}
+                          <CustomText
+                            variant={SLIP_VALUE_VARIANT}
+                            fontWeight="semiBold"
+                            color={theme.colors.text.primary}
+                            style={slipStyles.slipValueText}
+                          >
+                            {cryptoAsset}
+                          </CustomText>
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Paid In */}
+                    {fromCurrency && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
+                        >
+                          Paid In
+                        </CustomText>
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
                           color={theme.colors.text.primary}
                           style={slipStyles.slipValueText}
                         >
-                          {cryptoAsset}
+                          {fromCurrency}
                         </CustomText>
                       </View>
-                    </View>
-                  )}
+                    )}
 
-                  {/* Paid In */}
-                  {fromCurrency && (
+                    {/* Received */}
+                    {toCurrency && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
+                        >
+                          Received
+                        </CustomText>
+                        <CustomText
+                          variant={SLIP_VALUE_VARIANT}
+                          fontWeight="semiBold"
+                          color={theme.colors.text.primary}
+                          style={slipStyles.slipValueText}
+                        >
+                          {parseFloat(
+                            transactionData.final_amount ||
+                              transactionData.amount ||
+                              "0"
+                          ).toLocaleString("en-US", {
+                            minimumFractionDigits: getCryptoDecimalPlaces(toCurrency),
+                            maximumFractionDigits: getCryptoDecimalPlaces(toCurrency),
+                          })}{" "}
+                          {toCurrency}
+                        </CustomText>
+                      </View>
+                    )}
+
+                    {/* Exchange Rate */}
+                    {exchangeRate && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
+                        >
+                          Exchange Rate
+                        </CustomText>
+                        <CustomText
+                          variant={SLIP_VALUE_VARIANT}
+                          fontWeight="semiBold"
+                          color={theme.colors.text.primary}
+                          style={slipStyles.slipValueText}
+                        >
+                          1 {fromCurrency || "USD"} ={" "}
+                          {parseFloat(exchangeRate).toFixed(2)}{" "}
+                          {toCurrency || cryptoAsset}
+                        </CustomText>
+                      </View>
+                    )}
+
+                    {/* USD Value */}
+                    {usdValue && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
+                        >
+                          USD Value
+                        </CustomText>
+                        <CustomText
+                          variant={SLIP_VALUE_VARIANT}
+                          fontWeight="semiBold"
+                          color={theme.colors.text.primary}
+                          style={slipStyles.slipValueText}
+                        >
+                          ${parseFloat(usdValue).toFixed(2)}
+                        </CustomText>
+                      </View>
+                    )}
+                  </>
+                )}
+
+                {/* ========== CRYPTO SELL ========== */}
+                {isCryptoSell && (
+                  <>
+                    {/* Asset Sold */}
+                    {fromCurrency && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
+                        >
+                          Asset Sold
+                        </CustomText>
+                        <View
+                          style={{ flexDirection: "row", alignItems: "center" }}
+                        >
+                          {renderCryptoAssetIcon(cryptoIconUrl)}
+                          <CustomText
+                            variant={SLIP_VALUE_VARIANT}
+                            fontWeight="semiBold"
+                            color={theme.colors.text.primary}
+                            style={slipStyles.slipValueText}
+                          >
+                            {fromCurrency}
+                          </CustomText>
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Received */}
                     <View style={styles(theme).detailRow}>
-                      <CustomText 
-                        variant={SLIP_LABEL_VARIANT} 
-                        color={theme.colors.text.secondary}
-                        style={slipStyles.slipLabelText}
-                      >
-                        Paid In
-                      </CustomText>
                       <CustomText
-                        variant={SLIP_VALUE_VARIANT}
-                        fontWeight="semiBold"
-                        color={theme.colors.text.primary}
-                        style={slipStyles.slipValueText}
-                      >
-                        {fromCurrency}
-                      </CustomText>
-                    </View>
-                  )}
-
-                  {/* Received */}
-                  {toCurrency && (
-                    <View style={styles(theme).detailRow}>
-                      <CustomText 
-                        variant={SLIP_LABEL_VARIANT} 
+                        variant={SLIP_LABEL_VARIANT}
                         color={theme.colors.text.secondary}
                         style={slipStyles.slipLabelText}
                       >
@@ -799,23 +934,70 @@ const NewTransactionDetails: FC = () => {
                         color={theme.colors.text.primary}
                         style={slipStyles.slipValueText}
                       >
-                        {parseFloat(transactionData.final_amount || transactionData.amount || "0").toLocaleString("en-US", {
+                        {parseFloat(
+                          transactionData.final_amount ||
+                            transactionData.amount ||
+                            "0"
+                        ).toLocaleString("en-US", {
                           minimumFractionDigits: 2,
-                          maximumFractionDigits: 8,
-                        })} {toCurrency}
+                          maximumFractionDigits: 2,
+                        })}{" "}
+                        USD
                       </CustomText>
                     </View>
-                  )}
 
-                  {/* Exchange Rate */}
-                  {exchangeRate && (
+                    {/* Exchange Rate */}
+                    {exchangeRate && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                        >
+                          Exchange Rate
+                        </CustomText>
+                        <CustomText
+                          variant={SLIP_VALUE_VARIANT}
+                          fontWeight="semiBold"
+                          color={theme.colors.text.primary}
+                        >
+                          1 {fromCurrency} ={" "}
+                          {parseFloat(exchangeRate).toFixed(2)} USD
+                        </CustomText>
+                      </View>
+                    )}
+
+                    {/* USD Value */}
+                    {usdValue && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                        >
+                          USD Value
+                        </CustomText>
+                        <CustomText
+                          variant={SLIP_VALUE_VARIANT}
+                          fontWeight="semiBold"
+                          color={theme.colors.text.primary}
+                        >
+                          ${parseFloat(usdValue).toFixed(2)}
+                        </CustomText>
+                      </View>
+                    )}
+                  </>
+                )}
+
+                {/* ========== CRYPTO SEND ========== */}
+                {isCryptoSend && (
+                  <>
+                    {/* Sent To */}
                     <View style={styles(theme).detailRow}>
-                      <CustomText 
-                        variant={SLIP_LABEL_VARIANT} 
+                      <CustomText
+                        variant={SLIP_LABEL_VARIANT}
                         color={theme.colors.text.secondary}
                         style={slipStyles.slipLabelText}
                       >
-                        Exchange Rate
+                        Sent To
                       </CustomText>
                       <CustomText
                         variant={SLIP_VALUE_VARIANT}
@@ -823,148 +1005,197 @@ const NewTransactionDetails: FC = () => {
                         color={theme.colors.text.primary}
                         style={slipStyles.slipValueText}
                       >
-                        1 {fromCurrency || "USD"} = {parseFloat(exchangeRate).toFixed(2)} {toCurrency || cryptoAsset}
+                        {displayUsername}
                       </CustomText>
                     </View>
-                  )}
 
-                  {/* USD Value */}
-                  {usdValue && (
-                    <View style={styles(theme).detailRow}>
-                      <CustomText 
-                        variant={SLIP_LABEL_VARIANT} 
-                        color={theme.colors.text.secondary}
-                        style={slipStyles.slipLabelText}
-                      >
-                        USD Value
-                      </CustomText>
-                      <CustomText
-                        variant={SLIP_VALUE_VARIANT}
-                        fontWeight="semiBold"
-                        color={theme.colors.text.primary}
-                        style={slipStyles.slipValueText}
-                      >
-                        ${parseFloat(usdValue).toFixed(2)}
-                      </CustomText>
-                    </View>
-                  )}
-                </>
-              )}
-
-              {/* ========== CRYPTO SELL ========== */}
-              {isCryptoSell && (
-                <>
-                  {/* Asset Sold */}
-                  {fromCurrency && (
-                    <View style={styles(theme).detailRow}>
-                      <CustomText 
-                        variant={SLIP_LABEL_VARIANT} 
-                        color={theme.colors.text.secondary}
-                        style={slipStyles.slipLabelText}
-                      >
-                        Asset Sold
-                      </CustomText>
-                      <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        {renderCryptoAssetIcon(cryptoIconUrl)}
+                    {/* Network */}
+                    {cryptoNetwork && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
+                        >
+                          Network
+                        </CustomText>
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
                           color={theme.colors.text.primary}
                           style={slipStyles.slipValueText}
                         >
-                          {fromCurrency}
+                          {cryptoNetwork}
                         </CustomText>
                       </View>
-                    </View>
-                  )}
+                    )}
 
-                  {/* Received */}
-                  <View style={styles(theme).detailRow}>
-                    <CustomText 
-                      variant={SLIP_LABEL_VARIANT} 
-                      color={theme.colors.text.secondary}
-                      style={slipStyles.slipLabelText}
-                    >
-                      Received
-                    </CustomText>
-                    <CustomText
-                      variant={SLIP_VALUE_VARIANT}
-                      fontWeight="semiBold"
-                      color={theme.colors.text.primary}
-                      style={slipStyles.slipValueText}
-                    >
-                      {parseFloat(transactionData.final_amount || transactionData.amount || "0").toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })} USD
-                    </CustomText>
-                  </View>
+                    {/* From Address */}
+                    {fromAddress && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
+                        >
+                          From Address
+                        </CustomText>
+                        <TouchableOpacity
+                          onPress={handleCopyFromAddress}
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <CustomText
+                            variant={SLIP_VALUE_VARIANT}
+                            fontWeight="semiBold"
+                            color={theme.colors.text.primary}
+                            numberOfLines={1}
+                            style={[
+                              slipStyles.slipValueText,
+                              { maxWidth: 150 },
+                            ]}
+                          >
+                            {fromAddress.length > 16
+                              ? `${fromAddress.substring(0, 16)}...`
+                              : fromAddress}
+                          </CustomText>
+                          <SvgIcons.CopyOutlineBlack
+                            width={14}
+                            height={14}
+                            color={theme.colors.text.primary}
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    )}
 
-                  {/* Exchange Rate */}
-                  {exchangeRate && (
+                    {/* To Address */}
+                    {toAddress && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                        >
+                          To Address
+                        </CustomText>
+                        <TouchableOpacity
+                          onPress={handleCopyToAddress}
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <CustomText
+                            variant={SLIP_VALUE_VARIANT}
+                            fontWeight="semiBold"
+                            color={theme.colors.text.primary}
+                            numberOfLines={1}
+                            style={{ maxWidth: 150 }}
+                          >
+                            {toAddress.length > 16
+                              ? `${toAddress.substring(0, 16)}...`
+                              : toAddress}
+                          </CustomText>
+                          <SvgIcons.CopyOutlineBlack
+                            width={14}
+                            height={14}
+                            color={theme.colors.text.primary}
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+
+                    {/* Transaction Hash */}
+                    {txHash && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                        >
+                          Tx Hash
+                        </CustomText>
+                        <TouchableOpacity
+                          onPress={handleCopyTxHash}
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <CustomText
+                            variant={SLIP_VALUE_VARIANT}
+                            fontWeight="semiBold"
+                            color={theme.colors.text.primary}
+                            numberOfLines={1}
+                            style={{ maxWidth: 150 }}
+                          >
+                            {txHash.length > 16
+                              ? `${txHash.substring(0, 16)}...`
+                              : txHash}
+                          </CustomText>
+                          <SvgIcons.CopyOutlineBlack
+                            width={14}
+                            height={14}
+                            color={theme.colors.text.primary}
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+
+                    {/* USD Value */}
+                    {usdValue && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                        >
+                          USD Value
+                        </CustomText>
+                        <CustomText
+                          variant={SLIP_VALUE_VARIANT}
+                          fontWeight="semiBold"
+                          color={theme.colors.text.primary}
+                        >
+                          ${parseFloat(usdValue).toFixed(2)}
+                        </CustomText>
+                      </View>
+                    )}
+
+                    {/* Fee */}
+                    {feeAmount > 0 && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                        >
+                          Fee
+                        </CustomText>
+                        <CustomText
+                          variant={SLIP_VALUE_VARIANT}
+                          fontWeight="semiBold"
+                          color={theme.colors.text.primary}
+                        >
+                          {currencySymbol} {feeAmount.toFixed(2)}
+                        </CustomText>
+                      </View>
+                    )}
+                  </>
+                )}
+
+                {/* ========== CRYPTO RECEIVE ========== */}
+                {isCryptoReceive && (
+                  <>
+                    {/* Received From */}
                     <View style={styles(theme).detailRow}>
-                      <CustomText variant={SLIP_LABEL_VARIANT} color={theme.colors.text.secondary}>
-                        Exchange Rate
-                      </CustomText>
                       <CustomText
-                        variant={SLIP_VALUE_VARIANT}
-                        fontWeight="semiBold"
-                        color={theme.colors.text.primary}
-                      >
-                        1 {fromCurrency} = {parseFloat(exchangeRate).toFixed(2)} USD
-                      </CustomText>
-                    </View>
-                  )}
-
-                  {/* USD Value */}
-                  {usdValue && (
-                    <View style={styles(theme).detailRow}>
-                      <CustomText variant={SLIP_LABEL_VARIANT} color={theme.colors.text.secondary}>
-                        USD Value
-                      </CustomText>
-                      <CustomText
-                        variant={SLIP_VALUE_VARIANT}
-                        fontWeight="semiBold"
-                        color={theme.colors.text.primary}
-                      >
-                        ${parseFloat(usdValue).toFixed(2)}
-                      </CustomText>
-                    </View>
-                  )}
-                </>
-              )}
-
-              {/* ========== CRYPTO SEND ========== */}
-              {isCryptoSend && (
-                <>
-                  {/* Sent To */}
-                  <View style={styles(theme).detailRow}>
-                    <CustomText 
-                      variant={SLIP_LABEL_VARIANT} 
-                      color={theme.colors.text.secondary}
-                      style={slipStyles.slipLabelText}
-                    >
-                      Sent To
-                    </CustomText>
-                    <CustomText
-                      variant={SLIP_VALUE_VARIANT}
-                      fontWeight="semiBold"
-                      color={theme.colors.text.primary}
-                      style={slipStyles.slipValueText}
-                    >
-                      {displayUsername}
-                    </CustomText>
-                  </View>
-
-                  {/* Network */}
-                  {cryptoNetwork && (
-                    <View style={styles(theme).detailRow}>
-                      <CustomText 
-                        variant={SLIP_LABEL_VARIANT} 
+                        variant={SLIP_LABEL_VARIANT}
                         color={theme.colors.text.secondary}
                         style={slipStyles.slipLabelText}
                       >
-                        Network
+                        Received From
                       </CustomText>
                       <CustomText
                         variant={SLIP_VALUE_VARIANT}
@@ -972,281 +1203,188 @@ const NewTransactionDetails: FC = () => {
                         color={theme.colors.text.primary}
                         style={slipStyles.slipValueText}
                       >
-                        {cryptoNetwork}
+                        {displayUsername}
                       </CustomText>
                     </View>
-                  )}
 
-                  {/* From Address */}
-                  {fromAddress && (
-                    <View style={styles(theme).detailRow}>
-                      <CustomText 
-                        variant={SLIP_LABEL_VARIANT} 
-                        color={theme.colors.text.secondary}
-                        style={slipStyles.slipLabelText}
-                      >
-                        From Address
-                      </CustomText>
-                      <TouchableOpacity
-                        onPress={handleCopyFromAddress}
-                        style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-                      >
+                    {/* Network */}
+                    {cryptoNetwork && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
+                        >
+                          Network
+                        </CustomText>
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
                           color={theme.colors.text.primary}
-                          numberOfLines={1}
-                          style={[slipStyles.slipValueText, { maxWidth: 150 }]}
+                          style={slipStyles.slipValueText}
                         >
-                          {fromAddress.length > 16 ? `${fromAddress.substring(0, 16)}...` : fromAddress}
+                          {cryptoNetwork}
                         </CustomText>
-                        <SvgIcons.CopyOutlineBlack
-                          width={14}
-                          height={14}
-                          color={theme.colors.text.primary}
-                        />
-                      </TouchableOpacity>
-                    </View>
-                  )}
+                      </View>
+                    )}
 
-                  {/* To Address */}
-                  {toAddress && (
-                    <View style={styles(theme).detailRow}>
-                      <CustomText variant={SLIP_LABEL_VARIANT} color={theme.colors.text.secondary}>
-                        To Address
-                      </CustomText>
-                      <TouchableOpacity
-                        onPress={handleCopyToAddress}
-                        style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-                      >
+                    {/* From Address */}
+                    {fromAddress && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
+                        >
+                          From Address
+                        </CustomText>
+                        <TouchableOpacity
+                          onPress={handleCopyFromAddress}
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <CustomText
+                            variant={SLIP_VALUE_VARIANT}
+                            fontWeight="semiBold"
+                            color={theme.colors.text.primary}
+                            numberOfLines={1}
+                            style={[
+                              slipStyles.slipValueText,
+                              { maxWidth: 150 },
+                            ]}
+                          >
+                            {fromAddress.length > 16
+                              ? `${fromAddress.substring(0, 16)}...`
+                              : fromAddress}
+                          </CustomText>
+                          <SvgIcons.CopyOutlineBlack
+                            width={14}
+                            height={14}
+                            color={theme.colors.text.primary}
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+
+                    {/* To Address */}
+                    {toAddress && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
+                        >
+                          To Address
+                        </CustomText>
+                        <TouchableOpacity
+                          onPress={handleCopyToAddress}
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <CustomText
+                            variant={SLIP_VALUE_VARIANT}
+                            fontWeight="semiBold"
+                            color={theme.colors.text.primary}
+                            numberOfLines={1}
+                            style={[
+                              slipStyles.slipValueText,
+                              { maxWidth: 150 },
+                            ]}
+                          >
+                            {toAddress.length > 16
+                              ? `${toAddress.substring(0, 16)}...`
+                              : toAddress}
+                          </CustomText>
+                          <SvgIcons.CopyOutlineBlack
+                            width={14}
+                            height={14}
+                            color={theme.colors.text.primary}
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+
+                    {/* Transaction Hash */}
+                    {txHash && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
+                        >
+                          Tx Hash
+                        </CustomText>
+                        <TouchableOpacity
+                          onPress={handleCopyTxHash}
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <CustomText
+                            variant={SLIP_VALUE_VARIANT}
+                            fontWeight="semiBold"
+                            color={theme.colors.text.primary}
+                            numberOfLines={1}
+                            style={[
+                              slipStyles.slipValueText,
+                              { maxWidth: 150 },
+                            ]}
+                          >
+                            {txHash.length > 16
+                              ? `${txHash.substring(0, 16)}...`
+                              : txHash}
+                          </CustomText>
+                          <SvgIcons.CopyOutlineBlack
+                            width={14}
+                            height={14}
+                            color={theme.colors.text.primary}
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+
+                    {/* USD Value */}
+                    {usdValue && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
+                        >
+                          USD Value
+                        </CustomText>
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
                           color={theme.colors.text.primary}
-                          numberOfLines={1}
-                          style={{ maxWidth: 150 }}
+                          style={slipStyles.slipValueText}
                         >
-                          {toAddress.length > 16 ? `${toAddress.substring(0, 16)}...` : toAddress}
+                          ${parseFloat(usdValue).toFixed(2)}
                         </CustomText>
-                        <SvgIcons.CopyOutlineBlack
-                          width={14}
-                          height={14}
-                          color={theme.colors.text.primary}
-                        />
-                      </TouchableOpacity>
-                    </View>
-                  )}
+                      </View>
+                    )}
+                  </>
+                )}
 
-                  {/* Transaction Hash */}
-                  {txHash && (
+                {/* ========== CRYPTO WITHDRAWAL ========== */}
+                {isCryptoWithdrawal && (
+                  <>
+                    {/* Withdrawn To */}
                     <View style={styles(theme).detailRow}>
-                      <CustomText variant={SLIP_LABEL_VARIANT} color={theme.colors.text.secondary}>
-                        Tx Hash
-                      </CustomText>
-                      <TouchableOpacity
-                        onPress={handleCopyTxHash}
-                        style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-                      >
-                        <CustomText
-                          variant={SLIP_VALUE_VARIANT}
-                          fontWeight="semiBold"
-                          color={theme.colors.text.primary}
-                          numberOfLines={1}
-                          style={{ maxWidth: 150 }}
-                        >
-                          {txHash.length > 16 ? `${txHash.substring(0, 16)}...` : txHash}
-                        </CustomText>
-                        <SvgIcons.CopyOutlineBlack
-                          width={14}
-                          height={14}
-                          color={theme.colors.text.primary}
-                        />
-                      </TouchableOpacity>
-                    </View>
-                  )}
-
-                  {/* USD Value */}
-                  {usdValue && (
-                    <View style={styles(theme).detailRow}>
-                      <CustomText variant={SLIP_LABEL_VARIANT} color={theme.colors.text.secondary}>
-                        USD Value
-                      </CustomText>
                       <CustomText
-                        variant={SLIP_VALUE_VARIANT}
-                        fontWeight="semiBold"
-                        color={theme.colors.text.primary}
-                      >
-                        ${parseFloat(usdValue).toFixed(2)}
-                      </CustomText>
-                    </View>
-                  )}
-
-                  {/* Fee */}
-                  {feeAmount > 0 && (
-                    <View style={styles(theme).detailRow}>
-                      <CustomText variant={SLIP_LABEL_VARIANT} color={theme.colors.text.secondary}>
-                        Fee
-                      </CustomText>
-                      <CustomText
-                        variant={SLIP_VALUE_VARIANT}
-                        fontWeight="semiBold"
-                        color={theme.colors.text.primary}
-                      >
-                        {currencySymbol} {feeAmount.toFixed(2)}
-                      </CustomText>
-                    </View>
-                  )}
-                </>
-              )}
-
-              {/* ========== CRYPTO RECEIVE ========== */}
-              {isCryptoReceive && (
-                <>
-                  {/* Received From */}
-                  <View style={styles(theme).detailRow}>
-                    <CustomText 
-                      variant={SLIP_LABEL_VARIANT} 
-                      color={theme.colors.text.secondary}
-                      style={slipStyles.slipLabelText}
-                    >
-                      Received From
-                    </CustomText>
-                    <CustomText
-                      variant={SLIP_VALUE_VARIANT}
-                      fontWeight="semiBold"
-                      color={theme.colors.text.primary}
-                      style={slipStyles.slipValueText}
-                    >
-                      {displayUsername}
-                    </CustomText>
-                  </View>
-
-                  {/* Network */}
-                  {cryptoNetwork && (
-                    <View style={styles(theme).detailRow}>
-                      <CustomText 
-                        variant={SLIP_LABEL_VARIANT} 
+                        variant={SLIP_LABEL_VARIANT}
                         color={theme.colors.text.secondary}
                         style={slipStyles.slipLabelText}
                       >
-                        Network
-                      </CustomText>
-                      <CustomText
-                        variant={SLIP_VALUE_VARIANT}
-                        fontWeight="semiBold"
-                        color={theme.colors.text.primary}
-                        style={slipStyles.slipValueText}
-                      >
-                        {cryptoNetwork}
-                      </CustomText>
-                    </View>
-                  )}
-
-                  {/* From Address */}
-                  {fromAddress && (
-                    <View style={styles(theme).detailRow}>
-                      <CustomText 
-                        variant={SLIP_LABEL_VARIANT} 
-                        color={theme.colors.text.secondary}
-                        style={slipStyles.slipLabelText}
-                      >
-                        From Address
-                      </CustomText>
-                      <TouchableOpacity
-                        onPress={handleCopyFromAddress}
-                        style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-                      >
-                        <CustomText
-                          variant={SLIP_VALUE_VARIANT}
-                          fontWeight="semiBold"
-                          color={theme.colors.text.primary}
-                          numberOfLines={1}
-                          style={[slipStyles.slipValueText, { maxWidth: 150 }]}
-                        >
-                          {fromAddress.length > 16 ? `${fromAddress.substring(0, 16)}...` : fromAddress}
-                        </CustomText>
-                        <SvgIcons.CopyOutlineBlack
-                          width={14}
-                          height={14}
-                          color={theme.colors.text.primary}
-                        />
-                      </TouchableOpacity>
-                    </View>
-                  )}
-
-                  {/* To Address */}
-                  {toAddress && (
-                    <View style={styles(theme).detailRow}>
-                      <CustomText 
-                        variant={SLIP_LABEL_VARIANT} 
-                        color={theme.colors.text.secondary}
-                        style={slipStyles.slipLabelText}
-                      >
-                        To Address
-                      </CustomText>
-                      <TouchableOpacity
-                        onPress={handleCopyToAddress}
-                        style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-                      >
-                        <CustomText
-                          variant={SLIP_VALUE_VARIANT}
-                          fontWeight="semiBold"
-                          color={theme.colors.text.primary}
-                          numberOfLines={1}
-                          style={[slipStyles.slipValueText, { maxWidth: 150 }]}
-                        >
-                          {toAddress.length > 16 ? `${toAddress.substring(0, 16)}...` : toAddress}
-                        </CustomText>
-                        <SvgIcons.CopyOutlineBlack
-                          width={14}
-                          height={14}
-                          color={theme.colors.text.primary}
-                        />
-                      </TouchableOpacity>
-                    </View>
-                  )}
-
-                  {/* Transaction Hash */}
-                  {txHash && (
-                    <View style={styles(theme).detailRow}>
-                      <CustomText 
-                        variant={SLIP_LABEL_VARIANT} 
-                        color={theme.colors.text.secondary}
-                        style={slipStyles.slipLabelText}
-                      >
-                        Tx Hash
-                      </CustomText>
-                      <TouchableOpacity
-                        onPress={handleCopyTxHash}
-                        style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-                      >
-                        <CustomText
-                          variant={SLIP_VALUE_VARIANT}
-                          fontWeight="semiBold"
-                          color={theme.colors.text.primary}
-                          numberOfLines={1}
-                          style={[slipStyles.slipValueText, { maxWidth: 150 }]}
-                        >
-                          {txHash.length > 16 ? `${txHash.substring(0, 16)}...` : txHash}
-                        </CustomText>
-                        <SvgIcons.CopyOutlineBlack
-                          width={14}
-                          height={14}
-                          color={theme.colors.text.primary}
-                        />
-                      </TouchableOpacity>
-                    </View>
-                  )}
-
-                  {/* USD Value */}
-                  {usdValue && (
-                    <View style={styles(theme).detailRow}>
-                      <CustomText 
-                        variant={SLIP_LABEL_VARIANT} 
-                        color={theme.colors.text.secondary}
-                        style={slipStyles.slipLabelText}
-                      >
-                        USD Value
+                        Withdrawn To
                       </CustomText>
                       <CustomText
                         variant={SLIP_VALUE_VARIANT}
@@ -1254,58 +1392,33 @@ const NewTransactionDetails: FC = () => {
                         color={theme.colors.text.primary}
                         style={slipStyles.slipValueText}
                       >
-                        ${parseFloat(usdValue).toFixed(2)}
+                        {displayUsername}
                       </CustomText>
                     </View>
-                  )}
-                </>
-              )}
 
-              {/* ========== CRYPTO WITHDRAWAL ========== */}
-              {isCryptoWithdrawal && (
-                <>
-                  {/* Withdrawn To */}
-             <View style={styles(theme).detailRow}>
-                    <CustomText 
-                      variant={SLIP_LABEL_VARIANT} 
-                      color={theme.colors.text.secondary}
-                      style={slipStyles.slipLabelText}
-                    >
-                      Withdrawn To
-                    </CustomText>
-                    <CustomText
-                      variant={SLIP_VALUE_VARIANT}
-                      fontWeight="semiBold"
-                      color={theme.colors.text.primary}
-                      style={slipStyles.slipValueText}
-                    >
-                      {displayUsername}
-                </CustomText>
-            </View>
+                    {/* Network */}
+                    {cryptoNetwork && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
+                        >
+                          Network
+                        </CustomText>
+                        <CustomText
+                          variant={SLIP_VALUE_VARIANT}
+                          fontWeight="semiBold"
+                          color={theme.colors.text.primary}
+                          style={slipStyles.slipValueText}
+                        >
+                          {cryptoNetwork}
+                        </CustomText>
+                      </View>
+                    )}
 
-                  {/* Network */}
-                  {cryptoNetwork && (
-                    <View style={styles(theme).detailRow}>
-                      <CustomText 
-                        variant={SLIP_LABEL_VARIANT} 
-                        color={theme.colors.text.secondary}
-                        style={slipStyles.slipLabelText}
-                      >
-                        Network
-                      </CustomText>
-                      <CustomText
-                        variant={SLIP_VALUE_VARIANT}
-                        fontWeight="semiBold"
-                        color={theme.colors.text.primary}
-                        style={slipStyles.slipValueText}
-                      >
-                        {cryptoNetwork}
-                      </CustomText>
-                    </View>
-                  )}
-
-                  {/* From Address */}
-                  {/* {fromAddress && (
+                    {/* From Address */}
+                    {/* {fromAddress && (
                     <View style={styles(theme).detailRow}>
                       <CustomText 
                         variant={SLIP_LABEL_VARIANT} 
@@ -1336,86 +1449,98 @@ const NewTransactionDetails: FC = () => {
                     </View>
                   )} */}
 
-                  {/* To Address (External Address) */}
-                  {toAddress && (
-                    <View style={styles(theme).detailRow}>
-                      <CustomText 
-                        variant={SLIP_LABEL_VARIANT} 
-                        color={theme.colors.text.secondary}
-                        style={slipStyles.slipLabelText}
-                      >
-                        To Address
-                      </CustomText>
-                      <TouchableOpacity
-                        onPress={handleCopyToAddress}
-                        style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-                      >
+                    {/* To Address (External Address) */}
+                    {toAddress && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
+                        >
+                          To Address
+                        </CustomText>
+                        <TouchableOpacity
+                          onPress={handleCopyToAddress}
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <CustomText
+                            variant={SLIP_VALUE_VARIANT}
+                            fontWeight="semiBold"
+                            color={theme.colors.text.primary}
+                            numberOfLines={1}
+                            style={[
+                              slipStyles.slipValueText,
+                              { maxWidth: 150 },
+                            ]}
+                          >
+                            {toAddress.length > 16
+                              ? `${toAddress.substring(0, 16)}...`
+                              : toAddress}
+                          </CustomText>
+                          <SvgIcons.CopyOutlineBlack
+                            width={14}
+                            height={14}
+                            color={theme.colors.text.primary}
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+
+                    {/* USD Value */}
+                    {usdValue && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
+                        >
+                          USD Value
+                        </CustomText>
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
                           color={theme.colors.text.primary}
-                          numberOfLines={1}
-                          style={[slipStyles.slipValueText, { maxWidth: 150 }]}
+                          style={slipStyles.slipValueText}
                         >
-                          {toAddress.length > 16 ? `${toAddress.substring(0, 16)}...` : toAddress}
+                          ${parseFloat(usdValue).toFixed(2)}
                         </CustomText>
-                        <SvgIcons.CopyOutlineBlack
-                          width={14}
-                          height={14}
-                          color={theme.colors.text.primary}
-                        />
-                      </TouchableOpacity>
-                    </View>
-                  )}
+                      </View>
+                    )}
+                  </>
+                )}
+              </>
+            )}
 
-                  {/* USD Value */}
-                  {usdValue && (
-                    <View style={styles(theme).detailRow}>
-                      <CustomText 
-                        variant={SLIP_LABEL_VARIANT} 
-                        color={theme.colors.text.secondary}
-                        style={slipStyles.slipLabelText}
-                      >
-                        USD Value
-                      </CustomText>
-                      <CustomText
-                        variant={SLIP_VALUE_VARIANT}
-                        fontWeight="semiBold"
-                        color={theme.colors.text.primary}
-                        style={slipStyles.slipValueText}
-                      >
-                        ${parseFloat(usdValue).toFixed(2)}
-                      </CustomText>
-                    </View>
-                  )}
-                </>
-              )}
-            </>
-          )}
-
-          {/* Note */}
-          {transactionData.note && (
-            <View style={[styles(theme).detailRow, { borderBottomWidth: 0 }]}>
-              <CustomText 
-                variant={SLIP_LABEL_VARIANT} 
-                color={theme.colors.text.secondary}
-                style={slipStyles.slipLabelText}
-              >
-                Note
-              </CustomText>
-              <CustomText
-                variant={SLIP_VALUE_VARIANT}
-                fontWeight="semiBold"
-                color={theme.colors.text.primary}
-                style={[slipStyles.slipValueText, { maxWidth: 200, textAlign: "right" }]}
-              >
-                {transactionData.note}
-              </CustomText>
-            </View>
-          )}
-        </View>
+            {/* Note */}
+            {transactionData.note && (
+              <View style={[styles(theme).detailRow, { borderBottomWidth: 0 }]}>
+                <CustomText
+                  variant={SLIP_LABEL_VARIANT}
+                  color={theme.colors.text.secondary}
+                  style={slipStyles.slipLabelText}
+                >
+                  Note
+                </CustomText>
+                <CustomText
+                  variant={SLIP_VALUE_VARIANT}
+                  fontWeight="semiBold"
+                  color={theme.colors.text.primary}
+                  style={[
+                    slipStyles.slipValueText,
+                    { maxWidth: 200, textAlign: "right" },
+                  ]}
+                >
+                  {transactionData.note}
+                </CustomText>
+              </View>
+            )}
+          </View>
         </ViewShot>
-        
+
         <View style={{ paddingHorizontal: 20, marginBottom: 40 }}>
           <GenericButton title="Download" onPress={handleDownload} />
         </View>
@@ -1426,70 +1551,70 @@ const NewTransactionDetails: FC = () => {
 
 const styles = (theme: Theme) =>
   StyleSheet.create({
-  headerSection: {
-    alignItems: "center",
-    paddingVertical: 20,
-    backgroundColor: theme.colors.palette.green50,
-  },
-  avatarContainerBig: {
-    marginBottom: 12,
-  },
-  avatarBig: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-  },
-  avatarPlaceholderBig: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    headerSection: {
+      alignItems: "center",
+      paddingVertical: 20,
+      backgroundColor: theme.colors.palette.green50,
+      // backgroundColor: "red",
+    },
+    avatarContainerBig: {
+      marginBottom: 12,
+    },
+    avatarBig: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+    },
+    avatarPlaceholderBig: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
       backgroundColor: theme.colors.palette.green700,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  amountText: {
-    fontSize: 40,
-    fontWeight: "800",
-    marginBottom: 8,
-    marginTop: 4,
-    fontFamily: "System",
-    textAlign: "center",
-  },
-  statusBadge: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginTop: 4,
-  },
-  whiteCard: {
-    backgroundColor: theme.colors.palette.white,
-    marginHorizontal: 20,
-    borderRadius: 8,
-    paddingHorizontal: 20,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    amountText: {
+      fontSize: 40,
+      fontWeight: "800",
+      marginBottom: 8,
+      marginTop: 4,
+      fontFamily: "System",
+      textAlign: "center",
+    },
+    statusBadge: {
+      paddingHorizontal: 16,
+      paddingVertical: 6,
+      borderRadius: 20,
+      marginTop: 4,
+    },
+    whiteCard: {
+      backgroundColor: theme.colors.palette.white,
+      marginHorizontal: 20,
+      borderRadius: 8,
+      paddingHorizontal: 20,
       paddingVertical: 10,
-    marginVertical: 20,
-  },
-  detailRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+      marginVertical: 20,
+    },
+    detailRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
       paddingVertical: 10,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.palette.grey100,
     },
-  // Slip text styles - adjust fontSize here for direct control
-  slipLabelText: {
-    fontSize: SLIP_LABEL_FONT_SIZE, // Change this value to adjust label font size
-  },
-  slipValueText: {
-    fontSize: SLIP_VALUE_FONT_SIZE, // Change this value to adjust value font size
-  },
-  screenshotContainer: {
-    backgroundColor: theme.colors.palette.green50,
-    borderRadius: 8,
-    padding: 0,
-    
-  },
-});
+    // Slip text styles - adjust fontSize here for direct control
+    slipLabelText: {
+      fontSize: SLIP_LABEL_FONT_SIZE, // Change this value to adjust label font size
+    },
+    slipValueText: {
+      fontSize: SLIP_VALUE_FONT_SIZE, // Change this value to adjust value font size
+    },
+    screenshotContainer: {
+      backgroundColor: theme.colors.palette.green50,
+      borderRadius: 8,
+      padding: 0,
+    },
+  });
 
 export default NewTransactionDetails;
