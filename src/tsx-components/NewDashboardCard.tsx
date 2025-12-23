@@ -510,7 +510,7 @@ const createStyles = (theme: any) =>
       },
       shadowOpacity: 0.5,
       shadowRadius: 16,
-      elevation: 4,
+      // elevation: 4,
     },
     availableBadgeBorder: {
       position: "absolute",

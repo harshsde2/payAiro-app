@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { View, Pressable, StyleSheet, ActivityIndicator, ScrollView } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "../../components/HeaderTitle";
 import { useTheme } from "../../styles/ThemeContext";
@@ -8,6 +7,7 @@ import CustomText from "../../tsx-components/CustomText";
 import { SvgIcons } from "../../constants/svgs";
 import CongratulationsModal from "../../components/common-components/CongratulationsModal";
 import HowToEarnPointsModal from "../../components/common-components/HowToEarnPointsModal";
+import ScratchCardModal from "../../components/common-components/ScratchCardModal";
 import { IBalanceData, IRewardCard, IScratchCardHistory } from "./types";
 import {
   useScratchCards,
@@ -16,8 +16,35 @@ import {
 } from "../../query/hooks/useRewards";
 import { showError } from "../../utils/toast";
 
+// Helper function to safely format numbers
+const formatAmount = (value: number | undefined | null, decimals: number = 2): string => {
+  if (value === undefined || value === null || isNaN(value)) {
+    return "0.00";
+  }
+  return Number(value).toFixed(decimals);
+};
+
+// Helper function to safely format dates
+const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return "N/A";
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Invalid date";
+    
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "Invalid date";
+  }
+};
+
 const Scratch: React.FC = () => {
-  const navigation = useNavigation();
   const { theme } = useTheme();
   const [showCongratulations, setShowCongratulations] = useState(false);
   const [selectedReward, setSelectedReward] = useState<number>(0);
@@ -25,6 +52,8 @@ const Scratch: React.FC = () => {
   const [scratchingCardId, setScratchingCardId] = useState<number | null>(null);
   const [showClaimCongratulations, setShowClaimCongratulations] = useState(false);
   const [claimedAmount, setClaimedAmount] = useState<number>(0);
+  const [showScratchModal, setShowScratchModal] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<IRewardCard | null>(null);
 
   const {
     data: scratchCardsData,
@@ -37,17 +66,11 @@ const Scratch: React.FC = () => {
   const scratchCardMutation = useScratchCard();
   const claimRewardMutation = useClaimScratchReward();
 
-  // Extract data from API response
-  const balanceData: IBalanceData = scratchCardsData?.data?.points_info
-    ? {
-        points: scratchCardsData.data.points_info.available_points,
-        rewards:
-          scratchCardsData.data.scratch_rewards?.available_scratch_reward || 0,
-      }
-    : {
-        points: 0,
-        rewards: 0,
-      };
+  // Extract data from API response with safe defaults
+  const balanceData: IBalanceData = {
+    points: scratchCardsData?.data?.points_info?.available_points ?? 0,
+    rewards: scratchCardsData?.data?.scratch_rewards?.available_scratch_reward ?? 0,
+  };
 
   // Get scratch rewards data
   const scratchRewards = scratchCardsData?.data?.scratch_rewards;
@@ -74,6 +97,51 @@ const Scratch: React.FC = () => {
     setScratchingCardId(null);
     // Refetch data after closing modal to update card states
     refetch();
+  };
+
+  const handleOpenScratchModal = (card: IRewardCard) => {
+    if (card.can_scratch && !card.is_scratched) {
+      setSelectedCard(card);
+      setShowScratchModal(true);
+    } else if (!card.can_scratch) {
+      showError("This card cannot be scratched yet");
+    } else if (card.is_scratched) {
+      showError("This card has already been scratched");
+    }
+  };
+
+  const handleCloseScratchModal = () => {
+    setShowScratchModal(false);
+    setSelectedCard(null);
+    setScratchingCardId(null);
+    // Refetch data after closing modal to update card states
+    refetch();
+  };
+
+  const handleScratchComplete = (cardId: number) => {
+    setScratchingCardId(cardId);
+    scratchCardMutation.mutate(
+      { card_id: cardId },
+      {
+        onSuccess: (data) => {
+          // Try to get reward amount from the selected card first, then from API response
+          const card = scratchCardsData?.data?.cards?.find((c) => c.id === cardId);
+          const rewardAmount = card?.reward_amount ?? selectedCard?.reward_amount ?? 0;
+          setSelectedReward(rewardAmount);
+          
+          // Close scratch modal and show congratulations
+          setShowScratchModal(false);
+          setSelectedCard(null);
+          setShowCongratulations(true);
+          setScratchingCardId(null);
+        },
+        onError: () => {
+          setShowScratchModal(false);
+          setSelectedCard(null);
+          setScratchingCardId(null);
+        },
+      }
+    );
   };
 
   // Loading state
@@ -203,7 +271,7 @@ const Scratch: React.FC = () => {
                 fontWeight="bold"
                 color={theme.colors.palette.white}
               >
-                {balanceData.points.toFixed(2)}
+                {formatAmount(balanceData.points)}
               </CustomText>
             </View>
             <View style={styles(theme).balanceItem}>
@@ -222,7 +290,7 @@ const Scratch: React.FC = () => {
                 fontWeight="bold"
                 color={theme.colors.palette.white}
               >
-                ${balanceData.rewards.toFixed(2)}
+                ${formatAmount(balanceData.rewards)}
               </CustomText>
             </View>
           </View>
@@ -262,31 +330,11 @@ const Scratch: React.FC = () => {
                     key={card.id}
                     style={[
                       styles(theme).rewardCard,
-                      (!card.can_scratch || isCurrentlyScratching) &&
+                      (!card.can_scratch || card.is_scratched || isCurrentlyScratching) &&
                         styles(theme).rewardCardDisabled,
                     ]}
-                    onPress={() => {
-                      if (card.can_scratch && !scratchCardMutation.isPending) {
-                        setScratchingCardId(card.id);
-                        scratchCardMutation.mutate(
-                          { card_id: card.id },
-                          {
-                            onSuccess: (data) => {
-                              setSelectedReward(card.reward_amount);
-                              setShowCongratulations(true);
-                              setScratchingCardId(null);
-                            },
-                            onError: () => {
-                              setShowCongratulations(false);
-                              setScratchingCardId(null);
-                            },
-                          }
-                        );
-                      } else if (!card.can_scratch) {
-                        showError("This card cannot be scratched yet");
-                      }
-                    }}
-                    disabled={!card.can_scratch || isCurrentlyScratching}
+                    onPress={() => handleOpenScratchModal(card)}
+                    disabled={!card.can_scratch || card.is_scratched || isCurrentlyScratching}
                   >
                     <View style={styles(theme).rewardCardHeader}>
                       <View style={styles(theme).rewardIconContainer}>
@@ -354,7 +402,7 @@ const Scratch: React.FC = () => {
                               color={theme.colors.palette.white}
                               style={styles(theme).rewardAmountText}
                             >
-                              Reward: ${card.reward_amount.toFixed(2)}
+                              Reward: ${formatAmount(card.reward_amount)}
                             </CustomText>
                           )}
                         </>
@@ -414,13 +462,7 @@ const Scratch: React.FC = () => {
                       color={theme.colors.text.secondary}
                       style={styles(theme).historyDate}
                     >
-                      {new Date(item.scratched_at).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatDate(item.scratched_at)}
                     </CustomText>
                   </View>
                 </View>
@@ -456,7 +498,7 @@ const Scratch: React.FC = () => {
                           : theme.colors.text.secondary
                       }
                     >
-                      ${item.scratch_card.reward_amount.toFixed(2)}
+                      ${formatAmount(item.scratch_card?.reward_amount)}
                     </CustomText>
                   </View>
                 </View>
@@ -505,7 +547,7 @@ const Scratch: React.FC = () => {
                   fontWeight="bold"
                   color={theme.colors.text.primary}
                 >
-                  ${scratchRewards.total_scratched_reward.toFixed(2)}
+                  ${formatAmount(scratchRewards.total_scratched_reward)}
                 </CustomText>
               </View>
               <View style={styles(theme).summaryItem}>
@@ -521,7 +563,7 @@ const Scratch: React.FC = () => {
                   fontWeight="bold"
                   color={theme.colors.text.primary}
                 >
-                  ${scratchRewards.scratch_reward_claimed.toFixed(2)}
+                  ${formatAmount(scratchRewards.scratch_reward_claimed)}
                 </CustomText>
               </View>
               <View style={styles(theme).summaryItem}>
@@ -537,7 +579,7 @@ const Scratch: React.FC = () => {
                   fontWeight="bold"
                   color={theme.colors.palette.green700}
                 >
-                  ${scratchRewards.available_scratch_reward.toFixed(2)}
+                  ${formatAmount(scratchRewards.available_scratch_reward)}
                 </CustomText>
               </View>
             </View>
@@ -586,13 +628,20 @@ const Scratch: React.FC = () => {
                   fontWeight="semiBold"
                   color={theme.colors.palette.white}
                 >
-                  Claim ${scratchRewards.available_scratch_reward.toFixed(2)}
+                  Claim ${formatAmount(scratchRewards.available_scratch_reward)}
                 </CustomText>
               )}
             </Pressable>
           </View>
         )}
 
+      <ScratchCardModal
+        isVisible={showScratchModal}
+        onClose={handleCloseScratchModal}
+        onScratchComplete={handleScratchComplete}
+        card={selectedCard}
+        isScratching={scratchCardMutation.isPending}
+      />
       <CongratulationsModal
         isVisible={showCongratulations}
         onClose={handleCloseCongratulations}
@@ -854,7 +903,7 @@ const styles = (theme: any) =>
     rewardsSummarySection: {
       paddingHorizontal: theme.spacing.spacing[5],
       marginTop: theme.spacing.spacing[6],
-      marginBottom: theme.spacing.spacing[4],
+      marginBottom: 100,
     },
     summaryContainer: {
       flexDirection: "row",

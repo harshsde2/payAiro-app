@@ -1,4 +1,4 @@
-import { View, Text } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import React from "react";
 import GenericButton from "./GenericButton";
 import Fonts from "../constants/Fonts";
@@ -10,7 +10,10 @@ import { useNavigation } from "@react-navigation/native";
 export default function Rewards2({ item }) {
   const navigation = useNavigation();
   return (
-    <View
+    <TouchableOpacity
+      onPress={() => {
+        navigation.navigate(item?.route ?? "");
+      }}
       style={{
         borderRadius: 10,
         backgroundColor: item?.bgColor ?? "rgba(255, 234, 177, 0.7)",
@@ -70,7 +73,7 @@ export default function Rewards2({ item }) {
         </View>
       </View>
 
-      <GenericButton
+      {/* <GenericButton
         title={"Explore "}
         onPress={() => {
           navigation.navigate(item?.route ?? "");
@@ -79,10 +82,10 @@ export default function Rewards2({ item }) {
           backgroundColor: "#000",
           paddingHorizontal: 10,
           paddingVertical: 5,
-          width: 80,
+          width: 50,
         }}
-        tStyle={{ color: "white" }}
-      />
-    </View>
+        tStyle={{ color: "white",fontSize: 6 }}
+      /> */}
+    </TouchableOpacity>
   );
 }
