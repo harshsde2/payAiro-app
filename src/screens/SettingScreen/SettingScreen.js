@@ -39,7 +39,7 @@ import {
   setPin,
   setWalletDataAuth
 } from "../../services/Auth";
-import { getKYC } from "../../services/Services";
+import { useKyc } from "../../query/hooks";
 
 export default function SettingScreen() {
   const navigation = useNavigation();
@@ -52,6 +52,8 @@ export default function SettingScreen() {
 
   const dispatch = useDispatch();
 
+  const { data: kycData } = useKyc();
+
   const setuserPin = async () => {
     await setPin("1234");
   };
@@ -59,19 +61,10 @@ export default function SettingScreen() {
   console.log(kycStep?.selfimage, "image");
 
   useEffect(() => {
-    fetchKycStep();
-  }, []);
-
-  const fetchKycStep = async () => {
-    try {
-      const kycData = await getKYC(tokens?.access);
-      if (kycData?.data?.step_count) {
-        setKycStep(kycData?.data);
-      }
-    } catch (error) {
-      console.log("Error fetching KYC data:", error);
+    if (kycData?.data?.step_count) {
+      setKycStep(kycData?.data);
     }
-  };
+  }, [kycData]);
 
   const handleLogout = async () => {
     resetAppState();

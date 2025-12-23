@@ -73,45 +73,68 @@ export default function AddContact() {
   const validateForm = useCallback(() => {
     const newErrors = {};
 
+    // Nick name validation (required)
+    if (!formData.nickName.trim()) {
+      newErrors.nickName = "Nickname is required.";
+    }
+
+    // Validate based on selected method
+    if (selectedMethod === "email") {
+      // Email is required when email method is selected
+      if (!formData.email.trim()) {
+        newErrors.email = "Email is required.";
+      } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+        newErrors.email = "Please enter a valid email address.";
+      }
+    } else if (selectedMethod === "payAiroTag") {
+      // PayAiro Tag is required when PayAiro Tag method is selected
+      if (!formData.payAiroTag.trim()) {
+        newErrors.payAiroTag = "PayAiro Tag is required.";
+      }
+    } else if (selectedMethod === "contact") {
+      // Contact number is required when contact method is selected
+      if (!formData.contactNumber.trim()) {
+        newErrors.contactNumber = "Contact number is required.";
+      } else if (!/^\+\d{1,3}\s\d{6,14}$/.test(formData.contactNumber)) {
+        newErrors.contactNumber =
+          "Enter a valid contact number (e.g., +1 123456789).";
+      }
+    }
+
+    // Validate other fields if provided (even if not selected method)
     // Email validation (optional but must be valid if provided)
-    if (formData.email && !/^\S+@\S+\.\S+$/.test(formData.email)) {
+    if (
+      formData.email &&
+      formData.email.trim() &&
+      selectedMethod !== "email" &&
+      !/^\S+@\S+\.\S+$/.test(formData.email)
+    ) {
       newErrors.email = "Please enter a valid email address.";
     }
 
-    // Contact number validation (optional)
+    // Contact number validation (optional but must be valid if provided)
     if (
       formData.contactNumber &&
+      formData.contactNumber.trim() &&
+      selectedMethod !== "contact" &&
       !/^\+\d{1,3}\s\d{6,14}$/.test(formData.contactNumber)
     ) {
       newErrors.contactNumber =
         "Enter a valid contact number (e.g., +1 123456789).";
     }
 
-    // Nick name validation (required)
-    if (!formData.nickName.trim()) {
-      newErrors.nickName = "Nickname is required.";
-    }
-
-    // PayAiro Tag validation (optional)
-    // No specific validation pattern, just check if it exists if provided
-
     // Wallet address validation (optional but must be valid if provided)
     if (
       formData.walletAddress &&
+      formData.walletAddress.trim() &&
       !/^0x[a-fA-F0-9]{40}$/.test(formData.walletAddress)
     ) {
       newErrors.walletAddress = "Enter a valid wallet address.";
     }
 
-    // At least one of email, payAiroTag, or walletAddress must be provided
-    if (!formData.email && !formData.payAiroTag && !formData.walletAddress) {
-      newErrors.general =
-        "At least one of Email, PayAiro Tag, or Wallet Address is required.";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [formData]);
+  }, [formData, selectedMethod]);
 
   // Handle input change
   const handleChange = useCallback((field, value) => {
@@ -119,7 +142,20 @@ export default function AddContact() {
       ...prevData,
       [field]: value,
     }));
-  }, []);
+    // Clear error for this field when user starts typing
+    if (errors[field]) {
+      setErrors((prevErrors) => {
+        const newErrors = { ...prevErrors };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  }, [errors]);
+
+  // Clear errors when selected method changes
+  useEffect(() => {
+    setErrors({});
+  }, [selectedMethod]);
 
   // Handle form submission
   const handleSave = useCallback(async () => {
@@ -206,14 +242,20 @@ export default function AddContact() {
     // Nickname is required
     if (!formData.nickName.trim()) return false;
 
-    // At least one of these must be provided
-    if (!formData.email && !formData.payAiroTag) {
+    // Check the selected method's field is filled
+    if (selectedMethod === "email" && !formData.email.trim()) {
+      return false;
+    }
+    if (selectedMethod === "payAiroTag" && !formData.payAiroTag.trim()) {
+      return false;
+    }
+    if (selectedMethod === "contact" && !formData.contactNumber.trim()) {
       return false;
     }
 
     // Check if there are any validation errors
     return Object.keys(errors).length === 0;
-  }, [formData, errors]);
+  }, [formData, errors, selectedMethod]);
 
   return (
     <ScreenContainer padding={0} backgroundColor={theme.colors.palette.green50}>

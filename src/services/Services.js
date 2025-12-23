@@ -83,8 +83,10 @@ export const patchPin = async (payload, token) =>
 
 export const getPinFromSev = async (token) => getReq2("auth/get-pin/", token);
 
-export const getStatementsTX = async (filters, token) =>
-  getReq2(`wallet/filtered-transactions/?${filters}`, token);
+export const getStatementsTX = async (filters, token) => {
+  const queryString = filters && filters.trim() !== "" ? `?${filters}` : "";
+  return getReq2(`wallet/filtered-transactions${queryString}`, token);
+};
 
 export const getBankDetails = async (token) =>
   postReq2(`kyc/plaid-get-balance`, {}, token, false);

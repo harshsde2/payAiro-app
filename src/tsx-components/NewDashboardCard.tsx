@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { View, StyleSheet, TouchableOpacity, Dimensions } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Dimensions, Clipboard } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import { useSelector } from "react-redux";
 import Animated, {
@@ -11,6 +11,7 @@ import { SvgIcons } from "constants/svgs";
 import CustomText from "./CustomText";
 import { useTheme } from "styles/ThemeContext";
 import { INewDashboardCardProps } from "./NewDashboardCard/types";
+import { showSuccess } from "../utils/toast";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CARD_WIDTH = Math.min(448, SCREEN_WIDTH - 32); // Responsive width with padding
@@ -96,12 +97,13 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
   userId = "",
   onToggleVisibility,
   onQRCodePress,
-  isBalanceVisible = true,
+  isBalanceVisible = false, // Default to hidden for security
+  onRequestShowBalance,
 }) => {
   const { walletData, isCrypto, bankBalance, cryptoData, allCryptoBalances } =
     useSelector((state: any) => state.authenticationSlice);
 
-  console.log(JSON.stringify(allCryptoBalances,null,2), "allCryptoBalances");
+  // console.log(JSON.stringify(allCryptoBalances,null,2), "allCryptoBalances");
 
   const { theme } = useTheme();
   const [localBalanceVisible, setLocalBalanceVisible] =
@@ -260,8 +262,48 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
       };
 
   const handleToggleVisibility = () => {
-    setLocalBalanceVisible(!localBalanceVisible);
+    // If balance is currently hidden and user wants to show it, require PIN verification
+    if (!localBalanceVisible) {
+      if (onRequestShowBalance) {
+        onRequestShowBalance();
+      } else {
+        // If no PIN handler provided, just show balance (fallback)
+        setLocalBalanceVisible(true);
+      }
+      return;
+    }
+    
+    // If balance is visible, allow hiding without PIN
+    setLocalBalanceVisible(false);
     onToggleVisibility?.();
+  };
+
+  // Effect to sync with external visibility changes (e.g., after PIN verification)
+  React.useEffect(() => {
+    if (isBalanceVisible !== undefined && isBalanceVisible !== localBalanceVisible) {
+      setLocalBalanceVisible(isBalanceVisible);
+    }
+  }, [isBalanceVisible]);
+
+  const copyToClipboard = (text: string) => {
+    Clipboard.setString(text);
+    // Show success toast with simple message
+    showSuccess("Copied!", "PayAiro Tag copied to clipboard");
+  };
+
+  const handleCopyPress = () => {
+    if (displayUserId) {
+      copyToClipboard(displayUserId);
+      // Delay navigation if onQRCodePress is provided, to allow toast to show
+      if (onQRCodePress) {
+        setTimeout(() => {
+          onQRCodePress();
+        }, 500);
+      }
+    } else {
+      // If no userId, just call onQRCodePress immediately
+      onQRCodePress?.();
+    }
   };
 
   const styles = createStyles(currentTheme);
@@ -387,7 +429,7 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
                     </CustomText>
                   </View>
                   <TouchableOpacity
-                    onPress={onQRCodePress}
+                    onPress={handleCopyPress}
                     style={styles.qrButton}
                     activeOpacity={0.7}
                   >

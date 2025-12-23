@@ -57,47 +57,77 @@ export default function Receive() {
 
   const handleShare = async () => {
     try {
-      const uri = await viewShotRef.current.capture();
-
       // Step 1: Get only checked items
       const selectedItems = checkedBoxArray.filter((item) => item.isChecked);
-
-      // Step 2: Build dynamic message
-      let message = "Use the following credentials:\n\n";
-
-      selectedItems.forEach(({ name }) => {
-        switch (name) {
-          case "Qr Code":
-            message += "Scan the QR to send Money\n";
-            break;
-          case "PayAiro Tag":
-            message += `PayAiro Tag: ${walletData?.username}\n`;
-            break;
-          case "Bank Details":
-            message += `Bank Name: ${bankLists[0]?.bank_name}\n`;
-            message += `Routing Number: ${bankLists[0]?.ref_code}\n`;
-            message += `Account Number: ${bankLists[0]?.account_number}\n`;
-            break;
-        }
-      });
 
       if (selectedItems.length === 0) {
         Alert.alert("Please select at least one detail to share.");
         return;
       }
 
-      // Step 3: Share
-      const shareOptions = {
-        title: "PayAiro QR",
-        message: message.trim(),
-        url: uri,
-        type: "image/png",
-      };
+      // Step 2: Build dynamic message
+      let message = "PayAiro Payment Details\n\n";
 
-      const res = await Share.open(shareOptions);
-      console.log("Share result:", res);
-    } catch (err) {
-      console.log("Error sharing:", err);
+      selectedItems.forEach(({ name }) => {
+        switch (name) {
+          case "Qr Code":
+            message += "📱 Scan the QR code to send money\n\n";
+            break;
+          case "PayAiro Tag":
+            message += `🏷️ PayAiro Tag: ${walletData?.username}\n\n`;
+            break;
+          case "Bank Details":
+            const bankData = bankLists?.[bankLists.length - 1];
+            if (bankData) {
+              message += `🏦 Bank Details:\n`;
+              message += `   Bank Name: ${bankData.bank_name || "N/A"}\n`;
+              message += `   Routing Number: ${bankData.ref_code || "N/A"}\n`;
+              message += `   Account Number: ${bankData.account_number || "N/A"}\n\n`;
+            }
+            break;
+        }
+      });
+
+      // Check if QR code is selected - if so, capture and share with image
+      const isQrSelected = selectedItems.some((item) => item.name === "Qr Code");
+
+      if (isQrSelected && viewShotRef.current) {
+        // Capture QR code image with proper filename
+        const uri = await viewShotRef.current.capture({
+          format: "png",
+          quality: 0.9,
+          result: "tmpfile",
+        });
+
+        const shareOptions = {
+          title: "PayAiro Payment Details",
+          subject: "PayAiro Payment Details",
+          message: message.trim(),
+          url: uri,
+          type: "image/png",
+          filename: `PayAiro_QR_${walletData?.username || "code"}`,
+          failOnCancel: false,
+        };
+
+        await Share.open(shareOptions);
+      } else {
+        // Share text only without QR image
+        const shareOptions = {
+          title: "PayAiro Payment Details",
+          subject: "PayAiro Payment Details",
+          message: message.trim(),
+          failOnCancel: false,
+        };
+
+        await Share.open(shareOptions);
+      }
+
+      console.log("Share completed");
+    } catch (err: any) {
+      // User cancelled sharing - don't show error
+      if (err?.message !== "User did not share") {
+        console.log("Error sharing:", err);
+      }
     }
   };
 
@@ -207,8 +237,36 @@ export default function Receive() {
           borderRadius: 20,
         }}
       >
-        <ViewShot ref={viewShotRef} options={{ format: "png", quality: 0.9 }}>
-          <QRCode value={`sending: ${walletData?.username}`} size={200} />
+        <ViewShot 
+          ref={viewShotRef} 
+          options={{ 
+            format: "png", 
+            quality: 0.9,
+            result: "tmpfile",
+          }}
+          style={{
+            backgroundColor: "#FFFFFF",
+            padding: 20,
+            borderRadius: 10,
+            alignItems: "center",
+          }}
+        >
+          <QRCode 
+            value={JSON.stringify({
+              type: "payairo_payment",
+              username: walletData?.username,
+              tag: walletData?.username,
+            })} 
+            size={200} 
+          />
+          <Text style={{ 
+            marginTop: 15, 
+            fontSize: 14, 
+            fontFamily: Fonts.semibold,
+            color: "#333",
+          }}>
+            PayAiro Tag: {walletData?.username}
+          </Text>
         </ViewShot>
       </View>
       <View

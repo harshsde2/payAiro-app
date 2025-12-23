@@ -210,18 +210,37 @@ const Toast = () => {
   };
 
   return (
-    <ToastManager
-      config={toastConfig}
-      position="top"
-      textStyle={{
-        fontFamily: theme.typography.fontFamily.montserrat,
-        fontSize: theme.typography.fontSize.base,
-      }}
-    />
+    <View style={styles.toastWrapper} pointerEvents="box-none">
+      <ToastManager
+        config={toastConfig}
+        position="top"
+        positionValue={Platform.OS === "ios" ? 60 : 40}
+        style={{
+          zIndex: 99999,
+          elevation: 99999,
+        }}
+        textStyle={{
+          fontFamily: theme.typography.fontFamily.montserrat,
+          fontSize: theme.typography.fontSize.base,
+        }}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  toastWrapper: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 99999,
+    elevation: 99999,
+    ...(Platform.OS === "ios" && {
+      // Ensure toast appears above all iOS elements
+      pointerEvents: "box-none",
+    }),
+  },
   toastContainer: {
     flexDirection: "row",
     alignItems: "center",

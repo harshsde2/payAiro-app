@@ -10,13 +10,12 @@ import {
 import HeaderTitle from "../../components/HeaderTitle";
 import { SVGLeftArrow } from "../../constants/images";
 import Notificatiom from "../Authentications/Notificatiom";
-import { getNotification } from "../../services/Services";
-import useSelectorAction from "../../hooks/useSelectorAction";
 import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "../../styles/ThemeContext";
 import CustomText from "../../tsx-components/CustomText";
 import { colors } from "styles";
 import { ScreenContainer } from "HOC";
+import { useNotifications } from "../../query/hooks";
 
 // Constants
 const TAB_GENERAL = "1";
@@ -28,20 +27,28 @@ const TAB_OPTIONS = [
 
 export default function Notification() {
   const navigation = useNavigation();
-  const { tokens } = useSelectorAction();
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState(TAB_GENERAL);
-  const [notifications, setNotifications] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   const styles = customStyles(theme);
 
+  // Use the notifications hook
+  const {
+    data: notificationsResponse,
+    isLoading,
+    isError,
+    error,
+    refetch: refetchNotifications,
+  } = useNotifications(true);
+
+  // Extract notifications from response
+  const notifications = notificationsResponse?.data || [];
+  const errorMessage = isError
+    ? error?.response?.data?.message || error?.message || "Failed to load notifications"
+    : null;
+
   // Handle back action
   const handleGoBack = useCallback(() => {
-    // Clear data before navigating
-    setNotifications([]);
-
     try {
       if (navigation.canGoBack()) {
         navigation.goBack();
@@ -66,54 +73,6 @@ export default function Notification() {
 
     return () => backHandler.remove();
   }, [handleGoBack]);
-
-  // Fetch notifications with error handling
-  const fetchNotifications = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await getNotification(tokens?.access);
-      if (response?.data) {
-        setNotifications(response.data || []);
-      }
-    } catch (err) {
-      setError("Failed to load notifications");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [tokens?.access]);
-
-  console.log("Notification response:", JSON.stringify(notifications, null, 2));
-  // Load notifications on mount
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-        const response = await getNotification(tokens?.access);
-        if (isMounted && response?.data) {
-          setNotifications(response.data || []);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setError("Failed to load notifications");
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadData();
-
-    return () => {
-      isMounted = false;
-      setNotifications([]);
-    };
-  }, [tokens?.access]);
 
   // Tab Button Component
   const TabButton = ({ isActive, label, onPress }) => (
@@ -145,15 +104,15 @@ export default function Notification() {
       );
     }
 
-    if (error) {
+    if (isError || errorMessage) {
       return (
         <View style={styles.centerContainer}>
           <CustomText variant="body1" color={theme.colors.error}>
-            {error}
+            {errorMessage || "Failed to load notifications"}
           </CustomText>
           <TouchableOpacity
             style={styles.retryButton}
-            onPress={fetchNotifications}
+            onPress={() => refetchNotifications()}
           >
             <CustomText variant="button" color={theme.colors.text.inverse}>
               Retry

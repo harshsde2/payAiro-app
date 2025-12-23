@@ -4,6 +4,7 @@ export interface INewDashboardCardProps {
   userId: string;
   onToggleVisibility?: () => void;
   onQRCodePress?: () => void;
-  isBalanceVisible: boolean;
+  isBalanceVisible?: boolean;
+  onRequestShowBalance?: () => void; // Callback to trigger PIN verification when user wants to show balance
 }
 

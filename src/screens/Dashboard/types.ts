@@ -68,3 +68,33 @@ export interface IStatementDetailsRouteParams {
   statementData?: IStatementAPIResponse;
 }
 
+// Send Screen Types
+export interface ISendScreenRouteParams {
+  requested?: boolean;
+  type?: "requested" | "send";
+  sender?: string;
+}
+
+export interface IBankItem {
+  bank_name?: string;
+  name?: string;
+  account_type?: string;
+  balances?: {
+    available?: string | number;
+  };
+}
+
+export interface IBankBalance {
+  roth_ira_account?: {
+    usd?: string | number;
+  };
+  traditional_ira_account?: {
+    usd?: string | number;
+  };
+  bank_account?: {
+    usd?: string | number;
+  };
+}
+
+export type BlockchainServiceType = "ens" | "sns" | null;
+

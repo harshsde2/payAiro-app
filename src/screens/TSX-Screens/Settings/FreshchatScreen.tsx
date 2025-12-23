@@ -30,13 +30,13 @@ try {
   console.warn("Freshchat SDK not available:", e);
 }
 
-// Define wallet data interface for type safety
+// Define wallet data interface for type safety (matches actual walletData structure)
 interface IWalletData {
-  email?: string;
+  account_email?: string;
   name?: string;
   username?: string;
-  id?: string;
   phone?: string;
+  phoneCountryCode?: string;
 }
 
 // =====================================================
@@ -45,7 +45,7 @@ interface IWalletData {
 // =====================================================
 const FRESHCHAT_APP_ID = "55a5f65c-dc34-4673-8a0e-ec378efb9193"; 
 const FRESHCHAT_APP_KEY = "b7a36ae2-b186-402b-8f93-060c0b7084d4"; 
-const FRESHCHAT_DOMAIN = "msdk.in.freshchat.com"; // Default domain
+const FRESHCHAT_DOMAIN = "msdk.in.freshchat.com"; // From Freshworks dashboard
 // =====================================================
 
 // Check if SDK is available and configured
@@ -72,6 +72,13 @@ const FreshchatScreen = () => {
   useEffect(() => {
     initializeFreshchat();
   }, []);
+
+  // Update Freshchat user when walletData changes
+  useEffect(() => {
+    if (isSDKReady && walletData) {
+      setFreshchatUser(walletData);
+    }
+  }, [walletData, isSDKReady]);
 
   const initializeFreshchat = async () => {
     try {
@@ -104,11 +111,17 @@ const FreshchatScreen = () => {
       freshchatConfig.cameraCaptureEnabled = true;
       freshchatConfig.gallerySelectionEnabled = true;
 
-      await Freshchat.init(freshchatConfig);
+      // Freshchat.init() may not return a promise - just call it and proceed
+      Freshchat.init(freshchatConfig);
 
-      // Set user information if available
+      // Small delay to allow SDK to initialize
+      await new Promise<void>((resolve) => setTimeout(() => resolve(), 1500));
+
+      // Set user information if available (in background)
       if (walletData) {
-        await setFreshchatUser(walletData);
+        setFreshchatUser(walletData).catch((err) =>
+          console.warn("Failed to set user:", err)
+        );
       }
 
       setIsSDKReady(true);
@@ -120,10 +133,101 @@ const FreshchatScreen = () => {
     }
   };
 
-  const setFreshchatUser = async (userData: IWalletData) => {
-    // User properties setup is optional - chat works without it
-    // The SDK uses callback-style API which we'll skip for simplicity
-    console.log("Freshchat ready for user:", userData.email || userData.name);
+  const setFreshchatUser = (userData: IWalletData): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (!FreshchatUser || !userData) {
+        resolve();
+        return;
+      }
+
+      try {
+        // STEP 1: Identify user with unique external ID (email)
+        // This is what creates a UNIQUE user in Freshchat
+        const externalId = userData.account_email || userData.username || "";
+        
+        if (externalId) {
+          Freshchat.identifyUser(externalId, null, (error: any) => {
+            if (error) {
+              console.error("Freshchat identifyUser error:", error);
+            } else {
+              console.log("Freshchat user identified with externalId:", externalId);
+            }
+          });
+        }
+
+        // STEP 2: Set user details (name, email, phone)
+        const freshchatUser = new FreshchatUser();
+
+        if (userData.account_email) {
+          freshchatUser.email = userData.account_email;
+        }
+
+        // Set firstName from name or username
+        if (userData.name) {
+          const nameParts = userData.name.split(" ");
+          freshchatUser.firstName = nameParts[0] || userData.name;
+          freshchatUser.lastName = nameParts.slice(1).join(" ") || "";
+        } else if (userData.username) {
+          freshchatUser.firstName = userData.username;
+        }
+
+        // Set phone if available
+        if (userData.phone) {
+          freshchatUser.phone = userData.phone;
+          freshchatUser.phoneCountryCode = userData.phoneCountryCode || "+1";
+        }
+
+        // Set user with callback (Freshchat uses callback-style API)
+        Freshchat.setUser(freshchatUser, (error: any) => {
+          if (error) {
+            console.error("Freshchat setUser error:", error);
+            reject(error);
+          } else {
+            console.log(
+              "Freshchat user set successfully:",
+              userData.account_email || userData.username
+            );
+
+            // Set additional user properties (metadata) for agents
+            setFreshchatUserProperties(userData);
+            resolve();
+          }
+        });
+      } catch (error) {
+        console.error("Error setting Freshchat user:", error);
+        reject(error);
+      }
+    });
+  };
+
+  // Set additional user properties (metadata) visible to support agents
+  const setFreshchatUserProperties = (userData: IWalletData) => {
+    try {
+      const userProperties: Record<string, string> = {};
+
+      if (userData.username) {
+        userProperties["username"] = userData.username;
+      }
+      if (userData.name) {
+        userProperties["full_name"] = userData.name;
+      }
+      if (userData.account_email) {
+        userProperties["email"] = userData.account_email;
+      }
+
+      // Only set properties if we have any
+      if (Object.keys(userProperties).length > 0) {
+        Freshchat.setUserProperties(userProperties, (error: any) => {
+          if (error) {
+            console.error("Error setting user properties:", error);
+          } else {
+            console.log("Freshchat user properties set successfully");
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error in setFreshchatUserProperties:", error);
+    }
   };
 
   const openChat = async () => {
@@ -162,14 +266,14 @@ const FreshchatScreen = () => {
 
   // Open email support as fallback
   const openEmailSupport = () => {
-    const email = "support@payairo.com";
+    const supportEmail = "support@payairo.com";
     const subject = "Support Request from PayAiro App";
     const body = `\n\n---\nUser: ${
       walletData?.name || walletData?.username || "Unknown"
-    }\nEmail: ${walletData?.email || "Unknown"}`;
+    }\nEmail: ${walletData?.account_email || "Unknown"}`;
 
     Linking.openURL(
-      `mailto:${email}?subject=${encodeURIComponent(
+      `mailto:${supportEmail}?subject=${encodeURIComponent(
         subject
       )}&body=${encodeURIComponent(body)}`
     );
@@ -257,7 +361,7 @@ const FreshchatScreen = () => {
                 {walletData.name || walletData.username || "User"}
               </CustomText>
               <CustomText variant="caption" style={styles.userCardEmail}>
-                {walletData.email || ""}
+                {walletData.account_email || ""}
               </CustomText>
             </View>
           )}

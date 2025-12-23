@@ -19,6 +19,7 @@ import { showError } from "../../utils/toast";
 import { SvgIcons } from "constants/svgs";
 import { getPin } from "storage/mmkv";
 import CustomText from "tsx-components/CustomText";
+import Toast from "../../components/common-components/Toast";
 
 const PIN_SCREEN_TASKS = {
   SHOW_BANK_BALANCE: "show_bank_balance",
@@ -117,10 +118,12 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
           setCurrentAccountForPin(null);
           setPinForShowBalance("");
         } else {
-          showError("Invalid PIN. Please try again");
+          showError("Invalid PIN", "Please try again");
+          setPinForShowBalance("");
         }
-      } catch {
-        showError("Failed to verify PIN. Please try again.");
+      } catch (error) {
+        showError("Failed to verify PIN", "Please try again");
+        setPinForShowBalance("");
       } finally {
         setIsVerifyingPin(false);
       }
@@ -142,11 +145,13 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
             onAction?.(null); // Triggers ResultModal
             setIsPinModalVisible(false);
           });
-        } else if (isUserEnterCorrectPin === false) {
-          showError("Invalid PIN. Please try again");
+        } else {
+          showError("Invalid PIN", "Please try again");
+          setPinForShowBalance("");
         }
-      } catch {
-        showError("Failed to verify PIN. Please try again.");
+      } catch (error) {
+        showError("Failed to verify PIN", "Please try again");
+        setPinForShowBalance("");
       } finally {
         setIsVerifyingPin(false);
       }
@@ -180,6 +185,7 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
         visible={isPinModalVisible}
         onRequestClose={() => setIsPinModalVisible(false)}
       >
+        <Toast />
         <SafeAreaView style={styles.modalContainer}>
           <View
             style={[

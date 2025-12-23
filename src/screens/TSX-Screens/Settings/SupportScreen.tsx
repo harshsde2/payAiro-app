@@ -80,7 +80,7 @@ const SupportScreen = () => {
 
   //   const han;
 
-  console.log("wallet data. =>", JSON.stringify(walletData, null, 2));
+  // console.log("wallet data. =>", JSON.stringify(walletData, null, 2));
 
   return (
     <ScreenContainer avoidKeyboard scrollable padding={0}>

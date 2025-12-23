@@ -363,7 +363,7 @@ export default function ScanPay(props: IScanPayProps) {
     }
     
     // Validate minimum amount for handleSend cases only
-    if (willCallHandleSend && transactionAmount < 1) {
+    if (willCallHandleSend && transactionAmount < 0.6) {
       showError("Minimum amount is 0.60");
       return false;
     }

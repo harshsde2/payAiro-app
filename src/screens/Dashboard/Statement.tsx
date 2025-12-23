@@ -1,22 +1,21 @@
 import { View, TouchableOpacity, StyleSheet } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import HeaderTitle from "../../components/HeaderTitle";
 import TextInputField from "../../components/TextInputField";
 import DatePicker from "react-native-date-picker";
 import moment from "moment";
 import GenericButton from "../../components/GenericButton";
 import { useNavigation } from "@react-navigation/native";
-import { getStatementsTX } from "../../services/Services";
-import useSelectorAction from "../../hooks/useSelectorAction";
 import { ScreenContainer } from "HOC";
 import { Theme, useTheme } from "styles";
 import { CustomText } from "tsx-components";
 import { useGlobalStyles } from "styles/GlobalStyles";
 import { IPeriodOption, PeriodOption, TransactionType } from "./types";
 import { SvgIcons } from "constants/svgs";
+import { useStatementTransactions, IStatementFilters } from "query/hooks";
+import { showError, showInfo } from "../../utils/toast";
 
 export default function Statement() {
-  const { tokens } = useSelectorAction();
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
   const globalStyles = useGlobalStyles();
@@ -29,44 +28,104 @@ export default function Statement() {
   const [open2, setOpen2] = useState<boolean>(false);
   const [selectedType, setSelectedType] = useState<TransactionType>("all");
   const [numberOfTransaction, setNumberOfTransaction] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [filters, setFilters] = useState<IStatementFilters | undefined>(undefined);
+
+  // Build filters object
+  const buildFilters = (): IStatementFilters | undefined => {
+    const filterObj: IStatementFilters = {};
+
+    if (numberOfTransaction.trim() !== "") {
+      const limitValue = parseInt(numberOfTransaction.trim(), 10);
+      if (!isNaN(limitValue) && limitValue > 0) {
+        filterObj.limit = limitValue;
+      }
+    }
+
+    if (selectedType !== "all") {
+      filterObj.type = selectedType;
+    }
+
+    if (selectedTime !== "custom") {
+      filterObj.period = selectedTime;
+    } else if (date && date2) {
+      filterObj.start_date = date;
+      filterObj.end_date = date2;
+    }
+
+    // Only return filters if at least one filter is set
+    if (filterObj.period || filterObj.start_date || filterObj.limit) {
+      return filterObj;
+    }
+
+    return undefined;
+  };
+
+  // Use the hook with filters - enabled only when filters are set
+  const {
+    data: statementData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useStatementTransactions(filters, !!filters);
+
+  // Handle navigation when data is available
+  useEffect(() => {
+    if (statementData?.data && filters) {
+      const transactions = statementData.data.transactions || [];
+      
+      if (transactions.length === 0) {
+        showInfo("No Transactions", "No transactions found for the selected filters");
+      }
+
+      navigation.navigate("StatementDetails", {
+        data: transactions,
+        statementData: statementData.data,
+      });
+      
+      // Reset filters after navigation to prevent re-navigation
+      setFilters(undefined);
+    }
+  }, [statementData, filters, navigation]);
+
+  // Handle errors
+  useEffect(() => {
+    if (isError && filters) {
+      const errorMessage =
+        (error as any)?.response?.data?.message ||
+        (error as any)?.message ||
+        "Failed to fetch statement. Please try again.";
+      showError("Error", errorMessage);
+      setFilters(undefined);
+    }
+  }, [isError, error, filters]);
 
   const handleTX = async () => {
-    try {
-      setIsLoading(true);
-
-      const filters: string[] = [];
-
-      if (numberOfTransaction.trim() !== "") {
-        filters.push(`limit=${numberOfTransaction}`);
+    // Validate custom date range if selected
+    if (selectedTime === "custom") {
+      if (!date || !date2) {
+        showError("Date Range Required", "Please select both start and end dates");
+        return;
       }
 
-      if (selectedType !== "all") {
-        filters.push(`type=${selectedType}`);
+      // Validate that end date is after start date
+      const startDate = moment(date);
+      const endDate = moment(date2);
+      if (endDate.isBefore(startDate)) {
+        showError("Invalid Date Range", "End date must be after start date");
+        return;
       }
-
-      if (selectedTime !== "custom") {
-        filters.push(`period=${selectedTime}`);
-      } else if (date && date2) {
-        filters.push(`start_date=${date}`);
-        filters.push(`end_date=${date2}`);
-      }
-
-      const filterQuery = filters.join("&");
-
-      console.log("Final Query →", filterQuery);
-
-      const data = await getStatementsTX(filterQuery, (tokens as any)?.access);
-      console.log("Statement Data =>", JSON.stringify(data, null, 2));
-      navigation.navigate("StatementDetails", {
-        data: data?.data?.transactions,
-        statementData: data?.data,
-      });
-    } catch (error) {
-      console.log(error, "handleTX error");
-    } finally {
-      setIsLoading(false);
     }
+
+    // Build and set filters - this will trigger the query
+    const filterObj = buildFilters();
+    
+    if (!filterObj) {
+      showError("Filters Required", "Please select at least one filter option");
+      return;
+    }
+
+    setFilters(filterObj);
   };
 
   const isButtonEnabled =

@@ -601,6 +601,7 @@ const NewDashboard = () => {
   const [hiddenBalances, setHiddenBalances] = useState<Record<string, boolean>>(
     {}
   );
+  const [isMainCardBalanceVisible, setIsMainCardBalanceVisible] = useState(false);
 
   const [refreshing, setRefreshing] = useState(false);
   const [souceAccount, setsouceAccount] = useState("");
@@ -617,6 +618,7 @@ const NewDashboard = () => {
   //   refetch: refetchAllBankAccounts,
   // } = useAllBankAccounts();
 
+  // console.log(JSON.stringify(walletData, null, 2), "walletData");
   const { mutate: redeemReward } = useRedeemReward();
   const { data: getRewardData, isError, isSuccess } = useGetReward();
 
@@ -1072,6 +1074,21 @@ const NewDashboard = () => {
     }
   };
 
+  // Handler for main card balance visibility with PIN verification
+  const handleMainCardBalanceVisibility = () => {
+    if (!isMainCardBalanceVisible) {
+      // Balance is hidden, trigger PIN verification
+      if (pinScreenRef.current) {
+        pinScreenRef.current.checkUserPin();
+        // After PIN verification, we'll show the balance
+        // This will be handled by listening to PIN success
+      }
+    } else {
+      // Balance is visible, just hide it
+      setIsMainCardBalanceVisible(false);
+    }
+  };
+
   const isPendingTransactions = () => {
     setTimeout(() => {
       setIsPending(true);
@@ -1393,6 +1410,12 @@ const NewDashboard = () => {
           ref={pinScreenRef}
           hiddenBalances={hiddenBalances}
           setHiddenBalances={setHiddenBalances}
+          onAction={(data) => {
+            // When PIN verification succeeds (for CHECK_PIN task), show the main card balance
+            if (data === null) {
+              setIsMainCardBalanceVisible(true);
+            }
+          }}
         />
       </View>
       {
@@ -1510,7 +1533,10 @@ const NewDashboard = () => {
                 />
               </View>
             )} */}
-            <NewDashboardCard />
+            <NewDashboardCard 
+              isBalanceVisible={isMainCardBalanceVisible}
+              onRequestShowBalance={handleMainCardBalanceVisibility}
+            />
           </View>
         )}
         {isCrypto ? (

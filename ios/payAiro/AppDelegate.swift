@@ -8,7 +8,7 @@ class AppDelegate: RCTAppDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
-    self.moduleName = "payAiro"
+    self.moduleName = "PayAiro"
     // Use custom SafeAppDependencyProvider that handles crashes gracefully
     self.dependencyProvider = SafeAppDependencyProvider()
     self.initialProps = [:]

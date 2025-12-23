@@ -393,8 +393,9 @@ export default function App() {
               {isLogin && <KycBanner />}
               <AppLockScreen />
               {!isLogin ? <AuthStack /> : <AppStack />}
-              <Toast />
             </NavigationContainer>
+            {/* Toast moved outside NavigationContainer for proper z-index on iOS */}
+            <Toast />
           </AppLockProvider>
         </PersistQueryProvider>
       </ThemeProvider>

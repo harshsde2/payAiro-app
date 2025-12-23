@@ -63,6 +63,8 @@ const Scratch: React.FC = () => {
     refetch,
   } = useScratchCards();
 
+  console.log("scratchCardsData =>",JSON.stringify(scratchCardsData, null, 2));
+
   const scratchCardMutation = useScratchCard();
   const claimRewardMutation = useClaimScratchReward();
 
@@ -129,10 +131,9 @@ const Scratch: React.FC = () => {
           const rewardAmount = card?.reward_amount ?? selectedCard?.reward_amount ?? 0;
           setSelectedReward(rewardAmount);
           
-          // Close scratch modal and show congratulations
-          setShowScratchModal(false);
-          setSelectedCard(null);
-          setShowCongratulations(true);
+          // Don't close scratch modal or show congratulations modal here
+          // ScratchCardModal already shows the reward when 40% is scratched
+          // User will close the modal manually after seeing the result
           setScratchingCardId(null);
         },
         onError: () => {
@@ -324,17 +325,19 @@ const Scratch: React.FC = () => {
               {scratchCardsData.data.cards.map((card) => {
                 const isCurrentlyScratching =
                   scratchCardMutation.isPending && scratchingCardId === card.id;
+                
+                const isCardDisabled = !card.can_scratch || card.is_scratched || isCurrentlyScratching;
 
                 return (
                   <Pressable
                     key={card.id}
                     style={[
                       styles(theme).rewardCard,
-                      (!card.can_scratch || card.is_scratched || isCurrentlyScratching) &&
+                      isCardDisabled &&
                         styles(theme).rewardCardDisabled,
                     ]}
                     onPress={() => handleOpenScratchModal(card)}
-                    disabled={!card.can_scratch || card.is_scratched || isCurrentlyScratching}
+                    disabled={isCardDisabled}
                   >
                     <View style={styles(theme).rewardCardHeader}>
                       <View style={styles(theme).rewardIconContainer}>

@@ -216,12 +216,14 @@ export const useSupport = () => {
 /**
  * Hook to get user notifications
  */
-export const useNotifications = () => {
-  return useQuery<ApiResponse<any>>({
+export const useNotifications = (enabled: boolean = true) => {
+  return useQuery<ApiResponse<any[]>>({
     queryKey: userKeys.notifications(),
     queryFn: async () => {
-      return await apiClient.get<ApiResponse<any>>(AUTH.NOTIFICATIONS);
+      return await apiClient.get<ApiResponse<any[]>>(AUTH.NOTIFICATIONS);
     },
+    staleTime: queryStaleTime.VERY_FAST_STALE_TIME,
+    enabled,
   });
 };
 
