@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, Pressable, Image } from "react-native";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
@@ -29,7 +29,28 @@ const CryptoBuy = () => {
   const { details } = route.params as any;
   console.log("details =>", JSON.stringify(details, null, 2));
   const { walletData } = useSelectorAction() as any;
-  const { symbol, buy_price, logo } = details;
+
+  // Robust edge case handling for details
+  useEffect(() => {
+    if (!details) {
+      showError("Invalid crypto details. Please try again.");
+      navigation.goBack();
+    }
+  }, [details, navigation]);
+
+  // Return early if details are invalid (but after hooks)
+  if (!details) {
+    return null;
+  }
+
+  const symbol = details?.symbol || "CRYPTO";
+  const buy_price = details?.buy_price ?? null;
+  const logo = details?.logo || null;
+
+  // Validate buy_price
+  const isValidPrice = buy_price !== null && buy_price !== undefined && !isNaN(Number(buy_price)) && Number(buy_price) > 0;
+  const formattedPrice = isValidPrice ? Number(buy_price).toFixed(6).replace(/\.?0+$/, "") : null;
+
   const { theme } = useTheme();
   const { spacing, colors } = theme;
   const styles = { ...useGlobalStyles(), ...custonStyles(theme) };
@@ -71,7 +92,9 @@ const CryptoBuy = () => {
     if (isNaN(parsedAmount) || parsedAmount <= 0) return 0;
     
     if (selectedCurrency === "USD") {
-      return parsedAmount / buy_price;
+      if (!isValidPrice || buy_price === 0) return 0;
+      const result = parsedAmount / Number(buy_price);
+      return isNaN(result) || !isFinite(result) ? 0 : result;
     }
     return parsedAmount;
   };
@@ -85,7 +108,33 @@ const CryptoBuy = () => {
     if (selectedCurrency === "USD") {
       return parsedAmount;
     }
-    return parsedAmount * buy_price;
+    if (!isValidPrice || buy_price === 0) return 0;
+    const result = parsedAmount * Number(buy_price);
+    return isNaN(result) || !isFinite(result) ? 0 : result;
+  };
+
+  // Smart USD formatter - shows accurate decimal values for crypto conversions
+  const formatUSDValue = (value: number): string => {
+    if (value === 0) return "0.00";
+    
+    // Check if there are significant digits beyond 2 decimal places
+    const twoDecimal = value.toFixed(2);
+    const sixDecimal = value.toFixed(6);
+    
+    // If the 6-decimal version differs from 2-decimal, show more precision
+    if (parseFloat(sixDecimal) !== parseFloat(twoDecimal)) {
+      // Trim trailing zeros but keep meaningful decimals
+      return sixDecimal.replace(/0+$/, "").replace(/\.$/, "");
+    }
+    
+    return twoDecimal;
+  };
+
+  // Smart crypto formatter
+  const formatCryptoValue = (value: number): string => {
+    if (value === 0) return "0.00";
+    // Show up to 8 decimals for crypto, trim trailing zeros
+    return value.toFixed(8).replace(/\.?0+$/, "");
   };
 
   const cryptoAmount = getCryptoAmount();
@@ -106,14 +155,27 @@ const CryptoBuy = () => {
       return;
     }
 
+    if (!isValidPrice || buy_price === 0) {
+      showError("Price data unavailable. Please try again later.");
+      return;
+    }
+
     let convertedAmount: number;
     let formattedAmount: string;
     
     if (selectedCurrency === "USD" && newCurrency !== "USD") {
-      convertedAmount = currentAmount / buy_price;
+      convertedAmount = currentAmount / Number(buy_price);
+      if (isNaN(convertedAmount) || !isFinite(convertedAmount)) {
+        showError("Invalid conversion. Please try again.");
+        return;
+      }
       formattedAmount = convertedAmount.toFixed(8).replace(/\.?0+$/, "");
     } else if (selectedCurrency !== "USD" && newCurrency === "USD") {
-      convertedAmount = currentAmount * buy_price;
+      convertedAmount = currentAmount * Number(buy_price);
+      if (isNaN(convertedAmount) || !isFinite(convertedAmount)) {
+        showError("Invalid conversion. Please try again.");
+        return;
+      }
       formattedAmount = convertedAmount.toFixed(2);
     } else {
       setSelectedCurrency(newCurrency);
@@ -124,16 +186,41 @@ const CryptoBuy = () => {
     setSelectedCurrency(newCurrency);
   };
 
-  const onBuyClick = async () => {
-    if (!amount || parseFloat(amount) <= 0) {
-      showError("Please enter a valid amount");
-      return;
+  // Validate buy data - returns true if valid, false otherwise
+  const validateBuyData = (): boolean => {
+    if (!isValidPrice || buy_price === 0) {
+      showError("Price data unavailable. Please try again later.");
+      return false;
     }
 
-    if (cryptoAmount <= 0) {
-      showError("Invalid crypto amount");
-      return;
+    if (!amount || amount.trim() === "" || parseFloat(amount) <= 0) {
+      showError("Please enter a valid amount");
+      return false;
     }
+
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || !isFinite(parsedAmount)) {
+      showError("Invalid amount format. Please enter a valid number.");
+      return false;
+    }
+
+    if (cryptoAmount <= 0 || isNaN(cryptoAmount) || !isFinite(cryptoAmount)) {
+      showError("Invalid crypto amount");
+      return false;
+    }
+
+    return true;
+  };
+
+  // Handle Proceed button click - validate first, then show modal
+  const handleProceed = () => {
+    if (validateBuyData()) {
+      setShowConfirmationModal(true);
+    }
+  };
+
+  const onBuyClick = async () => {
+    console.log("onBuyClick called");
 
     let payload = {
       amount: cryptoAmount.toString(),
@@ -227,25 +314,25 @@ const CryptoBuy = () => {
             <CustomText variant={"caption"} style={styles.label}>
               Amount
             </CustomText>
-            <Text>{isValidAmount ? cryptoAmount.toFixed(8) : "0.00"} {symbol}</Text>
+            <Text>{isValidAmount ? formatCryptoValue(cryptoAmount) : "0.00"} {symbol}</Text>
           </View>
           <View style={styles.row}>
             <CustomText variant={"caption"} style={styles.label}>
               Price per {symbol}
             </CustomText>
-            <CustomText>${buy_price}</CustomText>
+            <CustomText>{formattedPrice ? `$${formattedPrice}` : "N/A"}</CustomText>
           </View>
           <View style={styles.row}>
             <CustomText variant={"caption"} style={styles.label}>
               Subtotal
             </CustomText>
-            <Text>${isValidAmount ? usdAmount.toFixed(2) : "0.00"}</Text>
+            <Text>${isValidAmount ? formatUSDValue(usdAmount) : "0.00"}</Text>
           </View>
           <View style={styles.row}>
             <CustomText variant={"caption"} style={styles.label}>
               Fees ({feePercentage}%)
             </CustomText>
-            <Text>${isValidAmount ? feeAmount.toFixed(2) : "0.00"}</Text>
+            <Text>${isValidAmount ? formatUSDValue(feeAmount) : "0.00"}</Text>
           </View>
           <View style={styles.row}>
             <CustomText
@@ -256,7 +343,7 @@ const CryptoBuy = () => {
               Total
             </CustomText>
             <CustomText size={14} variant={"subtitle2"} style={styles.total}>
-              ${isValidAmount ? total.toFixed(2) : "0.00"}
+              ${isValidAmount ? formatUSDValue(total) : "0.00"}
             </CustomText>
           </View>
           <View style={{ marginVertical: 20, gap: 10 }}>
@@ -312,10 +399,19 @@ const CryptoBuy = () => {
                 </View>
               );
             })()}
-            <CustomText
-              size={14}
-              variant={"subtitle2"}
-            >{`${symbol} (${symbol})`}</CustomText>
+            <View style={styles.nameAndPriceContainer}>
+              <CustomText
+                size={14}
+                variant={"subtitle2"}
+              >{`${symbol}`}</CustomText>
+              {formattedPrice && (
+                <CustomText
+                  size={12}
+                  variant={"caption"}
+                  style={styles.priceText}
+                >{`$${formattedPrice} USD`}</CustomText>
+              )}
+            </View>
           </View>
           <AmountInputDisplay
             showDollarIcon={selectedCurrency === "USD"}
@@ -334,17 +430,15 @@ const CryptoBuy = () => {
                 variant="subtitle2"
               >
                 {selectedCurrency === "USD"
-                  ? `${isValidAmount ? cryptoAmount.toFixed(8) : "0.00"} ${symbol}`
-                  : `${isValidAmount ? usdAmount.toFixed(2) : "0.00"} USD`}
+                  ? `${isValidAmount ? formatCryptoValue(cryptoAmount) : "0.00"} ${symbol}`
+                  : `$${isValidAmount ? formatUSDValue(usdAmount) : "0.00"} USD`}
               </CustomText>
             </View>
           </View>
         </View>
         <GenericButton
           title="Proceed"
-          onPress={() => {
-            setShowConfirmationModal(true);
-          }}
+          onPress={handleProceed}
           disabled={!isValidAmount}
         />
       </View>
@@ -387,6 +481,14 @@ const custonStyles = (theme: Theme) =>
       alignItems: "center",
       gap: 10,
       paddingHorizontal: 5,
+    },
+    nameAndPriceContainer: {
+      flex: 1,
+      flexDirection: "column",
+      gap: 2,
+    },
+    priceText: {
+      color: theme.colors.palette.grey600,
     },
     totalInUSDContainer: {
       width: "100%",

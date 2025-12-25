@@ -1535,7 +1535,6 @@ const NewDashboard = () => {
             )} */}
             <NewDashboardCard 
               isBalanceVisible={isMainCardBalanceVisible}
-              onRequestShowBalance={handleMainCardBalanceVisibility}
             />
           </View>
         )}

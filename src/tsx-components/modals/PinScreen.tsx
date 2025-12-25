@@ -15,11 +15,9 @@ import { getBalance } from "services/Services";
 import { Theme, useTheme } from "styles";
 import { PinScreenProps, PinScreenRef } from "./modal.types";
 // import { getPin, setPin } from "services/Auth";
-import { showError } from "../../utils/toast";
 import { SvgIcons } from "constants/svgs";
 import { getPin } from "storage/mmkv";
 import CustomText from "tsx-components/CustomText";
-import Toast from "../../components/common-components/Toast";
 
 const PIN_SCREEN_TASKS = {
   SHOW_BANK_BALANCE: "show_bank_balance",
@@ -44,15 +42,24 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
     const [pinForShowBalance, setPinForShowBalance] = useState("");
     const [isVerifyingPin, setIsVerifyingPin] = useState(false);
     const [showPin, setShowPin] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const [pinScreenTask, setPinScreenTask] = useState<string>(
       PIN_SCREEN_TASKS.SHOW_BANK_BALANCE
     );
     const [isPinModalVisible, setIsPinModalVisible] = useState(false);
 
+    // Clear error when user starts typing
+    const handleClearError = () => {
+      if (errorMessage) {
+        setErrorMessage(null);
+      }
+    };
+
     useImperativeHandle(ref, () => ({
       toggleBalanceVisibility: (accountId: string) => {
         setPinScreenTask(PIN_SCREEN_TASKS.SHOW_BANK_BALANCE);
+        setErrorMessage(null);
 
         if (!hiddenBalances[accountId]) {
           setHiddenBalances((prev: any) => ({
@@ -69,20 +76,24 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
       checkUserPin: () => {
         setPinScreenTask(PIN_SCREEN_TASKS.CHECK_PIN);
         setPinForShowBalance("");
+        setErrorMessage(null);
         setCurrentAccountForPin(accountNumber);
         setIsPinModalVisible(true);
       },
       setUserPin: () => {
         setPinScreenTask(PIN_SCREEN_TASKS.SET_USER_PIN);
         setPinForShowBalance("");
+        setErrorMessage(null);
         setIsPinModalVisible(true);
       },
       onClose: () => {
         setIsPinModalVisible(false);
+        setErrorMessage(null);
       },
     }));
 
     const handlePinDigit = (digit: string) => {
+      handleClearError();
       if (pinForShowBalance.length < 4) {
         setPinForShowBalance((prev) => prev + digit);
       }
@@ -101,6 +112,7 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
     const verifyPinAndShowBalance = async () => {
       if (!currentAccountForPin || pinForShowBalance.length < 4) return;
       setIsVerifyingPin(true);
+      setErrorMessage(null);
 
       try {
         const isUserEnterCorrectPin = checkPin(pinForShowBalance);
@@ -117,12 +129,13 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
           setIsPinModalVisible(false);
           setCurrentAccountForPin(null);
           setPinForShowBalance("");
+          setErrorMessage(null);
         } else {
-          showError("Invalid PIN", "Please try again");
+          setErrorMessage("Invalid PIN. Please try again.");
           setPinForShowBalance("");
         }
       } catch (error) {
-        showError("Failed to verify PIN", "Please try again");
+        setErrorMessage("Failed to verify PIN. Please try again.");
         setPinForShowBalance("");
       } finally {
         setIsVerifyingPin(false);
@@ -132,6 +145,7 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
     const handleVerifyPin = async () => {
       if (pinForShowBalance.length < 4) return;
       setIsVerifyingPin(true);
+      setErrorMessage(null);
 
       try {
         const isUserEnterCorrectPin = checkPin(pinForShowBalance);
@@ -141,16 +155,17 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
         );
         if (isUserEnterCorrectPin) {
           setPinForShowBalance("");
+          setErrorMessage(null);
           requestAnimationFrame(() => {
             onAction?.(null); // Triggers ResultModal
             setIsPinModalVisible(false);
           });
         } else {
-          showError("Invalid PIN", "Please try again");
+          setErrorMessage("Invalid PIN. Please try again.");
           setPinForShowBalance("");
         }
       } catch (error) {
-        showError("Failed to verify PIN", "Please try again");
+        setErrorMessage("Failed to verify PIN. Please try again.");
         setPinForShowBalance("");
       } finally {
         setIsVerifyingPin(false);
@@ -185,7 +200,6 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
         visible={isPinModalVisible}
         onRequestClose={() => setIsPinModalVisible(false)}
       >
-        <Toast />
         <SafeAreaView style={styles.modalContainer}>
           <View
             style={[
@@ -266,6 +280,14 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
                   </View>
                 ))}
               </View>
+              
+              {/* Error Message Display */}
+              {errorMessage && (
+                <View style={styles.errorContainer}>
+                  <SvgIcons.ToastCross width={16} height={16} fill="#C92A2A" />
+                  <CustomText style={styles.errorText}>{errorMessage}</CustomText>
+                </View>
+              )}
             </View>
 
             <View style={styles.keypadContainer}>
@@ -450,4 +472,20 @@ const customStyles = (theme: Theme) =>
       justifyContent: "center",
       alignItems: "center",
     }),
+    errorContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "#FFEBEB",
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      marginTop: 20,
+      gap: 8,
+    },
+    errorText: {
+      color: "#C92A2A",
+      fontSize: 14,
+      fontFamily: theme.typography.fontFamily.montserratSemiBold,
+    },
   } as any);

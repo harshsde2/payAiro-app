@@ -342,7 +342,10 @@ const CryptoSend = () => {
             <GenericButton
               title={"Pay Now"}
               onPress={() => {
-                handleCheckPin();
+                setShowConfirmationModal(false);
+                setTimeout(() => {
+                  handleCheckPin();
+                }, 500);
               }}
               showLoader={true}
               isLoading={isPending}
