@@ -5,7 +5,7 @@ import { ApiResponse, CryptoAsset } from "../../api/types";
 import { queryStaleTime } from "query/queryConfigs";
 import useSelectorAction from "hooks/useSelectorAction";
 import { useDispatch } from "react-redux";
-import { setAllCryptoBalances, setTotalDisbursable, setCryptoData } from "../../redux/slices/authenticationSlice";
+import { setAllCryptoBalances, setTotalDisbursable, setCryptoData, setAggregatedCryptoBalances } from "../../redux/slices/authenticationSlice";
 import { setItem, getItem, STORAGE_KEYS } from "../../storage/mmkv";
 import { useSelector } from "react-redux";
 
@@ -263,7 +263,7 @@ export const useAllCryptoBalances = () => {
         
         // Store in Redux
         dispatch(setAllCryptoBalances(result?.data?.balances || []));
-        
+        dispatch(setAggregatedCryptoBalances(result?.data?.aggregated_balance || {}));
         // console.log("All crypto balances fetched and stored =>", JSON.stringify(result?.data?.balances, null, 2));
         
         return result;

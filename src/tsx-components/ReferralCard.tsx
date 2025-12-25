@@ -22,8 +22,8 @@ const ReferralCard = () => {
           Invite Friends and Get $5 Each
         </CustomText>
         <CustomText variant="caption" color={theme.colors.palette.grey400}>
-          Project duplicate arrange text ipsum list italic italic. Text vertical
-          pixel.
+          Share your referral link with friends. When they sign up and make their
+          first transaction, you both earn $5!
         </CustomText>
         <GenericButton
           title="Refer & Earn"

@@ -136,6 +136,7 @@ import FullyDiluted from "./FullyDilluted.svg";
 import CirculatingSupply from "./CirculatingSupply.svg";
 import TokenDecimal from "./TokenDecimal.svg";
 import TotalValue from "./TotalValue.svg";
+import NewCryptoIcon from "./NewCryptoIcon.svg";
 
 export const SvgIcons = {
   PayAiorRoundIcon,
@@ -275,5 +276,6 @@ export const SvgIcons = {
   FullyDiluted,
   CirculatingSupply,
   TokenDecimal,
-  TotalValue
+  TotalValue,
+  NewCryptoIcon
 };

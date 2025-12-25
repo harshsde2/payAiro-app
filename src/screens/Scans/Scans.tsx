@@ -24,6 +24,121 @@ import QRCodeScanner from "react-native-qr-decode-image-camera";
 
 const { width, height } = Dimensions.get("window"); // Get device dimensions
 
+/**
+ * Processes QR code string or object and determines the type and sender
+ * @param codeStringValue - The QR code value (can be string or parsed object)
+ * @returns Object containing type and sender based on QR code content
+ */
+const processQRCodeData = (
+  codeStringValue: string | object | null | undefined
+): {
+  type: "request" | "merchantSend" | "receive" | "receiveMerchant";
+  sender: string | object;
+} => {
+  console.log("codeStringValue ->", JSON.stringify(codeStringValue ?? "{}", null, 2));
+  
+  if (!codeStringValue) {
+    return {
+      type: "receiveMerchant",
+      sender: "",
+    };
+  }
+
+  // Handle object format: { "type": "receive", "username": "pratap", "tag": "pratap" }
+  if (typeof codeStringValue === "object" && codeStringValue !== null) {
+    const qrObject = codeStringValue as { type?: string; username?: string; orderID?: any; merchantSend?: any; [key: string]: any };
+    
+    // Extract username as sender if available, otherwise use the full object
+    const sender = qrObject.username ? qrObject.username : qrObject;
+    
+    // If object has a type field, use it directly
+    if (qrObject.type) {
+      const validTypes: Array<"request" | "merchantSend" | "receive" | "receiveMerchant"> = [
+        "request",
+        "merchantSend",
+        "receive",
+        "receiveMerchant",
+      ];
+      
+      const type = validTypes.includes(qrObject.type as any)
+        ? (qrObject.type as "request" | "merchantSend" | "receive" | "receiveMerchant")
+        : "receiveMerchant";
+      
+      return {
+        type,
+        sender,
+      };
+    }
+    
+    // If object doesn't have type but has orderID, it's a request
+    if ("orderID" in qrObject || qrObject.orderID) {
+      return {
+        type: "request",
+        sender,
+      };
+    }
+    
+    // If object has merchantSend, it's merchantSend
+    if ("merchantSend" in qrObject || qrObject.merchantSend) {
+      return {
+        type: "merchantSend",
+        sender,
+      };
+    }
+    
+    // Default for object without type field
+    return {
+      type: "receiveMerchant",
+      sender,
+    };
+  }
+
+  // Handle string format (legacy support)
+  const codeString = codeStringValue as string;
+
+  // Check conditions in priority order
+  if (codeString.includes("orderID")) {
+    try {
+      return {
+        type: "request",
+        sender: JSON.parse(codeString),
+      };
+    } catch {
+      return {
+        type: "request",
+        sender: codeString,
+      };
+    }
+  }
+
+  if (codeString.includes("merchantSend")) {
+    try {
+      return {
+        type: "merchantSend",
+        sender: JSON.parse(codeString),
+      };
+    } catch {
+      return {
+        type: "merchantSend",
+        sender: codeString,
+      };
+    }
+  }
+
+  if (codeString.includes("sending")) {
+    return {
+      type: "receive",
+      sender: codeString.replace("sending: ", ""),
+    };
+  }
+
+  // Default case
+  return {
+    type: "receiveMerchant",
+    sender: codeString.replace("sending: ", ""),
+  };
+};
+
 export default function Scans(): JSX.Element {
   const { theme } = useTheme();
 
@@ -36,19 +151,20 @@ export default function Scans(): JSX.Element {
       "event.nativeEvent.codeStringValue"
     );
     setScanned(true);
+    
+    // Try to parse as JSON, if it fails, pass as string
+    let parsedValue: string | object;
+    try {
+      parsedValue = JSON.parse(event.nativeEvent.codeStringValue);
+    } catch {
+      parsedValue = event.nativeEvent.codeStringValue;
+    }
+    
+    const { type, sender } = processQRCodeData(parsedValue);
+    
     navigation.replace(SCREENS.ScanPay, {
-      type: event.nativeEvent.codeStringValue?.includes("orderID")
-        ? "request"
-        : event.nativeEvent.codeStringValue.includes("merchantSend")
-        ? "merchantSend"
-        : event.nativeEvent.codeStringValue.includes("sending")
-        ? "receive"
-        : "receiveMerchant",
-      sender: event.nativeEvent.codeStringValue?.includes("orderID")
-        ? JSON.parse(event.nativeEvent.codeStringValue)
-        : event.nativeEvent.codeStringValue?.includes("merchantSend")
-        ? JSON.parse(event.nativeEvent.codeStringValue)
-        : event.nativeEvent.codeStringValue.replace("sending: ", ""),
+      type,
+      sender,
     });
   };
 
@@ -102,31 +218,32 @@ export default function Scans(): JSX.Element {
         
         if (codeStringValue && codeStringValue.length > 0) {
           console.log("QR Code from Gallery:", codeStringValue);
-          console.log("Contains 'sending':", codeStringValue.includes("sending"));
           
-          // Validate that it's a PayAiro QR code (contains "sending:")
-          if (!codeStringValue.includes("sending:") && 
-              !codeStringValue.includes("orderID") && 
-              !codeStringValue.includes("merchantSend")) {
-            Alert.alert("Invalid QR Code", "Please scan a valid PayAiro QR code.");
-            return;
+          // Try to parse as JSON, if it fails, validate as string
+          let parsedValue: string | object;
+          try {
+            parsedValue = JSON.parse(codeStringValue);
+            console.log("Parsed QR code as object:", parsedValue);
+          } catch {
+            parsedValue = codeStringValue;
+            console.log("QR code is string format");
+            
+            // Validate that it's a PayAiro QR code (contains "sending:", "orderID", or "merchantSend")
+            if (!codeStringValue.includes("sending:") && 
+                !codeStringValue.includes("orderID") && 
+                !codeStringValue.includes("merchantSend")) {
+              Alert.alert("Invalid QR Code", "Please scan a valid PayAiro QR code.");
+              return;
+            }
           }
           
-          // Process QR code data similar to onQRCodeRead
+          // Process QR code data using the helper function
           setScanned(true);
+          const { type, sender } = processQRCodeData(parsedValue);
+          
           navigation.replace(SCREENS.ScanPay, {
-            type: codeStringValue?.includes("orderID")
-              ? "request"
-              : codeStringValue.includes("merchantSend")
-              ? "merchantSend"
-              : codeStringValue.includes("sending")
-              ? "receive"
-              : "receiveMerchant",
-            sender: codeStringValue?.includes("orderID")
-              ? JSON.parse(codeStringValue)
-              : codeStringValue?.includes("merchantSend")
-              ? JSON.parse(codeStringValue)
-              : codeStringValue.replace("sending: ", ""),
+            type,
+            sender,
           });
         } else {
           console.log("QR data is empty or null");

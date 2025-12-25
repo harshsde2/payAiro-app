@@ -62,6 +62,7 @@ const CryptoSell = () => {
   };
 
   const handleActionsAfterOTPVerified = () => {
+    console.log("handleActionsAfterOTPVerified called");
     onSellClick();
   };
 
@@ -126,18 +127,22 @@ const CryptoSell = () => {
   };
 
   const onSellClick = async () => {
+    console.log("onSellClick called");
     if (!amount || parseFloat(amount) <= 0) {
+      console.log("onSellClick step 2");
       showError("Please enter a valid amount");
       return;
     }
 
     if (cryptoAmount <= 0) {
+      console.log("onSellClick step 3");
       showError("Invalid crypto amount");
       return;
     }
 
     const availableBalanceNum = parseFloat(availableBalance);
     if (cryptoAmount > availableBalanceNum) {
+      console.log("onSellClick step 4");
       showError(`Insufficient balance. Available: ${availableBalance} ${symbol}`);
       return;
     }
@@ -149,12 +154,17 @@ const CryptoSell = () => {
       usd_amount: total,
     };
 
+    console.log("payload =>", JSON.stringify(payload, null, 2));
+
+    console.log("onSellClick step 5");
+
     navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
       isLoading: true,
       transactionData: null,
       isSuccess: false,
       isError: false,
     });
+    console.log("onSellClick step 6");
 
     handleSellCripto(payload as any, {
       onSuccess: async (data) => {

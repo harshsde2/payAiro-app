@@ -161,22 +161,22 @@ export const FINANCE_LISTS = [
   {
     name: "Receive Money",
     icon: <SvgIcons.ReceiveIcon />,
-    route: NAVIGATION_SCREENS.COMING_SOON,
+    route: NAVIGATION_SCREENS.RECEIVE,
   },
   {
     name: "Add Money",
     icon: <SvgIcons.AddWallet width={20} height={20} />,
-    route: NAVIGATION_SCREENS.COMING_SOON,
+    route: NAVIGATION_SCREENS.ADD_BALANCE,
   },
   {
     name: "Withdraw Money",
     icon: <SvgIcons.WithdrawIcon2 />,
-    route: NAVIGATION_SCREENS.COMING_SOON,
+    route: NAVIGATION_SCREENS.WITHDRAW_BALANCE,
   },
   {
     name: "Buy / Sell Crypto",
     icon: <SvgIcons.CryptoIcon2 width={20} height={20} />,
-    route: NAVIGATION_SCREENS.COMING_SOON,
+    route: NAVIGATION_SCREENS.CRYPTO_SCREEN,
   },
   // {
   //   name: "Mutual Fund",

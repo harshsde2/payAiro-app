@@ -21,10 +21,11 @@ const CircleItem = ({ item, navigation, isVisble3 }) => {
       <TouchableOpacity
         style={styles.circleContainer}
         onPress={() =>
-          navigation.navigate(NAVIGATION_SCREENS.CONTACT_TX, {
-            item: item ?? null,
-            isVisble3,
-          })
+          // navigation.navigate(NAVIGATION_SCREENS.CONTACT_TX, {
+          //   item: item ?? null,
+          //   isVisble3,
+          // })
+          {}
         }
       >
         <View
@@ -33,7 +34,7 @@ const CircleItem = ({ item, navigation, isVisble3 }) => {
             { backgroundColor: theme.colors.palette.green200 },
           ]}
         >
-          {item?.pending_requests && item?.pending_requests?.length > 0 && (
+          {/* {item?.pending_requests && item?.pending_requests?.length > 0 && (
             <View
               style={{
                 width: 20,
@@ -60,7 +61,7 @@ const CircleItem = ({ item, navigation, isVisble3 }) => {
                 {item?.pending_requests?.length ?? 0}
               </Text>
             </View>
-          )}
+          )} */}
 
           {item?.image ? (
             <Image source={{ uri: item?.image }} style={styles.image} />

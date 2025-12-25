@@ -1063,7 +1063,7 @@ const NewDashboard = () => {
           : item?.account_type === "traditionalIra"
           ? bankBalance?.traditional_ira_account?.usd
           : bankBalance?.bank_account?.usd,
-      }));
+      })).reverse();
   }, [bankLists, bankBalance]);
 
   //  console.log("processedBankAccounts =>", JSON.stringify(processedBankAccounts, null, 2));
@@ -1850,7 +1850,6 @@ const NewDashboard = () => {
                       </>
                     ) : (
                       processedBankAccounts
-                        .reverse()
                         .map((item: any, index: number) => (
                           <View
                             key={index}
@@ -1908,18 +1907,20 @@ const NewDashboard = () => {
                                   >
                                     {item.displayName}
                                   </CustomText>
-                                  <View
-                                    style={{
-                                      backgroundColor: theme.colors.palette.green700,
-                                      padding: 5,
-                                      paddingHorizontal: 10,
-                                      borderRadius: 10,
-                                    }}
-                                  >
-                                    <CustomText color={theme.colors.palette.white} fontWeight={"bold"} fontFamily={theme.typography.fontFamily.nexaHeavy} style={{ fontSize: 12 }}>
-                                      {item.account_status}
-                                    </CustomText>
-                                  </View>
+                                  {item?.account_status && (
+                                    <View
+                                      style={{
+                                        backgroundColor: theme.colors.palette.green700,
+                                        padding: 5,
+                                        paddingHorizontal: 10,
+                                        borderRadius: 10,
+                                      }}
+                                    >
+                                      <CustomText color={theme.colors.palette.white} fontWeight={"bold"} fontFamily={theme.typography.fontFamily.nexaHeavy} style={{ fontSize: 12 }}>
+                                        {item?.account_status}
+                                      </CustomText>
+                                    </View>
+                                  )}
                                 </View>
                                 {item?.account_type && (
                                   <View

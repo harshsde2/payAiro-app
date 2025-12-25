@@ -3,7 +3,6 @@ import {
   Text,
   KeyboardAvoidingView,
   ScrollView,
-  TouchableOpacity,
   Platform,
   StyleSheet,
 } from "react-native";
@@ -56,10 +55,12 @@ const Send: React.FC<ISendProps> = ({ route }) => {
     bankBalance: IBankBalance | null;
   };
   const { bankLists, bankBalance } = selectorData;
-  const [selectedBank, setSelectedBank] = useState<IBankItem | null>(
-    bankLists?.[0] ?? null
-  );
-  const [isDropdown, setIsDropdown] = useState<boolean>(false);
+  
+  // Filter to only show banks with account_type === "main"
+  const mainBanks = bankLists?.filter(
+    (bank) => bank.account_type === "main"
+  ) ?? [];
+  const selectedBank = mainBanks?.[0] ?? null;
   const {
     mutateAsync: verifyUserByIdentifier,
     isPending: userLoading,
@@ -197,17 +198,10 @@ const Send: React.FC<ISendProps> = ({ route }) => {
                 <Text style={styles.sendFromLabel}>
                   {type === "requested" ? "" : "Send From"}
                 </Text>
-                {type !== "requested" && (
+                {type !== "requested" && selectedBank && (
                   <View>
                     <View style={styles.bankCard}>
-                      <TouchableOpacity
-                        activeOpacity={0.7}
-                        onPress={() => setIsDropdown((state) => !state)}
-                        style={[
-                          styles.bankCardTouchable,
-                          { marginBottom: isDropdown ? 10 : 0 },
-                        ]}
-                      >
+                      <View style={styles.bankCardTouchable}>
                         <View style={styles.bankInfoRow}>
                           <SvgXml xml={SVGUSD} width={40} height={40} />
                           <View style={styles.bankDetailsContainer}>
@@ -230,7 +224,7 @@ const Send: React.FC<ISendProps> = ({ route }) => {
                             </Text>
                           </View>
                         </View>
-                      </TouchableOpacity>
+                      </View>
                     </View>
                   </View>
                 )}

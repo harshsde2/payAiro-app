@@ -42,10 +42,12 @@ const NewTransactionDetails: FC = () => {
   const { transactionData } =
     route.params as INewTransactionDetailsProps["route"]["params"];
 
+  console.log("transactionData =>", JSON.stringify(transactionData, null, 2));
+
   // Get slip text styles - these can be modified in the styles function below
   const slipStyles = styles(theme);
 
-  console.log("transactionData =>", JSON.stringify(transactionData, null, 2));
+  // console.log("transactionData =>", JSON.stringify(transactionData, null, 2));
 
   // Direction
   const isIncoming = transactionData.direction === "incoming";
@@ -844,6 +846,7 @@ const NewTransactionDetails: FC = () => {
                       </View>
                     )}
 
+                    {"//TODO: Fix this"}
                     {/* Exchange Rate */}
                     {exchangeRate && (
                       <View style={styles(theme).detailRow}>

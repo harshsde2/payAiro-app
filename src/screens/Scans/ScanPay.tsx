@@ -37,6 +37,8 @@ import { IScanPayProps, PinScreenRef } from "./types";
 
 export default function ScanPay(props: IScanPayProps) {
   const { type, sender, bank } = props?.route?.params;
+
+  console.log("sender ->",JSON.stringify(props?.route?.params,null,2))
   const { theme } = useTheme();
 
   const { tokens, isCrypto, walletData, bankLists } = useSelectorAction() as any;

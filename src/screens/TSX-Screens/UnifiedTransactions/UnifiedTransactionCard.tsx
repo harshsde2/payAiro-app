@@ -39,8 +39,21 @@ const UnifiedTransactionCard: React.FC<IUnifiedTransactionCardProps> = ({
     return 2;
   };
 
+  // Get display amount - for crypto_sell with USD currency, use usd_value from crypto_details
+  const getDisplayAmount = (): string => {
+    // For crypto_sell transactions where currency is USD, show the USD value received
+    if (
+      transaction.transaction_type === "crypto_sell" &&
+      transaction.currency?.toUpperCase() === "USD" &&
+      transaction.crypto_details?.usd_value
+    ) {
+      return parseFloat(transaction.crypto_details.usd_value).toFixed(2);
+    }
+    return parseFloat(transaction.amount || "0").toFixed(getDecimalPlaces());
+  };
+
   // Format amount
-  const formattedAmount = parseFloat(transaction.amount || "0").toFixed(getDecimalPlaces());
+  const formattedAmount = getDisplayAmount();
   const sign = isIncoming ? "+" : "-";
   const amountColor = isIncoming
     ? theme.colors.palette.success

@@ -50,7 +50,7 @@ export default function Personal() {
 
 
   const DETAILS_DATA = [
-    { key: "PayAiro Tag", value: "#" + walletData?.username },
+    { key: "PayAiro Tag", value:  walletData?.username },
     { key: "Phone Number", value: kycStep?.mobile_number },
     {
       key: "Address",

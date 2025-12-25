@@ -47,6 +47,7 @@ const initialState = {
   totalDisbursablePending: 0.0,
   cryptoData: null,
   allCryptoBalances: [],
+  aggregatedCryptoBalances: {},
   kycStatus: null,
   currentRoute: null,
 };
@@ -157,6 +158,9 @@ const authenticationSlice = createSlice({
     setAllCryptoBalances: (state, action) => {
       state.allCryptoBalances = action.payload;
     },
+    setAggregatedCryptoBalances: (state, action) => {
+      state.aggregatedCryptoBalances = action.payload;
+    },
     setKycStatus: (state, action) => {
       state.kycStatus = action.payload;
     },
@@ -200,6 +204,7 @@ export const {
   setTotalDisbursablePending,
   setCryptoData,
   setAllCryptoBalances,
+  setAggregatedCryptoBalances,
   setKycStatus,
   setIsTransactionInProgress,
   setCurrentRoute,

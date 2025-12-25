@@ -54,7 +54,7 @@ const CryptoIconWatermark: React.FC<{ size: number; opacity: number }> = ({
         right: 32,
       }}
     >
-      <SvgIcons.CryptoIcon width={size} height={size} />
+      <SvgIcons.NewCryptoIcon width={size} height={size} />
     </View>
   );
 };
@@ -98,13 +98,12 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
   onToggleVisibility,
   onQRCodePress,
   isBalanceVisible = false, // Default to hidden for security
-  onRequestShowBalance,
 }) => {
-  const { walletData, isCrypto, bankBalance, cryptoData, allCryptoBalances } =
+  const { walletData, isCrypto, bankBalance, cryptoData, allCryptoBalances, aggregatedCryptoBalances } =
     useSelector((state: any) => state.authenticationSlice);
 
   // console.log(JSON.stringify(allCryptoBalances,null,2), "allCryptoBalances");
-
+  console.log(JSON.stringify(aggregatedCryptoBalances,null,2), "aggregatedCryptoBalances");
   const { theme } = useTheme();
   const [localBalanceVisible, setLocalBalanceVisible] =
     useState(isBalanceVisible);
@@ -168,7 +167,7 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
     }
     // Crypto mode (isCrypto = false)
     else {
-      const cryptoBalanceData =  allCryptoBalances[0] || {};
+      const cryptoBalanceData =  aggregatedCryptoBalances || {};
       switch (selectedBalanceType) {
         case "Available":
           return Number(cryptoBalanceData?.usd_value_available || 0);
@@ -191,6 +190,7 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
     bankBalance,
     cryptoData,
     allCryptoBalances,
+    aggregatedCryptoBalances,
     selectedBalanceType,
   ]);
 
@@ -262,23 +262,13 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
       };
 
   const handleToggleVisibility = () => {
-    // If balance is currently hidden and user wants to show it, require PIN verification
-    if (!localBalanceVisible) {
-      if (onRequestShowBalance) {
-        onRequestShowBalance();
-      } else {
-        // If no PIN handler provided, just show balance (fallback)
-        setLocalBalanceVisible(true);
-      }
-      return;
-    }
-    
-    // If balance is visible, allow hiding without PIN
-    setLocalBalanceVisible(false);
+    // Toggle balance visibility directly
+    const newVisibility = !localBalanceVisible;
+    setLocalBalanceVisible(newVisibility);
     onToggleVisibility?.();
   };
 
-  // Effect to sync with external visibility changes (e.g., after PIN verification)
+  // Effect to sync with external visibility changes
   React.useEffect(() => {
     if (isBalanceVisible !== undefined && isBalanceVisible !== localBalanceVisible) {
       setLocalBalanceVisible(isBalanceVisible);

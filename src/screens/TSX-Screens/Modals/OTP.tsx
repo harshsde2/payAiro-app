@@ -38,6 +38,8 @@ const OTP = () => {
   const { mutate: verifyUserForSendOTP, isPending: isVerifyingOTP } =
     useVerifyUserForSendOTP();
 
+  console.log("isVerifying =>", isVerifying);
+
   useEffect(() => {
     // Send OTP when screen opens
     handleSendOTP();

@@ -239,7 +239,7 @@ const ScratchCardModal: React.FC<IScratchCardModalProps> = ({
                   variant="h1"
                   fontWeight="bold"
                   color={theme.colors.palette.yellow500}
-                  style={styles(theme).rewardAmount}
+                  // style={styles(theme).rewardAmount}
                 >
                   ${formatAmount(card.reward_amount)}
                 </CustomText>

@@ -43,7 +43,7 @@ const CyrptoDetails: React.FC = () => {
 
   const routeParams = route.params as { item: CryptoRouteParams } | undefined;
   const cryptoItem = routeParams?.item;
-    // console.log("cryptoItem =>", JSON.stringify(cryptoItem, null, 2));
+    console.log("cryptoItem =>", JSON.stringify(cryptoItem, null, 2));
 
   // Get CoinGecko ID from asset
   const coinGeckoId = cryptoItem ? getCoinGeckoId(cryptoItem.asset) : null;
@@ -224,11 +224,11 @@ const CyrptoDetails: React.FC = () => {
       <View style={styles.balanceCardContent}>
         <View style={styles.balanceIconContainer}>
         {cryptoItem?.logo?.toLowerCase?.().endsWith(".svg") ? (
-              <SvgUri uri={cryptoItem?.logo} width={30} height={30} />
+              <SvgUri uri={cryptoItem?.logo} width={45} height={45} />
             ) : (
               <Image
                 source={{ uri: cryptoItem?.logo }}
-                style={{ width: 30, height: 30 }}
+                style={{ width: 45, height: 45 }}
                 resizeMode="contain"
               />
             )}
@@ -381,18 +381,17 @@ const CyrptoDetails: React.FC = () => {
         {/* Price Section */}
         <View
           style={{
-            // backgroundColor: "red",
             justifyContent: "center",
             alignItems: "center",
             flexDirection: "row",
           }}
         >
             {cryptoItem?.logo?.toLowerCase?.().endsWith(".svg") ? (
-              <SvgUri uri={cryptoItem?.logo} width={30} height={30} />
+              <SvgUri uri={cryptoItem?.logo} width={45} height={45} />
             ) : (
               <Image
                 source={{ uri: cryptoItem?.logo }}
-                style={{ width: 30, height: 30 }}
+                style={{ width: 45, height: 45 }}
                 resizeMode="contain"
               />
             )}
@@ -403,14 +402,7 @@ const CyrptoDetails: React.FC = () => {
                 size={36}
                 color={theme.colors.text.primary}
               >
-                ${cryptoData.currentPrice.toFixed(2).split(".")[0]}
-              </CustomText>
-              <CustomText
-                fontWeight="bold"
-                size={24}
-                color={theme.colors.text.tertiary}
-              >
-                .{cryptoData.currentPrice.toFixed(2).split(".")[1]}
+                ${cryptoItem?.usd_price}
               </CustomText>
             </View>
           </View>

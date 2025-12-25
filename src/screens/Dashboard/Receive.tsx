@@ -253,20 +253,20 @@ export default function Receive() {
         >
           <QRCode 
             value={JSON.stringify({
-              type: "payairo_payment",
+              type: "receive",
               username: walletData?.username,
               tag: walletData?.username,
             })} 
             size={200} 
           />
-          <Text style={{ 
+          {/* <Text style={{ 
             marginTop: 15, 
             fontSize: 14, 
             fontFamily: Fonts.semibold,
             color: "#333",
           }}>
             PayAiro Tag: {walletData?.username}
-          </Text>
+          </Text> */}
         </ViewShot>
       </View>
       <View
