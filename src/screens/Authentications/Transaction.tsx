@@ -4,6 +4,7 @@ import { SvgIcons } from "constants/svgs";
 import {
   useCryptoTrades,
   useFilteredTransactions,
+  usePendingPaymentRequests,
   usePendingRequests,
   useTransactions,
   useUserPaymentRequests,
@@ -512,10 +513,7 @@ export default function Transaction() {
   const { category_percentages, total_transactions } =
     filteredTransactionsData?.data || {};
 
-  // console.log(
-  //   "web3TxLists =>",
-  //   JSON.stringify(web3TxLists, null, 2)
-  // );
+
 
   return (
     <ScreenContainer

@@ -12,7 +12,7 @@ import { useSelector } from "react-redux";
 import { ScreenContainer } from "HOC";
 import { SvgIcons } from "constants/svgs";
 import { useTheme, Theme } from "styles";
-import { useUnifiedTransactions, useFormattedTradesHistory } from "query/hooks";
+import { useUnifiedTransactions, useFormattedTradesHistory, usePendingPaymentRequests } from "query/hooks";
 import useDispatchAction from "hooks/useDispatchAction";
 import { setActiveTab } from "redux/slices/authenticationSlice";
 import HeaderTitle from "components/HeaderTitle";
@@ -23,6 +23,7 @@ import CustomText from "tsx-components/CustomText";
 import CustomPieChart from "components/CustomPieChart";
 import CommonModal from "tsx-components/modals/CommonModal";
 import TransactionFilter from "tsx-components/modals/TransactionFilter";
+import PaymentRequestsList from "tsx-components/PaymentRequestsList";
 import UnifiedTransactionCard from "./UnifiedTransactionCard";
 import {
   IUnifiedTransaction,
@@ -79,6 +80,12 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const isFocused = useIsFocused();
+
+  const { 
+    data: pendingRequestsData, 
+    isLoading: isLoadingPendingPaymentRequests, 
+    refetch: refetchPendingPaymentRequests 
+  } = usePendingPaymentRequests();
 
   // Get isCrypto from Redux
   const { isCrypto } = useSelector((state: any) => state.authenticationSlice);
@@ -391,7 +398,8 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
   // Pull to refresh
   const onRefresh = useCallback(() => {
     refetch();
-  }, [refetch]);
+    refetchPendingPaymentRequests();
+  }, [refetch, refetchPendingPaymentRequests]);
 
   return (
     <ScreenContainer padding={0} backgroundColor={theme.colors.background.primary}>
@@ -459,14 +467,23 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
 
           {/* Content */}
           <View style={styles.contentContainer}>
-            {/* Transaction Summary - Only show for fiat (isCrypto === true) */}
+            {/* <>
             {isCrypto && (
               <DashboardSection title="Transaction Summary">
-                {/* @ts-ignore */}
                 <CustomPieChart
                   isTx={true}
                   amount={totalTransactions}
                   alloCationLists={formattedPieChartData}
+                />
+              </DashboardSection>
+            )}
+            </> */}
+
+            {isCrypto && (
+              <DashboardSection title="Payment Requests">
+                <PaymentRequestsList
+                  data={pendingRequestsData?.data}
+                  isLoading={isLoadingPendingPaymentRequests}
                 />
               </DashboardSection>
             )}

@@ -46,6 +46,8 @@ const Send: React.FC<ISendProps> = ({ route }) => {
   const { theme } = useTheme();
   const styles = customStyles(theme);
 
+  
+
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const dispatch = useDispatch();
   const [sender, setSender] = useState<string>(senderFromParams ?? "");
@@ -89,7 +91,7 @@ const Send: React.FC<ISendProps> = ({ route }) => {
     setPendingVerification(true);
     try {
       const data = await verifyUserByIdentifier({ identifier: trimmedSender });
-      console.log(data, "verified user data");
+      // console.log(data, "verified user data");
 
       if (data && data.status) {
         navigation.navigate(SCREENS.ScanPay, {
@@ -168,7 +170,7 @@ const Send: React.FC<ISendProps> = ({ route }) => {
         <HeaderTitle
           title={
             type === "requested"
-              ? "Receive Assets"
+              ? "Money Request"
               : "PayAiro to PayAiro Transfer"
           }
           titleStyle={styles.headerTitle}

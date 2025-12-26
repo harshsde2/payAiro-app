@@ -26,9 +26,11 @@ const CryptoSell = () => {
   
   const { details } = route.params as any;
 
-  console.log("details =>", JSON.stringify(details, null, 2));
+  // console.log("details =>", JSON.stringify(details, null, 2));
   const { walletData, totalDisbursable } = useSelectorAction() as any;
-  
+  // console.log("walletData =>", JSON.stringify(walletData?.fees?.SELL, null, 2));
+  const fees = walletData?.fees?.SELL;
+
   // Robust edge case handling for details
   useEffect(() => {
     if (!details) {
@@ -89,20 +91,6 @@ const CryptoSell = () => {
     onSellClick();
   };
 
-  const getCryptoAmount = () => {
-    if (!amount || amount === "" || amount === "0") return 0;
-    const parsedAmount = parseFloat(amount);
-    
-    if (isNaN(parsedAmount) || parsedAmount <= 0) return 0;
-    
-    if (selectedCurrency === "USD") {
-      if (!isValidPrice || sell_price === 0) return 0;
-      const result = parsedAmount / Number(sell_price);
-      return isNaN(result) || !isFinite(result) ? 0 : result;
-    }
-    return parsedAmount;
-  };
-
   const getUSDAmount = () => {
     if (!amount || amount === "" || amount === "0") return 0;
     const parsedAmount = parseFloat(amount);
@@ -141,11 +129,34 @@ const CryptoSell = () => {
     return value.toFixed(8).replace(/\.?0+$/, "");
   };
 
-  const cryptoAmount = getCryptoAmount();
   const usdAmount = getUSDAmount();
-  const feePercentage = parseFloat(walletData?.TransactionFees_persentage || 0);
+  const feePercentage = parseFloat(fees || 0);
   const feeAmount = (usdAmount * feePercentage) / 100;
-  const total = usdAmount - feeAmount;
+  const total = usdAmount - feeAmount; // USD after fee deduction (for display - what user receives)
+  
+  // Calculate ORIGINAL crypto amount (for API - backend handles fees)
+  const getCryptoAmountForApi = () => {
+    if (!amount || amount === "" || amount === "0") return 0;
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) return 0;
+    
+    if (selectedCurrency === "USD") {
+      // Calculate crypto from ORIGINAL usdAmount (no fee deduction)
+      if (usdAmount <= 0) return 0;
+      if (!isValidPrice || sell_price === 0) return 0;
+      const result = usdAmount / Number(sell_price);
+      return isNaN(result) || !isFinite(result) ? 0 : result;
+    }
+    // When entering crypto directly, return the entered amount
+    return parsedAmount;
+  };
+  
+  // Calculate DISPLAY crypto amount (what user is selling - same as original for sell)
+  // For SELL: User sells crypto, receives USD after fees
+  // So crypto amount shown = original crypto amount (what they're selling)
+  // USD shown = after fee deduction (what they receive)
+  const cryptoAmountForApi = getCryptoAmountForApi(); // Send to backend
+  const cryptoAmount = cryptoAmountForApi; // For sell, display the crypto being sold (original amount)
 
   const handleCurrencyChange = (newCurrency: string) => {
     if (!amount || amount === "" || amount === "0") {
@@ -237,16 +248,15 @@ const CryptoSell = () => {
   const onSellClick = async () => {
     console.log("onSellClick called");
 
+    // Send ORIGINAL values to backend (backend handles fee deduction)
     let payload = {
-      amount: cryptoAmount.toString(),
+      amount: cryptoAmountForApi.toString(),
       asset: symbol,
       fiat: "USD",
-      usd_amount: total,
+      usd_amount: usdAmount,
     };
 
     // console.log("payload =>", JSON.stringify(payload, null, 2));
-
-    console.log("onSellClick step 5");
 
     navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
       isLoading: true,
@@ -254,7 +264,6 @@ const CryptoSell = () => {
       isSuccess: false,
       isError: false,
     });
-    console.log("onSellClick step 6");
 
     handleSellCripto(payload as any, {
       onSuccess: async (data) => {
@@ -274,6 +283,8 @@ const CryptoSell = () => {
           });
           showSuccess(`Successfully sold ${cryptoAmount.toFixed(8)} ${symbol}`);
         } else {
+          // console.log("data =>", JSON.stringify(data, null, 2));
+
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
             isLoading: false,
             transactionData: data,
@@ -283,6 +294,7 @@ const CryptoSell = () => {
         }
       },
       onError: (error: any) => {
+        console.log("error =>", JSON.stringify(error.response, null, 2));
         navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
           isLoading: false,
           transactionData: null,

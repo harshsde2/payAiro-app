@@ -35,6 +35,7 @@ export const REWARDS = [
     bgColor: "rgba(255, 234, 177, 0.7)",
     icon: <SvgIcons.RewardsIcon />,
     route: NAVIGATION_SCREENS.SCRATCH,
+    description: "Earn upto $100 rewards by scratching cards",
     earned: 100,
   },
   // {
@@ -49,6 +50,7 @@ export const REWARDS = [
     icon: <SvgIcons.ReferralsIcon />,
     route: NAVIGATION_SCREENS.REFERRAL_SCREEN,
     earned: 5,
+    description: "Earn $5 for each Referral"
   },
 ];
 

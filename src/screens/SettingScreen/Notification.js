@@ -156,7 +156,7 @@ export default function Notification() {
       style={styles.safeArea}
     >
       <HeaderTitle
-        title="Notification"
+        title="Notifications"
         leftIcon={SVGLeftArrow}
         isBack={true}
         onPressLeft={handleGoBack}

@@ -63,7 +63,7 @@ const Scratch: React.FC = () => {
     refetch,
   } = useScratchCards();
 
-  console.log("scratchCardsData =>",JSON.stringify(scratchCardsData, null, 2));
+  // console.log("scratchCardsData =>",JSON.stringify(scratchCardsData, null, 2));
 
   const scratchCardMutation = useScratchCard();
   const claimRewardMutation = useClaimScratchReward();
@@ -246,7 +246,7 @@ const Scratch: React.FC = () => {
               fontWeight="semiBold"
               color={theme.colors.palette.white}
             >
-              Your Balances
+              Your Balance
             </CustomText>
             <Pressable
               onPress={() => setShowHowToEarnPoints(true)}
@@ -518,7 +518,7 @@ const Scratch: React.FC = () => {
               fontWeight="semiBold"
               style={styles(theme).sectionTitle}
             >
-              Scratch Rewards Summary
+              Scratched Rewards Summary
             </CustomText>
             <View style={styles(theme).summaryContainer}>
               <View style={styles(theme).summaryItem}>
@@ -527,7 +527,7 @@ const Scratch: React.FC = () => {
                   color={theme.colors.text.secondary}
                   style={styles(theme).summaryLabel}
                 >
-                  Total Scratched
+                  Redeemed Cards
                 </CustomText>
                 <CustomText
                   variant="h3"

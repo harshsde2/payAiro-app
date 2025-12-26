@@ -11,7 +11,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { Camera, CameraType } from "react-native-camera-kit";
+import { Camera, CameraType} from "react-native-camera-kit";
 import { ImageLibraryOptions, launchImageLibrary } from "react-native-image-picker";
 import { useTheme } from "styles";
 import { CustomText } from "tsx-components";
@@ -272,6 +272,7 @@ export default function Scans(): JSX.Element {
         frameColor="rgba(243, 251, 244, 1)"
         zoomMode="on"
         zoom={2}
+        flashMode={'auto'}
         cameraType={CameraType.Back}
       />
 
@@ -287,30 +288,13 @@ export default function Scans(): JSX.Element {
           paddingVertical: 10,
         }}
       >
-        <TouchableOpacity
-          onPress={() => setisVisible(true)}
-          style={{
-            paddingBottom: 8,
-            padding: 10,
-            backgroundColor: theme.colors.palette.green700,
-            borderRadius: theme.spacing.spacing[5],
-          }}
-        >
-          <CustomText
-            variant="button"
-            size={13}
-            color={theme.colors.palette.white}
-          >
-            Show My QR
-          </CustomText>
-        </TouchableOpacity>
         <CustomText variant="h3">Scan QR Code</CustomText>
-        <CustomText style={{ textAlign: "center" }} variant="subtitle1">
+        <CustomText style={{ textAlign: "center" }} >
           Scan a payment QR code to send money securely.
         </CustomText>
       </View>
       <QRModal isVisible={isVisible} onClose={() => setisVisible(false)} onSelected={() => {}} />
-      <View style={{ marginTop: 40 }}>
+      {/* <View style={{ marginTop: 40 }}>
         <TouchableOpacity
           onPress={uploadFromGallery}
           style={{
@@ -330,7 +314,7 @@ export default function Scans(): JSX.Element {
              Upload from Gallery
           </Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
       {/* <View style={[styles.overlay, styles.leftOverlay]} /> */}
       {/* <View style={[styles.overlay, styles.rightOverlay]} /> */}
       <BottomNavigation isVer={false} />

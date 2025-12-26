@@ -66,7 +66,7 @@ const WalletCard = ({ data, bankbalance, index }) => {
             fontWeight={"bold"}
             style={styles.bankName}
           >
-            {data?.bank_name || "Payairo Bank"}
+            {data?.bank_name || "PayAiro Bank"}
           </CustomText>
         </View>
         <View style={styles.headerRight}>

@@ -42,8 +42,8 @@ const CyrptoDetails: React.FC = () => {
   const navigation = useNavigation<any>();
 
   const routeParams = route.params as { item: CryptoRouteParams } | undefined;
-  const cryptoItem = routeParams?.item;
-    console.log("cryptoItem =>", JSON.stringify(cryptoItem, null, 2));
+  const cryptoItem = routeParams?.item as any;
+    // console.log("cryptoItem =>", JSON.stringify(cryptoItem, null, 2));
 
   // Get CoinGecko ID from asset
   const coinGeckoId = cryptoItem ? getCoinGeckoId(cryptoItem.asset) : null;
@@ -212,11 +212,11 @@ const CyrptoDetails: React.FC = () => {
     );
   }
 
-  const renderBalanceItem = ({ item }: { item: ICryptoBalance }) => (
+  const renderBalanceItem = ({ item }: { item: any }) => (
     <View
       style={[
         styles.balanceCard,
-        item.changePercentage > 0
+        item?.changePercentage && item?.changePercentage > 0
           ? styles.balanceCardGreen
           : styles.balanceCardGrey,
       ]}
@@ -242,7 +242,7 @@ const CyrptoDetails: React.FC = () => {
             {item.name}
           </CustomText>
           <CustomText size={14} color={theme.colors.text.tertiary}>
-            {item.availableBalance} Available | {item.pendingBalance} Pending
+            {item?.balance}
           </CustomText>
         </View>
         <View style={styles.balanceValue}>
@@ -252,17 +252,6 @@ const CyrptoDetails: React.FC = () => {
             color={theme.colors.text.primary}
           >
             {item.value}
-          </CustomText>
-          <CustomText
-            size={14}
-            color={
-              item.changePercentage > 0
-                ? theme.colors.palette.green600
-                : theme.colors.palette.red500
-            }
-          >
-            {item.changePercentage > 0 ? "+" : ""}
-            {item.changePercentage.toFixed(2)}%
           </CustomText>
         </View>
       </View>
@@ -365,6 +354,24 @@ const CyrptoDetails: React.FC = () => {
     ? cryptoData.about
     : `${cryptoData.about.substring(0, 150)}...`;
 
+
+    const balanceData = [
+        {
+          id: "1", 
+          name: cryptoItem?.asset, 
+          symbol: cryptoItem?.asset, 
+          balance: `${cryptoItem?.platform_available} Available`, 
+          value: `$${cryptoItem?.usd_value_available}`
+        },
+        {
+          id: "2", 
+          name: cryptoItem?.asset, 
+          symbol: cryptoItem?.asset, 
+          balance: `${cryptoItem?.platform_pending} Pending`, 
+          value: `$${cryptoItem?.usd_value_pending}`
+        },
+    ];
+    console.log("balanceData =>",JSON.stringify(balanceData, null, 2));
   return (
     <ScreenContainer
       style={{
@@ -457,7 +464,7 @@ const CyrptoDetails: React.FC = () => {
         {/* Your Balance Section */}
         <DashboardSection title="Your Balance">
           <FlatList
-            data={cryptoData.balances}
+            data={balanceData}
             renderItem={renderBalanceItem}
             keyExtractor={(item) => item.id}
             scrollEnabled={false}

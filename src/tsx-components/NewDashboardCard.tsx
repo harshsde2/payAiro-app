@@ -103,7 +103,7 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
     useSelector((state: any) => state.authenticationSlice);
 
   // console.log(JSON.stringify(allCryptoBalances,null,2), "allCryptoBalances");
-  console.log(JSON.stringify(aggregatedCryptoBalances,null,2), "aggregatedCryptoBalances");
+  // console.log(JSON.stringify(aggregatedCryptoBalances,null,2), "aggregatedCryptoBalances");
   const { theme } = useTheme();
   const [localBalanceVisible, setLocalBalanceVisible] =
     useState(isBalanceVisible);
@@ -244,8 +244,8 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
         accent: "#FFD070",
         footerBorder: "rgba(255, 215, 0, 0.2)",
         footerGradient: ["rgba(0, 0, 0, 0.3)", "rgba(29, 29, 29, 0.95)"],
-        title: "Payairo balance",
-        idLabel: "Payairo ID:",
+        title: "PayAiro Balance",
+        idLabel: "PayAiro ID:",
       }
     : {
         gradient: ["#1A1A2E", "#16213E", "#0F1624", "#0D0D0D"],
@@ -257,8 +257,8 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
         accent: "#00D9FF",
         footerBorder: "rgba(138, 180, 248, 0.2)",
         footerGradient: ["rgba(0, 0, 0, 0.3)", "rgba(13, 13, 13, 0.95)"],
-        title: "Crypto balance",
-        idLabel: "Wallet ID:",
+        title: "Crypto Balance",
+        idLabel: "PayAiro ID:",
       };
 
   const handleToggleVisibility = () => {

@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity } from "react-native";
-import React from "react";
+import React, { useMemo } from "react";
 import { SvgXml } from "react-native-svg";
 import {
   SVGHomeActive,
@@ -14,7 +14,7 @@ import {
   SVGTransactionInactive,
   SVGTrustedCircle,
 } from "../constants/images";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute, useIsFocused } from "@react-navigation/native";
 import { SCREENS } from "../constants/SCREENS";
 import useSelectorAction from "../hooks/useSelectorAction";
 import useDispatchAction from "../hooks/useDispatchAction";
@@ -29,14 +29,32 @@ import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { SvgIcons } from "constants/svgs";
 import { setTheme } from "redux/slices/animationSlice";
 import { useTheme } from "styles";
+import { usePendingPaymentRequests } from "query/hooks";
 
 export default function BottomNavigation({ isVer }) {
   const navigation = useNavigation();
   const route = useRoute();
+  const isFocused = useIsFocused();
   const { theme } = useTheme();
-  const { activeTab, pendingRequest, isCrypto } = useSelector(
+  const { activeTab, isCrypto } = useSelector(
     (state) => state.authenticationSlice
   );
+
+  // Fetch pending payment requests using React Query hook
+  const { data: pendingRequestsData, refetch } = usePendingPaymentRequests();
+
+  // Refetch pending requests when screen is focused
+  React.useEffect(() => {
+    if (isFocused) {
+      refetch();
+    }
+  }, [isFocused, refetch]);
+
+  // Calculate total pending requests count (received only - these are requests waiting for user to pay)
+  const pendingRequestCount = useMemo(() => {
+    const receivedCount = pendingRequestsData?.data?.received_pending_requests?.length ?? 0;
+    return receivedCount;
+  }, [pendingRequestsData]);
   // console.log(activeTab);
 
   const handleTabSwitch = (name) => {
@@ -202,37 +220,41 @@ export default function BottomNavigation({ isVer }) {
             handleTabSwitch(NAVIGATION_SCREENS.UNIFIED_TRANSACTION);
           }}
         >
-          <SvgIcons.TransactionIcon
-            style={{ opacity: activeTab === "2" ? 1 : 0.6 }}
-          />
-          {pendingRequest && pendingRequest > 0 ? (
-            <View
-              style={{
-                width: 20,
-                height: 20,
-                borderRadius: 35,
-                justifyContent: "center",
-                alignItems: "center",
-                overflow: "hidden",
-                backgroundColor: "red",
-                position: "absolute",
-                bottom: 10,
-                right: -10,
-              }}
-            >
-              <Text
+          <View>
+            <SvgIcons.TransactionIcon
+              style={{ opacity: activeTab === "2" ? 1 : 0.6 }}
+            />
+            {pendingRequestCount > 0 && (
+              <View
                 style={{
-                  color: "white",
-                  fontFamily: Fonts.semibold,
-                  textAlign: "center",
-                  fontSize: 12,
-                  // paddingBottom: 5,
+                  minWidth: 18,
+                  height: 18,
+                  borderRadius: 9,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  backgroundColor: theme.colors.palette.error || "#FF3B30",
+                  position: "absolute",
+                  top: -6,
+                  right: -8,
+                  paddingHorizontal: 4,
+                  borderWidth: 2,
+                  borderColor: "#000",
                 }}
               >
-                {pendingRequest}
-              </Text>
-            </View>
-          ) : null}
+                <Text
+                  style={{
+                    color: "white",
+                    fontFamily: Fonts.bold,
+                    textAlign: "center",
+                    fontSize: 10,
+                    lineHeight: 12,
+                  }}
+                >
+                  {pendingRequestCount > 99 ? "99+" : pendingRequestCount}
+                </Text>
+              </View>
+            )}
+          </View>
         </TouchableOpacity>
 
 

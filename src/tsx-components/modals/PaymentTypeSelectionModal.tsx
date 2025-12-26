@@ -10,6 +10,7 @@ import { CustomText } from "tsx-components";
 import CommonModal from "./CommonModal";
 import GenericButton from "components/GenericButton";
 import { SvgIcons } from "constants/svgs";
+import useSelectorAction from "hooks/useSelectorAction";
 
 interface PaymentTypeSelectionModalProps {
   isVisible: boolean;
@@ -27,6 +28,10 @@ const PaymentTypeSelectionModal: React.FC<PaymentTypeSelectionModalProps> = ({
   const { theme } = useTheme();
   const styles = customStyles(theme);
   const [selectedType, setSelectedType] = useState<"ach" | "rtp" | null>(null);
+  const { walletData } = useSelectorAction() as any;
+
+  const fees = walletData?.fees?.RTP_WITHDRAWAL;
+  const feesACH = walletData?.fees?.ACH_WITHDRAWAL;
 
   const handleConfirm = () => {
     if (selectedType) {
@@ -102,7 +107,7 @@ const PaymentTypeSelectionModal: React.FC<PaymentTypeSelectionModalProps> = ({
               color={theme.colors.text.secondary}
               style={styles.noteText}
             >
-              Payment will take 2-3 days
+              Payment will take 2-3 days {feesACH}%
             </CustomText>
           </TouchableOpacity>
 
@@ -130,7 +135,7 @@ const PaymentTypeSelectionModal: React.FC<PaymentTypeSelectionModalProps> = ({
                 color={theme.colors.text.secondary}
                 style={styles.noteText}
               >
-                NOTE: If you select RTP, you have to pay a transaction fee
+                NOTE: If you select RTP, you have to pay a transaction fee {fees}%
               </CustomText>
             </View>
           </TouchableOpacity>

@@ -1069,9 +1069,10 @@ const NewDashboard = () => {
   //  console.log("processedBankAccounts =>", JSON.stringify(processedBankAccounts, null, 2));
 
   const handleEyeClick = (account_id: string) => {
-    if (pinScreenRef.current) {
-      pinScreenRef.current.toggleBalanceVisibility(account_id);
-    }
+    setHiddenBalances((prev: Record<string, boolean>) => ({
+      ...prev,
+      [account_id]: !prev[account_id],
+    }));
   };
 
   // Handler for main card balance visibility with PIN verification

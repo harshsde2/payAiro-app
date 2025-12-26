@@ -13,7 +13,7 @@ export interface AppLockContextType {
 }
 
 export const LOCK_CONFIG = {
-  DEFAULT_TIMEOUT: 10000, // 10 seconds
+  DEFAULT_TIMEOUT: 0, // Lock immediately when returning from background
   MAX_PIN_ATTEMPTS: 3,
   LOCKOUT_DURATION: 300000, // 5 minutes after max attempts
 } as const;

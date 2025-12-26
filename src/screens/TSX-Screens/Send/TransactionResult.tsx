@@ -56,6 +56,8 @@ interface RouteParams {
   transactionData?: TransactionResponse;
   isSuccess?: boolean;
   isError?: boolean;
+  customTitle?: string;
+  customDescription?: string;
 }
 
 const keyLabels = {
@@ -86,7 +88,9 @@ const TransactionResult: FC = () => {
     isLoading = true, 
     transactionData, 
     isSuccess = false, 
-    isError = false 
+    isError = false,
+    customTitle,
+    customDescription
   } = params || {};
 
   const [showLoader, setShowLoader] = useState(isLoading);
@@ -168,6 +172,21 @@ const TransactionResult: FC = () => {
   const renderTitle = () => {
     const status = getTransactionStatus();
     
+    // Use custom title if provided
+    if (customTitle) {
+      const titleStyle = status === 'success' 
+        ? [styles.title, styles.successTitle]
+        : status === 'failed'
+        ? [styles.title, styles.errorTitle]
+        : styles.title;
+      
+      return (
+        <CustomText variant="h3" style={titleStyle}>
+          {customTitle}
+        </CustomText>
+      );
+    }
+    
     switch (status) {
       case 'loading':
         return (
@@ -198,6 +217,15 @@ const TransactionResult: FC = () => {
 
   const renderDescription = () => {
     const status = getTransactionStatus();
+    
+    // Use custom description if provided
+    if (customDescription) {
+      return (
+        <CustomText variant="subtitle2" style={styles.description}>
+          {customDescription}
+        </CustomText>
+      );
+    }
     
     switch (status) {
       case 'loading':

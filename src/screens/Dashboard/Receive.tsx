@@ -330,7 +330,7 @@ export default function Receive() {
             }}
           >
             <CustomText size={15} variant="caption">
-              Routing number
+              Routing Number
             </CustomText>
             <CustomText size={15} fontWeight="semiBold" variant="caption">
               {bankLists[bankLists.length-1]?.ref_code}
@@ -345,7 +345,7 @@ export default function Receive() {
             }}
           >
             <CustomText size={15} variant="caption">
-              Account number
+              Account Number
             </CustomText>
             <CustomText size={15} fontWeight="semiBold" variant="caption">
               {bankLists[bankLists.length-1]?.account_number}

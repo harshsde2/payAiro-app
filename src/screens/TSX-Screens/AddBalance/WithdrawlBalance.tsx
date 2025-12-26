@@ -226,7 +226,7 @@ const WithdrawlBalance = () => {
 
   return (
     <ScreenContainer scrollable padding={0}>
-      <HeaderTitle title="Withdrawal Balance" leftIcon="true" />
+      <HeaderTitle title="Withdraw Money" leftIcon="true" />
 
       <AmountInputDisplay
         amount={amount}

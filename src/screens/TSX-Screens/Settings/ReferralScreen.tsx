@@ -62,7 +62,7 @@ const ReferralScreen = () => {
       return;
     }
 
-    const shareMessage = `Join PayAiro and use my referral code: ${referralCode}\n\nDownload the app: ${referralLink}`;
+    const shareMessage = `Join PayAiro using my referral code: ${referralCode} to get $5 when you make your first transaction\n\n Download the app: ${referralLink}`;
 
     try {
       const shareOptions = {
@@ -179,8 +179,8 @@ const ReferralScreen = () => {
             style={styles.infoText}
             color={theme.colors.text.secondary}
           >
-            When your friends sign up using your referral code, you'll both earn
-            rewards!
+            When your friends sign up using your referral code and make their first transaction, you'll both earn
+            $5!
           </CustomText>
         </View>
       </View>

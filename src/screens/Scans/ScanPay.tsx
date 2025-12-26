@@ -3,7 +3,7 @@ import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
 import moment from "moment";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import { useUserToUserTransfer } from "query/hooks";
+import { useUserToUserTransfer, useCreatePaymentRequest, usePayPaymentRequest } from "query/hooks";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -29,8 +29,6 @@ import {
   confirmPaymentQR,
   cryptoTransfer,
   getBlockchains,
-  payUserContact,
-  paymentRequested
 } from "../../services/Services";
 import { SvgIcons } from "constants/svgs";
 import { IScanPayProps, PinScreenRef } from "./types";
@@ -81,28 +79,70 @@ export default function ScanPay(props: IScanPayProps) {
     isSuccess: isSuccessCreatePin,
   } = useUserToUserTransfer() as any;
 
+  const {
+    mutate: createPaymentRequest,
+    isPending: isPendingPaymentRequest,
+  } = useCreatePaymentRequest();
+
+  const {
+    mutate: payPaymentRequest,
+    isPending: isPendingPayPaymentRequest,
+  } = usePayPaymentRequest();
+
   useEffect(() => {
     getBlockchain();
   }, []);
 
   const handleContactPayment = async () => {
-    setspin(true);
+    const requestId = (sender as any)?.request_details?.request_id;
+    const requestAmount = (sender as any)?.request_details?.amount;
+    const requesterName = (sender as any)?.requester_details?.name;
+    const requesterUsername = (sender as any)?.requester_details?.username;
 
-    console.log(
-      "sender?.request_details?.request_id",
-      (sender as any)?.request_details?.request_id
-    );
-    const data = await payUserContact(
-      (sender as any)?.request_details?.request_id,
-      tokens?.access
-    );
-    if (data && data?.data.status) {
-      showSuccess("Transaction Paid Successfully");
-      navigation.replace(SCREENS.Dashboard as never);
-    } else {
-      showError("Did Not have enough amount or some error happens");
-    }
-    setspin(false);
+    console.log("Paying request_id:", requestId);
+
+    // Navigate to transaction result screen with loading state
+    navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+      isLoading: true,
+      transactionData: null,
+      isSuccess: false,
+      isError: false,
+      customTitle: "Processing Payment",
+      customDescription: "Please wait while we process your payment...",
+    } as never);
+
+    payPaymentRequest(requestId, {
+      onSuccess: (data) => {
+        if (data?.status) {
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+            isLoading: false,
+            transactionData: data,
+            isSuccess: true,
+            isError: false,
+            customTitle: "Payment Successful",
+            customDescription: `You have successfully paid $${requestAmount} to ${requesterName || requesterUsername}`,
+          } as never);
+        } else {
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+            isLoading: false,
+            transactionData: data,
+            isSuccess: false,
+            isError: true,
+          } as never);
+          showError(data?.message || "Did not have enough balance or some error occurred");
+        }
+      },
+      onError: (error) => {
+        console.log("Pay request error:", JSON.stringify(error,null,2));
+        navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+          isLoading: false,
+          transactionData: null,
+          isSuccess: false,
+          isError: true,
+        } as never);
+        showError("Did not have enough balance or some error occurred");
+      },
+    });
   };
 
   const handleMercentPayment = async () => {
@@ -289,28 +329,68 @@ export default function ScanPay(props: IScanPayProps) {
   };
 
   const handleRequested = async () => {
-    // Validation is now done before PIN/OTP flow, so we can proceed directly
-    setspin(true);
-
-    const formData = new FormData();
-    formData.append("amount", (sender as any)?.amount ?? amount);
-    console.log(formData, "formData");
-    if ((sender as any)?.order_id) {
-      formData.append("order_id", (sender as any)?.orderID);
-    } else {
-      formData.append("recipient_email_or_wallet_public_key", sender as string);
+    // Validate amount before making the request
+    const transactionAmount = Number((sender as any)?.amount ?? amount) || 0;
+    
+    if (transactionAmount <= 0) {
+      showError("Please enter a valid amount");
+      return;
     }
-    console.log(formData, "formData");
-    const data = await paymentRequested(formData, tokens?.access);
-    console.log(data, "requested");
-    if (data && data?.status) {
-      showSuccess("Payment request created successfully.");
-      navigation.replace(SCREENS.Dashboard as never);
-    } else {
-      showError("Already have pending request with this account");
+    
+    if (transactionAmount > 100000) {
+      showError("Amount cannot exceed ₹1,00,000");
+      return;
     }
 
-    setspin(false);
+    const payload = {
+      amount: String((sender as any)?.amount ?? amount),
+      recipient_email_or_wallet_public_key: (sender as any)?.order_id
+        ? (sender as any)?.orderID
+        : (sender as string),
+    };
+
+    // Navigate to transaction result screen with loading state
+    navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+      isLoading: true,
+      transactionData: null,
+      isSuccess: false,
+      isError: false,
+      customTitle: "Sending Payment Request",
+      customDescription: "Please wait while we send your payment request...",
+    } as never);
+
+    createPaymentRequest(payload, {
+      onSuccess: (data) => {
+        if (data?.status) {
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+            isLoading: false,
+            transactionData: data,
+            isSuccess: true,
+            isError: false,
+            customTitle: "Payment Request Sent Successfully",
+            customDescription: "Your payment request has been sent successfully!",
+          } as never);
+        } else {
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+            isLoading: false,
+            transactionData: data,
+            isSuccess: false,
+            isError: true,
+          } as never);
+          showError(data?.message || "Already have pending request with this account");
+        }
+      },
+      onError: (error) => {
+        console.log("Payment request error:", error);
+        navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+          isLoading: false,
+          transactionData: null,
+          isSuccess: false,
+          isError: true,
+        } as never);
+        showError("Already have pending request with this account");
+      },
+    });
   };
 
   const handleBackspace = () => {
@@ -379,6 +459,9 @@ export default function ScanPay(props: IScanPayProps) {
     return true;
   };
 
+  
+
+
   const handleCheckPin = () => {
     // Validate before proceeding with PIN/OTP flow
     if (!validateBeforeTransaction()) {
@@ -400,12 +483,11 @@ export default function ScanPay(props: IScanPayProps) {
 
   const handleActionsAfterOTPVerified = () => {
     // Execute the actual transaction after OTP verification
+    // Note: "requested" type is handled directly without PIN/OTP
     type === "request"
       ? (sender as any)?.requester_details
         ? handleContactPayment()
         : handleMercentPayment()
-      : type === "requested"
-      ? handleRequested()
       : type === "merchantSend"
       ? handleSend()
       : type === "receiveMerchant"
@@ -680,6 +762,7 @@ export default function ScanPay(props: IScanPayProps) {
               onPress={() => {
                 handleCheckPin();
               }}
+              isLoading={isPendingPayPaymentRequest}
             />
           )}
           {type === "widthdraw" && (
@@ -695,15 +778,9 @@ export default function ScanPay(props: IScanPayProps) {
               title={"Request"}
               cStyle={{ width: "100%", backgroundColor: "grey" }}
               onPress={() => {
-                // Validate before proceeding with OTP flow
-                if (!validateBeforeTransaction()) {
-                  return;
-                }
-                navigation.navigate(NAVIGATION_SCREENS.OTP_SCREEN, {
-                  onOTPVerified: handleActionsAfterOTPVerified,
-                  transactionType: type,
-                });
+                handleRequested();
               }}
+              isLoading={isPendingPaymentRequest}
             />
           )}
 

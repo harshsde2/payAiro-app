@@ -174,7 +174,7 @@ const AppLockScreen: React.FC = () => {
           <View style={styles.pinEntryContainer}>
             <View style={styles.pinEntryLabelRow}>
               <CustomText style={styles.pinEntryText}>
-                ENTER PAYAIRO PIN
+                ENTER PIN
               </CustomText>
               {!showPin ? (
                 <SvgIcons.EyeOnGreenbg width={22} height={22} />

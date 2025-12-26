@@ -8,6 +8,8 @@ import {
   FlatList,
   Pressable,
   Keyboard,
+  Platform,
+  ToastAndroid,
 } from "react-native";
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { SvgXml } from "react-native-svg";
@@ -33,10 +35,12 @@ import { useDeviceContacts, useRecentContacts } from "query/hooks";
 import { removeItem, STORAGE_KEYS } from "storage/mmkv";
 import LoaderComponent from "tsx-components/LoaderComponent";
 import { Theme } from "styles";
+import Share from "react-native-share";
+import { showSuccess, showError } from "utils/toast";
 
 export default function ContactScreen(props: any) {
   const { isVisble3 } = props.route?.params || {};
-  const { tokens } = useSelectorAction();
+  const { tokens, walletData } = useSelectorAction();
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
 
@@ -264,6 +268,38 @@ export default function ContactScreen(props: any) {
   const handleSearch = (text: string) => {
     setSearchText(text);
   };
+
+  const handleShare = useCallback(async () => {
+    const referralCode = walletData?.username || "";
+    if (!referralCode) {
+      showError("Referral code not available");
+      return;
+    }
+
+    const referralLink = `https://payairo.app/ref/${referralCode}`;
+    const shareMessage = `Join PayAiro and use my referral code: ${referralCode}\n\nDownload the app: ${referralLink}`;
+
+    try {
+      const shareOptions = {
+        message: shareMessage,
+        title: "Invite to PayAiro",
+      };
+
+      await Share.open(shareOptions);
+    } catch (error: any) {
+      // User cancelled or error occurred
+      if (
+        error?.message?.toLowerCase().includes("user did not share") ||
+        error?.message === "User did not share"
+      ) {
+        // User cancelled, do nothing
+        return;
+      }
+      console.log("Share error:", error);
+      showError("Failed to share referral link");
+    }
+  }, [walletData]);
+
   return (
     <ScreenContainer padding={0} backgroundColor={theme.colors.palette.green50}>
       <Pressable
@@ -336,6 +372,7 @@ export default function ContactScreen(props: any) {
                       <TouchableOpacity
                         activeOpacity={0.7}
                         style={styles(theme).actionButton}
+                        onPress={handleShare}
                       >
                         <SvgXml xml={SVGInvitePeople} width={45} height={45} />
                         <CustomText

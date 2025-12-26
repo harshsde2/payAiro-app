@@ -11,11 +11,11 @@ interface IHowToEarnPointsModalProps {
 
 const pointsInstructions = [
   "Earn 2 points for every $1 on crypto buy and sell transactions.",
-  "Points are earned on all eligible crypto trades.",
+  "Points are earned on all eligible crypto buy and sell transactions.",
   "Use your points to unlock scratch vouchers.",
   "Scratch each voucher to reveal a reward.",
   "Rewards are added directly to your PayAiro account.",
-  "Rewards can be used for eligible crypto trades.",
+  "Rewards can be used for eligible crypto buy and sell transactions.",
   "Users can earn up to $100 in total rewards.",
   "Points have no cash value until redeemed.",
   "Terms and conditions apply.",
@@ -94,7 +94,7 @@ const styles = (theme: any) =>
     modalContainer: {
         flex: 1,
       width: "90%",
-      maxHeight: "80%",
+      maxHeight: "70%",
       backgroundColor: theme.colors.palette.white,
       borderRadius: 16,
       padding: theme.spacing.spacing[5],
@@ -126,11 +126,11 @@ const styles = (theme: any) =>
     numberText: {
       marginRight: theme.spacing.spacing[2],
       minWidth: 24,
-      fontSize: 16,
+      fontSize: 14,
     },
     instructionText: {
       flex: 1,
-      fontSize: 16,
+      fontSize: 14,
       lineHeight: 24,
     },
   });

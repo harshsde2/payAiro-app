@@ -50,7 +50,7 @@ export default function Rewards2({ item }) {
         >
           {item?.icon}
         </View>
-        <View style={{ marginLeft: 10 }}>
+        <View style={{ marginLeft: 10 , flex: 1}}>
           <Text
             style={{
               //   textAlign: 'center',
@@ -62,13 +62,13 @@ export default function Rewards2({ item }) {
           </Text>
           <Text
             style={{
-              textAlign: "center",
+              // textAlign: "center",
               fontFamily: Fonts.semibold,
-              marginBottom: 10,
+              marginTop: 5,
               fontSize: 12,
             }}
           >
-            Earned ${item?.earned ?? 0} from {item?.name ?? "Rewards"}
+            {item?.description ?? ""}
           </Text>
         </View>
       </View>

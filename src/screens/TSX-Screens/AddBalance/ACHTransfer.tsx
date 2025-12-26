@@ -40,6 +40,7 @@ const ACHTransfer = () => {
     routes as any
   ).params;
 
+
   const inputRef = useRef<TextInput>(null);
 
   const { theme } = useTheme();
@@ -47,7 +48,8 @@ const ACHTransfer = () => {
   const customStyle = customStyles(theme);
   const styles = { ...useCommonAddBalanceStyles(), ...customStyle };
 
-  const { tokens, bankLists, bankBalance } = useSelectorAction();
+  const { tokens, bankLists, bankBalance , walletData } = useSelectorAction();
+  const fees = (walletData as any)?.fees?.ACH;
 
   const [amount, setAmount] = useState(paramsAmount || "");
   const [selectedAccount, setSelectedAccount] = useState<any>({
@@ -66,22 +68,21 @@ const ACHTransfer = () => {
     mutate: handleIntraAccountTransfer,
   } = useIntraAccountTransfer();
 
-  // console.log("selectedAccount =>", selectedAccount);
+  console.log("selectedBank =>", selectedBank);
   // console.log("paramsSouceAccount =>", paramsSouceAccount);
 
 
   // Initialize selectedBank from route parameters
   React.useEffect(() => {
-    console.log("paramsSelectedBank ->", JSON.stringify(paramsSelectedBank, null, 2));
     if (paramsSelectedBank) {
       setSelectedBank(paramsSelectedBank);
     }
   }, [paramsSelectedBank]);
 
   // Debug selectedBank state
-  React.useEffect(() => {
-    console.log("selectedBank state ->", JSON.stringify(selectedBank, null, 2));
-  }, [selectedBank]);
+  // React.useEffect(() => {
+  //   // console.log("selectedBank state ->", JSON.stringify(selectedBank, null, 2));
+  // }, [selectedBank]);
 
   // console.log(JSON.stringify(bankLists, null, 2));
 
@@ -114,14 +115,17 @@ const ACHTransfer = () => {
       return;
     }
 
+    // console.log("selectedBank =>", JSON.stringify(selectedBank, null, 2));
+    // console.log("selectedAccount =>", JSON.stringify(selectedAccount, null, 2));
     const formData = new FormData();
     formData.append("amount", paramsAmount);
     formData.append("source_account_type", selectedBank?.value); // Source: where money comes FROM
     formData.append("destination_account_type", selectedAccount?.value); // Destination: where money goes TO
+    formData.append("bank_account_id", selectedBank?.guid); // Destination: where money goes TO
 
     useDispatchAction(setShowLoader(true));
 
-    // console.log(formData);
+    console.log("formData =>", JSON.stringify(formData, null, 2));
 
     handleIntraAccountTransfer(formData as any, {
       onSuccess: (data) => {
@@ -133,6 +137,7 @@ const ACHTransfer = () => {
         });
       },
       onError: (error: any) => {
+        console.log("error =>", JSON.stringify(error.response, null, 2));
         showError("Something went wrong");
       },
       onSettled: () => {
@@ -286,13 +291,13 @@ const ACHTransfer = () => {
           Transfer Flow
         </CustomText>
         <CustomText variant="caption" align="center" style={{ color: theme?.colors?.palette?.grey500 }}>
-          Money will be transferred FROM the source account TO the destination account
+          Money will be transferred 'From' the source account 'To' the destination account and the fee will be {fees}%
         </CustomText>
       </View>
 
       <View style={[styles.whiteSheetContainer]}>
         {/* {" "} */}
-        <DashboardSection title="Select Destination Account (Where money goes)">
+        <DashboardSection title="Select Destination Account">
           {ACCOUNT_LIST.filter(
             (item: any) =>
               !item?.title
@@ -354,11 +359,11 @@ const ACHTransfer = () => {
               color={theme.colors.palette.black}
               variant="subtitle1"
               size={12}
-              style={{ marginLeft: 10 }}
+              style={{ marginLeft: 10 ,flex:1}}
             >
               {item.title}
             </CustomText>
-            <CustomText variant="caption" style={{ color: theme?.colors?.palette?.grey500 }}>
+            <CustomText variant="caption" style={{ color: theme?.colors?.palette?.grey500, fontWeight:'bold', }}>
               To
             </CustomText>
               </TouchableOpacity>

@@ -149,9 +149,6 @@ export default function Receive() {
     >
       <HeaderTitle leftIcon={"true"} title={"Receive"} />
       <View style={styles.qrTypeSwitcherContainer}>
-        <CustomText size={12} color={theme.colors.palette.grey700}>
-          Choose what this QR shows
-        </CustomText>
         <View style={styles.qrTypeChipsRow}>
           <Pressable
             style={[styles.qrTypeChip, !isOnChain && styles.qrTypeChipActive]}

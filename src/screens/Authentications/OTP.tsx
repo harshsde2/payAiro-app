@@ -242,7 +242,7 @@ export default function ConfirmOTP() {
       const pinResp = await refetchUserPin();
 
       console.log("result =====>", JSON.stringify(result, null, 2));
-      console.log("pinResp =====>", JSON.stringify(pinResp, null, 2));
+      // console.log("pinResp =====>", JSON.stringify(pinResp, null, 2));
 
       const pin = pinResp.data?.data.tpin;
 

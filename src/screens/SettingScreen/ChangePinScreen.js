@@ -214,6 +214,105 @@ const ChangePinScreen = () => {
     }
   };
 
+  // Handler for current PIN input
+  const handleCurrentPinChange = (val, index) => {
+    let tempPin = [...currentPin];
+    tempPin[index] = val;
+    setCurrentPin(tempPin);
+    
+    // Move to next input if value is entered
+    if (val && pinRefs[index + 1]) {
+      pinRefs[index + 1].current.focus();
+    }
+    
+    // Move to previous input if value is deleted and current is empty
+    if (!val && index > 0) {
+      pinRefs[index - 1].current.focus();
+    }
+  };
+
+  const handleCurrentPinKeyPress = (key, index) => {
+    if (key === "Backspace") {
+      if (currentPin[index] === "") {
+        // Move to the previous input if current is empty
+        if (index > 0) {
+          pinRefs[index - 1].current.focus();
+        }
+      } else {
+        // Clear the current input
+        let tempPin = [...currentPin];
+        tempPin[index] = "";
+        setCurrentPin(tempPin);
+      }
+    }
+  };
+
+  // Handler for new PIN input
+  const handleNewPinChange = (val, index) => {
+    let tempPin = [...newPin];
+    tempPin[index] = val;
+    setNewPin(tempPin);
+    
+    // Move to next input if value is entered
+    if (val && newPinRefs[index + 1]) {
+      newPinRefs[index + 1].current.focus();
+    }
+    
+    // Move to previous input if value is deleted and current is empty
+    if (!val && index > 0) {
+      newPinRefs[index - 1].current.focus();
+    }
+  };
+
+  const handleNewPinKeyPress = (key, index) => {
+    if (key === "Backspace") {
+      if (newPin[index] === "") {
+        // Move to the previous input if current is empty
+        if (index > 0) {
+          newPinRefs[index - 1].current.focus();
+        }
+      } else {
+        // Clear the current input
+        let tempPin = [...newPin];
+        tempPin[index] = "";
+        setNewPin(tempPin);
+      }
+    }
+  };
+
+  // Handler for confirm PIN input
+  const handleConfirmPinChange = (val, index) => {
+    let tempPin = [...confirmPin];
+    tempPin[index] = val;
+    setConfirmPin(tempPin);
+    
+    // Move to next input if value is entered
+    if (val && confirmPinRefs[index + 1]) {
+      confirmPinRefs[index + 1].current.focus();
+    }
+    
+    // Move to previous input if value is deleted and current is empty
+    if (!val && index > 0) {
+      confirmPinRefs[index - 1].current.focus();
+    }
+  };
+
+  const handleConfirmPinKeyPress = (key, index) => {
+    if (key === "Backspace") {
+      if (confirmPin[index] === "") {
+        // Move to the previous input if current is empty
+        if (index > 0) {
+          confirmPinRefs[index - 1].current.focus();
+        }
+      } else {
+        // Clear the current input
+        let tempPin = [...confirmPin];
+        tempPin[index] = "";
+        setConfirmPin(tempPin);
+      }
+    }
+  };
+
   return (
     <ScreenContainer scrollable safeArea padding={0}>
       <KeyboardAvoidingView
@@ -309,13 +408,10 @@ const ChangePinScreen = () => {
                   keyboardType="numeric"
                   maxLength={1}
                   value={digit}
-                  onChangeText={(val) => {
-                    let tempPin = [...currentPin];
-                    tempPin[index] = val;
-                    setCurrentPin(tempPin);
-                    if (val && pinRefs[index + 1])
-                      pinRefs[index + 1].current.focus();
-                  }}
+                  onChangeText={(val) => handleCurrentPinChange(val, index)}
+                  onKeyPress={({ nativeEvent }) =>
+                    handleCurrentPinKeyPress(nativeEvent.key, index)
+                  }
                   ref={pinRefs[index]}
                 />
               ))}
@@ -346,13 +442,10 @@ const ChangePinScreen = () => {
                     keyboardType="numeric"
                     maxLength={1}
                     value={digit}
-                    onChangeText={(val) => {
-                      let tempPin = [...newPin];
-                      tempPin[index] = val;
-                      setNewPin(tempPin);
-                      if (val && newPinRefs[index + 1])
-                        newPinRefs[index + 1].current.focus();
-                    }}
+                    onChangeText={(val) => handleNewPinChange(val, index)}
+                    onKeyPress={({ nativeEvent }) =>
+                      handleNewPinKeyPress(nativeEvent.key, index)
+                    }
                     ref={newPinRefs[index]}
                   />
                 ))}
@@ -368,13 +461,10 @@ const ChangePinScreen = () => {
                     keyboardType="numeric"
                     maxLength={1}
                     value={digit}
-                    onChangeText={(val) => {
-                      let tempPin = [...confirmPin];
-                      tempPin[index] = val;
-                      setConfirmPin(tempPin);
-                      if (val && confirmPinRefs[index + 1])
-                        confirmPinRefs[index + 1].current.focus();
-                    }}
+                    onChangeText={(val) => handleConfirmPinChange(val, index)}
+                    onKeyPress={({ nativeEvent }) =>
+                      handleConfirmPinKeyPress(nativeEvent.key, index)
+                    }
                     ref={confirmPinRefs[index]}
                   />
                 ))}

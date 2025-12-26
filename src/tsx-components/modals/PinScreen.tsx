@@ -238,7 +238,7 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
                 <CustomText style={styles.pinEntryText}>
                   {pinScreenTask === PIN_SCREEN_TASKS.SET_USER_PIN
                     ? "SET PAYAIRO PIN"
-                    : "ENTER PAYAIRO PIN"}
+                    : "ENTER PIN"}
                 </CustomText>
                 {!showPin ? (
                   <SvgIcons.EyeOnGreenbg width={22} height={22} />

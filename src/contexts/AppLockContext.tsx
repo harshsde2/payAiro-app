@@ -1,9 +1,8 @@
 import React, { createContext, useState, useEffect, useRef, ReactNode, useMemo } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { useSelector } from 'react-redux';
-import { storage, getItem, setItem, removeItem, STORAGE_KEYS, getPin } from 'storage/mmkv';
+import { storage, removeItem, STORAGE_KEYS, getPin } from 'storage/mmkv';
 import { AppLockContextType } from 'types/appLock.types';
-import { LOCK_CONFIG } from 'types/appLock.types';
 
 // Create the context
 export const AppLockContext = createContext<AppLockContextType | undefined>(undefined);
@@ -56,15 +55,10 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
         storage.set(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME, timestamp);
       }
       
-      // Coming to foreground
+      // Coming to foreground - lock immediately
       if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
-        // Only check lock if user has account + PIN
-        const lastActive = storage.getNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME);
-        const timeout = storage.getNumber(STORAGE_KEYS.APP_LOCK_TIMEOUT) || LOCK_CONFIG.DEFAULT_TIMEOUT;
-        
-        if (lastActive && (Date.now() - lastActive) >= timeout) {
-          setIsLocked(true);
-        }
+        // Lock immediately when returning from background (no timeout delay)
+        setIsLocked(true);
       }
       
       appState.current = nextAppState;
@@ -77,13 +71,12 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
     };
   }, [shouldShowLock]);
 
-  // Check on mount (app killed scenario)
+  // Check on mount (app killed scenario) - lock immediately if user has PIN
   useEffect(() => {
     if (shouldShowLock) {
       const lastActive = storage.getNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME);
-      const timeout = storage.getNumber(STORAGE_KEYS.APP_LOCK_TIMEOUT) || LOCK_CONFIG.DEFAULT_TIMEOUT;
-      
-      if (lastActive && (Date.now() - lastActive) >= timeout) {
+      // Lock immediately if there was a previous session
+      if (lastActive) {
         setIsLocked(true);
       }
     }

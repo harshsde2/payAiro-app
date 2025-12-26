@@ -13,3 +13,7 @@ export * from "./useRewards";
 export * from "./useRWA";
 export * from "./useKyc";
 export * from "./useStatement";
+export * from "./usePaymentRequest";
+
+// Re-export types
+export * from "./types";

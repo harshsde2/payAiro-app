@@ -5,8 +5,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
+  Dimensions,
 } from "react-native";
-import React, { FC, useRef, useState } from "react";
+import React, { FC, useRef, useState, useMemo } from "react";
 import { useTheme } from "styles";
 import { CustomText } from "tsx-components";
 import { setErrorMsg } from "redux/slices/authenticationSlice";
@@ -24,6 +25,10 @@ interface AmountInputDisplayProps {
   onCurrencyChange?: (currency: string) => void;
 }
 
+const MAX_FONT_SIZE = 48;
+const MIN_FONT_SIZE = 24;
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
 const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
   amount,
   setAmount,
@@ -37,6 +42,31 @@ const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
   const dispatch = useDispatch();
   const inputRef = useRef<TextInput>(null);
   const [isFocused, setIsFocused] = useState(false);
+
+  const dynamicFontSize = useMemo(() => {
+    const displayPrefix = selectedCurrency === "USD" && showDollarIcon;
+    const displaySuffix = selectedCurrency !== "USD" && suffixText;
+    
+    // Calculate total character count including prefix/suffix
+    let totalChars = amount.length || 3; // Default "0.00" is 4 chars
+    if (displayPrefix) totalChars += 1; // $ sign
+    if (displaySuffix && amount.length > 0) totalChars += (suffixText?.length || 0);
+    if (selectedCurrency === "USD" && suffixText && amount.length > 0) totalChars += 4; // "USD" text
+    
+    // Available width for the amount display (with padding)
+    const availableWidth = SCREEN_WIDTH - 80;
+    
+    // Estimate character width ratio (bold font is wider)
+    const charWidthRatio = 0.6;
+    
+    // Calculate the ideal font size based on content
+    const idealFontSize = availableWidth / (totalChars * charWidthRatio);
+    
+    // Clamp between min and max
+    const clampedSize = Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, idealFontSize));
+    
+    return Math.floor(clampedSize);
+  }, [amount, selectedCurrency, showDollarIcon, suffixText]);
 
   const handleAmountChange = (value: string) => {
     const numericValue = parseFloat(value);
@@ -79,17 +109,18 @@ const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
       <View
         style={{
           flexDirection: "row",
-          alignItems: "flex-end",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
         {displayPrefix && (
           <Text
             style={{
-              fontSize: 48,
+              fontSize: dynamicFontSize,
               fontWeight: "bold",
               color: theme.colors.palette.grey900,
-              // position:'absolute'
-              lineHeight:Platform.OS == 'ios' ? 50 : 85
+              includeFontPadding: false,
+              textAlignVertical: "center",
             }}
           >
             $
@@ -101,10 +132,14 @@ const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
           onChangeText={handleAmountChange}
           keyboardType="decimal-pad"
           style={{
-            fontSize: 48,
+            fontSize: dynamicFontSize,
             fontWeight: "bold",
             color: theme.colors.palette.black,
             minWidth: 0,
+            includeFontPadding: false,
+            textAlignVertical: "center",
+            padding: 0,
+            margin: 0,
           }}
           placeholder="0.00"
           placeholderTextColor={theme.colors.palette.grey400}
@@ -113,51 +148,51 @@ const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
           onBlur={() => setIsFocused(false)}
         />
         {amount.length > 0 && displaySuffix && (
-          <View>
-            <TouchableOpacity
-              onPress={handleCurrencyToggle}
+          <TouchableOpacity
+            onPress={handleCurrencyToggle}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginLeft: 8,
+              gap: 4,
+            }}
+          >
+            <Text
               style={{
-                alignItems: "center",
-                flexDirection: "row",
-                marginBottom: 10,
-                gap: 10,
-                marginLeft: 10,
+                fontSize: 18,
+                fontWeight: "bold",
+                color: theme.colors.palette.grey900,
+                includeFontPadding: false,
+                textAlignVertical: "center",
               }}
             >
-              <Text
-                style={{
-                  fontSize: 20,
-                  fontWeight: "bold",
-                  color: theme.colors.palette.grey900,
-                }}
-              >
-                {suffixText}
-              </Text>
-              <SvgIcons.ChevronDown style={{}} />
-            </TouchableOpacity>
-          </View>
+              {suffixText}
+            </Text>
+            <SvgIcons.ChevronDown />
+          </TouchableOpacity>
         )}
         {amount.length > 0 && selectedCurrency === "USD" && suffixText && (
           <TouchableOpacity
             onPress={handleCurrencyToggle}
             style={{
-              marginBottom: 10,
-              marginLeft: 10,
               flexDirection: "row",
               alignItems: "center",
-              gap: 5,
+              marginLeft: 8,
+              gap: 4,
             }}
           >
             <Text
               style={{
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: "bold",
                 color: theme.colors.palette.grey600,
+                includeFontPadding: false,
+                textAlignVertical: "center",
               }}
             >
               USD
             </Text>
-            <SvgIcons.ChevronDown style={{}} />
+            <SvgIcons.ChevronDown />
           </TouchableOpacity>
         )}
       </View>
