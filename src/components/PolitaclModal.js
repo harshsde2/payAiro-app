@@ -22,6 +22,20 @@ import useDispatchAction from '../hooks/useDispatchAction';
 import {setBiometric} from '../services/Auth';
 
 const PoliticalModal = ({isVisible, onClose, onConfirm}) => {
+  const handleLearnMore = async () => {
+    const url = 'https://bsaaml.ffiec.gov/manual/RisksAssociatedWithMoneyLaunderingAndTerroristFinancing/20';
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'Cannot open this URL');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to open URL');
+    }
+  };
+
   return (
     <Modal
       visible={isVisible}
@@ -31,34 +45,20 @@ const PoliticalModal = ({isVisible, onClose, onConfirm}) => {
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <Text style={styles.headerText}>
-            Are You a Politically Exposed Person
+            Access Restricted
           </Text>
-          <Text
-            style={{
-              fontSize: 14,
-              fontFamily: Fonts.regular,
-              color: 'grey',
-              textAlign: 'center',
-            }}>
-            Scale boolean component frame pixel
+          <Text style={styles.descriptionText}>
+            Based on your selection, you are identified as a Politically Exposed Person (PEP).
+            Under U.S. regulatory and AML/BSA policies, Politically Exposed Persons are not permitted to use the PayAiro app at this time.{' '}
+            <Text style={styles.linkText} onPress={handleLearnMore}>
+              Learn more
+            </Text>
           </Text>
-          <View style={{flexDirection: 'row'}}>
-            <GenericButton
-              title={`Yes`}
-              cStyle={{marginTop: 25, width: '50%', marginRight: 5}}
-              onPress={() => {
-                onConfirm(true);
-              }}
-            />
-            <GenericButton
-              title={'No'}
-              cStyle={{backgroundColor: '#000', marginTop: 25, width: '50%'}}
-              tStyle={{color: 'white'}}
-              onPress={() => {
-                onConfirm(false);
-              }}
-            />
-          </View>
+          <GenericButton
+            title="Close"
+            cStyle={{marginTop: 25, width: '100%'}}
+            onPress={onClose}
+          />
         </View>
       </View>
     </Modal>
@@ -95,6 +95,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 10,
     marginTop: 15,
+  },
+  descriptionText: {
+    fontSize: 14,
+    fontFamily: Fonts.regular,
+    color: 'grey',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginTop: 10,
+  },
+  linkText: {
+    color: '#4F378B',
+    textDecorationLine: 'underline',
+    fontFamily: Fonts.medium,
   },
   sectionHeader: {
     fontSize: 14,

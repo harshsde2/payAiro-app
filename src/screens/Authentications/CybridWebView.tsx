@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { Button, Platform, View } from "react-native";
+import { Platform, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
@@ -10,7 +10,6 @@ import GenericButton from "components/GenericButton";
 import {
   useCreatePin,
   useKYCCompleted,
-  useKYCStatus,
   useWalletDetails,
 } from "query/hooks";
 import { useDispatch } from "react-redux";
@@ -26,7 +25,7 @@ import PinScreen from "tsx-components/modals/PinScreen";
 import { PinScreenRef } from "tsx-components/modals/modal.types";
 import useDispatchAction from "hooks/useDispatchAction";
 import LottieView from "lottie-react-native";
-import useSelectorAction from "hooks/useSelectorAction";
+import { useAppLock } from "hooks/useAppLock";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 
 const CybridWebView = () => {
@@ -34,6 +33,7 @@ const CybridWebView = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation<any>();
   const pinScreenRef = useRef<PinScreenRef | any>();
+  const { refreshPinStatus } = useAppLock();
   const { URL, isUserAlreadyCreated } = route.params as any;
 
   console.log("URL ->", URL);
@@ -140,6 +140,7 @@ const CybridWebView = () => {
         if (data && data?.status) {
           console.log("handlPinCreation => ✅");
           setPin(pin);
+          refreshPinStatus(); // Update app lock context with new PIN status
           showSuccess("Transaction Pin created successfully");
           //   handleKYCCheck();
           // getWalletDetails();

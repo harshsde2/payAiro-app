@@ -1,5 +1,6 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
+import { useAppLock } from "hooks/useAppLock";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { useGetReward, useUserPin, useWalletDetails } from "query/hooks";
 import { useLogin, useStepCount, useVerifyOTP } from "query/hooks/useAPIAuth";
@@ -41,6 +42,7 @@ export default function ConfirmOTP() {
 
   const dispatch = useDispatch();
   const navigation = useNavigation();
+  const { refreshPinStatus } = useAppLock();
 
   const { fcmToken, tokens } = useSelectorAction();
   const route = useRoute();
@@ -256,6 +258,7 @@ export default function ConfirmOTP() {
         setWalletDataAuth(walletData);
         setItem(STORAGE_KEYS.WALLET_DATA, JSON.stringify(walletData));
         setPin(pin);
+        refreshPinStatus(); // Update app lock context with new PIN status
         dispatch(setLogin(true));
         showSuccess("Logged in Successfully");
       } else {

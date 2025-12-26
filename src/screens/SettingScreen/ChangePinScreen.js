@@ -28,6 +28,7 @@ import {
 import CommonModal from "tsx-components/modals/CommonModal";
 import { themes, useTheme } from "styles";
 import { CustomText } from "tsx-components";
+import { useAppLock } from "hooks/useAppLock";
 
 const PinInput = ({ value, setValue, nextRef }) => {
   return (
@@ -47,6 +48,7 @@ const PinInput = ({ value, setValue, nextRef }) => {
 const ChangePinScreen = () => {
   const globalStyles = useGlobalStyles();
   const { theme } = useTheme();
+  const { refreshPinStatus } = useAppLock();
 
   const { tokens } = useSelector((state) => state.authenticationSlice);
   const dispatch = useDispatch();
@@ -109,6 +111,7 @@ const ChangePinScreen = () => {
           onSuccess: (data) => {
             setShowLoader(false);
             setPin(confirmPin.join(""));
+            refreshPinStatus(); // Update app lock context with new PIN status
             console.log(JSON.stringify(data.data, null, 2));
             showSuccess("Pin change successfully");
             setConfirmPin(["", "", "", ""]);

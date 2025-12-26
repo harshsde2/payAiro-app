@@ -10,6 +10,7 @@ export interface AppLockContextType {
   unlockApp: () => void;
   updateLastActive: () => void;
   shouldShowLock: boolean;
+  refreshPinStatus: () => void;
 }
 
 export const LOCK_CONFIG = {

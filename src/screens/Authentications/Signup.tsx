@@ -235,7 +235,13 @@ export default function Signup() {
             </TouchableOpacity>
             <TouchableOpacity
               activeOpacity={0.7}
-              onPress={() => setIsPoliticalModalVisible(true)}
+              onPress={() => {
+                const newValue = !isPoliticallyExposed;
+                setIsPoliticallyExposed(newValue);
+                if (newValue) {
+                  setIsPoliticalModalVisible(true);
+                }
+              }}
               style={styles.termsAndConditionContainer}
             >
               {renderCheckbox(isPoliticallyExposed)}

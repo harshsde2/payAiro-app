@@ -2,6 +2,8 @@ import { useNavigation } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import UploadFile from "components/UploadFile";
 import { SVGChecked, SVGUnChecked } from "constants/images";
+import { useAppLock } from "hooks/useAppLock";
+import useDispatchAction from "hooks/useDispatchAction";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import {
   useAddBankAccount,
@@ -9,9 +11,8 @@ import {
   useCreatePin,
   useSubmitKYC,
 } from "query/hooks/useAPIAuth";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import {
-  Button,
   Image,
   StyleSheet,
   Text,
@@ -29,10 +30,10 @@ import GenericButton from "../../components/GenericButton";
 import Fonts from "../../constants/Fonts";
 import useSelectorAction from "../../hooks/useSelectorAction";
 import {
+  setErrorMsg,
   setLogin,
   setShowGuide,
   setShowLoader,
-  setShowRedeemReward,
   setWalletData,
 } from "../../redux/slices/authenticationSlice";
 import { showError, showSuccess } from "../../utils/toast";
@@ -41,7 +42,6 @@ import { useGetReward, useWalletDetails } from "query/hooks";
 import { setWalletDataAuth } from "services/Auth";
 import { useDispatch } from "react-redux";
 import { setItem, setPin, STORAGE_KEYS } from "storage/mmkv";
-import useDispatchAction from "hooks/useDispatchAction";
 
 export default function SelfieScreen(props: any) {
   const { payload } = props.route.params || {};
@@ -50,6 +50,7 @@ export default function SelfieScreen(props: any) {
   const styles = customStyles(theme);
   const dispatch = useDispatch();
   const pinScreenRef = useRef<PinScreenRef | any>();
+  const { refreshPinStatus } = useAppLock();
 
   const { tokens, userData } = useSelectorAction();
   const [checked, setchecked] = useState(false);
@@ -304,6 +305,7 @@ export default function SelfieScreen(props: any) {
         if (data && data?.status) {
           console.log("handlPinCreation => ✅");
           setPin(pin);
+          refreshPinStatus(); // Update app lock context with new PIN status
           showSuccess("Transaction Pin created successfully");
           handleAddBankAccounts();
 
