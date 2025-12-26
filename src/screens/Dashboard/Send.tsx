@@ -186,7 +186,7 @@ const Send: React.FC<ISendProps> = ({ route }) => {
                 editable={isEditable}
                 label={type === "requested" ? "From" : "To"}
                 placeholder="PayAiroTag, Phone, Email"
-                rightIcon={SVGScan}
+                rightIcon={ type === "requested" ? '' : SVGScan}
                 onRightIconClick={() => {
                   navigation.navigate(NAVIGATION_SCREENS.SCANS);
                   dispatch(setActiveTab("3"));
