@@ -71,7 +71,7 @@ const CryptoSell = () => {
 
   const { data: cryptoBalanceData, isLoading: isBalanceLoading } = useCryptoBalanceByAsset(symbol);
   
-  const availableBalance = cryptoBalanceData?.data?.rounded_balance || "0.00";
+  const availableBalance = cryptoBalanceData?.data?.platform_available || "0.00";
 
   const handleCheckPin = () => {
     if (pinScreenRef.current) {

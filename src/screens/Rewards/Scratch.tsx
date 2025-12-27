@@ -914,9 +914,10 @@ const styles = (theme: any) =>
       justifyContent: "space-between",
       marginTop: theme.spacing.spacing[3],
       gap: theme.spacing.spacing[3],
+      // backgroundColor: "red",
     },
     summaryItem: {
-      width: "48%",
+      width: "45%",
       backgroundColor: theme.colors.palette.gray100 || "#F5F5F5",
       borderRadius: 12,
       padding: theme.spacing.spacing[3],

@@ -40,10 +40,11 @@ export default function StatementDetails() {
   const [isSharing, setIsSharing] = useState<boolean>(false);
   const { walletData } = useSelectorAction() as any;
 
-  const { data, statementData } = (route.params as IStatementDetailsRouteParams) || {
-    data: [],
-    statementData: null,
-  };
+  const { data, statementData } =
+    (route.params as IStatementDetailsRouteParams) || {
+      data: [],
+      statementData: null,
+    };
   // console.log(JSON.stringify(data, null, 2), "data");
 
   const filteredData = data.filter((item) => {
@@ -72,9 +73,12 @@ export default function StatementDetails() {
       // Get account details
       const bankAccount = statementData?.cybrid_bank_accounts?.[0];
       const userDetails = statementData?.user_details;
-      const userName = walletData?.name || userDetails?.email?.split("@")[0] || "Account Holder";
+      const userName =
+        walletData?.name ||
+        userDetails?.email?.split("@")[0] ||
+        "Account Holder";
       const userEmail = userDetails?.email || walletData?.account_email || "";
-      
+
       // Get address from bank account or use defaults
       const address = bankAccount?.counterparty_address;
       const addressLine1 = address?.street || "";
@@ -83,7 +87,7 @@ export default function StatementDetails() {
       const state = address?.subdivision || "";
       const postalCode = address?.postal_code || "";
       const country = address?.country_code || "";
-      
+
       // Format full address
       const fullAddress = [
         addressLine1,
@@ -91,38 +95,46 @@ export default function StatementDetails() {
         city,
         state,
         postalCode,
-        country
-      ].filter(Boolean).join(", ");
+        country,
+      ]
+        .filter(Boolean)
+        .join(", ");
 
       // Calculate period from transactions
-      const sortedTransactions = [...filteredData].sort((a, b) => 
-        moment(a.datetime).valueOf() - moment(b.datetime).valueOf()
+      const sortedTransactions = [...filteredData].sort(
+        (a, b) => moment(a.datetime).valueOf() - moment(b.datetime).valueOf()
       );
-      const startDate = sortedTransactions.length > 0 
-        ? moment(sortedTransactions[0].datetime).format("DD-MM-YYYY")
-        : moment().format("DD-MM-YYYY");
-      const endDate = sortedTransactions.length > 0
-        ? moment(sortedTransactions[sortedTransactions.length - 1].datetime).format("DD-MM-YYYY")
-        : moment().format("DD-MM-YYYY");
+      const startDate =
+        sortedTransactions.length > 0
+          ? moment(sortedTransactions[0].datetime).format("DD-MM-YYYY")
+          : moment().format("DD-MM-YYYY");
+      const endDate =
+        sortedTransactions.length > 0
+          ? moment(
+              sortedTransactions[sortedTransactions.length - 1].datetime
+            ).format("DD-MM-YYYY")
+          : moment().format("DD-MM-YYYY");
 
       // Calculate running balance (reverse chronological order for statement)
-      const reversedTransactions = [...filteredData].sort((a, b) => 
-        moment(b.datetime).valueOf() - moment(a.datetime).valueOf()
+      const reversedTransactions = [...filteredData].sort(
+        (a, b) => moment(b.datetime).valueOf() - moment(a.datetime).valueOf()
       );
-      
+
       let runningBalance = 0;
-      const transactionsWithBalance = reversedTransactions.map((item) => {
-        const amount = parseFloat(item.amount) || 0;
-        if (item.type === "credit") {
-          runningBalance += amount;
-        } else {
-          runningBalance -= amount;
-        }
-        return {
-          ...item,
-          balance: runningBalance,
-        };
-      }).reverse(); // Reverse back to chronological order
+      const transactionsWithBalance = reversedTransactions
+        .map((item) => {
+          const amount = parseFloat(item.amount) || 0;
+          if (item.type === "credit") {
+            runningBalance += amount;
+          } else {
+            runningBalance -= amount;
+          }
+          return {
+            ...item,
+            balance: runningBalance,
+          };
+        })
+        .reverse(); // Reverse back to chronological order
 
       // Format amount with commas
       const formatAmount = (amount: string | number) => {
@@ -347,52 +359,93 @@ export default function StatementDetails() {
                   <span class="account-summary-label">Period:</span>
                   <span class="account-summary-value">${startDate} to ${endDate}</span>
                 </div>
-                ${bankAccount ? `
+                ${
+                  bankAccount
+                    ? `
                 <div class="account-summary-row">
                   <span class="account-summary-label">Account No:</span>
-                  <span class="account-summary-value">${bankAccount.account_number || "N/A"}</span>
+                  <span class="account-summary-value">${
+                    bankAccount.account_number || "N/A"
+                  }</span>
                 </div>
                 <div class="account-summary-row">
                   <span class="account-summary-label">Currency:</span>
-                  <span class="account-summary-value">${bankAccount.asset || "USD"}</span>
+                  <span class="account-summary-value">${
+                    bankAccount.asset || "USD"
+                  }</span>
                 </div>
                 <div class="account-summary-row">
                   <span class="account-summary-label">Branch:</span>
-                  <span class="account-summary-value">${bankAccount.bank_name || "PayAiro Bank"}</span>
+                  <span class="account-summary-value">${
+                    bankAccount.bank_name || "PayAiro Bank"
+                  }</span>
                 </div>
-                ${bankAccount.ref_code ? `
+                ${
+                  bankAccount.ref_code
+                    ? `
                 <div class="account-summary-row">
                   <span class="account-summary-label">Routing Number:</span>
                   <span class="account-summary-value">${bankAccount.ref_code}</span>
                 </div>
-                ` : ""}
-                ${bankAccount.routing_number_type ? `
+                `
+                    : ""
+                }
+                ${
+                  bankAccount.routing_number_type
+                    ? `
                 <div class="account-summary-row">
                   <span class="account-summary-label">Routing Type:</span>
                   <span class="account-summary-value">${bankAccount.routing_number_type}</span>
                 </div>
-                ` : ""}
-                ${bankAccount.account_type ? `
+                `
+                    : ""
+                }
+                ${
+                  bankAccount.account_type
+                    ? `
                 <div class="account-summary-row">
                   <span class="account-summary-label">Account Type:</span>
                   <span class="account-summary-value">${bankAccount.account_type}</span>
                 </div>
-                ` : ""}
-                ${bankAccount.account_status ? `
+                `
+                    : ""
+                }
+                ${
+                  bankAccount.account_status
+                    ? `
                 <div class="account-summary-row">
                   <span class="account-summary-label">Account Status:</span>
                   <span class="account-summary-value">${bankAccount.account_status}</span>
                 </div>
-                ` : ""}
-                ${address ? `
-                ${address.street ? `
+                `
+                    : ""
+                }
+                ${
+                  address
+                    ? `
+                ${
+                  address.street
+                    ? `
                 <div class="account-summary-row">
                   <span class="account-summary-label">Branch Address:</span>
-                  <span class="account-summary-value">${address.street}${address.street2 ? ", " + address.street2 : ""}${address.city ? ", " + address.city : ""}${address.postal_code ? ", " + address.postal_code : ""}${address.subdivision ? ", " + address.subdivision : ""}${address.country_code ? ", " + address.country_code : ""}</span>
+                  <span class="account-summary-value">${address.street}${
+                        address.street2 ? ", " + address.street2 : ""
+                      }${address.city ? ", " + address.city : ""}${
+                        address.postal_code ? ", " + address.postal_code : ""
+                      }${
+                        address.subdivision ? ", " + address.subdivision : ""
+                      }${
+                        address.country_code ? ", " + address.country_code : ""
+                      }</span>
                 </div>
-                ` : ""}
-                ` : ""}
-                ` : `
+                `
+                    : ""
+                }
+                `
+                    : ""
+                }
+                `
+                    : `
                 <div class="account-summary-row">
                   <span class="account-summary-label">Account No:</span>
                   <span class="account-summary-value">N/A</span>
@@ -401,7 +454,8 @@ export default function StatementDetails() {
                   <span class="account-summary-label">Currency:</span>
                   <span class="account-summary-value">USD</span>
                 </div>
-                `}
+                `
+                }
                 <div class="account-summary-row">
                   <span class="account-summary-label">Email:</span>
                   <span class="account-summary-value">${userEmail}</span>
@@ -421,28 +475,38 @@ export default function StatementDetails() {
               </thead>
               <tbody>
                 ${transactionsWithBalance
-                  .map(
-                    (item) => {
-                      const amount = parseFloat(item.amount) || 0;
-                      const formattedAmount = formatAmount(amount);
-                      const formattedBalance = formatAmount(item.balance);
-                      const isCredit = item.type === "credit";
-                      const transactionItem = item as ITransactionItem & { balance: number };
-                      const refNo = transactionItem.transaction_id || transactionItem.order_id || transactionItem.option || "N/A";
-                      
-                      return `
+                  .map((item) => {
+                    const amount = parseFloat(item.amount) || 0;
+                    const formattedAmount = formatAmount(amount);
+                    const formattedBalance = formatAmount(item.balance);
+                    const isCredit = item.type === "credit";
+                    const transactionItem = item as ITransactionItem & {
+                      balance: number;
+                    };
+                    const refNo =
+                      transactionItem.transaction_id ||
+                      transactionItem.order_id ||
+                      transactionItem.option ||
+                      "N/A";
+
+                    return `
                         <tr>
                           <td>${moment(item.datetime).format("DD-MM-YYYY")}</td>
                           <td>${getNarration(item)}</td>
-                          <td>${refNo.length > 20 ? refNo.substring(0, 20) + "..." : refNo}</td>
-                          <td class="amount-col ${isCredit ? "credit" : "debit"}">
+                          <td>${
+                            refNo.length > 20
+                              ? refNo.substring(0, 20) + "..."
+                              : refNo
+                          }</td>
+                          <td class="amount-col ${
+                            isCredit ? "credit" : "debit"
+                          }">
                             ${formattedAmount}${isCredit ? "(Cr)" : "(Dr)"}
                           </td>
                           <td class="balance-col">${formattedBalance}(Cr)</td>
                         </tr>
                       `;
-                    }
-                  )
+                  })
                   .join("")}
               </tbody>
             </table>
@@ -463,6 +527,16 @@ export default function StatementDetails() {
       };
       const pdf = await RNHTMLtoPDF.convert(pdfOptions);
 
+      // Verify PDF file exists
+      if (!pdf || !pdf.filePath) {
+        throw new Error("PDF generation failed - no file path returned");
+      }
+
+      const fileExists = await RNFS.exists(pdf.filePath);
+      if (!fileExists) {
+        throw new Error("PDF file was not created successfully");
+      }
+
       if (!isShare) {
         // Move PDF to Download Directory for Access
         const downloadDir =
@@ -476,11 +550,48 @@ export default function StatementDetails() {
           `Your bank statement has been saved to: ${downloadDir}`
         );
       } else {
-        // Share PDF
+        // Share PDF - Handle Android differently
+        let fileUri: string;
+        
+        if (Platform.OS === "android") {
+          // For Android, copy to cache directory for sharing
+          // This ensures the file is accessible for sharing
+          const cacheFilePath = `${RNFS.CachesDirectoryPath}/${fileName}.pdf`;
+          
+          // Remove existing file if it exists
+          const cacheFileExists = await RNFS.exists(cacheFilePath);
+          if (cacheFileExists) {
+            await RNFS.unlink(cacheFilePath);
+          }
+          
+          // Copy PDF to cache directory
+          await RNFS.copyFile(pdf.filePath, cacheFilePath);
+          
+          // Verify the copied file exists
+          const copiedFileExists = await RNFS.exists(cacheFilePath);
+          if (!copiedFileExists) {
+            throw new Error("Failed to prepare PDF file for sharing");
+          }
+          
+          // Use the cache file path with file:// prefix for Android
+          // Some versions of react-native-share require this format
+          fileUri = `file://${cacheFilePath}`;
+        } else {
+          // For iOS, use file:// prefix
+          fileUri = `file://${pdf.filePath}`;
+        }
+
+        // Ensure fileUri is valid before sharing
+        if (!fileUri || fileUri.trim() === "") {
+          throw new Error("Invalid file URI for sharing");
+        }
+
         const shareOptions = {
-          url: `file://${pdf.filePath}`,
+          url: fileUri,
           type: "application/pdf",
+          filename: fileName,
         };
+        
         await Share.open(shareOptions);
         showSuccess(
           "PDF Ready to Share",
@@ -497,11 +608,11 @@ export default function StatementDetails() {
         error?.message?.toLowerCase().includes("cancelled") ||
         error?.code === "ECANCELLED" ||
         error?.message === "User did not share";
-
       // Only show error if it's not a user cancellation
       if (!isUserCancelled) {
         const errorMessage =
           error?.message || "Failed to generate PDF. Please try again.";
+        console.log("errorMessage =>", errorMessage);
         showError("PDF Generation Failed", errorMessage);
       }
     } finally {
@@ -544,7 +655,9 @@ export default function StatementDetails() {
                     >
                       {moment(item?.datetime).format("YYYY-MMM-DD , LT")}
                     </CustomText>
-                    {(item?.account_holder || item?.account_number || item?.routing_number) && (
+                    {(item?.account_holder ||
+                      item?.account_number ||
+                      item?.routing_number) && (
                       <View style={styles.accountDetailsContainer}>
                         {item?.account_holder && (
                           <CustomText

@@ -256,7 +256,8 @@ const TransactionResult: FC = () => {
   };
 
   const renderTransactionDetails = () => {
-    if (showLoader || !transactionData?.data) return null;
+    // Don't show transaction details when showing custom messages (like payment request success)
+    if (showLoader || !transactionData?.data || customTitle || customDescription) return null;
 
     // Handle different response structures
     // For crypto transactions: data.data.transaction

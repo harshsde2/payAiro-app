@@ -46,6 +46,7 @@ const Send: React.FC<ISendProps> = ({ route }) => {
   const { theme } = useTheme();
   const styles = customStyles(theme);
 
+  // console.log("params =>", JSON.stringify(params, null, 2));
   
 
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -103,8 +104,8 @@ const Send: React.FC<ISendProps> = ({ route }) => {
         showValidationError(data?.message || "Recipient not found");
       }
     } catch (e: any) {
-      console.log("User verification failed:", JSON.stringify(e, null, 2));
-      showValidationError(e?.message || "Something went wrong. Please try again.");
+      console.log("User verification failed:", JSON.stringify(e.response, null, 2));
+      showValidationError(e?.response?.data?.data?.message || "Something went wrong. Please try again.");
     } finally {
       setPendingVerification(false);
     }

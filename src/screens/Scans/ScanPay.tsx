@@ -364,7 +364,7 @@ export default function ScanPay(props: IScanPayProps) {
         if (data?.status) {
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
             isLoading: false,
-            transactionData: data,
+            transactionData: null,
             isSuccess: true,
             isError: false,
             customTitle: "Payment Request Sent Successfully",
@@ -606,7 +606,7 @@ export default function ScanPay(props: IScanPayProps) {
         </TouchableOpacity>
       )}
 
-      <HeaderTitle title={"Payment"} leftIcon={'true'} />
+      <HeaderTitle title={ type === "requested" ? "Payment Request" : "Payment"} leftIcon={'true'} />
       <View
         style={{
           justifyContent: "center",
@@ -776,7 +776,7 @@ export default function ScanPay(props: IScanPayProps) {
           {type === "requested" && (
             <GenericButton
               title={"Request"}
-              cStyle={{ width: "100%", backgroundColor: "grey" }}
+              cStyle={{ width: "100%", }}
               onPress={() => {
                 handleRequested();
               }}

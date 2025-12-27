@@ -58,6 +58,8 @@ const HowToEarnPointsModal: React.FC<IHowToEarnPointsModalProps> = ({
             style={styles(theme).scrollView}
             contentContainerStyle={styles(theme).scrollContent}
             showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
+            keyboardShouldPersistTaps="handled"
           >
             {pointsInstructions.map((instruction, index) => (
               <View key={index} style={styles(theme).listItem}>
@@ -92,12 +94,13 @@ const styles = (theme: any) =>
       alignItems: "center",
     },
     modalContainer: {
-        flex: 1,
       width: "90%",
-      maxHeight: "70%",
+      maxHeight: "80%",
       backgroundColor: theme.colors.palette.white,
       borderRadius: 16,
       padding: theme.spacing.spacing[5],
+      justifyContent: "flex-start",
+      flexDirection: "column",
     },
     headerContainer: {
       flexDirection: "row",
@@ -113,9 +116,10 @@ const styles = (theme: any) =>
       padding: theme.spacing.spacing[1],
     },
     scrollView: {
-      flex: 1,
+      flexGrow: 1,
     },
     scrollContent: {
+      flexGrow: 1,
       paddingBottom: theme.spacing.spacing[2],
     },
     listItem: {

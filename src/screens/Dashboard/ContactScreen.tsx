@@ -10,6 +10,8 @@ import {
   Keyboard,
   Platform,
   ToastAndroid,
+  Linking,
+  Alert,
 } from "react-native";
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { SvgXml } from "react-native-svg";
@@ -25,7 +27,6 @@ import CustomSearchTextInput from "tsx-components/CustomSearchTextInput";
 import {
   SVGAddIcon,
   SVGInvitePeople,
-  SVGLeftArrow,
 } from "../../constants/images";
 import Fonts from "../../constants/Fonts";
 import { getContacts } from "../../services/Services";
@@ -37,10 +38,11 @@ import LoaderComponent from "tsx-components/LoaderComponent";
 import { Theme } from "styles";
 import Share from "react-native-share";
 import { showSuccess, showError } from "utils/toast";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 
 export default function ContactScreen(props: any) {
   const { isVisble3 } = props.route?.params || {};
-  const { tokens, walletData } = useSelectorAction();
+  const { tokens, walletData } = useSelectorAction() as unknown as { tokens: any, walletData: any };
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
 
@@ -129,9 +131,66 @@ export default function ContactScreen(props: any) {
     navigation.navigate("AddContact");
   }, [navigation]);
 
+  const handleInviteViaMessage = useCallback(async () => {
+    const referralCode = walletData?.username as string || "";
+    if (!referralCode) {
+      showError("Referral code not available");
+      return;
+    }
+
+    const referralLink = `https://payairo.app/ref/${referralCode}`;
+    const message = `Join PayAiro and use my referral code: ${referralCode}\n\nDownload the app: ${referralLink}`;
+
+    try {
+      // Platform-specific SMS URL schemes
+      let smsUrl: string;
+      if (Platform.OS === "ios") {
+        // iOS: sms: works without phone number
+        smsUrl = `sms:&body=${encodeURIComponent(message)}`;
+      } else {
+        // Android: sms: with empty number and body
+        smsUrl = `sms:?body=${encodeURIComponent(message)}`;
+      }
+
+      const canOpen = await Linking.canOpenURL(smsUrl);
+      
+      if (canOpen) {
+        await Linking.openURL(smsUrl);
+      } else {
+        // Fallback: Show share options if SMS is not available
+        const shareOptions = {
+          message: message,
+          title: "Invite to PayAiro",
+        };
+        await Share.open(shareOptions);
+      }
+    } catch (error: any) {
+      // User cancelled or error occurred
+      if (
+        error?.message?.toLowerCase().includes("user did not share") ||
+        error?.message === "User did not share" ||
+        error?.message?.toLowerCase().includes("cancel")
+      ) {
+        // User cancelled, do nothing
+        return;
+      }
+      console.log("Invite error:", error);
+      // Fallback to share sheet if SMS fails
+      try {
+        const shareOptions = {
+          message: message,
+          title: "Invite to PayAiro",
+        };
+        await Share.open(shareOptions);
+      } catch (shareError) {
+        showError("Failed to open messaging app");
+      }
+    }
+  }, [walletData]);
+
   const handleContactPress = useCallback(
     (item: any) => {
-      navigation.navigate("ContactTx", { item, isVisble3 });
+      navigation.navigate(NAVIGATION_SCREENS.SEND, { requested: false, sender: item?.username?.trim() ?? null });
     },
     [navigation, isVisble3]
   );
@@ -195,7 +254,7 @@ export default function ContactScreen(props: any) {
           style={styles(theme).contactItem}
           activeOpacity={0.8}
           onPress={() => {
-            /* Handle invite action */
+            // Device contacts can be invited via the invite button
           }}
         >
           <View style={styles(theme).contactLeftSection}>
@@ -215,7 +274,10 @@ export default function ContactScreen(props: any) {
               )}
             </View>
             <TouchableOpacity
-              onPress={handleAddContact}
+              onPress={(e) => {
+                e.stopPropagation();
+                handleInviteViaMessage();
+              }}
               style={styles(theme).addButton}
             >
               <CustomText variant="button" color={theme.colors.text.inverse}>
@@ -270,7 +332,7 @@ export default function ContactScreen(props: any) {
   };
 
   const handleShare = useCallback(async () => {
-    const referralCode = walletData?.username || "";
+    const referralCode = walletData?.username as string || "";
     if (!referralCode) {
       showError("Referral code not available");
       return;
@@ -311,7 +373,7 @@ export default function ContactScreen(props: any) {
       >
         <HeaderTitle
           title="Discover"
-          leftIcon={SVGLeftArrow}
+          leftIcon={'true'}
           isBack
           onPressLeft={handleGoBack}
         />

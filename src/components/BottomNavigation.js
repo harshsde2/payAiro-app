@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import React, { useMemo } from "react";
 import { SvgXml } from "react-native-svg";
 import {
@@ -161,13 +161,13 @@ export default function BottomNavigation({ isVer }) {
       style={
         !isVer
           ? {
-              padding: 10,
+              padding: 0,
               backgroundColor: "black",
               borderRadius: 20,
               position: "absolute",
-              bottom: 20,
+              bottom: 0,
               zIndex: 9999,
-              width: "92%",
+              width: "95%",
               alignSelf: "center",
             }
           : {}
@@ -182,6 +182,7 @@ export default function BottomNavigation({ isVer }) {
       >
         {/* Dashboard Tab */}
         <TouchableOpacity
+        style={styles.iconContainer}
           onPress={() => {
             handleSwitchBankingView();
             handleTabSwitch(NAVIGATION_SCREENS.NEW_DASHBOARD);
@@ -192,16 +193,18 @@ export default function BottomNavigation({ isVer }) {
 
         {/* Crypto Tab */}
         <TouchableOpacity
+        style={styles.iconContainer}
           onPress={() => {
             handleSwitchCryptoView();
             handleTabSwitch(NAVIGATION_SCREENS.NEW_DASHBOARD);
           }}
         >
-          <SvgIcons.CryptoIcon width={25} height={25} style={{ opacity: activeTab === "7" ? 1 : 0.6 }} />
+          <SvgIcons.BottomCryptoIcon color={'white'} width={25} height={25} style={{ opacity: activeTab === "7" ? 1 : 0.6 }} />
         </TouchableOpacity>
 
         {/* Scan Tab */}
         <TouchableOpacity
+        style={styles.iconContainer}
           // disabled={true}
           onPress={() => {
             // handleSwitchBankingView();
@@ -214,6 +217,7 @@ export default function BottomNavigation({ isVer }) {
         </TouchableOpacity>
         {/* Transaction Tab */}
         <TouchableOpacity
+        style={styles.iconContainer}
           // disabled={true}
           onPress={() => {
             // handleSwitchBankingView();
@@ -271,6 +275,7 @@ export default function BottomNavigation({ isVer }) {
 
         {/* Setting Tab */}
         <TouchableOpacity
+        style={styles.iconContainer}
           onPress={() => {
             // handleSwitchBankingView();
             handleTabSwitch(NAVIGATION_SCREENS.SETTING_SCREEN);
@@ -284,3 +289,12 @@ export default function BottomNavigation({ isVer }) {
     </View>
   );
 }
+
+
+const styles = StyleSheet.create({
+  iconContainer: {
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    // backgroundColor: 'red',
+  },
+});

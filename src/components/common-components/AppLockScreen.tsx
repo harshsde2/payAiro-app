@@ -10,13 +10,11 @@ import {
   BackHandler,
 } from "react-native";
 import { Theme, useTheme } from "styles";
-import { showError } from "utils/toast";
 import { SvgIcons } from "constants/svgs";
 import { getPin } from "storage/mmkv";
 import CustomText from "tsx-components/CustomText";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppLock } from "hooks/useAppLock";
-import { LOCK_CONFIG } from "types/appLock.types";
 
 const AppLockScreen: React.FC = () => {
   const { theme } = useTheme();
@@ -26,10 +24,7 @@ const AppLockScreen: React.FC = () => {
   const [pin, setPin] = useState("");
   const [isVerifyingPin, setIsVerifyingPin] = useState(false);
   const [showPin, setShowPin] = useState(false);
-  const [attempts, setAttempts] = useState(0);
-  const [error, setError] = useState("");
-
-  const MAX_ATTEMPTS = LOCK_CONFIG.MAX_PIN_ATTEMPTS;
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Verify PIN against stored PIN
   const verifyPin = (enteredPin: string): boolean => {
@@ -39,10 +34,10 @@ const AppLockScreen: React.FC = () => {
 
   // Handle PIN digit input
   const handlePinDigit = (digit: string) => {
-    if (pin.length < 4 && attempts < MAX_ATTEMPTS) {
+    if (pin.length < 4) {
       const newPin = pin + digit;
       setPin(newPin);
-      setError(""); // Clear error on new input
+      setErrorMessage(""); // Clear error on new input
 
       // Auto-verify when 4 digits are entered
       if (newPin.length === 4) {
@@ -54,7 +49,7 @@ const AppLockScreen: React.FC = () => {
   // Handle backspace
   const handlePinBackspace = () => {
     setPin((prev) => prev.slice(0, -1));
-    setError(""); // Clear error on backspace
+    setErrorMessage(""); // Clear error on backspace
   };
 
   // Verify PIN and unlock app
@@ -62,38 +57,23 @@ const AppLockScreen: React.FC = () => {
     const pinToCheck = pinToVerify || pin;
     if (pinToCheck.length < 4) return;
 
-    if (attempts >= MAX_ATTEMPTS) {
-      setError("Too many attempts. Please try again later.");
-      return;
-    }
-
     setIsVerifyingPin(true);
-    setError("");
+    setErrorMessage("");
 
     try {
       const isValid = verifyPin(pinToCheck);
       if (isValid) {
         // PIN is correct, unlock the app
         setPin("");
-        setAttempts(0);
-        setError("");
+        setErrorMessage("");
         unlockApp();
       } else {
         // PIN is incorrect
-        const newAttempts = attempts + 1;
-        setAttempts(newAttempts);
-
-        if (newAttempts >= MAX_ATTEMPTS) {
-          setError("Too many attempts. Please try again later.");
-        } else {
-          setError(
-            `Incorrect PIN. ${MAX_ATTEMPTS - newAttempts} attempts remaining.`
-          );
-        }
+        setErrorMessage("Invalid PIN. Please try again.");
         setPin("");
       }
     } catch (error) {
-      setError("Failed to verify PIN. Please try again.");
+      setErrorMessage("Failed to verify PIN. Please try again.");
       setPin("");
     } finally {
       setIsVerifyingPin(false);
@@ -109,8 +89,7 @@ const AppLockScreen: React.FC = () => {
   useEffect(() => {
     if (isLocked) {
       setPin("");
-      setError("");
-      setAttempts(0);
+      setErrorMessage("");
     }
   }, [isLocked]);
 
@@ -215,11 +194,13 @@ const AppLockScreen: React.FC = () => {
               ))}
             </View>
 
-            {error ? (
+            {/* Error Message Display */}
+            {errorMessage && (
               <View style={styles.errorContainer}>
-                <CustomText style={styles.errorText}>{error}</CustomText>
+                <SvgIcons.ToastCross width={16} height={16} fill="#C92A2A" />
+                <CustomText style={styles.errorText}>{errorMessage}</CustomText>
               </View>
-            ) : null}
+            )}
 
             {isVerifyingPin ? (
               <View style={styles.loadingContainer}>
@@ -243,7 +224,7 @@ const AppLockScreen: React.FC = () => {
                     key={num}
                     style={styles.keypadButton}
                     onPress={() => handlePinDigit(num)}
-                    disabled={attempts >= MAX_ATTEMPTS || isVerifyingPin}
+                    disabled={isVerifyingPin}
                   >
                     <Text style={styles.keypadNumber}>{num}</Text>
                   </TouchableOpacity>
@@ -255,7 +236,7 @@ const AppLockScreen: React.FC = () => {
               <TouchableOpacity
                 style={styles.keypadButton}
                 onPress={handlePinBackspace}
-                disabled={attempts >= MAX_ATTEMPTS || isVerifyingPin}
+                disabled={isVerifyingPin}
               >
                 <SvgIcons.KeyboardBack width={35} height={35} />
               </TouchableOpacity>
@@ -263,22 +244,16 @@ const AppLockScreen: React.FC = () => {
               <TouchableOpacity
                 style={styles.keypadButton}
                 onPress={() => handlePinDigit("0")}
-                disabled={attempts >= MAX_ATTEMPTS || isVerifyingPin}
+                disabled={isVerifyingPin}
               >
                 <Text style={styles.keypadNumber}>0</Text>
               </TouchableOpacity>
 
               <View style={styles.actionButtonWrapper}>
                 <TouchableOpacity
-                  style={(styles as any).actionButton(
-                    pin.length === 4 && attempts < MAX_ATTEMPTS
-                  )}
+                  style={(styles as any).actionButton(pin.length === 4)}
                   onPress={() => handleVerifyPin()}
-                  disabled={
-                    pin.length !== 4 ||
-                    isVerifyingPin ||
-                    attempts >= MAX_ATTEMPTS
-                  }
+                  disabled={pin.length !== 4 || isVerifyingPin}
                 >
                   {isVerifyingPin ? (
                     <ActivityIndicator color="#FFF" size="small" />
@@ -379,14 +354,20 @@ const customStyles = (theme: Theme) =>
       height: 2,
     },
     errorContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "#FFEBEB",
+      paddingVertical: 10,
+      paddingHorizontal: 15,
+      borderRadius: 8,
       marginTop: 20,
-      paddingHorizontal: 20,
+      gap: 8,
     },
     errorText: {
+      color: "#C92A2A",
       fontSize: 14,
-      color: theme.colors.palette.error || "#FF0000",
-      fontFamily: theme.typography.fontFamily.montserrat,
-      textAlign: "center",
+      fontFamily: theme.typography.fontFamily.montserratSemiBold,
     },
     loadingContainer: {
       marginTop: 20,

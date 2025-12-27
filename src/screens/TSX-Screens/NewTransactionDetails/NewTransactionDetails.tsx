@@ -23,6 +23,7 @@ import CustomText from "tsx-components/CustomText";
 import { SvgIcons } from "constants/svgs";
 import GenericButton from "components/GenericButton";
 import { INewTransactionDetailsProps } from "./types";
+import useSelectorAction from "hooks/useSelectorAction";
 // OR use react-native's built-in method for Android
 
 // Typography variants for transaction slip - change these to adjust font size globally
@@ -38,11 +39,12 @@ const NewTransactionDetails: FC = () => {
   const route = useRoute();
   const { theme } = useTheme();
   const screenshotRef = useRef<ViewShot>(null);
+  const {walletData} = useSelectorAction() as any;
 
   const { transactionData } =
     route.params as INewTransactionDetailsProps["route"]["params"];
 
-  console.log("transactionData =>", JSON.stringify(transactionData, null, 2));
+  // console.log("transactionData =>", JSON.stringify(transactionData, null, 2));
 
   // Get slip text styles - these can be modified in the styles function below
   const slipStyles = styles(theme);
@@ -100,8 +102,59 @@ const NewTransactionDetails: FC = () => {
   const accountNumberMasked =
     transactionData.bank_details?.account_number_masked || null;
 
-  // Fee
-  const feeAmount = parseFloat(transactionData.fee?.amount || "0");
+  // Fee calculation based on transaction type and walletData.fees
+  const getFeePercentage = (): number => {
+    const fees = walletData?.fees || {};
+    const txType = transactionData.transaction_type;
+
+    // Map transaction types to fee types
+    if (txType === "crypto_buy") return fees.BUY || 0;
+    if (txType === "crypto_sell") return fees.SELL || 0;
+    if (txType === "crypto_send" || txType === "crypto_receive") return fees.TRANSACTION || 0;
+    if (txType === "crypto_withdrawal") return fees.TRANSACTION || 0;
+    
+    // For fiat transactions, check transfer method
+    if (txType === "fiat_bank_transfer_out" || txType === "fiat_bank_transfer_in") {
+      const transferMethod = transactionData.bank_details?.transfer_method?.toUpperCase();
+      if (transferMethod === "RTP") return fees.RTP || 0;
+      if (transferMethod === "ACH") return fees.ACH || 0;
+      return fees.TRANSACTION || 0;
+    }
+    
+    // Default to TRANSACTION fee for other fiat transactions
+    return fees.TRANSACTION || 0;
+  };
+
+  const feePercentage = getFeePercentage();
+  
+  // Calculate fee amount - use API fee if available, otherwise calculate from percentage
+  let feeAmount = parseFloat(transactionData.fee?.amount || "0");
+  const feeCurrency = transactionData.fee?.currency || transactionData.currency || "USD";
+  
+  // If fee amount is 0 but we have a fee percentage, calculate it
+  if (feeAmount === 0 && feePercentage > 0) {
+    const txType = transactionData.transaction_type;
+    // For crypto buy, calculate fee from the original USD amount paid
+    if (txType === "crypto_buy") {
+      const usdAmount = parseFloat(transactionData.amount || "0");
+      feeAmount = (usdAmount * feePercentage) / 100;
+    }
+    // For crypto sell, calculate fee from the USD value
+    else if (txType === "crypto_sell") {
+      const usdValue = parseFloat(transactionData.crypto_details?.usd_value || transactionData.final_amount || "0");
+      feeAmount = (usdValue * feePercentage) / 100;
+    }
+    // For other transactions, calculate from transaction amount
+    else {
+      const transactionAmount = parseFloat(transactionData.amount || "0");
+      feeAmount = (transactionAmount * feePercentage) / 100;
+    }
+  }
+  
+  // Use API fee percentage if available, otherwise use calculated percentage
+  const displayFeePercentage = transactionData.fee?.percentage 
+    ? parseFloat(transactionData.fee.percentage) 
+    : feePercentage;
 
   // Crypto details
   // Note: isCrypto === false means crypto transaction (matches Redux state convention)
@@ -460,8 +513,6 @@ const NewTransactionDetails: FC = () => {
       <HeaderTitle
         title="Transaction Details"
         leftIcon="back"
-        rightIcon={<SvgIcons.ShareIcon width={30} height={30} />}
-        onPressRight={handleScreenshotShare}
       />
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -744,14 +795,14 @@ const NewTransactionDetails: FC = () => {
             )}
 
             {/* Fee - Only for fiat transactions (crypto Send shows fee in its own section) */}
-            {isCrypto && feeAmount > 0 && (
+            {isCrypto && (feeAmount > 0 || displayFeePercentage > 0) && (
               <View style={styles(theme).detailRow}>
                 <CustomText
                   variant={SLIP_LABEL_VARIANT}
                   color={theme.colors.text.secondary}
                   style={slipStyles.slipLabelText}
                 >
-                  Fee
+                  Transaction Fee
                 </CustomText>
                 <CustomText
                   variant={SLIP_VALUE_VARIANT}
@@ -760,6 +811,7 @@ const NewTransactionDetails: FC = () => {
                   style={slipStyles.slipValueText}
                 >
                   {currencySymbol} {feeAmount.toFixed(2)}
+                  {displayFeePercentage > 0 && ` (${displayFeePercentage.toFixed(2)}%)`}
                 </CustomText>
               </View>
             )}
@@ -890,6 +942,27 @@ const NewTransactionDetails: FC = () => {
                         </CustomText>
                       </View>
                     )}
+
+                    {/* Transaction Fee */}
+                    {(feeAmount > 0 || displayFeePercentage > 0) && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
+                        >
+                          Transaction Fee
+                        </CustomText>
+                        <CustomText
+                          variant={SLIP_VALUE_VARIANT}
+                          fontWeight="semiBold"
+                          color={theme.colors.text.primary}
+                          style={slipStyles.slipValueText}
+                        >
+                          ${feeAmount.toFixed(2)} ({displayFeePercentage.toFixed(2)}%)
+                        </CustomText>
+                      </View>
+                    )}
                   </>
                 )}
 
@@ -984,6 +1057,27 @@ const NewTransactionDetails: FC = () => {
                           color={theme.colors.text.primary}
                         >
                           ${parseFloat(usdValue).toFixed(2)}
+                        </CustomText>
+                      </View>
+                    )}
+
+                    {/* Transaction Fee */}
+                    {(feeAmount > 0 || displayFeePercentage > 0) && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
+                        >
+                          Transaction Fee
+                        </CustomText>
+                        <CustomText
+                          variant={SLIP_VALUE_VARIANT}
+                          fontWeight="semiBold"
+                          color={theme.colors.text.primary}
+                          style={slipStyles.slipValueText}
+                        >
+                          ${feeAmount.toFixed(2)} ({displayFeePercentage.toFixed(2)}%)
                         </CustomText>
                       </View>
                     )}
@@ -1168,20 +1262,23 @@ const NewTransactionDetails: FC = () => {
                     )}
 
                     {/* Fee */}
-                    {feeAmount > 0 && (
+                    {(feeAmount > 0 || displayFeePercentage > 0) && (
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
                           color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
                         >
-                          Fee
+                          Transaction Fee
                         </CustomText>
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
                           color={theme.colors.text.primary}
+                          style={slipStyles.slipValueText}
                         >
                           {currencySymbol} {feeAmount.toFixed(2)}
+                          {displayFeePercentage > 0 && ` (${displayFeePercentage.toFixed(2)}%)`}
                         </CustomText>
                       </View>
                     )}
@@ -1513,6 +1610,28 @@ const NewTransactionDetails: FC = () => {
                         </CustomText>
                       </View>
                     )}
+
+                    {/* Transaction Fee */}
+                    {(feeAmount > 0 || displayFeePercentage > 0) && (
+                      <View style={styles(theme).detailRow}>
+                        <CustomText
+                          variant={SLIP_LABEL_VARIANT}
+                          color={theme.colors.text.secondary}
+                          style={slipStyles.slipLabelText}
+                        >
+                          Transaction Fee
+                        </CustomText>
+                        <CustomText
+                          variant={SLIP_VALUE_VARIANT}
+                          fontWeight="semiBold"
+                          color={theme.colors.text.primary}
+                          style={slipStyles.slipValueText}
+                        >
+                          {currencySymbol} {feeAmount.toFixed(2)}
+                          {displayFeePercentage > 0 && ` (${displayFeePercentage.toFixed(2)}%)`}
+                        </CustomText>
+                      </View>
+                    )}
                   </>
                 )}
               </>
@@ -1545,7 +1664,7 @@ const NewTransactionDetails: FC = () => {
         </ViewShot>
 
         <View style={{ paddingHorizontal: 20, marginBottom: 40 }}>
-          <GenericButton title="Download" onPress={handleDownload} />
+          <GenericButton title="Share" onPress={handleScreenshotShare} />
         </View>
       </ScrollView>
     </ScreenContainer>

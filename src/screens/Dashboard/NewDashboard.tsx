@@ -1431,7 +1431,7 @@ const NewDashboard = () => {
             bottom: -15,
           }}
         >
-          <View
+          {/* <View
             style={{
               paddingVertical: 10,
               backgroundColor: "black",
@@ -1441,10 +1441,11 @@ const NewDashboard = () => {
               zIndex: 100,
               width: "92%",
               alignSelf: "center",
-            }}
-          >
-            <BottomNavigation isVer={true} />
-          </View>
+            }} 
+              >
+             */}
+            <BottomNavigation isVer={false} />
+          {/* </View> */}
         </View>
       }
 
@@ -1638,7 +1639,7 @@ const NewDashboard = () => {
                         height={iconSize - 5}
                       />
                     </View>
-                    <CustomText size={11}>Receive</CustomText>
+                    <CustomText size={11}>Request</CustomText>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => {

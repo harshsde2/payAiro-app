@@ -70,7 +70,7 @@ export const SETTINGS_LISTS = [
     route: "Personal",
   },
   {
-    name: "Security & privacy",
+    name: "Security & Privacy",
     icon: <SvgIcons.SecurityIcon />,
     isDisvled: false,
     route: "Settings2",

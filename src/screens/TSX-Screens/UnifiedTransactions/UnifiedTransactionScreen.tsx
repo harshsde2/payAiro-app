@@ -449,9 +449,11 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
                     ? "Search Name or PayAiro tag..."
                     : "Search crypto transactions..."
                 }
+                style={styles.searchInput}
                 placeholderTextColor={theme.colors.palette.green700}
                 onChangeText={setSearchText}
                 value={searchText}
+                numberOfLines={1}
               />
             </View>
             {/* Only show filter for fiat (isCrypto === true) */}
@@ -547,6 +549,13 @@ const createStyles = (theme: Theme) =>
     searchInputWrapper: {
       flex: 1,
       marginRight: 10,
+    },
+    searchInput: {
+      flex: 1,
+      fontSize: 16,
+      color: theme.colors.palette.green900,
+      
+      fontFamily: theme.typography.fontFamily.montserrat,
     },
     filterIcon: {
       justifyContent: "center",

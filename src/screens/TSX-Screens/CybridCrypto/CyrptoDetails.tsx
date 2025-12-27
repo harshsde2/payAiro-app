@@ -31,7 +31,7 @@ import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 const CyrptoDetails: React.FC = () => {
   const { theme } = useTheme();
   const route = useRoute();
-  const [showFullAbout, setShowFullAbout] = useState(false);
+  const [showFullAbout, setShowFullAbout] = useState(true);
   const [cryptoData, setCryptoData] = useState<ICryptoDetails | null>(null);
   const [chartData, setChartData] = useState<
     Array<{ x: number; y: number; date?: string }>
@@ -486,7 +486,7 @@ const CyrptoDetails: React.FC = () => {
           >
             {aboutText}
           </CustomText>
-          <TouchableOpacity onPress={() => setShowFullAbout(!showFullAbout)}>
+          {/* <TouchableOpacity onPress={() => setShowFullAbout(!showFullAbout)}>
             <CustomText
               size={14}
               color={theme.colors.palette.blue500}
@@ -494,7 +494,7 @@ const CyrptoDetails: React.FC = () => {
             >
               {showFullAbout ? "Show less" : "Show more"}
             </CustomText>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </DashboardSection>
 
         {/* Recent Activity Section */}
