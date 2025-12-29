@@ -123,7 +123,7 @@ export default function Receive() {
     if (isOnChain) {
       return depositAddress || "loading";
     }
-    return `sending: ${walletData?.username}`;
+    return `${walletData?.username}`;
   };
 
   // Get the display label based on chain type

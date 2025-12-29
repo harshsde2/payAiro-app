@@ -755,7 +755,7 @@ export default function StatementDetails() {
             Support
           </CustomText>
         </TouchableOpacity>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.actionButton}
           onPress={() => generatePDF(false)}
           disabled={isGeneratingPDF || filteredData.length === 0}
@@ -770,7 +770,7 @@ export default function StatementDetails() {
           <CustomText variant="body2" color={theme.colors.text.primary}>
             Download
           </CustomText>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <TouchableOpacity
           style={styles.actionButton}
           onPress={() => generatePDF(true)}
@@ -853,7 +853,7 @@ const customStyles = (theme: Theme) =>
     },
     actionBar: {
       flexDirection: "row",
-      justifyContent: "space-between",
+      justifyContent: "space-around",
       alignItems: "center",
       margin: theme.spacing.spacing[2],
       padding: theme.spacing.spacing[1],

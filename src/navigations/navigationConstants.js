@@ -114,5 +114,7 @@ export const NAVIGATION_SCREENS = {
   BANK_SELECTION: "BankSelection",
   QR_SCANNER:'QRScanner',
   NEW_TRANSACTION_DETAILS: "NewTransactionDetails",
-  UNIFIED_TRANSACTION: "UnifiedTransaction"
+  UNIFIED_TRANSACTION: "UnifiedTransaction",
+  HOW_TO_EARN_POINTS: "HowToEarnPoints",
+  BLOCKCHAIN_NAME_SERVICE_TERMS: "BlockchainNameServiceTerms"
 };

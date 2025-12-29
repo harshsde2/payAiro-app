@@ -14,6 +14,7 @@ import { Theme, useTheme } from "styles";
 import { useSendOTP, useVerifyUserForSendOTP } from "query/hooks/useAPIAuth";
 import { showError, showSuccess } from "../../../utils/toast";
 import HeaderTitle from "components/HeaderTitle";
+import { SvgIcons } from "constants/svgs";
 
 interface ITransactionOTPRouteParams {
   onOTPVerified?: () => void;
@@ -33,6 +34,7 @@ const OTP = () => {
   const [countdown, setCountdown] = useState<number>(60);
   const [resendEnabled, setResendEnabled] = useState<boolean>(false);
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   const { mutate: sendOTP, isPending: isSendingOTP } = useSendOTP();
   const { mutate: verifyUserForSendOTP, isPending: isVerifyingOTP } =
@@ -82,6 +84,11 @@ const OTP = () => {
   };
 
   const handleOtpChange = (text: string, index: number) => {
+    // Clear error when user starts typing
+    if (errorMessage) {
+      setErrorMessage("");
+    }
+
     // Check if text length is greater than 1 (paste scenario)
     if (text.length > 1) {
       handlePasteText(text, index);
@@ -149,10 +156,12 @@ const OTP = () => {
 
   const handleVerifyOTP = () => {
     setIsVerifying(true);
+    setErrorMessage(""); // Clear previous error
     const enteredOtp = otp.join("");
     
     if (enteredOtp.length < 6) {
       showError("Please enter complete OTP");
+      setErrorMessage("Please enter complete OTP");
       setIsVerifying(false);
       return;
     }
@@ -166,6 +175,7 @@ const OTP = () => {
         console.log("OTP verified successfully:", data);
         showSuccess("OTP verified successfully");
         setIsVerifying(false);
+        setErrorMessage("");
         
         // Navigate back and execute the transaction
         navigation.goBack();
@@ -173,9 +183,11 @@ const OTP = () => {
           onOTPVerified();
         }
       },
-      onError: (error) => {
+      onError: (error: any) => {
         console.log("Error verifying OTP:", error);
-        showError("Invalid OTP. Please try again.");
+        const errMsg = error?.response?.data?.data?.message || error?.response?.data?.message || "Invalid OTP. Please try again.";
+        showError(errMsg);
+        setErrorMessage(errMsg);
         setIsVerifying(false);
       },
     });
@@ -212,7 +224,11 @@ const OTP = () => {
             {otp.map((digit, index) => (
               <TextInput
                 key={index}
-                style={[styles.otpInput, digit && styles.otpInputActive]}
+                style={[
+                  styles.otpInput, 
+                  digit && styles.otpInputActive,
+                  errorMessage && styles.otpInputError,
+                ]}
                 maxLength={6}
                 keyboardType="number-pad"
                 onChangeText={(text) => handleOtpChange(text, index)}
@@ -227,6 +243,14 @@ const OTP = () => {
               />
             ))}
           </View>
+
+          {/* Error Message Display */}
+          {errorMessage ? (
+            <View style={styles.errorContainer}>
+              <SvgIcons.ToastCross width={16} height={16} />
+              <CustomText style={styles.errorText}>{errorMessage}</CustomText>
+            </View>
+          ) : null}
 
           {/* Resend Section */}
           <View style={styles.resendSection}>
@@ -345,6 +369,31 @@ const customStyles = (theme: Theme) =>
       borderColor: theme.colors.palette.green500,
       borderWidth: 2,
       backgroundColor: theme.colors.palette.green50,
+    },
+    otpInputError: {
+      borderColor: "#C92A2A",
+      borderWidth: 1.5,
+    },
+    errorContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "#FFF5F5",
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      marginBottom: 20,
+      width: "100%",
+      borderWidth: 1,
+      borderColor: "#C92A2A",
+    },
+    errorText: {
+      color: "#C92A2A",
+      fontSize: 14,
+      fontFamily: theme.typography.fontFamily.montserratSemiBold,
+      marginLeft: 8,
+      flex: 1,
+      textAlign: "center",
     },
     resendSection: {
       alignItems: "center",

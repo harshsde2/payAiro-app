@@ -1,5 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -26,7 +26,7 @@ import useSelectorAction from "../../hooks/useSelectorAction";
 // Services & Actions
 import { ScreenContainer } from "HOC";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { clearAll } from "storage/mmkv";
 import KYCBadge from "tsx-components/KYCBadge";
 import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
@@ -40,25 +40,37 @@ import {
   setWalletDataAuth
 } from "../../services/Auth";
 import { useKyc } from "../../query/hooks";
+import { toKycMode } from "types/kyc";
 
 export default function SettingScreen() {
   const navigation = useNavigation();
   const [isVisible, setIsVisible] = useState(false);
   const { tokens, walletData } = useSelectorAction();
   const [kycStep, setKycStep] = useState("");
+
+  const kycStatus = useSelector((s) => s.authenticationSlice?.kycStatus);
+  const mode = useMemo(() => toKycMode(kycStatus), [kycStatus]);
+  console.log("mode =>", mode);
   // console.log("kyc step =>", JSON.stringify(kycStep, null, 2));
 
-  const termsAndConditionRef = useRef(null);
-
-  const dispatch = useDispatch();
-
-  const { data: kycData } = useKyc();
-
-  const setuserPin = async () => {
-    await setPin("1234");
+  // Map KYC mode to badge status
+  const getKycBadgeStatus = (kycMode) => {
+    switch (kycMode) {
+      case "approved":
+        return "Verified";
+      case "pending":
+      case "not_started":
+      case "unknown":
+        return "Pending";
+      case "expired":
+        return "Rejected";
+      default:
+        return "Pending";
+    }
   };
 
-  console.log(kycStep?.selfimage, "image");
+  const termsAndConditionRef = useRef(null);
+  const { data: kycData } = useKyc();
 
   useEffect(() => {
     if (kycData?.data?.step_count) {
@@ -146,15 +158,7 @@ export default function SettingScreen() {
               >
                 {walletData?.name}
               </Text>
-              <KYCBadge
-                status={
-                  kycStep?.is_varified == true
-                    ? "Verified"
-                    : kycStep?.is_varified == false
-                    ? "Pending"
-                    : "Rejected"
-                }
-              />
+              <KYCBadge status={getKycBadgeStatus(mode)} />
             </View>
           </View>
           <View

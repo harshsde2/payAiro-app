@@ -96,6 +96,8 @@ import WithdrawlBalance from "screens/TSX-Screens/AddBalance/WithdrawlBalance";
 import NewTransactionDetails from "screens/TSX-Screens/NewTransactionDetails/NewTransactionDetails";
 import UnifiedTransactionScreen from "screens/TSX-Screens/UnifiedTransactions/UnifiedTransactionScreen";
 import CyrptoDetails from "screens/TSX-Screens/CybridCrypto/CyrptoDetails";
+import HowToEarnPoints from "screens/TSX-Screens/Modals/HowToEarnPoints";
+import BlockchainNameServiceTerms from "screens/TSX-Screens/Modals/BlockchainNameServiceTerms";
 
 const Stack = createNativeStackNavigator();
 
@@ -605,6 +607,32 @@ export default function AppStack() {
         }}
         name={NAVIGATION_SCREENS.CRYPTO_LIST}
         component={CryptoList}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: false,
+          presentation: 'containedTransparentModal',
+          gestureEnabled: true,
+          animationTypeForReplace: 'push',
+          animation: 'fade',
+          animationMatchesGesture:true,
+          gestureDirection:'vertical'
+        }}
+        name={NAVIGATION_SCREENS.HOW_TO_EARN_POINTS}
+        component={HowToEarnPoints}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: false,
+          presentation: 'containedTransparentModal',
+          gestureEnabled: true,
+          animationTypeForReplace: 'push',
+          animation: 'fade',
+          animationMatchesGesture:true,
+          gestureDirection:'vertical'
+        }}
+        name={NAVIGATION_SCREENS.BLOCKCHAIN_NAME_SERVICE_TERMS}
+        component={BlockchainNameServiceTerms}
       />
       <Stack.Screen
         options={{

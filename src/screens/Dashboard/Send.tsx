@@ -1,40 +1,37 @@
-import {
-  View,
-  Text,
-  KeyboardAvoidingView,
-  ScrollView,
-  Platform,
-  StyleSheet,
-} from "react-native";
-import React, { useState } from "react";
-import Fonts from "../../constants/Fonts";
-import TextInputField from "../../components/TextInputField";
-import { SvgXml } from "react-native-svg";
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { SVGLeftArrow, SVGUSD, SVGScan } = require("../../constants/images");
-import GenericButton from "../../components/GenericButton";
-import { SCREENS } from "../../constants/SCREENS";
-import { useNavigation } from "@react-navigation/native";
-import useSelectorAction from "../../hooks/useSelectorAction";
-import { setActiveTab } from "../../redux/slices/authenticationSlice";
-import { showError } from "../../utils/toast";
-import { CustomText } from "tsx-components";
-import { Theme, useTheme } from "styles";
+import { RouteProp, useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import { useDispatch } from "react-redux";
 import { useVerifyUserByIdentifier } from "query/hooks/useUser";
-import { detectBlockchainNameService } from "../../utils/blockchainNameService";
-import BlockchainNameServiceTermsModal from "../../components/common-components/BlockchainNameServiceTermsModal";
-import { RouteProp } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import React, { useState } from "react";
 import {
-  ISendScreenRouteParams,
-  IBankItem,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { SvgXml } from "react-native-svg";
+import { useDispatch } from "react-redux";
+import { Theme, useTheme } from "styles";
+import { CustomText } from "tsx-components";
+import GenericButton from "../../components/GenericButton";
+import TextInputField from "../../components/TextInputField";
+import Fonts from "../../constants/Fonts";
+import { SCREENS } from "../../constants/SCREENS";
+import useSelectorAction from "../../hooks/useSelectorAction";
+import { setActiveTab } from "../../redux/slices/authenticationSlice";
+import { detectBlockchainNameService } from "../../utils/blockchainNameService";
+import { showError } from "../../utils/toast";
+import {
   IBankBalance,
-  BlockchainServiceType,
+  IBankItem,
+  ISendScreenRouteParams
 } from "./types";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { SVGLeftArrow, SVGUSD, SVGScan } = require("../../constants/images");
 
 interface ISendProps {
   route: RouteProp<{ Send: ISendScreenRouteParams }, "Send">;
@@ -69,10 +66,6 @@ const Send: React.FC<ISendProps> = ({ route }) => {
     isPending: userLoading,
   } = useVerifyUserByIdentifier();
 
-  // Blockchain Name Service modal state
-  const [showTermsModal, setShowTermsModal] = useState<boolean>(false);
-  const [blockchainServiceType, setBlockchainServiceType] =
-    useState<BlockchainServiceType>(null);
   const [pendingVerification, setPendingVerification] = useState<boolean>(false);
 
   // Show validation error using toast
@@ -111,11 +104,6 @@ const Send: React.FC<ISendProps> = ({ route }) => {
     }
   };
 
-  // Handle terms agreement for blockchain name service
-  const handleTermsAgree = (): void => {
-    setShowTermsModal(false);
-    handleUserVerification();
-  };
 
   // Handle next button press with validation
   const handleNextPress = async (): Promise<void> => {
@@ -132,9 +120,15 @@ const Send: React.FC<ISendProps> = ({ route }) => {
       detectBlockchainNameService(trimmedSender);
 
     if (isBlockchainNameService && serviceType) {
-      // Show terms modal for blockchain name service addresses
-      setBlockchainServiceType(serviceType);
-      setShowTermsModal(true);
+      // Clear any previous agreement flag before navigating
+      navigation.setParams({ blockchainTermsAgreed: undefined } as any);
+      // Navigate to terms screen for blockchain name service addresses
+      navigation.navigate(NAVIGATION_SCREENS.BLOCKCHAIN_NAME_SERVICE_TERMS, {
+        serviceType: serviceType,
+        onAgreeCallback: async () => {
+          await handleUserVerification();
+        },
+      });
       return;
     }
 
@@ -243,18 +237,6 @@ const Send: React.FC<ISendProps> = ({ route }) => {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Blockchain Name Service Terms Modal */}
-      {blockchainServiceType && (
-        <BlockchainNameServiceTermsModal
-          isVisible={showTermsModal}
-          onClose={() => {
-            setShowTermsModal(false);
-            setBlockchainServiceType(null);
-          }}
-          onAgree={handleTermsAgree}
-          serviceType={blockchainServiceType}
-        />
-      )}
     </ScreenContainer>
   );
 };

@@ -22,13 +22,14 @@
     "android:production:debug": "cd android && ENVFILE=.env.production ./gradlew installProductionDebug && cd ../ && adb shell am start -n com.payairo/com.payairo.MainActivity",
     "android:production:debug:build": "cd android && ENVFILE=.env.production ./gradlew assembleProductionDebug && cd ../",
     "android:production:release": "cd android && ENVFILE=.env.production ./gradlew assembleProductionRelease && cd ../",
-    "ios:staging:debug": "ENVFILE=.env.staging react-native run-ios --scheme=payAiro",
-    "ios:staging:release": "ENVFILE=.env.staging react-native run-ios --scheme=payAiro --configuration=Release",
+    "android:production:release:bundle": "cd android && ENVFILE=.env.production ./gradlew bundleProductionRelease && cd ../",
+    "ios:staging:debug": "ENVFILE=.env.staging react-native run-ios --scheme=\"payAiro staging\"",
+    "ios:staging:release": "ENVFILE=.env.staging react-native run-ios --scheme=\"payAiro staging\" --configuration=StagingRelease",
     "ios:production:debug": "ENVFILE=.env.production react-native run-ios --scheme=payAiro",
     "ios:production:release": "ENVFILE=.env.production react-native run-ios --scheme=payAiro --configuration=Release",
     "build:android:staging": "cd android && ENVFILE=.env.staging ./gradlew assembleStagingRelease && cd ../",
     "build:android:production": "cd android && ENVFILE=.env.production ./gradlew assembleProductionRelease && cd ../",
-    "build:ios:staging": "ENVFILE=.env.staging react-native run-ios --scheme=payAiro --configuration=Release",
+    "build:ios:staging": "ENVFILE=.env.staging react-native run-ios --scheme=\"payAiro staging\" --configuration=StagingRelease",
     "build:ios:production": "ENVFILE=.env.production react-native run-ios --scheme=payAiro --configuration=Release"
   },
   "dependencies": {

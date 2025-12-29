@@ -30,6 +30,7 @@ import { SvgIcons } from "constants/svgs";
 import { setTheme } from "redux/slices/animationSlice";
 import { useTheme } from "styles";
 import { usePendingPaymentRequests } from "query/hooks";
+import { CustomText } from "tsx-components";
 
 export default function BottomNavigation({ isVer }) {
   const navigation = useNavigation();
@@ -163,11 +164,11 @@ export default function BottomNavigation({ isVer }) {
           ? {
               padding: 0,
               backgroundColor: "black",
-              borderRadius: 20,
+              // borderRadius: 20,
               position: "absolute",
               bottom: 0,
               zIndex: 9999,
-              width: "95%",
+              width: "100%",
               alignSelf: "center",
             }
           : {}
@@ -182,108 +183,113 @@ export default function BottomNavigation({ isVer }) {
       >
         {/* Dashboard Tab */}
         <TouchableOpacity
-        style={styles.iconContainer}
+          style={styles.iconContainer}
           onPress={() => {
             handleSwitchBankingView();
             handleTabSwitch(NAVIGATION_SCREENS.NEW_DASHBOARD);
           }}
         >
           <SvgIcons.HomeIcon style={{ opacity: activeTab === "1" ? 1 : 0.6 }} />
+          <CustomText 
+            fontWeight='medium' 
+            size={11} 
+            style={[
+              styles.tabLabel, 
+              { color: theme.colors.palette.white, opacity: activeTab === "1" ? 1 : 0.6 }
+            ]}
+          >
+            Home
+          </CustomText>
         </TouchableOpacity>
 
         {/* Crypto Tab */}
         <TouchableOpacity
-        style={styles.iconContainer}
+          style={styles.iconContainer}
           onPress={() => {
             handleSwitchCryptoView();
             handleTabSwitch(NAVIGATION_SCREENS.NEW_DASHBOARD);
           }}
         >
-          <SvgIcons.BottomCryptoIcon color={'white'} width={25} height={25} style={{ opacity: activeTab === "7" ? 1 : 0.6 }} />
+          <SvgIcons.BottomCryptoIcon color={'white'} width={22} height={22} style={{ opacity: activeTab === "7" ? 1 : 0.6 }} />
+          <CustomText 
+            fontWeight='medium' 
+            size={11} 
+            style={[
+              styles.tabLabel, 
+              { color: theme.colors.palette.white, opacity: activeTab === "7" ? 1 : 0.6 }
+            ]}
+          >
+            Crypto
+          </CustomText>
         </TouchableOpacity>
 
         {/* Scan Tab */}
         <TouchableOpacity
-        style={styles.iconContainer}
-          // disabled={true}
+          style={styles.iconContainer}
           onPress={() => {
-            // handleSwitchBankingView();
             handleTabSwitch(SCREENS.Scans);
           }}
         >
-          <SvgIcons.NewScannerIcon
-          style={{opacity: activeTab === '3' ? 1 : 0.6}}
-          />
+          <SvgIcons.NewScannerIcon style={{ opacity: activeTab === '3' ? 1 : 0.6 }} />
+          <CustomText 
+            fontWeight='medium' 
+            size={11} 
+            style={[
+              styles.tabLabel, 
+              { color: theme.colors.palette.white, opacity: activeTab === '3' ? 1 : 0.6 }
+            ]}
+          >
+            Scan
+          </CustomText>
         </TouchableOpacity>
+
         {/* Transaction Tab */}
         <TouchableOpacity
-        style={styles.iconContainer}
-          // disabled={true}
+          style={styles.iconContainer}
           onPress={() => {
-            // handleSwitchBankingView();
             handleTabSwitch(NAVIGATION_SCREENS.UNIFIED_TRANSACTION);
           }}
         >
           <View>
-            <SvgIcons.TransactionIcon
-              style={{ opacity: activeTab === "2" ? 1 : 0.6 }}
-            />
+            <SvgIcons.TransactionIcon style={{ opacity: activeTab === "2" ? 1 : 0.6 }} />
             {pendingRequestCount > 0 && (
-              <View
-                style={{
-                  minWidth: 18,
-                  height: 18,
-                  borderRadius: 9,
-                  justifyContent: "center",
-                  alignItems: "center",
-                  backgroundColor: theme.colors.palette.error || "#FF3B30",
-                  position: "absolute",
-                  top: -6,
-                  right: -8,
-                  paddingHorizontal: 4,
-                  borderWidth: 2,
-                  borderColor: "#000",
-                }}
-              >
-                <Text
-                  style={{
-                    color: "white",
-                    fontFamily: Fonts.bold,
-                    textAlign: "center",
-                    fontSize: 10,
-                    lineHeight: 12,
-                  }}
-                >
+              <View style={styles.badgeContainer}>
+                <Text style={styles.badgeText}>
                   {pendingRequestCount > 99 ? "99+" : pendingRequestCount}
                 </Text>
               </View>
             )}
           </View>
+          <CustomText 
+            fontWeight='medium' 
+            size={11} 
+            style={[
+              styles.tabLabel, 
+              { color: theme.colors.palette.white, opacity: activeTab === "2" ? 1 : 0.6 }
+            ]}
+          >
+            Activity
+          </CustomText>
         </TouchableOpacity>
-
-
-
-        {/* Offer Tab */}
-        {/* <TouchableOpacity
-          // disabled={true}
-          onPress={() => handleTabSwitch(NAVIGATION_SCREENS.REWARDS)}
-        >
-          <SvgIcons.DiscountShape
-            style={{ opacity: activeTab === "4" ? 1 : 0.6 }}
-          />
-        </TouchableOpacity> */}
 
         {/* Setting Tab */}
         <TouchableOpacity
-        style={styles.iconContainer}
+          style={styles.iconContainer}
           onPress={() => {
-            // handleSwitchBankingView();
             handleTabSwitch(NAVIGATION_SCREENS.SETTING_SCREEN);
           }}
         >
-          <SvgIcons.SettingIcon
-            style={{ opacity: activeTab === "5" ? 1 : 0.6 }}
-          />
+          <SvgIcons.SettingIcon style={{ opacity: activeTab === "5" ? 1 : 0.6 }} />
+          <CustomText 
+            fontWeight='medium' 
+            size={11} 
+            style={[
+              styles.tabLabel, 
+              { color: theme.colors.palette.white, opacity: activeTab === "5" ? 1 : 0.6 }
+            ]}
+          >
+            Settings
+          </CustomText>
         </TouchableOpacity>
       </View>
     </View>
@@ -293,8 +299,35 @@ export default function BottomNavigation({ isVer }) {
 
 const styles = StyleSheet.create({
   iconContainer: {
-    paddingHorizontal: 10,
+    flex: 1,
     paddingVertical: 10,
-    // backgroundColor: 'red',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  tabLabel: {
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  badgeContainer: {
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FF3B30',
+    position: 'absolute',
+    top: -6,
+    right: -8,
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: '#000',
+  },
+  badgeText: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: 10,
+    lineHeight: 12,
   },
 });

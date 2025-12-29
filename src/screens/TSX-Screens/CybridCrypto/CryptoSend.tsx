@@ -270,7 +270,7 @@ const CryptoSend = () => {
   const onQRScanClick = () =>{
       navigation.navigate(NAVIGATION_SCREENS.QR_SCANNER,{
         onScanSuccess:(id:string) =>{
-          console.log("chla ->",id)
+          console.log("QR Scan Result received in CryptoSend:", id, "Type:", typeof id);
           setRecipient(id);
         }
       })

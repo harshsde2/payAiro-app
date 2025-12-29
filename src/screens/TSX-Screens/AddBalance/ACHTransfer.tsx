@@ -40,7 +40,6 @@ const ACHTransfer = () => {
     routes as any
   ).params;
 
-
   const inputRef = useRef<TextInput>(null);
 
   const { theme } = useTheme();
@@ -48,7 +47,7 @@ const ACHTransfer = () => {
   const customStyle = customStyles(theme);
   const styles = { ...useCommonAddBalanceStyles(), ...customStyle };
 
-  const { tokens, bankLists, bankBalance , walletData } = useSelectorAction();
+  const { tokens, bankLists, bankBalance, walletData } = useSelectorAction();
   const fees = (walletData as any)?.fees?.ACH;
 
   const [amount, setAmount] = useState(paramsAmount || "");
@@ -60,6 +59,7 @@ const ACHTransfer = () => {
   });
   const [showExtenalModel, setShowExternalModal] = useState(false);
   const [selectedBank, setSelectedBank] = useState<any>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   // const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -70,7 +70,6 @@ const ACHTransfer = () => {
 
   console.log("selectedBank =>", selectedBank);
   // console.log("paramsSouceAccount =>", paramsSouceAccount);
-
 
   // Initialize selectedBank from route parameters
   React.useEffect(() => {
@@ -97,24 +96,22 @@ const ACHTransfer = () => {
 
     return {
       id: index,
-      title: `${item?.bank_name || ""} (${maskedAccount || ""}) ${accountType || ""}`,
+      title: `${item?.bank_name || ""} (${maskedAccount || ""}) ${
+        accountType || ""
+      }`,
       icon: <SvgIcons.Bank />,
       bank_type: accountType,
       value: accountType?.toLowerCase() || "",
     };
   });
 
-
   const handleSelfTransfer = async () => {
-    if (
-      paramsAmount === "" ||
-      !selectedBank ||
-      selectedAccount?.title === ""
-    ) {
+    if (paramsAmount === "" || !selectedBank || selectedAccount?.title === "") {
       showError("One or more field are empty");
       return;
     }
 
+    console.log("step 1");
     // console.log("selectedBank =>", JSON.stringify(selectedBank, null, 2));
     // console.log("selectedAccount =>", JSON.stringify(selectedAccount, null, 2));
     const formData = new FormData();
@@ -125,7 +122,10 @@ const ACHTransfer = () => {
 
     useDispatchAction(setShowLoader(true));
 
-    console.log("formData =>", JSON.stringify(formData, null, 2));
+    // console.log("formData =>", JSON.stringify(formData, null, 2));
+
+    // Clear previous error before making new request
+    setErrorMessage(null);
 
     handleIntraAccountTransfer(formData as any, {
       onSuccess: (data) => {
@@ -137,10 +137,14 @@ const ACHTransfer = () => {
         });
       },
       onError: (error: any) => {
-        console.log("error =>", JSON.stringify(error.response, null, 2));
-        showError("Something went wrong");
+        const errorMsg =
+          error?.response?.data?.data?.message || "Something went wrong";
+        showError(errorMsg);
+        // Also set error message to display on screen
+        setErrorMessage(errorMsg);
       },
       onSettled: () => {
+        console.log("step 5");
         useDispatchAction(setShowLoader(false));
       },
     });
@@ -208,7 +212,7 @@ const ACHTransfer = () => {
               <CustomText variant={"caption"} style={styles.label}>
                 Routing Number
               </CustomText>
-                <CustomText>{selectedBank?.ref_code || "17147714"}</CustomText>
+              <CustomText>{selectedBank?.ref_code || "17147714"}</CustomText>
             </View>
             <View style={styles.row}>
               <CustomText variant={"caption"} style={styles.label}>
@@ -226,7 +230,7 @@ const ACHTransfer = () => {
               <CustomText variant={"caption"} style={styles.label}>
                 Amount
               </CustomText>
-              <CustomText>${paramsAmount || ""  }</CustomText>
+              <CustomText>${paramsAmount || ""}</CustomText>
             </View>
 
             <View style={{ marginVertical: 20, gap: 10 }}>
@@ -270,11 +274,15 @@ const ACHTransfer = () => {
               </CustomText>
               {selectedBank && (
                 <CustomText variant="caption">
-                  {selectedBank.label.split("(")[1]?.split(")")[0]} • {selectedBank.account_type}
+                  {selectedBank.label.split("(")[1]?.split(")")[0]} •{" "}
+                  {selectedBank.account_type}
                 </CustomText>
               )}
             </View>
-            <CustomText variant="caption" style={{ color: theme?.colors?.palette?.grey500 }}>
+            <CustomText
+              variant="caption"
+              style={{ color: theme?.colors?.palette?.grey500 }}
+            >
               From
             </CustomText>
           </View>
@@ -284,14 +292,23 @@ const ACHTransfer = () => {
       <CustomText align="center" size={14} variant="caption">
         Current Balance: ${(bankBalance as any)?.bank_account?.usd}
       </CustomText>
-      
+
       {/* Transfer Flow Header */}
       <View style={{ paddingHorizontal: 20, marginVertical: 10 }}>
-        <CustomText variant="subtitle2" align="center" style={{ marginBottom: 5 }}>
+        <CustomText
+          variant="subtitle2"
+          align="center"
+          style={{ marginBottom: 5 }}
+        >
           Transfer Flow
         </CustomText>
-        <CustomText variant="caption" align="center" style={{ color: theme?.colors?.palette?.grey500 }}>
-          Money will be transferred 'From' the source account 'To' the destination account and the fee will be {fees}%
+        <CustomText
+          variant="caption"
+          align="center"
+          style={{ color: theme?.colors?.palette?.grey500 }}
+        >
+          Money will be transferred 'From' the source account 'To' the
+          destination account and the fee will be {fees}%
         </CustomText>
       </View>
 
@@ -355,17 +372,23 @@ const ACHTransfer = () => {
                   )}
                 </View>
                 {item.icon}
-            <CustomText
-              color={theme.colors.palette.black}
-              variant="subtitle1"
-              size={12}
-              style={{ marginLeft: 10 ,flex:1}}
-            >
-              {item.title}
-            </CustomText>
-            <CustomText variant="caption" style={{ color: theme?.colors?.palette?.grey500, fontWeight:'bold', }}>
-              To
-            </CustomText>
+                <CustomText
+                  color={theme.colors.palette.black}
+                  variant="subtitle1"
+                  size={12}
+                  style={{ marginLeft: 10, flex: 1 }}
+                >
+                  {item.title}
+                </CustomText>
+                <CustomText
+                  variant="caption"
+                  style={{
+                    color: theme?.colors?.palette?.grey500,
+                    fontWeight: "bold",
+                  }}
+                >
+                  To
+                </CustomText>
               </TouchableOpacity>
             ))}
           {/* <TouchableOpacity
@@ -423,6 +446,19 @@ const ACHTransfer = () => {
             </CustomText>
           </TouchableOpacity> */}
         </DashboardSection>
+
+        {/* Error Message Display */}
+        {errorMessage && (
+          <View style={customStyle.errorContainer}>
+            <SvgIcons.ToastCross width={16} height={16} fill="#C92A2A" />
+            <View style={{ flex: 1, paddingLeft: 10 }}>
+              <CustomText variant="caption" style={customStyle.errorText}>
+                {errorMessage}
+              </CustomText>
+            </View>
+          </View>
+        )}
+
         <GenericButton
           title="Add Balance"
           onPress={() => {
@@ -465,5 +501,22 @@ const customStyles = (theme: Theme) =>
     total: {
       fontWeight: "bold",
       color: "green",
+    },
+    errorContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: "#FFEBEE",
+      borderRadius: 8,
+      padding: 12,
+      marginBottom: 16,
+      borderWidth: 1,
+      borderColor: "#C92A2A",
+    },
+
+    errorText: {
+      color: "#C92A2A",
+      fontSize: 14,
+      fontFamily: theme.typography.fontFamily.montserratSemiBold,
+      // marginLeft: 10,
     },
   });

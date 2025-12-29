@@ -661,7 +661,7 @@ const NewDashboard = () => {
       (item: any) => item.asset_type == "Realestate"
     ) ?? [];
 
-  // console.log("balances =>", JSON.stringify(data, null, 2));
+  // console.log("DashBoardData =>", JSON.stringify(DashBoardData, null, 2));
   // console.log("token =>", tokens.access);
 
   const {
@@ -1428,7 +1428,7 @@ const NewDashboard = () => {
             backgroundColor: "black",
             borderRadius: 20,
             position: "absolute",
-            bottom: -15,
+            bottom: -17,
           }}
         >
           {/* <View

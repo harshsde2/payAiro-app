@@ -63,6 +63,7 @@ const ChangePinScreen = () => {
 
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [isUserVerfied, setIsUserVerfied] = useState(false);
+  const [otpError, setOtpError] = useState("");
 
   const pinRefs = [useRef(), useRef(), useRef(), useRef()];
   const newPinRefs = [useRef(), useRef(), useRef(), useRef()];
@@ -162,21 +163,29 @@ const ChangePinScreen = () => {
       showError("OTP Should Be 6 Digits");
       return;
     }
+    // Clear previous error
+    setOtpError("");
     console.log("step 3 ->");
     handlVerifyUserForChangePinOtp(
       { otp: enteredOtp },
       {
         onSuccess: (data) => {
           console.log("step 4 ->", data.data);
+          setOtpError("");
+          setOtp(["", "", "", "", "", ""]); // Clear OTP
           setShowVerifyModal(false);
           setIsUserVerfied(true);
           showSuccess("User verified successfully");
         },
-        onError: () => {
-          console.log("send otp", JSON.stringify(err, null, 2));
-          showError(err?.data?.data?.error || "Some error occured!");
+        onError: (err) => {
+          console.log("verify otp error =>", JSON.stringify(err?.response?.data, null, 2));
+          const errorMessage = err?.response?.data?.data?.message || err?.response?.data?.message || "Invalid OTP. Please try again.";
+          showError(errorMessage);
+          setOtpError(errorMessage);
         },
-        onSettled: () => {},
+        onSettled: () => {
+          // This ensures any cleanup happens regardless of success/error
+        },
       }
     );
   };
@@ -324,7 +333,11 @@ const ChangePinScreen = () => {
       >
         {showVerifyModal && (
           <CommonModal
-            onClose={() => setShowVerifyModal(false)}
+            onClose={() => {
+              setShowVerifyModal(false);
+              setOtpError("");
+              setOtp(["", "", "", "", "", ""]);
+            }}
             isVisible={showVerifyModal}
             containerStyle={{ justifyContent: "center", alignItems: "center" }}
             isOnOutsidePressClose={false}
@@ -334,7 +347,7 @@ const ChangePinScreen = () => {
               style={[
                 globalStyles.whiteSheetContainer,
                 {
-                  maxHeight: 270,
+                  maxHeight: otpError ? 320 : 270,
                   width: "95%",
                   borderRadius: theme.spacing.spacing[8],
                   padding: 20,
@@ -355,10 +368,14 @@ const ChangePinScreen = () => {
                     style={[
                       styles.otpInput,
                       otp[index] && styles.otpInputActive,
+                      otpError && styles.otpInputError,
                     ]}
                     maxLength={1}
                     keyboardType="number-pad"
-                    onChangeText={(text) => handleOtpChange(text, index)}
+                    onChangeText={(text) => {
+                      setOtpError(""); // Clear error when user starts typing
+                      handleOtpChange(text, index);
+                    }}
                     onKeyPress={({ nativeEvent }) =>
                       handleKeyPress(nativeEvent.key, index)
                     }
@@ -367,6 +384,14 @@ const ChangePinScreen = () => {
                   />
                 ))}
               </View>
+              {/* Error Message Display */}
+              {otpError ? (
+                <View style={styles.errorContainer}>
+                  <CustomText variant="caption" style={styles.errorText}>
+                    {otpError}
+                  </CustomText>
+                </View>
+              ) : null}
               <GenericButton
                 onPress={() => {
                   handleVerfyUserChangePinOTP();
@@ -375,10 +400,13 @@ const ChangePinScreen = () => {
                 cStyle={{ width: "90%", alignSelf: "center" }}
                 showLoader={true}
                 isLoading={isPendingVerifyUserForChangePinOtp}
+                disabled={isPendingVerifyUserForChangePinOtp}
               />
               <GenericButton
                 onPress={() => {
                   setShowVerifyModal(false);
+                  setOtpError("");
+                  setOtp(["", "", "", "", "", ""]);
                 }}
                 title={"Cancel"}
                 cStyle={{
@@ -501,6 +529,24 @@ const styles = StyleSheet.create({
   otpInputActive: {
     borderColor: themes.dark.colors.palette.green700,
     borderWidth: 2,
+  },
+  otpInputError: {
+    borderColor: "#FF3A20",
+    borderWidth: 1.5,
+  },
+  errorContainer: {
+    backgroundColor: "#FFEBEE",
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 12,
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#FF3A20",
+  },
+  errorText: {
+    color: "#D32F2F",
+    textAlign: "center",
+    fontSize: 13,
   },
   otpContainer: {
     flexDirection: "row",

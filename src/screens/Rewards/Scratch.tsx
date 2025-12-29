@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { View, Pressable, StyleSheet, ActivityIndicator, ScrollView } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "../../components/HeaderTitle";
 import { useTheme } from "../../styles/ThemeContext";
 import CustomText from "../../tsx-components/CustomText";
 import { SvgIcons } from "../../constants/svgs";
 import CongratulationsModal from "../../components/common-components/CongratulationsModal";
-import HowToEarnPointsModal from "../../components/common-components/HowToEarnPointsModal";
 import ScratchCardModal from "../../components/common-components/ScratchCardModal";
+import { NAVIGATION_SCREENS } from "../../navigations/navigationConstants";
 import { IBalanceData, IRewardCard, IScratchCardHistory } from "./types";
 import {
   useScratchCards,
@@ -46,9 +47,9 @@ const formatDate = (dateString: string | null | undefined): string => {
 
 const Scratch: React.FC = () => {
   const { theme } = useTheme();
+  const navigation = useNavigation<any>();
   const [showCongratulations, setShowCongratulations] = useState(false);
   const [selectedReward, setSelectedReward] = useState<number>(0);
-  const [showHowToEarnPoints, setShowHowToEarnPoints] = useState(false);
   const [scratchingCardId, setScratchingCardId] = useState<number | null>(null);
   const [showClaimCongratulations, setShowClaimCongratulations] = useState(false);
   const [claimedAmount, setClaimedAmount] = useState<number>(0);
@@ -249,7 +250,7 @@ const Scratch: React.FC = () => {
               Your Balance
             </CustomText>
             <Pressable
-              onPress={() => setShowHowToEarnPoints(true)}
+              onPress={() => navigation.navigate(NAVIGATION_SCREENS.HOW_TO_EARN_POINTS)}
               style={{ transform: [{ rotate: "180deg" }] }}
             >
               <SvgIcons.ToastCircleAlert width={24} height={24} />
@@ -659,10 +660,6 @@ const Scratch: React.FC = () => {
           refetch();
         }}
         rewardAmount={claimedAmount}
-      />
-      <HowToEarnPointsModal
-        isVisible={showHowToEarnPoints}
-        onClose={() => setShowHowToEarnPoints(false)}
       />
     </ScreenContainer>
   );

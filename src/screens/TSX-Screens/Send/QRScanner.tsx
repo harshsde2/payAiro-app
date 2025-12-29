@@ -7,7 +7,7 @@ import {
   Dimensions,
 } from "react-native";
 import { Camera, CameraType } from "react-native-camera-kit";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Theme, useTheme } from "styles";
 import { useDispatch } from "react-redux";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -26,14 +26,76 @@ const QRScanner = () => {
   const styles = qrScannerStyles(theme);
 
   const [scanned, setScanned] = useState<boolean>(false);
+  const isProcessingRef = useRef<boolean>(false);
+
+  const parseQRCodeValue = (value: string): string | null => {
+    if (!value || typeof value !== "string") {
+      return null;
+    }
+
+    const trimmedValue = value.trim();
+    
+    // Check if it starts with { and ends with } - likely JSON
+    if (trimmedValue.startsWith("{") && trimmedValue.endsWith("}")) {
+      try {
+        // Try to parse as JSON
+        const parsed = JSON.parse(trimmedValue);
+        
+        // Check if it's the expected JSON format with type "receive" and username
+        if (
+          parsed &&
+          typeof parsed === "object" &&
+          !Array.isArray(parsed) &&
+          parsed.type === "receive" &&
+          parsed.username &&
+          typeof parsed.username === "string"
+        ) {
+          return parsed.username;
+        }
+        
+        // If it's a valid JSON but not the expected format, reject it
+        return null;
+      } catch {
+        // If JSON parsing fails, reject it (not a valid JSON)
+        return null;
+      }
+    }
+    
+    // If it's not JSON, treat it as a plain string (wallet address)
+    // Only accept non-empty strings
+    if (trimmedValue.length > 0) {
+      return trimmedValue;
+    }
+    
+    // Reject empty values
+    return null;
+  };
 
   const onQRCodeRead = (event: IQRCodeEvent): void => {
-    console.log(
-      event.nativeEvent.codeStringValue,
-      "event.nativeEvent.codeStringValue"
-    );
+    // Prevent multiple scans using ref for synchronous check
+    if (isProcessingRef.current || scanned) {
+      return;
+    }
+    
+    // Mark as processing immediately (synchronous)
+    isProcessingRef.current = true;
+    
+    const scannedValue = event.nativeEvent.codeStringValue;
+    const parsedValue = parseQRCodeValue(scannedValue);
+    
+    if (parsedValue === null) {
+      // Invalid QR code format - reject it and allow retry
+      isProcessingRef.current = false;
+      return;
+    }
+    
     setScanned(true);
-    if (onScanSuccess) onScanSuccess(event.nativeEvent.codeStringValue);
+    
+    // Call the callback with parsed value
+    if (onScanSuccess) {
+      onScanSuccess(parsedValue);
+    }
+    
     navigation.goBack();
   };
 
