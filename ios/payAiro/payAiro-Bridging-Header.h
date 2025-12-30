@@ -3,3 +3,4 @@
 //
 
 #import "SafeAppDependencyProvider.h"
+#import <React/RCTLinkingManager.h>

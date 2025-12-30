@@ -110,6 +110,13 @@ const FreshchatScreen = () => {
       freshchatConfig.teamMemberInfoVisible = true;
       freshchatConfig.cameraCaptureEnabled = true;
       freshchatConfig.gallerySelectionEnabled = true;
+      
+      // Custom theme to remove "Powered by Freshchat" branding (iOS only)
+      // iOS: uses FreshchatCustomTheme.plist from ios/payAiro/
+      // Note: Requires FreshchatDisableFrame secret key from Freshworks
+      if (Platform.OS === 'ios') {
+        freshchatConfig.themeName = 'FreshchatCustomTheme';
+      }
 
       // Freshchat.init() may not return a promise - just call it and proceed
       Freshchat.init(freshchatConfig);

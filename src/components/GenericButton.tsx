@@ -19,6 +19,7 @@ const GenericButton: FC<GenericButtonProps> = ({
   disabled,
   icon,
   showLoader,
+  IconComponent,
 }) => {
   const { theme } = useTheme();
   const styles = customStyles(theme);
@@ -47,6 +48,7 @@ const GenericButton: FC<GenericButtonProps> = ({
             {title}
           </CustomText>
           {icon && <SvgIcons.Copy style={{ marginLeft: 10 }} />}
+          {IconComponent && IconComponent}
         </View>
       )}
 

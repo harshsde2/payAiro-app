@@ -83,6 +83,7 @@ export interface GenericButtonProps {
   disabled?: boolean;
   icon?: string | any;
   showLoader?: boolean;
+  IconComponent?: React.ReactNode;
 }
 
 export interface UploadFileProps {

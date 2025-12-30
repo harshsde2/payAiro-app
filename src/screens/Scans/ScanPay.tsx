@@ -91,6 +91,9 @@ export default function ScanPay(props: IScanPayProps) {
 
   useEffect(() => {
     getBlockchain();
+    if(type === "request") {
+      handleCheckPin()
+    }
   }, []);
 
   const handleContactPayment = async () => {

@@ -27,8 +27,9 @@ const ReferralScreen = () => {
 
   // Get referral code from username
   const referralCode = walletData?.username || "";
+  // Use https:// link - clickable in WhatsApp, iMessage, etc.
+  // For this to open the app directly, Universal Links must be configured on server
   const referralLink = `https://payairo.app/ref/${referralCode}`;
-  const deepLink = `payairo://ref/${referralCode}`;
 
   const handleCopyCode = () => {
     if (!referralCode) {
@@ -62,7 +63,8 @@ const ReferralScreen = () => {
       return;
     }
 
-    const shareMessage = `Join PayAiro using my referral code: ${referralCode} to get $5 when you make your first transaction\n\n Download the app: ${referralLink}`;
+    // Share message with clickable link and referral code
+    const shareMessage = `🎉 Join PayAiro and get $5 when you make your first transaction!\n\n📱 Download the app: ${referralLink}\n\n🎁 Use my referral code during signup: ${referralCode}`;
 
     try {
       const shareOptions = {
@@ -168,7 +170,7 @@ const ReferralScreen = () => {
           cStyle={styles.shareButton}
           disabled={!referralCode}
           
-          icon={<SvgIcons.ShareIcon width={20} height={20} />}
+          IconComponent={<SvgIcons.ShareWhiteIcon width={20} height={20} color={theme.colors.palette.white} style={{ marginLeft: 10 }} />}
         />
 
         {/* Info Section */}

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join PayAiro - Get $5 Bonus!</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 24px;
+      padding: 40px 30px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .logo {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 20px;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: white;
+      font-weight: bold;
+    }
+    h1 {
+      color: #1a1a2e;
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      color: #666;
+      font-size: 16px;
+      margin-bottom: 30px;
+    }
+    .referral-box {
+      background: #f8f9fa;
+      border: 2px dashed #667eea;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    .referral-label {
+      color: #666;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .referral-code {
+      color: #667eea;
+      font-size: 28px;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      margin-bottom: 12px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    .btn-ios {
+      background: #000;
+      color: white;
+    }
+    .btn-android {
+      background: #3ddc84;
+      color: white;
+    }
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 20px 0;
+      color: #999;
+      font-size: 14px;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #ddd;
+    }
+    .divider span {
+      padding: 0 15px;
+    }
+    .info {
+      color: #888;
+      font-size: 12px;
+      margin-top: 20px;
+    }
+    .spinner {
+      display: none;
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .loading .spinner { display: block; }
+    .loading .btn { opacity: 0.5; }
+  </style>
+</head>
+<body>
+  <div class="container" id="container">
+    <div class="logo">P</div>
+    <h1>You're Invited to PayAiro!</h1>
+    <p class="subtitle">Get $5 when you sign up and make your first transaction</p>
+    
+    <div class="referral-box">
+      <div class="referral-label">Your Referral Code</div>
+      <div class="referral-code" id="referralCode">Loading...</div>
+    </div>
+    
+    <div class="spinner" id="spinner"></div>
+    
+    <a href="#" class="btn btn-primary" id="openAppBtn">Open PayAiro App</a>
+    
+    <div class="divider"><span>Don't have the app?</span></div>
+    
+    <a href="https://apps.apple.com/app/payairo/id123456789" class="btn btn-ios" id="iosBtn">
+      📱 Download for iOS
+    </a>
+    <a href="https://play.google.com/store/apps/details?id=com.payairo" class="btn btn-android" id="androidBtn">
+      🤖 Download for Android
+    </a>
+    
+    <p class="info">
+      After downloading, open the app and enter the referral code during signup to get your $5 bonus!
+    </p>
+  </div>
+
+  <script>
+    // Extract referral code from URL
+    const pathParts = window.location.pathname.split('/');
+    const refIndex = pathParts.indexOf('ref');
+    const referralCode = refIndex !== -1 ? pathParts[refIndex + 1] : null;
+    
+    // Display referral code
+    const codeElement = document.getElementById('referralCode');
+    if (referralCode) {
+      codeElement.textContent = referralCode;
+    } else {
+      codeElement.textContent = 'N/A';
+    }
+    
+    // Deep link URLs
+    const deepLink = referralCode ? `payairo://ref/${referralCode}` : 'payairo://';
+    const universalLink = window.location.href;
+    
+    // Detect platform
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    
+    // Show relevant download button
+    if (isIOS) {
+      document.getElementById('androidBtn').style.display = 'none';
+    } else if (isAndroid) {
+      document.getElementById('iosBtn').style.display = 'none';
+    }
+    
+    // Open app button click
+    document.getElementById('openAppBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      // Show loading state
+      document.getElementById('container').classList.add('loading');
+      
+      // Try to open the app via deep link
+      window.location = deepLink;
+      
+      // Fallback: if app doesn't open within 2.5 seconds, redirect to app store
+      setTimeout(function() {
+        document.getElementById('container').classList.remove('loading');
+        
+        // Check if page is still visible (app didn't open)
+        if (!document.hidden) {
+          const confirmDownload = confirm(
+            'It looks like PayAiro is not installed. Would you like to download it?'
+          );
+          if (confirmDownload) {
+            if (isIOS) {
+              window.location = 'https://apps.apple.com/app/payairo/id123456789';
+            } else {
+              window.location = 'https://play.google.com/store/apps/details?id=com.payairo';
+            }
+          }
+        }
+      }, 2500);
+    });
+    
+    // Auto-attempt to open app on mobile
+    if (isIOS || isAndroid) {
+      // Small delay to ensure page is rendered
+      setTimeout(function() {
+        window.location = deepLink;
+      }, 500);
+    }
+  </script>
+</body>
+</html>
+

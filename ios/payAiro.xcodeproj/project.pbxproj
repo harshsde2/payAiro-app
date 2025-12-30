@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		00E356F31AD99517003FC87E /* payAiroTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* payAiroTests.m */; };
 		059D75AA716E8BEA8B221923 /* Pods_payAiro_payAiroTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6171378DEAFBDE388A86E204 /* Pods_payAiro_payAiroTests.framework */; };
+		13B07FB91A68108700A75B9A /* FreshchatCustomTheme.plist in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* FreshchatCustomTheme.plist */; };
 		13B07FBD1A68108700A75B9A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB21A68108700A75B9A /* AppDelegate.swift */; };
 		13B07FBE1A68108700A75B9A /* SafeAppDependencyProvider.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB31A68108700A75B9A /* SafeAppDependencyProvider.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
@@ -79,6 +80,7 @@
 		13B07FB41A68108700A75B9A /* SafeAppDependencyProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SafeAppDependencyProvider.h; path = payAiro/SafeAppDependencyProvider.h; sourceTree = "<group>"; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = payAiro/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = payAiro/Info.plist; sourceTree = "<group>"; };
+		13B07FB71A68108700A75B9A /* FreshchatCustomTheme.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = FreshchatCustomTheme.plist; path = payAiro/FreshchatCustomTheme.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = payAiro/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		15B3B53C91C74D61BB254973 /* Neue Plak Extended Black.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Extended Black.ttf"; path = "../assets/fonts/Neue Plak Extended Black.ttf"; sourceTree = "<group>"; };
 		184B0A336A424FEEB85B33C4 /* Neue Plak Extended Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Extended Bold.ttf"; path = "../assets/fonts/Neue Plak Extended Bold.ttf"; sourceTree = "<group>"; };
@@ -177,6 +179,7 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+				13B07FB71A68108700A75B9A /* FreshchatCustomTheme.plist */,
 			);
 			name = payAiro;
 			sourceTree = "<group>";
@@ -380,6 +383,7 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				80F809D5271922DBD435053C /* PrivacyInfo.xcprivacy in Resources */,
+				13B07FB91A68108700A75B9A /* FreshchatCustomTheme.plist in Resources */,
 				212E88E3923248FBAF8182FC /* Neue Plak Black.ttf in Resources */,
 				8E02F2F52745487AAC437182 /* Neue Plak Bold.ttf in Resources */,
 				99FA4AFC25114E6588CE4303 /* Neue Plak Condensed Black.ttf in Resources */,
@@ -789,7 +793,10 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
@@ -934,7 +941,10 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -1014,7 +1024,10 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;

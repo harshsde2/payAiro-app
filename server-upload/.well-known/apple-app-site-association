@@ -1,0 +1,39 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": [
+          "8T3V6TMY34.com.payairo",
+          "8T3V6TMY34.com.payairo.staging"
+        ],
+        "paths": [
+          "/ref/*",
+          "/invite/*",
+          "/dashboard",
+          "/transaction/*",
+          "/send",
+          "/receive",
+          "/rewards/*"
+        ],
+        "components": [
+          {
+            "/": "/ref/*",
+            "comment": "Matches referral links"
+          },
+          {
+            "/": "/invite/*",
+            "comment": "Matches invitation links"
+          }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "8T3V6TMY34.com.payairo",
+      "8T3V6TMY34.com.payairo.staging"
+    ]
+  }
+}
+

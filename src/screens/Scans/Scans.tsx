@@ -21,6 +21,8 @@ import Fonts from "../../constants/Fonts";
 import { SCREENS } from "../../constants/SCREENS";
 import { IQRCodeEvent, ScansNavigationProp } from "./types";
 import QRCodeScanner from "react-native-qr-decode-image-camera";
+import GenericButton from "components/GenericButton";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 
 const { width, height } = Dimensions.get("window"); // Get device dimensions
 
@@ -315,6 +317,14 @@ export default function Scans(): JSX.Element {
           </Text>
         </TouchableOpacity>
       </View> */}
+      <View style={{ marginTop: 20,paddingHorizontal: 20, alignItems: "center", justifyContent: "center" }}>
+      <GenericButton
+        title="Show My QR Code"
+        onPress={() => {
+            navigation.navigate(NAVIGATION_SCREENS.RECEIVE);
+          }}
+        />
+      </View>
       {/* <View style={[styles.overlay, styles.leftOverlay]} /> */}
       {/* <View style={[styles.overlay, styles.rightOverlay]} /> */}
       <BottomNavigation isVer={false} />

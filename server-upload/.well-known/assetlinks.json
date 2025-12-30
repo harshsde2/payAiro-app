@@ -1,0 +1,23 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.payairo",
+      "sha256_cert_fingerprints": [
+        "F5:82:A1:9E:9F:86:E6:F1:C9:64:14:68:BD:37:1B:33:6C:74:14:7C:C7:AF:C9:8E:9D:79:D8:90:D8:4E:93:17"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.payairo.staging",
+      "sha256_cert_fingerprints": [
+        "F5:82:A1:9E:9F:86:E6:F1:C9:64:14:68:BD:37:1B:33:6C:74:14:7C:C7:AF:C9:8E:9D:79:D8:90:D8:4E:93:17"
+      ]
+    }
+  }
+]
+
