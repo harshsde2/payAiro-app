@@ -30,6 +30,7 @@ import {
   IUnifiedTransactionScreenProps,
   ICategoryPercentages,
 } from "./types";
+import { DonutChartContainer } from "tsx-components/donut-chart";
 
 // Filter keys
 const TRANSACTION_FILTERS_KEYS = {
@@ -260,6 +261,30 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
     });
   }, [categoryPercentages]);
 
+  // Transform formattedPieChartData for DonutChart
+  const donutChartData = useMemo(() => {
+    if (!formattedPieChartData || formattedPieChartData.length === 0) {
+      return null;
+    }
+
+    // Filter out segments with 0% or negative percentages
+    const validSegments = formattedPieChartData.filter((item) => item.percentage > 0);
+
+    if (validSegments.length === 0) {
+      return null;
+    }
+
+    return {
+      data: {
+        asset_classes: validSegments.map((item) => ({
+          label: item.assetType,
+          percentage: item.percentage,
+        })),
+        total_portfolio_value: totalTransactions || 0,
+      },
+    };
+  }, [formattedPieChartData, totalTransactions]);
+
   // Handle filter click
   const onFilterClick = useCallback(
     (type: string, item: any, index: number) => {
@@ -401,6 +426,8 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
     refetchPendingPaymentRequests();
   }, [refetch, refetchPendingPaymentRequests]);
 
+  console.log("formattedPieChartData =>", JSON.stringify(formattedPieChartData, null, 2));
+
   return (
     <ScreenContainer padding={0} backgroundColor={theme.colors.background.primary}>
       <BottomNavigation isVer={undefined} />
@@ -480,6 +507,13 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
               </DashboardSection>
             )}
             </> */}
+            <>
+            {isCrypto && donutChartData && (
+              <DashboardSection titleStyle={{color: theme.colors.text.primary}} style={{ marginTop: 20 ,backgroundColor: theme.colors.card.background,paddingHorizontal:10,paddingVertical:10, borderRadius: 10}} title="Transaction Summary">
+                <DonutChartContainer portfolioBreakdownData={donutChartData} index={0} n={0} />
+              </DashboardSection>
+            )}
+            </>
 
             {isCrypto && (
               <DashboardSection title="Payment Requests">
@@ -581,4 +615,3 @@ const createStyles = (theme: Theme) =>
   });
 
 export default UnifiedTransactionScreen;
-
