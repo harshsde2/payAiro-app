@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<!--
+    =====================================================
+    Freshchat Custom Theme - iOS
+    =====================================================
+    This plist file customizes the Freshchat SDK appearance
+    and removes the "Powered by Freshchat" branding.
+    
+    IMPORTANT: You need to get the Secret Key from Freshworks
+    to disable the branding. Contact Freshworks support or
+    check your Freshchat dashboard for the key.
+    =====================================================
+-->
+<dict>
+    <!-- =====================================================
+         FooterView Configuration
+         This dictionary contains the key to disable branding
+         ===================================================== -->
+    <key>FooterView</key>
+    <dict>
+        <!-- 
+             FreshchatDisableFrame - Secret Key
+             Replace YOUR_SECRET_KEY_HERE with the actual key
+             provided by Freshworks for your account
+        -->
+        <key>FreshchatDisableFrame</key>
+        <string>YOUR_SECRET_KEY_HERE</string>
+    </dict>
+    
+    <!-- =====================================================
+         Optional: Theme Colors (Customize as needed)
+         ===================================================== -->
+    
+    <!--
+    <key>NavigationBarBackgroundColor</key>
+    <string>#2C6A3F</string>
+    
+    <key>NavigationBarTitleColor</key>
+    <string>#FFFFFF</string>
+    -->
+</dict>
+</plist>
