@@ -279,7 +279,7 @@ export default function Scans(): JSX.Element {
       />
 
       {/* Masking the rest of the screen */}
-      <View
+      {/* <View
         style={{
           position: "absolute",
           top: 0,
@@ -294,7 +294,7 @@ export default function Scans(): JSX.Element {
         <CustomText style={{ textAlign: "center" }} >
           Scan a payment QR code to send money securely.
         </CustomText>
-      </View>
+      </View> */}
       <QRModal isVisible={isVisible} onClose={() => setisVisible(false)} onSelected={() => {}} />
       {/* <View style={{ marginTop: 40 }}>
         <TouchableOpacity
@@ -317,14 +317,14 @@ export default function Scans(): JSX.Element {
           </Text>
         </TouchableOpacity>
       </View> */}
-      <View style={{ marginTop: 20,paddingHorizontal: 20, alignItems: "center", justifyContent: "center" }}>
+      {/* <View style={{ marginTop: 20,paddingHorizontal: 20, alignItems: "center", justifyContent: "center" }}>
       <GenericButton
         title="Show My QR Code"
         onPress={() => {
             navigation.navigate(NAVIGATION_SCREENS.RECEIVE);
           }}
         />
-      </View>
+      </View> */}
       {/* <View style={[styles.overlay, styles.leftOverlay]} /> */}
       {/* <View style={[styles.overlay, styles.rightOverlay]} /> */}
       <BottomNavigation isVer={false} />
@@ -357,14 +357,14 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   camera: {
-    width: width * 0.95, // 80% of the screen width
-    height: width * 0.95, // Make it square
+    width: width, // 80% of the screen width
+    height: height * 0.85, // Make it square
     alignSelf: "center",
-    marginTop: height * 0.2, // Center vertically
+    // marginTop: height * 0.2, // Center vertically
   },
   overlay: {
     position: "absolute",
-    backgroundColor: "rgba(243, 251, 244, 1)",
+    backgroundColor: "rgb(251, 246, 243)",
     opacity: 0.8, // Slight transparency if desired
     top: 20,
   },

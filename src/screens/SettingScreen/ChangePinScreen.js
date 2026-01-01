@@ -29,6 +29,7 @@ import CommonModal from "tsx-components/modals/CommonModal";
 import { themes, useTheme } from "styles";
 import { CustomText } from "tsx-components";
 import { useAppLock } from "hooks/useAppLock";
+import { useNavigation } from "@react-navigation/native";
 
 const PinInput = ({ value, setValue, nextRef }) => {
   return (
@@ -48,6 +49,7 @@ const PinInput = ({ value, setValue, nextRef }) => {
 const ChangePinScreen = () => {
   const globalStyles = useGlobalStyles();
   const { theme } = useTheme();
+  const navigation = useNavigation();
   const { refreshPinStatus } = useAppLock();
 
   const { tokens } = useSelector((state) => state.authenticationSlice);
@@ -102,6 +104,10 @@ const ChangePinScreen = () => {
   };
 
   const handlePinChange = async () => {
+    if (!isUserVerfied) {
+      showError("Please verify your email first");
+      return;
+    }
     if (isCurrentPinCorrect()) {
       if (isNewPinAndConfirmPinSame()) {
         setShowLoader(true);
@@ -118,6 +124,7 @@ const ChangePinScreen = () => {
             setConfirmPin(["", "", "", ""]);
             setCurrentPin(["", "", "", ""]);
             setNewPin(["", "", "", ""]);
+            navigation.goBack();
           },
           onError: () => {
             showError(err?.data?.data?.error || "Some error occured!");
@@ -178,8 +185,14 @@ const ChangePinScreen = () => {
           showSuccess("User verified successfully");
         },
         onError: (err) => {
-          console.log("verify otp error =>", JSON.stringify(err?.response?.data, null, 2));
-          const errorMessage = err?.response?.data?.data?.message || err?.response?.data?.message || "Invalid OTP. Please try again.";
+          console.log(
+            "verify otp error =>",
+            JSON.stringify(err?.response?.data, null, 2)
+          );
+          const errorMessage =
+            err?.response?.data?.data?.message ||
+            err?.response?.data?.message ||
+            "Invalid OTP. Please try again.";
           showError(errorMessage);
           setOtpError(errorMessage);
         },
@@ -231,12 +244,12 @@ const ChangePinScreen = () => {
     let tempPin = [...currentPin];
     tempPin[index] = val;
     setCurrentPin(tempPin);
-    
+
     // Move to next input if value is entered
     if (val && pinRefs[index + 1]) {
       pinRefs[index + 1].current.focus();
     }
-    
+
     // Move to previous input if value is deleted and current is empty
     if (!val && index > 0) {
       pinRefs[index - 1].current.focus();
@@ -264,12 +277,12 @@ const ChangePinScreen = () => {
     let tempPin = [...newPin];
     tempPin[index] = val;
     setNewPin(tempPin);
-    
+
     // Move to next input if value is entered
     if (val && newPinRefs[index + 1]) {
       newPinRefs[index + 1].current.focus();
     }
-    
+
     // Move to previous input if value is deleted and current is empty
     if (!val && index > 0) {
       newPinRefs[index - 1].current.focus();
@@ -297,12 +310,12 @@ const ChangePinScreen = () => {
     let tempPin = [...confirmPin];
     tempPin[index] = val;
     setConfirmPin(tempPin);
-    
+
     // Move to next input if value is entered
     if (val && confirmPinRefs[index + 1]) {
       confirmPinRefs[index + 1].current.focus();
     }
-    
+
     // Move to previous input if value is deleted and current is empty
     if (!val && index > 0) {
       confirmPinRefs[index - 1].current.focus();
@@ -429,25 +442,29 @@ const ChangePinScreen = () => {
               <Text style={styles.bold}>4 digit code</Text> then confirm it
               below.
             </Text>
-            {/* Current PIN Input */}
-            <Text style={styles.label}>Enter current PIN</Text>
-            <View style={styles.pinContainer}>
-              {currentPin.map((digit, index) => (
-                <TextInput
-                  key={index}
-                  style={styles.pinInput}
-                  keyboardType="numeric"
-                  maxLength={1}
-                  value={digit}
-                  onChangeText={(val) => handleCurrentPinChange(val, index)}
-                  onKeyPress={({ nativeEvent }) =>
-                    handleCurrentPinKeyPress(nativeEvent.key, index)
-                  }
-                  ref={pinRefs[index]}
-                />
-              ))}
-            </View>
 
+            {/* Current PIN Input */}
+            {!isUserVerfied && (
+              <View>
+                <Text style={styles.label}>Enter current PIN</Text>
+                <View style={styles.pinContainer}>
+                  {currentPin.map((digit, index) => (
+                    <TextInput
+                      key={index}
+                      style={styles.pinInput}
+                      keyboardType="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChangeText={(val) => handleCurrentPinChange(val, index)}
+                      onKeyPress={({ nativeEvent }) =>
+                        handleCurrentPinKeyPress(nativeEvent.key, index)
+                      }
+                      ref={pinRefs[index]}
+                    />
+                  ))}
+                </View>
+              </View>
+            )}
             {!isUserVerfied && (
               <GenericButton
                 onPress={() => {
@@ -587,7 +604,7 @@ const styles = StyleSheet.create({
   pinInput: {
     width: 70,
     height: 60,
-    borderRadius: 35,
+    borderRadius: 15,
     borderWidth: 1,
     borderColor: "rgba(0, 119, 4, 0.4)",
     textAlign: "center",

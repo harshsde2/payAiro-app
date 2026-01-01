@@ -23,14 +23,14 @@
     "android:production:debug:build": "cd android && ENVFILE=.env.production ./gradlew assembleProductionDebug && cd ../",
     "android:production:release": "cd android && ENVFILE=.env.production ./gradlew assembleProductionRelease && cd ../",
     "android:production:release:bundle": "cd android && ENVFILE=.env.production ./gradlew bundleProductionRelease && cd ../",
-    "ios:staging:debug": "ENVFILE=.env.staging react-native run-ios --scheme=\"payAiro staging\"",
-    "ios:staging:release": "ENVFILE=.env.staging react-native run-ios --scheme=\"payAiro staging\" --configuration=StagingRelease",
-    "ios:production:debug": "ENVFILE=.env.production react-native run-ios --scheme=payAiro",
-    "ios:production:release": "ENVFILE=.env.production react-native run-ios --scheme=payAiro --configuration=Release",
+    "ios:staging:debug": "cp .env.staging .env && ENVFILE=.env.staging react-native run-ios --scheme=\"payAiro staging\"",
+    "ios:staging:release": "cp .env.staging .env && ENVFILE=.env.staging react-native run-ios --scheme=\"payAiro staging\" --configuration=StagingRelease",
+    "ios:production:debug": "cp .env.production .env && ENVFILE=.env.production react-native run-ios --scheme=payAiro",
+    "ios:production:release": "cp .env.production .env && ENVFILE=.env.production react-native run-ios --scheme=payAiro --configuration=Release",
     "build:android:staging": "cd android && ENVFILE=.env.staging ./gradlew assembleStagingRelease && cd ../",
     "build:android:production": "cd android && ENVFILE=.env.production ./gradlew assembleProductionRelease && cd ../",
-    "build:ios:staging": "ENVFILE=.env.staging react-native run-ios --scheme=\"payAiro staging\" --configuration=StagingRelease",
-    "build:ios:production": "ENVFILE=.env.production react-native run-ios --scheme=payAiro --configuration=Release"
+    "build:ios:staging": "cp .env.staging .env && ENVFILE=.env.staging react-native run-ios --scheme=\"payAiro staging\" --configuration=StagingRelease",
+    "build:ios:production": "cp .env.production .env && ENVFILE=.env.production react-native run-ios --scheme=payAiro --configuration=Release"
   },
   "dependencies": {
     "@legendapp/list": "^1.0.14",

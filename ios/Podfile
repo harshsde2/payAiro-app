@@ -68,16 +68,16 @@ target 'payAiro' do
 
   # React Native Config - Environment file configuration
   # 
-  # For npm scripts (development): ENVFILE environment variable is passed to Metro bundler
-  #   - npm run ios:production:debug → uses .env.production
-  #   - npm run ios:staging:debug → uses .env.staging
+  # The .env file is copied by:
+  # 1. npm scripts (before react-native run-ios) - copies .env.staging or .env.production to .env
+  # 2. Xcode pre-build scripts (in schemes) - copies correct .env file before build
   #
-  # For Xcode Archive builds: ENVFILES mapping ensures correct .env file at native build time
-  # This is critical for TestFlight builds where Metro bundler runs during archive
+  # react-native-config will use the .env file in the project root
+  # For Xcode Archive builds, ENVFILES mapping ensures correct .env file at native build time
   ENVFILES = {
-    'Debug' => '$(PODS_ROOT)/../../.env.staging',
-    'Release' => '$(PODS_ROOT)/../../.env.production',
-    'StagingRelease' => '$(PODS_ROOT)/../../.env.staging',
+    'Debug' => '$(PODS_ROOT)/../../.env',
+    'Release' => '$(PODS_ROOT)/../../.env',
+    'StagingRelease' => '$(PODS_ROOT)/../../.env',
   }
 
   post_install do |installer|
@@ -89,8 +89,8 @@ target 'payAiro' do
       # :ccache_enabled => true
     )
     
-    # Configure react-native-config to use the correct .env file based on build configuration
-    # This ensures that when archiving in Xcode, the correct environment file is used
+    # Configure react-native-config to use the .env file
+    # The .env file is copied by pre-build scripts or npm scripts before the build
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
         if target.name == 'react-native-config'
