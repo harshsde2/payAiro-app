@@ -37,7 +37,7 @@
           <data android:scheme="payairo" />
         </intent-filter>
         
-        <!-- App Links (Android Universal Links): https://payairo.app -->
+        <!-- App Links (Android Universal Links): https://payairo.com -->
         <!-- autoVerify="true" enables automatic verification via assetlinks.json -->
         <intent-filter android:autoVerify="true">
           <action android:name="android.intent.action.VIEW" />
@@ -45,7 +45,7 @@
           <category android:name="android.intent.category.BROWSABLE" />
           <data 
             android:scheme="https" 
-            android:host="payairo.app" />
+            android:host="payairo.com" />
         </intent-filter>
         
         <!-- App Links for www subdomain -->
@@ -55,17 +55,7 @@
           <category android:name="android.intent.category.BROWSABLE" />
           <data 
             android:scheme="https" 
-            android:host="www.payairo.app" />
-        </intent-filter>
-        
-        <!-- App Links for payairo.com domain -->
-        <intent-filter android:autoVerify="true">
-          <action android:name="android.intent.action.VIEW" />
-          <category android:name="android.intent.category.DEFAULT" />
-          <category android:name="android.intent.category.BROWSABLE" />
-          <data 
-            android:scheme="https" 
-            android:host="payairo.com" />
+            android:host="www.payairo.com" />
         </intent-filter>
         
       </activity>

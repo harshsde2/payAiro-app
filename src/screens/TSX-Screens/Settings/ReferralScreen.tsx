@@ -29,7 +29,7 @@ const ReferralScreen = () => {
   const referralCode = walletData?.username || "";
   // Use https:// link - clickable in WhatsApp, iMessage, etc.
   // For this to open the app directly, Universal Links must be configured on server
-  const referralLink = `https://payairo.app/ref/${referralCode}`;
+  const referralLink = `https://payairo.com/ref/${referralCode}`;
 
   const handleCopyCode = () => {
     if (!referralCode) {

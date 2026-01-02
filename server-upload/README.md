@@ -18,12 +18,12 @@ server-upload/
 
 ### Step 1: Upload Files to Your Server
 
-Upload the contents of this `server-upload` folder to the root of your web server at `https://payairo.app/`
+Upload the contents of this `server-upload` folder to the root of your web server at `https://payairo.com/`
 
 The files should be accessible at:
-- `https://payairo.app/.well-known/apple-app-site-association`
-- `https://payairo.app/.well-known/assetlinks.json`
-- `https://payairo.app/ref/[CODE]` (for the landing page)
+- `https://payairo.com/.well-known/apple-app-site-association`
+- `https://payairo.com/.well-known/assetlinks.json`
+- `https://payairo.com/ref/[CODE]` (for the landing page)
 
 ### Step 2: Configure Web Server
 
@@ -101,7 +101,7 @@ xcrun simctl openurl booted "payairo://ref/TESTCODE"
 
 # Test Universal Link (Note: Simulator has limited Universal Link support)
 # For full testing, use a physical device
-xcrun simctl openurl booted "https://payairo.app/ref/TESTCODE"
+xcrun simctl openurl booted "https://payairo.com/ref/TESTCODE"
 ```
 
 ### Test on Android Emulator
@@ -111,7 +111,7 @@ xcrun simctl openurl booted "https://payairo.app/ref/TESTCODE"
 adb shell am start -a android.intent.action.VIEW -d "payairo://ref/TESTCODE"
 
 # Test App Link
-adb shell am start -a android.intent.action.VIEW -d "https://payairo.app/ref/TESTCODE"
+adb shell am start -a android.intent.action.VIEW -d "https://payairo.com/ref/TESTCODE"
 
 # Verify App Links are configured correctly
 adb shell pm get-app-links com.payairo
@@ -123,12 +123,12 @@ adb shell pm set-app-links --package com.payairo 0 all
 ### Test on Physical Device
 
 #### iOS:
-1. Send yourself a message with the link: `https://payairo.app/ref/TESTCODE`
+1. Send yourself a message with the link: `https://payairo.com/ref/TESTCODE`
 2. Tap the link in Messages or Notes app
 3. The PayAiro app should open
 
 #### Android:
-1. Send yourself a message with the link: `https://payairo.app/ref/TESTCODE`
+1. Send yourself a message with the link: `https://payairo.com/ref/TESTCODE`
 2. Tap the link
 3. Android should show a chooser or open the app directly
 
@@ -136,10 +136,10 @@ adb shell pm set-app-links --package com.payairo 0 all
 
 ```bash
 # Check iOS apple-app-site-association
-curl -I https://payairo.app/.well-known/apple-app-site-association
+curl -I https://payairo.com/.well-known/apple-app-site-association
 
 # Check Android assetlinks.json  
-curl -I https://payairo.app/.well-known/assetlinks.json
+curl -I https://payairo.com/.well-known/assetlinks.json
 
 # Use Apple's validation tool
 # Visit: https://app.links.apple.com/validator
@@ -158,10 +158,9 @@ You must enable Associated Domains capability in Xcode:
 4. Click **+ Capability** button
 5. Add **Associated Domains**
 6. Add these domains:
-   - `applinks:payairo.app`
-   - `applinks:www.payairo.app`
    - `applinks:payairo.com`
-   - `webcredentials:payairo.app`
+   - `applinks:www.payairo.com`
+   - `webcredentials:payairo.com`
 
 The entitlements file (`payAiro.entitlements`) has been created, but you must link it in Xcode:
 1. In Xcode, select the target
@@ -201,8 +200,8 @@ The entitlements file (`payAiro.entitlements`) has been created, but you must li
 | Type | Format | Example |
 |------|--------|---------|
 | Custom Scheme | `payairo://path` | `payairo://ref/ABC123` |
-| Universal Link | `https://payairo.app/path` | `https://payairo.app/ref/ABC123` |
-| Referral | `https://payairo.app/ref/{code}` | `https://payairo.app/ref/john_doe` |
+| Universal Link | `https://payairo.com/path` | `https://payairo.com/ref/ABC123` |
+| Referral | `https://payairo.com/ref/{code}` | `https://payairo.com/ref/john_doe` |
 
 ## ✅ Checklist
 

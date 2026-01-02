@@ -36,7 +36,7 @@ class AppDelegate: RCTAppDelegate {
     return RCTLinkingManager.application(app, open: url, options: options)
   }
   
-  // MARK: - Universal Links (https://payairo.app/*)
+  // MARK: - Universal Links (https://payairo.com/*)
   override func application(
     _ application: UIApplication,
     continue userActivity: NSUserActivity,

@@ -4,11 +4,8 @@
 <dict>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
-		<string>applinks:payairo.app</string>
-		<string>applinks:www.payairo.app</string>
 		<string>applinks:payairo.com</string>
 		<string>applinks:www.payairo.com</string>
-		<string>webcredentials:payairo.app</string>
 		<string>webcredentials:payairo.com</string>
 	</array>
 </dict>

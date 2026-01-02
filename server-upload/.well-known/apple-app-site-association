@@ -16,7 +16,8 @@
           "/receive",
           "/rewards/*"
         ],
-        "components": [
+        "components": 
+        [
           {
             "/": "/ref/*",
             "comment": "Matches referral links"

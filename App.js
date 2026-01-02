@@ -1,7 +1,7 @@
 import notifee, { AndroidStyle } from "@notifee/react-native";
 import messaging from "@react-native-firebase/messaging";
 import { NavigationContainer } from "@react-navigation/native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { AppState, Linking, Platform } from "react-native";
 import ReactNativeBiometrics from "react-native-biometrics";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -33,7 +33,7 @@ import { getItem, STORAGE_KEYS } from "./src/storage/mmkv";
 import { ThemeProvider } from "./src/styles";
 import GlobalLoader from "./src/tsx-components/GlobalLoader";
 import { LinkingPath } from "./src/utils/linking";
-import { initializeDeepLinking } from "./src/utils/deepLinkHandler";
+import { initializeDeepLinking, setNavigationRef } from "./src/utils/deepLinkHandler";
 import UseNet from './src/utils/UseNet';
 import KycWatchdog from "./src/components/common-components/KycWatchdog";
 import KycBanner from "./src/components/common-components/KycBanner";
@@ -66,6 +66,17 @@ export default function App() {
   } = useSelector((state) => state.authenticationSlice);
 
   const dispatch = useDispatch();
+
+  // -------------------- Navigation Ref --------------------
+  // Create navigation ref for deep link navigation
+  const navigationRef = useRef(null);
+  
+  // Set navigation ref for deep link handler
+  useEffect(() => {
+    if (navigationRef.current) {
+      setNavigationRef(navigationRef.current);
+    }
+  }, []);
 
   // -------------------- Local State --------------------
   const [appState, setAppState] = useState(AppState.currentState);
@@ -329,6 +340,7 @@ export default function App() {
         <PersistQueryProvider>
           <AppLockProvider>
             <NavigationContainer
+              ref={navigationRef}
               linking={LinkingPath}
               onStateChange={(state) => {
                 // Helper function to get the focused route recursively (handles nested navigators)

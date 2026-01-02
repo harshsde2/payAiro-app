@@ -73,6 +73,7 @@ export default function Login() {
         }
       },
       onError: (error: any) => {
+        console.log("error =>", JSON.stringify(error.response,null,2));
         const errorMessage = error?.response?.data?.message || "Something went wrong";
         showError(errorMessage);
         console.log("error?.response =>", JSON.stringify(error?.response,null,2));

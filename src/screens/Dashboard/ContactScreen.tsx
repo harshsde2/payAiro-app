@@ -138,7 +138,7 @@ export default function ContactScreen(props: any) {
       return;
     }
 
-    const referralLink = `https://payairo.app/ref/${referralCode}`;
+    const referralLink = `https://payairo.com/ref/${referralCode}`;
     const message = `Join PayAiro and use my referral code: ${referralCode}\n\nDownload the app: ${referralLink}`;
 
     try {
@@ -338,7 +338,7 @@ export default function ContactScreen(props: any) {
       return;
     }
 
-    const referralLink = `https://payairo.app/ref/${referralCode}`;
+    const referralLink = `https://payairo.com/ref/${referralCode}`;
     const shareMessage = `Join PayAiro and use my referral code: ${referralCode}\n\nDownload the app: ${referralLink}`;
 
     try {

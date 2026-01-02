@@ -3,8 +3,8 @@
  * 
  * This configuration handles:
  * 1. Custom URL Scheme: payairo://
- * 2. Universal Links (iOS): https://payairo.app/* and https://payairo.com/*
- * 3. App Links (Android): https://payairo.app/* and https://payairo.com/*
+ * 2. Universal Links (iOS): https://payairo.com/*
+ * 3. App Links (Android): https://payairo.com/*
  * 
  * Server Requirements:
  * - iOS: Host apple-app-site-association at /.well-known/apple-app-site-association
@@ -25,8 +25,6 @@ export const LinkingPath: LinkingOptions<RootStackParamList> = {
     // Custom URL scheme
     "payairo://",
     // Universal Links / App Links
-    "https://payairo.app",
-    "https://www.payairo.app",
     "https://payairo.com",
     "https://www.payairo.com",
   ],
@@ -60,11 +58,18 @@ export const LinkingPath: LinkingOptions<RootStackParamList> = {
     screens: {
       // ============================================
       // REFERRAL LINKS (Primary use case)
-      // Handles: payairo://ref/CODE, https://payairo.app/ref/CODE
+      // Handles: payairo://ref/CODE, https://payairo.com/ref/CODE
       // ============================================
       // Note: Referral codes are handled by deepLinkHandler.ts
-      // which extracts the code and stores it in MMKV storage.
-      // The app then navigates to the appropriate screen.
+      // which extracts the code, stores it, and navigates to Signup if user is logged out
+      // Signup screen auto-fills the code from storage (see Signup.tsx lines 39-46)
+      
+      // ============================================
+      // AUTH SCREENS
+      // ============================================
+      [NAVIGATION_SCREENS.SIGNUP]: {
+        path: "signup",
+      },
       
       // ============================================
       // DASHBOARD & MAIN SCREENS
@@ -181,7 +186,7 @@ export const LinkingPath: LinkingOptions<RootStackParamList> = {
  * @returns The referral URL
  */
 export const generateReferralLink = (referralCode: string): string => {
-  return `https://payairo.app/ref/${referralCode}`;
+  return `https://payairo.com/ref/${referralCode}`;
 };
 
 /**
