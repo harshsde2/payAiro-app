@@ -138,6 +138,11 @@ import TokenDecimal from "./TokenDecimal.svg";
 import TotalValue from "./TotalValue.svg";
 import NewCryptoIcon from "./NewCryptoIcon.svg";
 import BottomCryptoIcon from "./BottomCryptoIcon.svg";
+import LeftArrowWhite from "./LeftArrowWhite.svg";
+import CrossWhite from "./CrossWhite.svg";
+import TorchIcon from "./TorchIcon.svg";
+import QRCodeWhite from "./QRCodeWhite.svg";
+
 
 
 export const SvgIcons = {
@@ -280,5 +285,9 @@ export const SvgIcons = {
   TokenDecimal,
   TotalValue,
   NewCryptoIcon,
-  BottomCryptoIcon
+  BottomCryptoIcon,
+  LeftArrowWhite,
+  CrossWhite,
+  TorchIcon,
+  QRCodeWhite
 };

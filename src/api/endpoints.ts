@@ -88,6 +88,7 @@ export const AUTH = {
   DEPOSIT_ADDRESS: "auth/depositAddress/",
   CRYPTO_WITHDRAWAL: "auth/cybrid/Withdrawal/",
   CRYPTO_MARKET_DATA: "auth/coingecko/markets/",
+  COINFLOW_CHECKOUT: "auth/coinflow/checkout/",
 };
 // Wallet endpoints
 export const WALLET = {

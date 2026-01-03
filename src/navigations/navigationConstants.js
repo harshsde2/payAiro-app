@@ -116,5 +116,6 @@ export const NAVIGATION_SCREENS = {
   NEW_TRANSACTION_DETAILS: "NewTransactionDetails",
   UNIFIED_TRANSACTION: "UnifiedTransaction",
   HOW_TO_EARN_POINTS: "HowToEarnPoints",
-  BLOCKCHAIN_NAME_SERVICE_TERMS: "BlockchainNameServiceTerms"
+  BLOCKCHAIN_NAME_SERVICE_TERMS: "BlockchainNameServiceTerms",
+  COINFLOW_CHECKOUT_WEBVIEW: "CoinflowCheckoutWebView"
 };

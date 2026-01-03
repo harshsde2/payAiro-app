@@ -566,7 +566,7 @@ export default function ScanPay(props: IScanPayProps) {
         accountNumber={(bank as any)?.account_number}
       />
 
-      {!isCrypto && (
+      {/* {!isCrypto && (
         <TouchableOpacity
           onPress={() => setisVisible2(true)}
           style={{
@@ -607,7 +607,7 @@ export default function ScanPay(props: IScanPayProps) {
             <SvgIcons.ChevronDown />
           </View>
         </TouchableOpacity>
-      )}
+      )} */}
 
       <HeaderTitle title={ type === "requested" ? "Payment Request" : "Payment"} leftIcon={'true'} />
       <View
@@ -676,7 +676,7 @@ export default function ScanPay(props: IScanPayProps) {
         )}
       </View>
 
-      {!isCrypto && (
+      {/* {!isCrypto && (
         <TouchableOpacity
           onPress={() => setisVisible3(true)}
           style={{
@@ -710,7 +710,7 @@ export default function ScanPay(props: IScanPayProps) {
             <SvgIcons.ChevronDown width={10} height={10} />
           </View>
         </TouchableOpacity>
-      )}
+      )} */}
 
       <View
         style={{

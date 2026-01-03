@@ -93,6 +93,7 @@ import BankSelection from "screens/TSX-Screens/AddBalance/BankSelection";
 import QRScanner from "screens/TSX-Screens/Send/QRScanner";
 import CybridWebView from "screens/Authentications/CybridWebView";
 import WithdrawlBalance from "screens/TSX-Screens/AddBalance/WithdrawlBalance";
+import CoinflowCheckoutWebView from "screens/TSX-Screens/AddBalance/CoinflowCheckoutWebView";
 import NewTransactionDetails from "screens/TSX-Screens/NewTransactionDetails/NewTransactionDetails";
 import UnifiedTransactionScreen from "screens/TSX-Screens/UnifiedTransactions/UnifiedTransactionScreen";
 import CyrptoDetails from "screens/TSX-Screens/CybridCrypto/CyrptoDetails";
@@ -464,6 +465,11 @@ export default function AppStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.ADD_BALANCE}
         component={AddBalance}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.COINFLOW_CHECKOUT_WEBVIEW}
+        component={CoinflowCheckoutWebView}
       />
       <Stack.Screen
         options={{ headerShown: false }}

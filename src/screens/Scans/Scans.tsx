@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import { SvgIcons } from "constants/svgs";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
     Alert,
     Dimensions,
@@ -147,6 +147,8 @@ export default function Scans(): JSX.Element {
   const [scanned, setScanned] = useState<boolean>(false);
   const navigation = useNavigation<ScansNavigationProp | any>();
   const [isVisible, setisVisible] = useState<boolean>(false);
+  const [torchMode, setTorchMode] = useState<'on' | 'off'>('off');
+  const cameraRef = useRef<any>(null);
   const onQRCodeRead = (event: IQRCodeEvent): void => {
     console.log(
       event.nativeEvent.codeStringValue,
@@ -168,6 +170,12 @@ export default function Scans(): JSX.Element {
       type,
       sender,
     });
+  };
+
+  const toggleTorchMode = (): void => {
+    const newMode = torchMode === 'off' ? 'on' : 'off';
+    console.log('Toggling torch mode to:', newMode);
+    setTorchMode(newMode);
   };
 
   const uploadFromGallery = async (): Promise<void> => {
@@ -265,16 +273,25 @@ export default function Scans(): JSX.Element {
     // <Container >
     <ScreenContainer padding={0}>
       {/* Camera Preview */}
+      <View style={{ flex: 1,alignItems: "center",position: "absolute", top: 0, zIndex: 1000,flexDirection: "row",width:'100%' ,paddingHorizontal:20,paddingVertical:20}}>
+        {/* <SvgIcons. width={30} height={30} /> */}
+        <View style={{flex:1,alignItems:'center',justifyContent:'flex-end',flexDirection:'row',gap:20}}>
+          <SvgIcons.TorchIcon onPress={toggleTorchMode} width={25} height={25} />
+          <SvgIcons.QRCodeWhite onPress={() => navigation.navigate(NAVIGATION_SCREENS.RECEIVE)} width={30} height={30} />
+        </View>
+      </View>
       <Camera
+        ref={cameraRef}
         style={styles.camera} // Limit camera feed size
         scanBarcode={true}
         onReadCode={onQRCodeRead} // Callback when a QR code is scanned
-        showFrame={false} // Show frame for QR scanning
+        showFrame={true} // Show frame for QR scanning
         laserColor="red"
         frameColor="rgba(243, 251, 244, 1)"
         zoomMode="on"
         zoom={2}
-        flashMode={'auto'}
+        torchMode={torchMode}
+        flashMode="auto"
         cameraType={CameraType.Back}
       />
 
@@ -358,7 +375,7 @@ const styles = StyleSheet.create({
   },
   camera: {
     width: width, // 80% of the screen width
-    height: height * 0.85, // Make it square
+    height: Platform.OS === 'ios' ? height * 0.85 : height * 0.95, // Make it square
     alignSelf: "center",
     // marginTop: height * 0.2, // Center vertically
   },
