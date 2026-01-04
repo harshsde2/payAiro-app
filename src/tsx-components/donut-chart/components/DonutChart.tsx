@@ -100,7 +100,8 @@ const DonutChart = ({
     return 'Total';
   }, []);
 
-  const maxLabelWidth = (radius - outerStrokeWidth / 2) * 1.6;
+  // Reduced maxLabelWidth to prevent overflow and ensure labels don't affect chart layout
+  const maxLabelWidth = (radius - outerStrokeWidth / 2) * 1.4;
 
   const labelFontIndex = useDerivedValue(() => {
     'worklet';
@@ -117,12 +118,72 @@ const DonutChart = ({
     if (width10 <= maxLabelWidth) {
       return 2;
     }
+    const width8 = smallFont8.measureText(text).width;
+    if (width8 <= maxLabelWidth) {
+      return 3;
+    }
+    // If even smallest font doesn't fit, we'll truncate with font index 3
     return 3;
+  }, []);
+  
+  // Truncated label text that fits within maxLabelWidth
+  const truncatedLabelText = useDerivedValue(() => {
+    'worklet';
+    const text = labelText.value;
+    const fontIndex = labelFontIndex.value;
+    
+    let selectedFont: typeof smallFont;
+    switch (fontIndex) {
+      case 0:
+        selectedFont = smallFont;
+        break;
+      case 1:
+        selectedFont = smallFont12;
+        break;
+      case 2:
+        selectedFont = smallFont10;
+        break;
+      case 3:
+        selectedFont = smallFont8;
+        break;
+      default:
+        selectedFont = smallFont;
+    }
+    
+    const textWidth = selectedFont.measureText(text).width;
+    if (textWidth <= maxLabelWidth) {
+      return text;
+    }
+    
+    // Truncate text to fit within max width with ellipsis
+    const ellipsis = '...';
+    const ellipsisWidth = selectedFont.measureText(ellipsis).width;
+    const availableWidth = maxLabelWidth - ellipsisWidth;
+    
+    // Binary search for the right truncation point
+    let left = 0;
+    let right = text.length;
+    let result = '';
+    
+    while (left <= right) {
+      const mid = Math.floor((left + right) / 2);
+      const truncated = text.substring(0, mid);
+      const width = selectedFont.measureText(truncated).width;
+      
+      if (width <= availableWidth) {
+        result = truncated;
+        left = mid + 1;
+      } else {
+        right = mid - 1;
+      }
+    }
+    
+    return result + ellipsis;
   }, []);
 
   const labelTextX = useDerivedValue(() => {
     'worklet';
-    const text = labelText.value;
+    const text = truncatedLabelText.value;
     const fontIndex = labelFontIndex.value;
     let selectedFont: typeof smallFont;
     switch (fontIndex) {
@@ -147,7 +208,7 @@ const DonutChart = ({
 
   const labelTextY = useDerivedValue(() => {
     'worklet';
-    const text = labelText.value;
+    const text = truncatedLabelText.value;
     const fontIndex = labelFontIndex.value;
     let selectedFont: typeof smallFont;
     switch (fontIndex) {
@@ -221,11 +282,11 @@ const DonutChart = ({
           );
         })}
         <Group>
-          <Text x={labelTextX} y={labelTextY} text={labelText} font={smallFont} color={textColor} opacity={labelOpacity0} />
+          <Text x={labelTextX} y={labelTextY} text={truncatedLabelText} font={smallFont} color={textColor} opacity={labelOpacity0} />
           <Text
             x={labelTextX}
             y={labelTextY}
-            text={labelText}
+            text={truncatedLabelText}
             font={smallFont12}
             color={textColor}
             opacity={labelOpacity1}
@@ -233,7 +294,7 @@ const DonutChart = ({
           <Text
             x={labelTextX}
             y={labelTextY}
-            text={labelText}
+            text={truncatedLabelText}
             font={smallFont10}
             color={textColor}
             opacity={labelOpacity2}
@@ -241,7 +302,7 @@ const DonutChart = ({
           <Text
             x={labelTextX}
             y={labelTextY}
-            text={labelText}
+            text={truncatedLabelText}
             font={smallFont8}
             color={textColor}
             opacity={labelOpacity3}

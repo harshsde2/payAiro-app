@@ -3,30 +3,29 @@ interface ColorPair {
   lightColors: string[];
 }
 
+// Modern vibrant color palette - each color is distinctly different (no similar shades)
+// First 6 colors are maximally distinct for common use cases
+const APP_THEME_COLORS = [
+  '#6366F1', // Indigo - Blue-purple (cool blue)
+  // '#EC4899', // Pink - Vibrant pink/magenta (warm pink)
+  // '#F59E0B', // Amber - Warm golden yellow (yellow-orange)
+  // '#10B981', // Emerald - Vibrant teal-green (green)
+  '#EF4444', // Red - Bright red (pure red)
+  '#06B6D4', // Cyan - Bright cyan (blue-green, distinct from indigo and emerald)
+  '#F97316', // Orange - Vibrant orange (pure orange, distinct from amber)
+  '#8B5CF6', // Purple - Rich purple (distinct from indigo)
+  '#84CC16', // Lime - Vibrant lime green (yellow-green, distinct from emerald)
+  '#F43F5E', // Rose - Vibrant rose (pink-red, distinct from pink and red)
+  '#14B8A6', // Teal - Vibrant teal (blue-green, distinct from emerald and cyan)
+  '#A855F7', // Violet - Rich violet (purple, distinct from purple and indigo)
+];
+
 export const generateColorPairs = (n: number): ColorPair => {
   const colors: string[] = [];
   const lightColors: string[] = [];
 
-  const baseColors = [
-    '#2ECC71', // Vibrant green - good contrast on light
-    '#E67E22', // Orange - good contrast
-    '#3498DB', // Blue - good contrast
-    '#9B59B6', // Purple - good contrast
-    '#E74C3C', // Red - good contrast
-    '#1ABC9C', // Teal - good contrast
-    '#F39C12', // Orange-yellow - good contrast
-    '#34495E', // Dark blue-grey - good contrast
-    '#16A085', // Dark teal - good contrast
-    '#D35400', // Dark orange - good contrast
-    '#8E44AD', // Dark purple - good contrast
-    '#C0392B', // Dark red - good contrast
-    '#27AE60', // Medium green - good contrast
-    '#2980B9', // Medium blue - good contrast
-    '#95A5A6', // Grey - good contrast
-  ];
-
   for (let i = 0; i < n; i++) {
-    const mainColor = baseColors[i % baseColors.length];
+    const mainColor = APP_THEME_COLORS[i % APP_THEME_COLORS.length];
 
     colors.push(normalizeHex(mainColor));
 

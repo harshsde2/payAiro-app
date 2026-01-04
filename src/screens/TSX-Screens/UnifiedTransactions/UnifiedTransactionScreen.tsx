@@ -261,6 +261,9 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
     });
   }, [categoryPercentages]);
 
+
+  console.log("formattedPieChartData =>", JSON.stringify(formattedPieChartData, null, 2));
+
   // Transform formattedPieChartData for DonutChart
   const donutChartData = useMemo(() => {
     if (!formattedPieChartData || formattedPieChartData.length === 0) {
@@ -515,7 +518,7 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
             )}
             </>
 
-            {isCrypto && (
+            {isCrypto && [pendingRequestsData?.data?.received_pending_requests, pendingRequestsData?.data?.sent_pending_requests].flat().length > 0 && (
               <DashboardSection title="Payment Requests">
                 <PaymentRequestsList
                   data={pendingRequestsData?.data}

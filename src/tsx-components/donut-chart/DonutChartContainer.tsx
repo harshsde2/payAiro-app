@@ -162,7 +162,10 @@ export const DonutChartContainer = ({ n, index, portfolioBreakdownData }: DonutC
         activeIndex.value = null;
       }}
       style={styles.container}>
-      <ScrollView contentContainerStyle={{ alignItems: 'center' }} horizontal showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={{ alignItems: 'center' }} 
+        horizontal 
+        showsVerticalScrollIndicator={false}>
         <View style={styles.chartComponentContainer}>
           <DonutChart
             radius={RADIUS}
@@ -185,7 +188,7 @@ export const DonutChartContainer = ({ n, index, portfolioBreakdownData }: DonutC
             outerStrokeColor={theme.colors.border.default}
           />
         </View>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', marginTop: 10 }}>
+        <View style={{ justifyContent: 'center', alignItems: 'flex-start', flexWrap: 'wrap', marginLeft: 10, minWidth: 140 }}>
           {data.map((item, index) => {
             return <RenderItem item={item} key={index} index={index} activeIndex={activeIndex} />;
           })}

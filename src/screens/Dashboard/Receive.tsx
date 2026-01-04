@@ -360,7 +360,7 @@ export default function Receive() {
           borderWidth: 1,
           borderColor: "white",
           margin: 20,
-          marginTop: 80,
+          marginTop: 60,
           flexDirection: "row",
           justifyContent: "center",
           alignItems: "center",
@@ -376,6 +376,7 @@ export default function Receive() {
         title={"Request Payment"}
         cStyle={{
           marginHorizontal: 20,
+          marginBottom: 100,
           width: "90%",
         }}
         onPress={() =>
