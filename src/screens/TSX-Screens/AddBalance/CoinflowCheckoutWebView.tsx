@@ -261,7 +261,7 @@ const CoinflowCheckoutWebView: React.FC = () => {
         onPressLeft={() => navigation.goBack()}
       />
       <Card
-        style={[globalStyles.whiteSheetContainer, { flex: 1, marginTop: 10, backgroundColor: isLoading || hasError ? '#fff' : '#000',borderBottomLeftRadius:0,borderBottomRightRadius:0 }]}
+        style={[globalStyles.whiteSheetContainer, { flex: 1, marginTop: 10, backgroundColor: '#fff',borderBottomLeftRadius:0,borderBottomRightRadius:0 }]}
       >
         {isLoading && !hasError && (
           <View

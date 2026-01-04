@@ -48,14 +48,23 @@ const AddBalance = () => {
 
   const [amount, setAmount] = useState("");
   const [loadingPaymentMethod, setLoadingPaymentMethod] = useState<string | null>(null);
+  const [hasAmountError, setHasAmountError] = useState(false);
   const current_balance = (bankBalance as any)?.bank_account?.usd;
 
   // Handle coinflow checkout
   const handleCoinflowCheckout = async (paymentMethodTitle: string) => {
     if (!amount || parseInt(amount) <= 0) {
+      setHasAmountError(true);
       showError("Please enter a valid amount");
+      // Reset error after animation completes
+      setTimeout(() => {
+        setHasAmountError(false);
+      }, 1000);
       return;
     }
+    
+    // Clear error if amount is valid
+    setHasAmountError(false);
 
     setLoadingPaymentMethod(paymentMethodTitle);
     try {
@@ -105,7 +114,12 @@ const AddBalance = () => {
         amount={amount}
         setAmount={(amount) => {
           setAmount(amount);
+          // Clear error when user starts typing
+          if (hasAmountError) {
+            setHasAmountError(false);
+          }
         }}
+        hasError={hasAmountError}
       />
       <CustomText align="center" size={14} variant="caption">
         Current Balance: ${current_balance}
@@ -117,7 +131,9 @@ const AddBalance = () => {
             const isCoinflow = method.type === "coinflow";
             const isValidAmount = amount !== "" && parseInt(amount) > 0;
             const isThisMethodLoading = loadingPaymentMethod === method.title;
-            const isDisabled = isThisMethodLoading || (loadingPaymentMethod !== null) || !isValidAmount;
+            const isOtherMethodLoading = loadingPaymentMethod !== null && loadingPaymentMethod !== method.title;
+            // Only disable if another method is loading, not if amount is invalid
+            const isDisabled = isThisMethodLoading || isOtherMethodLoading;
 
             return (
               <TouchableOpacity
@@ -132,7 +148,8 @@ const AddBalance = () => {
                   flexDirection: "row",
                   alignItems: "center",
                   marginBottom: 10,
-                  opacity: isDisabled && !isThisMethodLoading ? 0.6 : 1,
+                  // Show reduced opacity if amount is invalid or if disabled
+                  opacity: (!isValidAmount || isDisabled) && !isThisMethodLoading ? 0.6 : 1,
                 }}
                 onPress={() => {
                   if (isCoinflow) {

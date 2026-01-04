@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -6,6 +6,8 @@ import {
   Alert,
   Platform,
   ToastAndroid,
+  FlatList,
+  ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
@@ -18,6 +20,8 @@ import { SvgIcons } from "constants/svgs";
 import Share from "react-native-share";
 import { Clipboard } from "react-native";
 import { showSuccess, showError } from "utils/toast";
+import { useReferralData } from "query/hooks/useReferral";
+import { IReferredUser } from "./types";
 
 const ReferralScreen = () => {
   const { theme } = useTheme();
@@ -25,11 +29,36 @@ const ReferralScreen = () => {
   const styles = customStyles(theme);
   const { walletData } = useSelectorAction() as any;
 
+  // Fetch referral data
+  const {
+    data: referralResponse,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useReferralData();
+
+  // Get referral data
+  const referralData = referralResponse?.data;
+  const statistics = referralData?.referral_statistics;
+  const referredUsers = referralData?.referred_users_list || [];
+
   // Get referral code from username
   const referralCode = walletData?.username || "";
   // Use https:// link - clickable in WhatsApp, iMessage, etc.
   // For this to open the app directly, Universal Links must be configured on server
   const referralLink = `https://payairo.com/ref/${referralCode}`;
+
+  // Handle API errors
+  useEffect(() => {
+    if (isError) {
+      const errorMessage =
+        (error as any)?.response?.data?.message ||
+        (error as any)?.message ||
+        "Failed to load referral data. Please try again.";
+      showError(errorMessage);
+    }
+  }, [isError, error]);
 
   const handleCopyCode = () => {
     if (!referralCode) {
@@ -185,8 +214,229 @@ const ReferralScreen = () => {
             $5!
           </CustomText>
         </View>
+
+        {/* Statistics Section */}
+        {statistics && (
+          <View style={styles.statisticsSection}>
+            <CustomText
+              variant="h3"
+              fontFamily={theme.typography.fontFamily.montserratBold}
+              style={styles.sectionTitle}
+            >
+              Your Referral Stats
+            </CustomText>
+            <View style={styles.statsGrid}>
+              <View style={styles.statCard}>
+                <CustomText
+                  variant="h2"
+                  fontFamily={theme.typography.fontFamily.montserratBold}
+                  color={theme.colors.palette.green600}
+                >
+                  {statistics.total_referred_users}
+                </CustomText>
+                <CustomText
+                  variant="caption"
+                  color={theme.colors.text.secondary}
+                  style={styles.statLabel}
+                >
+                  Total Referrals
+                </CustomText>
+              </View>
+              <View style={styles.statCard}>
+                <CustomText
+                  variant="h2"
+                  fontFamily={theme.typography.fontFamily.montserratBold}
+                  color={theme.colors.palette.green600}
+                >
+                  ${statistics.total_referral_amount_earned.toFixed(2)}
+                </CustomText>
+                <CustomText
+                  variant="caption"
+                  color={theme.colors.text.secondary}
+                  style={styles.statLabel}
+                >
+                  Total Earned
+                </CustomText>
+              </View>
+            </View>
+            {statistics.total_referral_amount_pending > 0 && (
+              <View style={styles.pendingCard}>
+                <CustomText
+                  variant="body2"
+                  color={theme.colors.text.secondary}
+                >
+                  Pending: ${statistics.total_referral_amount_pending.toFixed(2)}
+                </CustomText>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Referred Users List */}
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator
+              size="large"
+              color={theme.colors.palette.green600}
+            />
+            <CustomText
+              variant="body2"
+              color={theme.colors.text.secondary}
+              style={styles.loadingText}
+            >
+              Loading referral data...
+            </CustomText>
+          </View>
+        ) : referredUsers.length > 0 ? (
+          <View style={styles.referredUsersSection}>
+            <CustomText
+              variant="h3"
+              fontFamily={theme.typography.fontFamily.montserratBold}
+              style={styles.sectionTitle}
+            >
+              Referred Users ({referredUsers.length})
+            </CustomText>
+            <FlatList
+              data={referredUsers}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => <ReferredUserCard user={item} />}
+              scrollEnabled={false}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+        ) : !isLoading ? (
+          <View style={styles.emptyContainer}>
+            <CustomText
+              variant="body2"
+              color={theme.colors.text.secondary}
+              style={styles.emptyText}
+            >
+              No referrals yet. Share your code to start earning!
+            </CustomText>
+          </View>
+        ) : null}
       </View>
     </ScreenContainer>
+  );
+};
+
+// Referred User Card Component
+const ReferredUserCard: React.FC<{ user: IReferredUser }> = ({ user }) => {
+  const { theme } = useTheme();
+  const styles = cardStyles(theme);
+
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  const getStatusColor = () => {
+    if (user.status === "completed") {
+      return theme.colors.palette.green600;
+    }
+    return theme.colors.palette.yellow600;
+  };
+
+  const getStatusBgColor = () => {
+    if (user.status === "completed") {
+      return theme.colors.palette.green50;
+    }
+    return theme.colors.palette.yellow100;
+  };
+
+  const getInitials = () => {
+    const name = user.name || user.username || user.email;
+    if (!name) return "?";
+    const parts = name.split(" ");
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardContent}>
+        {/* Avatar */}
+        <View style={styles.avatar}>
+          <CustomText
+            variant="subtitle2"
+            fontFamily={theme.typography.fontFamily.montserratBold}
+            color={theme.colors.palette.white}
+          >
+            {getInitials()}
+          </CustomText>
+        </View>
+
+        {/* User Info */}
+        <View style={styles.userInfo}>
+          <CustomText
+            variant="subtitle2"
+            fontFamily={theme.typography.fontFamily.montserratSemiBold}
+            style={styles.userName}
+            numberOfLines={1}
+          >
+            {user.name || user.username || user.email}
+          </CustomText>
+          <CustomText
+            variant="caption"
+            color={theme.colors.text.tertiary}
+            numberOfLines={1}
+          >
+            {user.email}
+          </CustomText>
+          <CustomText
+            variant="caption"
+            color={theme.colors.text.tertiary}
+            style={styles.dateText}
+          >
+            Joined: {formatDate(user.created_at)}
+          </CustomText>
+        </View>
+
+        {/* Status and Amount */}
+        <View style={styles.statusContainer}>
+          <View
+            style={[
+              styles.statusBadge,
+              { backgroundColor: getStatusBgColor() },
+            ]}
+          >
+            <View
+              style={[
+                styles.statusDot,
+                { backgroundColor: getStatusColor() },
+              ]}
+            />
+            <CustomText
+              variant="caption"
+              fontFamily={theme.typography.fontFamily.montserratSemiBold}
+              style={[styles.statusText, { color: getStatusColor() }]}
+            >
+              {user.status === "completed" ? "Completed" : "Pending"}
+            </CustomText>
+          </View>
+          {user.referral_amount_earned > 0 && (
+            <CustomText
+              variant="subtitle2"
+              fontFamily={theme.typography.fontFamily.montserratBold}
+              color={theme.colors.palette.green600}
+              style={styles.amountText}
+            >
+              +${user.referral_amount_earned.toFixed(2)}
+            </CustomText>
+          )}
+        </View>
+      </View>
+    </View>
   );
 };
 
@@ -270,6 +520,124 @@ const customStyles = (theme: Theme) =>
     infoText: {
       flex: 1,
       lineHeight: 20,
+    },
+    statisticsSection: {
+      marginTop: 30,
+      marginBottom: 25,
+    },
+    sectionTitle: {
+      marginBottom: 16,
+      color: theme.colors.text.primary,
+    },
+    statsGrid: {
+      flexDirection: "row",
+      gap: 12,
+      marginBottom: 12,
+    },
+    statCard: {
+      flex: 1,
+      backgroundColor: theme.colors.palette.green50,
+      borderRadius: 16,
+      padding: 20,
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: theme.colors.palette.green100,
+    },
+    statLabel: {
+      marginTop: 8,
+      textAlign: "center",
+    },
+    pendingCard: {
+      backgroundColor: theme.colors.palette.yellow100,
+      borderRadius: 12,
+      padding: 12,
+      alignItems: "center",
+    },
+    referredUsersSection: {
+      marginTop: 20,
+    },
+    loadingContainer: {
+      padding: 40,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    loadingText: {
+      marginTop: 12,
+    },
+    emptyContainer: {
+      padding: 40,
+      alignItems: "center",
+    },
+    emptyText: {
+      textAlign: "center",
+    },
+  });
+
+const cardStyles = (theme: Theme) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: theme.colors.palette.white,
+      borderRadius: 16,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: theme.colors.palette.grey200,
+      shadowColor: theme.colors.palette.black,
+      shadowOffset: {
+        width: 0,
+        height: 1,
+      },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 2,
+    },
+    cardContent: {
+      flexDirection: "row",
+      padding: 16,
+      alignItems: "center",
+    },
+    avatar: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: theme.colors.palette.green600,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: 12,
+    },
+    userInfo: {
+      flex: 1,
+      marginRight: 12,
+    },
+    userName: {
+      marginBottom: 4,
+      color: theme.colors.text.primary,
+    },
+    dateText: {
+      marginTop: 4,
+    },
+    statusContainer: {
+      alignItems: "flex-end",
+    },
+    statusBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 12,
+      marginBottom: 8,
+    },
+    statusDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      marginRight: 6,
+    },
+    statusText: {
+      fontSize: 11,
+      textTransform: "capitalize",
+    },
+    amountText: {
+      marginTop: 4,
     },
   });
 

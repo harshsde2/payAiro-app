@@ -133,7 +133,10 @@ export default function AddContact() {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return {
+      isValid: Object.keys(newErrors).length === 0,
+      errors: newErrors,
+    };
   }, [formData, selectedMethod]);
 
   // Handle input change
@@ -159,7 +162,43 @@ export default function AddContact() {
 
   // Handle form submission
   const handleSave = useCallback(async () => {
-    if (!validateForm()) {
+    const validation = validateForm();
+    
+    if (!validation.isValid) {
+      // Show toast error message based on validation errors
+      const errorMessages = [];
+      
+      // Priority: Required fields first
+      if (validation.errors.nickName) {
+        errorMessages.push(validation.errors.nickName);
+      }
+      
+      // Then the selected method's field
+      if (selectedMethod === "email" && validation.errors.email) {
+        errorMessages.push(validation.errors.email);
+      } else if (selectedMethod === "payAiroTag" && validation.errors.payAiroTag) {
+        errorMessages.push(validation.errors.payAiroTag);
+      } else if (selectedMethod === "contact" && validation.errors.contactNumber) {
+        errorMessages.push(validation.errors.contactNumber);
+      }
+      
+      // Then other field errors if any
+      if (validation.errors.email && selectedMethod !== "email") {
+        errorMessages.push(validation.errors.email);
+      }
+      if (validation.errors.contactNumber && selectedMethod !== "contact") {
+        errorMessages.push(validation.errors.contactNumber);
+      }
+      if (validation.errors.walletAddress) {
+        errorMessages.push(validation.errors.walletAddress);
+      }
+      
+      // Show the first error message or a generic message
+      const errorMessage = errorMessages.length > 0 
+        ? errorMessages[0] 
+        : "Please fill in all required fields correctly.";
+      
+      showError(errorMessage);
       return;
     }
 

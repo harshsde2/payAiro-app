@@ -20,11 +20,12 @@ const CircleItem = ({ item, navigation, isVisble3 }) => {
     <View style={{}}>
       <TouchableOpacity
         style={styles.circleContainer}
-        onPress={() =>
+        onPress={() =>{
+          // console.log("item?.username?.trim() =>", JSON.stringify(item,null,2)),
           navigation.navigate(NAVIGATION_SCREENS.SEND, {
             requested: false,
             sender: item?.username?.trim() ?? null,
-          })
+          })}
         }
       >
         <View

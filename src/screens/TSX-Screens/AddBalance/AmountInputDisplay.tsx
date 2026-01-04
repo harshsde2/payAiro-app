@@ -7,12 +7,18 @@ import {
   Platform,
   Dimensions,
 } from "react-native";
-import React, { FC, useRef, useState, useMemo } from "react";
+import React, { FC, useRef, useState, useMemo, useEffect } from "react";
 import { useTheme } from "styles";
 import { CustomText } from "tsx-components";
 import { setErrorMsg } from "redux/slices/authenticationSlice";
 import { useDispatch } from "react-redux";
 import { SvgIcons } from "constants/svgs";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 
 interface AmountInputDisplayProps {
   amount: string;
@@ -23,6 +29,7 @@ interface AmountInputDisplayProps {
   onCurrencySelector?: () => void;
   selectedCurrency?: string;
   onCurrencyChange?: (currency: string) => void;
+  hasError?: boolean;
 }
 
 const MAX_FONT_SIZE = 48;
@@ -37,11 +44,58 @@ const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
   maxLimit = 100000,
   selectedCurrency = "USD",
   onCurrencyChange,
+  hasError = false,
 }) => {
   const { theme } = useTheme();
   const dispatch = useDispatch();
   const inputRef = useRef<TextInput>(null);
   const [isFocused, setIsFocused] = useState(false);
+  
+  // Animation values for shake effect
+  const translateX = useSharedValue(0);
+  const borderColor = useSharedValue("transparent");
+  const borderWidth = useSharedValue(0);
+
+  // Trigger shake animation when error occurs
+  useEffect(() => {
+    if (hasError) {
+      // Shake animation: left-right-left-right
+      translateX.value = withSequence(
+        withTiming(-10, { duration: 50 }),
+        withTiming(10, { duration: 50 }),
+        withTiming(-10, { duration: 50 }),
+        withTiming(10, { duration: 50 }),
+        withTiming(0, { duration: 50 })
+      );
+      
+      // Change border color to red and make it visible
+      borderColor.value = withTiming(theme.colors.palette.red500, { duration: 200 });
+      borderWidth.value = withTiming(2, { duration: 200 });
+      
+      // Reset border color after animation
+      setTimeout(() => {
+        borderColor.value = withTiming("transparent", { duration: 300 });
+        borderWidth.value = withTiming(0, { duration: 300 });
+      }, 1000);
+    }
+  }, [hasError, theme.colors.palette.red500]);
+
+  // Reset error state when amount changes
+  useEffect(() => {
+    if (amount && amount.length > 0 && !hasError) {
+      borderColor.value = withTiming("transparent", { duration: 200 });
+      borderWidth.value = withTiming(0, { duration: 200 });
+    }
+  }, [amount, hasError]);
+
+  // Animated styles
+  const animatedContainerStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: translateX.value }],
+      borderColor: borderColor.value,
+      borderWidth: borderWidth.value,
+    };
+  });
 
   const dynamicFontSize = useMemo(() => {
     const displayPrefix = selectedCurrency === "USD" && showDollarIcon;
@@ -106,12 +160,19 @@ const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
       <CustomText variant="subtitle1" style={{ marginBottom: 5 }}>
         Enter Amount
       </CustomText>
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
+      <Animated.View
+        style={[
+          {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: theme.spacing.spacing[2] || 8,
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            minHeight: 60,
+          },
+          animatedContainerStyle,
+        ]}
       >
         {displayPrefix && (
           <Text
@@ -195,7 +256,7 @@ const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
             <SvgIcons.ChevronDown />
           </TouchableOpacity>
         )}
-      </View>
+      </Animated.View>
     </TouchableOpacity>
   );
 };

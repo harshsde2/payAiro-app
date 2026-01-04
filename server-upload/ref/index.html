@@ -12,7 +12,7 @@
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #69BF82 0%, #2C6A3F 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -31,7 +31,7 @@
     .logo {
       width: 80px;
       height: 80px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #69BF82 0%, #2C6A3F 100%);
       border-radius: 20px;
       margin: 0 auto 20px;
       display: flex;
@@ -52,8 +52,8 @@
       margin-bottom: 30px;
     }
     .referral-box {
-      background: #f8f9fa;
-      border: 2px dashed #667eea;
+      background: #E2F1E3;
+      border: 2px dashed #69BF82;
       border-radius: 12px;
       padding: 20px;
       margin-bottom: 30px;
@@ -66,7 +66,7 @@
       margin-bottom: 8px;
     }
     .referral-code {
-      color: #667eea;
+      color: #2C6A3F;
       font-size: 28px;
       font-weight: bold;
       letter-spacing: 2px;
@@ -95,7 +95,7 @@
       color: white;
     }
     .btn-android {
-      background: #3ddc84;
+      background: #2C6A3F;
       color: white;
     }
     .divider {
@@ -124,7 +124,7 @@
       width: 40px;
       height: 40px;
       border: 4px solid #f3f3f3;
-      border-top: 4px solid #667eea;
+      border-top: 4px solid #69BF82;
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin: 20px auto;
@@ -149,8 +149,6 @@
     </div>
     
     <div class="spinner" id="spinner"></div>
-    
-    <a href="#" class="btn btn-primary" id="openAppBtn">Open PayAiro App</a>
     
     <div class="divider"><span>Don't have the app?</span></div>
     
@@ -194,36 +192,6 @@
     } else if (isAndroid) {
       document.getElementById('iosBtn').style.display = 'none';
     }
-    
-    // Open app button click
-    document.getElementById('openAppBtn').addEventListener('click', function(e) {
-      e.preventDefault();
-      
-      // Show loading state
-      document.getElementById('container').classList.add('loading');
-      
-      // Try to open the app via deep link
-      window.location = deepLink;
-      
-      // Fallback: if app doesn't open within 2.5 seconds, redirect to app store
-      setTimeout(function() {
-        document.getElementById('container').classList.remove('loading');
-        
-        // Check if page is still visible (app didn't open)
-        if (!document.hidden) {
-          const confirmDownload = confirm(
-            'It looks like PayAiro is not installed. Would you like to download it?'
-          );
-          if (confirmDownload) {
-            if (isIOS) {
-              window.location = 'https://apps.apple.com/us/app/payairo/id6744965210';
-            } else {
-              window.location = 'https://play.google.com/store/apps/details?id=com.payairo';
-            }
-          }
-        }
-      }, 2500);
-    });
     
     // Auto-attempt to open app on mobile
     if (isIOS || isAndroid) {

@@ -29,6 +29,7 @@ const BlockchainNameServiceTerms = () => {
   const { serviceType, onAgreeCallback } = params || {};
 
   const [isAgreed, setIsAgreed] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
   const screenHeight = Dimensions.get("window").height;
   const maxModalHeight = screenHeight * 0.5;
   const headerHeight = 60;
@@ -55,11 +56,19 @@ const BlockchainNameServiceTerms = () => {
   };
 
   const handleAgree = async () => {
+    if (isProcessing) return;
+    
     if (isAgreed && onAgreeCallback) {
-      // Call the callback and wait for it to complete
-      await onAgreeCallback();
-      // Navigate back after callback completes
-      navigation.goBack();
+      setIsProcessing(true);
+      try {
+        // Call the callback and wait for it to complete
+        await onAgreeCallback();
+        // Navigate back after callback completes
+        navigation.goBack();
+      } catch (error) {
+        // Reset processing state on error so user can retry
+        setIsProcessing(false);
+      }
     } else if (!isAgreed) {
       navigation.goBack();
     }
@@ -126,10 +135,10 @@ const BlockchainNameServiceTerms = () => {
           title="I Agree"
           cStyle={[
             styles(theme).continueButton,
-            !isAgreed && styles(theme).continueButtonDisabled,
+            (!isAgreed || isProcessing) && styles(theme).continueButtonDisabled,
           ]}
           onPress={handleAgree}
-          disabled={!isAgreed}
+          disabled={!isAgreed || isProcessing}
         />
       </View>
     </View>

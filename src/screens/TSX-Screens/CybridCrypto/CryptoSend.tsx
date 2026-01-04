@@ -239,6 +239,30 @@ const CryptoSend = () => {
     });
   };
 
+  // Helper function to detect if recipient is a wallet address
+  const isWalletAddress = (address: string): boolean => {
+    if (!address || typeof address !== 'string') return false;
+    const trimmed = address.trim();
+    
+    // Ethereum/EVM addresses: 0x followed by 40 hex characters
+    if (/^0x[a-fA-F0-9]{40}$/i.test(trimmed)) {
+      return true;
+    }
+    
+    // Bitcoin addresses: starts with 1, 3, or bc1, typically 26-62 characters
+    if (/^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/.test(trimmed) || /^bc1[a-z0-9]{39,59}$/i.test(trimmed)) {
+      return true;
+    }
+    
+    // Other common crypto address patterns (alphanumeric, typically 26-95 characters)
+    // This is a broader check for other blockchain addresses
+    if (/^[a-zA-Z0-9]{26,95}$/.test(trimmed) && !trimmed.includes('@') && !trimmed.includes(' ')) {
+      return true;
+    }
+    
+    return false;
+  };
+
   const onVerifyUser = async () => {
     const formData = new FormData();
     formData.append("identifier", recipient.trim());
@@ -523,7 +547,12 @@ const CryptoSend = () => {
             <GenericButton
               title="Next"
               onPress={() => {
-                onVerifyUser();
+                // Skip verification for wallet addresses
+                if (isWalletAddress(recipient)) {
+                  setShowFinalPage(true);
+                } else {
+                  onVerifyUser();
+                }
               }}
               showLoader={true}
               isLoading={isPendingVerifyUser}

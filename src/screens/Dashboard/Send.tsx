@@ -43,7 +43,7 @@ const Send: React.FC<ISendProps> = ({ route }) => {
   const { theme } = useTheme();
   const styles = customStyles(theme);
 
-  // console.log("params =>", JSON.stringify(params, null, 2));
+  console.log("params =>", JSON.stringify(params, null, 2));
   
 
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
