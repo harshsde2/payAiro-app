@@ -6,10 +6,11 @@ import {
 } from "@tanstack/react-query";
 import { apiClient } from "api";
 import { AUTH, KYC } from "api/endpoints";
-import { ApiResponse } from "api/types";
+import { ApiResponse, IContentDataResponse } from "api/types";
 import useDispatchAction from "hooks/useDispatchAction";
 import { setKycStatus } from "redux/slices/authenticationSlice";
 import { showError, showSuccess } from "../../utils/toast";
+import { queryStaleTime } from "query/queryConfigs";
 
 export const useLogin = () => {
   return useMutation<ApiResponse<any>, Error>({
@@ -196,5 +197,18 @@ export const useVerifyUserForSendOTP = () => {
       const data = apiClient.post<ApiResponse<any>>(AUTH.VERIFY_USER_FOR_SEND_OTP, payload, false);
       return data;
     },
+  });
+};
+
+/**
+ * Hook to get content data
+ */
+export const useContentData = () => {
+  return useQuery<ApiResponse<IContentDataResponse>>({
+    queryKey: ["contentData"],
+    queryFn: async () => {
+      return await apiClient.get<ApiResponse<IContentDataResponse>>(AUTH.CONTENT_DATA);
+    },
+    
   });
 };

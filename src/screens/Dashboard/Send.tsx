@@ -43,7 +43,7 @@ const Send: React.FC<ISendProps> = ({ route }) => {
   const { theme } = useTheme();
   const styles = customStyles(theme);
 
-  console.log("params =>", JSON.stringify(params, null, 2));
+  // console.log("params =>", JSON.stringify(params, null, 2));
   
 
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -82,6 +82,7 @@ const Send: React.FC<ISendProps> = ({ route }) => {
       return;
     }
 
+    console.log("trimmedSender =>", trimmedSender);
     setPendingVerification(true);
     try {
       const data = await verifyUserByIdentifier({ identifier: trimmedSender });
@@ -125,8 +126,15 @@ const Send: React.FC<ISendProps> = ({ route }) => {
       // Navigate to terms screen for blockchain name service addresses
       navigation.navigate(NAVIGATION_SCREENS.BLOCKCHAIN_NAME_SERVICE_TERMS, {
         serviceType: serviceType,
-        onAgreeCallback: async () => {
-          await handleUserVerification();
+        onAgreeCallback:  () => {
+          console.log("onAgreeCallback =>", trimmedSender);
+          setTimeout(() => {
+          navigation.navigate(SCREENS.ScanPay, {
+              type: requested || type === "requested" ? "requested" : "receive",
+              sender: trimmedSender,
+              bank: selectedBank,
+            });
+          }, 1000);
         },
       });
       return;

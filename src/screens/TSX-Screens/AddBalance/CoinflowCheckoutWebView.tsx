@@ -22,7 +22,7 @@ const CoinflowCheckoutWebView: React.FC = () => {
   const { theme } = useTheme();
   const { checkoutLink } = (route.params as RouteParams) || {};
 
-  console.log("checkoutLink ->", checkoutLink);
+  // console.log("checkoutLink ->", checkoutLink);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const retryCountRef = React.useRef(0);
@@ -350,7 +350,7 @@ const CoinflowCheckoutWebView: React.FC = () => {
         <WebView
           ref={webviewRef}
           source={{ uri: checkoutLink }}
-          injectedJavaScript={injectedJavaScript}
+          // injectedJavaScript={injectedJavaScript}
           onMessage={handleMessage}
           onLoadEnd={handleLoadEnd}
           onLoadStart={handleLoadStart}

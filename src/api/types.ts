@@ -216,4 +216,17 @@ export interface PlaidLinkExit {
   };
 }
 
+// Content Data interfaces
+export interface IContentDataItem {
+  heading1: string;
+  description: string;
+  link: string;
+}
+
+export interface IContentDataResponse {
+  success: boolean;
+  data: IContentDataItem[];
+  count: number;
+}
+
 

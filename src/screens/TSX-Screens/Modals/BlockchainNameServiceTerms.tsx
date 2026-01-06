@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import {
   useNavigation,
@@ -15,6 +16,7 @@ import { useTheme } from "../../../styles/ThemeContext";
 import CustomText from "../../../tsx-components/CustomText";
 import GenericButton from "../../../components/GenericButton";
 import { NAVIGATION_SCREENS } from "../../../navigations/navigationConstants";
+import { useContentData } from "../../../query/hooks/useAPIAuth";
 
 interface RouteParams {
   serviceType: "ens" | "sns";
@@ -30,8 +32,11 @@ const BlockchainNameServiceTerms = () => {
 
   const [isAgreed, setIsAgreed] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const { data: contentDataResponse, isLoading, isError,error } = useContentData();
+  
+  console.log("contentDataResponse =>", JSON.stringify(error, null, 2));
   const screenHeight = Dimensions.get("window").height;
-  const maxModalHeight = screenHeight * 0.5;
+  const maxModalHeight = 300;
   const headerHeight = 60;
   const padding = theme.spacing.spacing[5] * 2;
   const buttonHeight = 60;
@@ -44,27 +49,38 @@ const BlockchainNameServiceTerms = () => {
       : "Solana Name Service (SNS)";
   const networkName = serviceType === "ens" ? "Ethereum" : "Solana";
 
-  const termsContent = [
-    {
-      heading: `Important Notice: ${serviceName} Transfer`,
-      text: `You are about to send funds to a ${serviceName} address. This address will be resolved to a ${networkName} blockchain wallet address.`,
-    },
-  ];
+  const termsContent = useMemo(() => {
+    if (contentDataResponse?.data?.data && contentDataResponse.data.data.length > 0) {
+      return contentDataResponse.data.data.map((item) => ({
+        heading: item.heading1,
+        text: item.description,
+        link: item.link,
+      }));
+    }
+    // Fallback to default content if API data is not available
+    return [
+      {
+        heading: `Important Notice: ${serviceName} Transfer`,
+        text: `You are about to send funds to a ${serviceName} address. This address will be resolved to a ${networkName} blockchain wallet address.`,
+      },
+    ];
+  }, [contentDataResponse, serviceName, networkName]);
 
   const handleClose = () => {
     navigation.goBack();
   };
 
-  const handleAgree = async () => {
+  const handleAgree =  () => {
     if (isProcessing) return;
     
     if (isAgreed && onAgreeCallback) {
       setIsProcessing(true);
       try {
         // Call the callback and wait for it to complete
-        await onAgreeCallback();
+       onAgreeCallback();
         // Navigate back after callback completes
         navigation.goBack();
+        
       } catch (error) {
         // Reset processing state on error so user can retry
         setIsProcessing(false);
@@ -87,48 +103,45 @@ const BlockchainNameServiceTerms = () => {
           { maxHeight: maxModalHeight },
         ]}
       >
-        <View style={styles(theme).headerContainer}>
-          <CustomText
-            variant="h3"
-            fontWeight="bold"
-            color={theme.colors.text.primary}
-            style={styles(theme).title}
-          >
-            Terms and Conditions
-          </CustomText>
-        </View>
-
         <ScrollView
           style={[styles(theme).scrollView, { height: scrollViewHeight }]}
           showsVerticalScrollIndicator={false}
         >
-          <CustomText
-            variant="body1"
-            color={theme.colors.palette.green700}
-            style={styles(theme).serviceNameText}
-          >
-            {serviceName}
-          </CustomText>
-
-          {termsContent.map((item, index) => (
-            <View key={index} style={styles(theme).termItem}>
-              <CustomText
-                variant="h4"
-                fontWeight="semiBold"
-                color={theme.colors.palette.grey900}
-                style={styles(theme).termHeading}
-              >
-                {item.heading}
-              </CustomText>
+          {isLoading ? (
+            <View style={styles(theme).loadingContainer}>
+              <ActivityIndicator size="large" color={theme.colors.palette.primary} />
+            </View>
+          ) : isError ? (
+            <View style={styles(theme).errorContainer}>
               <CustomText
                 variant="body2"
                 color={theme.colors.palette.grey700}
                 style={styles(theme).termText}
               >
-                {item.text}
+                Failed to load content. Please try again.
               </CustomText>
             </View>
-          ))}
+          ) : (
+            termsContent.map((item, index) => (
+              <View key={index} style={styles(theme).termItem}>
+                <CustomText
+                  variant="h3"
+                  fontWeight="semiBold"
+                  color={theme.colors.palette.grey900}
+                  style={styles(theme).termHeading}
+                >
+                  {item.heading}
+                </CustomText>
+                <CustomText
+                  variant="body2"
+                  color={theme.colors.palette.grey700}
+                  style={styles(theme).termText}
+                >
+                  {item.text}
+                </CustomText>
+              </View>
+            ))
+          )}
         </ScrollView>
 
         <GenericButton
@@ -182,6 +195,8 @@ const styles = (theme: any, screenHeight?: number) =>
     },
     termItem: {
       marginBottom: theme.spacing.spacing[4],
+      justifyContent:'center',
+      alignItems: "center",
     },
     termHeading: {
       fontSize: 16,
@@ -190,12 +205,23 @@ const styles = (theme: any, screenHeight?: number) =>
     termText: {
       fontSize: 14,
       lineHeight: 20,
+      textAlign: "center",
+      
     },
     continueButton: {
       marginTop: theme.spacing.spacing[5],
     },
     continueButtonDisabled: {
       opacity: 0.5,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingVertical: theme.spacing.spacing[5],
+    },
+    errorContainer: {
+      paddingVertical: theme.spacing.spacing[5],
     },
   });
 

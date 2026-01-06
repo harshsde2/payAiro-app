@@ -163,7 +163,7 @@ export const DonutChartContainer = ({ n, index, portfolioBreakdownData }: DonutC
       }}
       style={styles.container}>
       <ScrollView 
-        contentContainerStyle={{ alignItems: 'center' }} 
+        contentContainerStyle={{ alignItems: 'center'}} 
         horizontal 
         showsVerticalScrollIndicator={false}>
         <View style={styles.chartComponentContainer}>

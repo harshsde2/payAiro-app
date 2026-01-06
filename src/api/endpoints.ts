@@ -90,6 +90,7 @@ export const AUTH = {
   CRYPTO_MARKET_DATA: "auth/coingecko/markets/",
   COINFLOW_CHECKOUT: "auth/coinflow/checkout/",
   GET_REFERRAL_DATA: "auth/users/ref/",
+  CONTENT_DATA: "auth/r1/content-data/",
 };
 // Wallet endpoints
 export const WALLET = {

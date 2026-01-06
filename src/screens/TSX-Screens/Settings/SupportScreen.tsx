@@ -37,45 +37,61 @@ const SupportScreen = () => {
   const { walletData } = useSelectorAction();
 
   const handleSubmit = () => {
-    if (subject.length == 0) {
-      showError("Subject is Empty");
-      return;
+    try {
+      if (subject.length == 0) {
+        showError("Subject is Empty");
+        return;
+      }
+      if (message.length == 0) {
+        showError("Message is Empty");
+        return;
+      }
+
+      const formData = new FormData();
+
+      // Append the attachment image only if it exists
+      if (attachment && attachment.uri) {
+        formData.append("selfimage", {
+          uri: attachment.uri,
+          name: attachment.name || `attachment${Date.now()}.jpg`,
+          type: attachment.type || "image/jpeg",
+        });
+      }
+
+      formData.append("message", message);
+      formData.append("subject", subject);
+      useDispatchAction(setShowLoader(true));
+
+      handleSubmitSupport(formData as any, {
+        onSuccess: (data) => {
+          // console.log("data => ✅", JSON.stringify(data, null, 2));
+          showSuccess("Your Query Submit Successfully");
+          // Reset form after successful submission
+          setMessage("");
+          setSubject("");
+          setAttachment(null);
+          // handleAddBankAccounts();
+          navigation.goBack();
+        },
+        onError: (error: any) => {
+          useDispatchAction(setShowLoader(false));
+          const errorMessage =
+            error?.response?.data?.message ||
+            error?.message ||
+            "Something went wrong!";
+          showError(errorMessage);
+        },
+        onSettled: () => {
+          useDispatchAction(setShowLoader(false));
+        },
+      });
+    } catch (error: any) {
+      useDispatchAction(setShowLoader(false));
+      const errorMessage =
+        error?.message || "An unexpected error occurred. Please try again.";
+      showError(errorMessage);
+      console.error("Support form submission error:", error);
     }
-    if (message.length == 0) {
-      showError("Message is Empty");
-      return;
-    }
-
-    const formData = new FormData();
-
-    // Append the selfie image
-    formData.append("selfimage", {
-      uri: attachment.uri,
-      name: attachment.name || `attachment${Date.now()}.jpg`,
-      type: attachment.type || "image/jpeg",
-    });
-
-    formData.append("message", message);
-    formData.append("subject", subject);
-    useDispatchAction(setShowLoader(true));
-
-    handleSubmitSupport(formData as any, {
-      onSuccess: (data) => {
-        // console.log("data => ✅", JSON.stringify(data, null, 2));
-        showSuccess("Your Query Submit Successfully");
-        // handleAddBankAccounts();
-        navigation.goBack();
-      },
-      onError: (error: any) => {
-        useDispatchAction(setShowLoader(false));
-
-        // console.log("Error uploading selfie:", errors);
-        showError("Something went wrong!");
-      },
-      onSettled: () => {
-        useDispatchAction(setShowLoader(false));
-      },
-    });
   };
 
   //   const han;
@@ -130,7 +146,11 @@ const SupportScreen = () => {
             label={"Upload file"}
             selectedFile={(result: any) => {
               //   setidProof1(result);
-              setAttachment(result[0]);
+              if (result && result.length > 0 && result[0]) {
+                setAttachment(result[0]);
+              } else {
+                setAttachment(null);
+              }
             }}
             value={attachment?.name}
             type={"image"}

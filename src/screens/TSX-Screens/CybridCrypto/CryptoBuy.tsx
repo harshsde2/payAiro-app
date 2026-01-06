@@ -12,6 +12,7 @@ import GenericButton from "components/GenericButton";
 import useSelectorAction from "hooks/useSelectorAction";
 import CommonModal from "tsx-components/modals/CommonModal";
 import { cryptoKeys, useCryptoBuy, useRefreshCryptoBalance } from "query/hooks";
+import { bankKeys } from "query/hooks/useBank";
 import { showError, showSuccess } from "../../../utils/toast";
 import { useDispatch, useSelector } from "react-redux";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
@@ -268,6 +269,12 @@ const CryptoBuy = () => {
           } catch (error) {
             console.log("Error refreshing balance after purchase:", error);
           }
+
+          // ✅ CRITICAL: Invalidate aggregated crypto balances (for NewDashboardCard)
+          queryClient.invalidateQueries({ queryKey: cryptoKeys.allCryptoBalances() });
+          
+          // ✅ CRITICAL: Invalidate bank balance (for NewDashboardCard in Fiat mode)
+          queryClient.invalidateQueries({ queryKey: bankKeys.balance() });
 
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
             isLoading: false,

@@ -47,6 +47,7 @@ import {
   useRedeemReward,
   useWalletDashboardData,
   userKeys,
+  paymentRequestKeys,
 } from "query/hooks";
 import { queryClient } from "query/queryClient";
 import DeviceInfo from "react-native-device-info";
@@ -858,7 +859,16 @@ const NewDashboard = () => {
     setRefreshing(true);
 
     try {
+      // ✅ Refresh bank balance (for NewDashboardCard in Fiat mode)
       refetchBankBalanceData();
+      
+      // ✅ Refresh aggregated crypto balances (for NewDashboardCard in Crypto mode)
+      refetch();
+      
+      // ✅ Refresh pending payment requests (for BottomNavigation badge count)
+      queryClient.invalidateQueries({ queryKey: paymentRequestKeys.pending() });
+      
+      // Refresh other dashboard data
       refetchDashBoardFiatData();
       refectWalletDashboardData();
     } catch (error) {
@@ -866,7 +876,7 @@ const NewDashboard = () => {
     } finally {
       setRefreshing(false);
     }
-  }, [tokens?.access]);
+  }, [tokens?.access, refetchBankBalanceData, refetch, refetchDashBoardFiatData, refectWalletDashboardData]);
 
   // Define interfaces for better type safety
   interface CryptoAsset {

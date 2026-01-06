@@ -160,7 +160,7 @@ const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
       <CustomText variant="subtitle1" style={{ marginBottom: 5 }}>
         Enter Amount
       </CustomText>
-      <Animated.View
+      <View
         style={[
           {
             flexDirection: "row",
@@ -171,7 +171,7 @@ const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
             paddingVertical: 12,
             minHeight: 60,
           },
-          animatedContainerStyle,
+          // animatedContainerStyle,
         ]}
       >
         {displayPrefix && (
@@ -256,7 +256,7 @@ const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
             <SvgIcons.ChevronDown />
           </TouchableOpacity>
         )}
-      </Animated.View>
+      </View>
     </TouchableOpacity>
   );
 };

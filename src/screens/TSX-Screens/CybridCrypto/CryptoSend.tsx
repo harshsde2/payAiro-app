@@ -22,7 +22,10 @@ import {
   useVerifyUser,
   useCryptoBalanceByAsset,
   useRefreshCryptoBalance,
+  cryptoKeys,
 } from "query/hooks";
+import { bankKeys } from "query/hooks/useBank";
+import { queryClient } from "query/queryClient";
 import { showError, showSuccess } from "../../../utils/toast";
 import { useDispatch } from "react-redux";
 import DashboardSection from "tsx-components/DashboardSection";
@@ -203,6 +206,12 @@ const CryptoSend = () => {
           } catch (error) {
             console.log("Error refreshing balance after send:", error);
           }
+
+          // ✅ CRITICAL: Invalidate aggregated crypto balances (for NewDashboardCard)
+          queryClient.invalidateQueries({ queryKey: cryptoKeys.allCryptoBalances() });
+          
+          // ✅ CRITICAL: Invalidate bank balance (crypto transactions might affect fiat balance)
+          queryClient.invalidateQueries({ queryKey: bankKeys.balance() });
 
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT, {
             isLoading: false,

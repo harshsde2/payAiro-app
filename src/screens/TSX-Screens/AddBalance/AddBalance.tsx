@@ -153,7 +153,8 @@ const AddBalance = () => {
                 }}
                 onPress={() => {
                   if (isCoinflow) {
-                    handleCoinflowCheckout(method.title);
+                    // handleCoinflowCheckout(method.title);
+                    showError("This feature is not available yet");
                   }
                 }}
                 disabled={isDisabled}

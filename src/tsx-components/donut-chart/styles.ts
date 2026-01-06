@@ -8,7 +8,7 @@ export const styles = StyleSheet.create({
   },
   itemContainer: {
     padding: 5,
-    width: 130,
+    width: 120,
     marginRight: 5,
     marginBottom: 10,
     borderRadius: 20,
@@ -31,7 +31,7 @@ export const styles = StyleSheet.create({
   chartComponentContainer: {
     width: RADIUS * 2,
     height: RADIUS * 2,
-    marginHorizontal: 10,
+    // marginHorizontal: 10,
     // justifyContent: 'center',
     // alignItems: 'center',
     // backgroundColor: 'red', 

@@ -81,12 +81,12 @@ const TextInputField: FC<InputProps> = (props) => {
               borderRadius: 30,
               borderWidth: 1,
               borderColor: "#6A6A6A33",
-              flexDirection: "row",
+              flexDirection: isMultiLine ? "column" : "row",
               justifyContent: isCountry ? "space-between" : "flex-start",
-              alignItems: "center",
-              paddingVertical: !countryCode ? 5 : 0,
+              alignItems: isMultiLine ? "stretch" : "center",
+              paddingVertical: !countryCode && !isMultiLine ? 5 : 0,
             },
-            iStyle,
+            !isMultiLine && iStyle, // Only apply iStyle to container for non-multiline inputs
           ]}
         >
           {countryCode && (
@@ -177,19 +177,26 @@ const TextInputField: FC<InputProps> = (props) => {
 
           {isMultiLine && (
             <TextInput
-              style={{
-                color: "#000",
-                paddingRight: 10,
-                paddingLeft: 15,
-                fontFamily: Fonts.semibold,
-                height: 100,
-                backgroundColor: "rgba(217, 217, 217, 0.07)",
-              }}
+              style={[
+                {
+                  color: "#000",
+                  paddingRight: 10,
+                  paddingLeft: 15,
+                  paddingTop: 10,
+                  paddingBottom: 10,
+                  fontFamily: Fonts.semibold,
+                  height: 100,
+                  width: "100%",
+                  backgroundColor: "rgba(217, 217, 217, 0.07)",
+                },
+                iStyle, // Merge iStyle to allow custom styles for multiline input
+              ]}
               placeholder={placeholder}
               placeholderTextColor={"#6A6A6A"}
               onChangeText={onChange}
               value={value}
               multiline={true}
+              textAlignVertical="top" // Important for Android multiline inputs
             />
           )}
         </View>

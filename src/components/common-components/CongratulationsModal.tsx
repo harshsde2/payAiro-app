@@ -114,6 +114,7 @@ const styles = (theme: any) =>
     },
     rewardAmountText: {
       fontSize: 48,
+      lineHeight: 56,
     },
   });
 

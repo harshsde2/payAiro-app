@@ -3,7 +3,9 @@ import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
 import moment from "moment";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import { useUserToUserTransfer, useCreatePaymentRequest, usePayPaymentRequest } from "query/hooks";
+import { useUserToUserTransfer, useCreatePaymentRequest, usePayPaymentRequest, cryptoKeys } from "query/hooks";
+import { bankKeys } from "query/hooks/useBank";
+import { queryClient } from "query/queryClient";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -117,6 +119,9 @@ export default function ScanPay(props: IScanPayProps) {
     payPaymentRequest(requestId, {
       onSuccess: (data) => {
         if (data?.status) {
+          // ✅ CRITICAL: Invalidate bank balance (affects NewDashboardCard in Fiat mode)
+          queryClient.invalidateQueries({ queryKey: bankKeys.balance() });
+          
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
             isLoading: false,
             transactionData: data,
@@ -236,6 +241,9 @@ export default function ScanPay(props: IScanPayProps) {
     handleUserToUserTransfer(formData, {
       onSuccess: (data: any) => {
         if (data?.data && data?.status) {
+          // ✅ CRITICAL: Invalidate bank balance (affects NewDashboardCard in Fiat mode)
+          queryClient.invalidateQueries({ queryKey: bankKeys.balance() });
+          
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
             isLoading: false,
             transactionData: data,
