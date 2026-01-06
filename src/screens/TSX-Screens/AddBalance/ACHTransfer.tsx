@@ -1,17 +1,9 @@
 import {
   View,
-  Text,
   TouchableOpacity,
-  TextInput,
-  FlatList,
   StyleSheet,
-  Pressable,
-  ToastAndroid,
-  Platform,
-  Alert,
-  Clipboard,
 } from "react-native";
-import React, { useState, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
 import { SvgIcons } from "constants/svgs";
@@ -26,111 +18,129 @@ import GenericButton from "components/GenericButton";
 import useDispatchAction from "hooks/useDispatchAction";
 import { setShowLoader } from "redux/slices/authenticationSlice";
 import { showError, showSuccess } from "../../../utils/toast";
-import { selfTransfer } from "services/Services";
 import { useIntraAccountTransfer } from "query/hooks";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import { NotifyOnChangeProps } from "@tanstack/react-query";
-import ConfirmationModalComponent from "tsx-components/ConfirmationModalComponent";
-import CommonModal from "tsx-components/modals/CommonModal";
-import Share from "react-native-share";
 
 const ACHTransfer = () => {
   const routes = useRoute();
-  const { amount: paramsAmount, selectedBank: paramsSelectedBank } = (
-    routes as any
-  ).params;
-
-  const inputRef = useRef<TextInput>(null);
+  // Only accept amount from route params - make screen independent
+  const { amount: paramsAmount } = (routes as any).params || {};
 
   const { theme } = useTheme();
   const navigation = useNavigation<any>();
   const customStyle = customStyles(theme);
   const styles = { ...useCommonAddBalanceStyles(), ...customStyle };
 
-  const { tokens, bankLists, bankBalance, walletData } = useSelectorAction();
+  const { bankLists, bankBalance, walletData } = useSelectorAction();
   const fees = (walletData as any)?.fees?.ACH;
 
   const [amount, setAmount] = useState(paramsAmount || "");
-  const [selectedAccount, setSelectedAccount] = useState<any>({
-    id: "",
-    icon: "",
-    title: "",
-    value: "",
-  });
-  const [showExtenalModel, setShowExternalModal] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<any>(null);
   const [selectedBank, setSelectedBank] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  // const [isLoading, setIsLoading] = useState(false);
+  const hasInitializedRef = useRef(false);
 
   const {
     isPending,
-    isSuccess,
     mutate: handleIntraAccountTransfer,
   } = useIntraAccountTransfer();
 
-  console.log("selectedBank =>", selectedBank);
-  // console.log("paramsSouceAccount =>", paramsSouceAccount);
+  // Build formatted bank list from Redux bankLists
+  // Format: External accounts first, then MAIN account
+  const BANK_LISTS = useMemo(() => {
+    return bankLists.map((item: any) => {
+      const last4 = item?.account_number?.slice(-4);
+      const maskedAccount = `•••• ${last4}`;
+      const isExternalAccount =
+        item?.account_type === "checking" || item?.account_type === "savings";
+      const accountType = !isExternalAccount
+        ? item?.account_type?.toUpperCase()
+        : "EXTERNAL";
 
-  // Initialize selectedBank from route parameters
-  React.useEffect(() => {
-    if (paramsSelectedBank) {
-      setSelectedBank(paramsSelectedBank);
+      return {
+        label: `${item?.bank_name || ""} (${maskedAccount || ""}) ${accountType || ""}`,
+        value: accountType?.toLowerCase() || "",
+        bank_name: item?.bank_name || "",
+        account_number: item?.account_number || "",
+        account_type: accountType || "",
+        guid: item?.guid || item?.account_guid || "",
+        originalAccountType: item?.account_type || "",
+      };
+    });
+  }, [bankLists]);
+
+  // Separate external accounts
+  const externalAccounts = useMemo(() => {
+    return BANK_LISTS.filter((item: any) => item.value === "external");
+  }, [BANK_LISTS]);
+
+  // Check if user has external account
+  const hasExternalAccount = externalAccounts.length > 0;
+
+  // Auto-select external account as source if available, otherwise show warning
+  useEffect(() => {
+    if (!hasInitializedRef.current && BANK_LISTS.length > 0) {
+      hasInitializedRef.current = true;
+      if (hasExternalAccount && externalAccounts.length > 0) {
+        // Auto-select first external account as source
+        setSelectedBank(externalAccounts[0]);
+      }
     }
-  }, [paramsSelectedBank]);
+  }, [BANK_LISTS, hasExternalAccount, externalAccounts]);
 
-  // Debug selectedBank state
-  // React.useEffect(() => {
-  //   // console.log("selectedBank state ->", JSON.stringify(selectedBank, null, 2));
-  // }, [selectedBank]);
+  // Build destination account list (excluding selected source account)
+  const DESTINATION_ACCOUNT_LIST = useMemo(() => {
+    if (!selectedBank) return [];
 
-  // console.log(JSON.stringify(bankLists, null, 2));
-
-  const ACCOUNT_LIST = bankLists.map((item: any, index: any) => {
-    const last4 = item?.account_number?.slice(-4);
-    const maskedAccount = `•••• ${last4}`;
-    const isExternalAccount =
-      item?.account_type === "checking" || item?.account_type === "savings";
-    const accountType = !isExternalAccount
-      ? item?.account_type?.toUpperCase()
-      : "external";
-
-    return {
+    // Filter out the selected source account and IRA accounts
+    return BANK_LISTS.filter((item: any) => {
+      // Exclude selected source account
+      if (item.guid === selectedBank.guid) return false;
+      // Exclude IRA accounts
+      if (item.originalAccountType?.toLowerCase().includes("ira")) return false;
+      return true;
+    }).map((item: any, index: number) => ({
       id: index,
-      title: `${item?.bank_name || ""} (${maskedAccount || ""}) ${
-        accountType || ""
-      }`,
+      title: item.label,
       icon: <SvgIcons.Bank />,
-      bank_type: accountType,
-      value: accountType?.toLowerCase() || "",
-    };
-  });
+      bank_type: item.account_type,
+      value: item.value,
+      guid: item.guid,
+      bank_name: item.bank_name,
+      account_number: item.account_number,
+      account_type: item.account_type,
+    }));
+  }, [BANK_LISTS, selectedBank]);
 
   const handleSelfTransfer = async () => {
-    if (paramsAmount === "" || !selectedBank || selectedAccount?.title === "") {
-      showError("One or more field are empty");
+    // Validation
+    if (!amount || amount === "" || parseFloat(amount) <= 0) {
+      showError("Please enter a valid amount");
       return;
     }
 
-    console.log("step 1");
-    // console.log("selectedBank =>", JSON.stringify(selectedBank, null, 2));
-    // console.log("selectedAccount =>", JSON.stringify(selectedAccount, null, 2));
-    const formData = new FormData();
-    formData.append("amount", paramsAmount);
-    formData.append("source_account_type", selectedBank?.value); // Source: where money comes FROM
-    formData.append("destination_account_type", selectedAccount?.value); // Destination: where money goes TO
-    formData.append("bank_account_id", selectedBank?.guid); // Destination: where money goes TO
+    if (!selectedBank) {
+      showError("Please select a source account");
+      return;
+    }
 
-    useDispatchAction(setShowLoader(true));
-
-    // console.log("formData =>", JSON.stringify(formData, null, 2));
+    if (!selectedAccount) {
+      showError("Please select a destination account");
+      return;
+    }
 
     // Clear previous error before making new request
     setErrorMessage(null);
 
+    const formData = new FormData();
+    formData.append("amount", amount);
+    formData.append("source_account_type", selectedBank.value); // Source: where money comes FROM
+    formData.append("destination_account_type", selectedAccount.value); // Destination: where money goes TO
+    formData.append("bank_account_id", selectedBank.guid); // Source account GUID
+
     handleIntraAccountTransfer(formData as any, {
       onSuccess: (data) => {
-        // console.log("data =>", JSON.stringify(data.data, null, 2));
-        showSuccess(data?.data?.message);
+        showSuccess(data?.data?.message || "Transfer successful");
         navigation.reset({
           index: 0,
           routes: [{ name: NAVIGATION_SCREENS.NEW_DASHBOARD }],
@@ -138,123 +148,52 @@ const ACHTransfer = () => {
       },
       onError: (error: any) => {
         const errorMsg =
-          error?.response?.data?.data?.message || "Something went wrong";
+          error?.response?.data?.data?.message ||
+          error?.response?.data?.message ||
+          "Something went wrong";
         showError(errorMsg);
-        // Also set error message to display on screen
+        // Set error message to display on screen
         setErrorMessage(errorMsg);
       },
       onSettled: () => {
-        console.log("step 5");
         useDispatchAction(setShowLoader(false));
       },
     });
   };
 
-  const shareOptions = {
-    message: `Account Details:
-    Routing Number: ${selectedBank?.ref_code || ""}
-    Account Number: ${selectedBank?.account_number || ""}
-    Bank Name: ${selectedBank?.bank_name || ""}
-    Amount: ${paramsAmount}`,
-  };
 
-  const handleShare = async () => {
-    try {
-      const res = await Share.open(shareOptions);
 
-      console.log("Share result:", res);
-    } catch (err) {
-      console.log("Error sharing:", err);
-    }
-  };
 
-  const copyToClipboard = () => {
-    Clipboard.setString(shareOptions.message);
 
-    // Display a success message
-    if (Platform.OS === "android") {
-      ToastAndroid.show("Account Details Copied", ToastAndroid.SHORT);
-    } else if (Platform.OS === "ios") {
-      Alert.alert("Account Details Copied");
-    }
-  };
+  
 
-  // console.log(
-  //   "account list =>",
-  //   ACCOUNT_LIST.filter(
-  //     (item) => item.bank_type.toLowerCase() === paramsSouceAccount
-  //   )
-  // );
-  // console.log("paramsSouceAccount list =>", paramsSouceAccount);
+
   return (
     <ScreenContainer padding={0}>
       <HeaderTitle title="Account Transfer" leftIcon="true" />
-      {showExtenalModel && (
-        <CommonModal
-          isVisible={showExtenalModel}
-          onClose={() => {
-            setShowExternalModal(false);
-          }}
-          containerStyle={{ justifyContent: "flex-end", alignItems: "center" }}
-        >
-          <Pressable
-            style={[styles.whiteSheetContainer, { flex: 1 / 2 }]}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <CustomText style={styles.title} variant="h3">
-              External Account
-            </CustomText>
-            <CustomText style={styles.title} variant="caption">
-              Linking an external account allows you to move money in and out of
-              your Payairo App balance.
-            </CustomText>
-            <View style={styles.row}>
-              <CustomText variant={"caption"} style={styles.label}>
-                Routing Number
-              </CustomText>
-              <CustomText>{selectedBank?.ref_code || "17147714"}</CustomText>
-            </View>
-            <View style={styles.row}>
-              <CustomText variant={"caption"} style={styles.label}>
-                Account Number
-              </CustomText>
-              <CustomText>{selectedBank?.account_number || ""}</CustomText>
-            </View>
-            <View style={styles.row}>
-              <CustomText variant={"caption"} style={styles.label}>
-                Bank Name
-              </CustomText>
-              <CustomText>{selectedBank?.bank_name || ""}</CustomText>
-            </View>
-            <View style={styles.row}>
-              <CustomText variant={"caption"} style={styles.label}>
-                Amount
-              </CustomText>
-              <CustomText>${paramsAmount || ""}</CustomText>
-            </View>
 
-            <View style={{ marginVertical: 20, gap: 10 }}>
-              <GenericButton
-                title={"Share"}
-                onPress={() => {
-                  handleShare();
-                }}
-              />
-              <GenericButton
-                title={"Copy"}
-                cStyle={{ backgroundColor: "black" }}
-                onPress={() => {
-                  copyToClipboard();
-                  // setShowConfirmationModal(false);
-                }}
-              />
-            </View>
-          </Pressable>
-        </CommonModal>
+      {/* No External Account Warning */}
+      {!hasExternalAccount && (
+        <View style={customStyle.warningContainer}>
+          <SvgIcons.InfoNote width={24} height={24} />
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <CustomText variant="subtitle2" style={{ marginBottom: 4 }}>
+              No External Account Connected
+            </CustomText>
+            <CustomText
+              variant="caption"
+              style={{ color: theme?.colors?.palette?.grey500 }}
+            >
+              To add balance to your Payairo account, you need to connect an
+              external bank account first.
+            </CustomText>
+          </View>
+        </View>
       )}
-      <View style={{ paddingHorizontal: 20 }}>
-        {/* Source Account (Pre-selected and Disabled) */}
-        <View style={{ width: "100%" }}>
+
+      {/* Source Account Display (Pre-selected and Disabled) */}
+      {selectedBank && (
+        <View style={{ paddingHorizontal: 20, marginBottom: 16 }}>
           <View
             style={{
               borderRadius: theme?.spacing?.spacing[2],
@@ -270,14 +209,12 @@ const ACHTransfer = () => {
             <SvgIcons.Bank />
             <View style={{ flex: 1, paddingLeft: 10 }}>
               <CustomText variant="subtitle2">
-                {selectedBank ? selectedBank.bank_name : "Source Account"}
+                {selectedBank.bank_name}
               </CustomText>
-              {selectedBank && (
-                <CustomText variant="caption">
-                  {selectedBank.label.split("(")[1]?.split(")")[0]} •{" "}
-                  {selectedBank.account_type}
-                </CustomText>
-              )}
+              <CustomText variant="caption">
+                {selectedBank.label.split("(")[1]?.split(")")[0]} •{" "}
+                {selectedBank.account_type}
+              </CustomText>
             </View>
             <CustomText
               variant="caption"
@@ -287,10 +224,11 @@ const ACHTransfer = () => {
             </CustomText>
           </View>
         </View>
-      </View>
+      )}
+
       <AmountInputDisplay amount={amount} setAmount={setAmount} />
       <CustomText align="center" size={14} variant="caption">
-        Current Balance: ${(bankBalance as any)?.bank_account?.usd}
+        Current Balance: ${(bankBalance as any)?.bank_account?.usd || "0.00"}
       </CustomText>
 
       {/* Transfer Flow Header */}
@@ -308,27 +246,16 @@ const ACHTransfer = () => {
           style={{ color: theme?.colors?.palette?.grey500 }}
         >
           Money will be transferred 'From' the source account 'To' the
-          destination account and the fee will be {fees}%
+          destination account and the fee will be {fees || 0}%
         </CustomText>
       </View>
 
       <View style={[styles.whiteSheetContainer]}>
-        {/* {" "} */}
         <DashboardSection title="Select Destination Account">
-          {ACCOUNT_LIST.filter(
-            (item: any) =>
-              !item?.title
-                ?.toLowerCase()
-                ?.includes(
-                  selectedBank?.value?.toLowerCase() == "external"
-                    ? "external"
-                    : selectedBank?.value?.toLowerCase()
-                )
-          )
-            .filter((item) => !item?.title?.toLowerCase()?.includes("ira"))
-            .map((item) => (
+          {DESTINATION_ACCOUNT_LIST.length > 0 ? (
+            DESTINATION_ACCOUNT_LIST.map((item) => (
               <TouchableOpacity
-                key={item?.id}
+                key={item.id}
                 onPress={() => setSelectedAccount(item)}
                 style={{
                   flexDirection: "row",
@@ -342,7 +269,6 @@ const ACHTransfer = () => {
                   borderWidth: 1,
                   borderColor: theme.colors.palette.grey300,
                   marginBottom: 10,
-                  // paddingHorizontal: 20,
                 }}
               >
                 <View
@@ -390,61 +316,19 @@ const ACHTransfer = () => {
                   To
                 </CustomText>
               </TouchableOpacity>
-            ))}
-          {/* <TouchableOpacity
-            onPress={() => setShowExternalModal(true)}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              padding: 16,
-              borderRadius: 14,
-              backgroundColor: showExtenalModel
-                ? theme.colors.palette.green200
-                : theme.colors.palette.grey250,
-              borderWidth: 1,
-              borderColor: theme.colors.palette.grey300,
-              marginBottom: 10,
-              // paddingHorizontal: 20,
-            }}
-          >
-            <View
+            ))
+          ) : (
+            <CustomText
+              variant="caption"
               style={{
-                height: 20,
-                width: 20,
-                borderRadius: 10,
-                borderWidth: 2,
-                borderColor: showExtenalModel
-                  ? theme.colors.palette.primary
-                  : theme.colors.palette.grey400,
-                alignItems: "center",
-                justifyContent: "center",
-                marginRight: 10,
+                color: theme?.colors?.palette?.grey500,
+                textAlign: "center",
+                padding: 16,
               }}
             >
-              {showExtenalModel && (
-                <View
-                  style={{
-                    height: 10,
-                    width: 10,
-                    borderRadius: 5,
-                    backgroundColor: theme.colors.palette.primary,
-                  }}
-                />
-              )}
-            </View>
-            <SvgIcons.Bank />
-            <CustomText
-              color={theme.colors.palette.black}
-              variant="subtitle1"
-              size={12}
-              style={{ marginLeft: 10 }}
-            >
-              {"External Account"}
+              No destination accounts available
             </CustomText>
-            <CustomText variant="caption" style={{ color: theme?.colors?.palette?.grey500 }}>
-              To
-            </CustomText>
-          </TouchableOpacity> */}
+          )}
         </DashboardSection>
 
         {/* Error Message Display */}
@@ -461,12 +345,10 @@ const ACHTransfer = () => {
 
         <GenericButton
           title="Add Balance"
-          onPress={() => {
-            handleSelfTransfer();
-          }}
+          onPress={handleSelfTransfer}
           showLoader={true}
           isLoading={isPending}
-          disabled={isPending}
+          disabled={isPending || !hasExternalAccount || !selectedAccount}
         />
       </View>
     </ScreenContainer>
@@ -482,6 +364,17 @@ const customStyles = (theme: Theme) =>
       fontWeight: "bold",
       textAlign: "center",
       marginBottom: 15,
+    },
+    warningContainer: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      backgroundColor: theme?.colors?.palette?.yellow100 || "#FFF9E6",
+      borderRadius: theme?.spacing?.spacing[2] || 8,
+      padding: 16,
+      marginHorizontal: 20,
+      marginBottom: 16,
+      borderWidth: 1,
+      borderColor: theme?.colors?.palette?.yellow400 || "#FFD666",
     },
 
     row: {

@@ -468,9 +468,8 @@ export default function StatementDetails() {
                 <tr>
                   <th class="date-col">Date</th>
                   <th class="narration-col">Narration</th>
-                  <th class="ref-col">Chq/Ref No</th>
-                  <th class="amount-col">Withdrawal(Dr)/Deposit(Cr)</th>
-                  <th class="balance-col">Balance</th>
+                  <th class="ref-col">Transaction ID</th>
+                  <th class="amount-col">Withdrawal(Dr) / Deposit(Cr)</th>
                 </tr>
               </thead>
               <tbody>
@@ -503,7 +502,6 @@ export default function StatementDetails() {
                           }">
                             ${formattedAmount}${isCredit ? "(Cr)" : "(Dr)"}
                           </td>
-                          <td class="balance-col">${formattedBalance}(Cr)</td>
                         </tr>
                       `;
                   })

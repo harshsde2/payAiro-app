@@ -36,6 +36,7 @@ export default function Receive() {
   const { theme } = useTheme();
   const styles = { ...useGlobalStyles(), ...customStyles(theme) };
   const viewShotRef = useRef<any>(null);
+  const shareCardRef = useRef<any>(null);
   const [showShareDetailsModal, setShowShareDetailsModal] = useState(false);
   const [checkedBoxArray, setcheckedBoxArray] = useState([
     {
@@ -65,7 +66,7 @@ export default function Receive() {
         return;
       }
 
-      // Step 2: Build dynamic message
+      // Step 2: Build dynamic message for text-only sharing (fallback)
       let message = "PayAiro Payment Details\n\n";
 
       selectedItems.forEach(({ name }) => {
@@ -88,26 +89,35 @@ export default function Receive() {
         }
       });
 
-      // Check if QR code is selected - if so, capture and share with image
+      // Check if QR code is selected
       const isQrSelected = selectedItems.some((item) => item.name === "Qr Code");
 
-      if (isQrSelected && viewShotRef.current) {
-        // Capture QR code image with proper filename
-        const uri = await viewShotRef.current.capture({
+      if (isQrSelected && shareCardRef.current) {
+        // Capture the composite share card that includes QR + all selected details
+        const uri = await shareCardRef.current.capture({
           format: "png",
           quality: 0.9,
           result: "tmpfile",
         });
 
-        const shareOptions = {
+        // Share the composite image (contains all details)
+        // On iOS, sharing image with message often ignores message, so we only share the image
+        // which already contains all the text details
+        const shareOptions: any = {
           title: "PayAiro Payment Details",
           subject: "PayAiro Payment Details",
-          message: message.trim(),
           url: uri,
           type: "image/png",
-          filename: `PayAiro_QR_${walletData?.username || "code"}`,
+          filename: `PayAiro_Payment_${walletData?.username || "details"}`,
           failOnCancel: false,
         };
+
+        // For iOS, don't include message as it's ignored when url is present
+        // The image already contains all the details
+        // For Android, we can optionally include message, but image is primary
+        if (Platform.OS === "android") {
+          shareOptions.message = message.trim();
+        }
 
         await Share.open(shareOptions);
       } else {
@@ -386,6 +396,119 @@ export default function Receive() {
           })
         }
       />
+
+      {/* Hidden ViewShot for sharing composite image with all selected details */}
+      <View
+        style={{
+          position: "absolute",
+          bottom: -1000,
+          left: 0,
+          right: 0,
+          opacity: 0,
+          width: 350,
+          alignSelf: "center",
+        }}
+        pointerEvents="none"
+      >
+        <ViewShot
+          ref={shareCardRef}
+          options={{
+            format: "png",
+            quality: 0.9,
+            result: "tmpfile",
+          }}
+          style={{
+            backgroundColor: theme.colors.palette.green700 || "#1a5f3f",
+            padding: 20,
+            borderRadius: 15,
+            width: 350,
+            alignItems: "center",
+          }}
+        >
+          <View style={{ width: "100%", alignItems: "center" }}>
+            {checkedBoxArray.some((item) => item.name === "Qr Code" && item.isChecked) && (
+              <>
+                <View
+                  style={{
+                    backgroundColor: "#FFFFFF",
+                    padding: 15,
+                    borderRadius: 10,
+                    marginBottom: 15,
+                    alignItems: "center",
+                  }}
+                >
+                  <QRCode
+                    value={JSON.stringify({
+                      type: "receive",
+                      username: walletData?.username,
+                      tag: walletData?.username,
+                    })}
+                    size={200}
+                  />
+                </View>
+                <CustomText
+                  color="#FFFFFF"
+                  size={18}
+                  fontWeight="bold"
+                  style={{ marginBottom: 15, textAlign: "center" }}
+                >
+                  PayAiro Payment Details
+                </CustomText>
+                <CustomText
+                  color="#FFFFFF"
+                  size={14}
+                  style={{ marginBottom: 15, textAlign: "center" }}
+                >
+                  📱 Scan the QR code to send money
+                </CustomText>
+              </>
+            )}
+            {checkedBoxArray.some((item) => item.name === "PayAiro Tag" && item.isChecked) && (
+              <CustomText
+                color="#FFFFFF"
+                size={14}
+                style={{ marginBottom: 10, textAlign: "center" }}
+              >
+                🏷️ PayAiro Tag: {walletData?.username}
+              </CustomText>
+            )}
+            {checkedBoxArray.some((item) => item.name === "Bank Details" && item.isChecked) &&
+              bankLists?.[bankLists.length - 1] && (
+                <View style={{ width: "100%", marginTop: 10 }}>
+                  <CustomText
+                    color="#FFFFFF"
+                    size={14}
+                    fontWeight="bold"
+                    style={{ marginBottom: 10, textAlign: "center" }}
+                  >
+                    🏦 Bank Details:
+                  </CustomText>
+                  <CustomText
+                    color="#FFFFFF"
+                    size={13}
+                    style={{ marginBottom: 5, textAlign: "center" }}
+                  >
+                    Bank Name: {bankLists[bankLists.length - 1]?.bank_name || "N/A"}
+                  </CustomText>
+                  <CustomText
+                    color="#FFFFFF"
+                    size={13}
+                    style={{ marginBottom: 5, textAlign: "center" }}
+                  >
+                    Routing Number: {bankLists[bankLists.length - 1]?.ref_code || "N/A"}
+                  </CustomText>
+                  <CustomText
+                    color="#FFFFFF"
+                    size={13}
+                    style={{ marginBottom: 10, textAlign: "center" }}
+                  >
+                    Account Number: {bankLists[bankLists.length - 1]?.account_number || "N/A"}
+                  </CustomText>
+                </View>
+              )}
+          </View>
+        </ViewShot>
+      </View>
     </ScreenContainer>
   );
 }
