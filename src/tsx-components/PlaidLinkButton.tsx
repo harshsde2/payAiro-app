@@ -104,9 +104,9 @@ const PlaidLinkButton: React.FC<PlaidLinkButtonProps> = ({
   return (
      <AddAndLinkAccountCard 
      style={{height: 125}}
-      title={"LINK ACCOUNT"}
-      description={"Link your external account"}
-      buttonText={"Link Account"}
+      title={"External Bank Account"}
+      description={"link your external bank account"}
+      buttonText={"Connect"}
       onAddPress={handlePress}
       disabled={disabled || loading}
      />

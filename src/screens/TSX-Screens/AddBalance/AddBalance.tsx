@@ -3,6 +3,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import React, { useMemo, useState } from "react";
 import { Theme, useTheme } from "styles";
@@ -19,6 +20,7 @@ import AmountInputDisplay from "./AmountInputDisplay";
 import { apiClient } from "api";
 import { AUTH } from "api/endpoints";
 import { showError } from "utils/toast";
+import InAppBrowser from "react-native-inappbrowser-reborn";
 
 const AddBalance = () => {
   const { bankBalance, bankLists } = useSelectorAction();
@@ -139,13 +141,64 @@ const AddBalance = () => {
         console.log("✅ Checkout link generated successfully");
         console.log("🔗 Checkout URL:", response.data.checkout_link);
         console.log("⏰ Timestamp:", new Date().toISOString());
-        // Test this URL in Safari on iOS device to see if it works outside WebView
-        navigation.navigate(
-          NAVIGATION_SCREENS.COINFLOW_CHECKOUT_WEBVIEW as never,
-          {
-            checkoutLink: response.data.checkout_link,
+        
+        // Check if InAppBrowser is available
+        const isAvailable = await InAppBrowser.isAvailable();
+        
+        if (isAvailable) {
+          try {
+            // Open in-app browser with payment success detection
+            const result = await InAppBrowser.open(response.data.checkout_link, {
+              // iOS options
+              dismissButtonStyle: "cancel",
+              preferredBarTintColor: theme?.colors?.palette?.primary || "#4F378B",
+              preferredControlTintColor: "#FFFFFF",
+              readerMode: false,
+              animated: true,
+              modalPresentationStyle: "fullScreen",
+              modalTransitionStyle: "coverVertical",
+              modalEnabled: true,
+              enableBarCollapsing: false,
+              // Android options
+              showTitle: true,
+              toolbarColor: theme?.colors?.palette?.primary || "#4F378B",
+              secondaryToolbarColor: "#000000",
+              navigationBarColor: "#000000",
+              navigationBarDividerColor: "transparent",
+              enableUrlBarHiding: true,
+              enableDefaultShare: true,
+              forceCloseOnRedirection: false,
+              animations: {
+                startEnter: "slide_in_right",
+                startExit: "slide_out_left",
+                endEnter: "slide_in_left",
+                endExit: "slide_out_right",
+              },
+              headers: {
+                "Accept-Language": "en-US",
+              },
+            });
+
+            // Handle browser result
+            if (result.type === "cancel") {
+              console.log("User cancelled the checkout");
+              // User closed the browser, no action needed
+            } else if (result.type === "dismiss") {
+              console.log("Browser was dismissed");
+            }
+          } catch (error: any) {
+            console.error("InAppBrowser error:", error);
+            showError("Failed to open checkout page. Please try again.");
           }
-        );
+        } else {
+          // Fallback to WebView screen if InAppBrowser is not available
+          navigation.navigate(
+            NAVIGATION_SCREENS.COINFLOW_CHECKOUT_WEBVIEW as never,
+            {
+              checkoutLink: response.data.checkout_link,
+            }
+          );
+        }
       } else {
         showError(response?.message || "Failed to generate checkout link");
       }

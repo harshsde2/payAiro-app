@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   Dimensions,
   ActivityIndicator,
+  Linking,
+  Alert,
 } from "react-native";
 import {
   useNavigation,
@@ -32,11 +34,12 @@ const BlockchainNameServiceTerms = () => {
 
   const [isAgreed, setIsAgreed] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [openingLinkIndex, setOpeningLinkIndex] = useState<number | null>(null);
   const { data: contentDataResponse, isLoading, isError,error } = useContentData();
   
   console.log("contentDataResponse =>", JSON.stringify(error, null, 2));
   const screenHeight = Dimensions.get("window").height;
-  const maxModalHeight = 300;
+  const maxModalHeight = 340;
   const headerHeight = 60;
   const padding = theme.spacing.spacing[5] * 2;
   const buttonHeight = 60;
@@ -62,6 +65,7 @@ const BlockchainNameServiceTerms = () => {
       {
         heading: `Important Notice: ${serviceName} Transfer`,
         text: `You are about to send funds to a ${serviceName} address. This address will be resolved to a ${networkName} blockchain wallet address.`,
+        link: undefined,
       },
     ];
   }, [contentDataResponse, serviceName, networkName]);
@@ -87,6 +91,29 @@ const BlockchainNameServiceTerms = () => {
       }
     } else if (!isAgreed) {
       navigation.goBack();
+    }
+  };
+
+  const handleOpenLink = async (link: string, index: number) => {
+    if (!link) return;
+    
+    try {
+      setOpeningLinkIndex(index);
+      const canOpen = await Linking.canOpenURL(link);
+      
+      if (canOpen) {
+        await Linking.openURL(link);
+      } else {
+        Alert.alert("Error", "Unable to open this link. Please check the URL.");
+      }
+    } catch (error) {
+      console.error("Error opening link:", error);
+      Alert.alert("Error", "Failed to open link. Please try again.");
+    } finally {
+      // Small delay to show loading indicator
+      setTimeout(() => {
+        setOpeningLinkIndex(null);
+      }, 500);
     }
   };
 
@@ -132,13 +159,49 @@ const BlockchainNameServiceTerms = () => {
                 >
                   {item.heading}
                 </CustomText>
-                <CustomText
-                  variant="body2"
-                  color={theme.colors.palette.grey700}
-                  style={styles(theme).termText}
-                >
-                  {item.text}
-                </CustomText>
+                <View style={styles(theme).textContainer}>
+                  <CustomText
+                    variant="body2"
+                    color={theme.colors.palette.grey700}
+                    style={styles(theme).termText}
+                  >
+                    {item.text}
+                  </CustomText>
+                  {item.link && (
+                    <TouchableOpacity
+                      onPress={() => handleOpenLink(item.link, index)}
+                      disabled={openingLinkIndex === index}
+                      activeOpacity={0.7}
+                      style={styles(theme).linkTouchable}
+                    >
+                      {openingLinkIndex === index ? (
+                        <View style={styles(theme).linkLoadingContainer}>
+                          <ActivityIndicator
+                            size="small"
+                            color={theme.colors.palette.primary}
+                          />
+                          <CustomText
+                            variant="body2"
+                            color={theme.colors.palette.primary}
+                            fontWeight="medium"
+                            style={styles(theme).linkText}
+                          >
+                            {" "}Opening...
+                          </CustomText>
+                        </View>
+                      ) : (
+                        <CustomText
+                          variant="body2"
+                          color={theme.colors.palette.primary}
+                          fontWeight="medium"
+                          style={styles(theme).linkText}
+                        >
+                          {" "}Learn more
+                        </CustomText>
+                      )}
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
             ))
           )}
@@ -202,11 +265,16 @@ const styles = (theme: any, screenHeight?: number) =>
       fontSize: 16,
       marginBottom: theme.spacing.spacing[2],
     },
+    textContainer: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      justifyContent: "center",
+      alignItems: "center",
+    },
     termText: {
       fontSize: 14,
       lineHeight: 20,
       textAlign: "center",
-      
     },
     continueButton: {
       marginTop: theme.spacing.spacing[5],
@@ -222,6 +290,18 @@ const styles = (theme: any, screenHeight?: number) =>
     },
     errorContainer: {
       paddingVertical: theme.spacing.spacing[5],
+    },
+    linkTouchable: {
+      marginLeft: 4,
+    },
+    linkText: {
+      fontSize: 14,
+      textDecorationLine: "underline",
+    },
+    linkLoadingContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
     },
   });
 

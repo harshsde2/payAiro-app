@@ -6,6 +6,9 @@ buildscript {
         targetSdkVersion = 35
         ndkVersion = "28.0.12433566"
         kotlinVersion = "1.9.24"
+        // AndroidX Browser version for react-native-inappbrowser-reborn (compatible with compileSdk 35)
+        // Using 1.8.0 which should work with compileSdk 35 (1.9.0+ requires compileSdk 36)
+        androidXBrowser = "1.8.0"
     }
     repositories {
         google()

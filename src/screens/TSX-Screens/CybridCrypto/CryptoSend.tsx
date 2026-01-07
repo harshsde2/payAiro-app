@@ -158,25 +158,36 @@ const CryptoSend = () => {
     setSelectedCurrency(newCurrency);
   };
 
-  const onSendClick = async () => {
-    if (!amount || parseFloat(amount) <= 0) {
-      showError("Please enter a valid amount");
-      return;
+  const validateForm = (): string[] => {
+    const errors: string[] = [];
+
+    if (!amount || parseFloat(amount) <= 1.99) {
+      errors.push("$2.00 or more is required to send");
     }
 
     if (cryptoAmount <= 0) {
-      showError("Invalid crypto amount");
-      return;
+      errors.push("Invalid crypto amount");
     }
 
     const availableBalanceNum = parseFloat(availableBalance);
     if (cryptoAmount > availableBalanceNum) {
-      showError(`Insufficient balance. Available: ${availableBalance} ${symbol}`);
-      return;
+      errors.push(`Insufficient balance. Available: ${availableBalance} ${symbol}`);
     }
 
     if (Number(usdAmount) > 100000) {
-      showError("Amount cannot exceed ₹1,00,000");
+      errors.push("Amount cannot exceed ₹1,00,000");
+    }
+
+    return errors;
+  };
+
+  const onSendClick = async () => {
+    const validationErrors = validateForm();
+    
+    if (validationErrors.length > 0) {
+      validationErrors.forEach((error) => {
+        showError(error);
+      });
       return;
     }
 
@@ -487,6 +498,15 @@ const CryptoSend = () => {
             <GenericButton
               title="proceed"
               onPress={() => {
+                const validationErrors = validateForm();
+                
+                if (validationErrors.length > 0) {
+                  validationErrors.forEach((error) => {
+                    showError(error);
+                  });
+                  return;
+                }
+                
                 setShowConfirmationModal(true);
               }}
               disabled={!canProceed}

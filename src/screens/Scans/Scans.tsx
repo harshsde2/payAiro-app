@@ -3,16 +3,19 @@ import { ScreenContainer } from "HOC";
 import { SvgIcons } from "constants/svgs";
 import React, { useState, useRef } from "react";
 import {
-    Alert,
-    Dimensions,
-    Platform,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Dimensions,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { Camera, CameraType} from "react-native-camera-kit";
-import { ImageLibraryOptions, launchImageLibrary } from "react-native-image-picker";
+import { Camera, CameraType } from "react-native-camera-kit";
+import {
+  ImageLibraryOptions,
+  launchImageLibrary,
+} from "react-native-image-picker";
 import { useTheme } from "styles";
 import { CustomText } from "tsx-components";
 import BottomNavigation from "../../components/BottomNavigation";
@@ -23,6 +26,7 @@ import { IQRCodeEvent, ScansNavigationProp } from "./types";
 import QRCodeScanner from "react-native-qr-decode-image-camera";
 import GenericButton from "components/GenericButton";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { useSelector } from "react-redux";
 
 const { width, height } = Dimensions.get("window"); // Get device dimensions
 
@@ -37,8 +41,11 @@ const processQRCodeData = (
   type: "request" | "merchantSend" | "receive" | "receiveMerchant";
   sender: string | object;
 } => {
-  console.log("codeStringValue ->", JSON.stringify(codeStringValue ?? "{}", null, 2));
-  
+  console.log(
+    "codeStringValue ->",
+    JSON.stringify(codeStringValue ?? "{}", null, 2)
+  );
+
   if (!codeStringValue) {
     return {
       type: "receiveMerchant",
@@ -48,30 +55,37 @@ const processQRCodeData = (
 
   // Handle object format: { "type": "receive", "username": "pratap", "tag": "pratap" }
   if (typeof codeStringValue === "object" && codeStringValue !== null) {
-    const qrObject = codeStringValue as { type?: string; username?: string; orderID?: any; merchantSend?: any; [key: string]: any };
-    
+    const qrObject = codeStringValue as {
+      type?: string;
+      username?: string;
+      orderID?: any;
+      merchantSend?: any;
+      [key: string]: any;
+    };
+
     // Extract username as sender if available, otherwise use the full object
     const sender = qrObject.username ? qrObject.username : qrObject;
-    
+
     // If object has a type field, use it directly
     if (qrObject.type) {
-      const validTypes: Array<"request" | "merchantSend" | "receive" | "receiveMerchant"> = [
-        "request",
-        "merchantSend",
-        "receive",
-        "receiveMerchant",
-      ];
-      
+      const validTypes: Array<
+        "request" | "merchantSend" | "receive" | "receiveMerchant"
+      > = ["request", "merchantSend", "receive", "receiveMerchant"];
+
       const type = validTypes.includes(qrObject.type as any)
-        ? (qrObject.type as "request" | "merchantSend" | "receive" | "receiveMerchant")
+        ? (qrObject.type as
+            | "request"
+            | "merchantSend"
+            | "receive"
+            | "receiveMerchant")
         : "receiveMerchant";
-      
+
       return {
         type,
         sender,
       };
     }
-    
+
     // If object doesn't have type but has orderID, it's a request
     if ("orderID" in qrObject || qrObject.orderID) {
       return {
@@ -79,7 +93,7 @@ const processQRCodeData = (
         sender,
       };
     }
-    
+
     // If object has merchantSend, it's merchantSend
     if ("merchantSend" in qrObject || qrObject.merchantSend) {
       return {
@@ -87,7 +101,7 @@ const processQRCodeData = (
         sender,
       };
     }
-    
+
     // Default for object without type field
     return {
       type: "receiveMerchant",
@@ -143,11 +157,11 @@ const processQRCodeData = (
 
 export default function Scans(): JSX.Element {
   const { theme } = useTheme();
-
+  const { isCrypto } = useSelector((state: any) => state.authenticationSlice);
   const [scanned, setScanned] = useState<boolean>(false);
   const navigation = useNavigation<ScansNavigationProp | any>();
   const [isVisible, setisVisible] = useState<boolean>(false);
-  const [torchMode, setTorchMode] = useState<'on' | 'off'>('off');
+  const [torchMode, setTorchMode] = useState<"on" | "off">("off");
   const cameraRef = useRef<any>(null);
   const onQRCodeRead = (event: IQRCodeEvent): void => {
     console.log(
@@ -155,7 +169,7 @@ export default function Scans(): JSX.Element {
       "event.nativeEvent.codeStringValue"
     );
     setScanned(true);
-    
+
     // Try to parse as JSON, if it fails, pass as string
     let parsedValue: string | object;
     try {
@@ -163,18 +177,25 @@ export default function Scans(): JSX.Element {
     } catch {
       parsedValue = event.nativeEvent.codeStringValue;
     }
-    
+
     const { type, sender } = processQRCodeData(parsedValue);
-    
-    navigation.replace(SCREENS.ScanPay, {
-      type,
-      sender,
-    });
+
+    if (type === "receiveMerchant") {
+      navigation.replace(NAVIGATION_SCREENS.SEND, {
+        requested: false,
+        sender,
+      });
+    } else {
+      navigation.replace(NAVIGATION_SCREENS.SCAN_PAY, {
+        type,
+        sender,
+      });
+    }
   };
 
   const toggleTorchMode = (): void => {
-    const newMode = torchMode === 'off' ? 'on' : 'off';
-    console.log('Toggling torch mode to:', newMode);
+    const newMode = torchMode === "off" ? "on" : "off";
+    console.log("Toggling torch mode to:", newMode);
     setTorchMode(newMode);
   };
 
@@ -182,7 +203,7 @@ export default function Scans(): JSX.Element {
     const options: ImageLibraryOptions = {
       mediaType: "photo",
     };
-    
+
     const result = await launchImageLibrary(options);
 
     if (result.assets && result.assets[0]) {
@@ -194,41 +215,48 @@ export default function Scans(): JSX.Element {
       }
 
       // Convert URI for Android if needed (remove file:// prefix for the library)
-      if (Platform.OS === 'android' && imagePath.startsWith('file://')) {
-        imagePath = imagePath.replace('file://', '');
+      if (Platform.OS === "android" && imagePath.startsWith("file://")) {
+        imagePath = imagePath.replace("file://", "");
       }
 
       try {
         // Scan QR code from the selected image
         console.log("Starting QR decode for image:", imagePath);
         console.log("Original URI:", result.assets[0].uri);
-        
+
         const qrData = await QRCodeScanner.decode(imagePath);
-        
+
         console.log("QR Data received:", qrData);
         console.log("QR Data type:", typeof qrData);
-        console.log("QR Data length:", typeof qrData === 'string' ? qrData.length : 'N/A');
-        
+        console.log(
+          "QR Data length:",
+          typeof qrData === "string" ? qrData.length : "N/A"
+        );
+
         // Handle different return formats from the library
         let codeStringValue: string = "";
-        
-        if (typeof qrData === 'string' && qrData.length > 0) {
+
+        if (typeof qrData === "string" && qrData.length > 0) {
           codeStringValue = qrData;
-        } else if (typeof qrData === 'object' && qrData !== null) {
+        } else if (typeof qrData === "object" && qrData !== null) {
           // The library might return an object with values array
           const qrDataObj = qrData as any;
-          if (qrDataObj.values && Array.isArray(qrDataObj.values) && qrDataObj.values.length > 0) {
+          if (
+            qrDataObj.values &&
+            Array.isArray(qrDataObj.values) &&
+            qrDataObj.values.length > 0
+          ) {
             codeStringValue = qrDataObj.values[0];
           } else if (qrDataObj.data) {
             codeStringValue = qrDataObj.data;
           }
         }
-        
+
         console.log("Extracted code value:", codeStringValue);
-        
+
         if (codeStringValue && codeStringValue.length > 0) {
           console.log("QR Code from Gallery:", codeStringValue);
-          
+
           // Try to parse as JSON, if it fails, validate as string
           let parsedValue: string | object;
           try {
@@ -237,32 +265,43 @@ export default function Scans(): JSX.Element {
           } catch {
             parsedValue = codeStringValue;
             console.log("QR code is string format");
-            
+
             // Validate that it's a PayAiro QR code (contains "sending:", "orderID", or "merchantSend")
-            if (!codeStringValue.includes("sending:") && 
-                !codeStringValue.includes("orderID") && 
-                !codeStringValue.includes("merchantSend")) {
-              Alert.alert("Invalid QR Code", "Please scan a valid PayAiro QR code.");
+            if (
+              !codeStringValue.includes("sending:") &&
+              !codeStringValue.includes("orderID") &&
+              !codeStringValue.includes("merchantSend")
+            ) {
+              Alert.alert(
+                "Invalid QR Code",
+                "Please scan a valid PayAiro QR code."
+              );
               return;
             }
           }
-          
+
           // Process QR code data using the helper function
           setScanned(true);
           const { type, sender } = processQRCodeData(parsedValue);
-          
+
           navigation.replace(SCREENS.ScanPay, {
             type,
             sender,
           });
         } else {
           console.log("QR data is empty or null");
-          Alert.alert("Error", "No QR code found in the image. Please select an image with a valid QR code.");
+          Alert.alert(
+            "Error",
+            "No QR code found in the image. Please select an image with a valid QR code."
+          );
         }
       } catch (error) {
         console.log("QR Decode Error:", error);
         console.log("Error details:", JSON.stringify(error, null, 2));
-        Alert.alert("Error", "No QR code found in the image. Please select an image with a valid QR code.");
+        Alert.alert(
+          "Error",
+          "No QR code found in the image. Please select an image with a valid QR code."
+        );
       }
     } else {
       Alert.alert("Error", "No image selected.");
@@ -273,17 +312,45 @@ export default function Scans(): JSX.Element {
     // <Container >
     <ScreenContainer padding={0}>
       {/* Camera Preview */}
-      <View style={{ flex: 1,alignItems: "center",position: "absolute", top: 0, zIndex: 1000,flexDirection: "row",width:'100%' ,paddingHorizontal:20,paddingVertical:20}}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          position: "absolute",
+          top: 0,
+          zIndex: 1000,
+          flexDirection: "row",
+          width: "100%",
+          paddingHorizontal: 20,
+          paddingVertical: 20,
+        }}
+      >
         {/* <SvgIcons. width={30} height={30} /> */}
-        <View style={{flex:1,alignItems:'center',justifyContent:'flex-end',flexDirection:'row',gap:20}}>
-          <SvgIcons.TorchIcon onPress={toggleTorchMode} width={25} height={25} />
-          <SvgIcons.QRCodeWhite onPress={() => navigation.navigate(NAVIGATION_SCREENS.RECEIVE)} width={30} height={30} />
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "flex-end",
+            flexDirection: "row",
+            gap: 20,
+          }}
+        >
+          <SvgIcons.TorchIcon
+            onPress={toggleTorchMode}
+            width={25}
+            height={25}
+          />
+          <SvgIcons.QRCodeWhite
+            onPress={() => navigation.navigate(NAVIGATION_SCREENS.RECEIVE)}
+            width={30}
+            height={30}
+          />
         </View>
       </View>
       <Camera
         ref={cameraRef}
         style={styles.camera} // Limit camera feed size
-        scanBarcode={true}
+        scanBarcode={isCrypto}
         onReadCode={onQRCodeRead} // Callback when a QR code is scanned
         showFrame={true} // Show frame for QR scanning
         laserColor="red"
@@ -312,7 +379,11 @@ export default function Scans(): JSX.Element {
           Scan a payment QR code to send money securely.
         </CustomText>
       </View> */}
-      <QRModal isVisible={isVisible} onClose={() => setisVisible(false)} onSelected={() => {}} />
+      <QRModal
+        isVisible={isVisible}
+        onClose={() => setisVisible(false)}
+        onSelected={() => {}}
+      />
       {/* <View style={{ marginTop: 40 }}>
         <TouchableOpacity
           onPress={uploadFromGallery}
@@ -375,7 +446,7 @@ const styles = StyleSheet.create({
   },
   camera: {
     width: width, // 80% of the screen width
-    height: Platform.OS === 'ios' ? height * 0.85 : height * 0.95, // Make it square
+    height: Platform.OS === "ios" ? height * 0.85 : height * 0.95, // Make it square
     alignSelf: "center",
     // marginTop: height * 0.2, // Center vertically
   },
@@ -412,4 +483,3 @@ const styles = StyleSheet.create({
     width: width * 0.1, // Right black area
   },
 });
-

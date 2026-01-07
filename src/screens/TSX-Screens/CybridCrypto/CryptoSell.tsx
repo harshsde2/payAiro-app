@@ -210,8 +210,8 @@ const CryptoSell = () => {
       return false;
     }
 
-    if (!amount || amount.trim() === "" || parseFloat(amount) <= 0) {
-      showError("Please enter a valid amount");
+    if (!amount || amount.trim() === "" || parseFloat(amount) <= 1.99) {
+      showError("$2.00 or more is required to sell");
       return false;
     }
 

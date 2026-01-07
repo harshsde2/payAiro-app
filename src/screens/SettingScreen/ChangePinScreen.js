@@ -438,9 +438,7 @@ const ChangePinScreen = () => {
           <View style={{ width: "100%" }}>
             <Text style={styles.title}>Change Your Pin</Text>
             <Text style={styles.subtitle}>
-              To set up your <Text style={styles.bold}>PIN</Text> create a{" "}
-              <Text style={styles.bold}>4 digit code</Text> then confirm it
-              below.
+              To change your <Text style={styles.bold}>PIN</Text>, first verify your identity via email, then create a new <Text style={styles.bold}>4-digit code</Text> and confirm it below to complete the process.
             </Text>
 
             {/* Current PIN Input */}

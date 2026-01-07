@@ -11,7 +11,7 @@ import AmountInputDisplay from "../AddBalance/AmountInputDisplay";
 import GenericButton from "components/GenericButton";
 import useSelectorAction from "hooks/useSelectorAction";
 import CommonModal from "tsx-components/modals/CommonModal";
-import { cryptoKeys, useCryptoBuy, useRefreshCryptoBalance } from "query/hooks";
+import { cryptoKeys, useCryptoBuy, useRefreshCryptoBalance,  } from "query/hooks";
 import { bankKeys } from "query/hooks/useBank";
 import { showError, showSuccess } from "../../../utils/toast";
 import { useDispatch, useSelector } from "react-redux";
@@ -30,8 +30,7 @@ const CryptoBuy = () => {
 
   const { details } = route.params as any;
   // console.log("details =>", JSON.stringify(details, null, 2));
-  const { walletData } = useSelectorAction() as any;
-
+  const { walletData, bankBalance } = useSelectorAction() as any;
   // console.log("walletData =>", JSON.stringify(walletData?.fees?.BUY, null, 2));
   const fees = walletData?.fees?.BUY;
 
@@ -207,37 +206,51 @@ const CryptoBuy = () => {
     setSelectedCurrency(newCurrency);
   };
 
-  // Validate buy data - returns true if valid, false otherwise
-  const validateBuyData = (): boolean => {
+  // Validate buy data - returns array of error messages
+  const validateBuyData = (): string[] => {
+    const errors: string[] = [];
+
     if (!isValidPrice || buy_price === 0) {
-      showError("Price data unavailable. Please try again later.");
-      return false;
+      errors.push("Price data unavailable. Please try again later.");
     }
 
-    if (!amount || amount.trim() === "" || parseFloat(amount) <= 0) {
-      showError("Please enter a valid amount");
-      return false;
+    if (!amount || amount.trim() === "" || parseFloat(amount) <= 1.99) {
+      errors.push("$2.00 or more is required to buy");
     }
 
     const parsedAmount = parseFloat(amount);
     if (isNaN(parsedAmount) || !isFinite(parsedAmount)) {
-      showError("Invalid amount format. Please enter a valid number.");
-      return false;
+      errors.push("Invalid amount format. Please enter a valid number.");
     }
 
     if (cryptoAmount <= 0 || isNaN(cryptoAmount) || !isFinite(cryptoAmount)) {
-      showError("Invalid crypto amount");
-      return false;
+      errors.push("Invalid crypto amount");
     }
 
-    return true;
+    // Check insufficient funds - compare USD amount with available balance
+    const availableBalanceNum = parseFloat(bankBalance?.platform_available || "0");
+    if (isNaN(availableBalanceNum)) {
+      errors.push("Unable to fetch balance. Please try again.");
+    } else if (usdAmount > availableBalanceNum) {
+      const formattedBalance = formatUSDValue(availableBalanceNum);
+      errors.push(`Insufficient balance. Available: $${formattedBalance} USD`);
+    }
+
+    return errors;
   };
 
   // Handle Proceed button click - validate first, then show modal
   const handleProceed = () => {
-    if (validateBuyData()) {
-      setShowConfirmationModal(true);
+    const validationErrors = validateBuyData();
+    
+    if (validationErrors.length > 0) {
+      validationErrors.forEach((error) => {
+        showError(error);
+      });
+      return;
     }
+    
+    setShowConfirmationModal(true);
   };
 
   const onBuyClick = async () => {
@@ -455,6 +468,14 @@ const CryptoBuy = () => {
             selectedCurrency={selectedCurrency}
             onCurrencyChange={handleCurrencyChange}
           />
+          <Pressable 
+            style={[styles.maxBalanceContainer]}
+          >
+            <CustomText
+              variant="subtitle2"
+              size={10}
+            >{`Balance: $${bankBalance?.platform_available ? formatUSDValue(parseFloat(bankBalance.platform_available)) : "0.00"} USD`}</CustomText>
+          </Pressable>
           <View style={[styles.totalInUSDContainer]}>
             <View style={[styles.totalInUSDText]}>
               <CustomText
@@ -522,6 +543,14 @@ const custonStyles = (theme: Theme) =>
     },
     priceText: {
       color: theme.colors.palette.grey600,
+    },
+    maxBalanceContainer: {
+      width: "100%",
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      gap: 10,
+      marginVertical: 10,
     },
     totalInUSDContainer: {
       width: "100%",

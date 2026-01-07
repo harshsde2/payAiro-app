@@ -361,7 +361,7 @@ const customStyles = (theme: Theme) =>
       paddingVertical: 10,
       paddingHorizontal: 15,
       borderRadius: 8,
-      marginTop: 20,
+      marginTop: 0,
       gap: 8,
     },
     errorText: {

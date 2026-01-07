@@ -98,8 +98,8 @@ android {
         applicationId "com.payairo"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 25
-        versionName "2.6"
+        versionCode 26
+        versionName "2.7"
         missingDimensionStrategy 'react-native-camera', 'general'
         
         // Required for react-native-config when using different package names
@@ -174,12 +174,22 @@ android {
     }
 }
 
+configurations.all {
+    resolutionStrategy {
+        // Force androidx.browser version to be compatible with compileSdk 35
+        force "androidx.browser:browser:1.8.0"
+    }
+}
+
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
     
     // Required for react-native-freshchat-sdk (LocalBroadcastManager)
     implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.1.0'
+    
+    // Force androidx.browser version compatible with compileSdk 35
+    implementation "androidx.browser:browser:1.8.0"
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
