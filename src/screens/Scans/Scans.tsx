@@ -350,7 +350,7 @@ export default function Scans(): JSX.Element {
       <Camera
         ref={cameraRef}
         style={styles.camera} // Limit camera feed size
-        scanBarcode={isCrypto}
+        scanBarcode={true}
         onReadCode={onQRCodeRead} // Callback when a QR code is scanned
         showFrame={true} // Show frame for QR scanning
         laserColor="red"

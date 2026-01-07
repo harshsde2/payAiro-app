@@ -21,30 +21,67 @@ import { apiClient } from "api";
 import { AUTH } from "api/endpoints";
 import { showError } from "utils/toast";
 import InAppBrowser from "react-native-inappbrowser-reborn";
+import { isProduction } from "config/env.config";
+
+// Helper function to get icon component by key
+const getPaymentIcon = (iconKey: "DebitCard" | "ApplePay" | "ACHTransfer") => {
+  switch (iconKey) {
+    case "DebitCard":
+      return <SvgIcons.DebitCard />;
+    case "ApplePay":
+      return <SvgIcons.ApplePay />;
+    case "ACHTransfer":
+      return <SvgIcons.ACHTransfer />;
+    default:
+      return null;
+  }
+};
+
+// Payment method configurations (without icons - icons are created in component)
+const PAYMENT_METHOD_CONFIGS = [
+  {
+    title: "Debit Card",
+    iconKey: "DebitCard" as const,
+    type: "coinflow" as const,
+    navigation: NAVIGATION_SCREENS.COINFLOW_CHECKOUT_WEBVIEW,
+    showInProduction: false, // Hide in production
+  },
+  {
+    title: "Apple Pay/Google Pay",
+    iconKey: "ApplePay" as const,
+    type: "coinflow" as const,
+    navigation: NAVIGATION_SCREENS.COINFLOW_CHECKOUT_WEBVIEW,
+    showInProduction: false, // Hide in production
+  },
+  {
+    title: "Account Transfer",
+    iconKey: "ACHTransfer" as const,
+    type: "ACH" as const,
+    navigation: NAVIGATION_SCREENS.ACH_TRANSFER,
+    showInProduction: true, // Always show
+  },
+] as const;
 
 const AddBalance = () => {
   const { bankBalance, bankLists } = useSelectorAction();
 
-  const PAYMENT_METHODS = [
-    // {
-    //   title: "Debit Card",
-    //   icon: <SvgIcons.DebitCard />,
-    //   type: "coinflow",
-    //   navigation: NAVIGATION_SCREENS.COINFLOW_CHECKOUT_WEBVIEW,
-    // },
-    // {
-    //   title: "Apple Pay/Google Pay",
-    //   icon: <SvgIcons.ApplePay />,
-    //   type: "coinflow",
-    //   navigation: NAVIGATION_SCREENS.COINFLOW_CHECKOUT_WEBVIEW,
-    // },
-    {
-      title: "Account Transfer",
-      icon: <SvgIcons.ACHTransfer />,
-      type: "ACH",
-      navigation: NAVIGATION_SCREENS.ACH_TRANSFER,
-    },
-  ];
+  // Filter and create payment methods with icons based on environment
+  const PAYMENT_METHODS = useMemo(() => {
+    const isProd = isProduction();
+    
+    // Filter methods based on environment
+    const filteredConfigs = isProd
+      ? PAYMENT_METHOD_CONFIGS.filter((method) => method.showInProduction)
+      : PAYMENT_METHOD_CONFIGS;
+
+    // Create payment methods with icons
+    return filteredConfigs.map((config) => ({
+      title: config.title,
+      icon: getPaymentIcon(config.iconKey),
+      type: config.type,
+      navigation: config.navigation,
+    }));
+  }, []);
 
   const BANK_LISTS = useMemo(() => {
     return bankLists.map((item: any) => {
@@ -267,10 +304,15 @@ const AddBalance = () => {
                 }}
                 onPress={() => {
                   if (method.type === "ACH") {
+                    if(amount === ""){
+                      showError("Please enter valid amount");
+                      return;
+                    }
                     navigation.navigate(method?.navigation, {
                       amount,
                     });
                   } else if (method.type === "coinflow") {
+                    
                     handleCoinflowCheckout(method.title);
                     // showError("This feature is not available yet");
                   }
