@@ -63,27 +63,37 @@ const AddCrypto = () => {
         asset: symbol,
       });
 
+      // API response structure: ApiResponse<DepositAddressResponse>
+      // response.data is DepositAddressResponse which contains: status, message, asset, address
+      const addressData = response?.data;
+
       // Check if the response indicates address is under review
-      if (response?.data?.status === false && !response?.data?.address) {
+      if (addressData?.status === false && !addressData?.address) {
         const message =
-          response?.data?.message ||
+          addressData?.message ||
+          response?.message ||
           "Your deposit address is under review. Please try again later.";
         Alert.alert("Address Under Review", message);
         return;
       }
 
       // Check if address is available
-      if (response?.data?.address) {
-        setDepositAddress(response.data.address);
+      if (addressData?.address) {
+        setDepositAddress(addressData.address);
       } else {
-        Alert.alert(
-          "Error",
-          "Unable to retrieve deposit address. Please try again."
-        );
+        const errorMessage =
+          addressData?.message ||
+          response?.message ||
+          "Unable to retrieve deposit address. Please try again.";
+        Alert.alert("Error", errorMessage);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log("Error fetching deposit address:", error);
-      Alert.alert("Error", "Failed to get deposit address. Please try again.");
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to get deposit address. Please try again.";
+      Alert.alert("Error", errorMessage);
     }
   };
 

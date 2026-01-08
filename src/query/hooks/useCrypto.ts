@@ -54,6 +54,19 @@ export const useGetCrypto = () => {
 };
 
 /**
+ * Hook to get asset list from new API
+ */
+export const useGetAssetList = () => {
+  return useQuery<ApiResponse<any>>({
+    queryKey: [...cryptoKeys.all, "assetList"] as const,
+    queryFn: async () => {
+      return await apiClient.get<ApiResponse<any>>(AUTH.ASSET_LIST);
+    },
+    staleTime: queryStaleTime.VERY_VERY_VERY_VERY_SLOW_STALE_TIME,
+  });
+};
+
+/**
  * Hook to get crypto balance by specific asset
  */
 export const useCryptoBalanceByAsset = (asset: string) => {
@@ -282,9 +295,13 @@ export const useAllCryptoBalances = () => {
 export const useDepositAddress = () => {
   return useMutation<ApiResponse<DepositAddressResponse>, Error, DepositAddressPayload>({
     mutationFn: async (payload) => {
+      // Convert payload to FormData
+      const formData = new FormData();
+      formData.append("asset", payload.asset);
+      
       return await apiClient.post<ApiResponse<DepositAddressResponse>>(
         AUTH.DEPOSIT_ADDRESS,
-        payload,
+        formData,
         true
       );
     },
