@@ -24,7 +24,9 @@ import InAppBrowser from "react-native-inappbrowser-reborn";
 import { isProduction } from "config/env.config";
 
 // Helper function to get icon component by key
-const getPaymentIcon = (iconKey: "DebitCard" | "ApplePay" | "ACHTransfer") => {
+const getPaymentIcon = (
+  iconKey: "DebitCard" | "ApplePay" | "ACHTransfer" | "CryptoWallet"
+) => {
   switch (iconKey) {
     case "DebitCard":
       return <SvgIcons.DebitCard />;
@@ -32,6 +34,8 @@ const getPaymentIcon = (iconKey: "DebitCard" | "ApplePay" | "ACHTransfer") => {
       return <SvgIcons.ApplePay />;
     case "ACHTransfer":
       return <SvgIcons.ACHTransfer />;
+    case "CryptoWallet":
+      return <SvgIcons.CryptoWallet />;
     default:
       return null;
   }
@@ -60,6 +64,13 @@ const PAYMENT_METHOD_CONFIGS = [
     navigation: NAVIGATION_SCREENS.ACH_TRANSFER,
     showInProduction: true, // Always show
   },
+  {
+    title: "Crypto Wallet",
+    iconKey: "CryptoWallet" as const,
+    type: "CryptoWallet" as const,
+    navigation: NAVIGATION_SCREENS.CRYPTO_LIST,
+    showInProduction: false, // Always show
+  },
 ] as const;
 
 const AddBalance = () => {
@@ -68,7 +79,7 @@ const AddBalance = () => {
   // Filter and create payment methods with icons based on environment
   const PAYMENT_METHODS = useMemo(() => {
     const isProd = isProduction();
-    
+
     // Filter methods based on environment
     const filteredConfigs = isProd
       ? PAYMENT_METHOD_CONFIGS.filter((method) => method.showInProduction)
@@ -178,43 +189,47 @@ const AddBalance = () => {
         console.log("✅ Checkout link generated successfully");
         console.log("🔗 Checkout URL:", response.data.checkout_link);
         console.log("⏰ Timestamp:", new Date().toISOString());
-        
+
         // Check if InAppBrowser is available
         const isAvailable = await InAppBrowser.isAvailable();
-        
+
         if (isAvailable) {
           try {
             // Open in-app browser with payment success detection
-            const result = await InAppBrowser.open(response.data.checkout_link, {
-              // iOS options
-              dismissButtonStyle: "cancel",
-              preferredBarTintColor: theme?.colors?.palette?.primary || "#4F378B",
-              preferredControlTintColor: "#FFFFFF",
-              readerMode: false,
-              animated: true,
-              modalPresentationStyle: "fullScreen",
-              modalTransitionStyle: "coverVertical",
-              modalEnabled: true,
-              enableBarCollapsing: false,
-              // Android options
-              showTitle: true,
-              toolbarColor: theme?.colors?.palette?.primary || "#4F378B",
-              secondaryToolbarColor: "#000000",
-              navigationBarColor: "#000000",
-              navigationBarDividerColor: "transparent",
-              enableUrlBarHiding: true,
-              enableDefaultShare: true,
-              forceCloseOnRedirection: false,
-              animations: {
-                startEnter: "slide_in_right",
-                startExit: "slide_out_left",
-                endEnter: "slide_in_left",
-                endExit: "slide_out_right",
-              },
-              headers: {
-                "Accept-Language": "en-US",
-              },
-            });
+            const result = await InAppBrowser.open(
+              response.data.checkout_link,
+              {
+                // iOS options
+                dismissButtonStyle: "cancel",
+                preferredBarTintColor:
+                  theme?.colors?.palette?.primary || "#4F378B",
+                preferredControlTintColor: "#FFFFFF",
+                readerMode: false,
+                animated: true,
+                modalPresentationStyle: "fullScreen",
+                modalTransitionStyle: "coverVertical",
+                modalEnabled: true,
+                enableBarCollapsing: false,
+                // Android options
+                showTitle: true,
+                toolbarColor: theme?.colors?.palette?.primary || "#4F378B",
+                secondaryToolbarColor: "#000000",
+                navigationBarColor: "#000000",
+                navigationBarDividerColor: "transparent",
+                enableUrlBarHiding: true,
+                enableDefaultShare: true,
+                forceCloseOnRedirection: false,
+                animations: {
+                  startEnter: "slide_in_right",
+                  startExit: "slide_out_left",
+                  endEnter: "slide_in_left",
+                  endExit: "slide_out_right",
+                },
+                headers: {
+                  "Accept-Language": "en-US",
+                },
+              }
+            );
 
             // Handle browser result
             if (result.type === "cancel") {
@@ -254,7 +269,6 @@ const AddBalance = () => {
   return (
     <ScreenContainer scrollable padding={0}>
       <HeaderTitle title="Add Balance" leftIcon="true" />
-
 
       <AmountInputDisplay
         amount={amount}
@@ -304,7 +318,7 @@ const AddBalance = () => {
                 }}
                 onPress={() => {
                   if (method.type === "ACH") {
-                    if(amount === ""){
+                    if (amount === "") {
                       showError("Please enter valid amount");
                       return;
                     }
@@ -312,9 +326,14 @@ const AddBalance = () => {
                       amount,
                     });
                   } else if (method.type === "coinflow") {
-                    
                     handleCoinflowCheckout(method.title);
                     // showError("This feature is not available yet");
+                  } else if (method.type === "CryptoWallet") {
+                    if (amount === "") {
+                      showError("Please enter valid amount");
+                      return;
+                    }
+                    navigation.navigate(method?.navigation);
                   }
                 }}
                 disabled={isDisabled}

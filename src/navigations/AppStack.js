@@ -99,6 +99,7 @@ import UnifiedTransactionScreen from "screens/TSX-Screens/UnifiedTransactions/Un
 import CyrptoDetails from "screens/TSX-Screens/CybridCrypto/CyrptoDetails";
 import HowToEarnPoints from "screens/TSX-Screens/Modals/HowToEarnPoints";
 import BlockchainNameServiceTerms from "screens/TSX-Screens/Modals/BlockchainNameServiceTerms";
+import AddCrypto from "screens/TSX-Screens/AddBalance/AddCrypto";
 
 const Stack = createNativeStackNavigator();
 
@@ -604,12 +605,8 @@ export default function AppStack() {
       <Stack.Screen
         options={{
           headerShown: false,
-          presentation: 'containedTransparentModal',
-          gestureEnabled: true,
-          animationTypeForReplace: 'push',
-          animation: 'slide_from_bottom',
-          animationMatchesGesture:true,
-          gestureDirection:'vertical'
+          animation: 'slide_from_right',
+
         }}
         name={NAVIGATION_SCREENS.CRYPTO_LIST}
         component={CryptoList}
@@ -675,6 +672,12 @@ export default function AppStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.CRYPTO_DETAILS}
         component={CyrptoDetails}
+        
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.ADD_CRYPTO}
+        component={AddCrypto}
         
       />
     </Stack.Navigator>

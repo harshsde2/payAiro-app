@@ -16,6 +16,9 @@ import { useNavigation } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
 import { setSelectedCurrency } from "redux/slices/authenticationSlice";
 import { setItem, STORAGE_KEYS } from "storage/mmkv";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { ScreenContainer } from "HOC";
+import HeaderTitle from "components/HeaderTitle";
 
 const CryptoList = () => {
   const { theme } = useTheme();
@@ -36,19 +39,12 @@ const CryptoList = () => {
     try {
       setSelectedItemId(item.symbol);
       const result = await selectCurrency(item.symbol);
-
-      // Save selected currency to Redux state
-      dispatch(setSelectedCurrency(item));
-      
-      // Save selected currency to MMKV storage for persistence
-      setItem(STORAGE_KEYS.SELECTED_CURRENCY, JSON.stringify(item));
-      
-      // Refresh balance using the reusable hook (updates Redux and MMKV)
-      await refreshBalance(item.symbol);
       
       console.log(JSON.stringify(result?.data, null, 2), "result?.data?.rounded_balance");
       
-      navigation.goBack();
+      navigation.navigate(NAVIGATION_SCREENS.ADD_CRYPTO,{
+        item: item,
+      });
     } catch (error) {
       console.log("Error selecting currency:", error);
     } finally {
@@ -111,32 +107,14 @@ const CryptoList = () => {
   );
 
   return (
-    <Pressable
-      onPress={() => navigation.goBack()}
-      style={[styles.mainContainer]}
+    <ScreenContainer
+      safeArea={true}
+      paddingHorizontal={0}
     >
-      <Pressable
-        onPress={(e) => e.stopPropagation()}
+      <HeaderTitle title="Crypto Wallet" leftIcon={'true'} />
+      <View
         style={[styles.container]}
       >
-        {/* Header */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() => navigation.goBack()}
-          style={styles.header}
-        >
-          <View
-            style={[
-              {
-                height: 5,
-                backgroundColor: "black",
-                width: 80,
-                borderRadius: theme.spacing.spacing[1],
-              },
-            ]}
-          />
-        </TouchableOpacity>
-
         {/* Crypto List */}
         <View style={styles.listContainer}>
           {isFetching && (
@@ -158,8 +136,8 @@ const CryptoList = () => {
             />
           )}
         </View>
-      </Pressable>
-    </Pressable>
+      </View>
+    </ScreenContainer>
   );
 };
 
@@ -195,5 +173,6 @@ const cryptoListStyles = (theme: Theme) =>
     },
     listContainer: {
       flex: 1,
+      paddingVertical: theme.spacing.spacing.md,
     },
   });
