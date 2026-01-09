@@ -196,7 +196,7 @@ const AddCrypto = () => {
           </View>
         </View>
 
-        {depositAddress && (
+        {/* {depositAddress && (
           <View style={styles.noticeContainer}>
             <View style={styles.noticeIconContainer}>
               <CustomText
@@ -224,7 +224,7 @@ const AddCrypto = () => {
               </CustomText>
             </View>
           </View>
-        )}
+        )} */}
       </View>
     </ScreenContainer>
   );

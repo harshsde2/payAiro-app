@@ -31,10 +31,6 @@
 			</array>
 		</dict>
 	</array>
-	<key>UIDeviceFamily</key>
-	<array>
-	<integer>1</integer>
-	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
@@ -62,6 +58,8 @@
 	<string>We need access to your photo library to save your KYC documents for your records.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs photo library access to let you upload KYC documents such as your ID or address proof.</string>
+	<key>RCTNewArchEnabled</key>
+	<true/>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Neue Plak Black.ttf</string>
@@ -104,6 +102,10 @@
 		<string>Montserrat-Medium.ttf</string>
 		<string>Montserrat-SemiBold.ttf</string>
 		<string>Montserrat-Bold.ttf</string>
+	</array>
+	<key>UIDeviceFamily</key>
+	<array>
+		<integer>1</integer>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>

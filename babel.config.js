@@ -1,7 +1,6 @@
 module.exports = {
   presets: ['module:@react-native/babel-preset'],
   plugins: [
-    'react-native-reanimated/plugin',
     [
       'module-resolver',
       {
@@ -11,6 +10,8 @@ module.exports = {
           '@tsx-components': './src/tsx-components'
         }
       }
-    ]
+    ],
+    // react-native-worklets/plugin MUST be listed last
+   'react-native-reanimated/plugin',
   ],
 };

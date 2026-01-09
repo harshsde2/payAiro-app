@@ -3,32 +3,37 @@ import React
 import React_RCTAppDelegate
 
 @main
-class AppDelegate: RCTAppDelegate {
-  override func application(
+class AppDelegate: UIResponder, UIApplicationDelegate {
+  var window: UIWindow?
+  
+  var reactNativeDelegate: ReactNativeDelegate?
+  var reactNativeFactory: RCTReactNativeFactory?
+  
+  func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
-    self.moduleName = "PayAiro"
+    let delegate = ReactNativeDelegate()
+    let factory = RCTReactNativeFactory(delegate: delegate)
     // Use custom SafeAppDependencyProvider that handles crashes gracefully
-    self.dependencyProvider = SafeAppDependencyProvider()
-    self.initialProps = [:]
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
-  }
-  
-  override func sourceURL(for bridge: RCTBridge) -> URL? {
-    return self.bundleURL()
-  }
-  
-  override func bundleURL() -> URL? {
-    #if DEBUG
-    return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
-    #else
-    return Bundle.main.url(forResource: "main", withExtension: "jsbundle")
-    #endif
+    delegate.dependencyProvider = SafeAppDependencyProvider()
+    
+    reactNativeDelegate = delegate
+    reactNativeFactory = factory
+    
+    window = UIWindow(frame: UIScreen.main.bounds)
+    
+    factory.startReactNative(
+      withModuleName: "PayAiro",
+      in: window,
+      launchOptions: launchOptions
+    )
+    
+    return true
   }
   
   // MARK: - Deep Linking (Custom URL Scheme: payairo://)
-  override func application(
+  func application(
     _ app: UIApplication,
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey: Any] = [:]
@@ -37,7 +42,7 @@ class AppDelegate: RCTAppDelegate {
   }
   
   // MARK: - Universal Links (https://payairo.com/*)
-  override func application(
+  func application(
     _ application: UIApplication,
     continue userActivity: NSUserActivity,
     restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
@@ -47,5 +52,19 @@ class AppDelegate: RCTAppDelegate {
       continue: userActivity,
       restorationHandler: restorationHandler
     )
+  }
+}
+
+class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
+  override func sourceURL(for bridge: RCTBridge) -> URL? {
+    self.bundleURL()
+  }
+  
+  override func bundleURL() -> URL? {
+    #if DEBUG
+    return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
+    #else
+    return Bundle.main.url(forResource: "main", withExtension: "jsbundle")
+    #endif
   }
 }
