@@ -49,6 +49,7 @@ const PAYMENT_METHOD_CONFIGS = [
     type: "coinflow" as const,
     navigation: NAVIGATION_SCREENS.COINFLOW_CHECKOUT_WEBVIEW,
     showInProduction: false, // Hide in production
+    isDisabled: true,
   },
   {
     title: "Apple Pay/Google Pay",
@@ -56,6 +57,7 @@ const PAYMENT_METHOD_CONFIGS = [
     type: "coinflow" as const,
     navigation: NAVIGATION_SCREENS.COINFLOW_CHECKOUT_WEBVIEW,
     showInProduction: false, // Hide in production
+    isDisabled: true,
   },
   {
     title: "Account Transfer",
@@ -63,13 +65,15 @@ const PAYMENT_METHOD_CONFIGS = [
     type: "ACH" as const,
     navigation: NAVIGATION_SCREENS.ACH_TRANSFER,
     showInProduction: true, // Always show
+    isDisabled: true,
   },
   {
     title: "Crypto Wallet",
     iconKey: "CryptoWallet" as const,
     type: "CryptoWallet" as const,
-    navigation: NAVIGATION_SCREENS.CRYPTO_LIST,
+    navigation: NAVIGATION_SCREENS.ADD_CRYPTO,
     showInProduction: false, // Always show
+    isDisabled: false,
   },
 ] as const;
 
@@ -91,6 +95,7 @@ const AddBalance = () => {
       icon: getPaymentIcon(config.iconKey),
       type: config.type,
       navigation: config.navigation,
+      isDisabled: config.isDisabled,
     }));
   }, []);
 
@@ -266,6 +271,14 @@ const AddBalance = () => {
     }
   };
 
+
+  const item = {
+    "symbol": "USDC_NPL",
+    "logo": "https://app.payairo.com/media/svgs/logo_2.svg",
+    "network": "Polygon",
+    "name": "USDC_NPL"
+  }
+
   return (
     <ScreenContainer scrollable padding={0}>
       <HeaderTitle title="Add Balance" leftIcon="true" />
@@ -295,7 +308,7 @@ const AddBalance = () => {
               loadingPaymentMethod !== null &&
               loadingPaymentMethod !== method.title;
             // Only disable if another method is loading, not if amount is invalid
-            const isDisabled = isThisMethodLoading || isOtherMethodLoading;
+            const isDisabled = isThisMethodLoading || isOtherMethodLoading 
 
             return (
               <TouchableOpacity
@@ -312,9 +325,9 @@ const AddBalance = () => {
                   marginBottom: 10,
                   // Show reduced opacity if amount is invalid or if disabled
                   opacity:
-                    (!isValidAmount || isDisabled) && !isThisMethodLoading
+                    method.isDisabled ? (!isValidAmount || isDisabled ) && !isThisMethodLoading 
                       ? 0.6
-                      : 1,
+                      : 1 : 1,
                 }}
                 onPress={() => {
                   if (method.type === "ACH") {
@@ -329,11 +342,9 @@ const AddBalance = () => {
                     handleCoinflowCheckout(method.title);
                     // showError("This feature is not available yet");
                   } else if (method.type === "CryptoWallet") {
-                    if (amount === "") {
-                      showError("Please enter valid amount");
-                      return;
-                    }
-                    navigation.navigate(method?.navigation);
+                    navigation.navigate(method?.navigation, {
+                      item,
+                    });
                   }
                 }}
                 disabled={isDisabled}

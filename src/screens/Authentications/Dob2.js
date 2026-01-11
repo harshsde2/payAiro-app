@@ -17,7 +17,7 @@ import {
   setWalletData,
 } from '../../redux/slices/authenticationSlice';
 import { showError, showSuccess } from '../../utils/toast';
-import DatePicker from 'react-native-date-picker';
+import DatePicker from 'components/common-components/DatePicker';
 import moment from 'moment';
 import {
   setKycStep,

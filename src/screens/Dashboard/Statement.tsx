@@ -2,7 +2,7 @@ import { View, TouchableOpacity, StyleSheet } from "react-native";
 import React, { useState, useEffect } from "react";
 import HeaderTitle from "../../components/HeaderTitle";
 import TextInputField from "../../components/TextInputField";
-import DatePicker from "react-native-date-picker";
+import DatePicker from "components/common-components/DatePicker";
 import moment from "moment";
 import GenericButton from "../../components/GenericButton";
 import { useNavigation } from "@react-navigation/native";

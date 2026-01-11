@@ -30,6 +30,7 @@ interface AmountInputDisplayProps {
   selectedCurrency?: string;
   onCurrencyChange?: (currency: string) => void;
   hasError?: boolean;
+  editable?: boolean;
 }
 
 const MAX_FONT_SIZE = 48;
@@ -45,6 +46,7 @@ const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
   selectedCurrency = "USD",
   onCurrencyChange,
   hasError = false,
+  editable = true,
 }) => {
   const { theme } = useTheme();
   const dispatch = useDispatch();
@@ -207,6 +209,7 @@ const AmountInputDisplay: FC<AmountInputDisplayProps> = ({
           textAlign="left"
           caretHidden={!isFocused}
           onBlur={() => setIsFocused(false)}
+          editable={editable}
         />
         {amount.length > 0 && displaySuffix && (
           <TouchableOpacity

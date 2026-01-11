@@ -125,6 +125,7 @@ interface DepositAddressResponse {
   message: string;
   asset: string;
   address: string;
+  disclaimer: string;
 }
 
 // Interfaces for on-chain withdrawal

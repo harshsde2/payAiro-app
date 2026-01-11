@@ -66,7 +66,7 @@ PODS:
     - hermes-engine/Pre-built (= 0.81.5)
   - hermes-engine/Pre-built (0.81.5)
   - lottie-ios (4.5.0)
-  - lottie-react-native (7.3.4):
+  - lottie-react-native (7.3.5):
     - boost
     - DoubleConversion
     - fast_float
@@ -1968,34 +1968,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-date-picker (5.0.13):
-    - boost
-    - DoubleConversion
-    - fast_float
-    - fmt
-    - glog
-    - hermes-engine
-    - RCT-Folly
-    - RCT-Folly/Fabric
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - SocketRocket
-    - Yoga
   - react-native-document-picker (9.3.1):
     - boost
     - DoubleConversion
@@ -2992,6 +2964,34 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - RNDateTimePicker (8.6.0):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - RNDeviceInfo (14.1.1):
     - React-Core
   - RNFBApp (21.14.0):
@@ -3461,7 +3461,6 @@ DEPENDENCIES:
   - react-native-camera (from `../node_modules/react-native-camera`)
   - react-native-config (from `../node_modules/react-native-config`)
   - react-native-contacts (from `../node_modules/react-native-contacts`)
-  - react-native-date-picker (from `../node_modules/react-native-date-picker`)
   - react-native-document-picker (from `../node_modules/react-native-document-picker`)
   - react-native-encrypted-storage (from `../node_modules/react-native-encrypted-storage`)
   - react-native-html-to-pdf (from `../node_modules/react-native-html-to-pdf`)
@@ -3507,6 +3506,7 @@ DEPENDENCIES:
   - ReactCodegen (from `build/generated/ios`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - ReactNativeCameraKit (from `../node_modules/react-native-camera-kit`)
+  - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
   - "RNFBMessaging (from `../node_modules/@react-native-firebase/messaging`)"
@@ -3643,8 +3643,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-config"
   react-native-contacts:
     :path: "../node_modules/react-native-contacts"
-  react-native-date-picker:
-    :path: "../node_modules/react-native-date-picker"
   react-native-document-picker:
     :path: "../node_modules/react-native-document-picker"
   react-native-encrypted-storage:
@@ -3735,6 +3733,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   ReactNativeCameraKit:
     :path: "../node_modules/react-native-camera-kit"
+  RNDateTimePicker:
+    :path: "../node_modules/@react-native-community/datetimepicker"
   RNDeviceInfo:
     :path: "../node_modules/react-native-device-info"
   RNFBApp:
@@ -3787,7 +3787,7 @@ SPEC CHECKSUMS:
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   hermes-engine: 9f4dfe93326146a1c99eb535b1cb0b857a3cd172
   lottie-ios: a881093fab623c467d3bce374367755c272bdd59
-  lottie-react-native: a236ef9840b0e49f55fc0db365dfaa7bc14424c6
+  lottie-react-native: 9eca117b24506c2a9bf026abf848b6bc73a0b155
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   Plaid: 8a212ed955d480364e0deb7fed93625b29811e9d
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
@@ -3831,7 +3831,6 @@ SPEC CHECKSUMS:
   react-native-camera: 3eae183c1d111103963f3dd913b65d01aef8110f
   react-native-config: 81fd713bbbc6fbe39588c975edf5485d0e15adf8
   react-native-contacts: 7c2462f65a7a07941343bf38a50d02f1f11c32b8
-  react-native-date-picker: d1d607499ff9f2e1231f902b4bda70595d71253e
   react-native-document-picker: 2ed17a26528d7db3b39ca7ddf99f668077d54182
   react-native-encrypted-storage: db300a3f2f0aba1e818417c1c0a6be549038deb7
   react-native-html-to-pdf: 4c5c6e26819fe202971061594058877aa9b25265
@@ -3877,6 +3876,7 @@ SPEC CHECKSUMS:
   ReactCodegen: 1e847cf77c1402fe7394dae41b3829c95569e76e
   ReactCommon: 5cfd842fcd893bb40fc835f98fadc60c42906a20
   ReactNativeCameraKit: 36bf14d7e7c299ef07263ee66ff012212e1040d4
+  RNDateTimePicker: 239dc0c70f94e440d815763d3bace9c4ea73ae27
   RNDeviceInfo: 8b6fa8379062949dd79a009cf3d6b02a9c03ca59
   RNFBApp: fda4a8b08fe31bea8492808106aa638d1bb595b7
   RNFBMessaging: 099972ab397d61815f32610514b0573d1db2b1e1
@@ -3896,6 +3896,6 @@ SPEC CHECKSUMS:
   TOCropViewController: 80b8985ad794298fb69d3341de183f33d1853654
   Yoga: 1e91d83a5286cfd3b725eade59274c92270540d4
 
-PODFILE CHECKSUM: d0ebc1a2b971d8e20142742301b0a1a6bfae0338
+PODFILE CHECKSUM: fced254898173d9649fb487acbdc235f7d5d7c88
 
-COCOAPODS: 1.16.2
+COCOAPODS: 1.15.2

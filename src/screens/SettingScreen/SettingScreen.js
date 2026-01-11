@@ -200,7 +200,11 @@ export default function SettingScreen() {
                       setIsVisible(true);
                       return;
                     } else if (item.name === "Terms & Condition") {
-                      termsAndConditionRef.current.showTermsAndConditions();
+                      navigation.navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
+                        url: require("../../assets/pdf/Terms_and_Conditions.pdf"),
+                        isFileFromLocal: true,
+                        fileName: "Terms_and_Conditions.pdf",
+                      });
                       return;
                     } else if (item.name === "Cybrid User Agreement") {
                       navigation.navigate(NAVIGATION_SCREENS.PDF_VIEWER, {

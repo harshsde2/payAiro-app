@@ -226,7 +226,7 @@ const ACHTransfer = () => {
         </View>
       )}
 
-      <AmountInputDisplay amount={amount} setAmount={setAmount} />
+      <AmountInputDisplay editable={false}  amount={amount} setAmount={setAmount} />
       <CustomText align="center" size={14} variant="caption">
         Current Balance: ${(bankBalance as any)?.bank_account?.usd || "0.00"}
       </CustomText>
@@ -246,7 +246,7 @@ const ACHTransfer = () => {
           style={{ color: theme?.colors?.palette?.grey500 }}
         >
           Money will be transferred 'From' the source account 'To' the
-          destination account and the fee will be {fees || 0}%
+          destination account.
         </CustomText>
       </View>
 

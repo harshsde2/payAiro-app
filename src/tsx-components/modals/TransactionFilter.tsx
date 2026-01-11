@@ -17,7 +17,7 @@ import GenericButton from "components/GenericButton";
 import Fonts from "constants/Fonts";
 import moment from "moment";
 import { SvgXml } from "react-native-svg";
-import DatePicker from "react-native-date-picker";
+import DatePicker from "components/common-components/DatePicker";
 import {
   FilteredTransactions,
   TRANSACTION_FILTERS_KEYS,

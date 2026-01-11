@@ -27,6 +27,7 @@ const AddCrypto = () => {
   const { item } = route.params as any;
   const { symbol, logo, network } = item;
 
+  // console.log("item =>", JSON.stringify(item, null, 2));
   // Extract crypto name and network from symbol
   const getCryptoInfo = () => {
     // Handle symbol formats: "BTC", "USDC_SOL", "USDC_SOL-USD", etc.
@@ -48,7 +49,7 @@ const AddCrypto = () => {
   const { cryptoName, network: displayNetwork } = getCryptoInfo();
 
   const [depositAddress, setDepositAddress] = useState("");
-
+  const [disclaimer, setDisclaimer] = useState("");
   // Deposit address mutation hook
   const depositAddressMutation = useDepositAddress();
 
@@ -67,6 +68,7 @@ const AddCrypto = () => {
       // response.data is DepositAddressResponse which contains: status, message, asset, address
       const addressData = response?.data;
 
+      // console.log("addressData =>", JSON.stringify(addressData, null, 2));
       // Check if the response indicates address is under review
       if (addressData?.status === false && !addressData?.address) {
         const message =
@@ -75,6 +77,13 @@ const AddCrypto = () => {
           "Your deposit address is under review. Please try again later.";
         Alert.alert("Address Under Review", message);
         return;
+      }
+
+      // Set disclaimer
+      if (addressData?.disclaimer) {
+        setDisclaimer(addressData?.disclaimer);
+      } else {
+        setDisclaimer("Only send {symbol} assets to this address.");
       }
 
       // Check if address is available
@@ -196,7 +205,7 @@ const AddCrypto = () => {
           </View>
         </View>
 
-        {/* {depositAddress && (
+        {depositAddress && (
           <View style={styles.noticeContainer}>
             <View style={styles.noticeIconContainer}>
               <CustomText
@@ -213,18 +222,12 @@ const AddCrypto = () => {
                 color={theme.colors.palette.white}
                 style={styles.noticeText}
               >
-                Only send {symbol} assets to this address.
+               {disclaimer}
               </CustomText>
-              <CustomText
-                size={13}
-                color={theme.colors.palette.white}
-                style={styles.noticeText}
-              >
-                Other assets will be lost forever.
-              </CustomText>
+              
             </View>
           </View>
-        )} */}
+        )}
       </View>
     </ScreenContainer>
   );
