@@ -4,7 +4,7 @@ import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { useVerifyUserByIdentifier } from "query/hooks/useUser";
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -30,6 +30,10 @@ import {
   IBankItem,
   ISendScreenRouteParams
 } from "./types";
+import {
+  ContactSuggestion,
+  IContactItem,
+} from "components/common-components/ContactSuggestion";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { SVGLeftArrow, SVGUSD, SVGScan } = require("../../constants/images");
 
@@ -49,6 +53,36 @@ const Send: React.FC<ISendProps> = ({ route }) => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const dispatch = useDispatch();
   const [sender, setSender] = useState<string>(senderFromParams ?? "");
+  const [isSuggestionVisible, setIsSuggestionVisible] = useState<boolean>(false);
+
+  // Handle contact selection from suggestions
+  // Priority: username (if not empty) -> email -> nickname
+  const handleContactSelect = useCallback((contact: IContactItem) => {
+    const identifier = contact.username?.trim() || contact.email?.trim() || contact.nickname?.trim() || "";
+    setSender(identifier);
+    setIsSuggestionVisible(false);
+  }, []);
+
+  // Handle input change
+  const handleSenderChange = useCallback((text: string) => {
+    setSender(text);
+    setIsSuggestionVisible(text.length >= 1);
+  }, []);
+
+  // Handle input focus
+  const handleInputFocus = useCallback(() => {
+    if (sender.length >= 1) {
+      setIsSuggestionVisible(true);
+    }
+  }, [sender.length]);
+
+  // Handle input blur
+  const handleInputBlur = useCallback(() => {
+    // Delay hiding to allow touch on suggestion items
+    setTimeout(() => {
+      setIsSuggestionVisible(false);
+    }, 200);
+  }, []);
 
   const selectorData = useSelectorAction() as unknown as {
     bankLists: IBankItem[];
@@ -184,19 +218,32 @@ const Send: React.FC<ISendProps> = ({ route }) => {
           contentContainerStyle={styles.scrollContent}
         >
           <View style={styles.contentContainer}>
-            <View>
+            <View style={styles.inputWrapper}>
               <TextInputField
                 editable={isEditable}
                 label={type === "requested" ? "From" : "To"}
                 placeholder="PayAiroTag, Phone, Email"
-                rightIcon={ type === "requested" ? '' : SVGScan}
+                rightIcon={type === "requested" ? "" : SVGScan}
                 onRightIconClick={() => {
                   navigation.navigate(NAVIGATION_SCREENS.SCANS);
                   dispatch(setActiveTab("3"));
                 }}
                 value={sender}
-                onChange={setSender}
+                onChange={handleSenderChange}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
               />
+              {type !== "requested" && (
+                <ContactSuggestion
+                  searchQuery={sender}
+                  onContactSelect={handleContactSelect}
+                  isVisible={isSuggestionVisible && isEditable}
+                  maxSuggestions={5}
+                  minCharacters={1}
+                  debounceDelay={300}
+                  emptyPlaceholder="No matching contacts"
+                />
+              )}
             </View>
             <View style={styles.mainContentContainer}>
               <View style={styles.flex1}>
@@ -267,6 +314,10 @@ const customStyles = (theme: Theme) =>
       borderTopStartRadius: 32,
       padding: 20,
       marginTop: 20,
+    },
+    inputWrapper: {
+      position: "relative",
+      zIndex: 10,
     },
     mainContentContainer: {
       flex: 1,

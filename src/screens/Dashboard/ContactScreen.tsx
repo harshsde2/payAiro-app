@@ -56,6 +56,8 @@ export default function ContactScreen(props: any) {
   } = useDeviceContacts();
   const { data, isLoading: isLoading, error } = useRecentContacts();
 
+  console.log("data =>",JSON.stringify(data,null,2))
+
   // Memoize contact lists to prevent infinite loops
   const contactLists = useMemo(() => {
     if (!data?.allContacts) return [];

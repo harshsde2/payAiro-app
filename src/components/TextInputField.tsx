@@ -35,6 +35,8 @@ const TextInputField: FC<InputProps> = (props) => {
     onRightIconClick,
     onInfoPress,
     rightIconComponent,
+    onFocus,
+    onBlur,
   } = props;
 
   // console.log("---- > ",rightIconComponent)
@@ -163,7 +165,6 @@ const TextInputField: FC<InputProps> = (props) => {
                 fontFamily: Fonts.semibold,
                 width: "90%",
                 minHeight: 40,
-
               }}
               placeholder={placeholder}
               placeholderTextColor={theme.colors.palette.grey500}
@@ -172,6 +173,8 @@ const TextInputField: FC<InputProps> = (props) => {
               keyboardType={keyboardType ?? "default"}
               autoCapitalize="none"
               autoCorrect={false}
+              onFocus={onFocus}
+              onBlur={onBlur}
             />
           )}
 
