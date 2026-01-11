@@ -5,8 +5,8 @@ import {
   Animated,
   ActivityIndicator,
   Keyboard,
-  ScrollView,
 } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
 import { useTheme } from "styles/ThemeContext";
 import { CustomText } from "tsx-components";
 import { useRecentContacts } from "query/hooks";
@@ -149,6 +149,11 @@ ContactSuggestionItem.displayName = "ContactSuggestionItem";
  * - Customizable max suggestions and min characters
  * - Empty state and loading indicators
  */
+// Height per item for calculating container height
+const ITEM_HEIGHT = 64;
+const CONTAINER_PADDING = 16;
+const MAX_VISIBLE_ITEMS = 4;
+
 const ContactSuggestion: React.FC<IContactSuggestionProps> = ({
   searchQuery,
   onContactSelect,
@@ -276,24 +281,36 @@ const ContactSuggestion: React.FC<IContactSuggestionProps> = ({
           </CustomText>
         </View>
       ) : filteredContacts.length > 0 ? (
-        <ScrollView
-          style={styles.listContainer}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          nestedScrollEnabled
-          bounces={false}
+        <View
+          style={[
+            styles.listWrapper,
+            {
+              height: Math.min(
+                filteredContacts.length * ITEM_HEIGHT + CONTAINER_PADDING,
+                MAX_VISIBLE_ITEMS * ITEM_HEIGHT + CONTAINER_PADDING
+              ),
+            },
+          ]}
         >
-          {filteredContacts.map((contact, index) => (
-            <ContactSuggestionItem
-              key={contact.uuid || contact.wallet_address || index}
-              contact={contact}
-              onPress={handleContactSelect}
-              searchQuery={debouncedQuery}
-              isLast={index === filteredContacts.length - 1}
-            />
-          ))}
-        </ScrollView>
+          <ScrollView
+            style={styles.listContainer}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={true}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled={true}
+            bounces={false}
+          >
+            {filteredContacts.map((contact, index) => (
+              <ContactSuggestionItem
+                key={contact.uuid || contact.wallet_address || index}
+                contact={contact}
+                onPress={handleContactSelect}
+                searchQuery={debouncedQuery}
+                isLast={index === filteredContacts.length - 1}
+              />
+            ))}
+          </ScrollView>
+        </View>
       ) : (
         <View style={styles.emptyContainer}>
           <CustomText variant="body2" color={theme.colors.text.secondary}>

@@ -216,6 +216,8 @@ const Send: React.FC<ISendProps> = ({ route }) => {
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled={true}
         >
           <View style={styles.contentContainer}>
             <View style={styles.inputWrapper}>

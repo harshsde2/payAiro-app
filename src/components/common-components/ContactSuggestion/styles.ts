@@ -10,7 +10,6 @@ export const contactSuggestionStyles = (theme: Theme) =>
       right: 0,
       backgroundColor: theme.colors.palette.white,
       borderRadius: 16,
-      maxHeight: 250,
       zIndex: 1000,
       elevation: 8,
       ...Platform.select({
@@ -29,8 +28,12 @@ export const contactSuggestionStyles = (theme: Theme) =>
       marginTop: 4,
       overflow: "hidden",
     },
+    listWrapper: {
+      width: "100%",
+      overflow: "hidden",
+    },
     listContainer: {
-      maxHeight: 250,
+      flex: 1,
     },
     listContent: {
       paddingVertical: 8,

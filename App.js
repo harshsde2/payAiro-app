@@ -33,8 +33,11 @@ import { getItem, STORAGE_KEYS } from "./src/storage/mmkv";
 import { ThemeProvider } from "./src/styles";
 import GlobalLoader from "./src/tsx-components/GlobalLoader";
 import { LinkingPath } from "./src/utils/linking";
-import { initializeDeepLinking, setNavigationRef } from "./src/utils/deepLinkHandler";
-import UseNet from './src/utils/UseNet';
+import {
+  initializeDeepLinking,
+  setNavigationRef,
+} from "./src/utils/deepLinkHandler";
+import UseNet from "./src/utils/UseNet";
 import KycWatchdog from "./src/components/common-components/KycWatchdog";
 import KycBanner from "./src/components/common-components/KycBanner";
 import AppLockScreen from "./src/components/common-components/AppLockScreen";
@@ -42,6 +45,7 @@ import Toast from "./src/components/common-components/Toast";
 import { AppLockProvider } from "./src/contexts/AppLockContext";
 // Import config for verification (remove after testing)
 import { EnvConfig } from "./src/config/env.config";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function App() {
   // ========== ENVIRONMENT CONFIG VERIFICATION ==========
@@ -57,20 +61,15 @@ export default function App() {
   }
   // ====================================================
   // -------------------- Redux State --------------------
-  const {
-    isLogin,
-    tokens,
-    biometricAvailable,
-    showLoader,
-    isCrypto,
-  } = useSelector((state) => state.authenticationSlice);
+  const { isLogin, tokens, biometricAvailable, showLoader, isCrypto } =
+    useSelector((state) => state.authenticationSlice);
 
   const dispatch = useDispatch();
 
   // -------------------- Navigation Ref --------------------
   // Create navigation ref for deep link navigation
   const navigationRef = useRef(null);
-  
+
   // Set navigation ref for deep link handler
   useEffect(() => {
     if (navigationRef.current) {
@@ -127,7 +126,7 @@ export default function App() {
       getMerchentRequest(token);
       useDispatchAction(setLogin(true));
       useDispatchAction(setBiometricAvailable(biometric));
-      
+
       // Restore selectedCurrency, totalDisbursable, cryptoData, and allCryptoBalances from MMKV storage
       if (selectedCurrency) {
         useDispatchAction(setSelectedCurrency(JSON.parse(selectedCurrency)));
@@ -332,85 +331,87 @@ export default function App() {
     return <SplashScreen />;
   }
 
-  console.log("isLogin =>", isLogin)
+  // console.log("isLogin =>", isLogin);
   // Render main app navigation
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <PersistQueryProvider>
-          <AppLockProvider>
-            <NavigationContainer
-              ref={navigationRef}
-              linking={LinkingPath}
-              onStateChange={(state) => {
-                // Helper function to get the focused route recursively (handles nested navigators)
-                const getFocusedRoute = (navState) => {
-                  if (!navState) return null;
-                  const route = navState.routes[navState.index];
-                  if (!route) return null;
-                  
-                  // If this route has nested state, get the focused route from it
-                  if (route.state) {
-                    const nestedRoute = getFocusedRoute(route.state);
-                    if (nestedRoute) return nestedRoute;
-                  }
-                  
-                  return route;
-                };
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <ThemeProvider>
+          <PersistQueryProvider>
+            <AppLockProvider>
+              <NavigationContainer
+                ref={navigationRef}
+                linking={LinkingPath}
+                onStateChange={(state) => {
+                  // Helper function to get the focused route recursively (handles nested navigators)
+                  const getFocusedRoute = (navState) => {
+                    if (!navState) return null;
+                    const route = navState.routes[navState.index];
+                    if (!route) return null;
 
-                const focusedRoute = getFocusedRoute(state);
-                const currentRouteName = focusedRoute?.name || null;
-                
-                // Dispatch current route to Redux
-                dispatch(setCurrentRoute(currentRouteName));
-
-                // Existing logic for active tabs
-                const currentRoute = state.routes[state.index];
-                // console.log('Current Screen:', currentRoute.name);
-                let activeTabs = "1"; // Default to home (or whichever default)
-
-                switch (currentRoute.name) {
-                  case NAVIGATION_SCREENS.NEW_DASHBOARD:
-                    // isCrypto true = fiat (activeTab "1"), false = crypto (activeTab "7")
-                    if (isCrypto) {
-                      activeTabs = "1";
-                    } else {
-                      activeTabs = "7";
+                    // If this route has nested state, get the focused route from it
+                    if (route.state) {
+                      const nestedRoute = getFocusedRoute(route.state);
+                      if (nestedRoute) return nestedRoute;
                     }
-                    break;
-                  case NAVIGATION_SCREENS.TRANSACTION:
-                  case NAVIGATION_SCREENS.UNIFIED_TRANSACTION:
-                    activeTabs = "2";
-                    break;
-                  case NAVIGATION_SCREENS.SCANS:
-                    activeTabs = "3";
-                    break;
-                  case NAVIGATION_SCREENS.REWARDS:
-                    activeTabs = "4";
-                    break;
-                  case NAVIGATION_SCREENS.SETTING_SCREEN:
-                    activeTabs = "5";
-                    break;
-                  default:
-                    activeTabs = "1"; // Default to home
-                }
 
-                // Dispatch to update Redux store
-                dispatch(setActiveTab(activeTabs));
-              }}
-            >
-              <UseNet />
-              {showLoader && <GlobalLoader />}
-              {isLogin && <KycWatchdog />}
-              {isLogin && <KycBanner />}
-              <AppLockScreen />
-              {!isLogin ? <AuthStack /> : <AppStack />}
-            </NavigationContainer>
-            {/* Toast moved outside NavigationContainer for proper z-index on iOS */}
-            <Toast />
-          </AppLockProvider>
-        </PersistQueryProvider>
-      </ThemeProvider>
+                    return route;
+                  };
+
+                  const focusedRoute = getFocusedRoute(state);
+                  const currentRouteName = focusedRoute?.name || null;
+
+                  // Dispatch current route to Redux
+                  dispatch(setCurrentRoute(currentRouteName));
+
+                  // Existing logic for active tabs
+                  const currentRoute = state.routes[state.index];
+                  // console.log('Current Screen:', currentRoute.name);
+                  let activeTabs = "1"; // Default to home (or whichever default)
+
+                  switch (currentRoute.name) {
+                    case NAVIGATION_SCREENS.NEW_DASHBOARD:
+                      // isCrypto true = fiat (activeTab "1"), false = crypto (activeTab "7")
+                      if (isCrypto) {
+                        activeTabs = "1";
+                      } else {
+                        activeTabs = "7";
+                      }
+                      break;
+                    case NAVIGATION_SCREENS.TRANSACTION:
+                    case NAVIGATION_SCREENS.UNIFIED_TRANSACTION:
+                      activeTabs = "2";
+                      break;
+                    case NAVIGATION_SCREENS.SCANS:
+                      activeTabs = "3";
+                      break;
+                    case NAVIGATION_SCREENS.REWARDS:
+                      activeTabs = "4";
+                      break;
+                    case NAVIGATION_SCREENS.SETTING_SCREEN:
+                      activeTabs = "5";
+                      break;
+                    default:
+                      activeTabs = "1"; // Default to home
+                  }
+
+                  // Dispatch to update Redux store
+                  dispatch(setActiveTab(activeTabs));
+                }}
+              >
+                <UseNet />
+                {showLoader && <GlobalLoader />}
+                {isLogin && <KycWatchdog />}
+                {isLogin && <KycBanner />}
+                <AppLockScreen />
+                {!isLogin ? <AuthStack /> : <AppStack />}
+              </NavigationContainer>
+              {/* Toast moved outside NavigationContainer for proper z-index on iOS */}
+              <Toast />
+            </AppLockProvider>
+          </PersistQueryProvider>
+        </ThemeProvider>
+      </GestureHandlerRootView>
     </SafeAreaProvider>
   );
 }
