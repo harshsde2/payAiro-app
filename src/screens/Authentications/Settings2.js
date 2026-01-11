@@ -142,6 +142,10 @@ export default function Settings2() {
                     }
                     return;
                   }
+                  if (i.name === 'Forgot Pin') {
+                    navigation.navigate(NAVIGATION_SCREENS.FORGOT_PIN_SCREEN);
+                    return;
+                  }
                   if (i.name === 'Transaction Pin') {
                     setshowPinOld(true);
                     return;

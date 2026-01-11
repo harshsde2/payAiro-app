@@ -68,6 +68,7 @@ import Scans from "../screens/Scans/Scans";
 import AddCard from "../screens/SettingScreen/AddCard";
 import AlertScreen from "../screens/SettingScreen/AlertScreen";
 import ChangePinScreen from "../screens/SettingScreen/ChangePinScreen";
+import ForgotPinScreen from "../screens/SettingScreen/ForgotPinScreen/ForgotPinScreen";
 import ChatScreen from "../screens/SettingScreen/ChatScreen";
 import DeviceManagement from "../screens/SettingScreen/DeviceManagement";
 import Notification from "../screens/SettingScreen/Notification";
@@ -296,6 +297,11 @@ export default function AppStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.CHANGE_PIN_SCREEN}
         component={ChangePinScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.FORGOT_PIN_SCREEN}
+        component={ForgotPinScreen}
       />
       <Stack.Screen
         options={{ headerShown: false }}

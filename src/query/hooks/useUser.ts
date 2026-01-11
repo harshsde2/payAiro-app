@@ -159,6 +159,63 @@ export const useVerifyUserForChangePinOtp = () => {
 };
 
 /**
+ * Hook to send OTP for forgot PIN
+ * TODO: Replace with actual API endpoint when ready
+ */
+export const useForgotPinSendOtp = () => {
+  return useMutation<ApiResponse<any>, Error, any>({
+    mutationFn: async () => {
+      // TODO: Replace AUTH.FORGOT_PIN_SEND_OTP with actual endpoint
+      // For now, using placeholder endpoint
+      return await apiClient.post<ApiResponse<any>>(
+        AUTH.VERIFY_OTP_WITH_MAIL, // Placeholder - replace with AUTH.FORGOT_PIN_SEND_OTP
+        {},
+        false
+      );
+    },
+    onSuccess: () => {},
+  });
+};
+
+/**
+ * Hook to verify OTP for forgot PIN
+ * TODO: Replace with actual API endpoint when ready
+ */
+export const useForgotPinVerifyOtp = () => {
+  return useMutation<ApiResponse<any>, Error, { otp: string }>({
+    mutationFn: async (payload) => {
+      // TODO: Replace AUTH.FORGOT_PIN_VERIFY_OTP with actual endpoint
+      // For now, using placeholder endpoint
+      return await apiClient.post<ApiResponse<any>>(
+        AUTH.VERIFY_SEND_OTP, // Placeholder - replace with AUTH.FORGOT_PIN_VERIFY_OTP
+        payload,
+        true
+      );
+    },
+    onSuccess: () => {},
+  });
+};
+
+/**
+ * Hook to reset PIN after forgot PIN flow
+ * TODO: Replace with actual API endpoint when ready
+ */
+export const useForgotPinReset = () => {
+  return useMutation<ApiResponse<any>, Error, FormData>({
+    mutationFn: async (payload) => {
+      // TODO: Replace AUTH.FORGOT_PIN_RESET with actual endpoint
+      // For now, using placeholder endpoint
+      return await apiClient.patch<ApiResponse<any>>(
+        AUTH.CHANGE_PIN, // Placeholder - replace with AUTH.FORGOT_PIN_RESET
+        payload,
+        true
+      );
+    },
+    onSuccess: () => {},
+  });
+};
+
+/**
  * Hook to Intra Account Transfer
  */
 export const useIntraAccountTransfer = () => {

@@ -60,6 +60,7 @@ export const NAVIGATION_SCREENS = {
   STATEMENT_DETAILS: "StatementDetails",
   BANK_DETAILS: "BankDetails",
   CHANGE_PIN_SCREEN: "ChangePinScreen",
+  FORGOT_PIN_SCREEN: "ForgotPinScreen",
   ALERT_SCREEN: "AlertScreen",
   CHAT_SCREEN: "ChatScreen",
   ACH_SCREEN: "AchScreen",

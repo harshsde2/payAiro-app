@@ -629,7 +629,7 @@ const ChangePinScreen = () => {
         <GenericButton
           onPress={() => handlePinChange()}
           title={"Save PIN"}
-          cStyle={{ width: "90%", alignSelf: "center" }}
+          cStyle={{ width: "90%", alignSelf: "center", marginBottom: theme.spacing.spacing[4] }}
           showLoader={true}
           isLoading={showLoader}
         />
