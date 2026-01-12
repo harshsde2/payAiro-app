@@ -46,6 +46,12 @@ export interface IEnvConfig {
   // Development Settings
   SHOW_ENV_BANNER: boolean;
   ALLOW_DEV_TOOLS: boolean;
+  
+  // Version Update Settings
+  ENABLE_VERSION_TEST_MODE?: boolean;
+  TEST_VERSION_OVERRIDE?: string;
+  TEST_FORCE_UPDATE?: boolean;
+  FORCE_UPDATE_ENABLED?: boolean; // Production: true = force all updates, false = optional updates
 }
 
 /**
@@ -73,6 +79,10 @@ const OPTIONAL_VARS: Partial<Record<keyof IEnvConfig, any>> = {
   API_RETRY_DELAY: 1000,
   SHOW_ENV_BANNER: false,
   ALLOW_DEV_TOOLS: false,
+  ENABLE_VERSION_TEST_MODE: false,
+  TEST_VERSION_OVERRIDE: undefined,
+  TEST_FORCE_UPDATE: false,
+  FORCE_UPDATE_ENABLED: true, // Default: force all updates in production
 };
 
 // ========================================
@@ -304,6 +314,24 @@ function buildConfig(): IEnvConfig {
       (Config as any).ALLOW_DEV_TOOLS,
       OPTIONAL_VARS.ALLOW_DEV_TOOLS as boolean,
       'ALLOW_DEV_TOOLS'
+    ),
+    ENABLE_VERSION_TEST_MODE: parseBoolean(
+      (Config as any).ENABLE_VERSION_TEST_MODE,
+      OPTIONAL_VARS.ENABLE_VERSION_TEST_MODE as boolean,
+      'ENABLE_VERSION_TEST_MODE'
+    ),
+    TEST_VERSION_OVERRIDE: (Config as any).TEST_VERSION_OVERRIDE
+      ? String((Config as any).TEST_VERSION_OVERRIDE).trim()
+      : undefined,
+    TEST_FORCE_UPDATE: parseBoolean(
+      (Config as any).TEST_FORCE_UPDATE,
+      OPTIONAL_VARS.TEST_FORCE_UPDATE as boolean,
+      'TEST_FORCE_UPDATE'
+    ),
+    FORCE_UPDATE_ENABLED: parseBoolean(
+      (Config as any).FORCE_UPDATE_ENABLED,
+      OPTIONAL_VARS.FORCE_UPDATE_ENABLED as boolean,
+      'FORCE_UPDATE_ENABLED'
     ),
   };
   

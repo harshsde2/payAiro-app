@@ -42,10 +42,12 @@ import KycWatchdog from "./src/components/common-components/KycWatchdog";
 import KycBanner from "./src/components/common-components/KycBanner";
 import AppLockScreen from "./src/components/common-components/AppLockScreen";
 import Toast from "./src/components/common-components/Toast";
+import ForceUpdateModal from "./src/components/common-components/ForceUpdateModal";
 import { AppLockProvider } from "./src/contexts/AppLockContext";
 // Import config for verification (remove after testing)
 import { EnvConfig } from "./src/config/env.config";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useAppVersionCheck } from "./src/hooks/useAppVersionCheck";
 
 export default function App() {
   // ========== ENVIRONMENT CONFIG VERIFICATION ==========
@@ -325,6 +327,92 @@ export default function App() {
     useDispatchAction(setPendingRequest(data?.data?.total_pending_requests));
   };
 
+  // -------------------- Version Check --------------------
+  // Check for app updates on mount and when app comes to foreground
+  const {
+    shouldUpdate,
+    storeVersion,
+    needsForceUpdate,
+    startUpdate,
+  } = useAppVersionCheck({
+    checkOnMount: true,
+    checkOnForeground: true,
+    checkInterval: 3600000, // Check every hour (optional)
+    autoUpdate: false, // Set to true for automatic flexible updates (dev only)
+  });
+
+  // State to control modal visibility (for optional updates that can be dismissed)
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState(null);
+
+  // Show modal when update is available - with 10 second delay to let AppLockScreen work first
+  useEffect(() => {
+    let timeoutId = null;
+    
+    if (shouldUpdate) {
+      console.log('[App] Update available - will show modal after 10 seconds. needsForceUpdate:', needsForceUpdate);
+      
+      // Delay showing the update modal by 10 seconds
+      // This ensures AppLockScreen has priority and can open/close properly
+      timeoutId = setTimeout(() => {
+        console.log('[App] 10 seconds passed - showing update modal now');
+        setShowUpdateModal(true);
+      }, 10000); // 10 seconds delay
+    }
+    
+    // Cleanup timeout if component unmounts or shouldUpdate changes
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [shouldUpdate, needsForceUpdate]);
+
+  // Handle update button press
+  const handleUpdate = async () => {
+    console.log('[App] Update button pressed - needsForceUpdate:', needsForceUpdate);
+    setIsUpdating(true);
+    setUpdateError(null);
+    
+    try {
+      await startUpdate(needsForceUpdate || false);
+      console.log('[App] Update process started successfully');
+      // Don't set isUpdating to false here - let the update process handle it
+      // The modal will close when update starts (or user dismisses if optional)
+    } catch (error) {
+      console.error("[App] Error starting update:", error);
+      setIsUpdating(false);
+      
+      // Set user-friendly error message
+      const errorMessage = error?.message || 
+        'Unable to start update. Please try again or update manually from the app store.';
+      setUpdateError(errorMessage);
+    }
+  };
+
+  // Handle close modal (for optional updates only)
+  const handleCloseUpdateModal = () => {
+    console.log('[App] Update modal closed by user');
+    setShowUpdateModal(false);
+    setIsUpdating(false);
+    setUpdateError(null);
+  };
+
+  // Debug log for version check (remove in production)
+  if (__DEV__) {
+    useEffect(() => {
+      console.log('[App] Version Check Status:', JSON.stringify({
+        shouldUpdate,
+        storeVersion,
+        needsForceUpdate,
+        showUpdateModal,
+        testMode: EnvConfig.ENABLE_VERSION_TEST_MODE,
+        testVersion: EnvConfig.TEST_VERSION_OVERRIDE,
+      }, null, 2));
+    }, [shouldUpdate, storeVersion, needsForceUpdate, showUpdateModal]);
+  }
+
   // -------------------- Render Logic --------------------
   // Show splash screen while initializing
   if (isFetching) {
@@ -404,10 +492,27 @@ export default function App() {
                 {isLogin && <KycWatchdog />}
                 {isLogin && <KycBanner />}
                 <AppLockScreen />
+
                 {!isLogin ? <AuthStack /> : <AppStack />}
               </NavigationContainer>
               {/* Toast moved outside NavigationContainer for proper z-index on iOS */}
               <Toast />
+              
+              {/* Force Update Modal - MUST be outside NavigationContainer for iOS */}
+              <ForceUpdateModal
+                isVisible={showUpdateModal}
+                message={
+                  needsForceUpdate
+                    ? "This update is required to continue using PayAiro. Please update now."
+                    : `A new version (${storeVersion || "latest"}) is available with new features and improvements.`
+                }
+                storeVersion={storeVersion}
+                onUpdate={handleUpdate}
+                onClose={handleCloseUpdateModal}
+                forceUpdate={needsForceUpdate}
+                isUpdating={isUpdating}
+                updateError={updateError}
+              />
             </AppLockProvider>
           </PersistQueryProvider>
         </ThemeProvider>
