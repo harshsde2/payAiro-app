@@ -16,6 +16,7 @@ import { SvgIcons } from "constants/svgs";
 import { CustomText } from "tsx-components";
 import GenericButton from "components/GenericButton";
 import { IFreshchatUser } from "./types";
+import { useAppLock } from "hooks/useAppLock";
 
 // Try to import Freshchat SDK
 let Freshchat: any = null;
@@ -64,7 +65,7 @@ const FreshchatScreen = () => {
     walletData: IWalletData | null;
   };
   const styles = customStyles(theme);
-
+  const { setNativeModalVisible } = useAppLock();
   const [isInitializing, setIsInitializing] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
   const [isSDKReady, setIsSDKReady] = useState(false);
@@ -238,6 +239,7 @@ const FreshchatScreen = () => {
   };
 
   const openChat = async () => {
+    setNativeModalVisible(true);
     try {
       if (!isSDKReady) {
         showError("Chat is not ready. Please try again.");
@@ -249,6 +251,12 @@ const FreshchatScreen = () => {
     } catch (error: any) {
       console.error("Error opening chat:", error);
       showError("Failed to open chat. Please try again.");
+    } finally {
+      // Reset flag AFTER chat modal closes (with delay to ensure app state change completes first)
+      // The delay is important because the app state change to 'active' may happen AFTER Freshchat.showConversations() resolves/rejects
+      setTimeout(() => {
+        setNativeModalVisible(false);
+      }, 1000);
     }
   };
 
