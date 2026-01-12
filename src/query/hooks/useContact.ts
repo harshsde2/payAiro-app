@@ -4,10 +4,13 @@ import { ApiResponse, RecentContact, User } from "../../api/types";
 import { userContactKeys } from "query/queryKeys";
 import { apiClient } from "api";
 import { AUTH } from "api/endpoints";
-import { Alert, Linking, Platform } from "react-native";
+import { Platform } from "react-native";
 import { queryStaleTime } from "query/queryConfigs";
+import { useAppLock } from "hooks/useAppLock";
 
 export const useDeviceContacts = () => {
+  const { setNativeModalVisible } = useAppLock();
+  
   return useQuery<ApiResponse<User[]>>({
     queryKey: userContactKeys.contacts(),
     queryFn: async () => {
@@ -16,7 +19,16 @@ export const useDeviceContacts = () => {
         let permission = await Contacts.checkPermission();
 
         if (permission === "denied") {
-          permission = await Contacts.requestPermission();
+          // Set flag before showing native permission dialog
+          setNativeModalVisible(true);
+          try {
+            permission = await Contacts.requestPermission();
+          } finally {
+            // Reset flag after permission dialog closes (with delay)
+            setTimeout(() => {
+              setNativeModalVisible(false);
+            }, 1000);
+          }
         }
 
         if (permission !== "authorized") {

@@ -11,6 +11,7 @@ export interface AppLockContextType {
   updateLastActive: () => void;
   shouldShowLock: boolean;
   refreshPinStatus: () => void;
+  setNativeModalVisible: (visible: boolean) => void;
 }
 
 export const LOCK_CONFIG = {

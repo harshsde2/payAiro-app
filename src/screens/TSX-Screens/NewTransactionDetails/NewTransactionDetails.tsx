@@ -24,6 +24,7 @@ import { SvgIcons } from "constants/svgs";
 import GenericButton from "components/GenericButton";
 import { INewTransactionDetailsProps } from "./types";
 import useSelectorAction from "hooks/useSelectorAction";
+import { useAppLock } from "hooks/useAppLock";
 // OR use react-native's built-in method for Android
 
 // Typography variants for transaction slip - change these to adjust font size globally
@@ -40,6 +41,7 @@ const NewTransactionDetails: FC = () => {
   const { theme } = useTheme();
   const screenshotRef = useRef<ViewShot>(null);
   const {walletData} = useSelectorAction() as any;
+  const { setNativeModalVisible } = useAppLock();
 
   const { transactionData } =
     route.params as INewTransactionDetailsProps["route"]["params"];
@@ -382,6 +384,9 @@ const NewTransactionDetails: FC = () => {
 
   // Share transaction (screenshot)
   const handleScreenshotShare = async () => {
+    // Set flag BEFORE showing native share modal
+    setNativeModalVisible(true);
+    
     try {
       if (screenshotRef.current && screenshotRef.current.capture) {
         const uri = await screenshotRef.current.capture();
@@ -419,6 +424,12 @@ const NewTransactionDetails: FC = () => {
 
       console.error("Screenshot sharing failed:", error);
       Alert.alert("Error", "Failed to capture and share screenshot");
+    } finally {
+      // Reset flag AFTER share modal closes (with delay to ensure app state change completes first)
+      // The delay is important because the app state change to 'active' may happen AFTER Share.open() resolves/rejects
+      setTimeout(() => {
+        setNativeModalVisible(false);
+      }, 1000);
     }
   };
 

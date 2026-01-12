@@ -22,6 +22,9 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
   const wasLoggedInOnMount = useRef<boolean | null>(null);
   const hasCheckedColdStart = useRef(false);
   
+  // Track if a native modal/permission dialog is currently showing
+  const isNativeModalVisibleRef = useRef<boolean>(false);
+  
   // Get authentication state from Redux
   const isLogin = useSelector((state: any) => state.authenticationSlice?.isLogin);
   
@@ -72,8 +75,15 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
       
       // Coming to foreground - lock immediately
       if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
-        // Lock immediately when returning from background (no timeout delay)
-        setIsLocked(true);
+        // Don't lock if a native modal was showing (permission dialog, share sheet, etc.)
+        // The flag will be reset by the component that set it (with a delay)
+        if (!isNativeModalVisibleRef.current) {
+          // Lock immediately when returning from background (no timeout delay)
+          setIsLocked(true);
+        }
+        // Note: We don't reset the flag here because the share sheet may cause multiple
+        // state transitions (active -> inactive -> active -> inactive -> active)
+        // The component will reset the flag after the modal is fully dismissed
       }
       
       appState.current = nextAppState;
@@ -123,6 +133,11 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
     }
   };
   
+  // Function to set/unset native modal visibility flag
+  const setNativeModalVisible = useCallback((visible: boolean) => {
+    isNativeModalVisibleRef.current = visible;
+  }, []);
+  
   return (
     <AppLockContext.Provider 
       value={{ 
@@ -131,7 +146,8 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
         unlockApp, 
         updateLastActive,
         shouldShowLock,
-        refreshPinStatus
+        refreshPinStatus,
+        setNativeModalVisible
       }}
     >
       {children}
