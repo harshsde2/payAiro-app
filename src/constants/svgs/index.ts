@@ -142,6 +142,7 @@ import LeftArrowWhite from "./LeftArrowWhite.svg";
 import CrossWhite from "./CrossWhite.svg";
 import TorchIcon from "./TorchIcon.svg";
 import QRCodeWhite from "./QRCodeWhite.svg";
+import ImageIconWhite from "./ImageIconWhite.svg";
 
 
 
@@ -289,5 +290,6 @@ export const SvgIcons = {
   LeftArrowWhite,
   CrossWhite,
   TorchIcon,
-  QRCodeWhite
+  QRCodeWhite,
+  ImageIconWhite
 };

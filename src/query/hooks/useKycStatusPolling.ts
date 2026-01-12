@@ -19,7 +19,7 @@ export const useKycStatusPolling = (enabled: boolean) => {
     refetchOnWindowFocus: enabled,
   });
 
-  console.log("useKycStatusPolling data ->",JSON.stringify(data))
+  // console.log("useKycStatusPolling data ->",JSON.stringify(data))
 
   const mode = useMemo(() => toKycMode(data), [data]);
 

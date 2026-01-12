@@ -101,6 +101,7 @@ import CyrptoDetails from "screens/TSX-Screens/CybridCrypto/CyrptoDetails";
 import HowToEarnPoints from "screens/TSX-Screens/Modals/HowToEarnPoints";
 import BlockchainNameServiceTerms from "screens/TSX-Screens/Modals/BlockchainNameServiceTerms";
 import AddCrypto from "screens/TSX-Screens/AddBalance/AddCrypto";
+import TestWebView from "screens/TSX-Screens/TestWebView";
 
 const Stack = createNativeStackNavigator();
 
@@ -685,6 +686,11 @@ export default function AppStack() {
         name={NAVIGATION_SCREENS.ADD_CRYPTO}
         component={AddCrypto}
         
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.TEST_WEBVIEW}
+        component={TestWebView}
       />
     </Stack.Navigator>
   );

@@ -19,7 +19,7 @@ const ForceUpdateModal: React.FC<IForceUpdateModalProps> = ({
 
   // IMMEDIATE log on every render - not in useEffect
   if (__DEV__) {
-    console.log('[ForceUpdateModal] Component rendering - isVisible:', isVisible, 'Platform:', Platform.OS);
+    // console.log('[ForceUpdateModal] Component rendering - isVisible:', isVisible, 'Platform:', Platform.OS);
   }
 
   const defaultMessage = storeVersion
@@ -29,11 +29,11 @@ const ForceUpdateModal: React.FC<IForceUpdateModalProps> = ({
   // Debug log - shows what props are received
   useEffect(() => {
     if (__DEV__ && isVisible) {
-      console.log('[ForceUpdateModal] ====== MODAL VISIBLE ======');
-      console.log('[ForceUpdateModal] forceUpdate:', forceUpdate);
-      console.log('[ForceUpdateModal] storeVersion:', storeVersion);
-      console.log('[ForceUpdateModal] Platform:', Platform.OS);
-      console.log('[ForceUpdateModal] Title will be:', forceUpdate ? "Update Required" : "Update Available");
+      // console.log('[ForceUpdateModal] ====== MODAL VISIBLE ======');
+      // console.log('[ForceUpdateModal] forceUpdate:', forceUpdate);
+      // console.log('[ForceUpdateModal] storeVersion:', storeVersion);
+      // console.log('[ForceUpdateModal] Platform:', Platform.OS);
+      // console.log('[ForceUpdateModal] Title will be:', forceUpdate ? "Update Required" : "Update Available");
     }
   }, [isVisible, forceUpdate, storeVersion]);
 

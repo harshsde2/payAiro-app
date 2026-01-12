@@ -53,14 +53,14 @@ export default function App() {
   // ========== ENVIRONMENT CONFIG VERIFICATION ==========
   // This log helps verify environment configuration is working
   // Remove or comment out after verification
-  if (__DEV__) {
-    console.log("=== ENVIRONMENT CONFIG TEST ===");
-    console.log("ENV_NAME:", EnvConfig.ENV_NAME);
-    console.log("ENV_TYPE:", EnvConfig.ENV_TYPE);
-    console.log("API_BASE_URL:", EnvConfig.API_BASE_URL);
-    console.log("APP_NAME:", EnvConfig.APP_NAME);
-    console.log("=================================");
-  }
+  // if (__DEV__) {
+  //   console.log("=== ENVIRONMENT CONFIG TEST ===");
+  //   console.log("ENV_NAME:", EnvConfig.ENV_NAME);
+  //   console.log("ENV_TYPE:", EnvConfig.ENV_TYPE);
+  //   console.log("API_BASE_URL:", EnvConfig.API_BASE_URL);
+  //   console.log("APP_NAME:", EnvConfig.APP_NAME);
+  //   console.log("=================================");
+  // }
   // ====================================================
   // -------------------- Redux State --------------------
   const { isLogin, tokens, biometricAvailable, showLoader, isCrypto } =
@@ -313,7 +313,7 @@ export default function App() {
     await messaging().registerDeviceForRemoteMessages();
     const token = await messaging().getToken();
 
-    console.log("FCM Token =>", token);
+    // console.log("FCM Token =>", token);
 
     if (token) {
       useDispatchAction(setFcmToken(token));
@@ -402,14 +402,14 @@ export default function App() {
   // Debug log for version check (remove in production)
   if (__DEV__) {
     useEffect(() => {
-      console.log('[App] Version Check Status:', JSON.stringify({
-        shouldUpdate,
-        storeVersion,
-        needsForceUpdate,
-        showUpdateModal,
-        testMode: EnvConfig.ENABLE_VERSION_TEST_MODE,
-        testVersion: EnvConfig.TEST_VERSION_OVERRIDE,
-      }, null, 2));
+      // console.log('[App] Version Check Status:', JSON.stringify({
+      //   shouldUpdate,
+      //   storeVersion,
+      //   needsForceUpdate,
+      //   showUpdateModal,
+      //   testMode: EnvConfig.ENABLE_VERSION_TEST_MODE,
+      //   testVersion: EnvConfig.TEST_VERSION_OVERRIDE,
+      // }, null, 2));
     }, [shouldUpdate, storeVersion, needsForceUpdate, showUpdateModal]);
   }
 

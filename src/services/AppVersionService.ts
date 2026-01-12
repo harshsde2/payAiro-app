@@ -133,31 +133,31 @@ class AppVersionService {
     try {
       // Debug: Log all version test settings
       if (__DEV__) {
-        console.log('[AppVersionService] ====== VERSION CHECK START ======');
-        console.log('[AppVersionService] Platform:', Platform.OS);
-        console.log('[AppVersionService] ENABLE_VERSION_TEST_MODE:', EnvConfig.ENABLE_VERSION_TEST_MODE);
-        console.log('[AppVersionService] TEST_VERSION_OVERRIDE:', EnvConfig.TEST_VERSION_OVERRIDE);
-        console.log('[AppVersionService] TEST_FORCE_UPDATE:', EnvConfig.TEST_FORCE_UPDATE);
-        console.log('[AppVersionService] __DEV__:', __DEV__);
+        // console.log('[AppVersionService] ====== VERSION CHECK START ======');
+        // console.log('[AppVersionService] Platform:', Platform.OS);
+        // console.log('[AppVersionService] ENABLE_VERSION_TEST_MODE:', EnvConfig.ENABLE_VERSION_TEST_MODE);
+        // console.log('[AppVersionService] TEST_VERSION_OVERRIDE:', EnvConfig.TEST_VERSION_OVERRIDE);
+        // console.log('[AppVersionService] TEST_FORCE_UPDATE:', EnvConfig.TEST_FORCE_UPDATE);
+        // console.log('[AppVersionService] __DEV__:', __DEV__);
       }
 
       // Use test mode if enabled (development only)
       if (__DEV__ && EnvConfig.ENABLE_VERSION_TEST_MODE) {
-        console.log('[AppVersionService] ✅ Entering test mode...');
+        // console.log('[AppVersionService] ✅ Entering test mode...');
         const testResult = await this.simulateUpdateCheck();
         if (__DEV__) {
-          console.log('[AppVersionService] Test mode result:', JSON.stringify(testResult, null, 2));
+          // console.log('[AppVersionService] Test mode result:', JSON.stringify(testResult, null, 2));
         }
         return testResult;
       } else {
-        console.log('[AppVersionService] ❌ NOT in test mode - checking store');
+        // console.log('[AppVersionService] ❌ NOT in test mode - checking store');
       }
 
       // Real store check (only in production or when test mode is disabled)
       const currentVersion = await this.getCurrentVersion();
 
       if (!currentVersion) {
-        console.error('[AppVersionService] Cannot check update: invalid current version');
+        // console.error('[AppVersionService] Cannot check update: invalid current version');
         return {
           shouldUpdate: false,
         };
@@ -168,7 +168,7 @@ class AppVersionService {
       });
 
       if (__DEV__) {
-        console.log('[AppVersionService] Store check result:', result);
+        // console.log('[AppVersionService] Store check result:', result);
       }
 
       // Validate result
@@ -186,7 +186,7 @@ class AppVersionService {
         needsForceUpdate,
       };
     } catch (error) {
-      console.error('[AppVersionService] Error checking update:', error);
+      // console.error('[AppVersionService] Error checking update:', error);
       
       // In test mode, if there's an error, still return shouldUpdate=true for testing
       if (__DEV__ && EnvConfig.ENABLE_VERSION_TEST_MODE && EnvConfig.TEST_VERSION_OVERRIDE) {
@@ -201,7 +201,7 @@ class AppVersionService {
       // In production, silently fail - don't block the app if version check fails
       // This handles cases like: offline, store API down, network errors, etc.
       if (__DEV__) {
-        console.warn('[AppVersionService] Version check failed - app will continue normally');
+        // console.warn('[AppVersionService] Version check failed - app will continue normally');
       }
       
       return {
@@ -229,18 +229,18 @@ class AppVersionService {
   private async openStoreUrlManually(): Promise<void> {
     try {
       const storeUrl = this.getStoreUrl();
-      console.log('[AppVersionService] Opening store URL manually:', storeUrl);
+      // console.log('[AppVersionService] Opening store URL manually:', storeUrl);
       
       const canOpen = await Linking.canOpenURL(storeUrl);
       if (canOpen) {
         await Linking.openURL(storeUrl);
-        console.log('[AppVersionService] ✅ Store URL opened successfully');
+        // console.log('[AppVersionService] ✅ Store URL opened successfully');
       } else {
-        console.warn('[AppVersionService] ⚠️ Cannot open store URL:', storeUrl);
+        // console.warn('[AppVersionService] ⚠️ Cannot open store URL:', storeUrl);
         throw new Error('Cannot open store URL');
       }
     } catch (error) {
-      console.error('[AppVersionService] Error opening store URL:', error);
+      // console.error('[AppVersionService] Error opening store URL:', error);
       throw error;
     }
   }
@@ -254,18 +254,18 @@ class AppVersionService {
     
     // In test mode, open store URL directly for testing
     if (__DEV__ && EnvConfig.ENABLE_VERSION_TEST_MODE) {
-      console.log('[AppVersionService] TEST MODE: Opening store URL for testing');
+      // console.log('[AppVersionService] TEST MODE: Opening store URL for testing');
       
       try {
         const storeUrl = this.getStoreUrl();
-        console.log('[AppVersionService] Attempting to open:', storeUrl);
+        // console.log('[AppVersionService] Attempting to open:', storeUrl);
         
         const canOpen = await Linking.canOpenURL(storeUrl);
         if (canOpen) {
           await Linking.openURL(storeUrl);
-          console.log('[AppVersionService] ✅ Store URL opened successfully');
+          // console.log('[AppVersionService] ✅ Store URL opened successfully');
         } else {
-          console.warn('[AppVersionService] ⚠️ Cannot open store URL:', storeUrl);
+          // console.warn('[AppVersionService] ⚠️ Cannot open store URL:', storeUrl);
           Alert.alert(
             'Test Mode',
             `In test mode, this would open the store.\n\nStore URL: ${storeUrl}\n\nIn production, this would ${Platform.OS === 'android' ? (forceUpdate ? 'show immediate update screen' : 'start flexible background update') : 'redirect to App Store'}`,
@@ -273,7 +273,7 @@ class AppVersionService {
           );
         }
       } catch (error) {
-        console.error('[AppVersionService] Error opening store URL:', error);
+        // console.error('[AppVersionService] Error opening store URL:', error);
         Alert.alert(
           'Test Mode',
           `In production, this would redirect to the ${Platform.OS === 'ios' ? 'App Store' : 'Play Store'}.`,

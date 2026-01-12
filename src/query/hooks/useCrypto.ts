@@ -277,7 +277,7 @@ export const useAllCryptoBalances = () => {
         // Store in Redux
         dispatch(setAllCryptoBalances(result?.data?.balances || []));
         dispatch(setAggregatedCryptoBalances(result?.data?.aggregated_balance || {}));
-        console.log("result?.data?.aggregated_balance =>", JSON.stringify(result?.data?.aggregated_balance, null, 2));
+        // console.log("result?.data?.aggregated_balance =>", JSON.stringify(result?.data?.aggregated_balance, null, 2));
         // console.log("All crypto balances fetched and stored =>", JSON.stringify(result?.data?.balances, null, 2));
         
         return result;

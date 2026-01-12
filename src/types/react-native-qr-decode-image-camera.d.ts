@@ -7,5 +7,7 @@ declare module 'react-native-qr-decode-image-camera' {
   export default class QRCodeScanner {
     static decode(imagePath: string): Promise<string | QRCodeResult>;
   }
+
+  export function QRreader(imagePath: string): Promise<string>;
 }
 

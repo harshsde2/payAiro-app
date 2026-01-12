@@ -326,6 +326,7 @@ export default function Scans(): JSX.Element {
         }}
       >
         {/* <SvgIcons. width={30} height={30} /> */}
+
         <View
           style={{
             flex: 1,
@@ -335,6 +336,12 @@ export default function Scans(): JSX.Element {
             gap: 20,
           }}
         >
+          <SvgIcons.ImageIconWhite
+            onPress={uploadFromGallery}
+            width={25}
+            height={25}
+          />
+          
           <SvgIcons.TorchIcon
             onPress={toggleTorchMode}
             width={25}

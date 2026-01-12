@@ -32,15 +32,15 @@ export const useAppVersionCheck = (
       // Log current version for debugging
       const currentVersion = await AppVersionService.getCurrentVersion();
       if (__DEV__) {
-        console.log('[useAppVersionCheck] Current app version:', currentVersion, 'Platform:', Platform.OS);
+        // console.log('[useAppVersionCheck] Current app version:', currentVersion, 'Platform:', Platform.OS);
       }
 
       const result = await AppVersionService.checkNeedsUpdate();
       
       if (__DEV__) {
-        console.log('[useAppVersionCheck] Check result:', JSON.stringify(result, null, 2));
-        console.log('[useAppVersionCheck] Setting shouldUpdate to:', result.shouldUpdate);
-        console.log('[useAppVersionCheck] Setting needsForceUpdate to:', result.needsForceUpdate);
+        // console.log('[useAppVersionCheck] Check result:', JSON.stringify(result, null, 2));
+        // console.log('[useAppVersionCheck] Setting shouldUpdate to:', result.shouldUpdate);
+        // console.log('[useAppVersionCheck] Setting needsForceUpdate to:', result.needsForceUpdate);
       }
       
       // Force state update

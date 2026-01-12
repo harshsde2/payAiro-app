@@ -167,7 +167,7 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
     }
     // Crypto mode (isCrypto = false)
     else {
-      console.log("aggregatedCryptoBalances =>", JSON.stringify(aggregatedCryptoBalances, null, 2));
+      // console.log("aggregatedCryptoBalances =>", JSON.stringify(aggregatedCryptoBalances, null, 2));
       const cryptoBalanceData =  aggregatedCryptoBalances || {};
       switch (selectedBalanceType) {
         case "Available":

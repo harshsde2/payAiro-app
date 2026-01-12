@@ -99,9 +99,9 @@ api.interceptors.request.use(
           return url === route || url === route.replace(/\/$/, "");
         });
 
-        console.log("[KYC] Interceptor: method =>", method);
-        console.log("[KYC] Interceptor: url =>", url);
-        console.log("[KYC] Interceptor: mode =>", mode, ", isPublic =>", isPublic);
+        // console.log("[KYC] Interceptor: method =>", method);
+        // console.log("[KYC] Interceptor: url =>", url);
+        // console.log("[KYC] Interceptor: mode =>", mode, ", isPublic =>", isPublic);
 
         if (mode === "expired" && !isPublic) {
           const { setKycStatus } = require("../redux/slices/authenticationSlice");
@@ -138,7 +138,7 @@ api.interceptors.request.use(
           return Promise.reject(err);
         }
 
-        console.log("isPublic  ->",isPublic)
+        // console.log("isPublic  ->",isPublic)
         if ((mode === "pending" || mode === "not_started") && !isPublic) {
           const mutating = method === "post" || method === "patch" || method === "delete";
           if (mutating) {
@@ -183,14 +183,14 @@ api.interceptors.request.use(
             const err = new Error("KYC_PENDING_VIEW_ONLY") as any;
             err.code = "KYC_PENDING_VIEW_ONLY";
             err.kycMode = mode;
-            console.log("[KYC] BLOCKED request (pending):", method, url);
+            // console.log("[KYC] BLOCKED request (pending):", method, url);
             return Promise.reject(err);
           }
         }
         if (isPublic) {
-          console.log("[KYC] ALLOWED public request:", method, url);
+          // console.log("[KYC] ALLOWED public request:", method, url);
         } else {
-          console.log("[KYC] ALLOWED non-mutating or approved:", method, url);
+          // console.log("[KYC] ALLOWED non-mutating or approved:", method, url);
         }
       } catch (e) {
         // swallow gating error
