@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "347512550894",
+    "project_id": "payairo-13cfd",
+    "storage_bucket": "payairo-13cfd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:347512550894:android:104c604ec1516794a0caff",
+        "android_client_info": {
+          "package_name": "com.payairo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFIVRDZHkrsSSIZORzoaZfXOF4VelRzyQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:347512550894:android:2fede22bc9e1b69ea0caff",
+        "android_client_info": {
+          "package_name": "com.payairo.staging"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFIVRDZHkrsSSIZORzoaZfXOF4VelRzyQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

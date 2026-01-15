@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "919335823855",
-    "project_id": "payairo-6d931",
-    "storage_bucket": "payairo-6d931.firebasestorage.app"
+    "project_number": "347512550894",
+    "project_id": "payairo-13cfd",
+    "storage_bucket": "payairo-13cfd.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:919335823855:android:118a99c704c2a428a26e1a",
+        "mobilesdk_app_id": "1:347512550894:android:104c604ec1516794a0caff",
         "android_client_info": {
           "package_name": "com.payairo"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCqP35wwX4YqF5l5DB82DL5kzh9fDGJ2CE"
+          "current_key": "AIzaSyCFIVRDZHkrsSSIZORzoaZfXOF4VelRzyQ"
         }
       ],
       "services": {
@@ -26,7 +26,7 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:919335823855:android:118a99c704c2a428a26e1a",
+        "mobilesdk_app_id": "1:347512550894:android:2fede22bc9e1b69ea0caff",
         "android_client_info": {
           "package_name": "com.payairo.staging"
         }
@@ -34,7 +34,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCqP35wwX4YqF5l5DB82DL5kzh9fDGJ2CE"
+          "current_key": "AIzaSyCFIVRDZHkrsSSIZORzoaZfXOF4VelRzyQ"
         }
       ],
       "services": {

@@ -313,12 +313,47 @@ export default function App() {
     await messaging().registerDeviceForRemoteMessages();
     const token = await messaging().getToken();
 
-    // console.log("FCM Token =>", token);
+    console.log("FCM Token =>", token);
 
     if (token) {
       useDispatchAction(setFcmToken(token));
     }
   };
+
+  // Handle notification when app is opened from background/quit state
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      // Handle notification when app is opened from quit state
+      messaging()
+        .getInitialNotification()
+        .then(remoteMessage => {
+          if (remoteMessage) {
+            console.log(
+              'Notification caused app to open from quit state:',
+              remoteMessage.notification
+            );
+            // Handle navigation or other actions
+            if (remoteMessage.data?.deeplink) {
+              Linking.openURL(remoteMessage.data.deeplink);
+            }
+          }
+        });
+
+      // Handle notification when app is opened from background state
+      const unsubscribe = messaging().onNotificationOpenedApp(remoteMessage => {
+        console.log(
+          'Notification caused app to open from background state:',
+          remoteMessage.notification
+        );
+        // Handle navigation or other actions
+        if (remoteMessage.data?.deeplink) {
+          Linking.openURL(remoteMessage.data.deeplink);
+        }
+      });
+
+      return unsubscribe;
+    }
+  }, []);
 
   // -------------------- API Requests --------------------
   // Get merchant payment requests
