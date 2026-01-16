@@ -117,7 +117,7 @@ export const SETTINGS_LISTS = [
     name: "Support",
     icon: <SvgIcons.ChatSupport />,
     isDisvled: false,
-    route: NAVIGATION_SCREENS.SUPPORT_SCREEN,
+    route: NAVIGATION_SCREENS.FRESHCHAT_SCREEN,
   },
   // {
   //   name: "Chat Support",

@@ -143,6 +143,7 @@ import CrossWhite from "./CrossWhite.svg";
 import TorchIcon from "./TorchIcon.svg";
 import QRCodeWhite from "./QRCodeWhite.svg";
 import ImageIconWhite from "./ImageIconWhite.svg";
+import Person from "./Person.svg";
 
 
 
@@ -291,5 +292,6 @@ export const SvgIcons = {
   CrossWhite,
   TorchIcon,
   QRCodeWhite,
-  ImageIconWhite
+  ImageIconWhite,
+  Person
 };

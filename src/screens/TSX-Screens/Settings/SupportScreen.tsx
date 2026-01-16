@@ -100,9 +100,14 @@ const SupportScreen = () => {
 
   return (
     <ScreenContainer avoidKeyboard scrollable padding={0}>
-      <HeaderTitle title="Support" leftIcon="true" rightIcon={<SvgIcons.ChatWithAi width={30} height={30} />} onPressRight={() => {
-        navigation.navigate(NAVIGATION_SCREENS.FRESHCHAT_SCREEN);
-      }} />
+      <HeaderTitle
+        title="Support"
+        leftIcon="true"
+        rightIcon={<SvgIcons.ChatWithAi width={30} height={30} />}
+        onPressRight={() => {
+          navigation.navigate(NAVIGATION_SCREENS.FRESHCHAT_SCREEN);
+        }}
+      />
       <View style={[styles.whiteSheetContainer]}>
         <View style={customStyle.infoContainer}>
           {/* <SvgIcons.InfoNote /> */}
@@ -204,19 +209,12 @@ const SupportScreen = () => {
           </UploadFile>
         </View>
         <View style={{ gap: 10 }}>
-
-        <GenericButton
-          title="Submit"
-          onPress={() => {
-            handleSubmit();
-          }}
-        />
-        <GenericButton
-          title="Chat with Us"
-          onPress={() => {
-            navigation.navigate(NAVIGATION_SCREENS.FRESHCHAT_SCREEN);
-          }}
-        />
+          <GenericButton
+            title="Submit"
+            onPress={() => {
+              handleSubmit();
+            }}
+          />
         </View>
       </View>
     </ScreenContainer>

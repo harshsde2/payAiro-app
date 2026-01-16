@@ -17,6 +17,7 @@ import { CustomText } from "tsx-components";
 import GenericButton from "components/GenericButton";
 import { IFreshchatUser } from "./types";
 import { useAppLock } from "hooks/useAppLock";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 
 // Try to import Freshchat SDK
 let Freshchat: any = null;
@@ -294,6 +295,10 @@ const FreshchatScreen = () => {
     );
   };
 
+  const openEmailSupportForm = () => {
+    navigation.navigate(NAVIGATION_SCREENS.SUPPORT_SCREEN);
+  };
+
   // Render loading state
   if (isInitializing) {
     return (
@@ -391,6 +396,12 @@ const FreshchatScreen = () => {
           <GenericButton
             title="📚 Browse FAQs"
             onPress={openFAQs}
+            cStyle={styles.faqButton}
+          />
+
+          <GenericButton
+            title="Email Support"
+            onPress={openEmailSupportForm}
             cStyle={styles.faqButton}
           />
 

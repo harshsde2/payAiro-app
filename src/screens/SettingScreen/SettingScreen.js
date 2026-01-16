@@ -41,9 +41,12 @@ import {
 } from "../../services/Auth";
 import { useKyc } from "../../query/hooks";
 import { toKycMode } from "types/kyc";
+import HeaderTitle from "components/HeaderTitle";
+import { useTheme } from "styles";
 
 export default function SettingScreen() {
   const navigation = useNavigation();
+  const { theme} = useTheme();
   const [isVisible, setIsVisible] = useState(false);
   const { tokens, walletData } = useSelectorAction();
   const [kycStep, setKycStep] = useState("");
@@ -114,9 +117,10 @@ export default function SettingScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ flexGrow: 1 }}
         >
+          <HeaderTitle title="Profile" />
           <View
             style={{
-              flexDirection: "row",
+
               justifyContent: "flex-start",
               alignItems: "center",
               marginHorizontal: 15,
@@ -127,7 +131,7 @@ export default function SettingScreen() {
             <TouchableOpacity onPress={() => navigation.navigate(NAVIGATION_SCREENS.PERSONAL)}
               style={[
                 styles.circle,
-                { backgroundColor: "rgba(255, 172, 37, 1)" },
+                { backgroundColor: theme.colors.palette.green200 },
               ]}
             >
               {kycStep?.selfimage ? (
@@ -151,15 +155,15 @@ export default function SettingScreen() {
               <Text
                 style={{
                   color: "#000",
-                  marginLeft: 10,
+                  marginVertical: 5,
                   fontFamily: Fonts.semibold,
                   fontSize: 18,
                 }}
               >
                 {walletData?.name}
               </Text>
-              <KYCBadge status={getKycBadgeStatus(mode)} />
             </View>
+              <KYCBadge status={getKycBadgeStatus(mode)} />
           </View>
           <View
             style={{
@@ -172,18 +176,6 @@ export default function SettingScreen() {
               marginTop: 0,
             }}
           >
-            <Text
-              style={{
-                color: "#000",
-                marginLeft: 10,
-
-                fontFamily: Fonts.bold,
-                fontSize: 26,
-                marginBottom: 20,
-              }}
-            >
-              My Account
-            </Text>
             {SETTINGS_LISTS.map((item, index) => {
               if (
                 item.name === "Cybrid User Agreement" &&

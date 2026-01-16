@@ -173,7 +173,7 @@ const BankDetailsModal: React.FC<IBankDetailsModalProps> = ({
             </CustomText>
             <Pressable onPress={onClose} style={styles(theme).closeButton}>
               <CustomText
-                variant="h6"
+                variant='h4'
                 fontWeight="bold"
                 style={{ color: theme.colors.palette.grey900 }}
               >
@@ -236,19 +236,22 @@ const BankDetailsModal: React.FC<IBankDetailsModalProps> = ({
               variant="body2"
               style={styles(theme).receiveMoneyText}
             >
-              Receive money from Any PayAiro Account
+              Receive money to any PayAiro account
             </CustomText>
+            <View style={[styles(theme).paymentAppsContainer,{marginBottom: theme.spacing.spacing[1] || 16}]}>
+              <CustomText variant='subtitle1' size={14} style={styles(theme).paymentAppText}>Payment Modes</CustomText>
+            </View>
 
             {/* Payment App Logos */}
             <View style={styles(theme).paymentAppsContainer}>
-              <CustomText variant="caption" style={styles(theme).paymentAppText}>
-                Bank Account
+              <CustomText variant='caption' size={14} style={styles(theme).paymentAppText}>
+                RTP
               </CustomText>
-              <CustomText variant="caption" style={styles(theme).paymentAppText}>
-                Crypto Wallet
+              <CustomText variant='caption' size={14} style={styles(theme).paymentAppText}>
+                ACH Transfer
               </CustomText>
-              <CustomText variant="caption" style={styles(theme).paymentAppText}>
-                Debit Card
+              <CustomText variant='caption' size={14} style={styles(theme).paymentAppText}>
+                Via Bank
               </CustomText>
             </View>
 
@@ -461,8 +464,9 @@ const styles = (theme: any) =>
       justifyContent: "center",
       alignItems: "center",
       gap: theme.spacing.spacing[4] || 16,
-      marginBottom: theme.spacing.spacing[5] || 20,
+      marginBottom: theme.spacing.spacing[10] || 20,
       flexWrap: "wrap",
+      width: "100%",
     },
     paymentAppText: {
       color: theme.colors.palette.grey600 || "#4B5563",

@@ -279,7 +279,7 @@ export default function BottomNavigation({ isVer }) {
             handleTabSwitch(NAVIGATION_SCREENS.SETTING_SCREEN);
           }}
         >
-          <SvgIcons.SettingIcon style={{ opacity: activeTab === "5" ? 1 : 0.6 }} />
+          <SvgIcons.Person width={20} height={20} color={theme.colors.palette.white} style={{ opacity: activeTab === "5" ? 1 : 0.6 }} />
           <CustomText 
             fontWeight='medium' 
             size={11} 
@@ -288,7 +288,7 @@ export default function BottomNavigation({ isVer }) {
               { color: theme.colors.palette.white, opacity: activeTab === "5" ? 1 : 0.6 }
             ]}
           >
-            Settings
+            Profile
           </CustomText>
         </TouchableOpacity>
       </View>
