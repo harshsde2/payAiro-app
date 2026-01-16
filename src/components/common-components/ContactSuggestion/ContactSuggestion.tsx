@@ -9,7 +9,7 @@ import {
 import { ScrollView } from "react-native-gesture-handler";
 import { useTheme } from "styles/ThemeContext";
 import { CustomText } from "tsx-components";
-import { useRecentContacts } from "query/hooks";
+import { useUserSearch } from "query/hooks";
 import { useDebounce } from "hooks/useDebounce";
 import { contactSuggestionStyles } from "./styles";
 import {
@@ -17,6 +17,8 @@ import {
   IContactSuggestionItemProps,
   IContactItem,
 } from "./types";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { useNavigation } from "@react-navigation/native";
 
 const ANIMATION_DURATION = 200;
 const DEFAULT_MAX_SUGGESTIONS = 5;
@@ -31,6 +33,14 @@ const ContactSuggestionItem: React.FC<IContactSuggestionItemProps> = React.memo(
     const { theme } = useTheme();
     const styles = contactSuggestionStyles(theme);
     const scaleAnim = useRef(new Animated.Value(1)).current;
+
+    const navigation = useNavigation<any>();
+    // console.log("ContactSuggestionItem - contact:", contact);
+    const userDetails = {
+      username: contact.username,
+      profile_photo: contact.profile_photo,
+      identifier: contact.username,
+    }
 
     const handlePressIn = useCallback(() => {
       Animated.spring(scaleAnim, {
@@ -85,6 +95,7 @@ const ContactSuggestionItem: React.FC<IContactSuggestionItemProps> = React.memo(
       [searchQuery, theme.colors.palette.green700]
     );
 
+
     return (
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
         <TouchableOpacity
@@ -94,7 +105,7 @@ const ContactSuggestionItem: React.FC<IContactSuggestionItemProps> = React.memo(
           onPressOut={handlePressOut}
           activeOpacity={0.9}
         >
-          <View style={styles.avatarContainer}>
+          <TouchableOpacity onPress={() => navigation.navigate(NAVIGATION_SCREENS.USER_PROFILE, { userDetails })} style={styles.avatarContainer}>
             <CustomText
               variant="subtitle1"
               color={theme.colors.palette.green700}
@@ -102,7 +113,7 @@ const ContactSuggestionItem: React.FC<IContactSuggestionItemProps> = React.memo(
             >
               {initial}
             </CustomText>
-          </View>
+          </TouchableOpacity>
           <View style={styles.contactInfo}>
             <CustomText
               variant="subtitle2"
@@ -175,41 +186,56 @@ const ContactSuggestion: React.FC<IContactSuggestionProps> = ({
   // Debounced search query for performance
   const debouncedQuery = useDebounce(searchQuery, debounceDelay);
 
-  // Fetch contacts using the hook
-  const { data, isLoading } = useRecentContacts();
+  // Fetch contacts using the new user-search API hook
+  const { data, isLoading } = useUserSearch(
+    debouncedQuery,
+    minCharacters,
+    1,
+    20
+  );
 
-  // Filter contacts based on search query
+  // Map API response to IContactItem format
   const filteredContacts = useMemo<IContactItem[]>(() => {
     if (!debouncedQuery || debouncedQuery.length < minCharacters) {
       return [];
     }
 
-    const allContacts = data?.allContacts ?? [];
-    const queryLower = debouncedQuery.toLowerCase().trim();
+    const users = data?.data?.data ?? [];
+    
+    // Debug logs
+    console.log("ContactSuggestion - debouncedQuery:", debouncedQuery);
+    console.log("ContactSuggestion - API data:", JSON.stringify(data, null, 2));
+    console.log("ContactSuggestion - users array length:", users.length);
 
-    const filtered = allContacts.filter((contact: IContactItem) => {
-      if (!contact) return false;
-      const nickname = (contact.nickname ?? "").toLowerCase();
-      const username = (contact.username ?? "").toLowerCase();
-      const email = (contact.email ?? "").toLowerCase();
-      const phone = (contact.mobileno ?? "").toLowerCase();
+    const mappedContacts: IContactItem[] = users.map((user) => ({
+      uuid: user.email || user.mobile_number || "",
+      mobileno: user.mobile_number || "",
+      email: user.email || "",
+      wallet_address: "",
+      nickname: `${user.name || ""} ${user.lastname || ""}`.trim() || user.usernames || "",
+      username: user.usernames || "",
+      profile_photo: user.profile_photo,
+    }));
 
-      return (
-        nickname.includes(queryLower) ||
-        username.includes(queryLower) ||
-        email.includes(queryLower) ||
-        phone.includes(queryLower)
-      );
-    });
+    console.log("ContactSuggestion - mappedContacts length:", mappedContacts.length);
 
-    return filtered.slice(0, maxSuggestions);
-  }, [debouncedQuery, data?.allContacts, maxSuggestions, minCharacters]);
+    return mappedContacts.slice(0, maxSuggestions);
+  }, [data, debouncedQuery, maxSuggestions, minCharacters]);
 
-  // Should show the dropdown
+  // Should show the dropdown - use debouncedQuery for consistency
   const shouldShow =
     isVisible &&
-    searchQuery.length >= minCharacters &&
+    debouncedQuery.length >= minCharacters &&
     (filteredContacts.length > 0 || isLoading);
+
+  // Debug log
+  console.log("ContactSuggestion - shouldShow:", shouldShow, {
+    isVisible,
+    debouncedQueryLength: debouncedQuery.length,
+    minCharacters,
+    filteredContactsLength: filteredContacts.length,
+    isLoading,
+  });
 
   // Animation effect for show/hide
   useEffect(() => {
@@ -250,8 +276,8 @@ const ContactSuggestion: React.FC<IContactSuggestionProps> = ({
     [onContactSelect]
   );
 
-  // Don't render if not visible or no search query
-  if (!isVisible || searchQuery.length < minCharacters) {
+  // Don't render if not visible - keep showing while user is typing
+  if (!isVisible) {
     return null;
   }
 

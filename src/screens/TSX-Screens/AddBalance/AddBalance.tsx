@@ -22,10 +22,12 @@ import { AUTH } from "api/endpoints";
 import { showError } from "utils/toast";
 import InAppBrowser from "react-native-inappbrowser-reborn";
 import { isProduction } from "config/env.config";
+import BankDetailsModal from "components/common-components/BankDetailsModal";
+import LocationUnavailableModal from "components/common-components/LocationUnavailableModal";
 
 // Helper function to get icon component by key
 const getPaymentIcon = (
-  iconKey: "DebitCard" | "ApplePay" | "ACHTransfer" | "CryptoWallet"
+  iconKey: "DebitCard" | "ApplePay" | "ACHTransfer" | "CryptoWallet" | "Bank"
 ) => {
   switch (iconKey) {
     case "DebitCard":
@@ -36,6 +38,8 @@ const getPaymentIcon = (
       return <SvgIcons.ACHTransfer />;
     case "CryptoWallet":
       return <SvgIcons.CryptoWallet />;
+    case "Bank":
+      return <SvgIcons.Bank width={30} height={30} style={{ marginHorizontal:8 }} />;
     default:
       return null;
   }
@@ -72,7 +76,15 @@ const PAYMENT_METHOD_CONFIGS = [
     iconKey: "CryptoWallet" as const,
     type: "CryptoWallet" as const,
     navigation: NAVIGATION_SCREENS.ADD_CRYPTO,
-    showInProduction: false, // Always show
+    showInProduction: true, // Always show
+    isDisabled: false,
+  },
+  {
+    title: "Bank Account",
+    iconKey: "Bank" as const,
+    type: "Bank" as const,
+    navigation: NAVIGATION_SCREENS.ADD_CRYPTO,
+    showInProduction: true, // Always show
     isDisabled: false,
   },
 ] as const;
@@ -135,6 +147,8 @@ const AddBalance = () => {
     string | null
   >(null);
   const [hasAmountError, setHasAmountError] = useState(false);
+  const [isBankDetailsModalVisible, setIsBankDetailsModalVisible] = useState(false);
+  const [isLocationUnavailableModalVisible, setIsLocationUnavailableModalVisible] = useState(false);
   const current_balance = (bankBalance as any)?.bank_account?.usd;
 
   // Track if initial selection has been made
@@ -285,7 +299,18 @@ const AddBalance = () => {
   return (
     <ScreenContainer scrollable padding={0}>
       <HeaderTitle title="Add Balance" leftIcon="true" />
-
+      {/* <View style={customStyle.dropdownButtonContainer}>
+        <TouchableOpacity
+          style={customStyle.dropdownButton}
+          onPress={() => setIsBankDetailsModalVisible(true)}
+        >
+          <SvgIcons.Bank width={20} height={20} />
+          <CustomText variant="body2" style={customStyle.dropdownButtonText}>
+            View Bank Details
+          </CustomText>
+          <SvgIcons.ChevronDown width={16} height={16} />
+        </TouchableOpacity>
+      </View> */}
       <AmountInputDisplay
         amount={amount}
         setAmount={(amount) => {
@@ -348,6 +373,8 @@ const AddBalance = () => {
                     navigation.navigate(method?.navigation, {
                       item,
                     });
+                  } else if (method.type === "Bank") {
+                    setIsBankDetailsModalVisible(true)
                   }
                 }}
                 disabled={isDisabled}
@@ -372,6 +399,11 @@ const AddBalance = () => {
           })}
         </DashboardSection>
       </View>
+      <BankDetailsModal
+        isVisible={isBankDetailsModalVisible}
+        onClose={() => setIsBankDetailsModalVisible(false)}
+        bankList={BANK_LISTS}
+      />
     </ScreenContainer>
   );
 };
@@ -390,5 +422,24 @@ const customStyles = (theme: Theme) =>
       marginBottom: 16,
       borderWidth: 1,
       borderColor: theme?.colors?.palette?.yellow400 || "#FFD666",
+    },
+    dropdownButtonContainer: {
+      paddingHorizontal: theme?.spacing?.spacing[5] || 20,
+      paddingTop: theme?.spacing?.spacing[3] || 12,
+      paddingBottom: theme?.spacing?.spacing[2] || 8,
+    },
+    dropdownButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: theme?.colors?.palette?.grey250 || theme?.colors?.palette?.grey100,
+      borderRadius: theme?.spacing?.spacing[2] || 8,
+      padding: theme?.spacing?.spacing[3] || 12,
+      borderWidth: 1,
+      borderColor: theme?.colors?.palette?.grey300,
+      gap: theme?.spacing?.spacing[2] || 8,
+    },
+    dropdownButtonText: {
+      flex: 1,
+      marginLeft: theme?.spacing?.spacing[2] || 8,
     },
   });

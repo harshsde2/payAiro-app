@@ -80,3 +80,88 @@ export const useRecentContacts = () => {
     staleTime: Infinity,
   });
 };
+
+// Types for user search API response
+interface IUserSearchItem {
+  email: string;
+  mobile_number: string;
+  name: string;
+  lastname: string;
+  profile_photo: string | null;
+  usernames: string;
+  plaid_accountid: string | null;
+  plaid_connected: boolean;
+}
+
+interface IUserSearchPagination {
+  current_page: number;
+  page_size: number;
+  total_pages: number;
+  total_count: number;
+  has_next: boolean;
+  has_previous: boolean;
+  next_page: number | null;
+  previous_page: number | null;
+}
+
+interface IUserSearchData {
+  status: boolean;
+  message: string;
+  data: IUserSearchItem[];
+  pagination: IUserSearchPagination;
+}
+
+interface IUserSearchResponse {
+  status: boolean;
+  message: string;
+  data: IUserSearchData;
+}
+
+/**
+ * Hook to search for users using the user-search API
+ * @param query - Search query string
+ * @param minCharacters - Minimum characters required to trigger search (default: 1)
+ * @param page - Page number (default: 1)
+ * @param pageSize - Number of results per page (default: 20)
+ */
+export const useUserSearch = (
+  query: string,
+  minCharacters: number = 1,
+  page: number = 1,
+  pageSize: number = 20
+) => {
+  return useQuery<IUserSearchResponse>({
+    queryKey: userContactKeys.userSearch(query),
+    queryFn: async () => {
+      if (!query || query.length < minCharacters) {
+        return {
+          status: true,
+          message: "OK",
+          data: {
+            status: true,
+            message: "No query provided",
+            data: [],
+            pagination: {
+              current_page: 1,
+              page_size: pageSize,
+              total_pages: 0,
+              total_count: 0,
+              has_next: false,
+              has_previous: false,
+              next_page: null,
+              previous_page: null,
+            },
+          },
+        };
+      }
+
+      const response = await apiClient.get<IUserSearchResponse>(
+        `auth/user-search/?q=${encodeURIComponent(query)}&page=${page}&page_size=${pageSize}`
+      );
+
+      return response;
+    },
+    enabled: !!query && query.length >= minCharacters,
+    staleTime: 30000, // 30 seconds
+  });
+};

@@ -34,31 +34,62 @@ if [ "$DEVICES" -eq 0 ]; then
 fi
 
 # Check for unauthorized devices
-UNAUTHORIZED=$(adb devices | grep -c "unauthorized" || echo "0")
-if [ "$UNAUTHORIZED" -gt 0 ]; then
+UNAUTHORIZED_COUNT=$(adb devices | grep -c "unauthorized" || echo "0")
+if [ "$UNAUTHORIZED_COUNT" -gt 0 ]; then
     echo "⚠️  Found unauthorized device(s)"
     echo "   Please accept the USB debugging authorization on your device"
     exit 1
 fi
 
-CONNECTED_DEVICES=$(adb devices | grep -c "device$" || echo "0")
-echo "✅ Found $CONNECTED_DEVICES connected device(s)"
+# Get list of connected device serials
+DEVICE_SERIALS=$(adb devices | grep -E "device$" | awk '{print $1}')
 
-# Remove existing port forwarding (if any) to avoid conflicts
-adb reverse --remove tcp:8081 2>/dev/null || true
+if [ -z "$DEVICE_SERIALS" ]; then
+    echo "❌ No authorized devices found"
+    exit 1
+fi
 
-# Set up port forwarding
-echo "📱 Setting up port forwarding (8081 -> 8081)..."
-if adb reverse tcp:8081 tcp:8081; then
-    echo "✅ Port forwarding configured successfully"
+# Count connected devices
+CONNECTED_COUNT=$(echo "$DEVICE_SERIALS" | wc -l | tr -d ' ')
+echo "✅ Found $CONNECTED_COUNT connected device(s)"
+
+# Set up port forwarding for each device
+echo "📱 Setting up port forwarding (8081 -> 8081) for all devices..."
+SUCCESS_COUNT=0
+FAILED_DEVICES=""
+
+while IFS= read -r device_serial; do
+    if [ -n "$device_serial" ]; then
+        echo "   Setting up for device: $device_serial"
+        # Remove existing port forwarding (if any) to avoid conflicts
+        adb -s "$device_serial" reverse --remove tcp:8081 2>/dev/null || true
+        
+        if adb -s "$device_serial" reverse tcp:8081 tcp:8081; then
+            echo "   ✅ Port forwarding configured for $device_serial"
+            SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+        else
+            echo "   ❌ Failed to set up port forwarding for $device_serial"
+            FAILED_DEVICES="$FAILED_DEVICES $device_serial"
+        fi
+    fi
+done <<< "$DEVICE_SERIALS"
+
+echo ""
+if [ $SUCCESS_COUNT -gt 0 ]; then
+    echo "✅ Port forwarding configured successfully for $SUCCESS_COUNT device(s)"
     echo ""
-    echo "💡 Your device can now connect to Metro bundler"
+    echo "💡 Your device(s) can now connect to Metro bundler"
     echo "   Make sure Metro is running with: npm start"
     echo ""
     echo "📋 To verify port forwarding: adb reverse --list"
+    if [ -n "$FAILED_DEVICES" ]; then
+        echo ""
+        echo "⚠️  Some devices failed: $FAILED_DEVICES"
+        echo "   You can try manually: adb -s <device-serial> reverse tcp:8081 tcp:8081"
+    fi
 else
-    echo "❌ Failed to set up port forwarding"
-    echo "   Try running manually: adb reverse tcp:8081 tcp:8081"
+    echo "❌ Failed to set up port forwarding for all devices"
+    echo "   Try running manually: adb -s <device-serial> reverse tcp:8081 tcp:8081"
     exit 1
 fi
 

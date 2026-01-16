@@ -120,5 +120,6 @@ export const NAVIGATION_SCREENS = {
   BLOCKCHAIN_NAME_SERVICE_TERMS: "BlockchainNameServiceTerms",
   COINFLOW_CHECKOUT_WEBVIEW: "CoinflowCheckoutWebView",
   ADD_CRYPTO: "AddCrypto",
-  TEST_WEBVIEW: "TestWebView"
+  TEST_WEBVIEW: "TestWebView",
+  USER_PROFILE: "UserProfile"
 };

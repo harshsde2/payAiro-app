@@ -2,6 +2,7 @@ import { queryClient } from "query/queryClient";
 import { resetState } from "redux/slices/authenticationSlice";
 import { store } from "redux/store";
 import { clearAll } from "storage/mmkv";
+import FCMService from "services/FCMService";
 
 export const resetAppState = () => {
   // Clear all MMKV data
@@ -12,6 +13,9 @@ export const resetAppState = () => {
 
   // Clear all query cache
   queryClient.clear(); // Clears query cache
+
+  // Clear FCM service cache (for token tracking)
+  FCMService.getInstance().clearCache();
 };
 
 export const defaultImage = require("../../assets/images/Default_Image.webp");

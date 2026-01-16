@@ -1,6 +1,7 @@
 import UIKit
 import React
 import React_RCTAppDelegate
+import Firebase
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -13,11 +14,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+
+    FirebaseApp.configure()
+    
     let delegate = ReactNativeDelegate()
     let factory = RCTReactNativeFactory(delegate: delegate)
     // Use custom SafeAppDependencyProvider that handles crashes gracefully
     delegate.dependencyProvider = SafeAppDependencyProvider()
-    
+
     reactNativeDelegate = delegate
     reactNativeFactory = factory
     

@@ -13,7 +13,7 @@ import {
 import ViewShot from "react-native-view-shot";
 import Share from "react-native-share";
 import RNFS from "react-native-fs";
-import { useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import moment from "moment";
 import { SvgUri } from "react-native-svg";
 import { useTheme, Theme } from "styles";
@@ -25,6 +25,7 @@ import GenericButton from "components/GenericButton";
 import { INewTransactionDetailsProps } from "./types";
 import useSelectorAction from "hooks/useSelectorAction";
 import { useAppLock } from "hooks/useAppLock";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 // OR use react-native's built-in method for Android
 
 // Typography variants for transaction slip - change these to adjust font size globally
@@ -43,6 +44,8 @@ const NewTransactionDetails: FC = () => {
   const {walletData} = useSelectorAction() as any;
   const { setNativeModalVisible } = useAppLock();
 
+  const navigation = useNavigation<any>();
+
   const { transactionData } =
     route.params as INewTransactionDetailsProps["route"]["params"];
 
@@ -52,6 +55,7 @@ const NewTransactionDetails: FC = () => {
   const slipStyles = styles(theme);
 
   // console.log("transactionData =>", JSON.stringify(transactionData, null, 2));
+  const userDetails = transactionData?.display_party;
 
   // Direction
   const isIncoming = transactionData.direction === "incoming";
@@ -487,11 +491,11 @@ const NewTransactionDetails: FC = () => {
     }
 
     return (
-      <View style={styles(theme).avatarPlaceholderBig}>
+      <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate(NAVIGATION_SCREENS.USER_PROFILE, { userDetails })} style={styles(theme).avatarPlaceholderBig}>
         <CustomText variant="h2" color={theme.colors.palette.white}>
           {getInitials(displayUsername)}
         </CustomText>
-      </View>
+      </TouchableOpacity>
     );
   };
 

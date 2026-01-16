@@ -48,6 +48,8 @@ import { AppLockProvider } from "./src/contexts/AppLockContext";
 import { EnvConfig } from "./src/config/env.config";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useAppVersionCheck } from "./src/hooks/useAppVersionCheck";
+import FCMService from "./src/services/FCMService";
+import FCMTokenManager from "./src/components/common-components/FCMTokenManager";
 
 export default function App() {
   // ========== ENVIRONMENT CONFIG VERIFICATION ==========
@@ -310,13 +312,41 @@ export default function App() {
 
   // Get FCM token for push notifications
   const getFCMToken = async () => {
-    await messaging().registerDeviceForRemoteMessages();
-    const token = await messaging().getToken();
+    try {
+      // Initialize FCM Service (handles token caching, device ID, etc.)
+      const fcmService = FCMService.getInstance();
+      const token = await fcmService.initialize({
+        onTokenReceived: (newToken) => {
+          console.log("[App] FCM Token received via service");
+          useDispatchAction(setFcmToken(newToken));
+        },
+        onTokenRefresh: (newToken) => {
+          console.log("[App] FCM Token refreshed via service");
+          useDispatchAction(setFcmToken(newToken));
+        },
+        onError: (error) => {
+          console.error("[App] FCM Service error:", error);
+        },
+      });
 
-    console.log("FCM Token =>", token);
+      console.log("FCM Token =>", token);
 
-    if (token) {
-      useDispatchAction(setFcmToken(token));
+      if (token) {
+        useDispatchAction(setFcmToken(token));
+      }
+    } catch (error) {
+      console.error("[App] Error getting FCM token:", error);
+      
+      // Fallback to direct messaging call if service fails
+      try {
+        await messaging().registerDeviceForRemoteMessages();
+        const token = await messaging().getToken();
+        if (token) {
+          useDispatchAction(setFcmToken(token));
+        }
+      } catch (fallbackError) {
+        console.error("[App] Fallback FCM token fetch failed:", fallbackError);
+      }
     }
   };
 
@@ -461,6 +491,7 @@ export default function App() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <ThemeProvider>
           <PersistQueryProvider>
+            <FCMTokenManager />
             <AppLockProvider>
               <NavigationContainer
                 ref={navigationRef}

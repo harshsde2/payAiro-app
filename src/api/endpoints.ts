@@ -91,6 +91,7 @@ export const AUTH = {
   COINFLOW_CHECKOUT: "auth/coinflow/checkout/",
   GET_REFERRAL_DATA: "auth/users/ref/",
   CONTENT_DATA: "auth/r1/content-data/",
+  USER_DETAILS: "auth/r1/user-details/",
   ASSET_LIST: "auth/r1/assetlist",
 };
 // Wallet endpoints

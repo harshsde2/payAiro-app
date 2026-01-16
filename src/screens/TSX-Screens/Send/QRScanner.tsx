@@ -5,6 +5,8 @@ import {
   TouchableOpacity,
   Pressable,
   Dimensions,
+  Alert,
+  Platform,
 } from "react-native";
 import { Camera, CameraType } from "react-native-camera-kit";
 import React, { useState, useRef } from "react";
@@ -13,6 +15,11 @@ import { useDispatch } from "react-redux";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { IQRCodeEvent } from "screens/Scans/types";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { ScreenContainer } from "HOC";
+import { SvgIcons } from "constants/svgs";
+import { launchImageLibrary } from "react-native-image-picker";
+import { ImageLibraryOptions } from "react-native-image-picker";
+import QRCodeScanner from "react-native-qrcode-scanner";
 
 const { width, height } = Dimensions.get("window"); // Get device dimensions
 
@@ -26,6 +33,7 @@ const QRScanner = () => {
   const styles = qrScannerStyles(theme);
 
   const [scanned, setScanned] = useState<boolean>(false);
+  const [torchMode, setTorchMode] = useState<"on" | "off">("off");
   const isProcessingRef = useRef<boolean>(false);
 
   const parseQRCodeValue = (value: string): string | null => {
@@ -99,47 +107,78 @@ const QRScanner = () => {
     navigation.goBack();
   };
 
+
+
+
+  const toggleTorchMode = (): void => {
+    const newMode = torchMode === "off" ? "on" : "off";
+    console.log("Toggling torch mode to:", newMode);
+    setTorchMode(newMode);
+  };
+
   return (
-    <Pressable
-      onPress={() => navigation.goBack()}
-      style={[styles.mainContainer]}
+    <ScreenContainer
+      padding={0}
+      style={[{ flex: 1 }]}
     >
-      <Pressable
-        onPress={(e) => e.stopPropagation()}
-        style={[styles.container]}
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          position: "absolute",
+          top: 0,
+          zIndex: 1000,
+          flexDirection: "row",
+          width: "100%",
+          paddingHorizontal: 20,
+          paddingVertical: 20,
+        }}
       >
-        {/* Header */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() => navigation.goBack()}
-          style={styles.header}
+        {/* <SvgIcons. width={30} height={30} /> */}
+
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "flex-end",
+            flexDirection: "row",
+            gap: 20,
+          }}
         >
-          <View
-            style={[
-              {
-                height: 5,
-                backgroundColor: "black",
-                width: 80,
-                borderRadius: theme.spacing.spacing[1],
-              },
-            ]}
+          {/* <SvgIcons.ImageIconWhite
+            onPress={uploadFromGallery}
+            width={25}
+            height={25}
+          /> */}
+          
+          <SvgIcons.TorchIcon
+            onPress={toggleTorchMode}
+            width={25}
+            height={25}
           />
-        </TouchableOpacity>
-        <View style={[styles.listContainer]}>
+          {/* <SvgIcons.QRCodeWhite
+            onPress={() => navigation.navigate(NAVIGATION_SCREENS.RECEIVE)}
+            width={30}
+            height={30}
+          /> */}
+        </View>
+      </View>
+        {/* <View style={[{ flex: 1 }]}> */}
           <Camera
             style={styles.camera} // Limit camera feed size
             scanBarcode={true}
             onReadCode={onQRCodeRead} // Callback when a QR code is scanned
-            showFrame={false} // Show frame for QR scanning
+            showFrame={true} // Show frame for QR scanning
             laserColor="red"
             frameColor="rgba(243, 251, 244, 1)"
             zoomMode="on"
             zoom={2}
             cameraType={CameraType.Back}
+            torchMode={torchMode}
+            flashMode="auto"
           />
-        </View>
-      </Pressable>
-    </Pressable>
+        {/* </View> */}
+    </ScreenContainer>
   );
 };
 
@@ -177,9 +216,8 @@ const qrScannerStyles = (theme: Theme) =>
       flex: 1,
     },
     camera: {
-      width: width * 0.8, // 80% of the screen width
-      height: width * 0.8, // Make it square
+      width: width , // 80% of the screen width
+      height: height, // Make it square
       alignSelf: "center",
-      marginTop: height * 0.2, // Center vertically
     },
   });

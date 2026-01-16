@@ -212,3 +212,48 @@ export const useContentData = () => {
     
   });
 };
+
+/**
+ * Hook to store FCM token and device ID to backend
+ * Used for push notification registration
+ * 
+ * @example
+ * const { mutate: storeFCMToken, isPending } = useStoreFCMToken();
+ * storeFCMToken({ fcm_token: "token", device_id: "device123" });
+ */
+export const useStoreFCMToken = () => {
+  return useMutation<ApiResponse<any>, Error, { fcm_token: string; device_id: string }>({
+    mutationFn: async (payload) => {
+      console.log("[useStoreFCMToken] Storing FCM token to backend");
+      console.log("[useStoreFCMToken] Payload:", JSON.stringify(payload, null, 2));
+      return apiClient.post<ApiResponse<any>>(
+        AUTH.STORE_TOKEN,
+        payload,
+        false
+      );
+    },
+    onSuccess: (data) => {
+      console.log("[useStoreFCMToken] FCM token stored successfully:", data?.message || "Success");
+    },
+    onError: (error: any) => {
+      console.error("[useStoreFCMToken] Error storing FCM token");
+      console.error("[useStoreFCMToken] Error response:", JSON.stringify(error?.response?.data, null, 2));
+      console.error("[useStoreFCMToken] Error status:", error?.response?.status);
+      console.error("[useStoreFCMToken] Full error:", JSON.stringify(error,null,2));
+      
+      // Extract error message
+      const errorMessage = 
+        error?.response?.data?.message || 
+        error?.response?.data?.error ||
+        error?.message || 
+        "Failed to register device for notifications";
+      
+      // Only show toast if it's not a 500 error (might be temporary backend issue)
+      if (error?.response?.status !== 500) {
+        // showError(errorMessage);
+      } else {
+        console.error("[useStoreFCMToken] Backend error (500) - will retry automatically");
+      }
+    },
+  });
+};

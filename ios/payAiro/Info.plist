@@ -107,6 +107,10 @@
 		<string>Montserrat-SemiBold.ttf</string>
 		<string>Montserrat-Bold.ttf</string>
 	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UIDeviceFamily</key>
 	<array>
 		<integer>1</integer>

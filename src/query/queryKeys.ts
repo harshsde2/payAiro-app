@@ -3,4 +3,5 @@ export const userContactKeys = {
   all: ["user"] as const,
   contacts: () => [...userContactKeys.all, "contacts"] as const,
   recentContacts: () => [...userContactKeys.contacts(), "recent"] as const,
+  userSearch: (query: string) => [...userContactKeys.all, "search", query] as const,
 } as any;
