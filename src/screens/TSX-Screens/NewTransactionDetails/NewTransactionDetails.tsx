@@ -491,7 +491,7 @@ const NewTransactionDetails: FC = () => {
     }
 
     return (
-      <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate(NAVIGATION_SCREENS.USER_PROFILE, { userDetails })} style={styles(theme).avatarPlaceholderBig}>
+      <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.replace(NAVIGATION_SCREENS.USER_PROFILE, { userDetails })} style={styles(theme).avatarPlaceholderBig}>
         <CustomText variant="h2" color={theme.colors.palette.white}>
           {getInitials(displayUsername)}
         </CustomText>

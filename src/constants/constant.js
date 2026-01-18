@@ -63,12 +63,12 @@ export const TRANSACTION_HISTORY = [
 ];
 
 export const SETTINGS_LISTS = [
-  {
-    name: "My Profile",
-    icon: <SvgIcons.UserProfile />,
-    isDisvled: false,
-    route: "Personal",
-  },
+  // {
+  //   name: "My Profile",
+  //   icon: <SvgIcons.UserProfile />,
+  //   isDisvled: false,
+  //   route: NAVIGATION_SCREENS.NEW_PERSONAL,
+  // },
   {
     name: "Security & Privacy",
     icon: <SvgIcons.SecurityIcon />,

@@ -98,8 +98,8 @@ android {
         applicationId "com.payairo"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 31
-        versionName "2.8.4"
+        versionCode 32
+        versionName "3.0.0"
         missingDimensionStrategy 'react-native-camera', 'general'
         
         // Required for react-native-config when using different package names

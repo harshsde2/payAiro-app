@@ -1,11 +1,9 @@
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View
@@ -28,7 +26,6 @@ import { ScreenContainer } from "HOC";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { useDispatch, useSelector } from "react-redux";
 import { clearAll } from "storage/mmkv";
-import KYCBadge from "tsx-components/KYCBadge";
 import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
 import { resetAppState } from "utils/configs";
 import {
@@ -42,18 +39,21 @@ import {
 import { useKyc } from "../../query/hooks";
 import { toKycMode } from "types/kyc";
 import HeaderTitle from "components/HeaderTitle";
-import { useTheme } from "styles";
+import { ProfileHeader } from "components/common-components/ProfileHeader";
+import { usePatchUserDetails } from "../../query/hooks/useAPIAuth";
+import { setKycStatus } from "../../redux/slices/authenticationSlice";
+import { showError, showSuccess } from "../../utils/toast";
 
 export default function SettingScreen() {
   const navigation = useNavigation();
-  const { theme} = useTheme();
   const [isVisible, setIsVisible] = useState(false);
   const { tokens, walletData } = useSelectorAction();
   const [kycStep, setKycStep] = useState("");
 
   const kycStatus = useSelector((s) => s.authenticationSlice?.kycStatus);
   const mode = useMemo(() => toKycMode(kycStatus), [kycStatus]);
-  console.log("mode =>", mode);
+  const { mutate: patchUser, isPending } = usePatchUserDetails();
+  // console.log("mode =>", mode);
   // console.log("kyc step =>", JSON.stringify(kycStep, null, 2));
 
   // Map KYC mode to badge status
@@ -93,6 +93,31 @@ export default function SettingScreen() {
     }, 100);
   };
 
+  const handleStartKyc = () => {
+    try {
+      patchUser({ start_kyc: true }, {
+        onSuccess: (data) => {
+          console.log(JSON.stringify(data, null, 2), "datas");
+          if (data?.status === true && data?.persona_verification_url) {
+            navigation.navigate(NAVIGATION_SCREENS.CYBRID_WEB_VIEW, {
+              URL: data?.persona_verification_url,
+            });
+            showSuccess("KYC started successfully");
+            useDispatchAction(setKycStatus({ status: false, state: "pending", toast_message: "KYC started" }));
+          } else {
+            showSuccess("Your ID fetch successfully please click again to start KYC");
+          }
+        },
+        onError: (error) => {
+          console.log(JSON.stringify(error?.response, null, 2), "error");
+          showError("Failed to start KYC");
+        },
+      });
+    } catch (e) {
+      showError("Failed to start KYC");
+    }
+  };
+
   return (
     <ScreenContainer padding={0}>
       <BottomNavigation />
@@ -118,53 +143,16 @@ export default function SettingScreen() {
           contentContainerStyle={{ flexGrow: 1 }}
         >
           <HeaderTitle title="Profile" />
-          <View
-            style={{
-
-              justifyContent: "flex-start",
-              alignItems: "center",
-              marginHorizontal: 15,
-              marginBottom: 20,
-              marginTop: 10,
-            }}
-          >
-            <TouchableOpacity onPress={() => navigation.navigate(NAVIGATION_SCREENS.PERSONAL)}
-              style={[
-                styles.circle,
-                { backgroundColor: theme.colors.palette.green200 },
-              ]}
-            >
-              {kycStep?.selfimage ? (
-                <Image
-                  source={{
-                    uri: kycStep?.selfimage.includes("https://app.payairo.com")
-                      ? kycStep?.selfimage
-                      : "https://app.payairo.com" + kycStep?.selfimage,
-                  }}
-                  style={styles.image}
-                />
-              ) : (
-                <Text style={{ ...styles.initials, color: "#000" }}>
-                  {walletData?.name?.charAt(0)?.toUpperCase()}
-                </Text>
-              )}
-            </TouchableOpacity>
-            <View
-              style={{ flexDirection: "row", flex: 1, alignItems: "center" }}
-            >
-              <Text
-                style={{
-                  color: "#000",
-                  marginVertical: 5,
-                  fontFamily: Fonts.semibold,
-                  fontSize: 18,
-                }}
-              >
-                {walletData?.name}
-              </Text>
-            </View>
-              <KYCBadge status={getKycBadgeStatus(mode)} />
-          </View>
+          <ProfileHeader
+            walletData={walletData}
+            kycStep={kycStep}
+            kycBadgeStatus={getKycBadgeStatus(mode)}
+            kycMode={mode}
+            onStartKyc={handleStartKyc}
+            isKycPending={isPending}
+            onProfilePress={() => navigation.navigate(NAVIGATION_SCREENS.PERSONAL)}
+            onQrPress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL)}
+          />
           <View
             style={{
               flex: 1,
@@ -264,24 +252,3 @@ export default function SettingScreen() {
     </ScreenContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  circle: {
-    width: 60,
-    height: 60,
-    borderRadius: 35,
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
-  },
-  initials: {
-    color: "#000",
-    fontSize: 18,
-    fontFamily: Fonts.semibold,
-  },
-  image: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-});

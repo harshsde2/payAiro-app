@@ -52,11 +52,11 @@ const UserProfile = () => {
     // Amount color
     let amountColor = theme.colors.text.primary;
     if (isFailed) amountColor = theme.colors.kycStatusLight.Rejected; // Redish
-    else if (isIncoming) amountColor = theme.colors.kycStatusLight.Verified; // Greenish
+    else if (isIncoming) amountColor = theme.colors.kycStatusDark.Verified; // Greenish
 
     // Icon (Simple placeholder circle with initial or arrow)
     const iconColor = isIncoming
-      ? theme.colors.kycStatusLight.Verified
+      ? theme.colors.button.primary.background
       : theme.colors.button.primary.background;
 
     return (
@@ -107,7 +107,7 @@ const UserProfile = () => {
               {
                 color: isFailed
                   ? theme.colors.kycStatusLight.Rejected
-                  : theme.colors.kycStatusLight.Verified,
+                  : theme.colors.kycStatusDark.Verified,
               },
             ]}
           >
@@ -335,26 +335,14 @@ const UserProfile = () => {
             },
           ]}
         >
-          <View style={styles.sectionHeader}>
-            <Text
-              style={[
-                styles.sectionTitle,
-                { color: theme.colors.text.primary },
-              ]}
-            >
-              Recent Transactions
-            </Text>
-            <TouchableOpacity>
-              <Text
-                style={[
-                  styles.viewAll,
-                  { color: theme.colors.button.primary.background },
-                ]}
-              >
-                View All {">"}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: theme.colors.text.primary },
+            ]}
+          >
+            Recent Transactions
+          </Text>
 
           {transactions.map((item) => (
             <View key={item.transaction_id}>

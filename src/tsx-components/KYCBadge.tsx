@@ -31,7 +31,7 @@ const KYCBadge: FC<KYCBadgeProps> = ({ status }) => {
         ]}
       />
       <CustomText
-        size={12}
+        size={9}
         color={theme.colors.kycStatusDark[status]}
         variant="body1"
         fontWeight="semiBold"
@@ -50,7 +50,7 @@ const customStyles = (theme: Theme) =>
       backgroundColor: "red",
       //   width: 110,
       paddingHorizontal: 10,
-      marginHorizontal: 10,
+      // marginHorizontal: 10,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "flex-start",

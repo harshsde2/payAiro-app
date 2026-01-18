@@ -277,12 +277,13 @@ const AddBalance = () => {
         showError(response?.message || "Failed to generate checkout link");
       }
     } catch (error: any) {
-      console.error("Coinflow checkout error:", error);
+      // console.error("Coinflow checkout error:", JSON.stringify(error.response, null, 2));
       const errorMessage =
-        error?.response?.data?.message ||
+        error?.response?.data?.data?.message ||
         error?.message ||
         "Failed to initiate checkout. Please try again.";
       showError(errorMessage);
+      setIsLocationUnavailableModalVisible(true)
     } finally {
       setLoadingPaymentMethod(null);
     }
@@ -403,6 +404,10 @@ const AddBalance = () => {
         isVisible={isBankDetailsModalVisible}
         onClose={() => setIsBankDetailsModalVisible(false)}
         bankList={BANK_LISTS}
+      />
+      <LocationUnavailableModal
+        isVisible={isLocationUnavailableModalVisible}
+        onClose={() => setIsLocationUnavailableModalVisible(false)}
       />
     </ScreenContainer>
   );

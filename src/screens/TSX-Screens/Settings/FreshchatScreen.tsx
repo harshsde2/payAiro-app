@@ -399,11 +399,11 @@ const FreshchatScreen = () => {
             cStyle={styles.faqButton}
           />
 
-          <GenericButton
+          {/* <GenericButton
             title="Email Support"
             onPress={openEmailSupportForm}
             cStyle={styles.faqButton}
-          />
+          /> */}
 
           {/* Info Note */}
           <View style={styles.noteContainer}>

@@ -121,5 +121,6 @@ export const NAVIGATION_SCREENS = {
   COINFLOW_CHECKOUT_WEBVIEW: "CoinflowCheckoutWebView",
   ADD_CRYPTO: "AddCrypto",
   TEST_WEBVIEW: "TestWebView",
-  USER_PROFILE: "UserProfile"
+  USER_PROFILE: "UserProfile",
+  NEW_PERSONAL: "NewPersonal"
 };

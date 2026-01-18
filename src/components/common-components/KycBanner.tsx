@@ -73,7 +73,7 @@ const KycBanner: React.FC = () => {
   }, [contentHeight, isExpanded, animatedHeight]);
 
   const handleNavigateToKYC = () => {
-    navigation.navigate(NAVIGATION_SCREENS.PERSONAL as never);
+    navigation.navigate(NAVIGATION_SCREENS.SETTING_SCREEN as never);
   };
 
   // Calculate values needed for hooks (must be before early return)
@@ -132,7 +132,7 @@ const KycBanner: React.FC = () => {
   // Hide banner on Personal or CybridWebView screens
   if (
     currentRouteName &&
-    (currentRouteName === NAVIGATION_SCREENS.PERSONAL ||
+    (currentRouteName === NAVIGATION_SCREENS.SETTING_SCREEN ||
       currentRouteName === NAVIGATION_SCREENS.CYBRID_WEB_VIEW)
   ) {
     return null;

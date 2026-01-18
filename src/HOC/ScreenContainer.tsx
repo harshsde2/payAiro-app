@@ -60,7 +60,7 @@ const ScreenContainer: React.FC<ScreenContainerProps> = ({
   // Banner is visible if KYC is pending/not_started AND not on screens where banner is hidden
   const isBannerVisible = 
     (kycMode === "pending" || kycMode === "not_started") &&
-    currentRoute !== NAVIGATION_SCREENS.PERSONAL &&
+    currentRoute !== NAVIGATION_SCREENS.SETTING_SCREEN &&
     currentRoute !== NAVIGATION_SCREENS.CYBRID_WEB_VIEW;
   
   // Determine safe area edges: exclude top if banner is visible, include it if not

@@ -63,7 +63,7 @@ const KycWatchdog: React.FC = () => {
                 setKycStatus({ status: false, state: "not_started", toast_message: "Please start your KYC." })
               );
               try {
-                navigation.navigate(NAVIGATION_SCREENS.PERSONAL as never);
+                navigation.navigate(NAVIGATION_SCREENS.SETTING_SCREEN as never);
               } catch (e) {
                 // no-op if navigation stack not ready
               }
@@ -79,7 +79,7 @@ const KycWatchdog: React.FC = () => {
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener("NAVIGATE_TO_PERSONAL", () => {
       try {
-        navigation.navigate(NAVIGATION_SCREENS.PERSONAL as never);
+        navigation.navigate(NAVIGATION_SCREENS.SETTING_SCREEN as never);
       } catch (e) {
         // no-op
       }

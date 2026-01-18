@@ -103,6 +103,7 @@ import BlockchainNameServiceTerms from "screens/TSX-Screens/Modals/BlockchainNam
 import AddCrypto from "screens/TSX-Screens/AddBalance/AddCrypto";
 import TestWebView from "screens/TSX-Screens/TestWebView";
 import UserProfile from "screens/TSX-Screens/UserProfile/UserProfile";
+import NewPersonal from "screens/SettingScreen/NewPersonal";
 
 const Stack = createNativeStackNavigator();
 
@@ -698,6 +699,11 @@ export default function AppStack() {
         name={NAVIGATION_SCREENS.USER_PROFILE}
         component={UserProfile}
       />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.NEW_PERSONAL}
+        component={NewPersonal}
+      /> 
     </Stack.Navigator>
   );
 }

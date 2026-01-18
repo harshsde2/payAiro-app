@@ -302,10 +302,10 @@ export default function App() {
       android: {
         channelId,
         sound: remoteMessage?.notification?.android?.sound,
-        style: {
-          type: AndroidStyle.BIGPICTURE,
-          picture: "https://gift.utribe.app/demo/images/avatar/GIFT-Icon.png",
-        },
+        // style: {
+        //   type: AndroidStyle.BIGPICTURE,
+        //   picture: "https://gift.utribe.app/demo/images/avatar/GIFT-Icon.png",
+        // },
       },
     });
   };

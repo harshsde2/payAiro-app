@@ -134,7 +134,11 @@ const QRScanner = () => {
           paddingVertical: 20,
         }}
       >
-        {/* <SvgIcons. width={30} height={30} /> */}
+        <SvgIcons.ToastCross
+          onPress={() => navigation.goBack()}
+          width={25}
+          height={25}
+        />
 
         <View
           style={{
@@ -145,8 +149,8 @@ const QRScanner = () => {
             gap: 20,
           }}
         >
-          {/* <SvgIcons.ImageIconWhite
-            onPress={uploadFromGallery}
+          {/* <SvgIcons.CrossIcon
+            onPress={() => navigation.goBack()}
             width={25}
             height={25}
           /> */}

@@ -41,7 +41,9 @@ const BankDetailsModal: React.FC<IBankDetailsModalProps> = ({
   const { theme } = useTheme();
   const { walletData, bankLists } = useSelectorAction() as any;
   const qrViewShotRef = useRef<any>(null);
+  const shareViewShotRef = useRef<any>(null);
   const [showCRN, setShowCRN] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
   const { setNativeModalVisible } = useAppLock();
 
   // Get the first bank account (external account if available)
@@ -74,20 +76,24 @@ const BankDetailsModal: React.FC<IBankDetailsModalProps> = ({
 
   const handleShareQR = async () => {
     setNativeModalVisible(true);
+    setIsCapturing(true);
     try {
-      if (qrViewShotRef.current) {
-        const uri = await qrViewShotRef.current.capture({
+      // Wait for UI to update (hide copy buttons)
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (shareViewShotRef.current) {
+        const uri = await shareViewShotRef.current.capture({
           format: "png",
           quality: 0.9,
           result: "tmpfile",
         });
 
         const shareOptions: any = {
-          title: "PayAiro QR Code",
-          subject: "PayAiro QR Code",
+          title: "PayAiro Bank Details",
+          subject: "PayAiro Bank Details",
           url: uri,
           type: "image/png",
-          filename: `PayAiro_QR_${walletData?.username || "qr"}`,
+          filename: `PayAiro_BankDetails_${walletData?.username || "details"}`,
           failOnCancel: false,
         };
 
@@ -95,10 +101,11 @@ const BankDetailsModal: React.FC<IBankDetailsModalProps> = ({
       }
     } catch (err: any) {
       if (err?.message !== "User did not share") {
-        console.log("Error sharing QR:", err);
+        console.log("Error sharing bank details:", err);
       }
     }
     finally {
+      setIsCapturing(false);
       setTimeout(() => {
         setNativeModalVisible(false);
       }, 1000);
@@ -107,9 +114,13 @@ const BankDetailsModal: React.FC<IBankDetailsModalProps> = ({
 
   const handleDownloadQR = async () => {
     setNativeModalVisible(true);
+    setIsCapturing(true);
     try {
-      if (qrViewShotRef.current) {
-        const uri = await qrViewShotRef.current.capture({
+      // Wait for UI to update (hide copy buttons)
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (shareViewShotRef.current) {
+        const uri = await shareViewShotRef.current.capture({
           format: "png",
           quality: 0.9,
           result: "tmpfile",
@@ -117,11 +128,11 @@ const BankDetailsModal: React.FC<IBankDetailsModalProps> = ({
 
         // Use Share to allow user to save to gallery
         const shareOptions: any = {
-          title: "PayAiro QR Code",
-          subject: "PayAiro QR Code",
+          title: "PayAiro Bank Details",
+          subject: "PayAiro Bank Details",
           url: uri,
           type: "image/png",
-          filename: `PayAiro_QR_${walletData?.username || "qr"}`,
+          filename: `PayAiro_BankDetails_${walletData?.username || "details"}`,
           failOnCancel: false,
           saveToFiles: true,
         };
@@ -130,11 +141,12 @@ const BankDetailsModal: React.FC<IBankDetailsModalProps> = ({
       }
     } catch (err: any) {
       if (err?.message !== "User did not share") {
-        console.log("Error downloading QR:", err);
-        Alert.alert("Failed to download QR code");
+        console.log("Error downloading bank details:", err);
+        Alert.alert("Failed to download bank details");
       }
     }
     finally {
+      setIsCapturing(false);
       setTimeout(() => {
         setNativeModalVisible(false);
       }, 1000);
@@ -211,87 +223,40 @@ const BankDetailsModal: React.FC<IBankDetailsModalProps> = ({
                 <SvgIcons.CopyOutlineBlack width={20} height={20} />
               </TouchableOpacity>
             </View>
-
-            {/* QR Code */}
-            <View style={styles(theme).qrCodeContainer}>
-              <ViewShot
-                ref={qrViewShotRef}
-                options={{
-                  format: "png",
-                  quality: 0.9,
-                  result: "tmpfile",
-                }}
-                style={styles(theme).qrCodeWrapper}
-              >
-                <QRCode
-                  value={qrValue}
-                  size={200}
-
-                />
-              </ViewShot>
-            </View>
-
             {/* Receive Money Text */}
             <CustomText
               variant="body2"
               style={styles(theme).receiveMoneyText}
             >
-              Receive money to any PayAiro account
+              Receive money from any PayAiro account
             </CustomText>
-            <View style={[styles(theme).paymentAppsContainer,{marginBottom: theme.spacing.spacing[1] || 16}]}>
-              <CustomText variant='subtitle1' size={14} style={styles(theme).paymentAppText}>Payment Modes</CustomText>
-            </View>
+            {/* Shareable Content - QR Code + Account Details */}
+            <ViewShot
+              ref={shareViewShotRef}
+              options={{
+                format: "png",
+                quality: 0.9,
+                result: "tmpfile",
+              }}
+              style={styles(theme).shareableContentWrapper}
+            >
+              {/* QR Code */}
+              <View style={styles(theme).qrCodeContainer}>
+                <View style={styles(theme).qrCodeWrapper}>
+                  <QRCode
+                    value={qrValue}
+                    size={200}
+                  />
+                </View>
+              </View>
 
-            {/* Payment App Logos */}
-            <View style={styles(theme).paymentAppsContainer}>
-              <CustomText variant='caption' size={14} style={styles(theme).paymentAppText}>
-                RTP
-              </CustomText>
-              <CustomText variant='caption' size={14} style={styles(theme).paymentAppText}>
-                ACH Transfer
-              </CustomText>
-              <CustomText variant='caption' size={14} style={styles(theme).paymentAppText}>
-                Via Bank
-              </CustomText>
-            </View>
-
-            {/* Share and Download Buttons */}
-            <View style={styles(theme).actionButtonsContainer}>
-              <TouchableOpacity
-                style={styles(theme).actionButton}
-                onPress={handleShareQR}
-              >
-                <SvgIcons.ShareWhiteIcon width={20} height={20} color={theme.colors.palette.white} />
-                <CustomText
-                  variant="body2"
-                  fontWeight="medium"
-                  style={styles(theme).actionButtonText}
-                >
-                  Share QR
-                </CustomText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles(theme).actionButton}
-                onPress={handleDownloadQR}
-              >
-                <SvgIcons.DownloadIcon width={20} height={20} />
-                <CustomText
-                  variant="body2"
-                  fontWeight="medium"
-                  style={styles(theme).actionButtonText}
-                >
-                  Download QR
-                </CustomText>
-              </TouchableOpacity>
-            </View>
-
-            {/* Account Details Section */}
-            {primaryBank && (
-              <View style={styles(theme).accountDetailsContainer}>
+              {/* Account Details Section */}
+              {primaryBank && (
+                <View style={styles(theme).accountDetailsContainer}>
                 {/* CRN */}
                 <View style={styles(theme).accountDetailRow}>
                   <CustomText variant="caption" style={styles(theme).detailLabel}>
-                    CRN
+                    Account Holder
                   </CustomText>
                   <View style={styles(theme).detailValueContainer}>
                     <CustomText
@@ -299,26 +264,18 @@ const BankDetailsModal: React.FC<IBankDetailsModalProps> = ({
                       fontWeight="medium"
                       style={styles(theme).detailValue}
                     >
-                      {formatCRN(primaryBank.guid)}
+                      {walletData?.name}
                     </CustomText>
-                    <TouchableOpacity
-                      onPress={() => setShowCRN(!showCRN)}
-                      style={styles(theme).iconButton}
-                    >
-                      {showCRN ? (
-                        <SvgIcons.EyeOnGreenbg width={20} height={20} />
-                      ) : (
-                        <SvgIcons.EyeOffOutline width={20} height={20} />
-                      )}
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() =>
-                        copyToClipboard(primaryBank.guid, "CRN")
-                      }
-                      style={styles(theme).iconButton}
-                    >
-                      <SvgIcons.CopyOutlineBlack width={20} height={20} />
-                    </TouchableOpacity>
+                    {!isCapturing && (
+                      <TouchableOpacity
+                        onPress={() =>
+                          copyToClipboard(primaryBank.guid, "CRN")
+                        }
+                        style={styles(theme).iconButton}
+                      >
+                        <SvgIcons.CopyOutlineBlack width={20} height={20} />
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
 
@@ -335,17 +292,19 @@ const BankDetailsModal: React.FC<IBankDetailsModalProps> = ({
                     >
                       {primaryBank.account_number || "N/A"}
                     </CustomText>
-                    <TouchableOpacity
-                      onPress={() =>
-                        copyToClipboard(
-                          primaryBank.account_number,
-                          "Account number"
-                        )
-                      }
-                      style={styles(theme).iconButton}
-                    >
-                      <SvgIcons.CopyOutlineBlack width={20} height={20} />
-                    </TouchableOpacity>
+                    {!isCapturing && (
+                      <TouchableOpacity
+                        onPress={() =>
+                          copyToClipboard(
+                            primaryBank.account_number,
+                            "Account number"
+                          )
+                        }
+                        style={styles(theme).iconButton}
+                      >
+                        <SvgIcons.CopyOutlineBlack width={20} height={20} />
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
 
@@ -362,7 +321,7 @@ const BankDetailsModal: React.FC<IBankDetailsModalProps> = ({
                     >
                       {rawBankData?.ref_code || "N/A"}
                     </CustomText>
-                    {rawBankData?.ref_code && (
+                    {!isCapturing && rawBankData?.ref_code && (
                       <TouchableOpacity
                         onPress={() =>
                           copyToClipboard(
@@ -379,6 +338,43 @@ const BankDetailsModal: React.FC<IBankDetailsModalProps> = ({
                 </View>
               </View>
             )}
+            </ViewShot>
+            
+            <View style={styles(theme).noteContainer}>
+              <SvgIcons.InfoNote width={16} height={16} />
+              <CustomText variant="caption" style={styles(theme).noteText}>
+                Bank transfer methods: RTC, ACH transfer, Wire transfer
+              </CustomText>
+            </View>
+            {/* Share and Download Buttons */}
+            <View style={styles(theme).actionButtonsContainer}>
+              <TouchableOpacity
+                style={styles(theme).actionButton}
+                onPress={handleShareQR}
+              >
+                <SvgIcons.ShareWhiteIcon width={20} height={20} color={theme.colors.palette.white} />
+                <CustomText
+                  variant="body2"
+                  fontWeight="medium"
+                  style={styles(theme).actionButtonText}
+                >
+                  Share
+                </CustomText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles(theme).actionButton}
+                onPress={handleDownloadQR}
+              >
+                <SvgIcons.DownloadIcon width={20} height={20} />
+                <CustomText
+                  variant="body2"
+                  fontWeight="medium"
+                  style={styles(theme).actionButtonText}
+                >
+                  Download
+                </CustomText>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
         </View>
       </View>
@@ -398,10 +394,12 @@ const styles = (theme: any) =>
     },
     modalContainer: {
       backgroundColor: theme.colors.palette.white || "#FFFFFF",
-      // borderTopLeftRadius: theme.spacing.spacing[8] || 24,
-      // borderTopRightRadius: theme.spacing.spacing[8] || 24,
+      borderTopLeftRadius: theme.spacing.spacing[8] || 24,
+      borderTopRightRadius: theme.spacing.spacing[8] || 24,
       flex: 1,
       zIndex: 1,
+      marginTop: 80,
+      paddingHorizontal: 10,
     },
     header: {
       flexDirection: "row",
@@ -440,6 +438,13 @@ const styles = (theme: any) =>
     upiIdLabel: {
       color: theme.colors.palette.grey900 || "#111827",
     },
+    shareableContentWrapper: {
+      backgroundColor: theme.colors.palette.white || "#FFFFFF",
+      padding: theme.spacing.spacing[4] || 16,
+      borderRadius: theme.spacing.spacing[3] || 12,
+      alignItems: "center",
+      width: "100%",
+    },
     qrCodeContainer: {
       alignItems: "center",
       marginVertical: theme.spacing.spacing[4] || 16,
@@ -477,7 +482,7 @@ const styles = (theme: any) =>
       justifyContent: "center",
       alignItems: "center",
       gap: theme.spacing.spacing[3] || 12,
-      marginBottom: theme.spacing.spacing[6] || 24,
+      marginBottom: theme.spacing.spacing[2] || 24,
       width: "100%",
     },
     actionButton: {
@@ -502,7 +507,7 @@ const styles = (theme: any) =>
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      paddingVertical: theme.spacing.spacing[2] || 8,
+      paddingVertical: 2,
     },
     detailLabel: {
       color: theme.colors.palette.grey600 || "#4B5563",
@@ -520,6 +525,20 @@ const styles = (theme: any) =>
     },
     iconButton: {
       padding: theme.spacing.spacing[1] || 4,
+    },
+    noteContainer: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      backgroundColor: theme.colors.palette.grey50,
+      borderRadius: 12,
+      padding: 12,
+      gap: 8,
+      marginTop: theme.spacing.spacing[6] || 24,
+      marginBottom: theme.spacing.spacing[6] || 24,
+    },
+    noteText: {
+      flex: 1,
+      color: theme.colors.palette.grey600,
     },
   });
 

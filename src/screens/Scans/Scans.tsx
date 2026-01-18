@@ -27,6 +27,7 @@ import QRCodeScanner from "react-native-qr-decode-image-camera";
 import GenericButton from "components/GenericButton";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { useSelector } from "react-redux";
+import { useAppLock } from "hooks/useAppLock";
 
 const { width, height } = Dimensions.get("window"); // Get device dimensions
 
@@ -163,6 +164,10 @@ export default function Scans(): JSX.Element {
   const [isVisible, setisVisible] = useState<boolean>(false);
   const [torchMode, setTorchMode] = useState<"on" | "off">("off");
   const cameraRef = useRef<any>(null);
+
+
+  const { setNativeModalVisible } = useAppLock();
+
   const onQRCodeRead = (event: IQRCodeEvent): void => {
     console.log(
       event.nativeEvent.codeStringValue,
@@ -200,6 +205,7 @@ export default function Scans(): JSX.Element {
   };
 
   const uploadFromGallery = async (): Promise<void> => {
+    setNativeModalVisible(true);
     const options: ImageLibraryOptions = {
       mediaType: "photo",
     };
@@ -302,6 +308,9 @@ export default function Scans(): JSX.Element {
           "Error",
           "No QR code found in the image. Please select an image with a valid QR code."
         );
+      }
+      finally {
+        setTimeout(() => setNativeModalVisible(false), 1000);
       }
     } else {
       Alert.alert("Error", "No image selected.");
