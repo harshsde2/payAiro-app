@@ -104,8 +104,9 @@ import AddCrypto from "screens/TSX-Screens/AddBalance/AddCrypto";
 import TestWebView from "screens/TSX-Screens/TestWebView";
 import UserProfile from "screens/TSX-Screens/UserProfile/UserProfile";
 import NewPersonal from "screens/SettingScreen/NewPersonal";
+import { createStackNavigator } from "@react-navigation/stack";
 
-const Stack = createNativeStackNavigator();
+const Stack = createStackNavigator();
 
 export default function AppStack() {
   return (

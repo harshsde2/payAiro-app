@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
-import { SafeAreaView, Text ,Alert, View} from 'react-native'
+import {  Text ,Alert, View} from 'react-native'
 import { useNetInfo } from '@react-native-community/netinfo'
-
 export default class UseNet extends Component {
   constructor(props) {
     super(props)

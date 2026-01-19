@@ -21,8 +21,9 @@ import CybridWebView from "screens/Authentications/CybridWebView";
 import LandingPage from "screens/Authentications/LandingPage";
 import Signup from "screens/Authentications/Signup";
 import SelectStates from "tsx-components/modals/SelectStates";
+import { createStackNavigator } from "@react-navigation/stack";
 
-const Stack = createNativeStackNavigator();
+const Stack = createStackNavigator();
 export default function AuthStack() {
   return (
     <Stack.Navigator

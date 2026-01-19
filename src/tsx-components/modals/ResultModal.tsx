@@ -7,10 +7,11 @@ import { LOTTIE_APP_LOADER, TRANSACTION_SUCCESS } from "lottie/lottie";
 import moment from "moment";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import React, { FC } from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Theme, useTheme } from "styles";
 import { useGlobalStyles } from "styles/GlobalStyles";
 import { CustomText } from "tsx-components";
+import { SafeAreaView } from "react-native-safe-area-context"; 
 
 interface ResultModalProps {
   isPending?: boolean;
