@@ -59,10 +59,10 @@ export default function Signup() {
       return false;
     }
 
-    if (!trimmedState) {
-      showError("Location field cannot be empty");
-      return false;
-    }
+    // if (!trimmedState) {
+    //   showError("Location field cannot be empty");
+    //   return false;
+    // }
 
     if (!isTermsAccepted) {
       showError("Terms & Conditions are required");
@@ -169,7 +169,7 @@ export default function Signup() {
         </View>
 
         <View style={styles.fieldAndCheckboxContainer}>
-          <View style={styles.locationContainer}>
+          {/* <View style={styles.locationContainer}>
             <CustomText variant={"body2"} style={styles.locationLabel}>
               Select Your Location
             </CustomText>
@@ -196,7 +196,7 @@ export default function Signup() {
               </CustomText>
               <SvgIcons.ChevronDown width={15} height={15} />
             </TouchableOpacity>
-          </View>
+          </View> */}
 
           <TextInputField
             placeholder="joe@gmail.com"
