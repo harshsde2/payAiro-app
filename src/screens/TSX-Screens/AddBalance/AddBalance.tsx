@@ -291,10 +291,10 @@ const AddBalance = () => {
 
 
   const item = {
+    "name": "USDC_NPL",
     "symbol": "USDC_NPL",
-    "logo": "https://app.payairo.com/media/svgs/logo_2.svg",
     "network": "Polygon",
-    "name": "USDC_NPL"
+    "logo": "https://app.payairo.com/media/svgs/logo_2.svg"
   }
 
   return (

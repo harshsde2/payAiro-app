@@ -372,7 +372,7 @@ export default function Scans(): JSX.Element {
         laserColor="red"
         frameColor="rgba(243, 251, 244, 1)"
         zoomMode="on"
-        zoom={2}
+        zoom={1}
         torchMode={torchMode}
         flashMode="auto"
         cameraType={CameraType.Back}

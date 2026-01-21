@@ -1,6 +1,10 @@
-import React, { FC } from "react";
+import React, { FC, useCallback, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Image,
+  Linking,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -12,9 +16,105 @@ import { SvgIcons } from "constants/svgs";
 import Fonts from "constants/Fonts";
 import KYCBadge from "tsx-components/KYCBadge";
 import moment from "moment";
-import type { IProfileHeaderProps } from "./types";
+import {
+  captureImageFromCamera,
+  pickImageFromGallery,
+  PickedImageFile,
+} from "utils/ImagePicker";
+import type { IProfileHeaderProps, ImagePickerSource } from "./types";
+import { useAppLock } from "hooks/useAppLock";
 
 const IMAGE_BASE_URL = "https://app.payairo.com";
+
+// Error codes from react-native-image-crop-picker
+const PICKER_ERROR_CODES = {
+  CANCELLED: "E_PICKER_CANCELLED",
+  NO_CAMERA_PERMISSION: "E_NO_CAMERA_PERMISSION",
+  NO_LIBRARY_PERMISSION: "E_NO_LIBRARY_PERMISSION",
+  PERMISSION_DENIED: "E_PERMISSION_MISSING",
+  PERMISSION_MISSING_CAMERA: "E_PERMISSION_MISSING_CAMERA",
+} as const;
+
+/**
+ * Creates a FormData object ready for API upload
+ */
+const createFormData = (file: PickedImageFile): FormData => {
+  const formData = new FormData();
+  formData.append("profile_image", {
+    uri: Platform.OS === "ios" ? file.uri.replace("file://", "") : file.uri,
+    type: file.type || "image/jpeg",
+    name: file.name || `profile_${Date.now()}.jpg`,
+  } as any);
+  return formData;
+};
+
+/**
+ * Opens device settings for the app
+ */
+const openAppSettings = (): void => {
+  if (Platform.OS === "ios") {
+    Linking.openURL("app-settings:");
+  } else {
+    Linking.openSettings();
+  }
+};
+
+/**
+ * Shows permission denied alert with option to open settings
+ */
+const showPermissionDeniedAlert = (
+  permissionType: "camera" | "photo_library"
+): void => {
+  const permissionName = permissionType === "camera" ? "Camera" : "Photo Library";
+  Alert.alert(
+    `${permissionName} Access Required`,
+    `Please enable ${permissionName.toLowerCase()} access in your device settings to ${
+      permissionType === "camera" ? "take photos" : "select photos"
+    }.`,
+    [
+      { text: "Cancel", style: "cancel" },
+      { text: "Open Settings", onPress: openAppSettings },
+    ]
+  );
+};
+
+/**
+ * Handles image picker errors and returns appropriate error message
+ */
+const handlePickerError = (error: any): string | null => {
+  const errorCode = error?.code || "";
+  const errorMessage = error?.message || "";
+
+  // User cancelled - not an error to report
+  if (errorCode === PICKER_ERROR_CODES.CANCELLED) {
+    return null;
+  }
+
+  // Camera permission denied
+  if (
+    errorCode === PICKER_ERROR_CODES.NO_CAMERA_PERMISSION ||
+    errorCode === PICKER_ERROR_CODES.PERMISSION_MISSING_CAMERA ||
+    errorMessage.toLowerCase().includes("camera permission")
+  ) {
+    showPermissionDeniedAlert("camera");
+    return "Camera permission denied";
+  }
+
+  // Photo library permission denied
+  if (
+    errorCode === PICKER_ERROR_CODES.NO_LIBRARY_PERMISSION ||
+    errorCode === PICKER_ERROR_CODES.PERMISSION_DENIED ||
+    errorMessage.toLowerCase().includes("photo") ||
+    errorMessage.toLowerCase().includes("library")
+  ) {
+    showPermissionDeniedAlert("photo_library");
+    return "Photo library permission denied";
+  }
+
+  // Generic error
+  console.error("Image picker error:", error);
+  return errorMessage || "Failed to select image. Please try again.";
+};
 
 const ProfileHeader: FC<IProfileHeaderProps> = ({
   walletData,
@@ -28,24 +128,161 @@ const ProfileHeader: FC<IProfileHeaderProps> = ({
   containerStyle,
   imageBaseUrl = IMAGE_BASE_URL,
   showKycButton: showKycButtonProp,
+  showQrButton: showQrButtonProp = true,
+  onProfileImageSelected,
+  onImagePickerError,
+  isUploadingImage = false,
+  showCameraButton: showCameraButtonProp = true,
 }) => {
   const { theme } = useTheme();
   const styles = getStyles();
+  const [isPickerActive, setIsPickerActive] = useState(false);
+  const [localPreviewUri, setLocalPreviewUri] = useState<string | null>(null);
+
+  const { setNativeModalVisible} = useAppLock()
+
 
   const showKycButton =
     showKycButtonProp !== false && kycMode === "not_started";
 
-  const profileImageUri = kycStep?.selfimage
+  // Use local preview if available, otherwise fall back to KYC selfie image
+  const kycImageUri = kycStep?.selfimage
     ? kycStep.selfimage.includes(imageBaseUrl)
       ? kycStep.selfimage
       : `${imageBaseUrl}${kycStep.selfimage}`
     : null;
+
+  const profileImageUri = localPreviewUri || kycImageUri;
 
   const displayName =
     `${walletData?.name || ""} ${walletData?.last_name || ""}`.trim() || "User";
   const memberSince = walletData?.created_at
     ? moment(walletData.created_at).format("MMM YYYY")
     : "Jan 2025";
+
+  /**
+   * Processes the picked image and prepares it for API upload
+   */
+  const processPickedImage = useCallback(
+    async (
+      pickerFn: () => Promise<PickedImageFile | null>,
+      source: ImagePickerSource
+    ): Promise<void> => {
+      try {
+        setIsPickerActive(true);
+        const pickedImage = await pickerFn();
+
+        if (!pickedImage) {
+          // User cancelled or no image selected
+          return;
+        }
+
+        // Validate image
+        if (!pickedImage.uri || !pickedImage.type) {
+          const errorMsg = "Invalid image selected. Please try again.";
+          onImagePickerError?.(errorMsg);
+          return;
+        }
+
+        // Set local preview immediately for instant feedback
+        setLocalPreviewUri(pickedImage.uri);
+
+        // Create FormData for API upload
+        const formData = createFormData(pickedImage);
+
+        // Notify parent component with the prepared payload
+        onProfileImageSelected?.({
+          file: pickedImage,
+          formData,
+          source,
+        });
+      } catch (error: any) {
+        const errorMsg = handlePickerError(error);
+        if (errorMsg) {
+          onImagePickerError?.(errorMsg);
+        }
+      } finally {
+        setIsPickerActive(false);
+      }
+    },
+    [onProfileImageSelected, onImagePickerError]
+  );
+
+  /**
+   * Handles camera selection
+   */
+  const handleCameraSelect = useCallback(async (): Promise<void> => {
+    // Flag is already set by onCameraPress before Alert was shown
+    await processPickedImage(captureImageFromCamera, "camera");
+    // Use setTimeout to reset flag after picker is fully dismissed
+    // This accounts for app state transitions (active -> inactive -> active)
+    setTimeout(() => {
+      setNativeModalVisible(false);
+    }, 500);
+  }, [processPickedImage, setNativeModalVisible]);
+
+  /**
+   * Handles gallery selection
+   */
+  const handleGallerySelect = useCallback(async (): Promise<void> => {
+    // Flag is already set by onCameraPress before Alert was shown
+    await processPickedImage(pickImageFromGallery, "gallery");
+    // Use setTimeout to reset flag after picker is fully dismissed
+    // This accounts for app state transitions (active -> inactive -> active)
+    setTimeout(() => {
+      setNativeModalVisible(false);
+    }, 500);
+  }, [processPickedImage, setNativeModalVisible]);
+
+  /**
+   * Shows action sheet to choose between camera and gallery
+   */
+  const onCameraPress = useCallback((): void => {
+    // Prevent multiple presses while picker is active
+    if (isPickerActive || isUploadingImage) {
+      return;
+    }
+
+    // Set flag before showing Alert (Alert causes app state to go inactive on iOS)
+    setNativeModalVisible(true);
+
+    Alert.alert(
+      "Update Profile Photo",
+      "Choose an option",
+      [
+        {
+          text: "Take Photo",
+          onPress: handleCameraSelect,
+        },
+        {
+          text: "Choose from Library",
+          onPress: handleGallerySelect,
+        },
+        {
+          text: "Cancel",
+          style: "cancel",
+          onPress: () => {
+            // Reset flag when user cancels without selecting any option
+            // Use setTimeout to ensure we don't reset it too early during app state transitions
+            setTimeout(() => {
+              setNativeModalVisible(false);
+            }, 500);
+          },
+        },
+      ],
+      { 
+        cancelable: true,
+        onDismiss: () => {
+          // Android: Handle dismissal by tapping outside the alert
+          setTimeout(() => {
+            setNativeModalVisible(false);
+          }, 500);
+        },
+      }
+    );
+  }, [isPickerActive, isUploadingImage, handleCameraSelect, handleGallerySelect, setNativeModalVisible]);
+
+  const showCameraButton = showCameraButtonProp && !isPickerActive;
 
   return (
     <View
@@ -77,6 +314,25 @@ const ProfileHeader: FC<IProfileHeaderProps> = ({
               </Text>
             )}
           </TouchableOpacity>
+          {showCameraButton && (
+            <TouchableOpacity
+              onPress={onCameraPress}
+              style={styles.cameraButton}
+              disabled={isUploadingImage}
+              activeOpacity={0.7}
+            >
+              {isUploadingImage ? (
+                <View style={styles.cameraLoadingContainer}>
+                  <ActivityIndicator
+                    size="small"
+                    color={theme.colors.palette.green600}
+                  />
+                </View>
+              ) : (
+                <SvgIcons.AddCamera width={30} height={30} />
+              )}
+            </TouchableOpacity>
+          )}
           <View style={styles.kycBadgeContainer}>
             <KYCBadge status={kycBadgeStatus} />
           </View>
@@ -96,9 +352,11 @@ const ProfileHeader: FC<IProfileHeaderProps> = ({
         </View>
 
         {/* QR Code Icon */}
+        {showQrButtonProp && (
         <TouchableOpacity onPress={onQrPress} style={styles.qrCodeContainer}>
-          <SvgIcons.NewQRCode width={39} height={39} />
-        </TouchableOpacity>
+            <SvgIcons.NewQRCode width={39} height={39} />
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* KYC Button */}
@@ -138,6 +396,24 @@ const getStyles = () =>
       paddingVertical: 20,
       paddingHorizontal: 15,
       borderRadius: 16,
+    },
+    cameraButton: {
+      position: "absolute",
+      bottom: 25,
+      right: -10,
+    },
+    cameraLoadingContainer: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      backgroundColor: "#FFFFFF",
+      justifyContent: "center",
+      alignItems: "center",
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.2,
+      shadowRadius: 2,
+      elevation: 3,
     },
     profileContentRow: {
       flexDirection: "row",

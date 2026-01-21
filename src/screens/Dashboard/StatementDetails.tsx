@@ -45,7 +45,7 @@ export default function StatementDetails() {
       data: [],
       statementData: null,
     };
-  // console.log(JSON.stringify(data, null, 2), "data");
+  console.log(JSON.stringify(data, null, 2), "data");
 
   const filteredData = data.filter((item) => {
     if (!searchText.trim()) return true;
@@ -620,6 +620,8 @@ export default function StatementDetails() {
     }
   };
 
+  
+
   return (
     <ScreenContainer padding={0}>
       <HeaderTitle title={"Statement"} leftIcon={"true"} />
@@ -644,7 +646,7 @@ export default function StatementDetails() {
                       color={theme.colors.text.primary}
                       style={styles.senderName}
                     >
-                      {item?.sender}
+                      { item?.sender}
                     </CustomText>
                     <CustomText
                       variant="caption"
@@ -700,7 +702,7 @@ export default function StatementDetails() {
                       {item?.status.toUpperCase()}
                     </CustomText>
                     <View style={styles.amountContainer}>
-                      {item.type === "credit" ? (
+                      {item.type !== "credit" ? (
                         <SvgIcons.TransactionSentIcon width={16} height={16} />
                       ) : (
                         <SvgIcons.TransactionReciveIcon
@@ -740,7 +742,7 @@ export default function StatementDetails() {
       <View style={styles.actionBar}>
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => navigation.navigate(NAVIGATION_SCREENS.SUPPORT_SCREEN)}
+          onPress={() => navigation.navigate(NAVIGATION_SCREENS.FRESHCHAT_SCREEN)}
         >
           <View style={styles.actionButtonIcon}>
             <SvgIcons.ToastCircleAlert

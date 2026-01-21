@@ -325,10 +325,10 @@ export default function Receive() {
             }}
           >
             <CustomText size={15} variant="caption">
-              Bank Name
+              Account Holder's Name
             </CustomText>
             <CustomText size={15} fontWeight="semiBold" variant="caption">
-              {bankLists[bankLists.length-1]?.bank_name}
+              {bankLists[bankLists.length-1]?.account_name}
             </CustomText>
           </View>
           <View

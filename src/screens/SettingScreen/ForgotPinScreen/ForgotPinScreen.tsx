@@ -27,14 +27,36 @@ import {
 } from "query/hooks";
 import { getModalStyles, getStyles } from "./styles";
 import type { IForgotPinScreenProps, VerifyOtpPayload } from "./types";
+import { useSelector } from "react-redux";
 
 const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
   const globalStyles = useGlobalStyles();
   const { theme } = useTheme();
   const navigation = useNavigation();
-  const { refreshPinStatus } = useAppLock();
+  const { refreshPinStatus, lockApp } = useAppLock();
   const modalStyles = getModalStyles(theme);
   const styles = getStyles(theme);
+
+  const { walletData } = useSelector((state: any) => state.authenticationSlice);
+  const email = walletData?.account_email;
+
+  /**
+   * Masks email for privacy display
+   * Example: "john.doe@example.com" -> "jo***@example.com"
+   */
+  const getMaskedEmail = (emailAddress: string | undefined): string => {
+    if (!emailAddress || !emailAddress.includes("@")) {
+      return "your registered email";
+    }
+    
+    const [localPart, domain] = emailAddress.split("@");
+    const visibleChars = Math.min(2, localPart.length);
+    const maskedLocal = localPart.slice(0, visibleChars) + "***";
+    
+    return `${maskedLocal}@${domain}`;
+  };
+
+  const maskedEmail = getMaskedEmail(email);
 
   const [newPin, setNewPin] = useState<string[]>(["", "", "", ""]);
   const [confirmPin, setConfirmPin] = useState<string[]>(["", "", "", ""]);
@@ -425,7 +447,10 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
           </CommonModal>
         )}
 
-        <HeaderTitle title="Forgot PIN" leftIcon={"true"} />
+        <HeaderTitle title="Forgot PIN" onPressLeft={() => {
+          navigation.goBack();
+          lockApp();
+        }} leftIcon={"true"} />
 
         <View style={[globalStyles.whiteSheetContainer]}>
           <View style={{ width: "100%" }}>
@@ -434,6 +459,9 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
               Forgot your PIN? No worries! Verify your identity via email, then
               create a new <Text style={styles.bold}>4-digit code</Text> and
               confirm it below to reset your PIN.
+            </Text>
+            <Text style={styles.emailHint}>
+              OTP will be sent to <Text style={styles.bold}>{maskedEmail}</Text>
             </Text>
 
             {/* Email Verification Section */}

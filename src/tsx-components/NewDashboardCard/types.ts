@@ -5,5 +5,7 @@ export interface INewDashboardCardProps {
   onToggleVisibility?: () => void;
   onQRCodePress?: () => void;
   isBalanceVisible?: boolean;
+  onRefreshBalance?: () => Promise<void>;
+  isRefreshing?: boolean;
 }
 

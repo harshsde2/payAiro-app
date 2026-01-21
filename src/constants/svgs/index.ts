@@ -145,6 +145,10 @@ import QRCodeWhite from "./QRCodeWhite.svg";
 import ImageIconWhite from "./ImageIconWhite.svg";
 import Person from "./Person.svg";
 import NewQRCode from "./NewQRCode.svg";
+import DowloadIconBlack from "./DowloadIconBlack.svg";
+import DownloadBlack from "./DownloadBlack.svg";
+import AddCamera from "./AddCamera.svg";
+
 
 
 
@@ -295,5 +299,8 @@ export const SvgIcons = {
   QRCodeWhite,
   ImageIconWhite,
   Person,
-  NewQRCode
+  NewQRCode,
+  DowloadIconBlack,
+  DownloadBlack,
+  AddCamera
 };

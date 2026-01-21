@@ -103,7 +103,7 @@ const ReceiveQRCard: FC<IReceiveQRCardProps> = ({
             onPress={handleDownload}
             activeOpacity={0.7}
           >
-            <SvgIcons.DownloadIcon width={20} height={20} />
+            <SvgIcons.DownloadBlack width={20} height={20} />
             <CustomText variant="body2" fontWeight="medium" style={styles.actionText}>
               Download
             </CustomText>

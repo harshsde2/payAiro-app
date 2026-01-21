@@ -48,7 +48,7 @@ const Send: React.FC<ISendProps> = ({ route }) => {
   const styles = customStyles(theme);
 
   // console.log("params =>", JSON.stringify(params, null, 2));
-  
+
 
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const dispatch = useDispatch();
@@ -89,7 +89,7 @@ const Send: React.FC<ISendProps> = ({ route }) => {
     bankBalance: IBankBalance | null;
   };
   const { bankLists, bankBalance } = selectorData;
-  
+
   // Filter to only show banks with account_type === "main"
   const mainBanks = bankLists?.filter(
     (bank) => bank.account_type === "main"
@@ -160,10 +160,10 @@ const Send: React.FC<ISendProps> = ({ route }) => {
       // Navigate to terms screen for blockchain name service addresses
       navigation.navigate(NAVIGATION_SCREENS.BLOCKCHAIN_NAME_SERVICE_TERMS, {
         serviceType: serviceType,
-        onAgreeCallback:  () => {
+        onAgreeCallback: () => {
           console.log("onAgreeCallback =>", trimmedSender);
           setTimeout(() => {
-          navigation.navigate(SCREENS.ScanPay, {
+            navigation.navigate(SCREENS.ScanPay, {
               type: requested || type === "requested" ? "requested" : "receive",
               sender: trimmedSender,
               bank: selectedBank,
@@ -235,7 +235,7 @@ const Send: React.FC<ISendProps> = ({ route }) => {
                 onFocus={handleInputFocus}
                 onBlur={handleInputBlur}
               />
-              {type !== "requested" && (
+              {(
                 <ContactSuggestion
                   searchQuery={sender}
                   onContactSelect={handleContactSelect}

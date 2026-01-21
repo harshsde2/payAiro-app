@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { View, StyleSheet, TouchableOpacity, Dimensions, Clipboard } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Dimensions, Clipboard, ActivityIndicator } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import { useSelector } from "react-redux";
 import Animated, {
@@ -98,6 +98,8 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
   onToggleVisibility,
   onQRCodePress,
   isBalanceVisible = false, // Default to hidden for security
+  onRefreshBalance,
+  isRefreshing = false,
 }) => {
   const { walletData, isCrypto, bankBalance, cryptoData, allCryptoBalances, aggregatedCryptoBalances } =
     useSelector((state: any) => state.authenticationSlice);
@@ -246,7 +248,7 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
         footerBorder: "rgba(255, 215, 0, 0.2)",
         footerGradient: ["rgba(0, 0, 0, 0.3)", "rgba(29, 29, 29, 0.95)"],
         title: "PayAiro Balance",
-        idLabel: "PayAiro ID:",
+        idLabel: "PayAiro Tag:",
       }
     : {
         gradient: ["#1A1A2E", "#16213E", "#0F1624", "#0D0D0D"],
@@ -259,11 +261,20 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
         footerBorder: "rgba(138, 180, 248, 0.2)",
         footerGradient: ["rgba(0, 0, 0, 0.3)", "rgba(13, 13, 13, 0.95)"],
         title: "Crypto Balance",
-        idLabel: "PayAiro ID:",
+        idLabel: "PayAiro Tag:",
       };
 
-  const handleToggleVisibility = () => {
-    // Toggle balance visibility directly
+  const handleToggleVisibility = async () => {
+    // If currently hidden and about to show, refresh the balance data first
+    if (!localBalanceVisible && onRefreshBalance) {
+      try {
+        await onRefreshBalance();
+      } catch (error) {
+        console.log("Error refreshing balance:", error);
+      }
+    }
+    
+    // Toggle balance visibility
     const newVisibility = !localBalanceVisible;
     setLocalBalanceVisible(newVisibility);
     onToggleVisibility?.();
@@ -373,22 +384,30 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
 
             {/* Balance Display */}
             <Animated.View style={[styles.balanceContainer, animatedBalanceStyle]}>
-              <CustomText
-                color="#FFFFFF"
-                size={42}
-                variant="h1"
-                style={{ lineHeight: 49, textAlignVertical: "center" }}
-              >
-                $
-              </CustomText>
-              <CustomText
-                color="#FFFFFF"
-                variant="h1"
-                size={42}
-                style={{ lineHeight: 49, textAlignVertical: "center" }}
-              >
-                {displayBalance}
-              </CustomText>
+              {isRefreshing ? (
+                <View style={styles.loaderContainer}>
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                </View>
+              ) : (
+                <>
+                  <CustomText
+                    color="#FFFFFF"
+                    size={42}
+                    variant="h1"
+                    style={{ lineHeight: 49, textAlignVertical: "center" }}
+                  >
+                    $
+                  </CustomText>
+                  <CustomText
+                    color="#FFFFFF"
+                    variant="h1"
+                    size={42}
+                    style={{ lineHeight: 49, textAlignVertical: "center" }}
+                  >
+                    {displayBalance}
+                  </CustomText>
+                </>
+              )}
             </Animated.View>
 
             {/* Bottom Footer Section */}
@@ -562,6 +581,12 @@ const createStyles = (theme: any) =>
       alignItems: "flex-end",
       marginTop: 4,
       marginBottom: 8,
+      minHeight: 49,
+    },
+    loaderContainer: {
+      height: 49,
+      justifyContent: "center",
+      alignItems: "flex-start",
     },
     dollarSign: {
       letterSpacing: -1,

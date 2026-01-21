@@ -608,6 +608,7 @@ const NewDashboard = () => {
   const [souceAccount, setsouceAccount] = useState("");
   const [showResultModal, setShowResultModal] = useState(false);
   const [isPending, setIsPending] = useState(false);
+  const [isBalanceRefreshing, setIsBalanceRefreshing] = useState(false);
 
   const focus = useIsFocused();
 
@@ -1100,6 +1101,32 @@ const NewDashboard = () => {
     }
   };
 
+  // Handler for refreshing balance data when eye icon is clicked to show balance
+  const handleRefreshBalance = useCallback(async () => {
+    setIsBalanceRefreshing(true);
+    try {
+      // Create an array of promises to execute in parallel
+      const refreshPromises: Promise<any>[] = [];
+
+      // Refresh bank balance (for PayAiro/Fiat mode - isCrypto = true)
+      if (isCrypto) {
+        refreshPromises.push(refetchBankBalanceData());
+      }
+      
+      // Refresh crypto balances (for Crypto mode - isCrypto = false)
+      if (!isCrypto) {
+        refreshPromises.push(refetch());
+      }
+
+      // Wait for all promises to complete
+      await Promise.all(refreshPromises);
+    } catch (error) {
+      console.log("Error refreshing balance data:", error);
+    } finally {
+      setIsBalanceRefreshing(false);
+    }
+  }, [isCrypto, refetchBankBalanceData, refetch]);
+
   const isPendingTransactions = () => {
     setTimeout(() => {
       setIsPending(true);
@@ -1532,21 +1559,10 @@ const NewDashboard = () => {
           />
         ) : (
           <View style={{ width: "100%" }}>
-            {/* {isTablet ? (
-              <View style={{ width: 400 }}>
-                <DashboardCard
-                  refetchBankBalanceData={refetchBankBalanceData}
-                />
-              </View>
-            ) : (
-              <View style={{ width: "100%" }}>
-                <DashboardCard
-                  refetchBankBalanceData={refetchBankBalanceData}
-                />
-              </View>
-            )} */}
             <NewDashboardCard 
               isBalanceVisible={isMainCardBalanceVisible}
+              onRefreshBalance={handleRefreshBalance}
+              isRefreshing={isBalanceRefreshing}
             />
           </View>
         )}

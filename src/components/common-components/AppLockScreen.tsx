@@ -15,10 +15,13 @@ import { getPin } from "storage/mmkv";
 import CustomText from "tsx-components/CustomText";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppLock } from "hooks/useAppLock";
+import { useNavigation } from "@react-navigation/native";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 
 const AppLockScreen: React.FC = () => {
   const { theme } = useTheme();
   const styles = customStyles(theme);
+  const navigation = useNavigation<any>();
   const { isLocked, unlockApp, shouldShowLock } = useAppLock();
 
   const [pin, setPin] = useState("");
@@ -210,6 +213,23 @@ const AppLockScreen: React.FC = () => {
                 />
               </View>
             ) : null}
+
+            {/* Forgot PIN Link */}
+            <TouchableOpacity
+              style={styles.forgotPinContainer}
+              onPress={() => {
+
+                unlockApp();
+                // First hide the lock modal, then navigate   
+                //              // Use setTimeout to ensure modal is hidden before navigation
+                setTimeout(() => {
+                  navigation.navigate(NAVIGATION_SCREENS.FORGOT_PIN_SCREEN);
+                }, 100);
+              }}
+              activeOpacity={0.7}
+            >
+              <CustomText style={styles.forgotPinText}>Forgot PIN?</CustomText>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.keypadContainer}>
@@ -371,6 +391,16 @@ const customStyles = (theme: Theme) =>
     },
     loadingContainer: {
       marginTop: 20,
+    },
+    forgotPinContainer: {
+      marginTop: 20,
+      paddingVertical: 10,
+    },
+    forgotPinText: {
+      fontSize: 14,
+      color: theme.colors.palette.green700,
+      fontFamily: theme.typography.fontFamily.montserratSemiBold,
+      textDecorationLine: "underline",
     },
     keypadContainer: {
       width: "90%",

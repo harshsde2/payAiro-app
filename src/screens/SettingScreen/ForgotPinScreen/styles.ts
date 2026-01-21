@@ -108,9 +108,15 @@ export const getStyles = (theme: Theme) =>
     subtitle: {
       fontSize: 16,
       color: "#666",
-      marginBottom: 20,
+      marginBottom: 8,
       fontFamily: Fonts.regular,
       color: "black",
+    },
+    emailHint: {
+      fontSize: 14,
+      color: theme.colors.palette.green600,
+      marginBottom: 20,
+      fontFamily: Fonts.regular,
     },
     bold: {
       fontFamily: Fonts.semibold,

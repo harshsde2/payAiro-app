@@ -137,11 +137,11 @@ const AddCrypto = () => {
                 resizeMode="contain"
               />
             )}
-            {displayNetwork && (
+            {/* {displayNetwork && (
               <View style={styles.networkIconOverlay}>
                 <SvgIcons.Solana width={16} height={16} />
               </View>
-            )}
+            )} */}
           </View>
           <View style={styles.cryptoTextContainer}>
             <CustomText

@@ -5,7 +5,7 @@ import {
   Pressable,
   Image,
 } from "react-native";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useCallback } from "react";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
@@ -33,6 +33,10 @@ import TextInputField from "components/TextInputField";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import PinScreen from "tsx-components/modals/PinScreen";
 import { SvgUri } from "react-native-svg";
+import {
+  ContactSuggestion,
+  IContactItem,
+} from "components/common-components/ContactSuggestion";
 
 const CryptoSend = () => {
   const route = useRoute();
@@ -59,9 +63,39 @@ const CryptoSend = () => {
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [recipient, setRecipient] = useState("");
   const [showFinalPage, setShowFinalPage] = useState(false);
+  const [isSuggestionVisible, setIsSuggestionVisible] = useState(false);
 
   const [isPendingVerifyUser, setIspendingverifyUser] = useState(false);
   const [spin, setspin] = useState(false);
+
+  // Handle contact selection from suggestions
+  // Priority: username (if not empty) -> email -> nickname
+  const handleContactSelect = useCallback((contact: IContactItem) => {
+    const identifier = contact.username?.trim() || contact.email?.trim() || contact.nickname?.trim() || "";
+    setRecipient(identifier);
+    setIsSuggestionVisible(false);
+  }, []);
+
+  // Handle input change
+  const handleRecipientChange = useCallback((text: string) => {
+    setRecipient(text);
+    setIsSuggestionVisible(text.length >= 1);
+  }, []);
+
+  // Handle input focus
+  const handleInputFocus = useCallback(() => {
+    if (recipient.length >= 1) {
+      setIsSuggestionVisible(true);
+    }
+  }, [recipient.length]);
+
+  // Handle input blur
+  const handleInputBlur = useCallback(() => {
+    // Delay hiding to allow touch on suggestion items
+    setTimeout(() => {
+      setIsSuggestionVisible(false);
+    }, 200);
+  }, []);
 
   const {
     mutate: handleSendCripto,
@@ -563,14 +597,27 @@ const CryptoSend = () => {
                 titleStyle={{ fontSize: 14 }}
                 title="To"
               >
-                <TextInputField
-                  placeholder="PayAiroTag, Phone, Email, Wallet Address"
-                  rightIcon={""}
-                  value={recipient}
-                  rightIconComponent="scanner"
-                  onRightIconClick={onQRScanClick}
-                  onChange={setRecipient}
-                />
+                <View style={styles.inputWrapper}>
+                  <TextInputField
+                    placeholder="PayAiroTag, Email, Wallet Address"
+                    rightIcon={""}
+                    value={recipient}
+                    rightIconComponent="scanner"
+                    onRightIconClick={onQRScanClick}
+                    onChange={handleRecipientChange}
+                    onFocus={handleInputFocus}
+                    onBlur={handleInputBlur}
+                  />
+                  <ContactSuggestion
+                    searchQuery={recipient}
+                    onContactSelect={handleContactSelect}
+                    isVisible={isSuggestionVisible}
+                    maxSuggestions={5}
+                    minCharacters={1}
+                    debounceDelay={300}
+                    emptyPlaceholder="No matching contacts"
+                  />
+                </View>
               </DashboardSection>
             </View>
             <GenericButton
@@ -609,6 +656,10 @@ const custonStyles = (theme: Theme) =>
     testInputContainer: {
       flex: 1,
       marginRight: 10,
+    },
+    inputWrapper: {
+      position: "relative",
+      zIndex: 10,
     },
     maxBalanceContainer: {
       width: "100%",

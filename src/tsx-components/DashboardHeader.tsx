@@ -5,6 +5,8 @@ import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from "react-native";
 import { useSelector } from "react-redux";
 import { useTheme } from "../styles/ThemeContext";
+import { useNotifications } from "query/hooks/useUser";
+
 
 interface DashboardHeaderProps {
   name?: string;
@@ -34,13 +36,23 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ name, style }) => {
     return initials;
   };
 
+  const {
+    data: notificationsResponse,
+    isLoading,
+    isError,
+    error,
+    refetch: refetchNotifications,
+  } = useNotifications(true);
+
+  const notifications = notificationsResponse?.data || [];
+
   // console.log('Theme spacing:', theme.spacing);
   // console.log("PayAiorRoundIcon", JSON.stringify(walletData,null,2));
 
   return (
     <View style={[styles.container, style]}>
       <View style={styles.leftSection}>
-        <TouchableOpacity style={styles.avatarContainer} onPress={() => navigation.navigate(NAVIGATION_SCREENS.PERSONAL as never)}>
+        <TouchableOpacity style={styles.avatarContainer} onPress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL as never)}>
           <Text style={styles.avatarText}>
             {getInitials(walletData?.name || name || "")}
           </Text>
@@ -50,6 +62,11 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ name, style }) => {
           <Text style={styles.nameText}>{walletData?.name || ""}</Text>
         </View>
       </View>
+      {notifications.length > 0 && (
+        <View style={styles.notificationContainer}>
+          <Text style={styles.notificationText}>{notifications.length}</Text>
+        </View>
+      )}
       <SvgIcons.NotificationIcon
         onPress={() =>
           navigation.navigate(NAVIGATION_SCREENS.NOTIFICATION as never)
@@ -102,6 +119,23 @@ const createStyles = (theme: any) =>
       fontFamily: theme.typography.fontFamily.nexaHeavy,
       color: theme.colors.text.primary,
       fontSize: theme.typography.fontSize.md,
+    },
+    notificationContainer: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      position: "absolute",
+      right: 0,
+      top: 0,
+      backgroundColor: theme.colors.palette.red500,
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 1000,
+    },
+    notificationText: {
+      fontFamily: theme.typography.fontFamily.montserrat,
+      color: theme.colors.palette.white,
+      fontSize: 10,
     },
   });
 

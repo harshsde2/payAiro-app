@@ -152,7 +152,7 @@ const TextInputField: FC<InputProps> = (props) => {
               }}
             />
           )}
-          {rightIconComponent === "scanner" && <SvgIcons.ScannerIcon onPress={()=>onRightIconClick?.()} style={{position:'absolute',right:0,zIndex:10}} />}
+          {rightIconComponent === "scanner" && <SvgIcons.ScannerIcon width={50} height={50} onPress={()=>onRightIconClick?.()} style={{position:'absolute',right:0,zIndex:10}} />}
 
           {!isCountry && !isMultiLine && (
             <TextInput

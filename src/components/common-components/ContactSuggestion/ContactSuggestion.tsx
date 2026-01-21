@@ -163,7 +163,7 @@ ContactSuggestionItem.displayName = "ContactSuggestionItem";
 // Height per item for calculating container height
 const ITEM_HEIGHT = 64;
 const CONTAINER_PADDING = 16;
-const MAX_VISIBLE_ITEMS = 4;
+const MAX_VISIBLE_ITEMS = 6;
 
 const ContactSuggestion: React.FC<IContactSuggestionProps> = ({
   searchQuery,
