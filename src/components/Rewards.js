@@ -52,7 +52,7 @@ export default function Rewards({ item }) {
       </View>
 
       <GenericButton
-        title={"Explore"}
+        title={item?.buttonText ?? "View Rewards​"}
         tStyle={{ fontSize: 10 }}
         cStyle={{
           backgroundColor: "#000",

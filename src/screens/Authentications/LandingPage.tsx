@@ -8,6 +8,7 @@ import GenericButton from "components/GenericButton";
 import { CustomText } from "tsx-components";
 import { useNavigation } from "@react-navigation/native";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { appContent } from "utils/appContent";
 
 const LandingPage = () => {
   const { theme } = useTheme();
@@ -18,21 +19,21 @@ const LandingPage = () => {
       <View style={{ flex: 1 }}>
         <AuthHeader showAuthLogo={true} />
       </View>
-      <View style={[styles.whiteSheetContainer, { flex: 0 }]}>
-        <View style={styles.signinHeaderContainer}>
+      <View style={[styles.whiteSheetContainer, { flex: 0,}]}>
+        <View style={[styles.signinHeaderContainer,{width: '95%',paddingVertical: 20}]}>
           <CustomText
             variant={"h4"}
+            size={20}
             fontFamily={theme.typography.fontFamily.montserratBold}
             style={styles.signHeaderTextStyles}
           >
-            Your Money. Your Way.
+            {appContent.landingPage.title}
           </CustomText>
           <CustomText
             variant={"caption"}
             style={styles.signHeaderCaptionTextStyles}
           >
-            Say goodbye to juggling apps. Seamlessly manage your crypto and bank
-            accounts together.
+            {appContent.landingPage.description}
           </CustomText>
         </View>
         <GenericButton
@@ -40,14 +41,14 @@ const LandingPage = () => {
           onPress={() => {
             navigation.navigate(NAVIGATION_SCREENS.LOGIN);
           }}
-          title="Sign In"
+          title={appContent.landingPage.signInButton}
         />
         <GenericButton
           cStyle={{ marginVertical: 10 }}
           onPress={() => {
             navigation.navigate(NAVIGATION_SCREENS.SIGNUP);
           }}
-          title="Create an Account"
+          title={appContent.landingPage.createAccountButton}
         />
       </View>
     </ScreenContainer>

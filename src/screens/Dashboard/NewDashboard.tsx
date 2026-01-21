@@ -2204,7 +2204,7 @@ const NewDashboard = () => {
                             fontFamily: Fonts.semibold,
                           }}
                         >
-                          + Add People
+                          + Add Contact
                         </Text>
                       </TouchableOpacity>
                     )}

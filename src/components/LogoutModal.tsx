@@ -35,10 +35,10 @@ const LogoutModal: React.FC<ILogoutModalProps> = ({
             variant="subtitle1"
             style={styles(theme).descriptionText}
           >
-            Sure you want to log out?
+            Are you sure you want to log out?
           </CustomText>
           <GenericButton
-            title="Yes, Logout"
+            title="Logout"
             cStyle={{
               marginTop: theme.spacing.spacing[6],
               // paddingHorizontal: theme.spacing.spacing[4],

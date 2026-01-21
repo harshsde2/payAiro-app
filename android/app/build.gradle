@@ -98,9 +98,15 @@ android {
         applicationId "com.payairo"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 32
-        versionName "3.0.0"
+        versionCode 34
+        versionName "3.0.2"
         missingDimensionStrategy 'react-native-camera', 'general'
+        
+        // Exclude 32-bit ABIs to reduce 16KB compliance issues and AAB size
+        // Most modern devices are 64-bit, so this is safe
+        ndk {
+            abiFilters "arm64-v8a", "x86_64"
+        }
         
         // Required for react-native-config when using different package names
         resValue "string", "build_config_package", "com.payairo"
@@ -178,6 +184,11 @@ configurations.all {
     resolutionStrategy {
         // Force androidx.browser version to be compatible with compileSdk 36
         force "androidx.browser:browser:1.9.0"
+        // Force CameraX 1.4.2+ for 16KB page size support (overrides react-native-camera-kit's 1.1.0)
+        force "androidx.camera:camera-core:1.4.2"
+        force "androidx.camera:camera-camera2:1.4.2"
+        force "androidx.camera:camera-lifecycle:1.4.2"
+        force "androidx.camera:camera-view:1.4.2"
     }
 }
 
@@ -190,6 +201,14 @@ dependencies {
     
     // Force androidx.browser version compatible with compileSdk 36
     implementation "androidx.browser:browser:1.9.0"
+    
+    // Force newer CameraX version with 16KB support (overrides react-native-camera-kit's old version)
+    // CameraX 1.4.2+ includes 16KB-aligned native libraries (used in react-native-camera-kit v15.1.0+)
+    def camerax_version = "1.4.2"
+    implementation "androidx.camera:camera-core:${camerax_version}"
+    implementation "androidx.camera:camera-camera2:${camerax_version}"
+    implementation "androidx.camera:camera-lifecycle:${camerax_version}"
+    implementation "androidx.camera:camera-view:${camerax_version}"
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

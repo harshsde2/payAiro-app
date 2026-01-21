@@ -23,6 +23,8 @@ for ARCH_DIR in "$TEMP_DIR/lib"/*; do
         ARCH=$(basename "$ARCH_DIR")
         echo "📱 Architecture: $ARCH"
         echo "----------------------------------------"
+        NON_COMPLIANT_COUNT=0
+        COMPLIANT_COUNT=0
         
         for SO_FILE in "$ARCH_DIR"/*.so; do
             if [ -f "$SO_FILE" ]; then
@@ -70,7 +72,8 @@ try:
                 p_align = struct.unpack('<I', ph[28:32])[0]
             else:  # 64-bit
                 p_type = struct.unpack('<I', ph[0:4])[0]
-                p_align = struct.unpack('<Q', ph[40:48])[0]
+                # Elf64_Phdr layout ends with p_align at bytes 48..56
+                p_align = struct.unpack('<Q', ph[48:56])[0]
             
             # PT_LOAD = 1
             if p_type == 1 and p_align > 0:
@@ -92,8 +95,10 @@ EOF
                         ALIGN_DEC=$((ALIGNMENT))
                         if [ "$ALIGN_DEC" -lt 16384 ]; then
                             echo "  ❌ $LIB_NAME - Alignment: $ALIGNMENT ($ALIGN_DEC bytes) - NOT 16KB compatible"
+                            NON_COMPLIANT_COUNT=$((NON_COMPLIANT_COUNT + 1))
                         else
                             echo "  ✅ $LIB_NAME - Alignment: $ALIGNMENT ($ALIGN_DEC bytes) - 16KB compatible"
+                            COMPLIANT_COUNT=$((COMPLIANT_COUNT + 1))
                         fi
                     else
                         echo "  ⚠️  $LIB_NAME - Could not determine alignment"
@@ -104,6 +109,8 @@ EOF
                 fi
             fi
         done
+        echo ""
+        echo "  ➜ $ARCH summary: ✅ $COMPLIANT_COUNT compliant, ❌ $NON_COMPLIANT_COUNT non-compliant"
         echo ""
     fi
 done

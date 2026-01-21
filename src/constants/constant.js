@@ -37,6 +37,7 @@ export const REWARDS = [
     route: NAVIGATION_SCREENS.SCRATCH,
     description: "Earn upto $100 rewards by scratching cards",
     earned: 100,
+    buttonText: "View Rewards​"
   },
   // {
   //   name: "Vouchers",
@@ -50,7 +51,8 @@ export const REWARDS = [
     icon: <SvgIcons.ReferralsIcon />,
     route: NAVIGATION_SCREENS.REFERRAL_SCREEN,
     earned: 5,
-    description: "Earn $5 for each Referral"
+    description: "Earn $5 for each Referral",
+    buttonText: "Invite & Earn​"
   },
 ];
 

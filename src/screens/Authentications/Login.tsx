@@ -20,6 +20,7 @@ import TextInputField from "../../components/TextInputField";
 import { SCREENS } from "../../constants/SCREENS";
 import { showError, showSuccess } from "../../utils/toast";
 import { clearAll } from "storage/mmkv";
+import { appContent } from "utils/appContent";
 
 export default function Login() {
   const navigation = useNavigation();
@@ -85,7 +86,7 @@ export default function Login() {
 
   return (
     <ScreenContainer avoidKeyboard scrollable={true} padding={0}>
-      <HeaderTitle title="Sign In" leftIcon="true" />
+      <HeaderTitle title={appContent.login.headerTitle} leftIcon="true" />
       <View style={{ flex: 1 }}>
         <AuthHeader showAuthLogo={true} />
       </View>
@@ -110,30 +111,30 @@ export default function Login() {
             fontFamily={theme.typography.fontFamily.montserratBold}
             style={styles.signHeaderTextStyles}
           >
-            Sign In
+           {appContent.login.title}
           </CustomText>
           <CustomText
             variant={"caption"}
             style={styles.signHeaderCaptionTextStyles}
           >
-            Securely access your crypto portfolio with ease. Simplify login now!
+            {appContent.login.description}
           </CustomText>
         </View>
         <View style={styles.fieldAndCheckboxContainer}>
           <TextInputField
-            placeholder={"joe@gmail.com"}
+            placeholder={appContent.login.emailPlaceholder}
             value={email}
             onChange={setemail}
-            label="Enter your email"
+            label={appContent.login.emailLabel}
             required={true}
           />
           <GenericButton
-            title="Next"
+            title={appContent.login.nextButton}
             cStyle={{ marginTop: 20 }}
             onPress={handleLogin}
             isLoading={isPending}
             showLoader={true}
-            disabled={buttonDisabled}
+            disabled={buttonDisabled || !email.trim()}
           />
         </View>
       </View>

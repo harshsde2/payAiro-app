@@ -19,7 +19,7 @@ const ReferralCard = () => {
           fontFamily={theme.typography.fontFamily.montserratBold}
           color={theme.colors.palette.white}
         >
-          Invite Friends and Get $5 Each
+          Earn $5 for every referral
         </CustomText>
         <CustomText variant="caption" color={theme.colors.palette.grey400}>
           Share your referral link with friends. When they sign up and make their

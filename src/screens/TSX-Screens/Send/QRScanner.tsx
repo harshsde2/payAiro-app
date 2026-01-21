@@ -17,8 +17,6 @@ import { IQRCodeEvent } from "screens/Scans/types";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { ScreenContainer } from "HOC";
 import { SvgIcons } from "constants/svgs";
-import { launchImageLibrary } from "react-native-image-picker";
-import { ImageLibraryOptions } from "react-native-image-picker";
 import QRCodeScanner from "react-native-qrcode-scanner";
 
 const { width, height } = Dimensions.get("window"); // Get device dimensions

@@ -2000,34 +2000,6 @@ PODS:
     - React-Core
   - react-native-html-to-pdf (0.12.0):
     - React-Core
-  - react-native-image-picker (8.2.1):
-    - boost
-    - DoubleConversion
-    - fast_float
-    - fmt
-    - glog
-    - hermes-engine
-    - RCT-Folly
-    - RCT-Folly/Fabric
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - SocketRocket
-    - Yoga
   - react-native-mmkv (3.3.3):
     - boost
     - DoubleConversion
@@ -2058,7 +2030,7 @@ PODS:
     - Yoga
   - react-native-netinfo (11.4.1):
     - React-Core
-  - react-native-pdf (6.7.7):
+  - react-native-pdf (7.0.3):
     - boost
     - DoubleConversion
     - fast_float
@@ -2936,7 +2908,7 @@ PODS:
     - React-perflogger (= 0.81.5)
     - React-utils (= 0.81.5)
     - SocketRocket
-  - ReactNativeCameraKit (14.2.0):
+  - ReactNativeCameraKit (16.2.1):
     - boost
     - DoubleConversion
     - fast_float
@@ -3036,15 +3008,67 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - RNImageCropPicker (0.42.0):
+  - RNImageCropPicker (0.51.1):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
     - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
     - React-RCTImage
-    - RNImageCropPicker/QBImagePickerController (= 0.42.0)
-    - TOCropViewController (~> 2.7.4)
-  - RNImageCropPicker/QBImagePickerController (0.42.0):
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - RNImageCropPicker/QBImagePickerController (= 0.51.1)
+    - SocketRocket
+    - TOCropViewController (~> 2.8.0)
+    - Yoga
+  - RNImageCropPicker/QBImagePickerController (0.51.1):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
     - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
     - React-RCTImage
-    - TOCropViewController (~> 2.7.4)
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - TOCropViewController (~> 2.8.0)
+    - Yoga
   - RNInAppBrowser (3.7.0):
     - React-Core
   - RNNotifee (9.1.8):
@@ -3406,7 +3430,7 @@ PODS:
     - SocketRocket
     - Yoga
   - SocketRocket (0.7.1)
-  - TOCropViewController (2.7.4)
+  - TOCropViewController (2.8.0)
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -3464,7 +3488,6 @@ DEPENDENCIES:
   - react-native-document-picker (from `../node_modules/react-native-document-picker`)
   - react-native-encrypted-storage (from `../node_modules/react-native-encrypted-storage`)
   - react-native-html-to-pdf (from `../node_modules/react-native-html-to-pdf`)
-  - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - react-native-mmkv (from `../node_modules/react-native-mmkv`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-pdf (from `../node_modules/react-native-pdf`)
@@ -3649,8 +3672,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-encrypted-storage"
   react-native-html-to-pdf:
     :path: "../node_modules/react-native-html-to-pdf"
-  react-native-image-picker:
-    :path: "../node_modules/react-native-image-picker"
   react-native-mmkv:
     :path: "../node_modules/react-native-mmkv"
   react-native-netinfo:
@@ -3834,10 +3855,9 @@ SPEC CHECKSUMS:
   react-native-document-picker: 2ed17a26528d7db3b39ca7ddf99f668077d54182
   react-native-encrypted-storage: db300a3f2f0aba1e818417c1c0a6be549038deb7
   react-native-html-to-pdf: 4c5c6e26819fe202971061594058877aa9b25265
-  react-native-image-picker: b99d9c1f2ddbef491eb49e1103e5c2ce78b9ab37
   react-native-mmkv: c70c58437c0f5e5fe6992f1de1e350dcdd236332
   react-native-netinfo: f0a9899081c185db1de5bb2fdc1c88c202a059ac
-  react-native-pdf: b4ac635ae24275fe34f4075a58c6c27e2c9ba6c2
+  react-native-pdf: 5851482420f156606ae48d4f919b9208abd62a16
   react-native-plaid-link-sdk: 589048fe0880e7760389fa3b30be5c398697fe8a
   react-native-safe-area-context: fea29ae0275beaa22f72d0a8be1eb0ab09c3feae
   react-native-skia: f06726aa1ea36bb235e91143e8ff99c5bf2643f7
@@ -3875,7 +3895,7 @@ SPEC CHECKSUMS:
   ReactAppDependencyProvider: c277c5b231881ad4f00cd59e3aa0671b99d7ebee
   ReactCodegen: 1e847cf77c1402fe7394dae41b3829c95569e76e
   ReactCommon: 5cfd842fcd893bb40fc835f98fadc60c42906a20
-  ReactNativeCameraKit: 36bf14d7e7c299ef07263ee66ff012212e1040d4
+  ReactNativeCameraKit: bd7f2f57836ad11fbf5cefb43015fc4c1ea69cb9
   RNDateTimePicker: 239dc0c70f94e440d815763d3bace9c4ea73ae27
   RNDeviceInfo: 8b6fa8379062949dd79a009cf3d6b02a9c03ca59
   RNFBApp: fda4a8b08fe31bea8492808106aa638d1bb595b7
@@ -3883,7 +3903,7 @@ SPEC CHECKSUMS:
   RNFreshchatSDK: 88cb72bb42e64f0a96ee8becac8b46e05d85f4e3
   RNFS: 4ac0f0ea233904cb798630b3c077808c06931688
   RNGestureHandler: c6f6f26fef9654b198c2e91445b7cf9ddfa31c05
-  RNImageCropPicker: 64b6bec9ec185ee59b71a93d7058816bd0e1916e
+  RNImageCropPicker: 53721829357e8d8d00b1391662d29e263f05c067
   RNInAppBrowser: e36d6935517101ccba0e875bac8ad7b0cb655364
   RNNotifee: 4a6ee5c7deaf00e005050052d73ee6315dff7ec9
   RNPermissions: fb97b9bd7711656edc78a17d8dbacd936f38a5de
@@ -3893,7 +3913,7 @@ SPEC CHECKSUMS:
   RNSVG: 46be54b3378a27b412e0c290e41fecd69ffa1171
   RNWorklets: ab7740c2a152f77ff76a40d52be860d8f128fab1
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
-  TOCropViewController: 80b8985ad794298fb69d3341de183f33d1853654
+  TOCropViewController: 797deaf39c90e6e9ddd848d88817f6b9a8a09888
   Yoga: 1e91d83a5286cfd3b725eade59274c92270540d4
 
 PODFILE CHECKSUM: fced254898173d9649fb487acbdc235f7d5d7c88

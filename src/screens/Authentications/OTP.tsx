@@ -31,6 +31,7 @@ import {
 } from "../../redux/slices/authenticationSlice";
 import { setToken, setWalletDataAuth } from "../../services/Auth";
 import { showError, showSuccess } from "../../utils/toast";
+import { appContent } from "utils/appContent";
 
 const OTP_COOLDOWN_SECONDS = 60;
 
@@ -350,13 +351,13 @@ export default function ConfirmOTP() {
           fontFamily={theme.typography.fontFamily.montserratBold}
           style={styles.signHeaderTextStyles}
         >
-          Confirm OTP
+         {appContent.OTP.title}
         </CustomText>
         <CustomText
           variant={"caption"}
           style={styles.signHeaderCaptionTextStyles}
         >
-          Enter OTP we just sent to your email address.
+          {appContent.OTP.description}
         </CustomText>
 
         {/* OTP Input Fields */}
@@ -397,7 +398,7 @@ export default function ConfirmOTP() {
         <GenericButton
           title={isVerifying ? "Verifying..." : "Verify"}
           onPress={handleVerifyOTP}
-          disabled={!isOtpComplete || isVerifying}
+          disabled={!isOtpComplete || isVerifying || !otp.every((digit) => digit !== "")}
         />
       </View>
     </ScreenContainer>

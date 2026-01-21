@@ -12,10 +12,7 @@ import {
   View,
 } from "react-native";
 import { Camera, CameraType } from "react-native-camera-kit";
-import {
-  ImageLibraryOptions,
-  launchImageLibrary,
-} from "react-native-image-picker";
+import { pickImageFromGallery } from "../../utils/ImagePicker";
 import { useTheme } from "styles";
 import { CustomText } from "tsx-components";
 import BottomNavigation from "../../components/BottomNavigation";
@@ -206,19 +203,17 @@ export default function Scans(): JSX.Element {
 
   const uploadFromGallery = async (): Promise<void> => {
     setNativeModalVisible(true);
-    const options: ImageLibraryOptions = {
-      mediaType: "photo",
-    };
+    
+    try {
+      const pickedImage = await pickImageFromGallery();
 
-    const result = await launchImageLibrary(options);
-
-    if (result.assets && result.assets[0]) {
-      let imagePath = result.assets[0].uri;
-
-      if (!imagePath) {
-        Alert.alert("Error", "Unable to access the selected image.");
+      if (!pickedImage || !pickedImage.uri) {
+        Alert.alert("Error", "No image selected.");
+        setNativeModalVisible(false);
         return;
       }
+
+      let imagePath = pickedImage.uri;
 
       // Convert URI for Android if needed (remove file:// prefix for the library)
       if (Platform.OS === "android" && imagePath.startsWith("file://")) {
@@ -228,7 +223,7 @@ export default function Scans(): JSX.Element {
       try {
         // Scan QR code from the selected image
         console.log("Starting QR decode for image:", imagePath);
-        console.log("Original URI:", result.assets[0].uri);
+        console.log("Original URI:", pickedImage.uri);
 
         const qrData = await QRCodeScanner.decode(imagePath);
 
@@ -282,6 +277,7 @@ export default function Scans(): JSX.Element {
                 "Invalid QR Code",
                 "Please scan a valid PayAiro QR code."
               );
+              setNativeModalVisible(false);
               return;
             }
           }
@@ -308,12 +304,13 @@ export default function Scans(): JSX.Element {
           "Error",
           "No QR code found in the image. Please select an image with a valid QR code."
         );
-      }
-      finally {
+      } finally {
         setTimeout(() => setNativeModalVisible(false), 1000);
       }
-    } else {
-      Alert.alert("Error", "No image selected.");
+    } catch (error) {
+      console.log("Image picker error:", error);
+      Alert.alert("Error", "Unable to access the selected image.");
+      setNativeModalVisible(false);
     }
   };
 
