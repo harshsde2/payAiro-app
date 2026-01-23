@@ -160,58 +160,54 @@ export const useVerifyUserForChangePinOtp = () => {
 
 /**
  * Hook to send OTP for forgot PIN
- * TODO: Replace with actual API endpoint when ready
+ * Sends OTP to user's registered email for PIN reset verification
  */
 export const useForgotPinSendOtp = () => {
-  return useMutation<ApiResponse<any>, Error, any>({
+  return useMutation<ApiResponse<any>, Error, Record<string, never>>({
     mutationFn: async () => {
-      // TODO: Replace AUTH.FORGOT_PIN_SEND_OTP with actual endpoint
-      // For now, using placeholder endpoint
       return await apiClient.post<ApiResponse<any>>(
-        AUTH.VERIFY_OTP_WITH_MAIL, // Placeholder - replace with AUTH.FORGOT_PIN_SEND_OTP
+        AUTH.FORGOT_PIN_SEND_OTP,
         {},
         false
       );
     },
-    onSuccess: () => {},
   });
 };
 
 /**
  * Hook to verify OTP for forgot PIN
- * TODO: Replace with actual API endpoint when ready
+ * Verifies the OTP sent to user's email during PIN reset flow
  */
 export const useForgotPinVerifyOtp = () => {
   return useMutation<ApiResponse<any>, Error, { otp: string }>({
     mutationFn: async (payload) => {
-      // TODO: Replace AUTH.FORGOT_PIN_VERIFY_OTP with actual endpoint
-      // For now, using placeholder endpoint
       return await apiClient.post<ApiResponse<any>>(
-        AUTH.VERIFY_SEND_OTP, // Placeholder - replace with AUTH.FORGOT_PIN_VERIFY_OTP
+        AUTH.VERIFY_SEND_OTP,
         payload,
         true
       );
     },
-    onSuccess: () => {},
   });
 };
 
+// Interface for forgot PIN reset payload
+interface ForgotPinResetPayload {
+  new_pin: string;
+}
+
 /**
  * Hook to reset PIN after forgot PIN flow
- * TODO: Replace with actual API endpoint when ready
+ * Resets the user's PIN after successful OTP verification
  */
 export const useForgotPinReset = () => {
-  return useMutation<ApiResponse<any>, Error, FormData>({
+  return useMutation<ApiResponse<any>, Error, ForgotPinResetPayload>({
     mutationFn: async (payload) => {
-      // TODO: Replace AUTH.FORGOT_PIN_RESET with actual endpoint
-      // For now, using placeholder endpoint
-      return await apiClient.patch<ApiResponse<any>>(
-        AUTH.CHANGE_PIN, // Placeholder - replace with AUTH.FORGOT_PIN_RESET
+      return await apiClient.post<ApiResponse<any>>(
+        AUTH.FORGOT_PIN_RESET,
         payload,
         true
       );
     },
-    onSuccess: () => {},
   });
 };
 

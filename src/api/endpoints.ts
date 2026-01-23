@@ -34,6 +34,8 @@ export const AUTH = {
   GET_WALLET_DASHBOARD_DATA: "auth/v1/wallet-dashboard/",
   CREATE_PIN: "auth/create-pin/",
   CHANGE_PIN: "auth/change-pin/",
+  FORGOT_PIN_SEND_OTP: "auth/forget-pin/send-otp/",
+  FORGOT_PIN_RESET: "auth/forget-pin/",
   VERIFY_OTP_WITH_MAIL: "auth/verify/sendotp/",
   VERIFY_SEND_OTP: "auth/verify-otp-send/",
   STORE_TOKEN: "auth/store-token/",

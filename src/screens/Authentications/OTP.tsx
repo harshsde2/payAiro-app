@@ -368,6 +368,10 @@ export default function ConfirmOTP() {
               style={[styles.otpInput, otp[index] && styles.otpInputActive]}
               maxLength={6}
               keyboardType="number-pad"
+              // textContentType="oneTimeCode" // Required for iOS (SMS & Mail suggestions)
+              textContentType='oneTimeCode'
+              autoComplete='one-time-code' // Standardized for cross-platform support in 2026
+              importantForAutofill="yes" 
               onChangeText={(text) => handleOtpChange(text, index)}
               onKeyPress={({ nativeEvent }) =>
                 handleKeyPress(nativeEvent.key, index)

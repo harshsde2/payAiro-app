@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   Pressable,
   Platform,
+  BackHandler,
 } from "react-native";
 import HeaderTitle from "components/HeaderTitle";
 import GenericButton from "components/GenericButton";
@@ -48,11 +49,11 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
     if (!emailAddress || !emailAddress.includes("@")) {
       return "your registered email";
     }
-    
+
     const [localPart, domain] = emailAddress.split("@");
     const visibleChars = Math.min(2, localPart.length);
     const maskedLocal = localPart.slice(0, visibleChars) + "***";
-    
+
     return `${maskedLocal}@${domain}`;
   };
 
@@ -81,6 +82,17 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
     useRef<TextInput>(null),
     useRef<TextInput>(null),
   ];
+
+  const handleGoBack = async () => {
+    if (navigation.canGoBack()) {
+      await navigation.goBack();
+      setTimeout(() => {
+        lockApp();
+      }, 100);
+    } else {
+
+    }
+  }
 
   // API Hooks - These will be replaced with actual API calls when ready
   const {
@@ -115,8 +127,8 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
           console.log("Send OTP error:", JSON.stringify(err, null, 2));
           showError(
             err?.response?.data?.data?.error ||
-              err?.response?.data?.message ||
-              "Failed to send OTP. Please try again."
+            err?.response?.data?.message ||
+            "Failed to send OTP. Please try again."
           );
         },
       }
@@ -175,10 +187,9 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
     }
 
     setShowLoader(true);
-    const formData = new FormData();
-    formData.append("new_pin", newPin.join(""));
+    const payload = { new_pin: newPin.join("") };
 
-    handleForgotPinReset(formData, {
+    handleForgotPinReset(payload, {
       onSuccess: (data) => {
         setShowLoader(false);
         setPin(confirmPin.join(""));
@@ -188,14 +199,14 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
         setConfirmPin(["", "", "", ""]);
         setNewPin(["", "", "", ""]);
         setIsUserVerified(false);
-        navigation.goBack();
+        handleGoBack();
       },
       onError: (err: any) => {
         setShowLoader(false);
         showError(
           err?.response?.data?.data?.error ||
-            err?.response?.data?.message ||
-            "Failed to reset PIN. Please try again."
+          err?.response?.data?.message ||
+          "Failed to reset PIN. Please try again."
         );
         console.log("Reset PIN error:", JSON.stringify(err, null, 2));
       },
@@ -352,14 +363,14 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
                   backgroundColor: theme.colors.palette.white,
                   ...(Platform.OS === "ios"
                     ? {
-                        shadowColor: theme.colors.shadow.default,
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.15,
-                        shadowRadius: 12,
-                      }
+                      shadowColor: theme.colors.shadow.default,
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.15,
+                      shadowRadius: 12,
+                    }
                     : {
-                        elevation: 8,
-                      }),
+                      elevation: 8,
+                    }),
                 },
               ]}
             >
@@ -387,7 +398,7 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
                       modalStyles.otpInputWrapper,
                       index === 0 && modalStyles.otpInputWrapperFirst,
                       index === otp.length - 1 &&
-                        modalStyles.otpInputWrapperLast,
+                      modalStyles.otpInputWrapperLast,
                     ]}
                   >
                     <TextInput
@@ -402,7 +413,7 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
                       onKeyPress={({ nativeEvent }) =>
                         handleKeyPress(nativeEvent.key, index)
                       }
-                      ref={(input) => {(inputs.current[index] = input)}}
+                      ref={(input) => { (inputs.current[index] = input) }}
                       value={otp[index]}
                       selectTextOnFocus
                       editable={!isPendingVerifyOtp}
@@ -448,8 +459,7 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
         )}
 
         <HeaderTitle title="Forgot PIN" onPressLeft={() => {
-          navigation.goBack();
-          lockApp();
+          handleGoBack();
         }} leftIcon={"true"} />
 
         <View style={[globalStyles.whiteSheetContainer]}>

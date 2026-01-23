@@ -49,6 +49,11 @@ export default function Signup() {
     const trimmedEmail = email.trim();
     const trimmedState = selectedState.trim();
 
+     if (isPoliticallyExposed) {
+      setIsPoliticalModalVisible(true);
+      return false;
+    }
+
     if (!trimmedEmail) {
       showError("Email field cannot be empty");
       return false;
@@ -69,10 +74,7 @@ export default function Signup() {
       return false;
     }
 
-    if (isPoliticallyExposed) {
-      showError("Politically exposed persons cannot create an account");
-      return false;
-    }
+   
 
     return true;
   };
