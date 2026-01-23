@@ -2,7 +2,6 @@ import React, { memo } from "react";
 import { View, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import moment from "moment";
-import { SvgUri } from "react-native-svg";
 import { useTheme, Theme } from "styles";
 import CustomText from "tsx-components/CustomText";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
@@ -181,13 +180,7 @@ const UnifiedTransactionCard: React.FC<IUnifiedTransactionCardProps> = ({
       const isSvg = imageUrl?.toLowerCase()?.endsWith(".svg");
       
       if (isSvg) {
-        return (
-          <SvgUri
-            uri={imageUrl}
-            width={40}
-            height={40}
-          />
-        );
+        return ;
       } else {
         return <Image source={{ uri: imageUrl }} style={styles.avatarImage} />;
       }

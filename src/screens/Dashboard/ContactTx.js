@@ -114,26 +114,25 @@ const PaidTransaction = ({ amount, date }) => (
 );
 
 // Dropdown Menu component
-const DropdownMenu = ({ onSelectItem }) => 
-  {
+const DropdownMenu = ({ onSelectItem }) => {
   const navigation = useNavigation();
   return (
-  <View style={styles.dropdownMenu}>
-    <TouchableOpacity
-      style={styles.menuItem}
-      onPress={() => onSelectItem("Statement")}
-    >
-      <Text style={styles.menuItemText}>Statement</Text>
-    </TouchableOpacity>
-    <View style={styles.menuDivider} />
-    <TouchableOpacity
-      style={styles.menuItem}
-      onPress={() => navigation.navigate('SupportScreen')}
-    >
-      <Text style={styles.menuItemText}>Support</Text>
-    </TouchableOpacity>
-  </View>
-);
+    <View style={styles.dropdownMenu}>
+      <TouchableOpacity
+        style={styles.menuItem}
+        onPress={() => onSelectItem("Statement")}
+      >
+        <Text style={styles.menuItemText}>Statement</Text>
+      </TouchableOpacity>
+      <View style={styles.menuDivider} />
+      <TouchableOpacity
+        style={styles.menuItem}
+        onPress={() => navigation.navigate('SupportScreen')}
+      >
+        <Text style={styles.menuItemText}>Support</Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
 
 // Let's try a simple placeholder component first to verify the component area is rendering
@@ -219,16 +218,15 @@ const ContactTx = ({ route }) => {
     } catch (error) {
       console.log("Navigation error:", error);
       // Force navigation as fallback
-      navigation.reset({
-        index: 0,
-        routes: [{ name: NAVIGATION_SCREENS.NEW_DASHBOARD }],
-      });
+      if (navigation.canGoBack()) {
+        navigation.popToTop();
+      }
     }
 
     return true;
   }, [navigation, isLoading]);
 
- 
+
 
   // Use a wrapper for safe SVG rendering
   const SafeSvgBackButton = ({ onPress }) => {

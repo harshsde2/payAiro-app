@@ -11,7 +11,6 @@ import {
 import { SvgXml } from "react-native-svg";
 
 // Components
-import BottomNavigation from "../../components/BottomNavigation";
 import LogoutModal from "../../components/LogoutModal";
 
 // Constants & Hooks
@@ -120,7 +119,6 @@ export default function SettingScreen() {
 
   return (
     <ScreenContainer padding={0}>
-      <BottomNavigation />
       <LogoutModal
         isVisible={isVisible}
         onCancel={() => setIsVisible(false)}
@@ -150,7 +148,7 @@ export default function SettingScreen() {
             kycMode={mode}
             onStartKyc={handleStartKyc}
             isKycPending={isPending}
-            onProfilePress={() => navigation.navigate(NAVIGATION_SCREENS.PERSONAL)}
+            onProfilePress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL)}
             onQrPress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL)}
           />
           <View

@@ -139,7 +139,7 @@ export default function Name(props: any) {
         }
       },
       onError: (error: any) => {
-        console.log("error =>", JSON.stringify(error.response, null, 2));
+        console.log("error =>", JSON.stringify(error, null, 2));
         setIsPending(false);
 
         if (error?.response?.data?.errors?.mobile_number. length > 0) {

@@ -15,7 +15,6 @@ import { Camera, CameraType } from "react-native-camera-kit";
 import { pickImageFromGallery } from "../../utils/ImagePicker";
 import { useTheme } from "styles";
 import { CustomText } from "tsx-components";
-import BottomNavigation from "../../components/BottomNavigation";
 import QRModal from "../../components/QRModal";
 import Fonts from "../../constants/Fonts";
 import { SCREENS } from "../../constants/SCREENS";
@@ -428,7 +427,6 @@ export default function Scans(): JSX.Element {
       </View> */}
       {/* <View style={[styles.overlay, styles.leftOverlay]} /> */}
       {/* <View style={[styles.overlay, styles.rightOverlay]} /> */}
-      <BottomNavigation isVer={false} />
     </ScreenContainer>
     // </Container>
   );

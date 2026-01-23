@@ -1,10 +1,9 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
+import BottomTabNavigator from "./BottomTabNavigator";
 import ACHTransfer from "screens/TSX-Screens/AddBalance/ACHTransfer";
 import AddBalance from "screens/TSX-Screens/AddBalance/AddBalance";
-import DebitCardScreen from "screens/TSX-Screens/AddBalance/DebitCardScreen";
 import ComingSoon from "screens/TSX-Screens/ComingSoon";
-import ConnectWidgetTest from "screens/TSX-Screens/Fortess/ConnectWidgetTest";
 import CommonAssetsScreen from "screens/TSX-Screens/RWA/CommonAssetsScreen";
 import MyRWAAssets from "screens/TSX-Screens/RWA/MyRWAAssets";
 import RWA from "screens/TSX-Screens/RWA/RWA";
@@ -19,61 +18,23 @@ import ReferralScreen from "screens/TSX-Screens/Settings/ReferralScreen";
 import TrustedCircle from "screens/TSX-Screens/TrustedCircle";
 import ScratchCard from "../components/ScratchCard";
 import ScratchDetails from "../components/ScratchDetails";
-import Address2 from "../screens/Authentications/Address2";
-import Dob2 from "../screens/Authentications/Dob2";
-import IDProof2 from "../screens/Authentications/IdProof2";
-import ReceiveToken from "../screens/Authentications/ReceiveToken";
-import RequestMoney from "../screens/Authentications/RequestMoney";
-import SendReceipt from "../screens/Authentications/SendReceipt";
-import Settings2 from "../screens/Authentications/Settings2";
-import Signature2 from "../screens/Authentications/Signature2";
-import Transaction from "../screens/Authentications/Transaction";
-import TransactionDetails from "../screens/Authentications/TransactionDetails";
-import TransactionSuccess from "../screens/Authentications/TransactionSuccess";
-import Widhdraw from "../screens/Authentications/Widhdraw";
-import Buy from "../screens/Crypto/Buy";
-import ChooseCurrency from "../screens/Crypto/ChooseCurrency";
-import CryptoDashboard from "../screens/Crypto/CryptoDashboard";
 import CryptoScreen from "../screens/Crypto/CryptoScreen";
-import DepositScreen from "../screens/Crypto/DepositScreen";
-import DepositScreen2 from "../screens/Crypto/DepositScreen2";
-import DetailsCryptoScreen from "../screens/Crypto/DetailsCryptoScreen";
-import HoldingsScreen from "../screens/Crypto/HoldingsScreen";
-import InAppKYCBrowser from "../screens/Crypto/InAppKYCBrowser";
-import Sell from "../screens/Crypto/Sell";
-import StocksScreen from "../screens/Crypto/StocksScreen";
-import WithdrawScreen from "../screens/Crypto/WithdrawScreen";
-import AchScreen from "../screens/Dashboard/AchScreen";
 import AddContact from "../screens/Dashboard/AddContact";
-import AddCreditCard from "../screens/Dashboard/AddCreditCard";
 import BankDetails from "../screens/Dashboard/BankDetails";
 import ContactScreen from "../screens/Dashboard/ContactScreen";
 import ContactTx from "../screens/Dashboard/ContactTx";
-import Dashboard from "../screens/Dashboard/Dashboard";
-import DashboardRefactored from "../screens/Dashboard/DashboardRefactored";
-import IntraAccountTransfer from "../screens/Dashboard/IntraAccountTransfer";
 import NewDashboard from "../screens/Dashboard/NewDashboard";
 import Receive from "../screens/Dashboard/Receive";
-import SelectBankScreen from "../screens/Dashboard/SelectBankScreen";
 import Send from "../screens/Dashboard/Send";
-import SendToken from "../screens/Dashboard/SendToken";
 import Statement from "../screens/Dashboard/Statement";
 import StatementDetails from "../screens/Dashboard/StatementDetails";
-import TXViewDetails from "../screens/Dashboard/TXViewDetails";
-import VouchersScreens from "../screens/Dashboard/VouchersScreens";
 import Rewards from "../screens/Rewards/Rewards";
 import Scratch from "../screens/Rewards/Scratch";
 import ScanPay from "../screens/Scans/ScanPay";
 import Scans from "../screens/Scans/Scans";
-import AddCard from "../screens/SettingScreen/AddCard";
-import AlertScreen from "../screens/SettingScreen/AlertScreen";
 import ChangePinScreen from "../screens/SettingScreen/ChangePinScreen";
 import ForgotPinScreen from "../screens/SettingScreen/ForgotPinScreen/ForgotPinScreen";
-import ChatScreen from "../screens/SettingScreen/ChatScreen";
-import DeviceManagement from "../screens/SettingScreen/DeviceManagement";
 import Notification from "../screens/SettingScreen/Notification";
-import Personal from "../screens/SettingScreen/Personal";
-import Security from "../screens/SettingScreen/Security";
 import SettingScreen from "../screens/SettingScreen/SettingScreen";
 import { NAVIGATION_SCREENS } from "./navigationConstants";
 import Result from "screens/TSX-Screens/Send/Result";
@@ -84,7 +45,6 @@ import SendAndReceive from "screens/TSX-Screens/CybridCrypto/SendAndReceive";
 import CryptoSend from "screens/TSX-Screens/CybridCrypto/CryptoSend";
 import CryptoReceive from "screens/TSX-Screens/CybridCrypto/CryptoReceive";
 import IRAHolding from "screens/TSX-Screens/IRA/IRAHolding";
-import CryptoScreenFortess from "screens/Crypto/CryptoScreenFortess";
 import TransactionDetailsModal from "screens/TSX-Screens/TransactionDetails/TransactionDetails";
 import PlaidLinkScreen from "screens/TSX-Screens/AddBalance/PlaidLinkScreen";
 import PDFViewer from "tsx-components/PDFViewer";
@@ -104,58 +64,22 @@ import AddCrypto from "screens/TSX-Screens/AddBalance/AddCrypto";
 import TestWebView from "screens/TSX-Screens/TestWebView";
 import UserProfile from "screens/TSX-Screens/UserProfile/UserProfile";
 import NewPersonal from "screens/SettingScreen/NewPersonal";
-import { createStackNavigator } from "@react-navigation/stack";
+import Settings2 from "screens/Authentications/Settings2";
 
-const Stack = createStackNavigator();
+const Stack = createNativeStackNavigator();
 
 export default function AppStack() {
   return (
     <Stack.Navigator
-      headerMode="none"
-      initialRouteName={NAVIGATION_SCREENS.NEW_DASHBOARD}
+      initialRouteName="MainTabs"
       screenOptions={{
         headerShown: false,
       }}
     >
       <Stack.Screen
         options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.DASHBOARD}
-        component={Dashboard}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.NEW_DASHBOARD}
-        component={NewDashboard}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.DASHBOARD_REFACTORED}
-        component={DashboardRefactored}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.TRANSACTION}
-        component={Transaction}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.UNIFIED_TRANSACTION}
-        component={UnifiedTransactionScreen}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.TRANSACTION_SUCCESS}
-        component={TransactionSuccess}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.TRANSACTION_DETAILS}
-        component={TransactionDetails}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.SCANS}
-        component={Scans}
+        name="MainTabs"
+        component={BottomTabNavigator}
       />
       <Stack.Screen
         options={{ headerShown: false }}
@@ -165,7 +89,7 @@ export default function AppStack() {
       <Stack.Screen
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.SEND}
-        component={Send}
+        component={Send as any}
       />
       <Stack.Screen
         options={{ headerShown: false }}
@@ -179,58 +103,8 @@ export default function AppStack() {
       />
       <Stack.Screen
         options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.SETTING_SCREEN}
-        component={SettingScreen}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.NOTIFICATION}
         component={Notification}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.PERSONAL}
-        component={Personal}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.ADD_CARD}
-        component={AddCard}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.WITHDRAW}
-        component={Widhdraw}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.REQUEST_MONEY}
-        component={RequestMoney}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.SEND_TOKEN}
-        component={SendToken}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.SEND_RECEIPT}
-        component={SendReceipt}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.RECEIVE_TOKEN}
-        component={ReceiveToken}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.ADDRESS2}
-        component={Address2}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.ID_PROOF2}
-        component={IDProof2}
       />
       <Stack.Screen
         options={{ headerShown: false }}
@@ -244,6 +118,11 @@ export default function AppStack() {
       />
       <Stack.Screen
         options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.SETTINGS2}
+        component={Settings2}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.ADD_CONTACT}
         component={AddContact}
       />
@@ -254,33 +133,8 @@ export default function AppStack() {
       />
       <Stack.Screen
         options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.SIGNATURE2}
-        component={Signature2}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.DOB2}
-        component={Dob2}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.SECURITY}
-        component={Security}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.CONTACT_TX}
         component={ContactTx}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.SETTINGS2}
-        component={Settings2}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.TX_VIEW_DETAILS}
-        component={TXViewDetails}
       />
       <Stack.Screen
         options={{ headerShown: false }}
@@ -307,120 +161,18 @@ export default function AppStack() {
         name={NAVIGATION_SCREENS.FORGOT_PIN_SCREEN}
         component={ForgotPinScreen}
       />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.ALERT_SCREEN}
-        component={AlertScreen}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.CHAT_SCREEN}
-        component={ChatScreen}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.ACH_SCREEN}
-        component={AchScreen}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.ADD_CREDIT_CARD}
-        component={AddCreditCard}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.DEVICE_MANAGEMENT}
-        component={DeviceManagement}
-      />
+
+
       <Stack.Screen
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.SCRATCH_DETAILS}
         component={ScratchDetails}
       />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.VOUCHERS_SCREENS}
-        component={VouchersScreens}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.SELECT_BANK_SCREEN}
-        component={SelectBankScreen}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.CRYPTO_DASHBOARD}
-        component={CryptoDashboard}
-      />
+
       <Stack.Screen
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.CRYPTO_SCREEN}
         component={CryptoScreen}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.CRYPTO_SCREEN_FORTRESS}
-        component={CryptoScreenFortess}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.STOCKS_SCREEN}
-        component={StocksScreen}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.HOLDINGS_SCREEN}
-        component={HoldingsScreen}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.SELL}
-        component={Sell}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.DEPOSIT_SCREEN}
-        component={DepositScreen}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.IN_APP_KYC_BROWSER}
-        component={InAppKYCBrowser}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.DEPOSIT_SCREEN2}
-        component={DepositScreen2}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.CHOOSE_CURRENCY}
-        component={ChooseCurrency}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.WITHDRAW_SCREEN}
-        component={WithdrawScreen}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.INTRA_ACCOUNT_TRANSFER}
-        component={IntraAccountTransfer}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.BUY}
-        component={Buy}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.DETAILS_CRYPTO_SCREEN}
-        component={DetailsCryptoScreen}
-      />
-      <Stack.Screen
-        options={{ headerShown: false, headerTitle: "Link External Account" }}
-        name={NAVIGATION_SCREENS.MX_CONNECT_WIDGET_SCREEN}
-        component={ConnectWidgetTest}
       />
       <Stack.Screen
         options={{ headerShown: false }}
@@ -470,7 +222,7 @@ export default function AppStack() {
       <Stack.Screen
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.COMING_SOON}
-        component={ComingSoon}
+        component={ComingSoon as any}
       />
       <Stack.Screen
         options={{ headerShown: false }}
@@ -494,11 +246,6 @@ export default function AppStack() {
       />
       <Stack.Screen
         options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.DEBIT_CARD_SCREEN}
-        component={DebitCardScreen}
-      />
-      <Stack.Screen
-        options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.SUPPORT_SCREEN}
         component={SupportScreen}
       />
@@ -515,7 +262,7 @@ export default function AppStack() {
       <Stack.Screen
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.RESULT}
-        component={Result}
+        component={Result as any}
       />
       <Stack.Screen
         options={{ headerShown: false }}
@@ -599,7 +346,7 @@ export default function AppStack() {
           animationTypeForReplace: "push",
         }}
         name={NAVIGATION_SCREENS.PDF_VIEWER}
-        component={PDFViewer}
+        component={PDFViewer as any}
       />
       <Stack.Screen
         options={{

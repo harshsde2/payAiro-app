@@ -20,7 +20,6 @@ import PinScreen from "tsx-components/modals/PinScreen";
 import FullScreenModal from "../../components/FullScreenModal";
 import GenericButton from "../../components/GenericButton";
 import PincodeKeypad from "../../components/PincodeKeypad";
-import SelectionTokens from "../../components/SelectedTokens";
 import SelectionNetwork from "../../components/SelectionNetwork";
 import Fonts from "../../constants/Fonts";
 import { SCREENS } from "../../constants/SCREENS";
@@ -542,15 +541,6 @@ export default function ScanPay(props: IScanPayProps) {
         type={undefined as any}
       />
 
-      <SelectionTokens
-        isVisible={isVisible3}
-        data={selectedNetwork?.tokens}
-        onSelected={(i: any) => {
-          setselectedToken(i);
-        }}
-        onClose={() => setisVisible3(false)}
-        type={undefined as any}
-      />
       {isVisibleBank && (
         <FullScreenModal
           isVisible={isVisibleBank}

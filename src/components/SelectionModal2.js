@@ -12,11 +12,7 @@ import Fonts from '../constants/Fonts';
 import GenericButton from './GenericButton';
 import {SCREENS} from '../constants/SCREENS';
 import {useNavigation} from '@react-navigation/native';
-import QRCode from 'react-native-qrcode-svg';
 import useSelectorAction from '../hooks/useSelectorAction';
-import AssetsCards from './AssetsCards';
-import useDispatchAction from '../hooks/useDispatchAction';
-import {setSeletedCrypto} from '../redux/slices/authenticationSlice';
 
 const SelectionModal2 = ({isVisible, onClose, timeframe, settimeframe}) => {
   const navigation = useNavigation();

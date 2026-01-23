@@ -84,7 +84,7 @@ export default function Signup() {
 
     const payload: any = {
       email: email.trim().toLowerCase(),
-      location: selectedState,
+      location: "United States",
     };
 
     // Include referral code if present
@@ -107,8 +107,9 @@ export default function Signup() {
           showError("Email address already exists");
         }
       },
-      onError: () => {
+      onError: (error: any) => {
         setIsSubmitting(false);
+        console.log("error =>", JSON.stringify(error.response, null, 2));
         showError("Failed to send OTP. Please try again");
       },
     });
@@ -335,6 +336,6 @@ const customStyles = (theme: Theme) =>
       fontWeight: "700",
     },
     submitButton: {
-      // marginTop: 20,
+      marginTop: 20,
     },
   });

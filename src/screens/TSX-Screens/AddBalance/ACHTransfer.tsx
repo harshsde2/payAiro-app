@@ -141,10 +141,11 @@ const ACHTransfer = () => {
     handleIntraAccountTransfer(formData as any, {
       onSuccess: (data) => {
         showSuccess(data?.data?.message || "Transfer successful");
-        navigation.reset({
-          index: 0,
-          routes: [{ name: NAVIGATION_SCREENS.NEW_DASHBOARD }],
-        });
+        if (navigation.canGoBack()) {
+          navigation.popToTop();
+        } else {
+          navigation.goBack();
+        }
       },
       onError: (error: any) => {
         const errorMsg =
@@ -165,7 +166,7 @@ const ACHTransfer = () => {
 
 
 
-  
+
 
 
   return (
@@ -226,7 +227,7 @@ const ACHTransfer = () => {
         </View>
       )}
 
-      <AmountInputDisplay editable={false}  amount={amount} setAmount={setAmount} />
+      <AmountInputDisplay editable={false} amount={amount} setAmount={setAmount} />
       <CustomText align="center" size={14} variant="caption">
         Current Balance: ${(bankBalance as any)?.bank_account?.usd || "0.00"}
       </CustomText>

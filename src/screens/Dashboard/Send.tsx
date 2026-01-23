@@ -22,7 +22,6 @@ import TextInputField from "../../components/TextInputField";
 import Fonts from "../../constants/Fonts";
 import { SCREENS } from "../../constants/SCREENS";
 import useSelectorAction from "../../hooks/useSelectorAction";
-import { setActiveTab } from "../../redux/slices/authenticationSlice";
 import { detectBlockchainNameService } from "../../utils/blockchainNameService";
 import { showError } from "../../utils/toast";
 import {
@@ -228,7 +227,7 @@ const Send: React.FC<ISendProps> = ({ route }) => {
                 rightIcon={type === "requested" ? "" : SVGScan}
                 onRightIconClick={() => {
                   navigation.navigate(NAVIGATION_SCREENS.SCANS);
-                  dispatch(setActiveTab("3"));
+                  // Active tab is now handled automatically by App.js navigation listener
                 }}
                 value={sender}
                 onChange={handleSenderChange}

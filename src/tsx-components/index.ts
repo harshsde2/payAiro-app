@@ -1,7 +1,6 @@
 // Import and re-export all components
 import Card from './Card';
 import CustomText from './CustomText';
-import CryptoCard from './CryptoCard';
 import DashboardHeader from './DashboardHeader';
 import FontTest from './FontTest';
 import TransactionCard from './TransactionCard';
@@ -22,7 +21,6 @@ import PinInputModal from './PinInputModal';
 export {
   Card,
   CustomText,
-  CryptoCard,
   DashboardHeader,
   FontTest,
   TransactionCard,
@@ -44,7 +42,6 @@ export {
 export default {
   Card,
   CustomText,
-  CryptoCard,
   DashboardHeader,
   FontTest,
   TransactionCard,

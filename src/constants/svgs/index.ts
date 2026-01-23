@@ -148,6 +148,8 @@ import NewQRCode from "./NewQRCode.svg";
 import DowloadIconBlack from "./DowloadIconBlack.svg";
 import DownloadBlack from "./DownloadBlack.svg";
 import AddCamera from "./AddCamera.svg";
+import BlackCross from "./BlackCross.svg";
+import ToastDone from "./ToastDone.svg";
 
 
 
@@ -302,5 +304,7 @@ export const SvgIcons = {
   NewQRCode,
   DowloadIconBlack,
   DownloadBlack,
-  AddCamera
+  AddCamera,
+  BlackCross,
+  ToastDone
 };

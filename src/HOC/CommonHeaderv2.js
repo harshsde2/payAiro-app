@@ -1,19 +1,10 @@
 import {View, Text, KeyboardAvoidingView, ScrollView} from 'react-native';
 import React from 'react';
 import Container from './Container';
-import BottomNavigation from '../components/BottomNavigation';
-import BottomNaviCrypto from '../components/BottomNaviCrypto';
 
 export default function CommonHeaderv2({children, isBottomNav, ref, isCrypto}) {
   return (
     <Container>
-      {isBottomNav ? (
-        isCrypto ? (
-          <BottomNaviCrypto />
-        ) : (
-          <BottomNavigation />
-        )
-      ) : null}
       <KeyboardAvoidingView
         style={{flex: 1}}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>

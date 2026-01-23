@@ -65,8 +65,8 @@ const ScreenContainer: React.FC<ScreenContainerProps> = ({
   
   // Determine safe area edges: exclude top if banner is visible, include it if not
   const safeAreaEdges: ("top" | "bottom" | "left" | "right")[] = isBannerVisible 
-    ? ["bottom", "left", "right"] 
-    : ["top", "bottom", "left", "right"];
+    ? [ "left", "right"] 
+    : ["top", "left", "right"];
 
   // Set up status bar style based on theme
   const barStyle =
@@ -102,6 +102,7 @@ const ScreenContainer: React.FC<ScreenContainerProps> = ({
     { backgroundColor: backgroundColor || theme.colors.background.primary },
     paddingStyle,
     style,
+    { paddingBottom: 0 },
   ];
 
   // Content to render

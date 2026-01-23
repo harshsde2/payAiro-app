@@ -10,10 +10,7 @@ import React, { useEffect, useState } from "react";
 import Container from "../../HOC/Container";
 import HeaderTitle from "../../components/HeaderTitle";
 import Rewards2 from "../../components/Rewards2";
-import BottomNavigation from "../../components/BottomNavigation";
 import { useIsFocused } from "@react-navigation/native";
-import useDispatchAction from "../../hooks/useDispatchAction";
-import { setActiveTab } from "../../redux/slices/authenticationSlice";
 import Fonts from "../../constants/Fonts";
 import { ScreenContainer } from "HOC";
 import { REWARDS } from "constants/constant";
@@ -23,14 +20,12 @@ export default function Rewards() {
   const isFoucused = useIsFocused();
   const [activeTab, setactiveTab] = useState("1");
 
+  // Active tab is now handled automatically by App.js navigation listener
   useEffect(() => {
-    if (isFoucused) {
-      useDispatchAction(setActiveTab("4"));
-    }
+    // Removed setActiveTab call - App.js navigation listener handles this
   }, [isFoucused]);
   return (
     <ScreenContainer padding={0}>
-      <BottomNavigation />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}

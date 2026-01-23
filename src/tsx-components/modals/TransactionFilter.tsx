@@ -18,10 +18,58 @@ import Fonts from "constants/Fonts";
 import moment from "moment";
 import { SvgXml } from "react-native-svg";
 import DatePicker from "components/common-components/DatePicker";
-import {
-  FilteredTransactions,
-  TRANSACTION_FILTERS_KEYS,
-} from "screens/Authentications/Transaction";
+
+
+export const TRANSACTION_FILTERS_KEYS = {
+  categories: "categories",
+  time_range: "time_range",
+  filter_type: "filter_type",
+  start_date: "start_date",
+  end_date: "end_date",
+};
+
+interface TimeRangeOption {
+  id: number;
+  title: string;
+  isSelected: boolean;
+  value: "today" | "week" | "1month" | "6month" | "1year" | "custom_range";
+}
+
+interface CategoryOption {
+  id: number;
+  title: string;
+  isSelected: boolean;
+  key:
+    | "family_friends"
+    | "self_transfer"
+    | "merchant"
+    | "miscellaneous"
+    | "receive"
+    | "debit";
+}
+
+interface DateRangeOption {
+  id: number;
+  title: string;
+  isSelected: boolean;
+  key: "start_date" | "end_date";
+  value: string;
+}
+
+export interface FilteredTransactions {
+  timeRange: TimeRangeOption[];
+  categories: CategoryOption[];
+  filter_type: CategoryOption[];
+  start_date: DateRangeOption;
+  end_date: DateRangeOption;
+}
+
+export interface CategoryPercentages {
+  [key: string]: {
+    percentage?: number;
+    color?: string;
+  };
+}
 
 interface TransactionFilterProps {
   onApplyFilter: () => void;

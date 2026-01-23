@@ -1,4 +1,4 @@
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute, CommonActions } from "@react-navigation/native";
 import GenericButton from "components/GenericButton";
 import HeaderTitle from "components/HeaderTitle";
 import LottieView from "lottie-react-native";
@@ -116,10 +116,35 @@ const TransactionResult: FC = () => {
   }, [transactionData, isSuccess, isError]);
 
   const handleClose = () => {
-    navigation.reset({
-      index: 0,
-      routes: [{ name: NAVIGATION_SCREENS.NEW_DASHBOARD }],
-    });
+    // Option 1: popToTop() - Smoother with native slide-back animations
+    // Pops all screens until MainTabs, then navigates to NewDashboard tab
+    // This feels more natural as it uses the native pop animation
+    if (navigation.canGoBack()) {
+      navigation.popToTop();
+    }
+    // Small delay ensures pop completes before tab navigation
+    // setTimeout(() => {
+    //   navigation.navigate('MainTabs', {
+    //     screen: NAVIGATION_SCREENS.NEW_DASHBOARD,
+    //   } as any);
+    // }, 150);
+    
+    // Option 2: Reset (more abrupt but ensures clean state)
+    // Uncomment below and comment above if you prefer reset approach
+    // navigation.dispatch(
+    //   CommonActions.reset({
+    //     index: 0,
+    //     routes: [
+    //       {
+    //         name: 'MainTabs',
+    //         state: {
+    //           routes: [{ name: NAVIGATION_SCREENS.NEW_DASHBOARD }],
+    //           index: 0,
+    //         },
+    //       },
+    //     ],
+    //   })
+    // );
   };
 
   const getTransactionStatus = () => {

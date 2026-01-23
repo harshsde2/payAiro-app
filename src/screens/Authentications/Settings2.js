@@ -1,55 +1,34 @@
+import { useNavigation } from '@react-navigation/native';
+import { ScreenContainer } from 'HOC';
+import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
   KeyboardAvoidingView,
-  TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Alert,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
-import BottomNavigation from '../../components/BottomNavigation';
-import Container from '../../HOC/Container';
-import {SvgXml} from 'react-native-svg';
+import { SvgXml } from 'react-native-svg';
+import { useSelector } from 'react-redux';
+import BiometricModal from '../../components/BiometricModal';
+import HeaderTitle from '../../components/HeaderTitle';
+import Fonts from '../../constants/Fonts';
+import { SECURITY_LISTS } from '../../constants/constant';
 import {
   SVGLeftArrow,
-  SVGLog,
-  SVGLoggo,
-  SVGLogo2,
-  SVGPro,
-  SVGProfile,
-  SVGRightIcon,
+  SVGRightIcon
 } from '../../constants/images';
-import Fonts from '../../constants/Fonts';
-import {SECURITY_LISTS, SETTINGS_LISTS} from '../../constants/constant';
-import {useNavigation} from '@react-navigation/native';
-import LogoutModal from '../../components/LogoutModal';
-import useDispatchAction from '../../hooks/useDispatchAction';
-import {
-  setLogin,
-  setTokens,
-  setUserData,
-  setWalletData,
-} from '../../redux/slices/authenticationSlice';
-import { showError, showSuccess } from '../../utils/toast';
-import {
-  getPin,
-  setKycStep,
-  setPin,
-  setUser,
-  setWalletDataAuth,
-} from '../../services/Auth';
 import useSelectorAction from '../../hooks/useSelectorAction';
-import {createPin, getKYC, patchPin} from '../../services/Services';
-import Header from '../../components/Header';
-import HeaderTitle from '../../components/HeaderTitle';
-import BiometricModal from '../../components/BiometricModal';
-import PincodeScreen from './PincodeScreen';
-import Pincode2 from './Pincode2';
-import { ScreenContainer } from 'HOC';
-import {getBiometric} from '../../services/Auth';
-import { useSelector } from 'react-redux';
-import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
+import {
+  getBiometric,
+  getPin,
+  setPin
+} from '../../services/Auth';
+import { getKYC, patchPin } from '../../services/Services';
+import { showError, showSuccess } from '../../utils/toast';
+
 
 export default function Settings2() {
   const {tokens} = useSelectorAction();
@@ -90,7 +69,6 @@ export default function Settings2() {
   };
   return (
     <ScreenContainer padding={0} >
-      {/* <BottomNavigation /> */}
       <BiometricModal
         isVisible={isVisible}
         onCancel={() => {

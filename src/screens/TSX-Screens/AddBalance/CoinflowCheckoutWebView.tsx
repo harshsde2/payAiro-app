@@ -105,10 +105,11 @@ const CoinflowCheckoutWebView: React.FC = () => {
     if (message === "PAYMENT_SUCCESS") {
       // Show success page for 2 seconds before redirecting to dashboard
       setTimeout(() => {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: NAVIGATION_SCREENS.NEW_DASHBOARD }],
-        });
+        if (navigation.canGoBack()) {
+          navigation.popToTop();
+        } else {
+          navigation.goBack();
+        }
       }, 2000);
     }
   };

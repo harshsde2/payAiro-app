@@ -20,7 +20,7 @@ export const renderFinanceIcons = [
     IconName: SVGBankIcon,
     width: size.width,
     height: size.height,
-    navigationScreenName: NAVIGATION_SCREENS.SELECT_BANK_SCREEN,
+    navigationScreenName: '',
   },
   {
     label: "Debit",

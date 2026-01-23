@@ -75,7 +75,7 @@ export const SETTINGS_LISTS = [
     name: "Security & Privacy",
     icon: <SvgIcons.SecurityIcon />,
     isDisvled: false,
-    route: "Settings2",
+    route: NAVIGATION_SCREENS.SETTINGS2,
   },
   // {
   //   name: "Add Card",

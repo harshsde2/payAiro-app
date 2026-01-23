@@ -102,7 +102,7 @@ export const LinkingPath: LinkingOptions<RootStackParamList> = {
       // ============================================
       [NAVIGATION_SCREENS.SETTING_SCREEN]: "settings",
       [NAVIGATION_SCREENS.NOTIFICATION]: "settings/notification",
-      [NAVIGATION_SCREENS.PERSONAL]: "settings/personal",
+      [NAVIGATION_SCREENS.NEW_PERSONAL]: "settings/personal",
       [NAVIGATION_SCREENS.REFERRAL_SCREEN]: "settings/referral",
 
       // ============================================

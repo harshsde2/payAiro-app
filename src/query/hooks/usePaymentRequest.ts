@@ -62,9 +62,9 @@ export const usePendingPaymentRequests = (enabled = true) => {
         WALLET.PENDING_REQUESTS
       );
     },
-    staleTime: queryStaleTime.VERY_FAST_STALE_TIME,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    staleTime: queryStaleTime.FAST_STALE_TIME, // 30 seconds - avoid constant refetches
+    refetchOnMount: false, // Use cached data when switching tabs
+    refetchOnWindowFocus: false, // Avoid refetch when app comes to foreground
     enabled,
   });
 };

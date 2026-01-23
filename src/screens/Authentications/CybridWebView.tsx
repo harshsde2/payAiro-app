@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { Platform, View } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { CommonActions, useNavigation, useRoute } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
 import WebView from "react-native-webview";
@@ -91,10 +91,11 @@ const CybridWebView = () => {
       // Intentionally skip user-facing error so we can still navigate away gracefully
     } finally {
       dispatch(setShowLoader(false));
-      navigation.reset({
-        index: 0,
-        routes: [{ name: NAVIGATION_SCREENS.NEW_DASHBOARD }],
-      } as any);
+      if (navigation.canGoBack()) {
+        navigation.popToTop();
+      } else {
+        navigation.goBack();
+      }
     }
   };
 

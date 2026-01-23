@@ -6,8 +6,9 @@ import {
   Alert,
   Clipboard,
   ToastAndroid,
+  Button,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { CommonActions, useNavigation } from "@react-navigation/native";
 import { useSelector } from "react-redux";
 import { useTheme } from "../../styles/ThemeContext";
 import HeaderTitle from "../../components/HeaderTitle";
@@ -114,7 +115,7 @@ const NewPersonal: React.FC = () => {
           kycBadgeStatus={getKycBadgeStatus(mode)}
           kycMode={mode}
           showKycButton={false}
-          onProfilePress={() => navigation.navigate(NAVIGATION_SCREENS.PERSONAL)}
+          onProfilePress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL)}
           onQrPress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL)}
           showQrButton={false}
         />

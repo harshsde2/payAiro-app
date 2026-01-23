@@ -12,8 +12,6 @@ import {
 } from "react-native";
 import { useTheme } from "styles";
 import Video from "react-native-video"; // make sure this is installed
-import { SvgXml } from "react-native-svg";
-import { SVGPlayIcon } from "constants/images";
 
 const { width } = Dimensions.get("window");
 

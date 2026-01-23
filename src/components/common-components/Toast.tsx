@@ -4,8 +4,7 @@
  */
 
 import React from "react";
-import { View, StyleSheet, TouchableOpacity, Platform } from "react-native";
-import Animated, { FadeInDown, FadeInUp, FadeOutDown, FadeOutUp } from "react-native-reanimated";
+import { View, StyleSheet, TouchableOpacity, Platform, Pressable } from "react-native";
 import ToastManager from "toastify-react-native";
 import { useTheme } from "styles";
 import { CustomText } from "tsx-components";
@@ -38,43 +37,23 @@ const CustomToast: React.FC<ICustomToastProps> = ({
     switch (type) {
       case "success":
         return {
-          backgroundColor: "#236C4D", // Slightly lighter Deep Green
-          iconBg: "rgba(255, 255, 255, 0.3)",
-          iconColor: "#FFFFFF",
-          textColor: "#FFFFFF",
-          secondaryTextColor: "rgba(255, 255, 255, 0.8)",
+          accentColor: "#01aa77", // Standard Success Green
         };
       case "error":
         return {
-          backgroundColor: "#C92A2A", // Slightly lighter Deep Red
-          iconBg: "rgba(255, 255, 255, 0.35)",
-          iconColor: "#FFFFFF",
-          textColor: "#FFFFFF",
-          secondaryTextColor: "rgba(255, 255, 255, 0.8)",
+          accentColor: "#dc3545", // Standard Error Red
         };
       case "info":
         return {
-          backgroundColor: "#1A4D7C", // Slightly lighter Deep Blue
-          iconBg: "rgba(255, 255, 255, 0.15)",
-          iconColor: "#FFFFFF",
-          textColor: "#FFFFFF",
-          secondaryTextColor: "rgba(255, 255, 255, 0.8)",
+          accentColor: "#007bff", // Standard Info Blue
         };
       case "warning":
         return {
-          backgroundColor: "#946300", // Slightly lighter Deep Amber
-          iconBg: "rgba(255, 255, 255, 0.15)",
-          iconColor: "#FFFFFF",
-          textColor: "#FFFFFF",
-          secondaryTextColor: "rgba(255, 255, 255, 0.8)",
+          accentColor: "#ffc107", // Standard Warning Yellow/Amber
         };
       default:
         return {
-          backgroundColor: "#1A4D7C",
-          iconBg: "rgba(255, 255, 255, 0.15)",
-          iconColor: "#FFFFFF",
-          textColor: "#FFFFFF",
-          secondaryTextColor: "rgba(255, 255, 255, 0.8)",
+          accentColor: "#007bff",
         };
     }
   };
@@ -82,14 +61,14 @@ const CustomToast: React.FC<ICustomToastProps> = ({
   const stylesConfig = getToastStyles();
 
   const renderIcon = () => {
-    const iconSize = 20;
+    const iconSize = 24;
     switch (type) {
       case "success":
         return (
-          <SvgIcons.ToastChecked
+          <SvgIcons.ToastDone
             width={iconSize}
             height={iconSize}
-            fill={stylesConfig.iconColor}
+            fill={stylesConfig.accentColor}
           />
         );
       case "error":
@@ -97,15 +76,15 @@ const CustomToast: React.FC<ICustomToastProps> = ({
           <SvgIcons.ToastCross
             width={iconSize}
             height={iconSize}
-            fill={stylesConfig.iconColor}
+            fill={stylesConfig.accentColor}
           />
         );
       case "info":
         return (
-        <SvgIcons.ToastCircleAlert
+          <SvgIcons.ToastCircleAlert
             width={iconSize}
             height={iconSize}
-            fill={stylesConfig.iconColor}
+            fill={stylesConfig.accentColor}
           />
         );
       case "warning":
@@ -113,7 +92,7 @@ const CustomToast: React.FC<ICustomToastProps> = ({
           <SvgIcons.ToastTriangleAlert
             width={iconSize}
             height={iconSize}
-            fill={stylesConfig.iconColor}
+            fill={stylesConfig.accentColor}
           />
         );
       default:
@@ -122,22 +101,17 @@ const CustomToast: React.FC<ICustomToastProps> = ({
   };
 
   return (
-    <Animated.View
-      entering={FadeInUp.springify().damping(12)}
-      exiting={FadeOutDown}
-      style={[
+    <Pressable
+      onPress={hide}
+      style={({ pressed }) => [
         styles.toastContainer,
         {
-          backgroundColor: stylesConfig.backgroundColor,
+          borderLeftColor: stylesConfig.accentColor,
+          opacity: pressed ? 0.9 : 1,
         },
       ]}
     >
-      <View
-        style={[
-          styles.iconContainer,
-          { backgroundColor: stylesConfig.iconBg },
-        ]}
-      >
+      <View style={styles.iconContainer}>
         {renderIcon()}
       </View>
       
@@ -145,10 +119,11 @@ const CustomToast: React.FC<ICustomToastProps> = ({
         {displayText1 && (
           <CustomText
             variant="body1"
+            fontWeight="bold"
+            size={13}
             style={[
               styles.title,
               {
-                color: stylesConfig.textColor,
                 fontFamily: theme.typography.fontFamily.montserratSemiBold,
               },
             ]}
@@ -163,11 +138,10 @@ const CustomToast: React.FC<ICustomToastProps> = ({
             style={[
               styles.message,
               {
-                color: stylesConfig.secondaryTextColor,
                 fontFamily: theme.typography.fontFamily.montserrat,
               },
             ]}
-            numberOfLines={2}
+            numberOfLines={1}
           >
             {displayText2}
           </CustomText>
@@ -176,15 +150,15 @@ const CustomToast: React.FC<ICustomToastProps> = ({
 
       <TouchableOpacity 
         onPress={hide} 
-        style={[styles.closeButton, { borderColor: 'rgba(255,255,255,0.2)' }]}
+        style={styles.closeButton}
       >
-        <SvgIcons.NewCross
-          width={20}
-          height={20}
-          fill={stylesConfig.iconColor}
+        <SvgIcons.BlackCross
+          width={16}
+          height={16}
+          fill="#999999" // Standard grey for close icon
         />
       </TouchableOpacity>
-    </Animated.View>
+    </Pressable>
   );
 };
 
@@ -211,19 +185,22 @@ const Toast = () => {
 
   return (
     <View style={styles.toastWrapper} pointerEvents="box-none">
-      <ToastManager
-        config={toastConfig}
-        position="top"
-        positionValue={Platform.OS === "ios" ? 60 : 40}
-        style={{
-          zIndex: 99999,
-          elevation: 99999,
-        }}
-        textStyle={{
-          fontFamily: theme.typography.fontFamily.montserrat,
-          fontSize: theme.typography.fontSize.base,
-        }}
-      />
+      <View style={styles.toastManagerWrapper} pointerEvents="box-none">
+        <ToastManager
+          useModal={false}
+          config={toastConfig}
+          position="top"
+          positionValue={Platform.OS === "ios" ? 80 : 40}
+          style={{
+            zIndex: 99999,
+            elevation: 99999,
+          }}
+          textStyle={{
+            fontFamily: theme.typography.fontFamily.montserrat,
+            fontSize: theme.typography.fontSize.base,
+          }}
+        />
+      </View>
     </View>
   );
 };
@@ -231,44 +208,46 @@ const Toast = () => {
 const styles = StyleSheet.create({
   toastWrapper: {
     position: "absolute",
-    top: 0,
+    top: 10,
     left: 0,
     right: 0,
+    bottom: 0,
     zIndex: 99999,
     elevation: 99999,
-    ...(Platform.OS === "ios" && {
-      // Ensure toast appears above all iOS elements
-      pointerEvents: "box-none",
-    }),
+    pointerEvents: "box-none",
+  },
+  toastManagerWrapper: {
+    flex: 1,
+    pointerEvents: "box-none",
+
   },
   toastContainer: {
     flexDirection: "row",
     alignItems: "center",
     width: "90%",
-    minHeight: 65,
-    borderRadius: 50, // Pill shape
-    paddingVertical: 12,
+    minHeight: 70,
+    borderRadius: 8, // Standard card radius
+    backgroundColor: "#FFFFFF", // White background
+    borderLeftWidth: 6, // Colored left strip
+    paddingVertical: 14,
     paddingHorizontal: 16,
     marginVertical: 8,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 2,
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
-    ...(Platform.OS === "ios" && {
-      zIndex: 9999,
-    }),
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+    zIndex: 100000,
+    // Ensure toast container captures its own touches
+    pointerEvents: "auto",
   },
   iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    marginRight: 14,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 14,
   },
   textContainer: {
     flex: 1,
@@ -276,20 +255,17 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   title: {
-    fontSize: 15,
-    fontWeight: "600",
-    marginBottom: 2,
+    // fontSize: 16,
+    color: "#333333", // Standard dark grey for title
+    marginBottom: 4,
   },
   message: {
-    fontSize: 12,
-    fontWeight: "400",
-    lineHeight: 16,
+    // fontSize: 14,
+    color: "#666666", // Grey for message
+    lineHeight: 20,
   },
   closeButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 1,
+    padding: 4,
     justifyContent: 'center',
     alignItems: 'center',
   },

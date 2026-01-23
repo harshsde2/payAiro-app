@@ -10,8 +10,7 @@ import {
   View,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { useApiCall } from "screens/Dashboard/NewDashboard";
-import { getBalance } from "services/Services";
+
 import { Theme, useTheme } from "styles";
 import { PinScreenProps, PinScreenRef } from "./modal.types";
 // import { getPin, setPin } from "services/Auth";
@@ -33,7 +32,6 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
       (state: any) => state.authenticationSlice
     );
 
-    const bankBalanceApi = useApiCall(getBalance);
 
     const [currentAccountForPin, setCurrentAccountForPin] = useState<
       string | null
@@ -57,22 +55,6 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
     };
 
     useImperativeHandle(ref, () => ({
-      toggleBalanceVisibility: (accountId: string) => {
-        setPinScreenTask(PIN_SCREEN_TASKS.SHOW_BANK_BALANCE);
-        setErrorMessage(null);
-
-        if (!hiddenBalances[accountId]) {
-          setHiddenBalances((prev: any) => ({
-            ...prev,
-            [accountId]: true,
-          }));
-          return;
-        }
-
-        setCurrentAccountForPin(accountId);
-        setPinForShowBalance("");
-        setIsPinModalVisible(true);
-      },
       checkUserPin: () => {
         setPinScreenTask(PIN_SCREEN_TASKS.CHECK_PIN);
         setPinForShowBalance("");
@@ -109,38 +91,6 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
       return currentPin == correctPin;
     };
 
-    const verifyPinAndShowBalance = async () => {
-      if (!currentAccountForPin || pinForShowBalance.length < 4) return;
-      setIsVerifyingPin(true);
-      setErrorMessage(null);
-
-      try {
-        const isUserEnterCorrectPin = checkPin(pinForShowBalance);
-        // console.log(
-        //   "isUserEnterCorrectPin =>",
-        //   JSON.stringify(isUserEnterCorrectPin, null, 2)
-        // );
-        if (isUserEnterCorrectPin) {
-          await bankBalanceApi.execute(tokens?.access, true);
-          setHiddenBalances((prev: any) => ({
-            ...prev,
-            [currentAccountForPin]: false,
-          }));
-          setIsPinModalVisible(false);
-          setCurrentAccountForPin(null);
-          setPinForShowBalance("");
-          setErrorMessage(null);
-        } else {
-          setErrorMessage("Invalid PIN. Please try again.");
-          setPinForShowBalance("");
-        }
-      } catch (error) {
-        setErrorMessage("Failed to verify PIN. Please try again.");
-        setPinForShowBalance("");
-      } finally {
-        setIsVerifyingPin(false);
-      }
-    };
 
     const handleVerifyPin = async () => {
       if (pinForShowBalance.length < 4) return;
@@ -179,8 +129,6 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
 
     const conditionalFunction = async (task: string) => {
       switch (task) {
-        case PIN_SCREEN_TASKS.SHOW_BANK_BALANCE:
-          return await verifyPinAndShowBalance();
         case PIN_SCREEN_TASKS.CHECK_PIN:
           return await handleVerifyPin();
         case PIN_SCREEN_TASKS.SET_USER_PIN:

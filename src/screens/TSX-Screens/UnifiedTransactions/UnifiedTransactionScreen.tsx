@@ -7,16 +7,12 @@ import {
   Platform,
   RefreshControl,
 } from "react-native";
-import { useIsFocused } from "@react-navigation/native";
 import { useSelector } from "react-redux";
 import { ScreenContainer } from "HOC";
 import { SvgIcons } from "constants/svgs";
 import { useTheme, Theme } from "styles";
 import { useUnifiedTransactions, useFormattedTradesHistory, usePendingPaymentRequests } from "query/hooks";
-import useDispatchAction from "hooks/useDispatchAction";
-import { setActiveTab } from "redux/slices/authenticationSlice";
 import HeaderTitle from "components/HeaderTitle";
-import BottomNavigation from "components/BottomNavigation";
 import CustomSearchTextInput from "tsx-components/CustomSearchTextInput";
 import DashboardSection from "tsx-components/DashboardSection";
 import CustomText from "tsx-components/CustomText";
@@ -80,7 +76,6 @@ interface FilteredTransactions {
 const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () => {
   const { theme } = useTheme();
   const styles = createStyles(theme);
-  const isFocused = useIsFocused();
 
   const { 
     data: pendingRequestsData, 
@@ -119,12 +114,7 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
   const isFetching = isCrypto ? isFetchingFiat : isFetchingCrypto;
   const refetch = isCrypto ? refetchFiat : refetchCrypto;
 
-  // Set active tab when focused
-  useEffect(() => {
-    if (isFocused) {
-      useDispatchAction(setActiveTab("2"));
-    }
-  }, [isFocused]);
+  // Active tab is now handled automatically by App.js navigation listener
 
   // Filter state
   const [filteredTransactions, setFilteredTransactions] =
@@ -433,7 +423,6 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
 
   return (
     <ScreenContainer padding={0} backgroundColor={theme.colors.background.primary}>
-      <BottomNavigation isVer={undefined} />
 
       {/* Filter Modal */}
       <CommonModal isVisible={showFilter} onClose={() => setShowFilter(false)}>

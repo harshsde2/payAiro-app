@@ -1,9 +1,8 @@
 // FiatGraphSection.tsx
-import React, { FC, useMemo } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import React, { FC } from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import LineChartCustom from "components/LineChartCustom";
 import CustomPieChart from "components/CustomPieChart";
-import AssetsCards from "components/AssetsCards";
 import MemoizedDashboardSection from "tsx-components/DashboardSection";
 import { useTheme } from "styles/ThemeContext";
 import Fonts from "constants/Fonts";
@@ -66,9 +65,9 @@ const FiatGraphSection: FC<FiatGraphSectionProps> = ({
         <View style={{ backgroundColor: "#000", borderRadius: 20 }}>
           {renderButtonGraph()}
           <View style={{ padding: 10 }}>
-            <CustomPieChart allocationLists={memoizedAllocationLists} />
+            <CustomPieChart alloCationLists={memoizedAllocationLists} />
             {alloCationLists?.length > 0 && (
-              <View style={{ marginTop: 20 }}>
+              <View style={styles.allocationList}>
                 <CustomText
                   color={theme.colors.palette.white}
                   fontWeight={"semiBold"}
@@ -77,13 +76,21 @@ const FiatGraphSection: FC<FiatGraphSectionProps> = ({
                   Assets Allocation
                 </CustomText>
                 {alloCationLists?.map((item, key) => (
-                  <AssetsCards
-                    item={item}
-                    key={key}
-                    isSelected={false}
-                    onPress={() => {}}
-                    type="display"
-                  />
+                  <View key={key} style={styles.allocationRow}>
+                    <View
+                      style={[
+                        styles.colorBox,
+                        { backgroundColor: (item as { color?: string }).color ?? theme.colors.palette.grey400 },
+                      ]}
+                    />
+                    <CustomText
+                      color={theme.colors.palette.white}
+                      variant={"body2"}
+                    >
+                      {(item as { assetType?: string }).assetType?.toUpperCase() ?? "—"} (
+                      {((item as { percentage?: number }).percentage ?? 0).toFixed(1)}%)
+                    </CustomText>
+                  </View>
                 ))}
               </View>
             )}
@@ -93,5 +100,22 @@ const FiatGraphSection: FC<FiatGraphSectionProps> = ({
     </MemoizedDashboardSection>
   );
 };
+
+const styles = StyleSheet.create({
+  allocationList: {
+    marginTop: 20,
+  },
+  allocationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  colorBox: {
+    width: 10,
+    height: 10,
+    borderRadius: 3,
+    marginRight: 8,
+  },
+});
 
 export default FiatGraphSection;
