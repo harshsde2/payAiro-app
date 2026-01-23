@@ -1,31 +1,41 @@
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import { SvgIcons } from "constants/svgs";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback, useMemo } from "react";
 import {
   Alert,
   Dimensions,
   Platform,
   StyleSheet,
-  Text,
-  TouchableOpacity,
+  ActivityIndicator,
   View,
+  TouchableOpacity,
 } from "react-native";
-import { Camera, CameraType } from "react-native-camera-kit";
+import {
+  Camera,
+  useCameraDevice,
+  useCodeScanner,
+  Code,
+} from "react-native-vision-camera";
 import { pickImageFromGallery } from "../../utils/ImagePicker";
-import { useTheme } from "styles";
+import { colors, useTheme } from "styles";
 import { CustomText } from "tsx-components";
 import QRModal from "../../components/QRModal";
 import Fonts from "../../constants/Fonts";
 import { SCREENS } from "../../constants/SCREENS";
-import { IQRCodeEvent, ScansNavigationProp } from "./types";
+import { IProcessedQRCode, QRCodeType } from "./types";
 import QRCodeScanner from "react-native-qr-decode-image-camera";
-import GenericButton from "components/GenericButton";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { useSelector } from "react-redux";
 import { useAppLock } from "hooks/useAppLock";
+import { useCameraPermission } from "hooks/useCameraPermission";
+import QRScannerOverlay from "./QRScannerOverlay";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
-const { width, height } = Dimensions.get("window"); // Get device dimensions
+const { width, height } = Dimensions.get("window");
+
+// Scan area size for region of interest (iOS optimization)
+const SCAN_AREA_SIZE = width * 0.7;
 
 /**
  * Processes QR code string or object and determines the type and sender
@@ -34,10 +44,7 @@ const { width, height } = Dimensions.get("window"); // Get device dimensions
  */
 const processQRCodeData = (
   codeStringValue: string | object | null | undefined
-): {
-  type: "request" | "merchantSend" | "receive" | "receiveMerchant";
-  sender: string | object;
-} => {
+): IProcessedQRCode => {
   console.log(
     "codeStringValue ->",
     JSON.stringify(codeStringValue ?? "{}", null, 2)
@@ -55,9 +62,9 @@ const processQRCodeData = (
     const qrObject = codeStringValue as {
       type?: string;
       username?: string;
-      orderID?: any;
-      merchantSend?: any;
-      [key: string]: any;
+      orderID?: unknown;
+      merchantSend?: unknown;
+      [key: string]: unknown;
     };
 
     // Extract username as sender if available, otherwise use the full object
@@ -65,16 +72,10 @@ const processQRCodeData = (
 
     // If object has a type field, use it directly
     if (qrObject.type) {
-      const validTypes: Array<
-        "request" | "merchantSend" | "receive" | "receiveMerchant"
-      > = ["request", "merchantSend", "receive", "receiveMerchant"];
+      const validTypes: QRCodeType[] = ["request", "merchantSend", "receive", "receiveMerchant"];
 
-      const type = validTypes.includes(qrObject.type as any)
-        ? (qrObject.type as
-            | "request"
-            | "merchantSend"
-            | "receive"
-            | "receiveMerchant")
+      const type = validTypes.includes(qrObject.type as QRCodeType)
+        ? (qrObject.type as QRCodeType)
         : "receiveMerchant";
 
       return {
@@ -152,55 +153,105 @@ const processQRCodeData = (
   };
 };
 
-export default function Scans(): JSX.Element {
+export default function Scans(): React.ReactElement {
   const { theme } = useTheme();
-  const { isCrypto } = useSelector((state: any) => state.authenticationSlice);
-  const [scanned, setScanned] = useState<boolean>(false);
-  const navigation = useNavigation<ScansNavigationProp | any>();
+  const { isCrypto } = useSelector((state: unknown) => (state as { authenticationSlice: { isCrypto: boolean } }).authenticationSlice);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const [isVisible, setisVisible] = useState<boolean>(false);
   const [torchMode, setTorchMode] = useState<"on" | "off">("off");
-  const cameraRef = useRef<any>(null);
-
-
+  const [isScanning, setIsScanning] = useState<boolean>(true);
+  const [isCameraActive, setIsCameraActive] = useState<boolean>(true);
+  const cameraRef = useRef<Camera>(null);
+  const isProcessingRef = useRef<boolean>(false);
+  
   const { setNativeModalVisible } = useAppLock();
+  
+  // Camera permission hook with comprehensive handling
+  const {
+    hasPermission,
+    isLoading: isPermissionLoading,
+    permissionStatus,
+    canAskAgain,
+    requestPermission,
+    openSettings,
+    showPermissionDeniedAlert,
+  } = useCameraPermission();
 
-  const onQRCodeRead = (event: IQRCodeEvent): void => {
-    console.log(
-      event.nativeEvent.codeStringValue,
-      "event.nativeEvent.codeStringValue"
-    );
-    setScanned(true);
+  // Get back camera device
+  const device = useCameraDevice("back");
+
+  // Handle QR code detection from camera
+  const handleQRCodeScanned = useCallback((codes: Code[]): void => {
+    // Prevent multiple rapid scans
+    if (isProcessingRef.current || codes.length === 0) {
+      return;
+    }
+
+    const code = codes[0];
+    const codeValue = code.value;
+
+    if (!codeValue || codeValue.length === 0) {
+      return;
+    }
+
+    console.log("QR Code scanned:", codeValue);
+    
+    // Set processing flag to prevent duplicate navigation
+    isProcessingRef.current = true;
+    setIsScanning(false);
 
     // Try to parse as JSON, if it fails, pass as string
     let parsedValue: string | object;
     try {
-      parsedValue = JSON.parse(event.nativeEvent.codeStringValue);
+      parsedValue = JSON.parse(codeValue);
     } catch {
-      parsedValue = event.nativeEvent.codeStringValue;
+      parsedValue = codeValue;
     }
 
     const { type, sender } = processQRCodeData(parsedValue);
 
     if (type === "receiveMerchant") {
-      navigation.replace(NAVIGATION_SCREENS.SEND, {
+      navigation.navigate(NAVIGATION_SCREENS.SEND, {
         requested: false,
         sender,
       });
     } else {
-      navigation.replace(NAVIGATION_SCREENS.SCAN_PAY, {
+      navigation.navigate(NAVIGATION_SCREENS.SCAN_PAY, {
         type,
         sender,
       });
     }
-  };
+  }, [navigation]);
 
-  const toggleTorchMode = (): void => {
+  // Code scanner configuration - optimized for QR codes
+  const codeScanner = useCodeScanner({
+    codeTypes: ["qr"],
+    onCodeScanned: handleQRCodeScanned,
+  });
+
+  // Reset scanning state when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      setIsScanning(true);
+      setIsCameraActive(true);
+      isProcessingRef.current = false;
+      
+      return () => {
+        // Cleanup when leaving screen
+        setIsCameraActive(false);
+        setIsScanning(false);
+      };
+    }, [])
+  );
+
+  const toggleTorchMode = useCallback((): void => {
     const newMode = torchMode === "off" ? "on" : "off";
     console.log("Toggling torch mode to:", newMode);
     setTorchMode(newMode);
-  };
+  }, [torchMode]);
 
-  const uploadFromGallery = async (): Promise<void> => {
+  const uploadFromGallery = useCallback(async (): Promise<void> => {
     setNativeModalVisible(true);
     
     try {
@@ -240,7 +291,7 @@ export default function Scans(): JSX.Element {
           codeStringValue = qrData;
         } else if (typeof qrData === "object" && qrData !== null) {
           // The library might return an object with values array
-          const qrDataObj = qrData as any;
+          const qrDataObj = qrData as { values?: string[]; data?: string };
           if (
             qrDataObj.values &&
             Array.isArray(qrDataObj.values) &&
@@ -282,7 +333,7 @@ export default function Scans(): JSX.Element {
           }
 
           // Process QR code data using the helper function
-          setScanned(true);
+          setIsScanning(false);
           const { type, sender } = processQRCodeData(parsedValue);
 
           navigation.replace(SCREENS.ScanPay, {
@@ -311,36 +362,103 @@ export default function Scans(): JSX.Element {
       Alert.alert("Error", "Unable to access the selected image.");
       setNativeModalVisible(false);
     }
-  };
+  }, [navigation, setNativeModalVisible]);
+
+  // Handle permission request
+  const handleRequestPermission = useCallback(async (): Promise<void> => {
+    if (canAskAgain) {
+      await requestPermission();
+    } else {
+      showPermissionDeniedAlert();
+    }
+  }, [canAskAgain, requestPermission, showPermissionDeniedAlert]);
+
+  // Memoized permission denied UI
+  const PermissionDeniedView = useMemo(() => (
+    <View style={styles.permissionContainer}>
+      <SvgIcons.AddCamera width={80} height={80} />
+      <CustomText variant="h3" style={styles.permissionTitle}>
+        Camera Permission Required
+      </CustomText>
+      <CustomText style={styles.permissionText}>
+        To scan QR codes, PayAiro needs access to your camera.
+        {!canAskAgain && " Please enable camera access in your device settings."}
+      </CustomText>
+      <TouchableOpacity
+        style={styles.permissionButton}
+        onPress={handleRequestPermission}
+        activeOpacity={0.8}
+      >
+        <CustomText style={styles.permissionButtonText}>
+          {canAskAgain ? "Grant Permission" : "Open Settings"}
+        </CustomText>
+      </TouchableOpacity>
+    </View>
+  ), [canAskAgain, handleRequestPermission]);
+
+  // Loading state while checking permissions
+  if (isPermissionLoading) {
+    return (
+      <ScreenContainer padding={0}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.palette.primary} />
+          <CustomText style={styles.loadingText}>
+            Initializing camera...
+          </CustomText>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  // Permission denied state
+  if (!hasPermission) {
+    return (
+      <ScreenContainer padding={0}>
+        {PermissionDeniedView}
+      </ScreenContainer>
+    );
+  }
+
+  // No camera device available (e.g., simulator)
+  if (!device) {
+    return (
+      <ScreenContainer padding={0}>
+        <View style={styles.errorContainer}>
+          <SvgIcons.AddCamera width={80} height={80} />
+          <CustomText variant="h3" style={styles.errorTitle}>
+            Camera Unavailable
+          </CustomText>
+          <CustomText style={styles.errorText}>
+            No camera device found. You can still scan QR codes from gallery.
+          </CustomText>
+          <TouchableOpacity
+            style={styles.permissionButton}
+            onPress={uploadFromGallery}
+            activeOpacity={0.8}
+          >
+            <CustomText style={styles.permissionButtonText}>
+              Upload from Gallery
+            </CustomText>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => navigation.navigate(NAVIGATION_SCREENS.RECEIVE)}
+            activeOpacity={0.8}
+          >
+            <CustomText style={styles.secondaryButtonText}>
+              Show My QR Code
+            </CustomText>
+          </TouchableOpacity>
+        </View>
+      </ScreenContainer>
+    );
+  }
 
   return (
-    // <Container >
     <ScreenContainer padding={0}>
-      {/* Camera Preview */}
-      <View
-        style={{
-          flex: 1,
-          alignItems: "center",
-          position: "absolute",
-          top: 0,
-          zIndex: 1000,
-          flexDirection: "row",
-          width: "100%",
-          paddingHorizontal: 20,
-          paddingVertical: 20,
-        }}
-      >
-        {/* <SvgIcons. width={30} height={30} /> */}
-
-        <View
-          style={{
-            flex: 1,
-            alignItems: "center",
-            justifyContent: "flex-end",
-            flexDirection: "row",
-            gap: 20,
-          }}
-        >
+      {/* Top action bar */}
+      <View style={styles.topBar}>
+        <View style={styles.topBarActions}>
           <SvgIcons.ImageIconWhite
             onPress={uploadFromGallery}
             width={25}
@@ -359,76 +477,32 @@ export default function Scans(): JSX.Element {
           />
         </View>
       </View>
+
+      {/* Vision Camera */}
       <Camera
         ref={cameraRef}
-        style={styles.camera} // Limit camera feed size
-        scanBarcode={true}
-        onReadCode={onQRCodeRead} // Callback when a QR code is scanned
-        showFrame={true} // Show frame for QR scanning
-        laserColor="red"
-        frameColor="rgba(243, 251, 244, 1)"
-        zoomMode="on"
-        zoom={1}
-        torchMode={torchMode}
-        flashMode="auto"
-        cameraType={CameraType.Back}
+        style={styles.camera}
+        device={device}
+        isActive={isCameraActive && isScanning}
+        codeScanner={codeScanner}
+        torch={torchMode}
+        enableZoomGesture={true}
+        photo={false}
+        video={false}
+        audio={false}
       />
 
-      {/* Masking the rest of the screen */}
-      {/* <View
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          justifyContent: "center",
-          alignItems: "center",
-          width: "100%",
-          paddingVertical: 10,
-        }}
-      >
-        <CustomText variant="h3">Scan QR Code</CustomText>
-        <CustomText style={{ textAlign: "center" }} >
-          Scan a payment QR code to send money securely.
-        </CustomText>
-      </View> */}
-      <QRModal
-        isVisible={isVisible}
-        onClose={() => setisVisible(false)}
-        onSelected={() => {}}
+      {/* Custom QR Scanner Overlay */}
+      <QRScannerOverlay
+        scanAreaSize={SCAN_AREA_SIZE}
+        borderColor={theme.colors.palette.secondary}
+        borderWidth={3}
+        cornerLength={35}
+        cornerRadius={12}
+        overlayOpacity={0.65}
+        isScanning={isScanning}
       />
-      {/* <View style={{ marginTop: 40 }}>
-        <TouchableOpacity
-          onPress={uploadFromGallery}
-          style={{
-            padding: 15,
-            alignSelf: "center",
-            backgroundColor: "rgba(255, 255, 255, 1)",
-            borderRadius: 30,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 10,
-            // marginTop: -130,
-          }}
-        >
-            <SvgIcons.ImageIcon />
-          <Text style={{ color: "#000", fontFamily: Fonts.bold }}>
-             Upload from Gallery
-          </Text>
-        </TouchableOpacity>
-      </View> */}
-      {/* <View style={{ marginTop: 20,paddingHorizontal: 20, alignItems: "center", justifyContent: "center" }}>
-      <GenericButton
-        title="Show My QR Code"
-        onPress={() => {
-            navigation.navigate(NAVIGATION_SCREENS.RECEIVE);
-          }}
-        />
-      </View> */}
-      {/* <View style={[styles.overlay, styles.leftOverlay]} /> */}
-      {/* <View style={[styles.overlay, styles.rightOverlay]} /> */}
     </ScreenContainer>
-    // </Container>
   );
 }
 
@@ -437,60 +511,105 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "rgba(243, 251, 244, 1)",
   },
-  title: {
-    fontSize: 24,
-    fontFamily: Fonts.bold,
-    color: "#000",
-    marginBottom: 10,
-    textAlign: "center",
-    marginTop: 60,
-    // position: 'absolute',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#000",
-    textAlign: "center",
-    marginBottom: 20,
-    fontFamily: Fonts.semibold,
-    width: "70%",
-    alignSelf: "center",
-  },
   camera: {
-    width: width, // 80% of the screen width
-    height: Platform.OS === "ios" ? height * 0.85 : height * 0.95, // Make it square
+    width: width,
+    height: Platform.OS === "ios" ? height * 0.85 : height * 0.95,
     alignSelf: "center",
-    // marginTop: height * 0.2, // Center vertically
   },
-  overlay: {
+  topBar: {
     position: "absolute",
-    backgroundColor: "rgb(251, 246, 243)",
-    opacity: 0.8, // Slight transparency if desired
-    top: 20,
-  },
-  topOverlay: {
-    top: 20,
+    top: 0,
     left: 0,
     right: 0,
-    // bottom: 20,
-    height: height * 0.2, // Top black area\
+    zIndex: 1000,
+    flexDirection: "row",
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    alignItems: "center",
   },
-  bottomOverlay: {
-    // marginTop: 30,
-    bottom: 80,
-    left: 0,
-    right: 0,
-    height: height * 0, // Bottom black area
+  topBarActions: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    flexDirection: "row",
+    gap: 20,
   },
-  leftOverlay: {
-    top: height * 0.1, // Start from below the top overlay
-    bottom: height * 0.1, // End above the bottom overlay
-    left: 0,
-    width: width * 0.1, // Left black area
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#000",
   },
-  rightOverlay: {
-    top: height * 0.1,
-    bottom: height * 0.2,
-    right: 0,
-    width: width * 0.1, // Right black area
+  loadingText: {
+    marginTop: 16,
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: Fonts.regular,
+  },
+  permissionContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#000",
+    paddingHorizontal: 32,
+  },
+  permissionTitle: {
+    color: "#fff",
+    marginTop: 24,
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  permissionText: {
+    color: "#aaa",
+    textAlign: "center",
+    fontSize: 14,
+    lineHeight: 22,
+    fontFamily: Fonts.regular,
+  },
+  permissionButton: {
+    marginTop: 32,
+    backgroundColor: colors.green800,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 25,
+  },
+  permissionButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontFamily: Fonts.semibold,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#000",
+    paddingHorizontal: 32,
+  },
+  errorTitle: {
+    color: "#fff",
+    marginTop: 24,
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  errorText: {
+    color: "#aaa",
+    textAlign: "center",
+    fontSize: 14,
+    fontFamily: Fonts.regular,
+    marginBottom: 8,
+  },
+  secondaryButton: {
+    marginTop: 16,
+    backgroundColor: "transparent",
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: colors.green800,
+  },
+  secondaryButtonText: {
+    color: colors.green800,
+    fontSize: 16,
+    fontFamily: Fonts.semibold,
   },
 });
