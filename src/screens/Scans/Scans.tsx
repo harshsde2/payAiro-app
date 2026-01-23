@@ -20,11 +20,10 @@ import {
 import { pickImageFromGallery } from "../../utils/ImagePicker";
 import { colors, useTheme } from "styles";
 import { CustomText } from "tsx-components";
-import QRModal from "../../components/QRModal";
 import Fonts from "../../constants/Fonts";
 import { SCREENS } from "../../constants/SCREENS";
 import { IProcessedQRCode, QRCodeType } from "./types";
-import QRCodeScanner from "react-native-qr-decode-image-camera";
+import { PayAiroQRScanner, QRScannerError, QRScannerErrorCode } from "../../utils/PayAiroQRScanner";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { useSelector } from "react-redux";
 import { useAppLock } from "hooks/useAppLock";
@@ -263,97 +262,93 @@ export default function Scans(): React.ReactElement {
         return;
       }
 
-      let imagePath = pickedImage.uri;
-
-      // Convert URI for Android if needed (remove file:// prefix for the library)
-      if (Platform.OS === "android" && imagePath.startsWith("file://")) {
-        imagePath = imagePath.replace("file://", "");
-      }
-
       try {
-        // Scan QR code from the selected image
-        console.log("Starting QR decode for image:", imagePath);
-        console.log("Original URI:", pickedImage.uri);
+        // Scan QR code using native module (ZXing on Android, Vision on iOS)
+        console.log("Starting native QR decode for image:", pickedImage.uri);
 
-        const qrData = await QRCodeScanner.decode(imagePath);
+        const scanResult = await PayAiroQRScanner.scanQRCodeFromImage(pickedImage.uri);
 
-        console.log("QR Data received:", qrData);
-        console.log("QR Data type:", typeof qrData);
-        console.log(
-          "QR Data length:",
-          typeof qrData === "string" ? qrData.length : "N/A"
-        );
+        if (!scanResult) {
+          console.log("No QR code found in image");
+          Alert.alert(
+            "No QR Code Found",
+            "No QR code was detected in the selected image. Please try another image."
+          );
+          setNativeModalVisible(false);
+          return;
+        }
 
-        // Handle different return formats from the library
-        let codeStringValue: string = "";
+        const codeStringValue = scanResult.value;
+        console.log("QR Code scanned from gallery:", codeStringValue);
 
-        if (typeof qrData === "string" && qrData.length > 0) {
-          codeStringValue = qrData;
-        } else if (typeof qrData === "object" && qrData !== null) {
-          // The library might return an object with values array
-          const qrDataObj = qrData as { values?: string[]; data?: string };
+        // Try to parse as JSON, if it fails, use as string
+        let parsedValue: string | object;
+        try {
+          parsedValue = JSON.parse(codeStringValue);
+          console.log("Parsed QR code as object:", parsedValue);
+        } catch {
+          parsedValue = codeStringValue;
+          console.log("QR code is string format");
+
+          // Validate that it's a PayAiro QR code (contains "sending:", "orderID", or "merchantSend")
+          // Or if it's a valid JSON object, process it
           if (
-            qrDataObj.values &&
-            Array.isArray(qrDataObj.values) &&
-            qrDataObj.values.length > 0
+            !codeStringValue.includes("sending:") &&
+            !codeStringValue.includes("orderID") &&
+            !codeStringValue.includes("merchantSend") &&
+            !codeStringValue.startsWith("{")
           ) {
-            codeStringValue = qrDataObj.values[0];
-          } else if (qrDataObj.data) {
-            codeStringValue = qrDataObj.data;
+            Alert.alert(
+              "Invalid QR Code",
+              "Please scan a valid PayAiro QR code."
+            );
+            setNativeModalVisible(false);
+            return;
           }
         }
 
-        console.log("Extracted code value:", codeStringValue);
+        // Process QR code data using the helper function
+        setIsScanning(false);
+        const { type, sender } = processQRCodeData(parsedValue);
 
-        if (codeStringValue && codeStringValue.length > 0) {
-          console.log("QR Code from Gallery:", codeStringValue);
-
-          // Try to parse as JSON, if it fails, validate as string
-          let parsedValue: string | object;
-          try {
-            parsedValue = JSON.parse(codeStringValue);
-            console.log("Parsed QR code as object:", parsedValue);
-          } catch {
-            parsedValue = codeStringValue;
-            console.log("QR code is string format");
-
-            // Validate that it's a PayAiro QR code (contains "sending:", "orderID", or "merchantSend")
-            if (
-              !codeStringValue.includes("sending:") &&
-              !codeStringValue.includes("orderID") &&
-              !codeStringValue.includes("merchantSend")
-            ) {
-              Alert.alert(
-                "Invalid QR Code",
-                "Please scan a valid PayAiro QR code."
-              );
-              setNativeModalVisible(false);
-              return;
-            }
-          }
-
-          // Process QR code data using the helper function
-          setIsScanning(false);
-          const { type, sender } = processQRCodeData(parsedValue);
-
-          navigation.replace(SCREENS.ScanPay, {
-            type,
+        if (type === "receiveMerchant") {
+          navigation.navigate(NAVIGATION_SCREENS.SEND, {
+            requested: false,
             sender,
           });
         } else {
-          console.log("QR data is empty or null");
-          Alert.alert(
-            "Error",
-            "No QR code found in the image. Please select an image with a valid QR code."
-          );
+          navigation.navigate(NAVIGATION_SCREENS.SCAN_PAY, {
+            type,
+            sender,
+          });
         }
       } catch (error) {
         console.log("QR Decode Error:", error);
-        console.log("Error details:", JSON.stringify(error, null, 2));
-        Alert.alert(
-          "Error",
-          "No QR code found in the image. Please select an image with a valid QR code."
-        );
+        
+        // Handle specific error types
+        if (error instanceof QRScannerError) {
+          switch (error.code) {
+            case QRScannerErrorCode.IMAGE_LOAD_FAILED:
+              Alert.alert("Error", "Failed to load the selected image. Please try another image.");
+              break;
+            case QRScannerErrorCode.INVALID_URI:
+              Alert.alert("Error", "Invalid image path. Please try selecting the image again.");
+              break;
+            case QRScannerErrorCode.MODULE_NOT_AVAILABLE:
+              Alert.alert("Error", "QR scanner is not available. Please restart the app.");
+              break;
+            default:
+              Alert.alert(
+                "No QR Code Found",
+                "No QR code was detected in the selected image. Please try another image."
+              );
+          }
+        } else {
+          Alert.alert(
+            "Error",
+            "An unexpected error occurred. Please try again."
+          );
+        }
       } finally {
         setTimeout(() => setNativeModalVisible(false), 1000);
       }
