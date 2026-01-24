@@ -273,7 +273,7 @@ api.interceptors.response.use(
 
       if (status === 403 && !isPublicRoute) {
         // console.log("Forbidden access");
-        showError("Forbidden access");
+        // showError("Forbidden access");
       }
 
       if (status >= 500) {

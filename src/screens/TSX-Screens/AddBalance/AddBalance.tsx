@@ -282,7 +282,7 @@ const AddBalance = () => {
         error?.response?.data?.data?.message ||
         error?.message ||
         "Failed to initiate checkout. Please try again.";
-      showError(errorMessage);
+      // showError('jsasaksa ');
       setIsLocationUnavailableModalVisible(true)
     } finally {
       setLoadingPaymentMethod(null);
@@ -375,7 +375,9 @@ const AddBalance = () => {
                       item,
                     });
                   } else if (method.type === "Bank") {
-                    setIsBankDetailsModalVisible(true)
+                    navigation.navigate(NAVIGATION_SCREENS.ADD_BALANCE_BANK_DETAILS, {
+                      bankList: BANK_LISTS,
+                    });
                   }
                 }}
                 disabled={isDisabled}

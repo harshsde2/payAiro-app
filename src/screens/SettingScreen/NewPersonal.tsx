@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -6,9 +6,8 @@ import {
   Alert,
   Clipboard,
   ToastAndroid,
-  Button,
 } from "react-native";
-import { CommonActions, useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { useSelector } from "react-redux";
 import { useTheme } from "../../styles/ThemeContext";
 import HeaderTitle from "../../components/HeaderTitle";
@@ -20,6 +19,8 @@ import Share from "react-native-share";
 import { useAppLock } from "../../hooks/useAppLock";
 import ProfileHeader from "components/common-components/ProfileHeader/ProfileHeader";
 import { ReceiveQRCard } from "components/common-components/ReceiveQRCard";
+import type { IReceiveQRCardRef } from "components/common-components/ReceiveQRCard";
+import { SvgIcons } from "constants/svgs";
 
 interface IKycStep {
   mobile_number?: string;
@@ -38,6 +39,7 @@ const NewPersonal: React.FC = () => {
   const { walletData } = useSelectorAction() as any;
   const navigation = useNavigation<any>();
   const { setNativeModalVisible } = useAppLock();
+  const qrCardRef = useRef<IReceiveQRCardRef>(null);
 
   const kycStatus = useSelector((s: any) => s.authenticationSlice?.kycStatus);
   const mode = useMemo(() => toKycMode(kycStatus), [kycStatus]);
@@ -121,6 +123,7 @@ const NewPersonal: React.FC = () => {
         />
         <View style={customTheme.whiteSheetContainer}>
           <ReceiveQRCard
+            ref={qrCardRef}
             title="PayAiro"
             subtitle="Primary account for receiving funds"
             qrValue={{
@@ -132,8 +135,16 @@ const NewPersonal: React.FC = () => {
             onCopyTag={() =>
               copyToClipboard(walletData?.username || "", "PayAiro Tag")
             }
-            onDownload={handleDownload}
-            onShare={handleShare}
+            leftButton={{
+              text: "Download",
+              icon: <SvgIcons.DownloadBlack width={20} height={20} />,
+              onPress: () => qrCardRef.current?.capture(handleDownload),
+            }}
+            rightButton={{
+              text: "Share",
+              icon: <SvgIcons.ShareIcon width={20} height={20} />,
+              onPress: () => qrCardRef.current?.capture(handleShare),
+            }}
             onBeforeCapture={() => setNativeModalVisible(true)}
             onAfterCapture={() => {
               setTimeout(() => setNativeModalVisible(false), 1000);

@@ -150,6 +150,8 @@ import DownloadBlack from "./DownloadBlack.svg";
 import AddCamera from "./AddCamera.svg";
 import BlackCross from "./BlackCross.svg";
 import ToastDone from "./ToastDone.svg";
+import PaymentRequest from "./PaymentRequest.svg";
+
 
 
 
@@ -306,5 +308,6 @@ export const SvgIcons = {
   DownloadBlack,
   AddCamera,
   BlackCross,
-  ToastDone
+  ToastDone,
+  PaymentRequest
 };

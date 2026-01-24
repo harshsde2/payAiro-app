@@ -122,5 +122,6 @@ export const NAVIGATION_SCREENS = {
   ADD_CRYPTO: "AddCrypto",
   TEST_WEBVIEW: "TestWebView",
   USER_PROFILE: "UserProfile",
-  NEW_PERSONAL: "NewPersonal"
+  NEW_PERSONAL: "NewPersonal",
+  ADD_BALANCE_BANK_DETAILS: "AddBalanceBankDetails"
 };

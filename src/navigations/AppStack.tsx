@@ -65,6 +65,7 @@ import TestWebView from "screens/TSX-Screens/TestWebView";
 import UserProfile from "screens/TSX-Screens/UserProfile/UserProfile";
 import NewPersonal from "screens/SettingScreen/NewPersonal";
 import Settings2 from "screens/Authentications/Settings2";
+import AddBalanceBankDetails from "screens/TSX-Screens/AddBalance/AddBalanceBankDetails";
 
 const Stack = createNativeStackNavigator();
 
@@ -452,6 +453,11 @@ export default function AppStack() {
         name={NAVIGATION_SCREENS.NEW_PERSONAL}
         component={NewPersonal}
       /> 
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.ADD_BALANCE_BANK_DETAILS}
+        component={AddBalanceBankDetails}
+      />
     </Stack.Navigator>
   );
 }

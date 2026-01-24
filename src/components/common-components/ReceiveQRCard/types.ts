@@ -1,4 +1,21 @@
+import type { ReactNode } from "react";
 import type { ViewStyle } from "react-native";
+
+export interface IActionButtonProps {
+  /** Button text label */
+  text: string;
+  /** Button icon (React element) */
+  icon: ReactNode;
+  /** Button press handler */
+  onPress: () => void;
+}
+
+export interface IReceiveQRCardRef {
+  /** Capture the QR card and call the handler with the image URI */
+  capture: (handler: (uri: string) => void | Promise<void>) => Promise<void>;
+  /** Current capturing state */
+  isCapturing: boolean;
+}
 
 export interface IReceiveQRCardProps {
   /** Main title (e.g. "PayAiro Bank - 2323" or "PayAiro") */
@@ -11,20 +28,18 @@ export interface IReceiveQRCardProps {
   payAiroTag: string;
   /** Called when copy icon is pressed */
   onCopyTag: () => void;
-  /** Called with captured image URI when Download is pressed. Component captures ViewShot. */
-  onDownload?: (uri: string) => void | Promise<void>;
-  /** Called with captured image URI when Share is pressed. */
-  onShare?: (uri: string) => void | Promise<void>;
+  /** Override for the root container */
+  containerStyle?: ViewStyle;
+  /** Left action button configuration. If not provided, left button is hidden. */
+  leftButton?: IActionButtonProps;
+  /** Right action button configuration. If not provided, right button is hidden. */
+  rightButton?: IActionButtonProps;
   /** Optional: called before capture (e.g. show blocking UI) */
   onBeforeCapture?: () => void | Promise<void>;
   /** Optional: called after capture (e.g. hide blocking UI) */
   onAfterCapture?: () => void | Promise<void>;
-  /** When false, Download button is hidden. Default: true if onDownload is provided. */
-  showDownloadButton?: boolean;
-  /** When false, Share button is hidden. Default: true if onShare is provided. */
-  showShareButton?: boolean;
-  /** Override for the root container */
-  containerStyle?: ViewStyle;
-  /** Filename base for share/download. Default: "PayAiro_QR" */
-  filenameBase?: string;
+  /** Bank details to show in the QR card */
+  bankDetails?: ReactNode;
+  /** Callback when capturing state changes */
+  onCapturingChange?: (isCapturing: boolean) => void;
 }

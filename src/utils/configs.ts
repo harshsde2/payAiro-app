@@ -31,13 +31,12 @@ export const NotificationIcons = {
 <path d="M36 16L31 21" stroke="#1D1D1D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
 `,
-  "New Payairo Coin Transaction": `
+  "Payment sent successfully": `
   <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
 <rect width="52" height="52" rx="26" fill="#E2F1E3"/>
 <path d="M36 25.0799V25.9999C35.9988 28.1563 35.3005 30.2545 34.0093 31.9817C32.7182 33.7088 30.9033 34.9723 28.8354 35.5838C26.7674 36.1952 24.5573 36.1218 22.5345 35.3744C20.5117 34.6271 18.7847 33.246 17.611 31.4369C16.4373 29.6279 15.8798 27.4879 16.0217 25.3362C16.1636 23.1844 16.9972 21.1362 18.3983 19.4969C19.7994 17.8577 21.6928 16.7152 23.7962 16.24C25.8996 15.7648 28.1003 15.9822 30.07 16.8599" stroke="#2BA31C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M36 18L26 28.01L23 25.01" stroke="#2BA31C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
-
 `,
   "Payairo Coin Cancelled Transaction": `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
 <rect width="52" height="52" rx="26" fill="#FFE0E0"/>

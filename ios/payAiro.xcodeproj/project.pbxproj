@@ -12,6 +12,8 @@
 		13B07FBD1A68108700A75B9A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB21A68108700A75B9A /* AppDelegate.swift */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		16BBA24566EC48CD86D0B5FE /* Neue Plak ExtraBlack.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 477ECD74842F405CB944DA73 /* Neue Plak ExtraBlack.ttf */; };
+		1B92B61A7B7A4CE9B782C7B1 /* PayAiroQRScannerModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B92B6197B7A4CE9B782C7B1 /* PayAiroQRScannerModule.swift */; };
+		1B92B61C7B7A4CE9B782C7B1 /* PayAiroQRScannerModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 1B92B61B7B7A4CE9B782C7B1 /* PayAiroQRScannerModule.m */; };
 		1F7C69D5F11B4F5F903BB0EC /* Montserrat-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 004F13919E6F4918AB35AA97 /* Montserrat-Bold.ttf */; };
 		212E88E3923248FBAF8182FC /* Neue Plak Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B29ECCEDE7B5467DB87FE03B /* Neue Plak Black.ttf */; };
 		37A453A7D6974979940E6E4D /* Neue Plak Extended ExtraBlack.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DEAD105FBFED4CB58AC2EE10 /* Neue Plak Extended ExtraBlack.ttf */; };
@@ -83,6 +85,8 @@
 		15B3B53C91C74D61BB254973 /* Neue Plak Extended Black.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Extended Black.ttf"; path = "../assets/fonts/Neue Plak Extended Black.ttf"; sourceTree = "<group>"; };
 		184B0A336A424FEEB85B33C4 /* Neue Plak Extended Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Extended Bold.ttf"; path = "../assets/fonts/Neue Plak Extended Bold.ttf"; sourceTree = "<group>"; };
 		1AC1AD42F9AA4F60A76769C4 /* Neue Plak Extended Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Extended Regular.ttf"; path = "../assets/fonts/Neue Plak Extended Regular.ttf"; sourceTree = "<group>"; };
+		1B92B6197B7A4CE9B782C7B1 /* PayAiroQRScannerModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PayAiroQRScannerModule.swift; path = payAiro/PayAiroQRScannerModule.swift; sourceTree = "<group>"; };
+		1B92B61B7B7A4CE9B782C7B1 /* PayAiroQRScannerModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = PayAiroQRScannerModule.m; path = payAiro/PayAiroQRScannerModule.m; sourceTree = "<group>"; };
 		262CDA1D04894CF2B1E10C15 /* Montserrat-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Montserrat-Medium.ttf"; path = "../assets/fonts/Montserrat-Medium.ttf"; sourceTree = "<group>"; };
 		283AAD985F52F66C16333657 /* Pods_payAiro.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_payAiro.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		294780BFDBCE487B9E8B014A /* Neue Plak Text Light Italic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Text Light Italic.ttf"; path = "../assets/fonts/Neue Plak Text Light Italic.ttf"; sourceTree = "<group>"; };
@@ -175,6 +179,8 @@
 				7C592A252F1A37EE0054AFC5 /* GoogleService-Info.plist */,
 				7C592A242F1A34380054AFC5 /* payAiro.entitlements */,
 				13B07FB21A68108700A75B9A /* AppDelegate.swift */,
+				1B92B6197B7A4CE9B782C7B1 /* PayAiroQRScannerModule.swift */,
+				1B92B61B7B7A4CE9B782C7B1 /* PayAiroQRScannerModule.m */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
@@ -588,6 +594,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				13B07FBD1A68108700A75B9A /* AppDelegate.swift in Sources */,
+				1B92B61A7B7A4CE9B782C7B1 /* PayAiroQRScannerModule.swift in Sources */,
+				1B92B61C7B7A4CE9B782C7B1 /* PayAiroQRScannerModule.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

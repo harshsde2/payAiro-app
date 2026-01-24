@@ -23,6 +23,11 @@ import { CustomText } from "tsx-components";
 import { useDepositAddress } from "query/hooks/useCrypto";
 import { SvgUri } from "react-native-svg";
 
+const QR_SIZE = 200;
+const LOGO_ICON_SIZE = 26;
+const LOGO_OVERLAY_SIZE = 44;
+
+
 export default function Receive() {
   const route = useRoute();
   const { details } = route.params as any;
@@ -228,7 +233,7 @@ export default function Receive() {
         <View style={styles.qrCard}>
           <ViewShot ref={viewShotRef} options={{ format: "png", quality: 0.9 }}>
             {depositAddressMutation.isPending ||
-            (isOnChain && !depositAddress) ? (
+              (isOnChain && !depositAddress) ? (
               <View style={styles.qrLoadingContainer}>
                 <ActivityIndicator
                   size="large"
@@ -236,7 +241,18 @@ export default function Receive() {
                 />
               </View>
             ) : (
-              <QRCode value={getQRCodeValue()} size={220} />
+              <View style={styles.qrWrapper}>
+
+                <QRCode value={getQRCodeValue()}  size={220} />
+                <View
+                  style={[
+                    styles.logoOverlay,
+                    { backgroundColor: theme.colors.palette.green700 },
+                  ]}
+                >
+                  <SvgIcons.PayairoWhiteLogo width={LOGO_ICON_SIZE} height={LOGO_ICON_SIZE} />
+                </View>
+              </View>
             )}
           </ViewShot>
         </View>
@@ -320,6 +336,23 @@ const customStyles = (theme: Theme) =>
       borderTopEndRadius: 32,
       borderTopStartRadius: 32,
       padding: theme.spacing.layout.screenPadding,
+    },
+    qrWrapper: {
+      width: QR_SIZE,
+      height: QR_SIZE,
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 16,
+    },
+    logoOverlay: {
+      position: "absolute",
+      left: (QR_SIZE - LOGO_OVERLAY_SIZE) / 2,
+      top: (QR_SIZE - LOGO_OVERLAY_SIZE) / 2,
+      width: LOGO_OVERLAY_SIZE,
+      height: LOGO_OVERLAY_SIZE,
+      borderRadius: LOGO_OVERLAY_SIZE / 2,
+      justifyContent: "center",
+      alignItems: "center",
     },
     title: {
       //   fontSize: 20,

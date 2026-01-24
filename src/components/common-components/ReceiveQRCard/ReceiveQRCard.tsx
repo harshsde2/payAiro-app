@@ -1,4 +1,4 @@
-import React, { FC, useRef } from "react";
+import React, { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import {
   StyleSheet,
   TouchableOpacity,
@@ -9,40 +9,51 @@ import { CustomText } from "tsx-components";
 import { SvgIcons } from "constants/svgs";
 import QRCode from "react-native-qrcode-svg";
 import ViewShot from "react-native-view-shot";
-import type { IReceiveQRCardProps } from "./types";
+import type { IReceiveQRCardProps, IReceiveQRCardRef } from "./types";
 
 const QR_SIZE = 200;
 const LOGO_OVERLAY_SIZE = 44;
 const LOGO_ICON_SIZE = 26;
 
-const ReceiveQRCard: FC<IReceiveQRCardProps> = ({
+const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
   title,
   subtitle,
   qrValue,
   payAiroTag,
   onCopyTag,
-  onDownload,
-  onShare,
+  containerStyle,
+  leftButton,
+  rightButton,
   onBeforeCapture,
   onAfterCapture,
-  showDownloadButton = !!onDownload,
-  showShareButton = !!onShare,
-  containerStyle,
-  filenameBase = "PayAiro_QR",
-}) => {
+  bankDetails,
+  onCapturingChange,
+}, ref) => {
   const { theme } = useTheme();
   const viewShotRef = useRef<any>(null);
   const styles = getStyles(theme);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [stableBankDetails, setStableBankDetails] = useState<React.ReactNode>(null);
 
   const qrString =
     typeof qrValue === "string" ? qrValue : JSON.stringify(qrValue);
 
   const captureAndRun = async (
-    handler?: (uri: string) => void | Promise<void>
+    handler: (uri: string) => void | Promise<void>
   ) => {
-    if (!handler || !viewShotRef.current) return;
+    if (!viewShotRef.current) return;
     try {
+      // Store current bankDetails before capture to prevent re-renders
+      if (bankDetails) {
+        setStableBankDetails(bankDetails);
+      }
+      setIsCapturing(true);
+      onCapturingChange?.(true);
       await onBeforeCapture?.();
+      
+      // Small delay to ensure UI is stable before capture
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const uri = await viewShotRef.current.capture({
         format: "png",
         quality: 0.9,
@@ -50,12 +61,21 @@ const ReceiveQRCard: FC<IReceiveQRCardProps> = ({
       });
       await handler(uri);
     } finally {
+      setIsCapturing(false);
+      onCapturingChange?.(false);
       await onAfterCapture?.();
+      // Clear stable bankDetails after capture
+      setTimeout(() => setStableBankDetails(null), 100);
     }
   };
 
-  const handleDownload = () => captureAndRun(onDownload);
-  const handleShare = () => captureAndRun(onShare);
+  // Use stable bankDetails during capture, otherwise use current bankDetails
+  const displayBankDetails = isCapturing && stableBankDetails ? stableBankDetails : bankDetails;
+
+  useImperativeHandle(ref, () => ({
+    capture: captureAndRun,
+    isCapturing,
+  }));
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -94,37 +114,44 @@ const ReceiveQRCard: FC<IReceiveQRCardProps> = ({
             <SvgIcons.CopyOutlineBlack width={20} height={20} />
           </TouchableOpacity>
         </View>
+        {
+          displayBankDetails && (
+            <View style={styles.bankDetailsRow}>
+              {displayBankDetails}
+            </View>
+          )
+        }
       </ViewShot>
 
       <View style={styles.buttonsRow}>
-        {showDownloadButton && onDownload && (
+        {leftButton && (
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={handleDownload}
+            onPress={leftButton.onPress}
             activeOpacity={0.7}
           >
-            <SvgIcons.DownloadBlack width={20} height={20} />
+            {leftButton.icon}
             <CustomText variant="body2" fontWeight="medium" style={styles.actionText}>
-              Download
+              {leftButton.text}
             </CustomText>
           </TouchableOpacity>
         )}
-        {showShareButton && onShare && (
+        {rightButton && (
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={handleShare}
+            onPress={rightButton.onPress}
             activeOpacity={0.7}
           >
-            <SvgIcons.ShareIcon width={20} height={20} />
+            {rightButton.icon}
             <CustomText variant="body2" fontWeight="medium" style={styles.actionText}>
-              Share
+              {rightButton.text}
             </CustomText>
           </TouchableOpacity>
         )}
       </View>
     </View>
   );
-};
+});
 
 export default ReceiveQRCard;
 
@@ -155,6 +182,16 @@ const getStyles = (theme: any) =>
       justifyContent: "center",
       alignItems: "center",
       marginBottom: 16,
+    },
+    bankDetailsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      marginVertical: 10
+    },
+    bankDetailsText: {
+      color: theme.colors.palette.black,
     },
     logoOverlay: {
       position: "absolute",

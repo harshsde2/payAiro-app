@@ -41,6 +41,8 @@ export default function Notification() {
     refetch: refetchNotifications,
   } = useNotifications(true);
 
+  console.log("notificationsResponse", JSON.stringify(notificationsResponse, null, 2));
+
   // Extract notifications from response
   const notifications = notificationsResponse?.data || [];
   const errorMessage = isError

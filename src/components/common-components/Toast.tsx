@@ -135,6 +135,7 @@ const CustomToast: React.FC<ICustomToastProps> = ({
         {displayText2 && (
           <CustomText
             variant="body2"
+            size={11}
             style={[
               styles.message,
               {

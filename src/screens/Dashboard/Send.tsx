@@ -226,7 +226,7 @@ const Send: React.FC<ISendProps> = ({ route }) => {
                 placeholder="PayAiroTag, Phone, Email"
                 rightIcon={type === "requested" ? "" : SVGScan}
                 onRightIconClick={() => {
-                  navigation.navigate(NAVIGATION_SCREENS.SCANS);
+                  navigation.navigate('MainTabs', { screen: NAVIGATION_SCREENS.SCANS });
                   // Active tab is now handled automatically by App.js navigation listener
                 }}
                 value={sender}

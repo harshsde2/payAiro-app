@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import HeaderTitle from "components/HeaderTitle";
 import GenericButton from "components/GenericButton";
-import { setPin } from "storage/mmkv";
+import { getPin, setPin } from "storage/mmkv";
 import { ScreenContainer } from "HOC";
 import { globalStyles, useGlobalStyles } from "styles/GlobalStyles";
 import { showError, showSuccess } from "utils/toast";
@@ -83,12 +83,12 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
     useRef<TextInput>(null),
   ];
 
-  const handleGoBack = async () => {
+  const handleGoBack =  () => {
     if (navigation.canGoBack()) {
-      await navigation.goBack();
       setTimeout(() => {
+        navigation.goBack();
         lockApp();
-      }, 100);
+      }, 2000);
     } else {
 
     }
@@ -120,7 +120,7 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
       {
         onSuccess: (data) => {
           console.log("OTP sent successfully:", data);
-          showSuccess("OTP sent to your registered email");
+          showSuccess("OTP sent to your registered email.", "Please enter the OTP to verify your email.");
           setShowVerifyModal(true);
         },
         onError: (err: any) => {
@@ -153,7 +153,7 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
         setOtp(["", "", "", "", "", ""]);
         setShowVerifyModal(false);
         setIsUserVerified(true);
-        showSuccess("Email verified successfully. You can now reset your PIN.");
+        showSuccess("Email verified successfully.", "You can now reset your PIN.");
       },
       onError: (err: any) => {
         console.log(
@@ -186,6 +186,13 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
       return;
     }
 
+    const currentUserPin = getPin();
+    if (currentUserPin && newPin.join("") === currentUserPin) {
+      // showError("New PIN cannot be the same as your current PIN");
+      setNewPinError("New PIN cannot be the same as your current PIN");
+      return;
+    }
+
     setShowLoader(true);
     const payload = { new_pin: newPin.join("") };
 
@@ -195,7 +202,7 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
         setPin(confirmPin.join(""));
         refreshPinStatus();
         console.log("PIN reset successfully:", JSON.stringify(data.data, null, 2));
-        showSuccess("PIN reset successfully");
+        showSuccess("PIN reset successfully.", "You can now use your new PIN to login.");
         setConfirmPin(["", "", "", ""]);
         setNewPin(["", "", "", ""]);
         setIsUserVerified(false);
@@ -273,12 +280,23 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
 
   // Handler for new PIN input
   const handleNewPinChange = (val: string, index: number) => {
-    let tempPin = [...newPin];
+    const tempPin = [...newPin];
     tempPin[index] = val;
     setNewPin(tempPin);
 
     if (newPinError) {
       setNewPinError("");
+    }
+
+    // Check if new PIN matches current PIN (only when all 4 digits are entered)
+    const updatedPin = tempPin.join("");
+    if (updatedPin.length === 4) {
+      const currentUserPin = getPin();
+      if (currentUserPin && updatedPin === currentUserPin) {
+        setNewPinError("New PIN cannot be the same as your current PIN");
+      } else {
+        setNewPinError("");
+      }
     }
 
     if (val && newPinRefs[index + 1]) {
@@ -297,9 +315,10 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
           newPinRefs[index - 1].current?.focus();
         }
       } else {
-        let tempPin = [...newPin];
+        const tempPin = [...newPin];
         tempPin[index] = "";
         setNewPin(tempPin);
+        setNewPinError("");
       }
     }
   };
@@ -542,18 +561,19 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
               </View>
             )}
           </View>
+          {/* Save PIN Button - Only shown after email verification */}
+          {isUserVerified && (
+            <GenericButton
+              onPress={handleResetPin}
+              title="Reset PIN"
+              cStyle={{ width: "90%", alignSelf: "center" }}
+              showLoader={true}
+              isLoading={showLoader || isPendingResetPin}
+              disabled={!!newPinError}
+            />
+          )}
         </View>
 
-        {/* Save PIN Button - Only shown after email verification */}
-        {isUserVerified && (
-          <GenericButton
-            onPress={handleResetPin}
-            title="Reset PIN"
-            cStyle={{ width: "90%", alignSelf: "center" }}
-            showLoader={true}
-            isLoading={showLoader || isPendingResetPin}
-          />
-        )}
       </KeyboardAvoidingView>
     </ScreenContainer>
   );
