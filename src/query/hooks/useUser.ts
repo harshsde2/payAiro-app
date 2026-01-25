@@ -1,9 +1,16 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import { apiClient } from "../../api";
 import { AUTH } from "../../api/endpoints";
 import { ApiResponse, User } from "../../api/types";
 import { queryStaleTime } from "query/queryConfigs";
 import useSelectorAction from "hooks/useSelectorAction";
+import { INotificationsResponse } from "./types";
+import { kycKeys } from "./useKyc";
 
 // Query keys
 export const userKeys = {
@@ -11,6 +18,10 @@ export const userKeys = {
   contacts: () => [...userKeys.all, "contacts"] as const,
   profile: () => [...userKeys.all, "profile"] as const,
   notifications: () => [...userKeys.all, "notifications"] as const,
+  unreadNotificationsCount: () =>
+    [...userKeys.all, "unread_notifications_count"] as const,
+  notificationsPaginated: (pageSize: number) =>
+    [...userKeys.all, "notifications_paginated", pageSize] as const,
   pin: () => [...userKeys.all, "pin"] as const,
   fiatDashboard: () => [...userKeys.all, "fiat_dashboard"] as const,
   WallerDashboard: () => [...userKeys.all, "wallet_dashboard"] as const,
@@ -277,6 +288,89 @@ export const useNotifications = (enabled: boolean = true) => {
     },
     staleTime: queryStaleTime.VERY_FAST_STALE_TIME,
     enabled,
+  });
+};
+
+export const useNotificationsPaginated = (
+  pageSize: number = 12,
+  enabled: boolean = true
+) => {
+  return useInfiniteQuery<INotificationsResponse, Error>({
+    queryKey: userKeys.notificationsPaginated(pageSize),
+    initialPageParam: 1,
+    queryFn: async ({ pageParam = 1 }) => {
+      const query = `?page=${pageParam}&page_size=${pageSize}`;
+      const response = await apiClient.get<INotificationsResponse>(
+        `${AUTH.NOTIFICATIONS}${query}`
+      );
+      return response;
+    },
+    getNextPageParam: (lastPage) => {
+      // Use pagination.has_next to determine if there's more data
+      if (lastPage?.pagination?.has_next) {
+        return lastPage.pagination.current_page + 1;
+      }
+      return undefined;
+    },
+    staleTime: queryStaleTime.VERY_FAST_STALE_TIME,
+    enabled,
+  });
+};
+
+export const useUnreadNotificationsCount = (enabled: boolean = true) => {
+  return useQuery<ApiResponse<{ unread_count: number }>>({
+    queryKey: userKeys.unreadNotificationsCount(),
+    queryFn: async () => {
+      return await apiClient.get<ApiResponse<{ unread_count: number }>>(
+        AUTH.UNREAD_NOTIFICATIONS_COUNT
+      );
+    },
+    staleTime: queryStaleTime.VERY_FAST_STALE_TIME,
+    enabled,
+  });
+};
+
+export const useMarkAllNotificationsRead = () => {
+  const queryClient = useQueryClient();
+  return useMutation<ApiResponse<{ status: boolean; message: string; updated_count: number }>>({
+    mutationFn: async () => {
+      return await apiClient.post<ApiResponse<{ status: boolean; message: string; updated_count: number }>>(
+        AUTH.MARK_ALL_NOTIFICATIONS_READ,
+        {},
+        false
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.unreadNotificationsCount() });
+      queryClient.invalidateQueries({ queryKey: userKeys.notifications() });
+    },
+  });
+};
+
+/**
+ * Hook to upload profile photo (FormData) to server.
+ * Works on both iOS and Android.
+ * After successful upload, invalidates relevant queries to trigger refetch.
+ */
+export const useUploadProfilePhoto = () => {
+  const queryClient = useQueryClient();
+  return useMutation<ApiResponse<any>, Error, FormData>({
+    mutationFn: async (formData) => {
+      return await apiClient.post<ApiResponse<any>>(
+        AUTH.UPLOAD_PROFILE_PHOTO,
+        formData,
+        true // isFormData flag to set correct Content-Type header
+      );
+    },
+    onSuccess: () => {
+      // Invalidate all queries that might contain profile photo data
+      queryClient.invalidateQueries({ queryKey: userKeys.profile() });
+      queryClient.invalidateQueries({ queryKey: userKeys.fiatDashboard() });
+      queryClient.invalidateQueries({ queryKey: userKeys.WallerDashboard() });
+      queryClient.invalidateQueries({ queryKey: kycKeys.submission() });
+      // Invalidate wallet details to refetch updated profile_photo
+      queryClient.invalidateQueries({ queryKey: ["wallet", "details"] });
+    },
   });
 };
 

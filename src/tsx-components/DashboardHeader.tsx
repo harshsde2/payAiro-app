@@ -2,16 +2,14 @@ import { useNavigation } from "@react-navigation/native";
 import { SvgIcons } from "constants/svgs";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSelector } from "react-redux";
 import { useTheme } from "../styles/ThemeContext";
-import { useNotifications } from "query/hooks/useUser";
-
-
-interface DashboardHeaderProps {
-  name?: string;
-  style?: ViewStyle;
-}
+import {
+  useMarkAllNotificationsRead,
+  useUnreadNotificationsCount,
+} from "query/hooks/useUser";
+import { DashboardHeaderProps } from "./types";
 
 const DashboardHeader: React.FC<DashboardHeaderProps> = ({ name, style }) => {
   // Navigation hook
@@ -26,6 +24,11 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ name, style }) => {
   // Create styles with theme
   const styles = createStyles(theme);
 
+  // Convert HTTP to HTTPS for iOS ATS compliance
+  const profilePhotoUri = walletData?.profile_photo
+    ? walletData.profile_photo.replace(/^http:\/\//i, "https://")
+    : null;
+
   const getInitials = (name: string) => {
     if (!name) return "";
     const names = name.trim().split(" ");
@@ -36,41 +39,51 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ name, style }) => {
     return initials;
   };
 
-  const {
-    data: notificationsResponse,
-    isLoading,
-    isError,
-    error,
-    refetch: refetchNotifications,
-  } = useNotifications(true);
+  const { data: unreadCountResponse } = useUnreadNotificationsCount(true);
+  const { mutateAsync: markAllNotificationsRead } =
+    useMarkAllNotificationsRead();
 
-  const notifications = notificationsResponse?.data || [];
+
+    
+    const unreadCount = unreadCountResponse?.data?.unread_count ?? 0;
+    console.log("unreadCount =>", JSON.stringify(unreadCount, null, 2));
+    
+  const handleNotificationsPress = async () => {
+    try {
+      await markAllNotificationsRead();
+    } catch (err) {
+      // Keep navigation responsive even if mark-all fails.
+    }
+    navigation.navigate(NAVIGATION_SCREENS.NOTIFICATION as never);
+  };
 
   // console.log('Theme spacing:', theme.spacing);
-  // console.log("PayAiorRoundIcon", JSON.stringify(walletData,null,2));
+  console.log("PayAiro Dashboard Header =>", JSON.stringify(walletData,null,2));
 
   return (
     <View style={[styles.container, style]}>
       <View style={styles.leftSection}>
         <TouchableOpacity style={styles.avatarContainer} onPress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL as never)}>
-          <Text style={styles.avatarText}>
-            {getInitials(walletData?.name || name || "")}
-          </Text>
+          {profilePhotoUri ? (
+            <Image source={{ uri: profilePhotoUri }} style={styles.avatarImage} />
+          ) : (
+            <Text style={styles.avatarText}>
+              {getInitials(walletData?.name || name || "")}
+            </Text>
+          )}
         </TouchableOpacity>
         <View style={styles.textContainer}>
           <Text style={styles.welcomeText}>Welcome Back,</Text>
           <Text style={styles.nameText}>{walletData?.name || ""}</Text>
         </View>
       </View>
-      {notifications.length > 0 && (
+      {unreadCount > 0 && (
         <View style={styles.notificationContainer}>
-          <Text style={styles.notificationText}>{notifications.length}</Text>
+          <Text style={styles.notificationText}>{unreadCount}</Text>
         </View>
       )}
       <SvgIcons.NotificationIcon
-        onPress={() =>
-          navigation.navigate(NAVIGATION_SCREENS.NOTIFICATION as never)
-        }
+        onPress={handleNotificationsPress}
       />
     </View>
   );
@@ -88,6 +101,12 @@ const createStyles = (theme: any) =>
       // backgroundColor: theme.colors.palette.green50,
       // borderBottomWidth: 1,
       // borderBottomColor: theme.colors.palette.green100,
+    },
+    avatarImage: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      resizeMode: "cover",
     },
     leftSection: {
       flexDirection: "row",
