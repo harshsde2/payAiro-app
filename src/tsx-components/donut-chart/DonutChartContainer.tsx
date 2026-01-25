@@ -29,7 +29,7 @@ export const DonutChartContainer = ({ n, index, portfolioBreakdownData }: DonutC
   const baseGap = 0.070; // 0.5% base gap
   const dynamicGap = actualN > 4 ? baseGap : Math.max(baseGap, 0.01 / actualN);
 
-  console.log('portfolioBreakdownData in DonutChartContainer', JSON.stringify(portfolioBreakdownData, null, 2));
+  // console.log('portfolioBreakdownData in DonutChartContainer', JSON.stringify(portfolioBreakdownData, null, 2));
   const adjustDecimalsForVisibility = (decimals: number[]): number[] => {
     const minDecimal = MIN_SEGMENT_SIZE; // 3% minimum
     const adjustedDecimals = [...decimals];

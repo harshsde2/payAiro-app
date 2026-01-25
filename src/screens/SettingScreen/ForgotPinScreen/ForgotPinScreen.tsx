@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -64,6 +64,7 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
   const [showLoader, setShowLoader] = useState<boolean>(false);
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const inputs = useRef<(TextInput | null)[]>([]);
+  const hasAutoVerifiedRef = useRef(false);
 
   const [showVerifyModal, setShowVerifyModal] = useState<boolean>(false);
   const [isUserVerified, setIsUserVerified] = useState<boolean>(false);
@@ -351,6 +352,20 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
       }
     }
   };
+
+  const isOtpComplete = otp.every((digit) => digit !== "");
+
+  useEffect(() => {
+    if (!isOtpComplete) {
+      hasAutoVerifiedRef.current = false;
+      return;
+    }
+    if (hasAutoVerifiedRef.current || !showVerifyModal || isPendingVerifyOtp) {
+      return;
+    }
+    hasAutoVerifiedRef.current = true;
+    handleVerifyOtp();
+  }, [isOtpComplete, showVerifyModal, isPendingVerifyOtp]);
 
   return (
     <ScreenContainer scrollable safeArea padding={0}>

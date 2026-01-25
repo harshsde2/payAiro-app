@@ -252,7 +252,7 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
   }, [categoryPercentages]);
 
 
-  console.log("formattedPieChartData =>", JSON.stringify(formattedPieChartData, null, 2));
+  // console.log("formattedPieChartData =>", JSON.stringify(formattedPieChartData, null, 2));
 
   // Transform formattedPieChartData for DonutChart
   const donutChartData = useMemo(() => {
@@ -419,7 +419,7 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
     refetchPendingPaymentRequests();
   }, [refetch, refetchPendingPaymentRequests]);
 
-  console.log("formattedPieChartData =>", JSON.stringify(formattedPieChartData, null, 2));
+  // console.log("formattedPieChartData =>", JSON.stringify(formattedPieChartData, null, 2));
 
   return (
     <ScreenContainer padding={0} backgroundColor={theme.colors.background.primary}>
@@ -501,7 +501,7 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
             </> */}
             <>
             {isCrypto && donutChartData && (
-              <DashboardSection titleStyle={{color: theme.colors.text.primary}} style={{ marginTop: 20 ,backgroundColor: theme.colors.card.background,paddingHorizontal:10,paddingVertical:10, borderRadius: 10}} title="Transaction Summary">
+              <DashboardSection titleStyle={{color: theme.colors.text.primary}} style={{ backgroundColor: theme.colors.card.background,paddingHorizontal:10,paddingVertical:10, borderRadius: 10}} title="Transaction Summary">
                 <DonutChartContainer portfolioBreakdownData={donutChartData} index={0} n={0} />
               </DashboardSection>
             )}

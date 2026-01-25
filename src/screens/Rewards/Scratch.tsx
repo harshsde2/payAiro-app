@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Pressable, StyleSheet, ActivityIndicator, ScrollView } from "react-native";
+import { View, Pressable, StyleSheet, ActivityIndicator, ScrollView, Dimensions } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "../../components/HeaderTitle";
@@ -28,11 +28,11 @@ const formatAmount = (value: number | undefined | null, decimals: number = 2): s
 // Helper function to safely format dates
 const formatDate = (dateString: string | null | undefined): string => {
   if (!dateString) return "N/A";
-  
+
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return "Invalid date";
-    
+
     return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -44,6 +44,8 @@ const formatDate = (dateString: string | null | undefined): string => {
     return "Invalid date";
   }
 };
+
+const { width: ScreenWidth } = Dimensions.get("window");
 
 const Scratch: React.FC = () => {
   const { theme } = useTheme();
@@ -131,7 +133,7 @@ const Scratch: React.FC = () => {
           const card = scratchCardsData?.data?.cards?.find((c) => c.id === cardId);
           const rewardAmount = card?.reward_amount ?? selectedCard?.reward_amount ?? 0;
           setSelectedReward(rewardAmount);
-          
+
           // Don't close scratch modal or show congratulations modal here
           // ScratchCardModal already shows the reward when 40% is scratched
           // User will close the modal manually after seeing the result
@@ -269,11 +271,11 @@ const Scratch: React.FC = () => {
                 </CustomText>
               </View>
               <CustomText
-                variant="h2"
+                variant="h4"
                 fontWeight="bold"
                 color={theme.colors.palette.white}
               >
-                {formatAmount(balanceData.points)}
+                {balanceData.points}
               </CustomText>
             </View>
             <View style={styles(theme).balanceItem}>
@@ -288,7 +290,7 @@ const Scratch: React.FC = () => {
                 </CustomText>
               </View>
               <CustomText
-                variant="h2"
+                variant="h4"
                 fontWeight="bold"
                 color={theme.colors.palette.white}
               >
@@ -326,7 +328,7 @@ const Scratch: React.FC = () => {
               {scratchCardsData.data.cards.map((card) => {
                 const isCurrentlyScratching =
                   scratchCardMutation.isPending && scratchingCardId === card.id;
-                
+
                 const isCardDisabled = !card.can_scratch || card.is_scratched || isCurrentlyScratching;
 
                 return (
@@ -335,83 +337,22 @@ const Scratch: React.FC = () => {
                     style={[
                       styles(theme).rewardCard,
                       isCardDisabled &&
-                        styles(theme).rewardCardDisabled,
+                      styles(theme).rewardCardDisabled,
                     ]}
                     onPress={() => handleOpenScratchModal(card)}
                     disabled={isCardDisabled}
                   >
-                    <View style={styles(theme).rewardCardHeader}>
-                      <View style={styles(theme).rewardIconContainer}>
-                        <SvgIcons.RewardsGifts width={24} height={24} />
-                      </View>
-                      <CustomText
-                        variant="h4"
-                        fontWeight="semiBold"
-                        style={styles(theme).rewardCardTitle}
-                      >
-                        {card.title}
-                      </CustomText>
+                    <View style={styles(theme).pointsTextContainer}>
+                    <CustomText
+                      variant="h2"
+                      fontWeight="bold"
+                      color={theme.colors.palette.white}
+                      style={styles(theme).pointsText}
+                    >
+                      {card.points_required} Points
+                    </CustomText>
                     </View>
-                    <View style={styles(theme).rewardCardInner}>
-                      {isCurrentlyScratching ? (
-                        <View style={styles(theme).scratchingContainer}>
-                          <ActivityIndicator
-                            size="large"
-                            color={theme.colors.palette.yellow500}
-                          />
-                          <CustomText
-                            variant="body1"
-                            color={theme.colors.palette.white}
-                            style={styles(theme).scratchingText}
-                          >
-                            Scratching...
-                          </CustomText>
-                        </View>
-                      ) : (
-                        <>
-                          <View style={styles(theme).dotsContainer}>
-                            <View style={styles(theme).dot} />
-                            <View style={styles(theme).dot} />
-                            <View style={styles(theme).dot} />
-                          </View>
-                          <CustomText
-                            variant="body1"
-                            color={theme.colors.palette.white}
-                            style={styles(theme).unlockText}
-                          >
-                            Unlock a reward with
-                          </CustomText>
-                          <CustomText
-                            variant="h2"
-                            fontWeight="bold"
-                            color={theme.colors.palette.white}
-                            style={styles(theme).pointsText}
-                          >
-                            {card.points_required} Points
-                          </CustomText>
-                          <CustomText
-                            variant="body2"
-                            color={theme.colors.palette.yellow200}
-                            style={styles(theme).scratchText}
-                          >
-                            {card.is_scratched
-                              ? "Already scratched"
-                              : card.can_scratch
-                              ? "Scratch to reveal your prize"
-                              : "Not enough points"}
-                          </CustomText>
-                          {card.is_scratched && (
-                            <CustomText
-                              variant="body2"
-                              color={theme.colors.palette.white}
-                              style={styles(theme).rewardAmountText}
-                            >
-                              Reward: ${formatAmount(card.reward_amount)}
-                            </CustomText>
-                          )}
-                        </>
-                      )}
-                    </View>
+                    <SvgIcons.UnlockRewards width={ScreenWidth * 0.6} height={ScreenWidth * 0.6} />
                   </Pressable>
                 );
               })}
@@ -733,10 +674,10 @@ const styles = (theme: any) =>
       paddingVertical: theme.spacing.spacing[2],
     },
     rewardCard: {
-      backgroundColor: theme.colors.palette.yellow500,
-      borderRadius: 20,
-      padding: theme.spacing.spacing[4],
-      width: 280,
+      position: "relative",
+      borderRadius: 0,
+      width: ScreenWidth * 0.6,
+      height: ScreenWidth * 0.6,
       marginRight: theme.spacing.spacing[3],
     },
     rewardCardHeader: {
@@ -780,9 +721,20 @@ const styles = (theme: any) =>
     pointsText: {
       marginBottom: theme.spacing.spacing[3],
       fontSize: 28,
+      position: "absolute",
+      top: 40,
+      left: (ScreenWidth * 0.6) / 2 - 80,
+      color: theme.colors.palette.green800,
+      zIndex: 1000,
     },
     scratchText: {
       fontSize: 14,
+    },
+    pointsTextContainer: {
+      position: 'absolute',
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: 'red',
     },
     rewardAmountText: {
       marginTop: theme.spacing.spacing[2],

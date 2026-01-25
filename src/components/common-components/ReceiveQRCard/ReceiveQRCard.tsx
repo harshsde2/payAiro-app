@@ -17,9 +17,12 @@ const LOGO_ICON_SIZE = 26;
 
 const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
   title,
+  titleIcon,
   subtitle,
   qrValue,
   payAiroTag,
+  tagLabel,
+  tagValueStyle,
   onCopyTag,
   containerStyle,
   leftButton,
@@ -34,6 +37,7 @@ const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
   const styles = getStyles(theme);
   const [isCapturing, setIsCapturing] = useState(false);
   const [stableBankDetails, setStableBankDetails] = useState<React.ReactNode>(null);
+  const tagLabelText = tagLabel || "PayAiro Tag:";
 
   const qrString =
     typeof qrValue === "string" ? qrValue : JSON.stringify(qrValue);
@@ -84,15 +88,17 @@ const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
         options={{ format: "png", quality: 0.9, result: "tmpfile" }}
         style={styles.viewShot}
       >
-        <CustomText variant="h3" fontWeight="bold" style={styles.title}>
-          {title}
-        </CustomText>
-        <CustomText
-          variant="body2"
-          style={[styles.subtitle, { color: theme.colors.palette.green700 }]}
-        >
-          {subtitle}
-        </CustomText>
+        <View style={styles.titleRow}>
+          {titleIcon && <View style={styles.titleIcon}>{titleIcon}</View>}
+          <CustomText variant="h3" fontWeight="bold" style={styles.title}>
+            {title}
+          </CustomText>
+        </View>
+        {Boolean(subtitle) && (
+          <CustomText variant="body2" style={styles.subtitle}>
+            {subtitle}
+          </CustomText>
+        )}
 
         <View style={styles.qrWrapper}>
           <QRCode value={qrString} size={QR_SIZE} />
@@ -107,8 +113,20 @@ const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
         </View>
 
         <View style={styles.tagRow}>
-          <CustomText variant="body2" fontWeight="medium" style={styles.tagText}>
-            PayAiro Tag: {payAiroTag}
+          <CustomText variant="body2" fontWeight="medium" style={styles.tagLabel}>
+            {tagLabelText}
+          </CustomText>
+          <CustomText
+            variant="body2"
+            fontWeight="semiBold"
+            numberOfLines={1}
+            ellipsizeMode="middle"
+            style={[
+              styles.tagValue,
+              tagValueStyle,
+            ]}
+          >
+            {payAiroTag}
           </CustomText>
           <TouchableOpacity onPress={onCopyTag} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <SvgIcons.CopyOutlineBlack width={20} height={20} />
@@ -167,14 +185,27 @@ const getStyles = (theme: any) =>
       borderRadius: 12,
       alignItems: "center",
     },
+    titleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      marginBottom: 8,
+    },
+    titleIcon: {
+      width: 24,
+      height: 24,
+      alignItems: "center",
+      justifyContent: "center",
+    },
     title: {
       color: theme.colors.palette.black,
-      marginBottom: 8,
       textAlign: "center",
     },
     subtitle: {
       marginBottom: 20,
       textAlign: "center",
+      color: theme.colors.palette.green700,
     },
     qrWrapper: {
       width: QR_SIZE,
@@ -209,8 +240,12 @@ const getStyles = (theme: any) =>
       justifyContent: "center",
       gap: 8,
     },
-    tagText: {
+    tagLabel: {
       color: theme.colors.palette.black,
+    },
+    tagValue: {
+      color: theme.colors.palette.black,
+      flexShrink: 1,
     },
     buttonsRow: {
       flexDirection: "row",

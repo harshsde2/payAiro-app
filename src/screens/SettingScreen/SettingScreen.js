@@ -28,14 +28,16 @@ import { clearAll } from "storage/mmkv";
 import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
 import { resetAppState } from "utils/configs";
 import {
-  setLogin
+  setLogin,
+  setWalletData
 } from "../../redux/slices/authenticationSlice";
 import {
   setKYCAcceopted,
   setPin,
   setWalletDataAuth
 } from "../../services/Auth";
-import { useKyc } from "../../query/hooks";
+import { useKyc, useUploadProfilePhoto, useWalletDetails } from "../../query/hooks";
+import { setItem, STORAGE_KEYS } from "../../storage/mmkv";
 import { toKycMode } from "types/kyc";
 import HeaderTitle from "components/HeaderTitle";
 import { ProfileHeader } from "components/common-components/ProfileHeader";
@@ -45,6 +47,7 @@ import { showError, showSuccess } from "../../utils/toast";
 
 export default function SettingScreen() {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const [isVisible, setIsVisible] = useState(false);
   const { tokens, walletData } = useSelectorAction();
   const [kycStep, setKycStep] = useState("");
@@ -52,8 +55,10 @@ export default function SettingScreen() {
   const kycStatus = useSelector((s) => s.authenticationSlice?.kycStatus);
   const mode = useMemo(() => toKycMode(kycStatus), [kycStatus]);
   const { mutate: patchUser, isPending } = usePatchUserDetails();
-  // console.log("mode =>", mode);
-  // console.log("kyc step =>", JSON.stringify(kycStep, null, 2));
+  const { mutate: uploadProfilePhoto, isPending: isUploadingImage } = useUploadProfilePhoto();
+  
+  // Fetch wallet details - this will refetch when invalidated after profile photo upload
+  const { data: walletDetailsData } = useWalletDetails();
 
   // Map KYC mode to badge status
   const getKycBadgeStatus = (kycMode) => {
@@ -80,6 +85,16 @@ export default function SettingScreen() {
     }
   }, [kycData]);
 
+  // Update Redux and storage when wallet details are refetched (after profile photo upload)
+  useEffect(() => {
+    if (walletDetailsData?.data) {
+      const newWalletData = walletDetailsData.data;
+      dispatch(setWalletData(newWalletData));
+      setWalletDataAuth(newWalletData);
+      setItem(STORAGE_KEYS.WALLET_DATA, JSON.stringify(newWalletData));
+    }
+  }, [walletDetailsData, dispatch]);
+
   const handleLogout = async () => {
     resetAppState();
     setWalletDataAuth(null);
@@ -90,6 +105,30 @@ export default function SettingScreen() {
     setTimeout(() => {
       useDispatchAction(setLogin(false)); // optional, already in reset
     }, 100);
+  };
+
+  const handleProfileImageSelected = (payload) => {
+    const formData = new FormData();
+    
+    // React Native FormData requires specific structure for file uploads
+    formData.append("profile_photo", {
+      uri: payload.file.uri,
+      type: payload.file.type || "image/jpeg",
+      name: payload.file.fileName || "profile_photo.jpg",
+    });
+
+    uploadProfilePhoto(formData, {
+      onSuccess: () => {
+        showSuccess("Profile photo updated");
+      },
+      onError: () => {
+        showError("Failed to upload profile photo");
+      },
+    });
+  };
+
+  const handleImagePickerError = (msg) => {
+    showError(msg || "Failed to select image");
   };
 
   const handleStartKyc = () => {
@@ -150,6 +189,9 @@ export default function SettingScreen() {
             isKycPending={isPending}
             onProfilePress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL)}
             onQrPress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL)}
+            onProfileImageSelected={handleProfileImageSelected}
+            onImagePickerError={handleImagePickerError}
+            isUploadingImage={isUploadingImage}
           />
           <View
             style={{
@@ -177,7 +219,7 @@ export default function SettingScreen() {
                     if (item.name === "Logout") {
                       setIsVisible(true);
                       return;
-                    } else if (item.name === "Terms & Condition") {
+                    } else if (item.name === "Terms and Conditions") {
                       navigation.navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
                         url: require("../../assets/pdf/Terms_and_Conditions.pdf"),
                         isFileFromLocal: true,

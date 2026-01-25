@@ -49,7 +49,7 @@ export const useGetCrypto = () => {
     queryFn: async () => {
       return await apiClient.get<ApiResponse<any>>(url);
     },
-    staleTime: queryStaleTime.VERY_VERY_VERY_VERY_SLOW_STALE_TIME,
+    staleTime: 1000 * 60, // 24 hours
   });
 };
 

@@ -133,6 +133,8 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
     });
   };
 
+  console.log("selectedBalanceType =>", selectedBalanceType);
+
   // Get balance based on selected type and mode
   const currentBalance = useMemo(() => {
     if (balance !== undefined) {
@@ -175,12 +177,12 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
         case "Available":
           return Number(cryptoBalanceData?.usd_value_available || 0);
         case "Pending":
-          return Number(cryptoBalanceData?.usd_value_pending || 0);
+          return Number(cryptoBalanceData?.usd_value_available || 0);
         case "Total":
           return Number(
-            cryptoBalanceData?.usd_value_total ||
-              cryptoBalanceData?.rounded_balance ||
-              cryptoBalanceData?.platform_total_balance ||
+            cryptoBalanceData?.usd_value_available ||
+              cryptoBalanceData?.usd_value_available ||
+              cryptoBalanceData?.usd_value_available ||
               0
           );
         default:
@@ -335,6 +337,7 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
               style={styles.availableBadgeContainer}
               onPress={handleBadgeClick}
               activeOpacity={0.7}
+              disabled={!isCrypto}
             >
               <View style={styles.availableBadge}>
                 <CustomText
@@ -344,8 +347,12 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
                   fontFamily={theme.typography.fontFamily.bold}
                 >
                   {selectedBalanceType.toUpperCase()}
-                </CustomText>
-                <ChevronIcon color={currentTheme.accent} />
+                </CustomText> 
+                {
+                  isCrypto && (
+                    <ChevronIcon color={currentTheme.accent} />
+                  )
+                }
               </View>
             </TouchableOpacity>
 

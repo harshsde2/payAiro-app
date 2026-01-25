@@ -4,6 +4,7 @@ import {
   Alert,
   Image,
   Linking,
+  Modal,
   Platform,
   StyleSheet,
   Text,
@@ -21,6 +22,7 @@ import {
   pickImageFromGallery,
   PickedImageFile,
 } from "utils/ImagePicker";
+import { fileToBase64 } from "utils/fileToBase64";
 import type { IProfileHeaderProps, ImagePickerSource } from "./types";
 import { useAppLock } from "hooks/useAppLock";
 
@@ -34,19 +36,6 @@ const PICKER_ERROR_CODES = {
   PERMISSION_DENIED: "E_PERMISSION_MISSING",
   PERMISSION_MISSING_CAMERA: "E_PERMISSION_MISSING_CAMERA",
 } as const;
-
-/**
- * Creates a FormData object ready for API upload
- */
-const createFormData = (file: PickedImageFile): FormData => {
-  const formData = new FormData();
-  formData.append("profile_image", {
-    uri: Platform.OS === "ios" ? file.uri.replace("file://", "") : file.uri,
-    type: file.type || "image/jpeg",
-    name: file.name || `profile_${Date.now()}.jpg`,
-  } as any);
-  return formData;
-};
 
 /**
  * Opens device settings for the app
@@ -138,6 +127,7 @@ const ProfileHeader: FC<IProfileHeaderProps> = ({
   const styles = getStyles();
   const [isPickerActive, setIsPickerActive] = useState(false);
   const [localPreviewUri, setLocalPreviewUri] = useState<string | null>(null);
+  const [isImageViewerVisible, setIsImageViewerVisible] = useState(false);
 
   const { setNativeModalVisible} = useAppLock()
 
@@ -145,20 +135,28 @@ const ProfileHeader: FC<IProfileHeaderProps> = ({
   const showKycButton =
     showKycButtonProp !== false && kycMode === "not_started";
 
-  // Use local preview if available, otherwise fall back to KYC selfie image
+  // Priority: local preview > profile_photo from API > KYC selfie image
+  // Check if profile_photo exists and is a non-empty string
+  // Also convert HTTP to HTTPS for iOS ATS compliance
+  const rawProfilePhoto = walletData?.profile_photo;
+  const profilePhotoUri = 
+    rawProfilePhoto && typeof rawProfilePhoto === "string" && rawProfilePhoto.trim() !== ""
+      ? rawProfilePhoto.replace(/^http:\/\//i, "https://")
+      : null;
+  
   const kycImageUri = kycStep?.selfimage
     ? kycStep.selfimage.includes(imageBaseUrl)
       ? kycStep.selfimage
       : `${imageBaseUrl}${kycStep.selfimage}`
     : null;
 
-  const profileImageUri = localPreviewUri || kycImageUri;
+  const profileImageUri = localPreviewUri || profilePhotoUri || kycImageUri;
 
   const displayName =
     `${walletData?.name || ""} ${walletData?.last_name || ""}`.trim() || "User";
   const memberSince = walletData?.created_at
     ? moment(walletData.created_at).format("MMM YYYY")
-    : "Jan 2025";
+    : moment().format("MMM YYYY");
 
   /**
    * Processes the picked image and prepares it for API upload
@@ -187,13 +185,13 @@ const ProfileHeader: FC<IProfileHeaderProps> = ({
         // Set local preview immediately for instant feedback
         setLocalPreviewUri(pickedImage.uri);
 
-        // Create FormData for API upload
-        const formData = createFormData(pickedImage);
+        // Convert to base64 for API upload (iOS & Android compatible)
+        const base64 = await fileToBase64(pickedImage);
+        console.log("base64 =>", JSON.stringify(base64, null, 2));
 
-        // Notify parent component with the prepared payload
         onProfileImageSelected?.({
           file: pickedImage,
-          formData,
+          base64,
           source,
         });
       } catch (error: any) {
@@ -282,38 +280,81 @@ const ProfileHeader: FC<IProfileHeaderProps> = ({
     );
   }, [isPickerActive, isUploadingImage, handleCameraSelect, handleGallerySelect, setNativeModalVisible]);
 
+  /**
+   * Opens image in full screen viewer
+   */
+  const handleImagePress = useCallback((): void => {
+    if (profileImageUri) {
+      setIsImageViewerVisible(true);
+    }
+  }, [profileImageUri]);
+
+  /**
+   * Closes full screen image viewer
+   */
+  const handleCloseImageViewer = useCallback((): void => {
+    setIsImageViewerVisible(false);
+  }, []);
+
   const showCameraButton = showCameraButtonProp && !isPickerActive;
 
   return (
-    <View
-      style={[
-        styles.profileHeaderContainer,
-        { backgroundColor: theme.colors.palette.green50 },
-        containerStyle,
-      ]}
-    >
-      <View style={styles.profileContentRow}>
-        {/* Profile Picture Section */}
-        <View style={styles.profilePictureContainer}>
+    <>
+      {/* Full Screen Image Viewer Modal */}
+      <Modal
+        visible={isImageViewerVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCloseImageViewer}
+      >
+        <View style={styles.imageViewerContainer}>
           <TouchableOpacity
-            onPress={onProfilePress}
-            disabled={true}
-            style={[
-              styles.squircleContainer,
-              { backgroundColor: theme.colors.palette.green200 },
-            ]}
+            style={styles.imageViewerCloseButton}
+            onPress={handleCloseImageViewer}
+            activeOpacity={0.8}
           >
-            {profileImageUri ? (
-              <Image
-                source={{ uri: profileImageUri }}
-                style={styles.profileImage}
-              />
-            ) : (
-              <Text style={styles.profileInitials}>
-                {walletData?.name?.charAt(0)?.toUpperCase() || "?"}
-              </Text>
-            )}
+            <Text style={styles.imageViewerCloseText}>✕</Text>
           </TouchableOpacity>
+          {profileImageUri && (
+            <Image
+              source={{ uri: profileImageUri }}
+              style={styles.fullScreenImage}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
+
+      <View
+        style={[
+          styles.profileHeaderContainer,
+          { backgroundColor: theme.colors.palette.green50 },
+          containerStyle,
+        ]}
+      >
+        <View style={styles.profileContentRow}>
+          {/* Profile Picture Section */}
+          <View style={styles.profilePictureContainer}>
+            <TouchableOpacity
+              onPress={handleImagePress}
+              disabled={!profileImageUri}
+              style={[
+                styles.squircleContainer,
+                { backgroundColor: theme.colors.palette.green200 },
+              ]}
+              activeOpacity={0.7}
+            >
+              {profileImageUri ? (
+                <Image
+                  source={{ uri: profileImageUri }}
+                  style={styles.profileImage}
+                />
+              ) : (
+                <Text style={styles.profileInitials}>
+                  {walletData?.name?.charAt(0)?.toUpperCase() || "?"}
+                </Text>
+              )}
+            </TouchableOpacity>
           {showCameraButton && (
             <TouchableOpacity
               onPress={onCameraPress}
@@ -382,6 +423,7 @@ const ProfileHeader: FC<IProfileHeaderProps> = ({
         </View>
       )}
     </View>
+    </>
   );
 };
 
@@ -472,5 +514,32 @@ const getStyles = () =>
     },
     kycButtonText: {
       color: "#FFFFFF",
+    },
+    imageViewerContainer: {
+      flex: 1,
+      backgroundColor: "rgba(0, 0, 0, 0.95)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    imageViewerCloseButton: {
+      position: "absolute",
+      top: 50,
+      right: 20,
+      zIndex: 1,
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: "rgba(255, 255, 255, 0.3)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    imageViewerCloseText: {
+      color: "#FFFFFF",
+      fontSize: 24,
+      fontWeight: "bold",
+    },
+    fullScreenImage: {
+      width: "100%",
+      height: "100%",
     },
   });

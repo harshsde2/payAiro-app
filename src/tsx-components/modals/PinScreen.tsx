@@ -189,16 +189,11 @@ const PinScreen = forwardRef<PinScreenRef, PinScreenProps>(
                     : "ENTER PIN"}
                 </CustomText>
                 {!showPin ? (
-                  <SvgIcons.EyeOnGreenbg width={22} height={22} />
+                  <SvgIcons.EyeOnGreenbg onPress={handleShowAndHidePin} width={22} height={22} />
                 ) : (
-                  <SvgIcons.EyeOffGreenbg width={22} height={22} />
+                  <SvgIcons.EyeOffGreenbg onPress={handleShowAndHidePin} width={22} height={22} />
                 )}
-                <CustomText
-                  onPress={handleShowAndHidePin}
-                  style={styles.showText}
-                >
-                  SHOW
-                </CustomText>
+
               </View>
 
               <View style={styles.pinDotContainer}>

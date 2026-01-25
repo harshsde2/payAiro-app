@@ -104,14 +104,14 @@ export const SETTINGS_LISTS = [
   //   route: "AlertScreen",
   // },
   {
-    name: "Terms & Condition",
-    icon: <SvgIcons.TermsAndConditions />,
+    name: "Terms and Conditions",
+    icon: <SvgIcons.UserTerms width={55} height={55} />,
     isDisvled: false,
     route: "",
   },
   {
     name: "Cybrid User Agreement",
-    icon: <SvgIcons.TermsAndConditions />,
+    icon: <SvgIcons.UserPolicy width={55} height={55} />,
     isDisvled: false,
     route: "",
   },

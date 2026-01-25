@@ -35,6 +35,7 @@ const OTP = () => {
   const [resendEnabled, setResendEnabled] = useState<boolean>(false);
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const hasAutoVerifiedRef = useRef(false);
 
   const { mutate: sendOTP, isPending: isSendingOTP } = useSendOTP();
   const { mutate: verifyUserForSendOTP, isPending: isVerifyingOTP } =
@@ -198,6 +199,23 @@ const OTP = () => {
   };
 
   const isOtpComplete = otp.every((digit) => digit !== "");
+
+  useEffect(() => {
+    if (!isOtpComplete) {
+      hasAutoVerifiedRef.current = false;
+      return;
+    }
+    if (
+      hasAutoVerifiedRef.current ||
+      isVerifying ||
+      isVerifyingOTP ||
+      isSendingOTP
+    ) {
+      return;
+    }
+    hasAutoVerifiedRef.current = true;
+    handleVerifyOTP();
+  }, [isOtpComplete, isVerifying, isVerifyingOTP, isSendingOTP]);
 
   return (
     <ScreenContainer avoidKeyboard padding={0}>

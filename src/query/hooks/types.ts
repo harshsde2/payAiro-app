@@ -47,3 +47,36 @@ export interface IPendingPaymentRequestsResponse {
   received_pending_requests: IReceivedPendingRequest[];
   sent_pending_requests: ISentPendingRequest[];
 }
+
+export interface INotificationItem {
+  id: number;
+  title: string;
+  body: string;
+  data: Record<string, any>;
+  is_read: boolean;
+  created_at: string;
+  deeplink: string;
+  image: string;
+}
+
+export interface INotificationsPagination {
+  current_page: number;
+  page_size: number;
+  total_count: number;
+  total_pages: number;
+  has_next: boolean;
+  has_previous: boolean;
+}
+
+export interface INotificationsResponse {
+  data: INotificationItem[];
+  pagination: INotificationsPagination;
+}
+
+// Legacy type kept for compatibility
+export interface INotificationsPage {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: INotificationItem[];
+}

@@ -325,7 +325,7 @@ export const useUnreadNotificationsCount = (enabled: boolean = true) => {
         AUTH.UNREAD_NOTIFICATIONS_COUNT
       );
     },
-    staleTime: queryStaleTime.VERY_FAST_STALE_TIME,
+    staleTime:0,
     enabled,
   });
 };

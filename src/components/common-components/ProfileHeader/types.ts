@@ -11,6 +11,7 @@ export interface IWalletData {
   last_name?: string;
   username?: string;
   created_at?: string;
+  profile_photo?: string | null;
 }
 
 export interface IKycStep {
@@ -18,10 +19,10 @@ export interface IKycStep {
 }
 
 export interface IProfileImagePayload {
-  /** The picked image file ready for FormData upload */
+  /** The picked image file */
   file: PickedImageFile;
-  /** FormData object ready to send to API */
-  formData: FormData;
+  /** Base64-encoded image string for API upload (iOS & Android compatible) */
+  base64: string;
   /** Source of the image - 'camera' or 'gallery' */
   source: ImagePickerSource;
 }

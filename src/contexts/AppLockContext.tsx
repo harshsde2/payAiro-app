@@ -7,7 +7,7 @@ import { AppLockContextType } from 'types/appLock.types';
 // Create the context
 export const AppLockContext = createContext<AppLockContextType | undefined>(undefined);
 
-// Grace period constant (5 seconds in milliseconds)
+// Grace period constant (60 seconds in milliseconds)
 const GRACE_PERIOD_MS = 60000;
 
 // Provider props
@@ -74,6 +74,7 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
         // Only save timestamp if user has account + PIN
         const timestamp = Date.now();
         storage.set(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME, timestamp);
+        console.log('[AppLock] App going to background, saved timestamp:', timestamp);
       }
       
       // Coming to foreground - check grace period before locking
@@ -81,22 +82,27 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
         // Don't lock if a native modal was showing (permission dialog, share sheet, etc.)
         // The flag will be reset by the component that set it (with a delay)
         if (!isNativeModalVisibleRef.current) {
-          // Check if we're within the grace period (5 seconds)
+          // Check if we're within the grace period (60 seconds)
           const lastActiveTime = storage.getNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME);
           const currentTime = Date.now();
           
+          console.log('[AppLock] Checking grace period - lastActiveTime:', lastActiveTime, 'currentTime:', currentTime);
           if (lastActiveTime !== undefined) {
             const timeSinceLastActive = currentTime - lastActiveTime;
+            console.log('[AppLock] Time since last active:', timeSinceLastActive, 'ms (Grace period:', GRACE_PERIOD_MS, 'ms)');
             
-            // Only lock if more than 5 seconds have passed
+            // Only lock if more than 60 seconds have passed
             if (timeSinceLastActive >= GRACE_PERIOD_MS) {
+              console.log('[AppLock] Grace period EXPIRED - LOCKING APP');
               setIsLocked(true);
             } else {
               // Within grace period - update last active time and don't lock
+              console.log('[AppLock] Within grace period - NOT locking');
               storage.set(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME, currentTime);
             }
           } else {
             // No last active time found - lock immediately (first time or after logout)
+            console.log('[AppLock] No last active time found or invalid - LOCKING APP');
             setIsLocked(true);
           }
         }
@@ -121,14 +127,18 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
     if (shouldShowLock && !hasCheckedColdStart.current && wasLoggedInOnMount.current) {
       hasCheckedColdStart.current = true;
       
-      // Check if we're within the grace period (5 seconds)
+      // Check if we're within the grace period (60 seconds)
       const lastActiveTime = storage.getNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME);
       const currentTime = Date.now();
+      
+      console.log('[AppLock] Cold start - checking grace period - lastActiveTime:', lastActiveTime, 'currentTime:', currentTime);
       
       if (lastActiveTime !== undefined) {
         const timeSinceLastActive = currentTime - lastActiveTime;
         
-        // Only lock if more than 5 seconds have passed
+        console.log('[AppLock] Cold start - Time since last active:', timeSinceLastActive, 'ms (Grace period:', GRACE_PERIOD_MS, 'ms)');
+        
+        // Only lock if more than 60 seconds have passed
         if (timeSinceLastActive >= GRACE_PERIOD_MS) {
           console.log("AppLock: Cold start detected, locking app (grace period expired)");
           setIsLocked(true);

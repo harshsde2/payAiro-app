@@ -175,6 +175,8 @@ const UnifiedTransactionCard: React.FC<IUnifiedTransactionCardProps> = ({
     // For crypto transactions, prefer crypto icon, then profile photo
     const imageUrl = isCrypto && cryptoIcon ? cryptoIcon : profilePhoto;
 
+    // console.log("imageUrl =>", JSON.stringify(imageUrl, null, 2));
+
     if (imageUrl && imageUrl !== "null" && imageUrl !== "") {
       // Check if it's an SVG file
       const isSvg = imageUrl?.toLowerCase()?.endsWith(".svg");

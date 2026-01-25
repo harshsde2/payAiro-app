@@ -30,6 +30,10 @@ import { SvgIcons } from "constants/svgs";
 import CommonModal from "tsx-components/modals/CommonModal";
 import { useGlobalStyles } from "styles/GlobalStyles";
 
+const QR_SIZE = 200;
+const LOGO_OVERLAY_SIZE = 44;
+const LOGO_ICON_SIZE = 26;
+
 export default function Receive() {
   const navigation = useNavigation<any>();
   const { walletData, bankLists } = useSelectorAction() as any;
@@ -72,15 +76,15 @@ export default function Receive() {
       selectedItems.forEach(({ name }) => {
         switch (name) {
           case "Qr Code":
-            message += "📱 Scan the QR code to send money\n\n";
+            message += "Scan the QR code to send money\n\n";
             break;
           case "PayAiro Tag":
-            message += `🏷️ PayAiro Tag: ${walletData?.username}\n\n`;
+            message += `PayAiro Tag: ${walletData?.username}\n\n`;
             break;
           case "Bank Details":
             const bankData = bankLists?.[bankLists.length - 1];
             if (bankData) {
-              message += `🏦 Bank Details:\n`;
+              message += `Bank Details:\n`;
               message += `   Bank Name: ${bankData.bank_name || "N/A"}\n`;
               message += `   Routing Number: ${bankData.ref_code || "N/A"}\n`;
               message += `   Account Number: ${bankData.account_number || "N/A"}\n\n`;
@@ -154,7 +158,7 @@ export default function Receive() {
     }
   };
 
-  console.log("banks list ->",JSON.stringify(bankLists,null,2))
+  console.log("banks list ->", JSON.stringify(bankLists, null, 2))
   return (
     <ScreenContainer scrollable padding={0}>
       <HeaderTitle leftIcon={"true"} title={"QR Code"} />
@@ -247,10 +251,10 @@ export default function Receive() {
           borderRadius: 20,
         }}
       >
-        <ViewShot 
-          ref={viewShotRef} 
-          options={{ 
-            format: "png", 
+        <ViewShot
+          ref={viewShotRef}
+          options={{
+            format: "png",
             quality: 0.9,
             result: "tmpfile",
           }}
@@ -261,14 +265,30 @@ export default function Receive() {
             alignItems: "center",
           }}
         >
-          <QRCode 
+          <View style={styles.qrWrapper}>
+            <QRCode value={JSON.stringify({
+              type: "receive",
+              username: walletData?.username,
+              tag: walletData?.username,
+            })} size={QR_SIZE} />
+            <View
+              style={[
+                styles.logoOverlay,
+                { backgroundColor: theme.colors.palette.green700 },
+              ]}
+            >
+              <SvgIcons.PayairoWhiteLogo width={LOGO_ICON_SIZE} height={LOGO_ICON_SIZE} />
+            </View>
+          </View>
+
+          {/* <QRCode 
             value={JSON.stringify({
               type: "receive",
               username: walletData?.username,
               tag: walletData?.username,
             })} 
             size={200} 
-          />
+          /> */}
           {/* <Text style={{ 
             marginTop: 15, 
             fontSize: 14, 
@@ -328,7 +348,7 @@ export default function Receive() {
               Account Holder's Name
             </CustomText>
             <CustomText size={15} fontWeight="semiBold" variant="caption">
-              {bankLists[bankLists.length-1]?.account_name}
+              {bankLists[bankLists.length - 1]?.account_name}
             </CustomText>
           </View>
           <View
@@ -343,7 +363,7 @@ export default function Receive() {
               Routing Number
             </CustomText>
             <CustomText size={15} fontWeight="semiBold" variant="caption">
-              {bankLists[bankLists.length-1]?.ref_code}
+              {bankLists[bankLists.length - 1]?.ref_code}
             </CustomText>
           </View>
           <View
@@ -358,7 +378,7 @@ export default function Receive() {
               Account Number
             </CustomText>
             <CustomText size={15} fontWeight="semiBold" variant="caption">
-              {bankLists[bankLists.length-1]?.account_number}
+              {bankLists[bankLists.length - 1]?.account_number}
             </CustomText>
           </View>
         </View>
@@ -437,14 +457,21 @@ export default function Receive() {
                     alignItems: "center",
                   }}
                 >
-                  <QRCode
-                    value={JSON.stringify({
+                  <View style={styles.qrWrapper}>
+                    <QRCode value={JSON.stringify({
                       type: "receive",
                       username: walletData?.username,
                       tag: walletData?.username,
-                    })}
-                    size={200}
-                  />
+                    })} size={QR_SIZE} />
+                    <View
+                      style={[
+                        styles.logoOverlay,
+                        { backgroundColor: theme.colors.palette.green700 },
+                      ]}
+                    >
+                      <SvgIcons.PayairoWhiteLogo width={LOGO_ICON_SIZE} height={LOGO_ICON_SIZE} />
+                    </View>
+                  </View>
                 </View>
                 <CustomText
                   color="#FFFFFF"
@@ -459,7 +486,7 @@ export default function Receive() {
                   size={14}
                   style={{ marginBottom: 15, textAlign: "center" }}
                 >
-                  📱 Scan the QR code to send money
+                  Scan the QR code to send money
                 </CustomText>
               </>
             )}
@@ -469,7 +496,7 @@ export default function Receive() {
                 size={14}
                 style={{ marginBottom: 10, textAlign: "center" }}
               >
-                🏷️ PayAiro Tag: {walletData?.username}
+                PayAiro Tag: {walletData?.username}
               </CustomText>
             )}
             {checkedBoxArray.some((item) => item.name === "Bank Details" && item.isChecked) &&
@@ -481,7 +508,7 @@ export default function Receive() {
                     fontWeight="bold"
                     style={{ marginBottom: 10, textAlign: "center" }}
                   >
-                    🏦 Bank Details:
+                    Bank Details:
                   </CustomText>
                   <CustomText
                     color="#FFFFFF"
@@ -541,5 +568,22 @@ const customStyles = (theme: Theme) =>
     total: {
       fontWeight: "bold",
       color: "green",
+    },
+    logoOverlay: {
+      position: "absolute",
+      left: (QR_SIZE - LOGO_OVERLAY_SIZE) / 2,
+      top: (QR_SIZE - LOGO_OVERLAY_SIZE) / 2,
+      width: LOGO_OVERLAY_SIZE,
+      height: LOGO_OVERLAY_SIZE,
+      borderRadius: LOGO_OVERLAY_SIZE / 2,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    qrWrapper: {
+      width: QR_SIZE,
+      height: QR_SIZE,
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 16,
     },
   });

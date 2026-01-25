@@ -39,14 +39,15 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ name, style }) => {
     return initials;
   };
 
-  const { data: unreadCountResponse } = useUnreadNotificationsCount(true);
+  const { data: unreadCountResponse } = useUnreadNotificationsCount();
+
   const { mutateAsync: markAllNotificationsRead } =
     useMarkAllNotificationsRead();
 
 
     
     const unreadCount = unreadCountResponse?.data?.unread_count ?? 0;
-    console.log("unreadCount =>", JSON.stringify(unreadCount, null, 2));
+    console.log("unreadCount =>", JSON.stringify(unreadCountResponse, null, 2));
     
   const handleNotificationsPress = async () => {
     try {
@@ -58,7 +59,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ name, style }) => {
   };
 
   // console.log('Theme spacing:', theme.spacing);
-  console.log("PayAiro Dashboard Header =>", JSON.stringify(walletData,null,2));
+  // console.log("PayAiro Dashboard Header =>", JSON.stringify(walletData,null,2));
 
   return (
     <View style={[styles.container, style]}>

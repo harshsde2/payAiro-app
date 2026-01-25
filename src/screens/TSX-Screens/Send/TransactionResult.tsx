@@ -222,7 +222,7 @@ const TransactionResult: FC = () => {
       case 'success':
         return (
           <CustomText variant="h3" style={[styles.title, styles.successTitle]}>
-            Transaction Successful
+            Transaction Initiated
           </CustomText>
         );
       case 'failed':
@@ -262,7 +262,7 @@ const TransactionResult: FC = () => {
       case 'success':
         return (
           <CustomText variant="subtitle2" style={styles.description}>
-            Your transaction has been completed successfully!
+            Your transaction has been submitted and is being processed.
           </CustomText>
         );
       case 'failed':
@@ -396,7 +396,7 @@ const customStyles = (theme: Theme) =>
       width: "100%",
       justifyContent: "center",
       alignItems: "center",
-      paddingVertical: theme.spacing.spacing[4],
+      paddingVertical: theme.spacing.spacing[2],
     },
     lottieAnimation: {
       width: 250,

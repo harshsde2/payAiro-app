@@ -251,6 +251,7 @@ const WithdrawlBalance = () => {
                 backgroundColor: theme?.colors?.palette?.grey250,
                 flexDirection: "row",
                 alignItems: "center",
+                height: 50,
               }}
               onPress={() =>
                 navigation.navigate(NAVIGATION_SCREENS.BANK_SELECTION, {

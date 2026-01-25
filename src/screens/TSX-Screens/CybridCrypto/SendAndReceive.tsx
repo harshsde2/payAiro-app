@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
 import { useGlobalStyles } from "styles/GlobalStyles";
@@ -19,8 +19,9 @@ import { useNavigation } from "@react-navigation/native";
 import useSelectorAction from "hooks/useSelectorAction";
 import { defaultImage } from "utils/configs";
 import { SvgUri } from "react-native-svg";
+import { ICryptoItem, ITab } from "./types";
 
-const TABS = [
+const TABS: ITab[] = [
   {
     id: 0,
     title: "Send",
@@ -31,6 +32,25 @@ const TABS = [
   },
 ];
 
+// Memoized crypto logo component
+const CryptoLogo = React.memo<{ logo?: string }>(({ logo }) => {
+  if (!logo) return null;
+
+  if (logo.toLowerCase().endsWith(".svg")) {
+    return <SvgUri uri={logo} width={30} height={30} />;
+  }
+
+  return (
+    <Image
+      source={{ uri: logo }}
+      style={{ width: 30, height: 30 }}
+      resizeMode="contain"
+    />
+  );
+});
+
+CryptoLogo.displayName = "CryptoLogo";
+
 export default function SendAndReceive() {
   const { tokens } = useSelectorAction();
   const navigation = useNavigation<any>();
@@ -38,13 +58,103 @@ export default function SendAndReceive() {
   const { spacing, colors } = theme;
   const styles = { ...useGlobalStyles(), ...custonStyles(theme) };
   const [searchText, setSearchText] = useState("");
-  const [selectedTab, setSelectedTab] = useState(TABS[0]);
+  const [selectedTab, setSelectedTab] = useState<ITab>(TABS[0]);
 
   const { data, isPending, isFetched, isSuccess, isError, isFetching } =
     useGetCrypto();
 
-  // console.log("data => ", JSON.stringify(data?.data, null, 2));
-  // console.log("data => ", JSON.stringify(data, null, 2));
+  // Memoized styles to prevent recreation on every render
+  const tabContainerStyle = useMemo(
+    () => ({
+      width: "100%" as const,
+      backgroundColor: theme.colors.palette.green150,
+      flexDirection: "row" as const,
+      borderRadius: theme.spacing.spacing[5],
+    }),
+    [theme.colors.palette.green150, theme.spacing.spacing]
+  );
+
+  const cryptoItemStyle = useMemo(
+    () => ({
+      width: "100%" as const,
+      borderRadius: theme.spacing.spacing[3],
+      backgroundColor: theme.colors.palette.grey150,
+      padding: 10,
+      flexDirection: "row" as const,
+      marginVertical: 5,
+      borderColor: theme.colors.palette.grey300,
+      borderWidth: 1 / 2,
+      alignItems: "center" as const,
+    }),
+    [theme.spacing.spacing, theme.colors.palette]
+  );
+
+  const contentContainerStyle = useMemo(
+    () => ({
+      flex: 1,
+      paddingHorizontal: 10,
+      justifyContent: "center" as const,
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+    }),
+    []
+  );
+
+  // Memoized tab press handler
+  const handleTabPress = useCallback((tab: ITab) => {
+    setSelectedTab(tab);
+  }, []);
+
+  // Memoized keyExtractor for better list performance
+  const keyExtractor = useCallback((item: ICryptoItem) => item.symbol, []);
+
+  // Memoized renderItem to prevent re-renders
+  const renderCryptoItem = useCallback(
+    ({ item }: { item: ICryptoItem }) => {
+      const isSendTab = selectedTab.id === 0;
+      const price = isSendTab ? item.buy_price : item.sell_price;
+      const navigationScreen = isSendTab
+        ? NAVIGATION_SCREENS.CRYPTO_SEND
+        : NAVIGATION_SCREENS.CRYPTO_RECEIVE;
+
+      return (
+        <TouchableOpacity
+          onPress={() => {
+            navigation.navigate(navigationScreen, {
+              details: item,
+            });
+          }}
+          style={cryptoItemStyle}
+        >
+          <CryptoLogo logo={item?.logo} />
+          <View style={contentContainerStyle}>
+            <View style={{ flex: 1 }}>
+              <CustomText variant={"subtitle2"}>{item?.symbol}</CustomText>
+              <CustomText variant={"caption"}>
+                {item?.symbol.slice(0, 3)}
+              </CustomText>
+            </View>
+            <View>
+              <CustomText variant={"subtitle2"}>{`$${price}`}</CustomText>
+            </View>
+          </View>
+          <SvgIcons.ChevronRight />
+        </TouchableOpacity>
+      );
+    },
+    [selectedTab.id, navigation, cryptoItemStyle, contentContainerStyle]
+  );
+
+  // Memoized loading view
+  const loadingView = useMemo(
+    () => (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <CustomText variant="body2">Please wait....</CustomText>
+      </View>
+    ),
+    []
+  );
+
   return (
     <ScreenContainer padding={0}>
       <HeaderTitle leftIcon={"true"} title={"Crypto"} rightIcon={""} />
@@ -61,188 +171,53 @@ export default function SendAndReceive() {
         </View>
       </View> */}
       <View style={[styles.whiteSheetContainer]}>
-        <View
-          style={{
-            width: "100%",
-            backgroundColor: theme.colors.palette.green150,
-            flexDirection: "row",
-            borderRadius: theme.spacing.spacing[5],
-          }}
-        >
-          {TABS.map((tab, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                {
-                  width: "50%",
-                  borderRadius: theme.spacing.spacing[5],
-
-                  paddingVertical: theme.spacing.spacing[2],
-                  backgroundColor:
-                    selectedTab.id == index
+        <View style={tabContainerStyle}>
+          {TABS.map((tab, index) => {
+            const isSelected = selectedTab.id === index;
+            return (
+              <TouchableOpacity
+                key={tab.id}
+                style={[
+                  {
+                    width: "50%",
+                    borderRadius: theme.spacing.spacing[5],
+                    paddingVertical: theme.spacing.spacing[2],
+                    backgroundColor: isSelected
                       ? theme.colors.palette.green700
                       : theme.colors.palette.green150,
-                },
-              ]}
-              onPress={() => setSelectedTab(tab)}
-            >
-              <CustomText
-                color={
-                  selectedTab.id == index
-                    ? theme.colors.palette.white
-                    : theme.colors.palette.green700
-                }
-                size={14}
-                style={{ textAlign: "center" }}
-                variant="subtitle1"
+                  },
+                ]}
+                onPress={() => handleTabPress(tab)}
               >
-                {tab.title}
-              </CustomText>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <View style={[{ flex: 1, marginTop: 10 }]}>
-          {isFetching && (
-            <View
-              style={[
-                { flex: 1, justifyContent: "center", alignItems: "center" },
-              ]}
-            >
-              <CustomText variant="body2">Please wait....</CustomText>
-            </View>
-          )}
-          {/* s */}
-          {isSuccess && selectedTab.id == 0 && (
-            <FlatList
-              data={data?.data}
-              showsVerticalScrollIndicator={false}
-              renderItem={({ item, index }) => {
-                let isError = false;
-                return (
-                  <TouchableOpacity
-                    onPress={() => {
-                      navigation.navigate(NAVIGATION_SCREENS.CRYPTO_SEND, {
-                        details: item,
-                      });
-                    }}
-                    style={[
-                      {
-                        width: "100%",
-                        borderRadius: theme.spacing.spacing[3],
-                        backgroundColor: theme.colors.palette.grey150,
-                        padding: 10,
-                        flexDirection: "row",
-                        marginVertical: 5,
-                        borderColor: theme.colors.palette.grey300,
-                        borderWidth: 1 / 2,
-                        alignItems: "center",
-                      },
-                    ]}
-                  >
-                    {item?.logo?.toLowerCase?.().endsWith(".svg") ? (
-                    <SvgUri uri={item?.logo} width={30} height={30} />
-                  ) : (
-                    <Image
-                      source={{ uri: item?.logo }}
-                      style={{ width: 30, height: 30 }}
-                      resizeMode="contain"
-                    />
-                  )}
-                    <View
-                      style={[
-                        {
-                          flex: 1,
-                          // backgroundColor: "red",
-                          paddingHorizontal: 10,
-                          justifyContent: "center",
-                          flexDirection: "row",
-                          alignItems: "center",
-                        },
-                      ]}
-                    >
-                      <View style={[{ flex: 1 }]}>
-                        <CustomText variant={"subtitle2"}>
-                          {item?.symbol}
-                        </CustomText>
-                        <CustomText variant={"caption"}>
-                          {item?.symbol.slice(0, 3)}
-                        </CustomText>
-                      </View>
-                      <View style={[{}]}>
-                        <CustomText variant={"subtitle2"}>
-                          {`$${item?.buy_price}`}
-                        </CustomText>
-                      </View>
-                    </View>
-                    <SvgIcons.ChevronRight />
-                  </TouchableOpacity>
-                );
-              }}
-            />
-          )}
-          {isSuccess && selectedTab.id == 1 && (
-            <FlatList
-              data={data?.data}
-              showsVerticalScrollIndicator={false}
-              renderItem={({ item, index }) => (
-                <TouchableOpacity
-                  onPress={() => {
-                    navigation.navigate(NAVIGATION_SCREENS.CRYPTO_RECEIVE, {
-                      details: item,
-                    });
-                  }}
-                  style={[
-                    {
-                      width: "100%",
-                      borderRadius: theme.spacing.spacing[3],
-                      backgroundColor: theme.colors.palette.grey150,
-                      padding: 10,
-                      flexDirection: "row",
-                      marginVertical: 5,
-                      borderColor: theme.colors.palette.grey300,
-                      borderWidth: 1 / 2,
-                      alignItems: "center",
-                    },
-                  ]}
+                <CustomText
+                  color={
+                    isSelected
+                      ? theme.colors.palette.white
+                      : theme.colors.palette.green700
+                  }
+                  size={14}
+                  style={{ textAlign: "center" }}
+                  variant="subtitle1"
                 >
-                  {item?.logo?.toLowerCase?.().endsWith(".svg") ? (
-                    <SvgUri uri={item?.logo} width={30} height={30} />
-                  ) : (
-                    <Image
-                      source={{ uri: item?.logo }}
-                      style={{ width: 30, height: 30 }}
-                      resizeMode="contain"
-                    />
-                  )}
-                  <View
-                    style={[
-                      {
-                        flex: 1,
-                        // backgroundColor: "red",
-                        paddingHorizontal: 10,
-                        justifyContent: "center",
-                        flexDirection: "row",
-                        alignItems: "center",
-                      },
-                    ]}
-                  >
-                    <View style={[{ flex: 1 }]}>
-                      <CustomText variant={"subtitle2"}>
-                        {item?.symbol}
-                      </CustomText>
-                      <CustomText variant={"caption"}>
-                        {item?.symbol.slice(0, 3)}
-                      </CustomText>
-                    </View>
-                    <View style={[{}]}>
-                      <CustomText variant={"subtitle2"}>
-                        {`$${item?.sell_price}`}
-                      </CustomText>
-                    </View>
-                  </View>
-                  <SvgIcons.ChevronRight />
-                </TouchableOpacity>
-              )}
+                  {tab.title}
+                </CustomText>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        <View style={{ flex: 1, marginTop: 10 }}>
+          {isFetching && loadingView}
+          {isSuccess && (
+            <FlatList
+              data={data?.data}
+              keyExtractor={keyExtractor}
+              renderItem={renderCryptoItem}
+              showsVerticalScrollIndicator={false}
+              removeClippedSubviews={true}
+              maxToRenderPerBatch={10}
+              updateCellsBatchingPeriod={50}
+              initialNumToRender={10}
+              windowSize={5}
             />
           )}
         </View>

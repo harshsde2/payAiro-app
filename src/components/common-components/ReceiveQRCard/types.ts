@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { ViewStyle } from "react-native";
+import type { TextStyle, ViewStyle } from "react-native";
 
 export interface IActionButtonProps {
   /** Button text label */
@@ -20,12 +20,18 @@ export interface IReceiveQRCardRef {
 export interface IReceiveQRCardProps {
   /** Main title (e.g. "PayAiro Bank - 2323" or "PayAiro") */
   title: string;
+  /** Optional icon to show next to the title */
+  titleIcon?: ReactNode;
   /** Subtitle in green (e.g. "Primary account for receiving funds") */
   subtitle: string;
   /** Data to encode in QR. If object, will be JSON.stringify'd. */
   qrValue: string | object;
   /** PayAiro Tag to show and copy (e.g. "John123") */
   payAiroTag: string;
+  /** Override tag label (defaults to "PayAiro Tag:") */
+  tagLabel?: string;
+  /** Optional custom style for the tag value text */
+  tagValueStyle?: TextStyle;
   /** Called when copy icon is pressed */
   onCopyTag: () => void;
   /** Override for the root container */

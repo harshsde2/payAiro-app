@@ -340,6 +340,13 @@ export default function ConfirmOTP() {
 
   const isOtpComplete = otp.every((digit) => digit !== "");
 
+  useEffect(() => {
+    if (!isOtpComplete || isVerifyingRef.current || isVerifying) {
+      return;
+    }
+    handleVerifyOTP();
+  }, [isOtpComplete, isVerifying, handleVerifyOTP]);
+
   return (
     <ScreenContainer avoidKeyboard padding={0}>
       <View style={{ flex: 1 }}>

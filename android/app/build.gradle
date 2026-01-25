@@ -98,8 +98,8 @@ android {
         applicationId "com.payairo"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 34
-        versionName "3.0.2"
+        versionCode 35
+        versionName "3.0.3"
         missingDimensionStrategy 'react-native-camera', 'general'
         
         // Exclude 32-bit ABIs to reduce 16KB compliance issues and AAB size

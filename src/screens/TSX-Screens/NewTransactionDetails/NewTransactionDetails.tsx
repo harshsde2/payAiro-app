@@ -486,12 +486,14 @@ const NewTransactionDetails: FC = () => {
         );
       }
       return (
-        <Image source={{ uri: imageUrl }} style={styles(theme).avatarBig} />
+        <TouchableOpacity disabled={!isCrypto} onPress={() => navigation.replace(NAVIGATION_SCREENS.USER_PROFILE, { userDetails })}>
+          <Image source={{ uri: imageUrl }} style={styles(theme).avatarBig} />
+        </TouchableOpacity>
       );
     }
 
     return (
-      <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.replace(NAVIGATION_SCREENS.USER_PROFILE, { userDetails })} style={styles(theme).avatarPlaceholderBig}>
+      <TouchableOpacity disabled={!isCrypto} activeOpacity={0.8} onPress={() => navigation.replace(NAVIGATION_SCREENS.USER_PROFILE, { userDetails })} style={styles(theme).avatarPlaceholderBig}>
         <CustomText variant="h2" color={theme.colors.palette.white}>
           {getInitials(displayUsername)}
         </CustomText>

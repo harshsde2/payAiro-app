@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import {
   ActivityIndicator,
+  Alert,
   BackHandler,
   FlatList,
   Image,
@@ -75,6 +76,7 @@ import {
 import { useTheme } from "../../styles/ThemeContext";
 import { Card, CustomText, DashboardHeader } from "../../utils/moduleAlias";
 import { showError, showSuccess } from "../../utils/toast";
+import { toKycMode } from "types/kyc";
 
 
 const categories = {
@@ -235,6 +237,37 @@ const NewDashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [isBalanceRefreshing, setIsBalanceRefreshing] = useState(false);
 
+  const kycStatus = useSelector((s: any) => s.authenticationSlice?.kycStatus);
+
+  const mode = useMemo(() => toKycMode(kycStatus), [kycStatus]);
+  console.log("mode =>", mode);
+  console.log("kycStatus =>", JSON.stringify(kycStatus, null, 2));
+
+  const isKYCCompleted = (mode === "not_started" || mode === 'pending' || mode === 'expired') ? false : true;
+  const handleKYCAlert = () => {
+    Alert.alert(
+      "KYC Alert",
+      "You need to complete your KYC to continue using the app.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Complete KYC", style: "default", onPress: () => { navigation.navigate(NAVIGATION_SCREENS.SETTING_SCREEN as never); } }
+      ]
+    );
+  };
+
+  const showExternalAccountAlert = () => {
+
+    Alert.alert(
+      "External Account Alert",
+      "Please link your external account to continue to withdraw money.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Link External Account", style: "default", onPress: () => {     navigation.navigate(NAVIGATION_SCREENS.PLAID_LINK_SCREEN as never, {
+      
+        } as never); } }
+      ]
+    );
+  }
 
   const {
     data: DashBoardData,
@@ -244,6 +277,8 @@ const NewDashboard = () => {
     isFetched: isDashBoardDataFetched,
     refetch: refetchDashBoardFiatData,
   } = useDashBoardFiatData();
+
+      // console.log("Dashb =>", JSON.stringify(DashBoardData,null,2))
 
   const {
     data: WalletDashboardData,
@@ -256,7 +291,7 @@ const NewDashboard = () => {
 
   const { data, isLoading, error, refetch } = useAllCryptoBalances();
   const balances = data?.data?.balances || [];
-  
+
 
 
   const {
@@ -466,6 +501,12 @@ const NewDashboard = () => {
   }, [bankLists, bankBalance]);
 
 
+  const userHasExternalAccount = useMemo(() => {
+    return processedBankAccounts.some((item: any) => item?.bank_type === "external");
+  }, [processedBankAccounts]);
+
+  console.log("tokens =>", JSON.stringify(tokens, null, 2));
+
   const handleEyeClick = (account_id: string) => {
     setHiddenBalances((prev: Record<string, boolean>) => ({
       ...prev,
@@ -672,14 +713,15 @@ const NewDashboard = () => {
                 >
                   <TouchableOpacity
                     onPress={() => {
-                      navigation.navigate(
-                        !isCrypto
-                          ? NAVIGATION_SCREENS.SEND_TOKEN
-                          : NAVIGATION_SCREENS.SEND,
-                        {
-                          requested: false,
-                        }
-                      );
+                      if (isKYCCompleted) {
+                        navigation.navigate(NAVIGATION_SCREENS.SEND,
+                          {
+                            requested: false,
+                          }
+                        );
+                      } else {
+                        handleKYCAlert();
+                      }
                     }}
                     style={{
                       width: iconContainerWidth,
@@ -708,12 +750,15 @@ const NewDashboard = () => {
                     <CustomText size={11}>Send</CustomText>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    onPress={() =>
-                      navigation.navigate(
-                        !isCrypto
-                          ? NAVIGATION_SCREENS.RECEIVE_TOKEN
-                          : NAVIGATION_SCREENS.RECEIVE
-                      )
+                    onPress={() => {
+                      if (isKYCCompleted) {
+                        navigation.navigate(
+                          NAVIGATION_SCREENS.RECEIVE
+                        );
+                      } else {
+                        handleKYCAlert();
+                      }
+                    }
                     }
                     style={{
                       width: iconContainerWidth,
@@ -743,14 +788,10 @@ const NewDashboard = () => {
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => {
-                      if (walletData?.fortress) {
-                        if (!isCrypto) {
-                          navigation.navigate("CryptoDashboard");
-                        } else {
-                          navigation.navigate(NAVIGATION_SCREENS.ADD_BALANCE);
-                        }
-                      } else {
+                      if (isKYCCompleted) {
                         navigation.navigate(NAVIGATION_SCREENS.ADD_BALANCE);
+                      } else {
+                        handleKYCAlert();
                       }
                     }}
                     style={{
@@ -781,7 +822,15 @@ const NewDashboard = () => {
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => {
-                      navigation.navigate(NAVIGATION_SCREENS.WITHDRAW_BALANCE);
+                      if (isKYCCompleted) {
+                        if (userHasExternalAccount) {
+                          navigation.navigate(NAVIGATION_SCREENS.WITHDRAW_BALANCE);
+                        } else {
+                          showExternalAccountAlert();
+                        }
+                      } else {
+                        handleKYCAlert();
+                      }
                     }}
                     style={{
                       width: iconContainerWidth,

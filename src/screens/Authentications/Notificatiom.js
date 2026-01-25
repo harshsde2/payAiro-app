@@ -1,11 +1,8 @@
-import { View, Text, Image } from "react-native";
+import { View, Text } from "react-native";
 import React from "react";
-import { SvgXml } from "react-native-svg";
-import { SVGProfile, SVGRightIcon } from "../../constants/images";
 import Fonts from "../../constants/Fonts";
 import moment from "moment";
-import { defaultCrypto, defaultImage, NotificationIcons } from "utils/configs";
-import UserAvatar from "tsx-components/UserAvatar";
+import { FasterImageView } from "@rraut/react-native-faster-image";
 
 export default function Notificatiom({ item }) {
   return (
@@ -25,20 +22,12 @@ export default function Notificatiom({ item }) {
             alignItems: "center",
           }}
         >
-          {/* <SvgXml xml={SVGProfile} /> */}
-          {/* <Image
-            style={{ width: 50, height: 50, backgroundColor: "red" }}
-            resizeMode="contain"
-            borderRadius={50}
-            src={defaultCrypto}
-          /> */}
-          {!NotificationIcons[item?.title] ? (
-            <UserAvatar style={{ width: 50, height: 50 }} item={item} />
-          ) : (
-            <SvgXml
-              width={45}
-              height={45}
-              xml={NotificationIcons[item?.title]}
+          { item?.image && (
+            <FasterImageView 
+              source={{ uri: item?.image }} 
+              style={{ width: 50, height: 50 }} 
+              radius={25}
+              
             />
           )}
           <View style={{ marginLeft: 10, padding: 10 }}>
@@ -60,9 +49,6 @@ export default function Notificatiom({ item }) {
             <Text>{moment(item?.created_at).format("LT")}</Text>
           </View>
         </View>
-        {/* <View style={{ width: "25%" }}>
-          <SvgXml xml={SVGRightIcon} />
-        </View> */}
       </View>
       <View
         style={{

@@ -128,7 +128,7 @@ const ContactSuggestionItem: React.FC<IContactSuggestionItemProps> = React.memo(
                 color={theme.colors.text.secondary}
                 numberOfLines={1}
               >
-                @{contact.username}
+                {contact.username}
               </CustomText>
             )}
             {contact.email && !contact.username && (

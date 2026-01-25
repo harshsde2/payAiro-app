@@ -120,6 +120,7 @@ const NewPersonal: React.FC = () => {
           onProfilePress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL)}
           onQrPress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL)}
           showQrButton={false}
+          showCameraButton={false}
         />
         <View style={customTheme.whiteSheetContainer}>
           <ReceiveQRCard

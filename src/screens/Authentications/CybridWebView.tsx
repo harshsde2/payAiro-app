@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
-import { Platform, View } from "react-native";
-import { CommonActions, useNavigation, useRoute } from "@react-navigation/native";
+import { ActivityIndicator, Platform, View } from "react-native";
+import { CommonActions, useNavigation, useRoute, } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
 import WebView from "react-native-webview";
@@ -27,12 +27,15 @@ import useDispatchAction from "hooks/useDispatchAction";
 import LottieView from "lottie-react-native";
 import { useAppLock } from "hooks/useAppLock";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { useTheme } from "styles";
 
 const CybridWebView = () => {
   const route = useRoute();
   const dispatch = useDispatch();
   const navigation = useNavigation<any>();
   const pinScreenRef = useRef<PinScreenRef | any>();
+  const { theme } = useTheme();
+
   const { refreshPinStatus } = useAppLock();
   const { URL, isUserAlreadyCreated } = route.params as any;
 
@@ -44,6 +47,7 @@ const CybridWebView = () => {
   );
   const [isKYCInProgress, setIsKYCInProgress] = React.useState(true);
   const [KYCMessage, setKYCMessage] = React.useState("");
+  const [onLoad, setOnLoad] = React.useState(false);
 
   const { mutate: checkKYCStatus, isPending, isSuccess } = useKYCCompleted();
 
@@ -155,7 +159,7 @@ const CybridWebView = () => {
         console.log("Error creating pin:", error);
         showError(
           Object.values(error?.data?.data?.details?.errors)[0] as string ??
-            "Something went wrong"
+          "Something went wrong"
         );
       },
       onSettled: () => {
@@ -193,31 +197,49 @@ const CybridWebView = () => {
       <Card
         style={[globalStyles.whiteSheetContainer, { flex: 1, marginTop: 10 }]}
       >
+        {onLoad && (
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <ActivityIndicator size="large" color={theme?.colors?.palette?.green700} />
+          </View>
+        )}
         {/* {!isKycCompleted ? ( */}
-          <WebView
-            ref={webviewRef}
-            source={{ uri: URL }}
-            injectedJavaScript={injectedJS}
-            onMessage={(event) => {
-              if (event.nativeEvent.data === "KYC_SUCCESS") {
-                yourCustomFunction();
-              }
-            }}
-            javaScriptEnabled={true}
-            style={{ flex: 1 }}
-            // iOS specific props for camera/media access
-            allowsInlineMediaPlayback={true}
-            mediaPlaybackRequiresUserAction={false}
-            mediaCapturePermissionGrantType="grantIfSameHostElsePrompt"
-            allowsFullscreenVideo={false}
-            // Enable getUserMedia for camera access
-            allowsProtectedMedia={true}
-            // Additional iOS WebView settings
-            {...(Platform.OS === "ios" && {
-              allowsLinkPreview: false,
-              bounces: false,
-            })}
-          />
+
+        {/* {onLoad ? (
+  <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+    <ActivityIndicator size="large" color={theme?.colors?.palette?.green700} />
+  </View>
+) : ( */}
+        <WebView
+          ref={webviewRef}
+          source={{ uri: URL }}
+          injectedJavaScript={injectedJS}
+          onMessage={(event) => {
+            if (event.nativeEvent.data === "KYC_SUCCESS") {
+              yourCustomFunction();
+            }
+          }}
+          onLoadEnd={() => {
+            setOnLoad(false);
+          }}
+          onLoadStart={() => {
+            setOnLoad(true);
+          }}
+          javaScriptEnabled={true}
+          style={{ flex: 1 }}
+          // iOS specific props for camera/media access
+          allowsInlineMediaPlayback={true}
+          mediaPlaybackRequiresUserAction={false}
+          mediaCapturePermissionGrantType="grantIfSameHostElsePrompt"
+          allowsFullscreenVideo={false}
+          // Enable getUserMedia for camera access
+          allowsProtectedMedia={true}
+          // Additional iOS WebView settings
+          {...(Platform.OS === "ios" && {
+            allowsLinkPreview: false,
+            bounces: false,
+          })}
+        />
+        {/* )} */}
         {/* ) : (
           <View
             style={{ flex: 1, justifyContent: "center", alignItems: "center" }}

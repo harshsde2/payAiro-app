@@ -94,7 +94,10 @@ export const AUTH = {
   GET_REFERRAL_DATA: "auth/users/ref/",
   CONTENT_DATA: "auth/r1/content-data/",
   USER_DETAILS: "auth/r1/user-details/",
+  UPLOAD_PROFILE_PHOTO: "auth/upload-profile-photo/",
   ASSET_LIST: "auth/r1/assetlist",
+  UNREAD_NOTIFICATIONS_COUNT: "auth/unread-notifications-count/",
+  MARK_ALL_NOTIFICATIONS_READ: "auth/r1/mark-all-read/",
 };
 // Wallet endpoints
 export const WALLET = {

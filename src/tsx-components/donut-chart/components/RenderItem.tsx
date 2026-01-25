@@ -46,6 +46,7 @@ const RenderItem = ({ item, index, activeIndex }: RenderItemProps) => {
                 style={{ maxWidth: maxWidth }}
                 numberOfLines={1} // Allow 2 lines for long labels
                 color={item.color}
+                ellipsizeMode='tail'
                 fontWeight="semiBold"
                 align="center">
                 {item.label}

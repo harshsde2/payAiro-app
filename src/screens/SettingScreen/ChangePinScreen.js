@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -63,6 +63,7 @@ const ChangePinScreen = () => {
   const [showLoader, setShowLoader] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]); // OTP array
   const inputs = useRef([]); // Refs for the input fields
+  const hasAutoVerifiedRef = useRef(false);
 
   const [isVerifying, setIsVerifying] = useState(false);
 
@@ -404,6 +405,20 @@ const ChangePinScreen = () => {
     }
   };
 
+  const isOtpComplete = otp.every((digit) => digit !== "");
+
+  useEffect(() => {
+    if (!isOtpComplete) {
+      hasAutoVerifiedRef.current = false;
+      return;
+    }
+    if (hasAutoVerifiedRef.current || !showVerifyModal || isPendingVerifyUserForChangePinOtp) {
+      return;
+    }
+    hasAutoVerifiedRef.current = true;
+    handleVerfyUserChangePinOTP();
+  }, [isOtpComplete, showVerifyModal, isPendingVerifyUserForChangePinOtp]);
+
   return (
     <ScreenContainer scrollable safeArea padding={0}>
       <KeyboardAvoidingView
@@ -625,14 +640,16 @@ const ChangePinScreen = () => {
               </View>
             </View>
           )}
-        </View>
+          {isUserVerfied && (
         <GenericButton
           onPress={() => handlePinChange()}
           title={"Save PIN"}
-          cStyle={{ width: "90%", alignSelf: "center", marginBottom: theme.spacing.spacing[4] }}
+          cStyle={{ width: "90%", alignSelf: "center", marginVertical: theme.spacing.spacing[4] }}
           showLoader={true}
           isLoading={showLoader}
         />
+        )}
+        </View>
       </KeyboardAvoidingView>
     </ScreenContainer>
   );
