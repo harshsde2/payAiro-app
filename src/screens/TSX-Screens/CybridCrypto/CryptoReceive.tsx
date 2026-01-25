@@ -2,8 +2,10 @@ import { useRoute } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
 import { SvgIcons } from "constants/svgs";
+import { ReceiveQRCard } from "components/common-components/ReceiveQRCard";
+import type { IReceiveQRCardRef } from "components/common-components/ReceiveQRCard";
 import useSelectorAction from "hooks/useSelectorAction";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Clipboard,
@@ -15,58 +17,40 @@ import {
   ActivityIndicator,
   Image,
 } from "react-native";
-import QRCode from "react-native-qrcode-svg";
-import ViewShot from "react-native-view-shot";
+import Share from "react-native-share";
 import { Theme, useTheme } from "styles";
 import { useGlobalStyles } from "styles/GlobalStyles";
 import { CustomText } from "tsx-components";
 import { useDepositAddress } from "query/hooks/useCrypto";
 import { SvgUri } from "react-native-svg";
 
-const QR_SIZE = 200;
-const LOGO_ICON_SIZE = 26;
-const LOGO_OVERLAY_SIZE = 44;
-
-
-export default function Receive() {
+export default function CryptoReceive() {
   const route = useRoute();
   const { details } = route.params as any;
   const { walletData } = useSelectorAction() as any;
-  const { symbol, buy_price, logo } = details;
+  const { symbol, logo } = details;
   const { theme } = useTheme();
-  const { spacing, colors } = theme;
-  const styles = { ...useGlobalStyles(), ...customStyles(theme) };
+  const styles = { ...useGlobalStyles(), ...cryptoReceiveStyles(theme) };
+  const qrCardRef = useRef<IReceiveQRCardRef | null>(null);
 
-  // Extract crypto name and network from symbol
+  /** false = PayAiro Tag, true = Wallet Address (same as AddCrypto) */
+  const [isOnChain, setIsOnChain] = useState(false);
+  const [depositAddress, setDepositAddress] = useState("");
+  const [disclaimer, setDisclaimer] = useState("");
+
+  const depositAddressMutation = useDepositAddress();
+
   const getCryptoInfo = () => {
-    // Examples: "USDC_SOL-USD" -> crypto: "USDC", network: "SOL"
-    //           "USDC-USD" -> crypto: "USDC", network: null
-    //           "BTC-USD" -> crypto: "BTC", network: null
-    const parts = symbol.split("-")[0]; // Get part before "-USD"
+    const parts = symbol.split("-")[0];
     const networkParts = parts.split("_");
-
     if (networkParts.length > 1) {
-      return {
-        cryptoName: networkParts[0],
-        network: networkParts[1],
-      };
+      return { cryptoName: networkParts[0], network: networkParts[1] };
     }
-    return {
-      cryptoName: parts,
-      network: null,
-    };
+    return { cryptoName: parts, network: null as string | null };
   };
 
   const { cryptoName, network } = getCryptoInfo();
 
-  const viewShotRef = useRef<any>(null);
-  const [isOnChain, setIsOnChain] = useState(false); // false = Off Chain, true = On Chain
-  const [depositAddress, setDepositAddress] = useState("");
-
-  // Deposit address mutation hook
-  const depositAddressMutation = useDepositAddress();
-
-  // Fetch deposit address when switching to On Chain
   useEffect(() => {
     if (isOnChain && !depositAddress) {
       handleGetDepositAddress();
@@ -78,44 +62,51 @@ export default function Receive() {
       const response = await depositAddressMutation.mutateAsync({
         asset: symbol,
       });
+      const addressData = response?.data;
 
-      // Check if the response indicates address is under review
-      if (response?.data?.status === false && !response?.data?.address) {
+      if (addressData?.status === false && !addressData?.address) {
         const message =
-          response?.data?.message ||
+          addressData?.message ||
+          response?.message ||
           "Your deposit address is under review. Please try again later.";
         Alert.alert("Address Under Review", message);
-        setIsOnChain(false); // Revert to off-chain
+        setIsOnChain(false);
         return;
       }
 
-      // Check if address is available
-      if (response?.data?.address) {
-        setDepositAddress(response.data.address);
+      if (addressData?.disclaimer) {
+        setDisclaimer(addressData.disclaimer);
+      } else {
+        setDisclaimer(
+          `Only send ${cryptoName} assets to this address. Other assets will be lost forever.`
+        );
+      }
+
+      if (addressData?.address) {
+        setDepositAddress(addressData.address);
       } else {
         Alert.alert(
           "Error",
-          "Unable to retrieve deposit address. Please try again."
+          addressData?.message ||
+            response?.message ||
+            "Unable to retrieve deposit address. Please try again."
         );
-        setIsOnChain(false); // Revert to off-chain
+        setIsOnChain(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log("Error fetching deposit address:", error);
-      Alert.alert("Error", "Failed to get deposit address. Please try again.");
-      setIsOnChain(false); // Revert to off-chain on error
+      Alert.alert(
+        "Error",
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to get deposit address. Please try again."
+      );
+      setIsOnChain(false);
     }
   };
 
-  const handleToggleChainType = () => {
-    setIsOnChain(!isOnChain);
-  };
-
-  // console.log("wallet data =>",walletData)
-
   const copyToClipboard = (text: string, label: string = "Text") => {
     Clipboard.setString(text);
-
-    // Display a success message
     if (Platform.OS === "android") {
       ToastAndroid.show(`${label} copied`, ToastAndroid.SHORT);
     } else if (Platform.OS === "ios") {
@@ -123,29 +114,86 @@ export default function Receive() {
     }
   };
 
-  // Get the QR code value based on chain type
-  const getQRCodeValue = () => {
-    if (isOnChain) {
-      return depositAddress || "loading";
+  const handleShareQR = async (uri: string) => {
+    try {
+      await Share.open({
+        title: `${cryptoName} Wallet Address`,
+        subject: `${cryptoName} Wallet Address`,
+        url: uri,
+        type: "image/png",
+        filename: `PayAiro_${cryptoName}_WalletAddress`,
+        failOnCancel: false,
+      });
+    } catch (err: any) {
+      if (err?.message !== "User did not share") {
+        console.log("Error sharing wallet address:", err);
+      }
     }
-    return `${walletData?.username}`;
   };
 
-  // Get the display label based on chain type
-  const getDisplayLabel = () => {
-    if (isOnChain) {
-      return `${cryptoName} Wallet Address:`;
+  const handleDownloadQR = async (uri: string) => {
+    try {
+      await Share.open({
+        title: `${cryptoName} Wallet Address`,
+        subject: `${cryptoName} Wallet Address`,
+        url: uri,
+        type: "image/png",
+        filename: `PayAiro_${cryptoName}_WalletAddress`,
+        failOnCancel: false,
+        saveToFiles: true,
+      });
+    } catch (err: any) {
+      if (err?.message !== "User did not share") {
+        console.log("Error downloading wallet address:", err);
+        Alert.alert("Failed to download wallet address");
+      }
     }
-    return "PayAiro Tag:";
   };
 
-  // Get the display value based on chain type
-  const getDisplayValue = () => {
-    if (isOnChain) {
-      return depositAddress;
+  const displayAddress = useMemo(() => {
+    if (!depositAddress) return "";
+    if (depositAddress.length <= 16) return depositAddress;
+    return `${depositAddress.slice(0, 6)}...${depositAddress.slice(-4)}`;
+  }, [depositAddress]);
+
+  const getQRCodeValue = () =>
+    isOnChain ? depositAddress || "loading" : (walletData?.username ?? "");
+  const getTagLabel = () =>
+    isOnChain ? `${cryptoName} Wallet Address:` : "PayAiro Tag:";
+  const getTagValue = () =>
+    isOnChain ? displayAddress : (walletData?.username ?? "");
+  const getCopyValue = () =>
+    isOnChain ? depositAddress : (walletData?.username ?? "");
+  const getCopyLabel = () =>
+    isOnChain ? "Wallet Address" : "PayAiro Tag";
+
+  const resolvedDisclaimer = useMemo(() => {
+    if (!disclaimer) {
+      return `Only send ${cryptoName} assets to this address. Other assets will be lost forever.`;
     }
-    return walletData?.username;
-  };
+    return disclaimer.replace("{symbol}", cryptoName);
+  }, [cryptoName, disclaimer]);
+
+  const cryptoIcon = useMemo(() => {
+    if (!logo) return null;
+    if (logo?.toLowerCase?.().endsWith(".svg")) {
+      return <SvgUri uri={logo} width={22} height={22} />;
+    }
+    return (
+      <Image
+        source={{ uri: logo }}
+        style={styles.cryptoIcon}
+        resizeMode="contain"
+      />
+    );
+  }, [logo, styles.cryptoIcon]);
+
+  const subtitle = network
+    ? network === "SOL"
+      ? "Solana"
+      : network
+    : "";
+
   return (
     <ScreenContainer
       padding={0}
@@ -153,171 +201,92 @@ export default function Receive() {
       style={styles.safeArea}
     >
       <HeaderTitle leftIcon={"true"} title={"Receive"} />
-      <View style={styles.qrTypeSwitcherContainer}>
-        <View style={styles.qrTypeChipsRow}>
-          <Pressable
-            style={[styles.qrTypeChip, !isOnChain && styles.qrTypeChipActive]}
-            onPress={() => setIsOnChain(false)}
-          >
-            <CustomText
-              size={13}
-              fontWeight="semiBold"
-              color={
-                !isOnChain
-                  ? theme.colors.palette.white
-                  : theme.colors.palette.grey900
-              }
-            >
-              PayAiro Tag
-            </CustomText>
-          </Pressable>
-          <Pressable
-            style={[styles.qrTypeChip, isOnChain && styles.qrTypeChipActive]}
-            onPress={handleToggleChainType}
-          >
-            <CustomText
-              size={13}
-              fontWeight="semiBold"
-              color={
-                isOnChain
-                  ? theme.colors.palette.white
-                  : theme.colors.palette.grey900
-              }
-            >
-              Wallet Address
-            </CustomText>
-          </Pressable>
-        </View>
-      </View>
       <View style={styles.container}>
-        {/* Crypto Name and Network Display */}
-        <View style={styles.cryptoInfoContainer}>
-          <View style={styles.cryptoIconContainer}>
-            {logo?.toLowerCase?.().endsWith(".svg") ? (
-              <SvgUri uri={logo} width={30} height={30} />
-            ) : (
-              <Image
-                source={{ uri: logo }}
-                style={styles.cryptoIcon}
-                resizeMode="contain"
+        <View style={styles.qrTypeSwitcherContainer}>
+          <View style={styles.qrTypeChipsRow}>
+            <Pressable
+              style={[styles.qrTypeChip, !isOnChain && styles.qrTypeChipActive]}
+              onPress={() => setIsOnChain(false)}
+            >
+              <CustomText
+                size={13}
+                fontWeight="semiBold"
+                color={
+                  !isOnChain
+                    ? theme.colors.palette.white
+                    : theme.colors.palette.grey900
+                }
+              >
+                PayAiro Tag
+              </CustomText>
+            </Pressable>
+            <Pressable
+              style={[styles.qrTypeChip, isOnChain && styles.qrTypeChipActive]}
+              onPress={() => setIsOnChain(true)}
+            >
+              <CustomText
+                size={13}
+                fontWeight="semiBold"
+                color={
+                  isOnChain
+                    ? theme.colors.palette.white
+                    : theme.colors.palette.grey900
+                }
+              >
+                Wallet Address
+              </CustomText>
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.qrCardContainer}>
+          {isOnChain &&
+          (depositAddressMutation.isPending || !depositAddress) ? (
+            <View style={styles.qrLoadingCard}>
+              <ActivityIndicator
+                size="large"
+                color={theme.colors.palette.green700}
               />
-            )}
-            {network && (
-              <View style={styles.networkIconOverlay}>
-                <SvgIcons.Solana width={16} height={16} />
-              </View>
-            )}
-          </View>
-          <View style={styles.cryptoTextContainer}>
-            <CustomText
-              size={20}
-              fontWeight="bold"
-              color={theme.colors.palette.grey900}
-            >
-              {cryptoName}
-            </CustomText>
-            {network && (
-              <View style={styles.networkBadge}>
-                <CustomText
-                  size={12}
-                  fontWeight="medium"
-                  color={theme.colors.palette.grey700}
-                >
-                  {network === "SOL" ? "Solana" : network}
-                </CustomText>
-              </View>
-            )}
-          </View>
-        </View>
-
-        <View style={styles.qrCard}>
-          <ViewShot ref={viewShotRef} options={{ format: "png", quality: 0.9 }}>
-            {depositAddressMutation.isPending ||
-              (isOnChain && !depositAddress) ? (
-              <View style={styles.qrLoadingContainer}>
-                <ActivityIndicator
-                  size="large"
-                  color={theme.colors.palette.green700}
-                />
-              </View>
-            ) : (
-              <View style={styles.qrWrapper}>
-
-                <QRCode value={getQRCodeValue()}  size={220} />
-                <View
-                  style={[
-                    styles.logoOverlay,
-                    { backgroundColor: theme.colors.palette.green700 },
-                  ]}
-                >
-                  <SvgIcons.PayairoWhiteLogo width={LOGO_ICON_SIZE} height={LOGO_ICON_SIZE} />
-                </View>
-              </View>
-            )}
-          </ViewShot>
-        </View>
-
-        <View
-          style={{
-            width: "100%",
-            // backgroundColor: "red",
-            justifyContent: "center",
-            alignItems: "center",
-            marginVertical: theme.spacing.spacing[4],
-
-          }}
-        >
-          <View style={styles.qrInfoRow}>
-            <CustomText size={14} fontWeight="semiBold">
-              {getDisplayLabel()}
-            </CustomText>
-            <CustomText
-              fontWeight="semiBold"
-              size={14}
-              color={theme.colors.palette.green700}
-              numberOfLines={1}
-              style={styles.qrInfoValue}
-            >
-              {getDisplayValue()}
-            </CustomText>
-            <SvgIcons.CopyOutlineBlack
-              onPress={() =>
-                copyToClipboard(
-                  getDisplayValue(),
-                  isOnChain ? "Wallet Address" : "PayAiro Tag"
-                )
+            </View>
+          ) : (
+            <ReceiveQRCard
+              ref={qrCardRef}
+              title={cryptoName}
+              titleIcon={cryptoIcon}
+              subtitle={subtitle}
+              qrValue={getQRCodeValue()}
+              payAiroTag={getTagValue()}
+              tagLabel={getTagLabel()}
+              tagValueStyle={styles.qrTagValue}
+              onCopyTag={() =>
+                copyToClipboard(getCopyValue(), getCopyLabel())
               }
+              leftButton={{
+                text: "Download",
+                icon: <SvgIcons.DownloadBlack width={20} height={20} />,
+                onPress: () => qrCardRef.current?.capture(handleDownloadQR),
+              }}
+              rightButton={{
+                text: "Share",
+                icon: <SvgIcons.ShareIcon width={20} height={20} />,
+                onPress: () => qrCardRef.current?.capture(handleShareQR),
+              }}
             />
-          </View>
+          )}
         </View>
 
         {isOnChain && depositAddress && (
           <View style={styles.noticeContainer}>
             <View style={styles.noticeIconContainer}>
-              <CustomText
-                size={16}
-                fontWeight="bold"
-                color={theme.colors.palette.white}
-              >
-                i
-              </CustomText>
+              <SvgIcons.InfoNote width={18} height={18} />
             </View>
-            <View style={styles.noticeTextContainer}>
-              <CustomText
-                size={13}
-                color={theme.colors.palette.white}
-                style={styles.noticeText}
-              >
-                Only send {symbol} assets to this address.
-              </CustomText>
-              <CustomText
-                size={13}
-                color={theme.colors.palette.white}
-                style={styles.noticeText}
-              >
-                Other assets will be lost forever.
-              </CustomText>
-            </View>
+            <CustomText
+              size={13}
+              color={theme.colors.palette.green800}
+              style={styles.noticeText}
+            >
+              {resolvedDisclaimer}
+            </CustomText>
           </View>
         )}
       </View>
@@ -325,7 +294,7 @@ export default function Receive() {
   );
 }
 
-const customStyles = (theme: Theme) =>
+const cryptoReceiveStyles = (theme: Theme) =>
   StyleSheet.create({
     safeArea: {
       flex: 1,
@@ -337,97 +306,18 @@ const customStyles = (theme: Theme) =>
       borderTopStartRadius: 32,
       padding: theme.spacing.layout.screenPadding,
     },
-    qrWrapper: {
-      width: QR_SIZE,
-      height: QR_SIZE,
-      justifyContent: "center",
-      alignItems: "center",
-      marginBottom: 16,
-    },
-    logoOverlay: {
-      position: "absolute",
-      left: (QR_SIZE - LOGO_OVERLAY_SIZE) / 2,
-      top: (QR_SIZE - LOGO_OVERLAY_SIZE) / 2,
-      width: LOGO_OVERLAY_SIZE,
-      height: LOGO_OVERLAY_SIZE,
-      borderRadius: LOGO_OVERLAY_SIZE / 2,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    title: {
-      //   fontSize: 20,
-      fontWeight: "bold",
-      textAlign: "center",
-      marginBottom: 15,
-    },
-
-    row: {
-      width: "100%",
-      flexDirection: "row",
-      justifyContent: "flex-start",
-      marginVertical: 6,
-      gap: 15,
-    },
-    label: {
-      color: "#444",
-      // fontSize: 15,
-      marginVertical: 3,
-    },
-    labelBold: {
-      fontWeight: "bold",
-      color: "#000",
-    },
-    total: {
-      fontWeight: "bold",
-      color: "green",
-    },
-    totalInUSDContainer: {
-      width: "100%",
-      justifyContent: "center",
-      alignItems: "center",
-      // backgroundColor: theme.colors.palette.green700,
-      borderRadius: theme.spacing.spacing[4],
-    },
-    totalInUSDText: {
-      width: "50%",
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: theme.colors.palette.green700,
-      borderRadius: theme.spacing.spacing[4],
-      paddingVertical: 5,
-    },
-    toggleContainer: {
-      flexDirection: "row",
-      justifyContent: "center",
-      alignItems: "center",
-      gap: 10,
-      marginHorizontal: 20,
-      marginTop: 20,
-      marginBottom: 10,
-      backgroundColor: theme.colors.palette.green200,
-      borderRadius: theme.spacing.spacing[3],
-      padding: 4,
-    },
-    toggleButton: {
-      flex: 1,
-      paddingVertical: 12,
-      borderRadius: theme.spacing.spacing[2],
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: "transparent",
-    },
-    toggleButtonActive: {
-      backgroundColor: theme.colors.palette.green700,
+    cryptoIcon: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
     },
     qrTypeSwitcherContainer: {
       width: "100%",
       marginBottom: theme.spacing.spacing[4],
-      paddingHorizontal: theme.spacing.spacing[4],
     },
     qrTypeChipsRow: {
       flexDirection: "row",
       columnGap: 10,
-      marginTop: theme.spacing.spacing[2],
     },
     qrTypeChip: {
       flex: 1,
@@ -443,93 +333,45 @@ const customStyles = (theme: Theme) =>
       backgroundColor: theme.colors.palette.green700,
       borderColor: theme.colors.palette.green700,
     },
-    cryptoInfoContainer: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: theme.spacing.spacing[4],
-      gap: theme.spacing.spacing[3],
-    },
-    cryptoIconContainer: {
-      position: "relative",
-      justifyContent: "center",
-      alignItems: "center",
-      width: 30,
-      height: 30,
-    },
-    cryptoIcon: {
-      width: 30,
-      height: 30,
-      borderRadius: 15,
-    },
-    networkIconOverlay: {
-      position: "absolute",
-      bottom: -2,
-      right: -2,
-      width: 18,
-      height: 18,
-      borderRadius: 9,
-      backgroundColor: theme.colors.palette.grey900,
-      justifyContent: "center",
-      alignItems: "center",
-      borderWidth: 1.5,
-      borderColor: theme.colors.palette.white,
-    },
-    cryptoTextContainer: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: theme.spacing.spacing[2],
-    },
-    networkBadge: {
-      paddingHorizontal: theme.spacing.spacing[2],
-      paddingVertical: 4,
-      borderRadius: theme.spacing.spacing[2],
-      backgroundColor: theme.colors.palette.grey200,
-    },
-    qrCard: {
-      marginTop: theme.spacing.spacing[2],
+    qrCardContainer: {
       alignItems: "center",
       justifyContent: "center",
     },
-    qrLoadingContainer: {
-      width: 220,
-      height: 220,
+    qrTagValue: {
+      color: theme.colors.palette.green700,
+    },
+    qrLoadingCard: {
+      width: "100%",
+      backgroundColor: theme.colors.palette.white,
+      padding: theme.spacing.spacing[5],
+      borderRadius: theme.spacing.spacing[3],
+      alignItems: "center",
       justifyContent: "center",
-      alignItems: "center",
-    },
-    qrInfoRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      columnGap: 8,
-      width: "80%",
-    },
-    qrInfoValue: {
-      flex: 1,
+      minHeight: 260,
+      borderWidth: 1,
+      borderColor: theme.colors.palette.grey200,
     },
     noticeContainer: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "center",
-      marginTop: theme.spacing.spacing[4],
+      marginTop: theme.spacing.spacing[5],
       padding: theme.spacing.spacing[4],
-      backgroundColor: "rgba(137, 123, 83, 0.85)", // Dark olive green with overlay transparency
+      backgroundColor: theme.colors.palette.green100,
       borderRadius: theme.spacing.spacing[3],
+      borderWidth: 1,
+      borderColor: theme.colors.palette.green200,
       columnGap: theme.spacing.spacing[3],
     },
     noticeIconContainer: {
       width: 24,
       height: 24,
       borderRadius: 12,
-      backgroundColor: theme.colors.palette.yellow500,
+      backgroundColor: theme.colors.palette.green200,
       justifyContent: "center",
       alignItems: "center",
-      marginTop: 2,
-    },
-    noticeTextContainer: {
-      flex: 1,
-      gap: 4,
     },
     noticeText: {
+      flex: 1,
       lineHeight: 18,
     },
   });

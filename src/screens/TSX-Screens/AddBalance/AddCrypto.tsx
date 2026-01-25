@@ -2,11 +2,13 @@ import { useRoute } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
 import { SvgIcons } from "constants/svgs";
+import useSelectorAction from "hooks/useSelectorAction";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Clipboard,
   Platform,
+  Pressable,
   StyleSheet,
   ToastAndroid,
   View,
@@ -28,7 +30,11 @@ const AddCrypto = () => {
   const route = useRoute();
   const { item } = route.params as any;
   const { symbol, logo } = item;
+  const { walletData } = useSelectorAction() as any;
   const qrCardRef = useRef<IReceiveQRCardRef | null>(null);
+
+  /** false = PayAiro Tag, true = Wallet Address (matches CryptoReceive) */
+  const [isOnChain, setIsOnChain] = useState(false);
 
   // console.log("item =>", JSON.stringify(item, null, 2));
   // Extract crypto name and network from symbol
@@ -45,7 +51,7 @@ const AddCrypto = () => {
     }
     return {
       cryptoName: parts,
-      network: network || null,
+      network: null,
     };
   };
 
@@ -56,10 +62,12 @@ const AddCrypto = () => {
   // Deposit address mutation hook
   const depositAddressMutation = useDepositAddress();
 
-  // Fetch deposit address on mount
+  // Fetch deposit address only when user switches to Wallet Address (like CryptoReceive)
   useEffect(() => {
-    handleGetDepositAddress();
-  }, []);
+    if (isOnChain && !depositAddress) {
+      handleGetDepositAddress();
+    }
+  }, [isOnChain]);
 
   const handleGetDepositAddress = async () => {
     try {
@@ -79,6 +87,7 @@ const AddCrypto = () => {
           response?.message ||
           "Your deposit address is under review. Please try again later.";
         Alert.alert("Address Under Review", message);
+        setIsOnChain(false);
         return;
       }
 
@@ -100,6 +109,7 @@ const AddCrypto = () => {
           response?.message ||
           "Unable to retrieve deposit address. Please try again.";
         Alert.alert("Error", errorMessage);
+        setIsOnChain(false);
       }
     } catch (error: any) {
       console.log("Error fetching deposit address:", error);
@@ -108,6 +118,7 @@ const AddCrypto = () => {
         error?.message ||
         "Failed to get deposit address. Please try again.";
       Alert.alert("Error", errorMessage);
+      setIsOnChain(false);
     }
   };
 
@@ -168,6 +179,17 @@ const AddCrypto = () => {
     return `${depositAddress.slice(0, 6)}...${depositAddress.slice(-4)}`;
   }, [depositAddress]);
 
+  const getQRCodeValue = () =>
+    isOnChain ? depositAddress || "loading" : (walletData?.username ?? "");
+  const getTagLabel = () =>
+    isOnChain ? `${cryptoName} Wallet Address:` : "PayAiro Tag:";
+  const getTagValue = () =>
+    isOnChain ? displayAddress : (walletData?.username ?? "");
+  const getCopyValue = () =>
+    isOnChain ? depositAddress : (walletData?.username ?? "");
+  const getCopyLabel = () =>
+    isOnChain ? "Wallet Address" : "PayAiro Tag";
+
   const resolvedDisclaimer = useMemo(() => {
     if (!disclaimer) {
       return `Only send ${cryptoName} assets to this address. Other assets will be lost forever.`;
@@ -199,29 +221,44 @@ const AddCrypto = () => {
       <View style={styles.container}>
         <View style={styles.qrTypeSwitcherContainer}>
           <View style={styles.qrTypeChipsRow}>
-            <View style={styles.qrTypeChip}>
+            <Pressable
+              style={[styles.qrTypeChip, !isOnChain && styles.qrTypeChipActive]}
+              onPress={() => setIsOnChain(false)}
+            >
               <CustomText
                 size={13}
                 fontWeight="semiBold"
-                color={theme.colors.palette.grey900}
+                color={
+                  !isOnChain
+                    ? theme.colors.palette.white
+                    : theme.colors.palette.grey900
+                }
               >
                 PayAiro Tag
               </CustomText>
-            </View>
-            <View style={[styles.qrTypeChip, styles.qrTypeChipActive]}>
+            </Pressable>
+            <Pressable
+              style={[styles.qrTypeChip, isOnChain && styles.qrTypeChipActive]}
+              onPress={() => setIsOnChain(true)}
+            >
               <CustomText
                 size={13}
                 fontWeight="semiBold"
-                color={theme.colors.palette.white}
+                color={
+                  isOnChain
+                    ? theme.colors.palette.white
+                    : theme.colors.palette.grey900
+                }
               >
                 Wallet Address
               </CustomText>
-            </View>
+            </Pressable>
           </View>
         </View>
 
         <View style={styles.qrCardContainer}>
-          {depositAddressMutation.isPending || !depositAddress ? (
+          {isOnChain &&
+          (depositAddressMutation.isPending || !depositAddress) ? (
             <View style={styles.qrLoadingCard}>
               <ActivityIndicator
                 size="large"
@@ -234,11 +271,13 @@ const AddCrypto = () => {
               title={cryptoName}
               titleIcon={cryptoIcon}
               subtitle=""
-              qrValue={depositAddress}
-              payAiroTag={displayAddress}
-              tagLabel={`${cryptoName} Wallet Address:`}
+              qrValue={getQRCodeValue()}
+              payAiroTag={getTagValue()}
+              tagLabel={getTagLabel()}
               tagValueStyle={styles.qrTagValue}
-              onCopyTag={() => copyToClipboard(depositAddress, "Wallet Address")}
+              onCopyTag={() =>
+                copyToClipboard(getCopyValue(), getCopyLabel())
+              }
               leftButton={{
                 text: "Download",
                 icon: <SvgIcons.DownloadBlack width={20} height={20} />,
@@ -253,7 +292,7 @@ const AddCrypto = () => {
           )}
         </View>
 
-        {depositAddress && (
+        {isOnChain && depositAddress && (
           <View style={styles.noticeContainer}>
             <View style={styles.noticeIconContainer}>
               <SvgIcons.InfoNote width={18} height={18} />

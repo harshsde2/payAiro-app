@@ -126,8 +126,8 @@ export default function ScanPay(props: IScanPayProps) {
             transactionData: data,
             isSuccess: true,
             isError: false,
-            customTitle: "Payment Successful",
-            customDescription: `You have successfully paid $${requestAmount} to ${requesterName || requesterUsername}`,
+            customTitle: "Payment Initiated",
+            customDescription: `Your payment of $${requestAmount} to ${requesterName || requesterUsername} has been sent for processing.`,
           } as never);
         } else {
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
@@ -736,6 +736,7 @@ export default function ScanPay(props: IScanPayProps) {
             flexDirection: "row",
             alignItems: "center",
             marginHorizontal: 10,
+            marginBottom:  20,
           }}
         >
           {type === "receive" && (

@@ -429,6 +429,9 @@ const NewDashboard = () => {
       refetch();
 
       queryClient.invalidateQueries({ queryKey: paymentRequestKeys.pending() });
+      queryClient.invalidateQueries({
+        queryKey: userKeys.unreadNotificationsCount(),
+      });
       refetchDashBoardFiatData();
       refectWalletDashboardData();
     } catch (error) {

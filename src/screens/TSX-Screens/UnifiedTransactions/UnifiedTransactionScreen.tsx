@@ -2,21 +2,25 @@ import React, { useState, useMemo, useEffect, useCallback } from "react";
 import {
   View,
   StyleSheet,
-  ScrollView,
+  FlatList,
   KeyboardAvoidingView,
   Platform,
   RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import { useSelector } from "react-redux";
 import { ScreenContainer } from "HOC";
 import { SvgIcons } from "constants/svgs";
 import { useTheme, Theme } from "styles";
-import { useUnifiedTransactions, useFormattedTradesHistory, usePendingPaymentRequests } from "query/hooks";
+import {
+  useUnifiedTransactionsPaginated,
+  useFormattedTradesHistoryPaginated,
+  usePendingPaymentRequests,
+} from "query/hooks";
 import HeaderTitle from "components/HeaderTitle";
 import CustomSearchTextInput from "tsx-components/CustomSearchTextInput";
 import DashboardSection from "tsx-components/DashboardSection";
 import CustomText from "tsx-components/CustomText";
-import CustomPieChart from "components/CustomPieChart";
 import CommonModal from "tsx-components/modals/CommonModal";
 import TransactionFilter from "tsx-components/modals/TransactionFilter";
 import PaymentRequestsList from "tsx-components/PaymentRequestsList";
@@ -83,6 +87,9 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
     refetch: refetchPendingPaymentRequests 
   } = usePendingPaymentRequests();
 
+
+  console.log("pendingRequestsData =>", JSON.stringify(pendingRequestsData, null, 2));
+
   // Get isCrypto from Redux
   const { isCrypto } = useSelector((state: any) => state.authenticationSlice);
 
@@ -93,25 +100,83 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
   const [isCustomRangeSelected, setIsCustomRangeSelected] = useState(false);
   const [date, setDate] = useState("");
   const [date2, setDate2] = useState("");
+  const PAGE_SIZE = 5;
 
   // API hooks - conditionally use based on isCrypto
+  // Use paginated hook for fiat transactions
   const {
-    data: transactionsResponse,
+    data: transactionsPaginatedResponse,
     isLoading: isLoadingFiat,
     isFetching: isFetchingFiat,
+    isFetchingNextPage: isFetchingNextPageFiat,
+    fetchNextPage: fetchNextPageFiat,
+    hasNextPage: hasNextPageFiat,
     refetch: refetchFiat,
-  } = useUnifiedTransactions(filterQueryString);
+  } = useUnifiedTransactionsPaginated(filterQueryString, PAGE_SIZE, isCrypto);
+
+
+  console.log("transactionsPaginatedResponse ->", JSON.stringify(transactionsPaginatedResponse,null,2))
 
   const {
-    data: formattedTradesResponse,
+    data: formattedTradesPaginatedResponse,
     isLoading: isLoadingCrypto,
     isFetching: isFetchingCrypto,
+    isFetchingNextPage: isFetchingNextPageCrypto,
+    fetchNextPage: fetchNextPageCrypto,
+    hasNextPage: hasNextPageCrypto,
     refetch: refetchCrypto,
-  } = useFormattedTradesHistory();
+  } = useFormattedTradesHistoryPaginated(PAGE_SIZE, !isCrypto);
+
+  const formattedTradesResponse = useMemo(() => {
+    if (isCrypto || !formattedTradesPaginatedResponse) {
+      return null;
+    }
+
+    const allTransactions = formattedTradesPaginatedResponse.pages.flatMap(
+      (page) => page?.data ?? []
+    );
+
+    return { data: allTransactions };
+  }, [formattedTradesPaginatedResponse, isCrypto]);
+
+  // Flatten paginated transactions
+  const transactionsResponse = useMemo(() => {
+    if (!isCrypto || !transactionsPaginatedResponse) return null;
+    
+    const allTransactions = transactionsPaginatedResponse.pages.flatMap(
+      (page) => page?.data?.transactions ?? []
+    );
+    
+    // Get category percentages and other metadata from the first page
+    const firstPage = transactionsPaginatedResponse.pages[0];
+    
+    return {
+      data: {
+        transactions: allTransactions,
+        total_count: firstPage?.data?.total_count ?? 0,
+        category_percentages: firstPage?.data?.category_percentages,
+        total_transactions: firstPage?.data?.total_transactions ?? 0,
+        merchant_count: firstPage?.data?.merchant_count ?? 0,
+        family_friends_count: firstPage?.data?.family_friends_count ?? 0,
+        miscellaneous_count: firstPage?.data?.miscellaneous_count ?? 0,
+        self_transfer_count: firstPage?.data?.self_transfer_count ?? 0,
+        merchant_amount_total: firstPage?.data?.merchant_amount_total ?? 0,
+        family_friends_amount_total: firstPage?.data?.family_friends_amount_total ?? 0,
+        miscellaneous_amount_total: firstPage?.data?.miscellaneous_amount_total ?? 0,
+        self_transfer_amount_total: firstPage?.data?.self_transfer_amount_total ?? 0,
+        total_amount: firstPage?.data?.total_amount ?? 0,
+      },
+    };
+  }, [transactionsPaginatedResponse, isCrypto]);
 
   // Determine which data to use
   const isLoading = isCrypto ? isLoadingFiat : isLoadingCrypto;
   const isFetching = isCrypto ? isFetchingFiat : isFetchingCrypto;
+  const isFetchingNextPage = isCrypto
+    ? isFetchingNextPageFiat
+    : isFetchingNextPageCrypto;
+  const hasNextPage = isCrypto ? hasNextPageFiat : hasNextPageCrypto;
+  const fetchNextPage = isCrypto ? fetchNextPageFiat : fetchNextPageCrypto;
   const refetch = isCrypto ? refetchFiat : refetchCrypto;
 
   // Active tab is now handled automatically by App.js navigation listener
@@ -419,6 +484,147 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
     refetchPendingPaymentRequests();
   }, [refetch, refetchPendingPaymentRequests]);
 
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  const transactionsListHeader = useMemo(
+    () => (
+      <>
+        <HeaderTitle title="Transactions" />
+
+        {/* Search and Filter */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchInputWrapper}>
+            <CustomSearchTextInput
+              placeholder={
+                isCrypto
+                  ? "Search Name or PayAiro tag..."
+                  : "Search crypto transactions..."
+              }
+              style={styles.searchInput}
+              placeholderTextColor={theme.colors.palette.green700}
+              onChangeText={setSearchText}
+              value={searchText}
+              numberOfLines={1}
+            />
+          </View>
+          {/* Only show filter for fiat (isCrypto === true) */}
+          {isCrypto && (
+            <SvgIcons.FilterIcon
+              style={styles.filterIcon}
+              width={45}
+              height={45}
+              onPress={() => setShowFilter(true)}
+            />
+          )}
+        </View>
+
+        <View style={styles.contentContainer}>
+          {isCrypto && donutChartData && (
+            <DashboardSection
+              titleStyle={styles.donutTitle}
+              style={styles.donutContainer}
+              title="Transaction Summary"
+            >
+              <DonutChartContainer
+                portfolioBreakdownData={donutChartData}
+                index={0}
+                n={0}
+              />
+            </DashboardSection>
+          )}
+
+          {isCrypto &&
+            [
+              pendingRequestsData?.data?.received_pending_requests,
+              pendingRequestsData?.data?.sent_pending_requests,
+            ]
+              .flat()
+              .length > 0 && (
+              <DashboardSection title="Payment Requests">
+                <PaymentRequestsList
+                  data={pendingRequestsData?.data}
+                  isLoading={isLoadingPendingPaymentRequests}
+                />
+              </DashboardSection>
+            )}
+
+          <View style={styles.transactionsSection}>
+            <DashboardSection
+              title={isCrypto ? "Recent Transactions" : "Crypto Transactions"}
+            />
+          </View>
+        </View>
+      </>
+    ),
+    [
+      donutChartData,
+      isCrypto,
+      isLoadingPendingPaymentRequests,
+      pendingRequestsData?.data,
+      searchText,
+      setSearchText,
+      styles.contentContainer,
+      styles.donutContainer,
+      styles.donutTitle,
+      styles.filterIcon,
+      styles.searchContainer,
+      styles.searchInput,
+      styles.searchInputWrapper,
+      styles.transactionsSection,
+      theme.colors.palette.green700,
+    ]
+  );
+
+  const transactionsListFooter = useMemo(() => {
+    if (isFetchingNextPage) {
+      return (
+        <View style={styles.loadMoreContainer}>
+          <ActivityIndicator size="small" color={theme.colors.palette.green700} />
+          <CustomText
+            variant="caption"
+            color={theme.colors.text.secondary}
+            style={styles.loadMoreText}
+          >
+            Loading more...
+          </CustomText>
+        </View>
+      );
+    }
+
+    if (!hasNextPage && displayedTransactions.length > 0) {
+      return (
+        <View style={styles.loadMoreContainer}>
+          <CustomText variant="caption" color={theme.colors.text.secondary}>
+            No more transactions
+          </CustomText>
+        </View>
+      );
+    }
+    return <View style={styles.listFooterSpacing} />;
+  }, [
+    displayedTransactions.length,
+    hasNextPage,
+    isFetchingNextPage,
+    styles.listFooterSpacing,
+    styles.loadMoreContainer,
+    styles.loadMoreText,
+    theme.colors.palette.green700,
+    theme.colors.text.secondary,
+  ]);
+
+  const renderTransactionItem = useCallback(
+    ({ item }: { item: IUnifiedTransaction }) => (
+      <View style={styles.transactionItemWrapper}>
+        <UnifiedTransactionCard transaction={item} />
+      </View>
+    ),
+    [styles.transactionItemWrapper]
+  );
+
   // console.log("formattedPieChartData =>", JSON.stringify(formattedPieChartData, null, 2));
 
   return (
@@ -446,9 +652,33 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <ScrollView
+        <FlatList
+          data={displayedTransactions}
+          renderItem={renderTransactionItem}
+          keyExtractor={(item, index) =>
+            `${item.transaction_id}-${index}`
+          }
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={styles.listContent}
+          ListHeaderComponent={transactionsListHeader}
+          ListFooterComponent={transactionsListFooter}
+          ListEmptyComponent={
+            isLoading ? (
+              <View style={styles.emptyContainer}>
+                <CustomText variant="body1" color={theme.colors.text.secondary}>
+                  Loading transactions...
+                </CustomText>
+              </View>
+            ) : (
+              <View style={styles.emptyContainer}>
+                <CustomText variant="body1" color={theme.colors.text.secondary}>
+                  No transactions found
+                </CustomText>
+              </View>
+            )
+          }
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.2}
           refreshControl={
             <RefreshControl
               refreshing={isFetching && !isLoading}
@@ -456,102 +686,12 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
               tintColor={theme.colors.palette.green700}
             />
           }
-        >
-          <HeaderTitle title="Transactions" />
-
-          {/* Search and Filter */}
-          <View style={styles.searchContainer}>
-            <View style={styles.searchInputWrapper}>
-              <CustomSearchTextInput
-                placeholder={
-                  isCrypto
-                    ? "Search Name or PayAiro tag..."
-                    : "Search crypto transactions..."
-                }
-                style={styles.searchInput}
-                placeholderTextColor={theme.colors.palette.green700}
-                onChangeText={setSearchText}
-                value={searchText}
-                numberOfLines={1}
-              />
-            </View>
-            {/* Only show filter for fiat (isCrypto === true) */}
-            {isCrypto && (
-              <SvgIcons.FilterIcon
-                style={styles.filterIcon}
-                width={45}
-                height={45}
-                onPress={() => setShowFilter(true)}
-              />
-            )}
-          </View>
-
-          {/* Content */}
-          <View style={styles.contentContainer}>
-            {/* <>
-            {isCrypto && (
-              <DashboardSection title="Transaction Summary">
-                <CustomPieChart
-                  isTx={true}
-                  amount={totalTransactions}
-                  alloCationLists={formattedPieChartData}
-                />
-              </DashboardSection>
-            )}
-            </> */}
-            <>
-            {isCrypto && donutChartData && (
-              <DashboardSection titleStyle={{color: theme.colors.text.primary}} style={{ backgroundColor: theme.colors.card.background,paddingHorizontal:10,paddingVertical:10, borderRadius: 10}} title="Transaction Summary">
-                <DonutChartContainer portfolioBreakdownData={donutChartData} index={0} n={0} />
-              </DashboardSection>
-            )}
-            </>
-
-            {isCrypto && [pendingRequestsData?.data?.received_pending_requests, pendingRequestsData?.data?.sent_pending_requests].flat().length > 0 && (
-              <DashboardSection title="Payment Requests">
-                <PaymentRequestsList
-                  data={pendingRequestsData?.data}
-                  isLoading={isLoadingPendingPaymentRequests}
-                />
-              </DashboardSection>
-            )}
-
-            {/* Recent Transactions */}
-            <DashboardSection
-              title={isCrypto ? "Recent Transactions" : "Crypto Transactions"}
-              style={styles.transactionsSection}
-            >
-              {isLoading ? (
-                <View style={styles.emptyContainer}>
-                  <CustomText
-                    variant="body1"
-                    color={theme.colors.text.secondary}
-                  >
-                    Loading transactions...
-                  </CustomText>
-                </View>
-              ) : displayedTransactions.length > 0 ? (
-                displayedTransactions.map(
-                  (transaction: IUnifiedTransaction) => (
-                    <UnifiedTransactionCard
-                      key={transaction.transaction_id}
-                      transaction={transaction}
-                    />
-                  )
-                )
-              ) : (
-                <View style={styles.emptyContainer}>
-                  <CustomText
-                    variant="body1"
-                    color={theme.colors.text.secondary}
-                  >
-                    No transactions found
-                  </CustomText>
-                </View>
-              )}
-            </DashboardSection>
-          </View>
-        </ScrollView>
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={7}
+          updateCellsBatchingPeriod={50}
+          removeClippedSubviews={false}
+        />
       </KeyboardAvoidingView>
     </ScreenContainer>
   );
@@ -562,8 +702,9 @@ const createStyles = (theme: Theme) =>
     flex: {
       flex: 1,
     },
-    scrollContent: {
+    listContent: {
       flexGrow: 1,
+      paddingBottom: 40,
     },
     searchContainer: {
       width: "100%",
@@ -589,7 +730,6 @@ const createStyles = (theme: Theme) =>
       marginRight: 5,
     },
     contentContainer: {
-      flex: 1,
       backgroundColor: theme.colors.palette.white,
       borderTopEndRadius: 32,
       borderTopStartRadius: 32,
@@ -597,12 +737,41 @@ const createStyles = (theme: Theme) =>
       marginTop: 20,
     },
     transactionsSection: {
-      paddingBottom: 160,
+      paddingBottom: 10,
+    },
+    transactionItemWrapper: {
+      backgroundColor: theme.colors.palette.white,
+      paddingHorizontal: 20,
     },
     emptyContainer: {
       alignItems: "center",
       justifyContent: "center",
       paddingVertical: 16,
+    },
+    listFooterSpacing: {
+      height: 140,
+      backgroundColor: theme.colors.palette.white,
+      borderBottomEndRadius: 32,
+      borderBottomStartRadius: 32,
+      paddingHorizontal: 20,
+    },
+    loadMoreContainer: {
+      backgroundColor: theme.colors.palette.white,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 16,
+    },
+    loadMoreText: {
+      marginTop: 8,
+    },
+    donutContainer: {
+      backgroundColor: theme.colors.card.background,
+      paddingHorizontal: 10,
+      paddingVertical: 10,
+      borderRadius: 10,
+    },
+    donutTitle: {
+      color: theme.colors.text.primary,
     },
   });
 

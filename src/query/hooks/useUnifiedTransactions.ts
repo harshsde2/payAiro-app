@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { apiClient } from "../../api";
 import { WALLET } from "../../api/endpoints";
 import { ApiResponse } from "../../api/types";
@@ -11,6 +11,8 @@ export const unifiedTransactionKeys = {
   list: () => [...unifiedTransactionKeys.all, "list"] as const,
   filtered: (filters: string) =>
     [...unifiedTransactionKeys.all, "filtered", filters] as const,
+  paginated: (filters: string, pageSize: number) =>
+    [...unifiedTransactionKeys.all, "paginated", filters, pageSize] as const,
 };
 
 // Filter parameters interface
@@ -84,6 +86,54 @@ export const useUnifiedTransactionsWithFilters = (
       return response;
     },
     staleTime: queryStaleTime.VERY_FAST_STALE_TIME,
+  });
+};
+
+/**
+ * Hook to get unified transactions with pagination support
+ * @param filterQueryString - Optional filter query string (e.g., "?categories=family_friends&time_range=1month")
+ * @param pageSize - Number of items per page (default: 5)
+ * @param enabled - Whether the query is enabled (default: true)
+ */
+export const useUnifiedTransactionsPaginated = (
+  filterQueryString: string = "",
+  pageSize: number = 5,
+  enabled: boolean = true
+) => {
+  return useInfiniteQuery<ApiResponse<IUnifiedTransactionsResponse>, Error>({
+    queryKey: unifiedTransactionKeys.paginated(filterQueryString, pageSize),
+    initialPageParam: 1,
+    queryFn: async ({ pageParam = 1 }) => {
+      // Build pagination query params
+      const paginationParams = `page=${pageParam}&page_size=${pageSize}`;
+      
+      // Combine filter query string with pagination params
+      const separator = filterQueryString.includes("?") ? "&" : "?";
+      const fullQueryString = filterQueryString
+        ? `${filterQueryString}${separator}${paginationParams}`
+        : `?${paginationParams}`;
+
+      const response = await apiClient.get<ApiResponse<IUnifiedTransactionsResponse>>(
+        `${WALLET.UNIFIED_TRANSACTIONS}${fullQueryString}`
+      );
+      return response;
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      // Check if there are more pages by comparing total_count with current loaded count
+      const currentLoadedCount = allPages.reduce(
+        (sum, page) => sum + (page?.data?.transactions?.length ?? 0),
+        0
+      );
+      const totalCount = lastPage?.data?.total_count ?? 0;
+      
+      // If we've loaded less than total_count, there are more pages
+      if (currentLoadedCount < totalCount) {
+        return allPages.length + 1;
+      }
+      return undefined;
+    },
+    staleTime: queryStaleTime.VERY_FAST_STALE_TIME,
+    enabled,
   });
 };
 

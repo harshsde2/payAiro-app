@@ -7,11 +7,11 @@ import { useLogin, useStepCount, useVerifyOTP } from "query/hooks/useAPIAuth";
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   View
 } from "react-native";
 import DeviceInfo from "react-native-device-info";
+import { OtpInput, OtpInputRef } from "react-native-otp-entry";
 import { useDispatch } from "react-redux";
 import { getItem, setItem, setPin, STORAGE_KEYS } from "storage/mmkv";
 import { Theme, useTheme } from "styles";
@@ -81,8 +81,8 @@ export default function ConfirmOTP() {
   } = useUserPin(false);
 
   const { email } = (route as any).params;
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const inputs = useRef<any>([]);
+  const [otp, setOtp] = useState("");
+  const otpInputRef = useRef<OtpInputRef>(null);
   const [countdown, setCountdown] = useState(OTP_COOLDOWN_SECONDS);
   const [resendEnabled, setResendEnabled] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -160,67 +160,9 @@ export default function ConfirmOTP() {
     dispatch(setShowGuide(false));
   };
 
-  const handleOtpChange = (text: any, index: any) => {
-    // Check if text length is greater than 1 (paste scenario)
-    if (text.length > 1) {
-      handlePasteText(text, index);
-      return;
-    }
-
-    // Handle single character input or deletion
-    if (/^[0-9]$/.test(text) || text === "") {
-      const newOtp = [...otp];
-      newOtp[index] = text;
-      setOtp(newOtp);
-
-      if (text && index < otp.length - 1) {
-        inputs.current[index + 1]?.focus();
-      }
-
-      if (!text && index > 0) {
-        inputs.current[index - 1]?.focus();
-      }
-    }
-  };
-
-  // Handle pasted text
-  const handlePasteText = (text: string, startIndex: number) => {
-    // Extract only numbers from pasted text
-    const numbers = text.replace(/[^0-9]/g, '');
-    
-    if (numbers.length > 0) {
-      const newOtp = [...otp];
-      
-      // Fill from the start index onwards
-      let currentIndex = startIndex;
-      for (let i = 0; i < numbers.length && currentIndex < 6; i++) {
-        newOtp[currentIndex] = numbers[i];
-        currentIndex++;
-      }
-      
-      setOtp(newOtp);
-      
-      // Focus on next empty field or last field
-      const nextIndex = Math.min(currentIndex, 5);
-      setTimeout(() => {
-        inputs.current[nextIndex]?.focus();
-      }, 0);
-    }
-  };
-
-  const handleKeyPress = (key: any, index: any) => {
-    if (key === "Backspace") {
-      if (otp[index] === "") {
-        if (index > 0) {
-          inputs.current[index - 1]?.focus();
-        }
-      } else {
-        const newOtp = [...otp];
-        newOtp[index] = "";
-        setOtp(newOtp);
-      }
-    }
-  };
+  const handleOtpChange = useCallback((text: string) => {
+    setOtp(text);
+  }, []);
 
   const handleResendOTP = () => {
     login({ email: email.trim().toLowerCase() } as any, {
@@ -271,13 +213,13 @@ export default function ConfirmOTP() {
     }
   };
 
-  const handleVerifyOTP = useCallback(() => {
+  const handleVerifyOTP = useCallback((otpValue?: string) => {
     // Prevent multiple simultaneous verifications
     if (isVerifyingRef.current) {
       return;
     }
 
-    const enteredOtp = otp.join("");
+    const enteredOtp = otpValue || otp;
     if (enteredOtp.length < 6) {
       showError("OTP Should Be 6 Digits");
       return;
@@ -315,9 +257,11 @@ export default function ConfirmOTP() {
           }
         } else {
           showError("Invalid OTP. Please Try Again.");
-          // Reset on error
+          // Reset on error and clear OTP
           isVerifyingRef.current = false;
           setIsVerifying(false);
+          otpInputRef.current?.clear();
+          setOtp("");
         }
       },
       onError: (error: any) => {
@@ -328,9 +272,11 @@ export default function ConfirmOTP() {
           "Something went wrong";
         showError(errorMessage);
         
-        // Reset on error
+        // Reset on error and clear OTP
         isVerifyingRef.current = false;
         setIsVerifying(false);
+        otpInputRef.current?.clear();
+        setOtp("");
       },
       onSettled: () => {
         useDispatchAction(setShowLoader(false));
@@ -338,14 +284,15 @@ export default function ConfirmOTP() {
     });
   }, [otp, email, verifyOtp, navigation]);
 
-  const isOtpComplete = otp.every((digit) => digit !== "");
+  const isOtpComplete = otp.length === 6;
 
-  useEffect(() => {
-    if (!isOtpComplete || isVerifyingRef.current || isVerifying) {
+  // Handle OTP filled - auto verify
+  const handleOtpFilled = useCallback((filledOtp: string) => {
+    if (isVerifyingRef.current || isVerifying) {
       return;
     }
-    handleVerifyOTP();
-  }, [isOtpComplete, isVerifying, handleVerifyOTP]);
+    handleVerifyOTP(filledOtp);
+  }, [isVerifying, handleVerifyOTP]);
 
   return (
     <ScreenContainer avoidKeyboard padding={0}>
@@ -369,26 +316,30 @@ export default function ConfirmOTP() {
 
         {/* OTP Input Fields */}
         <View style={styles.otpContainer}>
-          {otp.map((_, index) => (
-            <TextInput
-              key={index}
-              style={[styles.otpInput, otp[index] && styles.otpInputActive]}
-              maxLength={6}
-              keyboardType="number-pad"
-              // textContentType="oneTimeCode" // Required for iOS (SMS & Mail suggestions)
-              textContentType='oneTimeCode'
-              autoComplete='sms-otp' // Standardized for cross-platform support in 2026
-              importantForAutofill="yes" 
-              onChangeText={(text) => handleOtpChange(text, index)}
-              onKeyPress={({ nativeEvent }) =>
-                handleKeyPress(nativeEvent.key, index)
-              }
-              ref={(input) => (inputs.current[index] = input)}
-              value={otp[index]}
-              editable={!isVerifying}
-              contextMenuHidden={false}
-            />
-          ))}
+          <OtpInput
+            ref={otpInputRef}
+            numberOfDigits={6}
+            focusColor={theme.colors.palette.green800}
+            autoFocus={true}
+            disabled={isVerifying}
+            type="numeric"
+            blurOnFilled={true}
+            onTextChange={handleOtpChange}
+            onFilled={handleOtpFilled}
+            textInputProps={{
+              accessibilityLabel: "One-Time Password",
+              textContentType: "oneTimeCode",
+              autoComplete: "sms-otp",
+            }}
+            theme={{
+              containerStyle: styles.otpInputContainer,
+              pinCodeContainerStyle: styles.otpInput,
+              pinCodeTextStyle: styles.otpInputText,
+              focusedPinCodeContainerStyle: styles.otpInputActive,
+              filledPinCodeContainerStyle: styles.otpInputFilled,
+              disabledPinCodeContainerStyle: styles.otpInputDisabled,
+            }}
+          />
         </View>
 
         <CustomText variant={"caption"}>Didn't receive the code?</CustomText>
@@ -408,8 +359,8 @@ export default function ConfirmOTP() {
         </TouchableOpacity>
         <GenericButton
           title={isVerifying ? "Verifying..." : "Verify"}
-          onPress={handleVerifyOTP}
-          disabled={!isOtpComplete || isVerifying || !otp.every((digit) => digit !== "")}
+          onPress={() => handleVerifyOTP()}
+          disabled={!isOtpComplete || isVerifying}
         />
       </View>
     </ScreenContainer>
@@ -441,20 +392,42 @@ const customStyles = (theme: Theme) =>
       fontFamily: Fonts.regular,
     },
     otpContainer: {
-      flexDirection: "row",
-      justifyContent: "space-between",
       width: "100%",
       marginVertical: 20,
     },
+    otpInputContainer: {
+      width: "100%",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      gap: 8,
+    },
     otpInput: {
-      width: 40,
-      height: 50,
-      borderRadius: 30,
-      borderWidth: 1,
-      borderColor: "#ccc",
-      textAlign: "center",
-      fontSize: 18,
+      width: 48,
+      height: 56,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: "#E0E0E0",
+      backgroundColor: "#FAFAFA",
+    },
+    otpInputText: {
+      fontSize: 20,
+      fontFamily: Fonts.semibold,
+      color: theme.colors.text.primary,
+    },
+    otpInputActive: {
+      borderColor: theme.colors.palette.green800,
+      borderWidth: 2,
       backgroundColor: "#fff",
+    },
+    otpInputFilled: {
+      borderColor: "#B1FF84",
+      borderWidth: 1.5,
+      backgroundColor: "#fff",
+    },
+    otpInputDisabled: {
+      borderColor: "#E0E0E0",
+      backgroundColor: "#F5F5F5",
+      opacity: 0.7,
     },
     signHeaderTextStyles: {
       width: "100%",
@@ -464,10 +437,6 @@ const customStyles = (theme: Theme) =>
       width: "100%",
       textAlign: "center",
       marginTop: 10,
-    },
-    otpInputActive: {
-      borderColor: "#B1FF84",
-      borderWidth: 2,
     },
     resendText: {
       color: "#000",

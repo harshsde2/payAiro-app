@@ -4,12 +4,15 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
+  Linking,
 } from "react-native";
 import moment from "moment";
 import { Theme, useTheme } from "styles";
 import CustomText from "./CustomText";
 import { SvgIcons } from "constants/svgs";
 import { IUserDetails, IRequestDetails } from "query/hooks/types";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { useNavigation } from "@react-navigation/native";
 
 interface IPaymentRequestCardProps {
   type: "received" | "sent";
@@ -32,7 +35,7 @@ const PaymentRequestCard: FC<IPaymentRequestCardProps> = ({
 }) => {
   const { theme } = useTheme();
   const styles = createStyles(theme);
-
+  const navigation = useNavigation<any>();
   const isReceived = type === "received";
   const formattedDate = moment(requestDetails.created_at).format("MMM DD, YYYY");
   const formattedTime = moment(requestDetails.created_at).format("hh:mm A");
@@ -45,6 +48,9 @@ const PaymentRequestCard: FC<IPaymentRequestCardProps> = ({
     return name.slice(0, 2).toUpperCase();
   };
 
+  const profilePhoto = userDetails?.profile_photo ? `https://testingapp.payairo.com${userDetails?.profile_photo}` : null;
+  
+  console.log("userDetails profile_photo =>", JSON.stringify(profilePhoto, null, 2));
   return (
     <View style={styles.container}>
       {/* Header with type indicator */}
@@ -62,13 +68,14 @@ const PaymentRequestCard: FC<IPaymentRequestCardProps> = ({
       {/* Main Content */}
       <View style={styles.contentRow}>
         {/* Avatar */}
-        <View style={[styles.avatar, isReceived ? styles.receivedAvatar : styles.sentAvatar]}>
+        <TouchableOpacity onPress={() => navigation.navigate(NAVIGATION_SCREENS.USER_PROFILE, { userDetails })}      style={[styles.avatar, isReceived ? styles.receivedAvatar : styles.sentAvatar]}>
           {userDetails.profile_photo ? (
-            <Image
-              source={{ uri: userDetails.profile_photo }}
-              style={styles.avatarImage}
-            />
+              <Image
+                source={{ uri: `${userDetails.profile_photo}` }}
+                style={styles.avatarImage}
+              />
           ) : (
+
             <CustomText
               variant="subtitle1"
               fontWeight="bold"
@@ -77,7 +84,7 @@ const PaymentRequestCard: FC<IPaymentRequestCardProps> = ({
               {getInitials(userDetails.name)}
             </CustomText>
           )}
-        </View>
+        </TouchableOpacity>
 
         {/* User Info */}
         <View style={styles.userInfo}>

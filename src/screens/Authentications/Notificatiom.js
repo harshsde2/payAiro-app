@@ -27,6 +27,7 @@ export default function Notificatiom({ item }) {
               source={{ uri: item?.image }} 
               style={{ width: 50, height: 50 }} 
               radius={25}
+              resizeMode="cover"
               
             />
           )}
