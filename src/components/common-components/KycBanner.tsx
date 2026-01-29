@@ -29,6 +29,8 @@ const KycBanner: React.FC = () => {
 
   const mode = useMemo(() => toKycMode(kycStatus), [kycStatus]);
 
+  console.log("kycStatus =>", kycStatus);
+
   // Animation values
   const animatedHeight = useSharedValue(COLLAPSED_HEIGHT);
   const chevronRotation = useSharedValue(0);

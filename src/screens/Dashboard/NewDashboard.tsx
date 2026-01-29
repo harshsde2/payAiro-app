@@ -21,7 +21,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 // Import from the module alias utility
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import GuideModal from "components/GuideModal";
 import Rewards from "components/Rewards";
@@ -215,6 +215,8 @@ const NewDashboard = () => {
     bankLists,
   } = useSelector((state: any) => state.authenticationSlice);
 
+  // console.log("walletData =>", JSON.stringify(walletData, null, 2));
+
   const { width: screenWidth } = useWindowDimensions();
   const dispatch = useDispatch();
   const { theme } = useTheme();
@@ -240,8 +242,8 @@ const NewDashboard = () => {
   const kycStatus = useSelector((s: any) => s.authenticationSlice?.kycStatus);
 
   const mode = useMemo(() => toKycMode(kycStatus), [kycStatus]);
-  console.log("mode =>", mode);
-  console.log("kycStatus =>", JSON.stringify(kycStatus, null, 2));
+  // console.log("mode =>", mode);
+  // console.log("kycStatus =>", JSON.stringify(kycStatus, null, 2));
 
   const isKYCCompleted = (mode === "not_started" || mode === 'pending' || mode === 'expired') ? false : true;
   const handleKYCAlert = () => {
@@ -288,6 +290,8 @@ const NewDashboard = () => {
     isFetched: isWalletDashboardDataFetched,
     refetch: refectWalletDashboardData,
   } = useWalletDashboardData();
+
+  // console.log("WalletDashboardData =>", JSON.stringify(WalletDashboardData, null, 2))
 
   const { data, isLoading, error, refetch } = useAllCryptoBalances();
   const balances = data?.data?.balances || [];
@@ -391,6 +395,7 @@ const NewDashboard = () => {
       );
     }
 
+
     if (
       !isErrorDashBoardData &&
       isDashBoardDataFetched &&
@@ -403,6 +408,9 @@ const NewDashboard = () => {
       );
     }
   }, [isDashBoardDataFetched, DashBoardData]);
+
+  // console.log("DashBoardData?.data?.bank?.bank_accounts ->", JSON.stringify(DashBoardData?.data?.bank, null, 2))
+
 
 
   useEffect(() => {
@@ -440,6 +448,22 @@ const NewDashboard = () => {
       setRefreshing(false);
     }
   }, [tokens?.access, refetchBankBalanceData, refetch, refetchDashBoardFiatData, refectWalletDashboardData]);
+
+  // Reload data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      // Reload all dashboard data when screen is focused
+      refetchBankBalanceData();
+      refetch();
+      refetchCryptoBalance();
+      queryClient.invalidateQueries({ queryKey: paymentRequestKeys.pending() });
+      queryClient.invalidateQueries({
+        queryKey: userKeys.unreadNotificationsCount(),
+      });
+      refetchDashBoardFiatData();
+      refectWalletDashboardData();
+    }, [refetchBankBalanceData, refetch, refetchCryptoBalance, refetchDashBoardFiatData, refectWalletDashboardData])
+  );
 
   interface CryptoAsset {
     assetType: string;
@@ -508,7 +532,7 @@ const NewDashboard = () => {
     return processedBankAccounts.some((item: any) => item?.bank_type === "external");
   }, [processedBankAccounts]);
 
-  console.log("tokens =>", JSON.stringify(tokens, null, 2));
+  // console.log("tokens =>", JSON.stringify(tokens, null, 2));
 
   const handleEyeClick = (account_id: string) => {
     setHiddenBalances((prev: Record<string, boolean>) => ({

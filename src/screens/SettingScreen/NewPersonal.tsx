@@ -64,6 +64,7 @@ const NewPersonal: React.FC = () => {
         type: "image/png",
         filename: `PayAiro_QR_${walletData?.username || "qr"}`,
         failOnCancel: false,
+        message: `PayAiro Payment Details\n\n PayAiro Tag: ${walletData?.username}`,
       });
     } catch (err: any) {
       if (err?.message !== "User did not share") {

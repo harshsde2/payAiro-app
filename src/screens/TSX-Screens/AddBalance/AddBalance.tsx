@@ -68,7 +68,7 @@ const PAYMENT_METHOD_CONFIGS = [
     iconKey: "ACHTransfer" as const,
     type: "ACH" as const,
     navigation: NAVIGATION_SCREENS.ACH_TRANSFER,
-    showInProduction: true, // Always show
+    showInProduction: false, // Always show
     isDisabled: true,
   },
   {
@@ -312,7 +312,7 @@ const AddBalance = () => {
           <SvgIcons.ChevronDown width={16} height={16} />
         </TouchableOpacity>
       </View> */}
-      <AmountInputDisplay
+      {/* <AmountInputDisplay
         amount={amount}
         setAmount={(amount) => {
           setAmount(amount);
@@ -325,7 +325,7 @@ const AddBalance = () => {
       />
       <CustomText align="center" size={14} variant="caption">
         Current Balance: ${current_balance}
-      </CustomText>
+      </CustomText> */}
       {/* Payment Method Selection */}
       <View style={[styles.whiteSheetContainer]}>
         <DashboardSection title="Select Payment Method">

@@ -1,11 +1,13 @@
-import React, { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import React, { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "react";
 import {
+  Platform,
   StyleSheet,
   TouchableOpacity,
   View,
 } from "react-native";
 import { useTheme } from "styles";
 import { CustomText } from "tsx-components";
+import Share from "react-native-share";
 import { SvgIcons } from "constants/svgs";
 import QRCode from "react-native-qrcode-svg";
 import ViewShot from "react-native-view-shot";
@@ -39,6 +41,8 @@ const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
   const [stableBankDetails, setStableBankDetails] = useState<React.ReactNode>(null);
   const tagLabelText = tagLabel || "PayAiro Tag:";
 
+  // console.log("payAiroTag ->", payAiroTag)
+
   const qrString =
     typeof qrValue === "string" ? qrValue : JSON.stringify(qrValue);
 
@@ -54,10 +58,10 @@ const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
       setIsCapturing(true);
       onCapturingChange?.(true);
       await onBeforeCapture?.();
-      
+
       // Small delay to ensure UI is stable before capture
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       const uri = await viewShotRef.current.capture({
         format: "png",
         quality: 0.9,
@@ -81,65 +85,126 @@ const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
     isCapturing,
   }));
 
+  const managePayAiroTagFontSize = useMemo(() => {
+    if (payAiroTag.length > 16) {
+      return 8;
+    }
+    return 12;
+  }, [payAiroTag]);
+
+  const managePayAiroTagFontWeight = useMemo(() => {
+    if (payAiroTag.length > 16) {
+      return "semiBold";
+    }
+    return "bold";
+  }, [payAiroTag]);
+
   return (
     <View style={[styles.container, containerStyle]}>
-      <ViewShot
-        ref={viewShotRef}
-        options={{ format: "png", quality: 0.9, result: "tmpfile" }}
-        style={styles.viewShot}
-      >
-        <View style={styles.titleRow}>
-          {titleIcon && <View style={styles.titleIcon}>{titleIcon}</View>}
-          <CustomText variant="h3" fontWeight="bold" style={styles.title}>
-            {title}
-          </CustomText>
-        </View>
-        {Boolean(subtitle) && (
-          <CustomText variant="body2" style={styles.subtitle}>
-            {subtitle}
-          </CustomText>
-        )}
-
-        <View style={styles.qrWrapper}>
-          <QRCode value={qrString} size={QR_SIZE} />
-          <View
-            style={[
-              styles.logoOverlay,
-              { backgroundColor: theme.colors.palette.green700 },
-            ]}
-          >
-            <SvgIcons.PayairoWhiteLogo width={LOGO_ICON_SIZE} height={LOGO_ICON_SIZE} />
+      <View style={[{}]}>
+        <ViewShot
+          ref={viewShotRef}
+          options={{ format: "png", quality: 0.9, result: "tmpfile" }}
+          style={styles.viewShot}
+        >
+          <View style={styles.titleRow}>
+            {titleIcon && <View style={styles.titleIcon}>{titleIcon}</View>}
+            <CustomText variant="h3" fontWeight="bold" style={styles.title}>
+              {title}
+            </CustomText>
           </View>
-        </View>
+          {Boolean(subtitle) && (
+            <CustomText variant="body2" style={styles.subtitle}>
+              {subtitle}
+            </CustomText>
+          )}
 
-        <View style={styles.tagRow}>
-          <CustomText variant="body2" fontWeight="medium" style={styles.tagLabel}>
-            {tagLabelText}
-          </CustomText>
-          <CustomText
-            variant="body2"
-            fontWeight="semiBold"
-            numberOfLines={1}
-            ellipsizeMode="middle"
-            style={[
-              styles.tagValue,
-              tagValueStyle,
-            ]}
-          >
-            {payAiroTag}
-          </CustomText>
-          <TouchableOpacity onPress={onCopyTag} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <SvgIcons.CopyOutlineBlack width={20} height={20} />
-          </TouchableOpacity>
-        </View>
+          <View style={styles.qrWrapper}>
+            <QRCode value={qrString} size={QR_SIZE} />
+            <View
+              style={[
+                styles.logoOverlay,
+                { backgroundColor: theme.colors.palette.green700 },
+              ]}
+            >
+              <SvgIcons.PayairoWhiteLogo style={{ marginLeft: 3 }} width={LOGO_ICON_SIZE} height={LOGO_ICON_SIZE} />
+            </View>
+          </View>
+          {
+            Platform.OS === 'ios' && (
+              <View style={styles.tagRow}>
+                <CustomText variant="body2" fontWeight="medium" style={styles.tagLabel}>
+                  {tagLabelText}
+                </CustomText>
+
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
+                  <CustomText
+                    variant="body2"
+                    fontWeight={managePayAiroTagFontWeight}
+                    size={managePayAiroTagFontSize}
+                    // numberOfLines={1}
+                    // ellipsizeMode="middle"
+                    style={[
+                      styles.tagValue,
+                      tagValueStyle,
+                    ]}
+                  >
+                    {payAiroTag}
+                  </CustomText>
+                  <TouchableOpacity onPress={onCopyTag} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <SvgIcons.CopyOutlineBlack width={20} height={20} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )
+          }
+
+          {
+            Platform.OS === 'ios' && bankDetails && (
+              <View style={styles.bankDetailsRow}>
+                {bankDetails}
+              </View>
+            )
+          }
+
+        </ViewShot>
         {
-          displayBankDetails && (
-            <View style={styles.bankDetailsRow}>
-              {displayBankDetails}
+          Platform.OS === 'android' && (
+            <View style={styles.tagRow}>
+              <CustomText variant="body2" fontWeight="medium" style={styles.tagLabel}>
+                {tagLabelText}
+              </CustomText>
+
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
+                <CustomText
+                  variant="body2"
+                  fontWeight={managePayAiroTagFontWeight}
+                  size={managePayAiroTagFontSize}
+                  // numberOfLines={1}
+                  // ellipsizeMode="middle"
+                  style={[
+                    styles.tagValue,
+                    tagValueStyle,
+                  ]}
+                >
+                  {payAiroTag}
+                </CustomText>
+                <TouchableOpacity onPress={onCopyTag} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <SvgIcons.CopyOutlineBlack width={20} height={20} />
+                </TouchableOpacity>
+              </View>
             </View>
           )
         }
-      </ViewShot>
+        {
+          Platform.OS === 'android' && bankDetails && (
+            <View style={styles.bankDetailsRow}>
+              {bankDetails}
+            </View>
+          )
+        }
+      </View>
+
 
       <View style={styles.buttonsRow}>
         {leftButton && (
@@ -212,14 +277,15 @@ const getStyles = (theme: any) =>
       height: QR_SIZE,
       justifyContent: "center",
       alignItems: "center",
-      marginBottom: 16,
+      marginVertical: 16,
     },
     bankDetailsRow: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
       gap: 8,
-      marginVertical: 10
+      marginVertical: 10,
+      paddingHorizontal: 20,
     },
     bankDetailsText: {
       color: theme.colors.palette.black,
@@ -233,9 +299,11 @@ const getStyles = (theme: any) =>
       borderRadius: LOGO_OVERLAY_SIZE / 2,
       justifyContent: "center",
       alignItems: "center",
+      // padding:,
+      // backgroundColor:'red',
     },
     tagRow: {
-      flexDirection: "row",
+      // flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
       gap: 8,
@@ -246,6 +314,7 @@ const getStyles = (theme: any) =>
     tagValue: {
       color: theme.colors.palette.black,
       flexShrink: 1,
+      marginRight: 8,
     },
     buttonsRow: {
       flexDirection: "row",

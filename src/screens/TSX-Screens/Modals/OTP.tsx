@@ -1,13 +1,12 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { OtpInput, OtpInputRef } from "react-native-otp-entry";
 import { CustomText } from "tsx-components";
 import GenericButton from "../../../components/GenericButton";
 import { Theme, useTheme } from "styles";
@@ -29,8 +28,8 @@ const OTP = () => {
 
   const { onOTPVerified, transactionType } = (route.params as ITransactionOTPRouteParams) || {};
 
-  const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
-  const inputs = useRef<any[]>([]);
+  const [otp, setOtp] = useState<string>("");
+  const otpInputRef = useRef<OtpInputRef>(null);
   const [countdown, setCountdown] = useState<number>(60);
   const [resendEnabled, setResendEnabled] = useState<boolean>(false);
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
@@ -48,10 +47,11 @@ const OTP = () => {
     handleSendOTP();
     
     // Reset states
-    setOtp(["", "", "", "", "", ""]);
+    setOtp("");
     setCountdown(60);
     setResendEnabled(false);
     setIsVerifying(false);
+    otpInputRef.current?.clear();
   }, []);
 
   useEffect(() => {
@@ -80,85 +80,26 @@ const OTP = () => {
     if (resendEnabled) {
       setCountdown(60);
       setResendEnabled(false);
+      setOtp("");
+      setErrorMessage("");
+      otpInputRef.current?.clear();
+      hasAutoVerifiedRef.current = false;
       handleSendOTP();
     }
   };
 
-  const handleOtpChange = (text: string, index: number) => {
+  const handleOtpChange = useCallback((text: string) => {
     // Clear error when user starts typing
     if (errorMessage) {
       setErrorMessage("");
     }
+    setOtp(text);
+  }, [errorMessage]);
 
-    // Check if text length is greater than 1 (paste scenario)
-    if (text.length > 1) {
-      handlePasteText(text, index);
-      return;
-    }
-
-    // Handle single character input or deletion
-    if (/^[0-9]$/.test(text) || text === "") {
-      const newOtp = [...otp];
-      newOtp[index] = text;
-      setOtp(newOtp);
-
-      // Move to the next input if a number is entered
-      if (text && index < otp.length - 1) {
-        inputs.current[index + 1]?.focus();
-      }
-
-      // Move to the previous input if backspace is pressed and field is empty
-      if (!text && index > 0) {
-        inputs.current[index - 1]?.focus();
-      }
-    }
-  };
-
-  // Handle pasted text
-  const handlePasteText = (text: string, startIndex: number) => {
-    // Extract only numbers from pasted text
-    const numbers = text.replace(/[^0-9]/g, '');
-    
-    if (numbers.length > 0) {
-      const newOtp = [...otp];
-      
-      // Fill from the start index onwards
-      let currentIndex = startIndex;
-      for (let i = 0; i < numbers.length && currentIndex < 6; i++) {
-        newOtp[currentIndex] = numbers[i];
-        currentIndex++;
-      }
-      
-      setOtp(newOtp);
-      
-      // Focus on next empty field or last field
-      const nextIndex = Math.min(currentIndex, 5);
-      setTimeout(() => {
-        inputs.current[nextIndex]?.focus();
-      }, 0);
-    }
-  };
-
-  const handleKeyPress = (key: string, index: number) => {
-    if (key === "Backspace") {
-      if (otp[index] === "") {
-        // Move to the previous input if current is empty
-        if (index > 0) {
-          inputs.current[index - 1]?.focus();
-        }
-      } else {
-        // Clear the current input
-        const newOtp = [...otp];
-        newOtp[index] = "";
-        setOtp(newOtp);
-      }
-    }
-  };
-
-  const handleVerifyOTP = () => {
+  const handleVerifyOTP = useCallback((otpValue?: string) => {
     setIsVerifying(true);
     setErrorMessage(""); // Clear previous error
-    const enteredOtp = otp.join("");
+    const enteredOtp = otpValue || otp;
     
     if (enteredOtp.length < 6) {
       showError("Please enter complete OTP");
@@ -190,21 +131,28 @@ const OTP = () => {
         showError(errMsg);
         setErrorMessage(errMsg);
         setIsVerifying(false);
+        // Clear OTP on error
+        otpInputRef.current?.clear();
+        setOtp("");
       },
     });
-  };
+  }, [otp, navigation, onOTPVerified, verifyUserForSendOTP]);
 
   const handleClose = () => {
     navigation.goBack();
   };
 
-  const isOtpComplete = otp.every((digit) => digit !== "");
+  const isOtpComplete = otp.length === 6;
 
+  // Reset auto-verify ref when OTP becomes incomplete
   useEffect(() => {
     if (!isOtpComplete) {
       hasAutoVerifiedRef.current = false;
-      return;
     }
+  }, [isOtpComplete]);
+
+  // Handle OTP filled - auto verify
+  const handleOtpFilled = useCallback((filledOtp: string) => {
     if (
       hasAutoVerifiedRef.current ||
       isVerifying ||
@@ -214,8 +162,8 @@ const OTP = () => {
       return;
     }
     hasAutoVerifiedRef.current = true;
-    handleVerifyOTP();
-  }, [isOtpComplete, isVerifying, isVerifyingOTP, isSendingOTP]);
+    handleVerifyOTP(filledOtp);
+  }, [isVerifying, isVerifyingOTP, isSendingOTP, handleVerifyOTP]);
 
   return (
     <ScreenContainer avoidKeyboard padding={0}>
@@ -239,27 +187,33 @@ const OTP = () => {
 
           {/* OTP Input Fields */}
           <View style={styles.otpContainer}>
-            {otp.map((digit, index) => (
-              <TextInput
-                key={index}
-                style={[
-                  styles.otpInput, 
-                  digit && styles.otpInputActive,
+            <OtpInput
+              ref={otpInputRef}
+              numberOfDigits={6}
+              focusColor={theme.colors.palette.green800}
+              autoFocus={true}
+              disabled={isVerifying || isVerifyingOTP || isSendingOTP}
+              type="numeric"
+              blurOnFilled={true}
+              onTextChange={handleOtpChange}
+              onFilled={handleOtpFilled}
+              textInputProps={{
+                accessibilityLabel: "One-Time Password",
+                textContentType: "oneTimeCode",
+                autoComplete: "sms-otp",
+              }}
+              theme={{
+                containerStyle: styles.otpInputContainer,
+                pinCodeContainerStyle: [
+                  styles.otpInput,
                   errorMessage && styles.otpInputError,
-                ]}
-                maxLength={6}
-                keyboardType="number-pad"
-                onChangeText={(text) => handleOtpChange(text, index)}
-                onKeyPress={({ nativeEvent }) =>
-                  handleKeyPress(nativeEvent.key, index)
-                }
-                ref={(input) => (inputs.current[index] = input)}
-                value={digit}
-                editable={!isVerifying}
-                contextMenuHidden={false}
-                selectTextOnFocus
-              />
-            ))}
+                ],
+                pinCodeTextStyle: styles.otpInputText,
+                focusedPinCodeContainerStyle: styles.otpInputActive,
+                filledPinCodeContainerStyle: styles.otpInputFilled,
+                disabledPinCodeContainerStyle: styles.otpInputDisabled,
+              }}
+            />
           </View>
 
           {/* Error Message Display */}
@@ -301,7 +255,7 @@ const OTP = () => {
             title={
               isVerifying || isVerifyingOTP ? "Verifying..." : "Verify & Continue"
             }
-            onPress={handleVerifyOTP}
+            onPress={() => handleVerifyOTP()}
             disabled={
               !isOtpComplete || isVerifying || isVerifyingOTP || isSendingOTP
             }
@@ -365,28 +319,43 @@ const customStyles = (theme: Theme) =>
       paddingHorizontal: 10,
     },
     otpContainer: {
-      flexDirection: "row",
-      justifyContent: "space-between",
       width: "100%",
       marginBottom: 40,
       paddingHorizontal: 10,
     },
+    otpInputContainer: {
+      width: "100%",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      gap: 8,
+    },
     otpInput: {
-      width: 45,
-      height: 55,
+      width: 48,
+      height: 56,
       borderRadius: 12,
-      borderWidth: 1,
+      borderWidth: 1.5,
       borderColor: theme.colors.palette.grey300,
-      textAlign: "center",
-      fontSize: 18,
-      fontFamily: theme.typography.fontFamily.montserratSemiBold,
       backgroundColor: theme.colors.background.primary,
+    },
+    otpInputText: {
+      fontSize: 20,
+      fontFamily: theme.typography.fontFamily.montserratSemiBold,
       color: theme.colors.text.primary,
     },
     otpInputActive: {
-      borderColor: theme.colors.palette.green500,
+      borderColor: theme.colors.palette.green800,
       borderWidth: 2,
       backgroundColor: theme.colors.palette.green50,
+    },
+    otpInputFilled: {
+      borderColor: theme.colors.palette.green500,
+      borderWidth: 1.5,
+      backgroundColor: theme.colors.palette.green50,
+    },
+    otpInputDisabled: {
+      borderColor: theme.colors.palette.grey300,
+      backgroundColor: theme.colors.palette.grey100,
+      opacity: 0.7,
     },
     otpInputError: {
       borderColor: "#C92A2A",

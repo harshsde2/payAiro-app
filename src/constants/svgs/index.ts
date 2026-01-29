@@ -154,6 +154,9 @@ import PaymentRequest from "./PaymentRequest.svg";
 import UserPolicy from "./UserPolicy.svg";
 import UserTerms from "./UserTerms.svg";
 import UnlockRewards from "./UnlockRewards.svg";
+import ArrowUp from "./ArrowUp.svg";
+import ArrowDown from "./ArrowDown.svg";
+import ArrowDownBlack from "./ArrowDownBlack.svg";
 
 
 
@@ -316,5 +319,8 @@ export const SvgIcons = {
   PaymentRequest,
   UserPolicy,
   UserTerms,
-  UnlockRewards
+  UnlockRewards,
+  ArrowUp,
+  ArrowDown,
+  ArrowDownBlack
 };

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Button,
   Pressable,
 } from "react-native";
+import { OtpInput, OtpInputRef } from "react-native-otp-entry";
 import Container from "../../HOC/Container";
 import HeaderTitle from "../../components/HeaderTitle";
 import { SVGLeftArrow } from "../../constants/images";
@@ -26,27 +27,12 @@ import {
   useVerifyUserForChangePinOtp,
 } from "query/hooks";
 import CommonModal from "tsx-components/modals/CommonModal";
-import { themes, useTheme } from "styles";
+import { colors, themes, useTheme } from "styles";
 import { CustomText } from "tsx-components";
 import { useAppLock } from "hooks/useAppLock";
 import { useNavigation } from "@react-navigation/native";
 import { SvgIcons } from "constants/svgs";
 import { Platform } from "react-native";
-
-const PinInput = ({ value, setValue, nextRef }) => {
-  return (
-    <TextInput
-      style={styles.pinInput}
-      keyboardType="numeric"
-      maxLength={1}
-      value={value}
-      onChangeText={(text) => {
-        setValue(text);
-        if (text && nextRef) nextRef.current.focus();
-      }}
-    />
-  );
-};
 
 const ChangePinScreen = () => {
   const globalStyles = useGlobalStyles();
@@ -61,8 +47,8 @@ const ChangePinScreen = () => {
   const [newPin, setNewPin] = useState(["", "", "", ""]);
   const [confirmPin, setConfirmPin] = useState(["", "", "", ""]);
   const [showLoader, setShowLoader] = useState(false);
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]); // OTP array
-  const inputs = useRef([]); // Refs for the input fields
+  const [otp, setOtp] = useState(""); // OTP string
+  const otpInputRef = useRef(null); // Ref for OTP input
   const hasAutoVerifiedRef = useRef(false);
 
   const [isVerifying, setIsVerifying] = useState(false);
@@ -96,6 +82,9 @@ const ChangePinScreen = () => {
     isSuccess: isSuccessVerifyUserForChangePinOtp,
   } = useVerifyUserForChangePinOtp();
 
+  const { walletData } = useSelector((state) => state.authenticationSlice);
+  const email = walletData?.account_email || "";
+
   const isPinMatched =
     newPin.join("") === confirmPin.join("") && newPin.join("") !== "";
 
@@ -107,6 +96,21 @@ const ChangePinScreen = () => {
   const isNewPinAndConfirmPinSame = () => {
     return newPin.join("") === confirmPin.join("") && newPin.join("") !== "";
   };
+
+
+  const getMaskedEmail = (emailAddress) => {
+    if (!emailAddress || !emailAddress.includes("@")) {
+      return "your registered email";
+    }
+
+    const [localPart, domain] = emailAddress.split("@");
+    const visibleChars = Math.min(2, localPart.length);
+    const maskedLocal = localPart.slice(0, visibleChars) + "***";
+
+    return `${maskedLocal}@${domain}`;
+  };
+
+  const maskedEmail = getMaskedEmail(email);
 
   const isNewPinSameAsCurrentPin = () => {
     const currentUserPin = getPin();
@@ -180,8 +184,8 @@ const ChangePinScreen = () => {
       showError("Current PIN is not correct");
     }
   };
-  const handleVerfyUserChangePinOTP = async () => {
-    const enteredOtp = otp.join("");
+  const handleVerfyUserChangePinOTP = useCallback((otpValue) => {
+    const enteredOtp = otpValue || otp;
     if (enteredOtp.length < 6) {
       showError("OTP Should Be 6 Digits");
       return;
@@ -195,7 +199,8 @@ const ChangePinScreen = () => {
         onSuccess: (data) => {
           console.log("step 4 ->", data.data);
           setOtpError("");
-          setOtp(["", "", "", "", "", ""]); // Clear OTP
+          setOtp(""); // Clear OTP
+          otpInputRef.current?.clear();
           setShowVerifyModal(false);
           setIsUserVerfied(true);
           showSuccess("User verified successfully");
@@ -211,84 +216,33 @@ const ChangePinScreen = () => {
             "Invalid OTP. Please try again.";
           showError(errorMessage);
           setOtpError(errorMessage);
+          // Clear OTP on error
+          otpInputRef.current?.clear();
+          setOtp("");
         },
         onSettled: () => {
           // This ensures any cleanup happens regardless of success/error
         },
       }
     );
-  };
+  }, [otp, handlVerifyUserForChangePinOtp]);
 
-  // Handle pasted text
-  const handlePasteText = (text, startIndex) => {
-    // Extract only numbers from pasted text
-    const numbers = text.replace(/[^0-9]/g, '');
-    
-    if (numbers.length > 0) {
-      const newOtp = [...otp];
-      
-      // Fill from the start index onwards
-      let currentIndex = startIndex;
-      for (let i = 0; i < numbers.length && currentIndex < 6; i++) {
-        newOtp[currentIndex] = numbers[i];
-        currentIndex++;
-      }
-      
-      setOtp(newOtp);
-      
-      // Focus on next empty field or last field
-      const nextIndex = Math.min(currentIndex, 5);
-      setTimeout(() => {
-        inputs.current[nextIndex]?.focus();
-      }, 0);
-    }
-  };
-
-  const handleOtpChange = (text, index) => {
+  const handleOtpChange = useCallback((text) => {
     // Clear error when user starts typing
     if (otpError) {
       setOtpError("");
     }
+    setOtp(text);
+  }, [otpError]);
 
-    // Check if text length is greater than 1 (paste scenario)
-    if (text.length > 1) {
-      handlePasteText(text, index);
+  // Handle OTP filled - auto verify
+  const handleOtpFilled = useCallback((filledOtp) => {
+    if (hasAutoVerifiedRef.current || !showVerifyModal || isPendingVerifyUserForChangePinOtp) {
       return;
     }
-
-    // Handle single character input or deletion
-    if (/^[0-9]$/.test(text) || text === "") {
-      const newOtp = [...otp];
-      newOtp[index] = text;
-      setOtp(newOtp);
-
-      // Move to the next input if a number is entered
-      if (text && index < otp.length - 1) {
-        inputs.current[index + 1]?.focus();
-      }
-
-      // Move to the previous input if backspace is pressed and field is empty
-      if (!text && index > 0) {
-        inputs.current[index - 1]?.focus();
-      }
-    }
-  };
-
-  const handleKeyPress = (key, index) => {
-    if (key === "Backspace") {
-      if (otp[index] === "") {
-        // Move to the previous input if current is empty
-        if (index > 0) {
-          inputs.current[index - 1]?.focus();
-        }
-      } else {
-        // Clear the current input
-        const newOtp = [...otp];
-        newOtp[index] = "";
-        setOtp(newOtp);
-      }
-    }
-  };
+    hasAutoVerifiedRef.current = true;
+    handleVerfyUserChangePinOTP(filledOtp);
+  }, [showVerifyModal, isPendingVerifyUserForChangePinOtp, handleVerfyUserChangePinOTP]);
 
   // Handler for current PIN input
   const handleCurrentPinChange = (val, index) => {
@@ -405,19 +359,14 @@ const ChangePinScreen = () => {
     }
   };
 
-  const isOtpComplete = otp.every((digit) => digit !== "");
+  const isOtpComplete = otp.length === 6;
 
+  // Reset auto-verify ref when OTP becomes incomplete
   useEffect(() => {
     if (!isOtpComplete) {
       hasAutoVerifiedRef.current = false;
-      return;
     }
-    if (hasAutoVerifiedRef.current || !showVerifyModal || isPendingVerifyUserForChangePinOtp) {
-      return;
-    }
-    hasAutoVerifiedRef.current = true;
-    handleVerfyUserChangePinOTP();
-  }, [isOtpComplete, showVerifyModal, isPendingVerifyUserForChangePinOtp]);
+  }, [isOtpComplete]);
 
   return (
     <ScreenContainer scrollable safeArea padding={0}>
@@ -430,7 +379,8 @@ const ChangePinScreen = () => {
             onClose={() => {
               setShowVerifyModal(false);
               setOtpError("");
-              setOtp(["", "", "", "", "", ""]);
+              setOtp("");
+              otpInputRef.current?.clear();
             }}
             isVisible={showVerifyModal}
             containerStyle={{ justifyContent: "center", alignItems: "center" }}
@@ -478,35 +428,33 @@ const ChangePinScreen = () => {
 
               {/* OTP Input Fields */}
               <View style={modalStyles.otpContainer}>
-                {otp.map((_, index) => (
-                  <View
-                    key={index}
-                    style={[
-                      modalStyles.otpInputWrapper,
-                      index === 0 && modalStyles.otpInputWrapperFirst,
-                      index === otp.length - 1 && modalStyles.otpInputWrapperLast,
-                    ]}
-                  >
-                    <TextInput
-                      style={[
-                        modalStyles.otpInput,
-                        otp[index] && modalStyles.otpInputActive,
-                        otpError && modalStyles.otpInputError,
-                      ]}
-                      maxLength={6}
-                      keyboardType="number-pad"
-                      onChangeText={(text) => handleOtpChange(text, index)}
-                      onKeyPress={({ nativeEvent }) =>
-                        handleKeyPress(nativeEvent.key, index)
-                      }
-                      ref={(input) => (inputs.current[index] = input)}
-                      value={otp[index]}
-                      selectTextOnFocus
-                      editable={!isPendingVerifyUserForChangePinOtp}
-                      contextMenuHidden={false}
-                    />
-                  </View>
-                ))}
+                <OtpInput
+                  ref={otpInputRef}
+                  numberOfDigits={6}
+                  focusColor={theme.colors.palette.green800}
+                  autoFocus={true}
+                  disabled={isPendingVerifyUserForChangePinOtp}
+                  type="numeric"
+                  blurOnFilled={true}
+                  onTextChange={handleOtpChange}
+                  onFilled={handleOtpFilled}
+                  textInputProps={{
+                    accessibilityLabel: "One-Time Password",
+                    textContentType: "oneTimeCode",
+                    autoComplete: "sms-otp",
+                  }}
+                  theme={{
+                    containerStyle: modalStyles.otpInputContainer,
+                    pinCodeContainerStyle: [
+                      modalStyles.otpInput,
+                      otpError && modalStyles.otpInputError,
+                    ],
+                    pinCodeTextStyle: modalStyles.otpInputText,
+                    focusedPinCodeContainerStyle: modalStyles.otpInputActive,
+                    filledPinCodeContainerStyle: modalStyles.otpInputFilled,
+                    disabledPinCodeContainerStyle: modalStyles.otpInputDisabled,
+                  }}
+                />
               </View>
 
               {/* Error Message Display */}
@@ -529,13 +477,14 @@ const ChangePinScreen = () => {
                   cStyle={modalStyles.verifyButton}
                   showLoader={true}
                   isLoading={isPendingVerifyUserForChangePinOtp}
-                  disabled={isPendingVerifyUserForChangePinOtp}
+                  disabled={!isOtpComplete || isPendingVerifyUserForChangePinOtp}
                 />
                 <GenericButton
                   onPress={() => {
                     setShowVerifyModal(false);
                     setOtpError("");
-                    setOtp(["", "", "", "", "", ""]);
+                    setOtp("");
+                    otpInputRef.current?.clear();
                   }}
                   title={"Cancel"}
                   cStyle={modalStyles.cancelButton}
@@ -553,6 +502,10 @@ const ChangePinScreen = () => {
             <Text style={styles.subtitle}>
               To change your <Text style={styles.bold}>PIN</Text>, first verify your identity via email, then create a new <Text style={styles.bold}>4-digit code</Text> and confirm it below to complete the process.
             </Text>
+            <Text  style={styles.emailHint}>
+              OTP will be sent to <Text style={styles.bold}>{maskedEmail}</Text>
+            </Text>
+
 
             {/* Current PIN Input */}
             {!isUserVerfied && (
@@ -671,6 +624,7 @@ const getModalStyles = (theme) =>
       borderWidth: 1,
       borderColor: "#C92A2A",
     },
+
     errorText: {
       color: "#C92A2A",
       fontSize: 14,
@@ -680,38 +634,42 @@ const getModalStyles = (theme) =>
       textAlign: "center",
     },
     otpContainer: {
-      flexDirection: "row",
-      justifyContent: "space-between",
       width: "100%",
       marginVertical: theme.spacing.spacing[5],
-      paddingHorizontal: theme.spacing.spacing[1],
     },
-    otpInputWrapper: {
-      flex: 1,
-      marginHorizontal: theme.spacing.spacing[1],
-    },
-    otpInputWrapperFirst: {
-      marginLeft: 0,
-    },
-    otpInputWrapperLast: {
-      marginRight: 0,
+    otpInputContainer: {
+      width: "100%",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      gap: 4,
     },
     otpInput: {
-      width: "100%",
+      width: 48,
       height: 56,
       borderRadius: 12,
       borderWidth: 1.5,
       borderColor: theme.colors.palette.grey300,
-      textAlign: "center",
+      backgroundColor: theme.colors.background.primary,
+    },
+    otpInputText: {
       fontSize: 20,
       fontFamily: theme.typography.fontFamily.montserratSemiBold,
-      backgroundColor: theme.colors.background.primary,
       color: theme.colors.text.primary,
     },
     otpInputActive: {
-      borderColor: theme.colors.palette.green500,
+      borderColor: theme.colors.palette.green800,
       borderWidth: 2,
       backgroundColor: theme.colors.palette.green50,
+    },
+    otpInputFilled: {
+      borderColor: theme.colors.palette.green500,
+      borderWidth: 1.5,
+      backgroundColor: theme.colors.palette.green50,
+    },
+    otpInputDisabled: {
+      borderColor: theme.colors.palette.grey300,
+      backgroundColor: theme.colors.palette.grey100,
+      opacity: 0.7,
     },
     otpInputError: {
       borderColor: "#C92A2A",
@@ -820,6 +778,13 @@ const styles = StyleSheet.create({
     color: "green",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  emailHint: {
+    fontSize: 14,
+    color: colors.green600,
+    marginBottom: 20,
+    fontFamily: Fonts.regular,
+    
   },
 });
 

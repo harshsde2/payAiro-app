@@ -47,7 +47,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ name, style }) => {
 
     
     const unreadCount = unreadCountResponse?.data?.unread_count ?? 0;
-    console.log("unreadCount =>", JSON.stringify(unreadCountResponse, null, 2));
+    // console.log("unreadCount =>", JSON.stringify(unreadCountResponse, null, 2));
     
   const handleNotificationsPress = async () => {
     try {

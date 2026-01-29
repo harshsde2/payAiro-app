@@ -14,6 +14,7 @@ import {
   View,
   ActivityIndicator,
   Image,
+  Button,
 } from "react-native";
 import Share from "react-native-share";
 import { ReceiveQRCard } from "components/common-components/ReceiveQRCard";
@@ -23,6 +24,7 @@ import { useGlobalStyles } from "styles/GlobalStyles";
 import { CustomText } from "tsx-components";
 import { useDepositAddress } from "query/hooks/useCrypto";
 import { SvgUri } from "react-native-svg";
+import GenericButton from "components/GenericButton";
 
 const AddCrypto = () => {
   const { theme } = useTheme();
@@ -33,10 +35,6 @@ const AddCrypto = () => {
   const { walletData } = useSelectorAction() as any;
   const qrCardRef = useRef<IReceiveQRCardRef | null>(null);
 
-  /** false = PayAiro Tag, true = Wallet Address (matches CryptoReceive) */
-  const [isOnChain, setIsOnChain] = useState(false);
-
-  // console.log("item =>", JSON.stringify(item, null, 2));
   // Extract crypto name and network from symbol
   const getCryptoInfo = () => {
     // Handle symbol formats: "BTC", "USDC_SOL", "USDC_SOL-USD", etc.
@@ -59,17 +57,23 @@ const AddCrypto = () => {
 
   const [depositAddress, setDepositAddress] = useState("");
   const [disclaimer, setDisclaimer] = useState("");
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  
   // Deposit address mutation hook
   const depositAddressMutation = useDepositAddress();
 
-  // Fetch deposit address only when user switches to Wallet Address (like CryptoReceive)
+  // Fetch deposit address on mount
   useEffect(() => {
-    if (isOnChain && !depositAddress) {
-      handleGetDepositAddress();
-    }
-  }, [isOnChain]);
+    handleGetDepositAddress();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleGetDepositAddress = async () => {
+    setHasError(false);
+    setErrorMessage("");
+    setDepositAddress("");
+    
     try {
       const response = await depositAddressMutation.mutateAsync({
         asset: symbol,
@@ -79,15 +83,14 @@ const AddCrypto = () => {
       // response.data is DepositAddressResponse which contains: status, message, asset, address
       const addressData = response?.data;
 
-      // console.log("addressData =>", JSON.stringify(addressData, null, 2));
       // Check if the response indicates address is under review
       if (addressData?.status === false && !addressData?.address) {
         const message =
           addressData?.message ||
           response?.message ||
           "Your deposit address is under review. Please try again later.";
-        Alert.alert("Address Under Review", message);
-        setIsOnChain(false);
+        setHasError(true);
+        setErrorMessage(message);
         return;
       }
 
@@ -103,22 +106,23 @@ const AddCrypto = () => {
       // Check if address is available
       if (addressData?.address) {
         setDepositAddress(addressData.address);
+        setHasError(false);
       } else {
-        const errorMessage =
+        const errorMsg =
           addressData?.message ||
           response?.message ||
           "Unable to retrieve deposit address. Please try again.";
-        Alert.alert("Error", errorMessage);
-        setIsOnChain(false);
+        setHasError(true);
+        setErrorMessage(errorMsg);
       }
     } catch (error: any) {
       console.log("Error fetching deposit address:", error);
-      const errorMessage =
+      const errorMsg =
         error?.response?.data?.message ||
         error?.message ||
         "Failed to get deposit address. Please try again.";
-      Alert.alert("Error", errorMessage);
-      setIsOnChain(false);
+      setHasError(true);
+      setErrorMessage(errorMsg);
     }
   };
 
@@ -142,6 +146,7 @@ const AddCrypto = () => {
         type: "image/png",
         filename: `PayAiro_${cryptoName}_WalletAddress`,
         failOnCancel: false,
+        message: `PayAiro Payment Details\n\nWallet Address:\n${getQRCodeValue()}`,
       };
 
       await Share.open(shareOptions);
@@ -174,21 +179,14 @@ const AddCrypto = () => {
   };
 
   const displayAddress = useMemo(() => {
-    if (!depositAddress) return "";
-    if (depositAddress.length <= 16) return depositAddress;
-    return `${depositAddress.slice(0, 6)}...${depositAddress.slice(-4)}`;
+    return `${depositAddress}`;
   }, [depositAddress]);
 
-  const getQRCodeValue = () =>
-    isOnChain ? depositAddress || "loading" : (walletData?.username ?? "");
-  const getTagLabel = () =>
-    isOnChain ? `${cryptoName} Wallet Address:` : "PayAiro Tag:";
-  const getTagValue = () =>
-    isOnChain ? displayAddress : (walletData?.username ?? "");
-  const getCopyValue = () =>
-    isOnChain ? depositAddress : (walletData?.username ?? "");
-  const getCopyLabel = () =>
-    isOnChain ? "Wallet Address" : "PayAiro Tag";
+  const getQRCodeValue = () => depositAddress || "loading";
+  const getTagLabel = () => `${cryptoName} Wallet Address:`;
+  const getTagValue = () => displayAddress;
+  const getCopyValue = () => depositAddress;
+  const getCopyLabel = () => "Wallet Address";
 
   const resolvedDisclaimer = useMemo(() => {
     if (!disclaimer) {
@@ -211,58 +209,40 @@ const AddCrypto = () => {
     );
   }, [logo, styles.cryptoIcon]);
 
+
+
   return (
     <ScreenContainer
       padding={0}
       backgroundColor={theme.colors.palette.green50}
       style={styles.safeArea}
     >
-      <HeaderTitle leftIcon={"true"} title={"Receive"} />
+      <HeaderTitle leftIcon={"true"} title={"Via Crypto"} />
       <View style={styles.container}>
-        <View style={styles.qrTypeSwitcherContainer}>
-          <View style={styles.qrTypeChipsRow}>
-            <Pressable
-              style={[styles.qrTypeChip, !isOnChain && styles.qrTypeChipActive]}
-              onPress={() => setIsOnChain(false)}
-            >
-              <CustomText
-                size={13}
-                fontWeight="semiBold"
-                color={
-                  !isOnChain
-                    ? theme.colors.palette.white
-                    : theme.colors.palette.grey900
-                }
-              >
-                PayAiro Tag
-              </CustomText>
-            </Pressable>
-            <Pressable
-              style={[styles.qrTypeChip, isOnChain && styles.qrTypeChipActive]}
-              onPress={() => setIsOnChain(true)}
-            >
-              <CustomText
-                size={13}
-                fontWeight="semiBold"
-                color={
-                  isOnChain
-                    ? theme.colors.palette.white
-                    : theme.colors.palette.grey900
-                }
-              >
-                Wallet Address
-              </CustomText>
-            </Pressable>
-          </View>
-        </View>
-
         <View style={styles.qrCardContainer}>
-          {isOnChain &&
-          (depositAddressMutation.isPending || !depositAddress) ? (
+          {depositAddressMutation.isPending || (!depositAddress && !hasError) ? (
             <View style={styles.qrLoadingCard}>
               <ActivityIndicator
                 size="large"
                 color={theme.colors.palette.green700}
+              />
+            </View>
+          ) : hasError ? (
+            <View style={styles.qrErrorCard}>
+              <SvgIcons.AlertIcon width={48} height={48} />
+              <CustomText
+                size={14}
+                color={theme.colors.palette.grey900}
+                style={styles.errorText}
+              >
+                {errorMessage || "Failed to load wallet address"}
+              </CustomText>
+              <GenericButton
+                title="Reload"
+                onPress={handleGetDepositAddress}
+                showLoader={true}
+                isLoading={depositAddressMutation.isPending}
+                cStyle={styles.reloadButton}
               />
             </View>
           ) : (
@@ -292,7 +272,7 @@ const AddCrypto = () => {
           )}
         </View>
 
-        {isOnChain && depositAddress && (
+        {depositAddress && (
           <View style={styles.noticeContainer}>
             <View style={styles.noticeIconContainer}>
               <SvgIcons.InfoNote width={18} height={18} />
@@ -330,28 +310,6 @@ const addCryptoStyles = (theme: Theme) =>
       height: 22,
       borderRadius: 11,
     },
-    qrTypeSwitcherContainer: {
-      width: "100%",
-      marginBottom: theme.spacing.spacing[4],
-    },
-    qrTypeChipsRow: {
-      flexDirection: "row",
-      columnGap: 10,
-    },
-    qrTypeChip: {
-      flex: 1,
-      paddingVertical: 10,
-      borderRadius: theme.spacing.spacing[3],
-      borderWidth: 1,
-      borderColor: theme.colors.palette.grey300,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: theme.colors.palette.white,
-    },
-    qrTypeChipActive: {
-      backgroundColor: theme.colors.palette.green700,
-      borderColor: theme.colors.palette.green700,
-    },
     qrCardContainer: {
       alignItems: "center",
       justifyContent: "center",
@@ -369,6 +327,26 @@ const addCryptoStyles = (theme: Theme) =>
       minHeight: 260,
       borderWidth: 1,
       borderColor: theme.colors.palette.grey200,
+    },
+    qrErrorCard: {
+      width: "100%",
+      backgroundColor: theme.colors.palette.white,
+      padding: theme.spacing.spacing[5],
+      borderRadius: theme.spacing.spacing[3],
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: 260,
+      borderWidth: 1,
+      borderColor: theme.colors.palette.grey200,
+      gap: theme.spacing.spacing[4],
+    },
+    errorText: {
+      textAlign: "center",
+      marginTop: theme.spacing.spacing[2],
+    },
+    reloadButton: {
+      marginTop: theme.spacing.spacing[2],
+      minWidth: 120,
     },
     noticeContainer: {
       flexDirection: "row",

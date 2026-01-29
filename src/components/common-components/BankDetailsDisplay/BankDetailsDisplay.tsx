@@ -6,6 +6,7 @@ import { Theme } from "styles";
 import { CustomText } from "tsx-components";
 import { SvgIcons } from "constants/svgs";
 import useSelectorAction from "hooks/useSelectorAction";
+import { getPayAiroBankDetails } from "utils/helper";
 
 // Context for capturing state
 const CapturingContext = createContext<{ isCapturing: boolean; setIsCapturing: (value: boolean) => void } | null>(null);
@@ -36,9 +37,12 @@ const BankDetailsDisplay: React.FC = () => {
   // const { bankList } = route?.params as any;
 
   const bankList = useMemo(() => {
+    if (!bankLists || !Array.isArray(bankLists)) {
+      return [];
+    }
     return bankLists.map((item: any) => {
-      const last4 = item.account_number?.slice(-4);
-      const maskedAccount = `•••• ${last4}`;
+      const last4 = item.account_number;
+      const maskedAccount = `${last4}`;
       const isExternalAccount =
         item?.account_type === "checking" || item?.account_type === "savings";
       const accountType = !isExternalAccount
@@ -62,7 +66,10 @@ const BankDetailsDisplay: React.FC = () => {
   const primaryBank = bankList && bankList.length > 0 ? bankList[0] : null;
   const rawBankData = bankLists && bankLists.length > 0 ? bankLists[bankLists.length - 1] : null;
 
-  const copyToClipboard = (text: string, label: string) => {
+  const copyToClipboard = (text: string | undefined, label: string) => {
+    if (!text) {
+      return;
+    }
     Clipboard.setString(text);
     if (Platform.OS === "android") {
       ToastAndroid.show(`${label} copied`, ToastAndroid.SHORT);
@@ -77,6 +84,12 @@ const BankDetailsDisplay: React.FC = () => {
 
   const styles = getStyles(theme);
 
+
+
+  const payairoBank = getPayAiroBankDetails(bankLists) as any;
+
+
+  // console.log("payairoBank ->", JSON.stringify(payairoBank, null, 2))
   return (
     <View style={styles.accountDetailsContainer}>
       {/* Account Holder */}
@@ -94,7 +107,7 @@ const BankDetailsDisplay: React.FC = () => {
           </CustomText>
           {!isCapturing && (
             <TouchableOpacity
-              onPress={() => copyToClipboard(primaryBank.guid, "CRN")}
+              onPress={() => copyToClipboard(walletData?.name, "Name")}
               style={styles.iconButton}
             >
               <SvgIcons.CopyOutlineBlack width={20} height={20} />
@@ -114,12 +127,12 @@ const BankDetailsDisplay: React.FC = () => {
             fontWeight="medium"
             style={styles.detailValue}
           >
-            {primaryBank.account_number || "N/A"}
+            {payairoBank?.account_number || "N/A"}
           </CustomText>
           {!isCapturing && (
             <TouchableOpacity
               onPress={() =>
-                copyToClipboard(primaryBank.account_number, "Account number")
+                copyToClipboard(payairoBank?.account_number, "Account number")
               }
               style={styles.iconButton}
             >
@@ -132,7 +145,7 @@ const BankDetailsDisplay: React.FC = () => {
       {/* IFSC Code / Routing Number */}
       <View style={styles.accountDetailRow}>
         <CustomText variant="caption" style={styles.detailLabel}>
-          {rawBankData?.ref_code ? "Routing Number" : "IFSC Code"}
+          {payairoBank?.ref_code ? "Routing Number" : "IFSC Code"}
         </CustomText>
         <View style={styles.detailValueContainer}>
           <CustomText
@@ -140,12 +153,12 @@ const BankDetailsDisplay: React.FC = () => {
             fontWeight="medium"
             style={styles.detailValue}
           >
-            {rawBankData?.ref_code || "N/A"}
+            {payairoBank?.ref_code || "N/A"}
           </CustomText>
-          {!isCapturing && rawBankData?.ref_code && (
+          {!isCapturing && payairoBank?.ref_code && (
             <TouchableOpacity
               onPress={() =>
-                copyToClipboard(rawBankData.ref_code, "Routing Number")
+                copyToClipboard(payairoBank?.ref_code, "Routing Number")
               }
               style={styles.iconButton}
             >

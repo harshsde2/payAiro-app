@@ -71,7 +71,7 @@ const PaymentRequestCard: FC<IPaymentRequestCardProps> = ({
         <TouchableOpacity onPress={() => navigation.navigate(NAVIGATION_SCREENS.USER_PROFILE, { userDetails })}      style={[styles.avatar, isReceived ? styles.receivedAvatar : styles.sentAvatar]}>
           {userDetails.profile_photo ? (
               <Image
-                source={{ uri: `${userDetails.profile_photo}` }}
+                source={{ uri: `${profilePhoto}` }}
                 style={styles.avatarImage}
               />
           ) : (
@@ -101,7 +101,7 @@ const PaymentRequestCard: FC<IPaymentRequestCardProps> = ({
             color={theme.colors.text.secondary}
             numberOfLines={1}
           >
-            @{userDetails.username}
+            {userDetails.username}
           </CustomText>
           <View style={styles.dateRow}>
             <SvgIcons.CalendarIcon width={12} height={12} />

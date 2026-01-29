@@ -41,8 +41,15 @@ if [ "$UNAUTHORIZED_COUNT" -gt 0 ]; then
     exit 1
 fi
 
-# Get list of connected device serials
-DEVICE_SERIALS=$(adb devices | grep -E "device$" | awk '{print $1}')
+# Get list of connected device serials (prefer physical device, skip emulators when physical is connected)
+PHYSICAL=$(adb devices | grep -E "device$" | grep -v "emulator" | awk '{print $1}')
+EMULATORS=$(adb devices | grep -E "emulator.*device$" | awk '{print $1}')
+if [ -n "$PHYSICAL" ]; then
+  DEVICE_SERIALS="$PHYSICAL"
+else
+  DEVICE_SERIALS="$EMULATORS"
+fi
+DEVICE_SERIALS=$(echo "$DEVICE_SERIALS" | tr -d ' ')
 
 if [ -z "$DEVICE_SERIALS" ]; then
     echo "❌ No authorized devices found"

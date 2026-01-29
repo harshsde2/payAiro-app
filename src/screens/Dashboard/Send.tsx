@@ -179,20 +179,12 @@ const Send: React.FC<ISendProps> = ({ route }) => {
 
   // Get balance display value
   const getBalanceDisplay = (): string => {
-    if (selectedBank?.balances?.available) {
-      return String(selectedBank.balances.available);
-    }
+    
 
-    if (selectedBank?.account_type === "rothIra") {
-      return String(bankBalance?.roth_ira_account?.usd ?? "0.00");
-    }
-
-    if (selectedBank?.account_type === "traditionalIra") {
-      return String(bankBalance?.traditional_ira_account?.usd ?? "0.00");
-    }
-
-    return String(bankBalance?.bank_account?.usd ?? "0.00");
+    return String((bankBalance as any)?.platform_available ?? "0.00");
   };
+
+  // console.log("selectedBank ->", JSON.stringify(bankBalance, null, 2))
 
   const isEditable = senderFromParams === "" || senderFromParams === undefined;
   const isLoading = userLoading || pendingVerification;

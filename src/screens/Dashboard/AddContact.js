@@ -101,28 +101,6 @@ export default function AddContact() {
       }
     }
 
-    // Validate other fields if provided (even if not selected method)
-    // Email validation (optional but must be valid if provided)
-    if (
-      formData.email &&
-      formData.email.trim() &&
-      selectedMethod !== "email" &&
-      !/^\S+@\S+\.\S+$/.test(formData.email)
-    ) {
-      newErrors.email = "Please enter a valid email address.";
-    }
-
-    // Contact number validation (optional but must be valid if provided)
-    if (
-      formData.contactNumber &&
-      formData.contactNumber.trim() &&
-      selectedMethod !== "contact" &&
-      !/^\+\d{1,3}\s\d{6,14}$/.test(formData.contactNumber)
-    ) {
-      newErrors.contactNumber =
-        "Enter a valid contact number (e.g., +1 123456789).";
-    }
-
     // Wallet address validation (optional but must be valid if provided)
     if (
       formData.walletAddress &&
@@ -155,9 +133,23 @@ export default function AddContact() {
     }
   }, [errors]);
 
-  // Clear errors when selected method changes
+  // Clear errors and non-selected fields when selected method changes
   useEffect(() => {
     setErrors({});
+    // Clear fields that are not selected to avoid validation issues
+    setFormData((prevData) => {
+      const newData = { ...prevData };
+      if (selectedMethod !== "email") {
+        newData.email = "";
+      }
+      if (selectedMethod !== "payAiroTag") {
+        newData.payAiroTag = "";
+      }
+      if (selectedMethod !== "contact") {
+        newData.contactNumber = "";
+      }
+      return newData;
+    });
   }, [selectedMethod]);
 
   // Handle form submission
@@ -220,7 +212,11 @@ export default function AddContact() {
           return;
         }
         showSuccess("Contact added successfully");
-        navigation.navigate(SCREENS.Dashboard);
+        if(navigation.canGoBack()) {
+          navigation.popToTop();
+        } else {
+          navigation.goBack();
+        }
         setIsSubmitting(false);
 
         await queryClient.invalidateQueries(userContactKeys.recentContacts());

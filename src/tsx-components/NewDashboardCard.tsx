@@ -133,7 +133,7 @@ const NewDashboardCard: React.FC<Partial<INewDashboardCardProps>> = ({
     });
   };
 
-  console.log("selectedBalanceType =>", selectedBalanceType);
+  // console.log("selectedBalanceType =>", selectedBalanceType);
 
   // Get balance based on selected type and mode
   const currentBalance = useMemo(() => {

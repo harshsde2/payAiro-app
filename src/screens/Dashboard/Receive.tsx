@@ -1,7 +1,5 @@
 import {
   View,
-  Text,
-  TextInput,
   ToastAndroid,
   Alert,
   Clipboard,
@@ -10,16 +8,11 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from "react-native";
-import React, { useRef, useState } from "react";
-import Container from "../../HOC/Container";
+import React, { useMemo, useRef, useState } from "react";
 import HeaderTitle from "../../components/HeaderTitle";
-import { SvgXml } from "react-native-svg";
 import GenericButton from "../../components/GenericButton";
 import { useNavigation } from "@react-navigation/native";
-import { SCREENS } from "../../constants/SCREENS";
 import useSelectorAction from "../../hooks/useSelectorAction";
-import QRCode from "react-native-qrcode-svg";
-import Fonts from "../../constants/Fonts";
 import Share from "react-native-share";
 import ViewShot from "react-native-view-shot";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
@@ -29,19 +22,40 @@ import { Theme, useTheme } from "styles";
 import { SvgIcons } from "constants/svgs";
 import CommonModal from "tsx-components/modals/CommonModal";
 import { useGlobalStyles } from "styles/GlobalStyles";
+import { ReceiveQRCard } from "components/common-components/ReceiveQRCard";
+import type { IReceiveQRCardRef } from "components/common-components/ReceiveQRCard";
+import { BankDetailsDisplay, CapturingProvider, useCapturing } from "components/common-components/BankDetailsDisplay";
+import QRCode from "react-native-qrcode-svg";
 
 const QR_SIZE = 200;
 const LOGO_OVERLAY_SIZE = 44;
 const LOGO_ICON_SIZE = 26;
 
-export default function Receive() {
+const ReceiveContent = () => {
   const navigation = useNavigation<any>();
   const { walletData, bankLists } = useSelectorAction() as any;
+
+  const payairoBank = useMemo(() => {
+    if (!bankLists || !Array.isArray(bankLists) || bankLists.length === 0) {
+      return null;
+    }
+    return bankLists.find((item: any) => {
+      const bankName = item?.bank_name;
+      return bankName && bankName.toLowerCase().trim() === "payairo bank";
+    }) || null;
+  }, [bankLists]);
+
+  console.log("payairoBank ->", JSON.stringify(payairoBank, null, 2))
+
+
   const { theme } = useTheme();
+  const { setIsCapturing } = useCapturing();
+
   const styles = { ...useGlobalStyles(), ...customStyles(theme) };
-  const viewShotRef = useRef<any>(null);
+  const qrCardRef = useRef<IReceiveQRCardRef>(null);
   const shareCardRef = useRef<any>(null);
   const [showShareDetailsModal, setShowShareDetailsModal] = useState(false);
+  const [qrUri, setQrUri] = useState("");
   const [checkedBoxArray, setcheckedBoxArray] = useState([
     {
       id: 0,
@@ -62,7 +76,6 @@ export default function Receive() {
 
   const handleShare = async () => {
     try {
-      // Step 1: Get only checked items
       const selectedItems = checkedBoxArray.filter((item) => item.isChecked);
 
       if (selectedItems.length === 0) {
@@ -70,7 +83,6 @@ export default function Receive() {
         return;
       }
 
-      // Step 2: Build dynamic message for text-only sharing (fallback)
       let message = "PayAiro Payment Details\n\n";
 
       selectedItems.forEach(({ name }) => {
@@ -82,10 +94,10 @@ export default function Receive() {
             message += `PayAiro Tag: ${walletData?.username}\n\n`;
             break;
           case "Bank Details":
-            const bankData = bankLists?.[bankLists.length - 1];
+            const bankData = payairoBank;
             if (bankData) {
               message += `Bank Details:\n`;
-              message += `   Bank Name: ${bankData.bank_name || "N/A"}\n`;
+              message += `   Account Holder: ${walletData?.name || "N/A"}\n`;
               message += `   Routing Number: ${bankData.ref_code || "N/A"}\n`;
               message += `   Account Number: ${bankData.account_number || "N/A"}\n\n`;
             }
@@ -93,20 +105,17 @@ export default function Receive() {
         }
       });
 
-      // Check if QR code is selected
       const isQrSelected = selectedItems.some((item) => item.name === "Qr Code");
 
+      // When QR or any visual is selected: capture from shareCardRef so the image
+      // shows only what's checked (QR, PayAiro Tag, Bank Details).
       if (isQrSelected && shareCardRef.current) {
-        // Capture the composite share card that includes QR + all selected details
         const uri = await shareCardRef.current.capture({
           format: "png",
           quality: 0.9,
           result: "tmpfile",
         });
 
-        // Share the composite image (contains all details)
-        // On iOS, sharing image with message often ignores message, so we only share the image
-        // which already contains all the text details
         const shareOptions: any = {
           title: "PayAiro Payment Details",
           subject: "PayAiro Payment Details",
@@ -116,16 +125,13 @@ export default function Receive() {
           failOnCancel: false,
         };
 
-        // For iOS, don't include message as it's ignored when url is present
-        // The image already contains all the details
-        // For Android, we can optionally include message, but image is primary
         if (Platform.OS === "android") {
           shareOptions.message = message.trim();
         }
 
         await Share.open(shareOptions);
       } else {
-        // Share text only without QR image
+        // No QR selected: share only text (PayAiro Tag and/or Bank Details)
         const shareOptions = {
           title: "PayAiro Payment Details",
           subject: "PayAiro Payment Details",
@@ -135,33 +141,32 @@ export default function Receive() {
 
         await Share.open(shareOptions);
       }
-
-      console.log("Share completed");
     } catch (err: any) {
-      // User cancelled sharing - don't show error
       if (err?.message !== "User did not share") {
         console.log("Error sharing:", err);
       }
     }
   };
 
-  // console.log("wallet data =>",walletData)
-
-  const copyToClipboard = (e: string) => {
-    Clipboard.setString(e);
-
-    // Display a success message
+  const copyToClipboard = (text: string) => {
+    Clipboard.setString(text);
     if (Platform.OS === "android") {
       ToastAndroid.show("PayAiro Tag copied", ToastAndroid.SHORT);
-    } else if (Platform.OS === "ios") {
+    } else {
       Alert.alert("PayAiro Tag copied");
     }
   };
 
-  console.log("banks list ->", JSON.stringify(bankLists, null, 2))
+  const onShareClick = (uri:any) => {
+    setShowShareDetailsModal(true);
+    setQrUri(uri);
+    handleShare();
+  }
+
+
   return (
     <ScreenContainer scrollable padding={0}>
-      <HeaderTitle leftIcon={"true"} title={"QR Code"} />
+      <HeaderTitle leftIcon={"true"} title={"Receive"} />
       {showShareDetailsModal && (
         <CommonModal
           isVisible={showShareDetailsModal}
@@ -186,13 +191,6 @@ export default function Receive() {
                 <TouchableOpacity
                   key={index}
                   onPress={() => {
-                    // const temp = {
-                    //   ...item,
-                    //   isChecked: id == index ? !isChecked : isChecked,
-                    // };
-                    // const arr = [...checkedBoxArray];
-                    // arr.splice(index, 1, temp);
-
                     const updated = checkedBoxArray.map((item) =>
                       item.id === index
                         ? { ...item, isChecked: !isChecked }
@@ -242,182 +240,40 @@ export default function Receive() {
           </Pressable>
         </CommonModal>
       )}
-      <View
-        style={{
-          alignSelf: "center",
-          marginTop: 30,
-          // backgroundColor: "#000",
-          padding: 20,
-          borderRadius: 20,
-        }}
-      >
-        <ViewShot
-          ref={viewShotRef}
-          options={{
-            format: "png",
-            quality: 0.9,
-            result: "tmpfile",
-          }}
-          style={{
-            backgroundColor: "#FFFFFF",
-            padding: 20,
-            borderRadius: 10,
-            alignItems: "center",
-          }}
-        >
-          <View style={styles.qrWrapper}>
-            <QRCode value={JSON.stringify({
+      <View style={[styles.whiteSheetContainer]}>
+        <View >
+          <ReceiveQRCard
+            ref={qrCardRef}
+            title="PayAiro"
+            subtitle="Scan to receive payment"
+            qrValue={{
               type: "receive",
               username: walletData?.username,
               tag: walletData?.username,
-            })} size={QR_SIZE} />
-            <View
-              style={[
-                styles.logoOverlay,
-                { backgroundColor: theme.colors.palette.green700 },
-              ]}
-            >
-              <SvgIcons.PayairoWhiteLogo width={LOGO_ICON_SIZE} height={LOGO_ICON_SIZE} />
-            </View>
-          </View>
-
-          {/* <QRCode 
-            value={JSON.stringify({
-              type: "receive",
-              username: walletData?.username,
-              tag: walletData?.username,
-            })} 
-            size={200} 
-          /> */}
-          {/* <Text style={{ 
-            marginTop: 15, 
-            fontSize: 14, 
-            fontFamily: Fonts.semibold,
-            color: "#333",
-          }}>
-            PayAiro Tag: {walletData?.username}
-          </Text> */}
-        </ViewShot>
-      </View>
-      <View
-        style={{
-          width: "100%",
-          flexDirection: "row",
-          justifyContent: "center",
-          alignItems: "center",
-          gap: 10,
-          marginVertical: 10,
-          // backgroundColor: themes.dark.colors.palette.grey200,
-          paddingHorizontal: 30,
-          paddingVertical: 10,
-        }}
-      >
-        <CustomText size={16} fontWeight="semiBold">
-          PayAiro Tag:
-        </CustomText>
-        <CustomText
-          fontWeight="semiBold"
-          size={16}
-          color={theme.colors.palette.green700}
-        >
-          {walletData?.username}
-        </CustomText>
-        <SvgIcons.CopyOutlineBlack
-          onPress={() => copyToClipboard(walletData?.username)}
-        />
-      </View>
-      <View
-        style={{
-          // backgroundColor: "red",
-          width: "100%",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <View style={{ width: "80%", gap: 15 }}>
-          <CustomText variant="subtitle1">Bank Details</CustomText>
-          <View
-            style={{
-              // backgroundColor: "green",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
             }}
-          >
-            <CustomText size={15} variant="caption">
-              Account Holder's Name
-            </CustomText>
-            <CustomText size={15} fontWeight="semiBold" variant="caption">
-              {bankLists[bankLists.length - 1]?.account_name}
-            </CustomText>
-          </View>
-          <View
-            style={{
-              // backgroundColor: "green",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
+            payAiroTag={walletData?.username || "N/A"}
+            onCopyTag={() => copyToClipboard(walletData?.username || "")}
+            bankDetails={<BankDetailsDisplay />}
+            onCapturingChange={(capturing: boolean) => setIsCapturing(capturing)}
+            leftButton={{
+              text: "Share Details",
+              icon: <SvgIcons.ShareIcon width={20} height={20} />,
+              onPress: () => setShowShareDetailsModal(true),
             }}
-          >
-            <CustomText size={15} variant="caption">
-              Routing Number
-            </CustomText>
-            <CustomText size={15} fontWeight="semiBold" variant="caption">
-              {bankLists[bankLists.length - 1]?.ref_code}
-            </CustomText>
-          </View>
-          <View
-            style={{
-              // backgroundColor: "green",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
+            rightButton={{
+              text: "Request",
+              icon: <SvgIcons.PaymentRequest width={20} height={20} />,
+              onPress: () =>
+                navigation.navigate(NAVIGATION_SCREENS.SEND, {
+                  requested: true,
+                  type: "requested",
+                }),
             }}
-          >
-            <CustomText size={15} variant="caption">
-              Account Number
-            </CustomText>
-            <CustomText size={15} fontWeight="semiBold" variant="caption">
-              {bankLists[bankLists.length - 1]?.account_number}
-            </CustomText>
-          </View>
+          />
         </View>
+
       </View>
-      <GenericButton
-        title={"Share Details"}
-        cStyle={{
-          backgroundColor: "black",
-          borderWidth: 1,
-          borderColor: "white",
-          margin: 20,
-          marginTop: 60,
-          flexDirection: "row",
-          justifyContent: "center",
-          alignItems: "center",
-          width: "90%",
-        }}
-        tStyle={{ color: "white" }}
-        onPress={() => {
-          setShowShareDetailsModal(true);
-        }}
-      />
 
-      <GenericButton
-        title={"Request Payment"}
-        cStyle={{
-          marginHorizontal: 20,
-          marginBottom: 100,
-          width: "90%",
-        }}
-        onPress={() =>
-          navigation.navigate(NAVIGATION_SCREENS.SEND, {
-            requested: true,
-            type: "requested",
-          })
-        }
-      />
-
-      {/* Hidden ViewShot for sharing composite image with all selected details */}
       <View
         style={{
           position: "absolute",
@@ -438,7 +294,7 @@ export default function Receive() {
             result: "tmpfile",
           }}
           style={{
-            backgroundColor: theme.colors.palette.green700 || "#1a5f3f",
+            backgroundColor: theme.colors.palette.white || "#FFFFFF",
             padding: 20,
             borderRadius: 15,
             width: 350,
@@ -448,6 +304,21 @@ export default function Receive() {
           <View style={{ width: "100%", alignItems: "center" }}>
             {checkedBoxArray.some((item) => item.name === "Qr Code" && item.isChecked) && (
               <>
+                <CustomText
+                  color={theme.colors.palette.black || "#000000"}
+                  size={18}
+                  fontWeight="bold"
+                  style={{ marginBottom: 8, textAlign: "center" }}
+                >
+                  PayAiro
+                </CustomText>
+                <CustomText
+                  color={theme.colors.palette.green700 || "#1a5f3f"}
+                  size={14}
+                  style={{ marginBottom: 15, textAlign: "center" }}
+                >
+                  Primary account for receiving funds
+                </CustomText>
                 <View
                   style={{
                     backgroundColor: "#FFFFFF",
@@ -458,11 +329,16 @@ export default function Receive() {
                   }}
                 >
                   <View style={styles.qrWrapper}>
-                    <QRCode value={JSON.stringify({
-                      type: "receive",
-                      username: walletData?.username,
-                      tag: walletData?.username,
-                    })} size={QR_SIZE} />
+                    <QRCode
+                      value={JSON.stringify({
+                        type: "receive",
+                        username: walletData?.username,
+                        tag: walletData?.username,
+                      })}
+                      size={QR_SIZE}
+                      backgroundColor="white"
+                      color="black"
+                    />
                     <View
                       style={[
                         styles.logoOverlay,
@@ -473,26 +349,11 @@ export default function Receive() {
                     </View>
                   </View>
                 </View>
-                <CustomText
-                  color="#FFFFFF"
-                  size={18}
-                  fontWeight="bold"
-                  style={{ marginBottom: 15, textAlign: "center" }}
-                >
-                  PayAiro Payment Details
-                </CustomText>
-                <CustomText
-                  color="#FFFFFF"
-                  size={14}
-                  style={{ marginBottom: 15, textAlign: "center" }}
-                >
-                  Scan the QR code to send money
-                </CustomText>
               </>
             )}
             {checkedBoxArray.some((item) => item.name === "PayAiro Tag" && item.isChecked) && (
               <CustomText
-                color="#FFFFFF"
+                color={theme.colors.palette.black || "#000000"}
                 size={14}
                 style={{ marginBottom: 10, textAlign: "center" }}
               >
@@ -500,10 +361,10 @@ export default function Receive() {
               </CustomText>
             )}
             {checkedBoxArray.some((item) => item.name === "Bank Details" && item.isChecked) &&
-              bankLists?.[bankLists.length - 1] && (
+              payairoBank && (
                 <View style={{ width: "100%", marginTop: 10 }}>
                   <CustomText
-                    color="#FFFFFF"
+                    color={theme.colors.palette.black || "#000000"}
                     size={14}
                     fontWeight="bold"
                     style={{ marginBottom: 10, textAlign: "center" }}
@@ -511,25 +372,25 @@ export default function Receive() {
                     Bank Details:
                   </CustomText>
                   <CustomText
-                    color="#FFFFFF"
+                    color={theme.colors.palette.grey700 || "#374151"}
                     size={13}
                     style={{ marginBottom: 5, textAlign: "center" }}
                   >
-                    Bank Name: {bankLists[bankLists.length - 1]?.bank_name || "N/A"}
+                    Account Holder: {walletData?.name || "N/A"}
                   </CustomText>
                   <CustomText
-                    color="#FFFFFF"
+                    color={theme.colors.palette.grey700 || "#374151"}
                     size={13}
                     style={{ marginBottom: 5, textAlign: "center" }}
                   >
-                    Routing Number: {bankLists[bankLists.length - 1]?.ref_code || "N/A"}
+                    Routing Number: {payairoBank.ref_code || "N/A"}
                   </CustomText>
                   <CustomText
-                    color="#FFFFFF"
+                    color={theme.colors.palette.grey700 || "#374151"}
                     size={13}
                     style={{ marginBottom: 10, textAlign: "center" }}
                   >
-                    Account Number: {bankLists[bankLists.length - 1]?.account_number || "N/A"}
+                    Account Number: {payairoBank.account_number || "N/A"}
                   </CustomText>
                 </View>
               )}
@@ -538,17 +399,33 @@ export default function Receive() {
       </View>
     </ScreenContainer>
   );
-}
+};
+
+const Receive = () => {
+  return (
+    <CapturingProvider>
+      <ReceiveContent />
+    </CapturingProvider>
+  );
+};
+
+export default Receive;
 
 const customStyles = (theme: Theme) =>
   StyleSheet.create({
     title: {
-      //   fontSize: 20,
       fontWeight: "bold",
       textAlign: "center",
       marginBottom: 15,
     },
-
+    whiteSheetContainer: {
+      flex: 1,
+      backgroundColor: theme.colors.palette.white,
+      borderTopEndRadius: theme.spacing.spacing[8],
+      borderTopStartRadius: theme.spacing.spacing[8],
+      marginTop: theme.spacing.spacing[5],
+      padding: theme.spacing.spacing[5],
+    },
     row: {
       width: "100%",
       flexDirection: "row",
@@ -558,16 +435,7 @@ const customStyles = (theme: Theme) =>
     },
     label: {
       color: "#444",
-      // fontSize: 15,
       marginVertical: 3,
-    },
-    labelBold: {
-      fontWeight: "bold",
-      color: "#000",
-    },
-    total: {
-      fontWeight: "bold",
-      color: "green",
     },
     logoOverlay: {
       position: "absolute",

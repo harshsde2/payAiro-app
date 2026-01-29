@@ -32,11 +32,6 @@ class FCMService {
    * @returns FCM token or null if failed
    */
   async initialize(options?: IFCMServiceOptions): Promise<string | null> {
-    // Only initialize on Android for now
-    if (Platform.OS !== "android") {
-      console.log("[FCMService] iOS not supported yet");
-      return null;
-    }
 
     if (this.isInitialized && this.tokenCache) {
       return this.tokenCache;
@@ -45,8 +40,17 @@ class FCMService {
     this.options = options || {};
 
     try {
-      // Register device for remote messages
-      await messaging().registerDeviceForRemoteMessages();
+      // Register device for remote messages (iOS only)
+      if (Platform.OS === "ios") {
+        await messaging().registerDeviceForRemoteMessages();
+      }
+
+      // Request permission first
+      const permissionGranted = await this.requestPermission();
+      if (!permissionGranted) {
+        console.log("[FCMService] Permission not granted");
+        return null;
+      }
 
       // Get FCM token
       const token = await messaging().getToken();
@@ -80,10 +84,6 @@ class FCMService {
    * Get current FCM token (fetches fresh if needed)
    */
   async getToken(): Promise<string | null> {
-    if (Platform.OS !== "android") {
-      return null;
-    }
-
     try {
       const token = await messaging().getToken();
       this.tokenCache = token;
@@ -127,10 +127,6 @@ class FCMService {
    * @returns true if permission granted
    */
   async requestPermission(): Promise<boolean> {
-    if (Platform.OS !== "android") {
-      return false;
-    }
-
     try {
       const authStatus = await messaging().requestPermission();
       const enabled =

@@ -34,7 +34,7 @@ export default function CryptoReceive() {
   const qrCardRef = useRef<IReceiveQRCardRef | null>(null);
 
   /** false = PayAiro Tag, true = Wallet Address (same as AddCrypto) */
-  const [isOnChain, setIsOnChain] = useState(false);
+  const [isOnChain, setIsOnChain] = useState(true);
   const [depositAddress, setDepositAddress] = useState("");
   const [disclaimer, setDisclaimer] = useState("");
 
@@ -123,6 +123,7 @@ export default function CryptoReceive() {
         type: "image/png",
         filename: `PayAiro_${cryptoName}_WalletAddress`,
         failOnCancel: false,
+        message: `PayAiro Payment Details\n\n Scan the QR code to send money\n\n PayAiro Tag: ${ isOnChain ? depositAddress : walletData?.username || "N/A"}`,
       });
     } catch (err: any) {
       if (err?.message !== "User did not share") {
@@ -141,6 +142,7 @@ export default function CryptoReceive() {
         filename: `PayAiro_${cryptoName}_WalletAddress`,
         failOnCancel: false,
         saveToFiles: true,
+        message: `PayAiro Payment Details\n\n Scan the QR code to send money\n\n PayAiro Tag: ${ isOnChain ? depositAddress : walletData?.username || "N/A"}`,
       });
     } catch (err: any) {
       if (err?.message !== "User did not share") {
@@ -151,9 +153,7 @@ export default function CryptoReceive() {
   };
 
   const displayAddress = useMemo(() => {
-    if (!depositAddress) return "";
-    if (depositAddress.length <= 16) return depositAddress;
-    return `${depositAddress.slice(0, 6)}...${depositAddress.slice(-4)}`;
+    return `${depositAddress}`;
   }, [depositAddress]);
 
   const getQRCodeValue = () =>
@@ -204,6 +204,22 @@ export default function CryptoReceive() {
       <View style={styles.container}>
         <View style={styles.qrTypeSwitcherContainer}>
           <View style={styles.qrTypeChipsRow}>
+          <Pressable
+              style={[styles.qrTypeChip, isOnChain && styles.qrTypeChipActive]}
+              onPress={() => setIsOnChain(true)}
+            >
+              <CustomText
+                size={13}
+                fontWeight="semiBold"
+                color={
+                  isOnChain
+                    ? theme.colors.palette.white
+                    : theme.colors.palette.grey900
+                }
+              >
+                Wallet Address
+              </CustomText>
+            </Pressable>
             <Pressable
               style={[styles.qrTypeChip, !isOnChain && styles.qrTypeChipActive]}
               onPress={() => setIsOnChain(false)}
@@ -220,22 +236,7 @@ export default function CryptoReceive() {
                 PayAiro Tag
               </CustomText>
             </Pressable>
-            <Pressable
-              style={[styles.qrTypeChip, isOnChain && styles.qrTypeChipActive]}
-              onPress={() => setIsOnChain(true)}
-            >
-              <CustomText
-                size={13}
-                fontWeight="semiBold"
-                color={
-                  isOnChain
-                    ? theme.colors.palette.white
-                    : theme.colors.palette.grey900
-                }
-              >
-                Wallet Address
-              </CustomText>
-            </Pressable>
+
           </View>
         </View>
 

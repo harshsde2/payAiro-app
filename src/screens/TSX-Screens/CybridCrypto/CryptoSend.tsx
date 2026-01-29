@@ -529,6 +529,13 @@ const CryptoSend = () => {
                 onChange={setRecipient}
               />
             </View>
+            {/* Error Message Display */}
+            {hasInsufficientBalance && (
+                <View style={styles.errorContainer}>
+                  <SvgIcons.ToastCross width={16} height={16} fill="#C92A2A" />
+                  <CustomText style={styles.errorText}>{'Insufficient balance'}</CustomText>
+                </View>
+              )}
             <GenericButton
               title="proceed"
               onPress={() => {
@@ -652,6 +659,22 @@ const custonStyles = (theme: Theme) =>
       flexDirection: "row",
       alignItems: "center",
       paddingHorizontal: 10,
+    },
+    errorContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "#FFEBEB",
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      marginTop: 10,
+      gap: 8,
+    },
+    errorText: {
+      color: "#C92A2A",
+      fontSize: 14,
+      fontFamily: theme.typography.fontFamily.montserratSemiBold,
     },
     testInputContainer: {
       flex: 1,

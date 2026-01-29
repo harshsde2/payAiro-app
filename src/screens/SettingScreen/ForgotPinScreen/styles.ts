@@ -27,38 +27,42 @@ export const getModalStyles = (theme: Theme) =>
       textAlign: "center",
     },
     otpContainer: {
+      width: "100%",
+      marginVertical: theme.spacing.spacing[5],
+    },
+    otpInputContainer: {
+      width: "100%",
       flexDirection: "row",
       justifyContent: "space-between",
-      width: "100%",
-      marginVertical: theme.spacing.spacing[2],
-      paddingHorizontal: theme.spacing.spacing[1],
-    },
-    otpInputWrapper: {
-      flex: 1,
-      marginHorizontal: theme.spacing.spacing[1],
-    },
-    otpInputWrapperFirst: {
-      marginLeft: 0,
-    },
-    otpInputWrapperLast: {
-      marginRight: 0,
+      gap: 4,
     },
     otpInput: {
-      width: "100%",
+      width: 48,
       height: 56,
       borderRadius: 12,
       borderWidth: 1.5,
       borderColor: theme.colors.palette.grey300,
-      textAlign: "center",
+      backgroundColor: theme.colors.background.primary,
+    },
+    otpInputText: {
       fontSize: 20,
       fontFamily: theme.typography.fontFamily.montserratSemiBold,
-      backgroundColor: theme.colors.background.primary,
       color: theme.colors.text.primary,
     },
     otpInputActive: {
-      borderColor: theme.colors.palette.green500,
+      borderColor: theme.colors.palette.green800,
       borderWidth: 2,
       backgroundColor: theme.colors.palette.green50,
+    },
+    otpInputFilled: {
+      borderColor: theme.colors.palette.green500,
+      borderWidth: 1.5,
+      backgroundColor: theme.colors.palette.green50,
+    },
+    otpInputDisabled: {
+      borderColor: theme.colors.palette.grey300,
+      backgroundColor: theme.colors.palette.grey100,
+      opacity: 0.7,
     },
     otpInputError: {
       borderColor: "#C92A2A",

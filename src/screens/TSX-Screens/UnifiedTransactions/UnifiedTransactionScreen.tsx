@@ -8,6 +8,7 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { useSelector } from "react-redux";
 import { ScreenContainer } from "HOC";
 import { SvgIcons } from "constants/svgs";
@@ -483,6 +484,16 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
     refetch();
     refetchPendingPaymentRequests();
   }, [refetch, refetchPendingPaymentRequests]);
+
+  // Reload data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      // Refetch all transaction data when screen is focused
+      refetchFiat();
+      refetchCrypto();
+      refetchPendingPaymentRequests();
+    }, [refetchFiat, refetchCrypto, refetchPendingPaymentRequests])
+  );
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {

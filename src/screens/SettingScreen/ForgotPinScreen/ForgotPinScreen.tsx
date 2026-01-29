@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Platform,
   BackHandler,
 } from "react-native";
+import { OtpInput, OtpInputRef } from "react-native-otp-entry";
 import HeaderTitle from "components/HeaderTitle";
 import GenericButton from "components/GenericButton";
 import { getPin, setPin } from "storage/mmkv";
@@ -62,8 +63,8 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
   const [newPin, setNewPin] = useState<string[]>(["", "", "", ""]);
   const [confirmPin, setConfirmPin] = useState<string[]>(["", "", "", ""]);
   const [showLoader, setShowLoader] = useState<boolean>(false);
-  const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
-  const inputs = useRef<(TextInput | null)[]>([]);
+  const [otp, setOtp] = useState<string>("");
+  const otpInputRef = useRef<OtpInputRef>(null);
   const hasAutoVerifiedRef = useRef(false);
 
   const [showVerifyModal, setShowVerifyModal] = useState<boolean>(false);
@@ -86,8 +87,8 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
 
   const handleGoBack =  () => {
     if (navigation.canGoBack()) {
-      setTimeout(() => {
-        navigation.goBack();
+      setTimeout(async () => {
+        await navigation.goBack();
         lockApp();
       }, 2000);
     } else {
@@ -136,8 +137,8 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
     );
   };
 
-  const handleVerifyOtp = () => {
-    const enteredOtp = otp.join("");
+  const handleVerifyOtp = useCallback((otpValue?: string) => {
+    const enteredOtp = otpValue || otp;
     if (enteredOtp.length < 6) {
       showError("OTP should be 6 digits");
       setOtpError("OTP should be 6 digits");
@@ -151,7 +152,8 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
       onSuccess: (data) => {
         console.log("OTP verified successfully:", data);
         setOtpError("");
-        setOtp(["", "", "", "", "", ""]);
+        setOtp("");
+        otpInputRef.current?.clear();
         setShowVerifyModal(false);
         setIsUserVerified(true);
         showSuccess("Email verified successfully.", "You can now reset your PIN.");
@@ -167,9 +169,12 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
           "Invalid OTP. Please try again.";
         showError(errorMessage);
         setOtpError(errorMessage);
+        // Clear OTP on error
+        otpInputRef.current?.clear();
+        setOtp("");
       },
     });
-  };
+  }, [otp, handleForgotPinVerifyOtp]);
 
   const handleResetPin = () => {
     if (!isUserVerified) {
@@ -221,63 +226,21 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
     });
   };
 
-  // Handle pasted text for OTP
-  const handlePasteText = (text: string, startIndex: number) => {
-    const numbers = text.replace(/[^0-9]/g, "");
-
-    if (numbers.length > 0) {
-      const newOtp = [...otp];
-      let currentIndex = startIndex;
-      for (let i = 0; i < numbers.length && currentIndex < 6; i++) {
-        newOtp[currentIndex] = numbers[i];
-        currentIndex++;
-      }
-      setOtp(newOtp);
-      const nextIndex = Math.min(currentIndex, 5);
-      setTimeout(() => {
-        inputs.current[nextIndex]?.focus();
-      }, 0);
-    }
-  };
-
-  const handleOtpChange = (text: string, index: number) => {
+  const handleOtpChange = useCallback((text: string) => {
     if (otpError) {
       setOtpError("");
     }
+    setOtp(text);
+  }, [otpError]);
 
-    if (text.length > 1) {
-      handlePasteText(text, index);
+  // Handle OTP filled - auto verify
+  const handleOtpFilled = useCallback((filledOtp: string) => {
+    if (hasAutoVerifiedRef.current || !showVerifyModal || isPendingVerifyOtp) {
       return;
     }
-
-    if (/^[0-9]$/.test(text) || text === "") {
-      const newOtp = [...otp];
-      newOtp[index] = text;
-      setOtp(newOtp);
-
-      if (text && index < otp.length - 1) {
-        inputs.current[index + 1]?.focus();
-      }
-
-      if (!text && index > 0) {
-        inputs.current[index - 1]?.focus();
-      }
-    }
-  };
-
-  const handleKeyPress = (key: string, index: number) => {
-    if (key === "Backspace") {
-      if (otp[index] === "") {
-        if (index > 0) {
-          inputs.current[index - 1]?.focus();
-        }
-      } else {
-        const newOtp = [...otp];
-        newOtp[index] = "";
-        setOtp(newOtp);
-      }
-    }
-  };
+    hasAutoVerifiedRef.current = true;
+    handleVerifyOtp(filledOtp);
+  }, [showVerifyModal, isPendingVerifyOtp, handleVerifyOtp]);
 
   // Handler for new PIN input
   const handleNewPinChange = (val: string, index: number) => {
@@ -353,19 +316,14 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
     }
   };
 
-  const isOtpComplete = otp.every((digit) => digit !== "");
+  const isOtpComplete = otp.length === 6;
 
+  // Reset auto-verify ref when OTP becomes incomplete
   useEffect(() => {
     if (!isOtpComplete) {
       hasAutoVerifiedRef.current = false;
-      return;
     }
-    if (hasAutoVerifiedRef.current || !showVerifyModal || isPendingVerifyOtp) {
-      return;
-    }
-    hasAutoVerifiedRef.current = true;
-    handleVerifyOtp();
-  }, [isOtpComplete, showVerifyModal, isPendingVerifyOtp]);
+  }, [isOtpComplete]);
 
   return (
     <ScreenContainer scrollable safeArea padding={0}>
@@ -379,7 +337,8 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
             onClose={() => {
               setShowVerifyModal(false);
               setOtpError("");
-              setOtp(["", "", "", "", "", ""]);
+              setOtp("");
+              otpInputRef.current?.clear();
             }}
             isVisible={showVerifyModal}
             containerStyle={{ justifyContent: "center", alignItems: "center" }}
@@ -390,7 +349,7 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
               style={[
                 globalStyles.whiteSheetContainer,
                 {
-                  maxHeight: otpError ? 420 : 360,
+                  maxHeight: otpError ? 440 : 380,
                   width: "90%",
                   borderRadius: theme.spacing.spacing[8],
                   padding: theme.spacing.spacing[6],
@@ -425,36 +384,33 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
 
               {/* OTP Input Fields */}
               <View style={modalStyles.otpContainer}>
-                {otp.map((_, index) => (
-                  <View
-                    key={index}
-                    style={[
-                      modalStyles.otpInputWrapper,
-                      index === 0 && modalStyles.otpInputWrapperFirst,
-                      index === otp.length - 1 &&
-                      modalStyles.otpInputWrapperLast,
-                    ]}
-                  >
-                    <TextInput
-                      style={[
-                        modalStyles.otpInput,
-                        otp[index] && modalStyles.otpInputActive,
-                        otpError && modalStyles.otpInputError,
-                      ]}
-                      maxLength={6}
-                      keyboardType="number-pad"
-                      onChangeText={(text) => handleOtpChange(text, index)}
-                      onKeyPress={({ nativeEvent }) =>
-                        handleKeyPress(nativeEvent.key, index)
-                      }
-                      ref={(input) => { (inputs.current[index] = input) }}
-                      value={otp[index]}
-                      selectTextOnFocus
-                      editable={!isPendingVerifyOtp}
-                      contextMenuHidden={false}
-                    />
-                  </View>
-                ))}
+                <OtpInput
+                  ref={otpInputRef}
+                  numberOfDigits={6}
+                  focusColor={theme.colors.palette.green800}
+                  autoFocus={true}
+                  disabled={isPendingVerifyOtp}
+                  type="numeric"
+                  blurOnFilled={true}
+                  onTextChange={handleOtpChange}
+                  onFilled={handleOtpFilled}
+                  textInputProps={{
+                    accessibilityLabel: "One-Time Password",
+                    textContentType: "oneTimeCode",
+                    autoComplete: "sms-otp",
+                  }}
+                  theme={{
+                    containerStyle: modalStyles.otpInputContainer,
+                    pinCodeContainerStyle: [
+                      modalStyles.otpInput,
+                      otpError && modalStyles.otpInputError,
+                    ] as any,
+                    pinCodeTextStyle: modalStyles.otpInputText,
+                    focusedPinCodeContainerStyle: modalStyles.otpInputActive,
+                    filledPinCodeContainerStyle: modalStyles.otpInputFilled,
+                    disabledPinCodeContainerStyle: modalStyles.otpInputDisabled,
+                  }}
+                />
               </View>
 
               {/* Error Message Display */}
@@ -470,18 +426,19 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
               {/* Action Buttons */}
               <View style={modalStyles.buttonContainer}>
                 <GenericButton
-                  onPress={handleVerifyOtp}
+                  onPress={() => handleVerifyOtp()}
                   title="Verify OTP"
                   cStyle={modalStyles.verifyButton}
                   showLoader={true}
                   isLoading={isPendingVerifyOtp}
-                  disabled={isPendingVerifyOtp}
+                  disabled={!isOtpComplete || isPendingVerifyOtp}
                 />
                 <GenericButton
                   onPress={() => {
                     setShowVerifyModal(false);
                     setOtpError("");
-                    setOtp(["", "", "", "", "", ""]);
+                    setOtp("");
+                    otpInputRef.current?.clear();
                   }}
                   title="Cancel"
                   cStyle={modalStyles.cancelButton}

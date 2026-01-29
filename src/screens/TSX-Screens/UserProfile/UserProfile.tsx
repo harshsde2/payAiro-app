@@ -17,6 +17,7 @@ import moment from "moment";
 import { UserTransaction } from "./types";
 import { CustomText } from "tsx-components";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { SvgIcons } from "constants/svgs";
 
 const UserProfile = () => {
   const { theme } = useTheme();
@@ -78,9 +79,9 @@ const UserProfile = () => {
               },
             ]}
           >
-            <Text style={{ color: "#fff", fontWeight: "bold" }}>
-              {isFailed ? "X" : isIncoming ? "↓" : "↑"}
-            </Text>
+              {isFailed ? "X" : isIncoming ? <SvgIcons.ArrowDown width={15} height={15} /> : <SvgIcons.ArrowUp width={15} height={15} />}
+            {/* <Text style={{ color: "#fff", fontWeight: "bold" }}> */}
+            {/* </Text> */}
           </View>
           <View style={{ marginLeft: 12 }}>
             <Text style={[styles.txName, { color: theme.colors.text.primary }]}>
@@ -211,13 +212,14 @@ const UserProfile = () => {
                 { backgroundColor: theme.colors.button.primary.background },
               ]}
             >
+              <SvgIcons.ArrowUp  width={15} height={15} style={{ marginRight: 10 }} />
               <Text
                 style={[
                   styles.btnText,
                   { color: theme.colors.button.primary.text },
                 ]}
               >
-                ↑ Pay
+               Pay
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -234,10 +236,11 @@ const UserProfile = () => {
                 { backgroundColor: theme.colors.background.tertiary },
               ]}
             >
+              <SvgIcons.ArrowDownBlack width={15} height={15} style={{ marginRight: 10 }} />
               <Text
                 style={[styles.btnText, { color: theme.colors.text.primary }]}
               >
-                ↓ Request
+                Request
               </Text>
             </TouchableOpacity>
           </View>
@@ -416,8 +419,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  btnPrimary: {},
-  btnSecondary: {},
+  btnPrimary: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  btnSecondary: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   btnText: {
     fontWeight: "600",
     fontSize: 16,

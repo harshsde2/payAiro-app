@@ -29,7 +29,7 @@
 		7593A7FD4B5544D2B7704888 /* Neue Plak Text Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7D05A5B824EA45D8A46676C5 /* Neue Plak Text Bold.ttf */; };
 		7718BAA7F1AC4560BF164274 /* Neue Plak Extended Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 1AC1AD42F9AA4F60A76769C4 /* Neue Plak Extended Regular.ttf */; };
 		7BE6D847D2254811B99ECA9D /* Montserrat-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 11363C8507B143B693B751C0 /* Montserrat-Regular.ttf */; };
-		7C592A262F1A37EE0054AFC5 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 7C592A252F1A37EE0054AFC5 /* GoogleService-Info.plist */; };
+		7C3830772F2B1624007CD4B0 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 7C3830762F2B1624007CD4B0 /* GoogleService-Info.plist */; };
 		7F59CA2815B44926A9A3D113 /* Nexa-Heavy.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4FB66535EEB44F41BC97C3C3 /* Nexa-Heavy.ttf */; };
 		80F809D5271922DBD435053C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
@@ -108,8 +108,8 @@
 		6C3CAD2788104B168C1A87F4 /* Neue Plak Text SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Text SemiBold.ttf"; path = "../assets/fonts/Neue Plak Text SemiBold.ttf"; sourceTree = "<group>"; };
 		703D6C452E5D63A6F26B03F8 /* Pods-payAiro-payAiroTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-payAiro-payAiroTests.debug.xcconfig"; path = "Target Support Files/Pods-payAiro-payAiroTests/Pods-payAiro-payAiroTests.debug.xcconfig"; sourceTree = "<group>"; };
 		77AE74387971C3FE8A240727 /* Pods-payAiro-payAiroTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-payAiro-payAiroTests.release.xcconfig"; path = "Target Support Files/Pods-payAiro-payAiroTests/Pods-payAiro-payAiroTests.release.xcconfig"; sourceTree = "<group>"; };
+		7C3830762F2B1624007CD4B0 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		7C592A242F1A34380054AFC5 /* payAiro.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = payAiro.entitlements; path = payAiro/payAiro.entitlements; sourceTree = "<group>"; };
-		7C592A252F1A37EE0054AFC5 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		7D05A5B824EA45D8A46676C5 /* Neue Plak Text Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Text Bold.ttf"; path = "../assets/fonts/Neue Plak Text Bold.ttf"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = payAiro/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		92BF6552D4604451BB4FF678 /* Neue Plak Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Regular.ttf"; path = "../assets/fonts/Neue Plak Regular.ttf"; sourceTree = "<group>"; };
@@ -176,7 +176,7 @@
 		13B07FAE1A68108700A75B9A /* payAiro */ = {
 			isa = PBXGroup;
 			children = (
-				7C592A252F1A37EE0054AFC5 /* GoogleService-Info.plist */,
+				7C3830762F2B1624007CD4B0 /* GoogleService-Info.plist */,
 				7C592A242F1A34380054AFC5 /* payAiro.entitlements */,
 				13B07FB21A68108700A75B9A /* AppDelegate.swift */,
 				1B92B6197B7A4CE9B782C7B1 /* PayAiroQRScannerModule.swift */,
@@ -388,7 +388,7 @@
 			files = (
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
-				7C592A262F1A37EE0054AFC5 /* GoogleService-Info.plist in Resources */,
+				7C3830772F2B1624007CD4B0 /* GoogleService-Info.plist in Resources */,
 				80F809D5271922DBD435053C /* PrivacyInfo.xcprivacy in Resources */,
 				13B07FB91A68108700A75B9A /* FreshchatCustomTheme.plist in Resources */,
 				212E88E3923248FBAF8182FC /* Neue Plak Black.ttf in Resources */,
@@ -686,7 +686,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = payAiro/payAiro.entitlements;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 8T3V6TMY34;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = payAiro/Info.plist;
@@ -696,7 +696,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 6.60;
+				MARKETING_VERSION = 6.65;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -722,7 +722,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = payAiro/payAiro.entitlements;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 8T3V6TMY34;
 				INFOPLIST_FILE = payAiro/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PayAiro;
@@ -731,7 +731,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 6.60;
+				MARKETING_VERSION = 6.65;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -838,7 +838,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = payAiro/payAiro.entitlements;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 8T3V6TMY34;
 				INFOPLIST_FILE = payAiro/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "PayAiro Staging";
@@ -847,7 +847,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 6.60;
+				MARKETING_VERSION = 6.65;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

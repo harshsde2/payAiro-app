@@ -251,6 +251,17 @@ export default function ConfirmOTP() {
             //   URL: persona_verification_url,
             //   isUserAlreadyCreated: true,
             // });
+            
+            // Check if this is an old user (already logged in before)
+            // If wallet data exists in storage, it's an old user logging in again
+            const existingWalletData = getItem(STORAGE_KEYS.WALLET_DATA);
+            const isOldUser = !!existingWalletData;
+            
+            // If old user, mark KYC congratulations as already shown to prevent popup
+            if (isOldUser) {
+              setItem(STORAGE_KEYS.KYC_CONGRATULATIONS_SHOWN, "true");
+            }
+            
             await getWalletD();
           } else if (step === 2) {
             await getWalletD();

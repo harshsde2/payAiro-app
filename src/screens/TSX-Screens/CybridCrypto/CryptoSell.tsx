@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable, Image } from "react-native";
+import { View, Text, StyleSheet, Pressable, Image, Keyboard } from "react-native";
 import React, { useRef, useState, useEffect } from "react";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
@@ -242,6 +242,7 @@ const CryptoSell = () => {
 
   // Handle Proceed button click - validate first, then show modal
   const handleProceed = () => {
+    Keyboard.dismiss();
     if (validateSellData()) {
       setShowConfirmationModal(true);
     }

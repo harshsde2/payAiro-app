@@ -1,5 +1,5 @@
 import { View, Clipboard, Platform, ToastAndroid, Alert, StyleSheet, TouchableOpacity } from 'react-native'
-import React, { useRef } from 'react'
+import React, { useMemo, useRef } from 'react'
 import HeaderTitle from 'components/HeaderTitle'
 import { ScreenContainer } from 'HOC'
 import { useAppLock } from 'hooks/useAppLock'
@@ -12,6 +12,7 @@ import { SvgIcons } from 'constants/svgs'
 import { ReceiveQRCard } from 'components/common-components/ReceiveQRCard'
 import type { IReceiveQRCardRef } from 'components/common-components/ReceiveQRCard'
 import { BankDetailsDisplay, CapturingProvider, useCapturing } from 'components/common-components/BankDetailsDisplay'
+import { sharePayAiroBankDetails } from 'utils/helper'
 
 const AddBalanceBankDetailsContent = () => {
     const { theme } = useTheme();
@@ -21,6 +22,9 @@ const AddBalanceBankDetailsContent = () => {
     const route = useRoute<any>();
     const navigation = useNavigation<any>();
     const qrCardRef = useRef<any>(null);
+    const { bankLists } = useSelectorAction() as any;
+    
+    const payairoBankDetails = sharePayAiroBankDetails(walletData, bankLists) as any;
 
     const copyToClipboard = (text: string, label: string) => {
         Clipboard.setString(text);
@@ -40,6 +44,7 @@ const AddBalanceBankDetailsContent = () => {
                 type: "image/png",
                 filename: `PayAiro_BankDetails_${walletData?.username || "details"}`,
                 failOnCancel: false,
+                message: payairoBankDetails as string,
             };
 
             await Share.open(shareOptions);
@@ -74,7 +79,7 @@ const AddBalanceBankDetailsContent = () => {
 
     return (
         <ScreenContainer scrollable={true} padding={0} >
-            <HeaderTitle title="Add Balance Bank Details" leftIcon="true" />
+            <HeaderTitle title="Via Bank" leftIcon="true" />
             <View style={styles(theme).container}>
 
                 <ReceiveQRCard
