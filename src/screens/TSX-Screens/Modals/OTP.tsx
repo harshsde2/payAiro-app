@@ -2,18 +2,26 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
+  Alert,
+  Platform,
   StyleSheet,
   TouchableOpacity,
   View,
 } from "react-native";
 import { OtpInput, OtpInputRef } from "react-native-otp-entry";
+import {
+  startOtpListener,
+  removeListener,
+} from "react-native-otp-verify";
 import { CustomText } from "tsx-components";
 import GenericButton from "../../../components/GenericButton";
 import { Theme, useTheme } from "styles";
 import { useSendOTP, useVerifyUserForSendOTP } from "query/hooks/useAPIAuth";
 import { showError, showSuccess } from "../../../utils/toast";
+import { getSmsHash } from "utils/smsHash";
 import HeaderTitle from "components/HeaderTitle";
 import { SvgIcons } from "constants/svgs";
+import { isProduction } from "config/env.config";
 
 interface ITransactionOTPRouteParams {
   onOTPVerified?: () => void;
@@ -25,6 +33,7 @@ const OTP = () => {
   const route = useRoute();
   const { theme } = useTheme();
   const styles = customStyles(theme);
+  const isProductionEnv = isProduction();
 
   const { onOTPVerified, transactionType } = (route.params as ITransactionOTPRouteParams) || {};
 
@@ -54,6 +63,30 @@ const OTP = () => {
     otpInputRef.current?.clear();
   }, []);
 
+  // Auto OTP reading for Android using SMS Retriever API
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      // Start listening for OTP SMS
+      startOtpListener((message) => {
+        // console.log("Received SMS (Transaction OTP):", message);
+        // Extract 6-digit OTP from message using regex
+        const otpMatch = /(\d{6})/g.exec(message);
+        if (otpMatch && otpMatch[1]) {
+          const extractedOtp = otpMatch[1];
+          console.log("Extracted OTP:", extractedOtp);
+          setOtp(extractedOtp);
+          // Auto-fill the OTP input
+          otpInputRef.current?.setValue(extractedOtp);
+        }
+      });
+
+      // Cleanup listener on unmount
+      return () => {
+        removeListener();
+      };
+    }
+  }, []);
+
   useEffect(() => {
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
@@ -63,8 +96,20 @@ const OTP = () => {
     }
   }, [countdown]);
 
-  const handleSendOTP = () => {
-    sendOTP({} as any, {
+  const handleSendOTP = async () => {
+    // Fetch hash when needed (checks storage first, so fast when cached)
+    const hash = await getSmsHash();
+
+    const payload: Record<string, unknown> = {
+      send_phone_otp: true,
+      country_code: "91",
+    };
+    if (hash) {
+      payload.hash = hash;
+    }
+    // Alert.alert("Payload =>", JSON.stringify(payload, null, 2));
+
+    sendOTP(payload as any, {
       onSuccess: (data) => {
         console.log("OTP sent successfully:", data);
         showSuccess("OTP sent to your registered email");
@@ -207,7 +252,7 @@ const OTP = () => {
                 pinCodeContainerStyle: [
                   styles.otpInput,
                   errorMessage && styles.otpInputError,
-                ],
+                ] as any,
                 pinCodeTextStyle: styles.otpInputText,
                 focusedPinCodeContainerStyle: styles.otpInputActive,
                 filledPinCodeContainerStyle: styles.otpInputFilled,

@@ -2072,6 +2072,8 @@ PODS:
     - Yoga
   - react-native-netinfo (11.4.1):
     - React-Core
+  - react-native-otp-verify (1.1.8):
+    - React-Core
   - react-native-pdf (7.0.3):
     - boost
     - DoubleConversion
@@ -3573,6 +3575,7 @@ DEPENDENCIES:
   - react-native-html-to-pdf (from `../node_modules/react-native-html-to-pdf`)
   - react-native-mmkv (from `../node_modules/react-native-mmkv`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
+  - react-native-otp-verify (from `../node_modules/react-native-otp-verify`)
   - react-native-pdf (from `../node_modules/react-native-pdf`)
   - react-native-plaid-link-sdk (from `../node_modules/react-native-plaid-link-sdk`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
@@ -3766,6 +3769,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-mmkv"
   react-native-netinfo:
     :path: "../node_modules/@react-native-community/netinfo"
+  react-native-otp-verify:
+    :path: "../node_modules/react-native-otp-verify"
   react-native-pdf:
     :path: "../node_modules/react-native-pdf"
   react-native-plaid-link-sdk:
@@ -3953,6 +3958,7 @@ SPEC CHECKSUMS:
   react-native-html-to-pdf: 4c5c6e26819fe202971061594058877aa9b25265
   react-native-mmkv: c70c58437c0f5e5fe6992f1de1e350dcdd236332
   react-native-netinfo: f0a9899081c185db1de5bb2fdc1c88c202a059ac
+  react-native-otp-verify: b524a7f44b691644bea08376d6a4782a2df57e09
   react-native-pdf: 5851482420f156606ae48d4f919b9208abd62a16
   react-native-plaid-link-sdk: 589048fe0880e7760389fa3b30be5c398697fe8a
   react-native-safe-area-context: fea29ae0275beaa22f72d0a8be1eb0ab09c3feae

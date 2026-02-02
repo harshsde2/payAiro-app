@@ -3,14 +3,20 @@ import { ScreenContainer } from "HOC";
 import { useAppLock } from "hooks/useAppLock";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { useGetReward, useUserPin, useWalletDetails } from "query/hooks";
-import { useLogin, useStepCount, useVerifyOTP } from "query/hooks/useAPIAuth";
+import { useLogin, useSignUp, useStepCount, useVerifyOTP } from "query/hooks/useAPIAuth";
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
+  Platform,
   StyleSheet,
   TouchableOpacity,
   View
 } from "react-native";
 import DeviceInfo from "react-native-device-info";
+import {
+  startOtpListener,
+  removeListener,
+} from "react-native-otp-verify";
+import { InputType } from "./types";
 import { OtpInput, OtpInputRef } from "react-native-otp-entry";
 import { useDispatch } from "react-redux";
 import { getItem, setItem, setPin, STORAGE_KEYS } from "storage/mmkv";
@@ -80,7 +86,19 @@ export default function ConfirmOTP() {
     refetch: refetchUserPin,
   } = useUserPin(false);
 
-  const { email } = (route as any).params;
+  const { mutate: signUp, isPending: isPendingSignUp } = useSignUp();
+
+  // Get params - support both email and phone
+  const { email, phone, inputType, isEmail } = (route as any).params as {
+    email?: string;
+    phone?: string;
+    inputType?: InputType;
+    isEmail?: boolean;
+  };
+  
+  // Determine if using phone or email
+  const isPhoneLogin = inputType === "phone" || !!phone;
+  const contactValue = isPhoneLogin ? phone : email;
   const [otp, setOtp] = useState("");
   const otpInputRef = useRef<OtpInputRef>(null);
   const [countdown, setCountdown] = useState(OTP_COOLDOWN_SECONDS);
@@ -90,6 +108,30 @@ export default function ConfirmOTP() {
   
   // Use ref to prevent multiple simultaneous verifications
   const isVerifyingRef = useRef(false);
+
+  // Auto OTP reading for Android using SMS Retriever API
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      // Start listening for OTP SMS
+      startOtpListener((message) => {
+        // console.log("Received SMS:", message);
+        // Extract 6-digit OTP from message using regex
+        const otpMatch = /(\d{6})/g.exec(message);
+        if (otpMatch && otpMatch[1]) {
+          const extractedOtp = otpMatch[1];
+          // console.log("Extracted OTP:", extractedOtp);
+          setOtp(extractedOtp);
+          // Auto-fill the OTP input
+          otpInputRef.current?.setValue(extractedOtp);
+        }
+      });
+
+      // Cleanup listener on unmount
+      return () => {
+        removeListener();
+      };
+    }
+  }, []);
 
   const initializeOtpTimer = useCallback(() => {
     const storedTimestamp = getItem(STORAGE_KEYS.OTP_RESEND_TIMESTAMP);
@@ -165,10 +207,25 @@ export default function ConfirmOTP() {
   }, []);
 
   const handleResendOTP = () => {
-    login({ email: email.trim().toLowerCase() } as any, {
+    // Build payload based on input type (email or phone)
+    const payload: any = {
+      location: "United States", // Default location
+    };
+
+    if (isPhoneLogin && phone) {
+      payload.phone = phone;
+    } else if (email) {
+      payload.email = email.trim().toLowerCase();
+    }
+
+    const successMessage = isPhoneLogin
+      ? "OTP has been sent to your phone"
+      : "OTP has been sent to your email";
+
+    signUp(payload, {
       onSuccess: (data) => {
         if (data?.status && data) {
-          showSuccess("OTP has been sent to email");
+          showSuccess(successMessage);
         } else {
           showError("Something went wrong");
         }
@@ -229,7 +286,15 @@ export default function ConfirmOTP() {
     isVerifyingRef.current = true;
     setIsVerifying(true);
 
-    verifyOtp({ email: email.trim().toLowerCase(), otp: enteredOtp } as any, {
+    // Build verify payload based on input type
+    const verifyPayload: any = { otp: enteredOtp };
+    if (isPhoneLogin && phone) {
+      verifyPayload.phone = phone;
+    } else if (email) {
+      verifyPayload.email = email.trim().toLowerCase();
+    }
+
+    verifyOtp(verifyPayload, {
       onSuccess: async (data) => {
         if (data?.status) {
           console.log("data =>", JSON.stringify(data, null, 2));
@@ -243,8 +308,11 @@ export default function ConfirmOTP() {
 
           if (step === 0) {
             (navigation as any).navigate(SCREENS.Name, {
-              email,
+              email: isPhoneLogin ? undefined : email,
+              phone: isPhoneLogin ? phone : undefined,
+              inputType,
               data: data?.data,
+              isEmail: isEmail,
             });
           } else if (step === 1) {
             // (navigation as any).navigate(NAVIGATION_SCREENS.CYBRID_WEB_VIEW, {
@@ -293,7 +361,7 @@ export default function ConfirmOTP() {
         useDispatchAction(setShowLoader(false));
       },
     });
-  }, [otp, email, verifyOtp, navigation]);
+  }, [otp, email, phone, isPhoneLogin, inputType, verifyOtp, navigation]);
 
   const isOtpComplete = otp.length === 6;
 

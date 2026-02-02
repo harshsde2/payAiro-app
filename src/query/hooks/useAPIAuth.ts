@@ -15,6 +15,7 @@ import { queryStaleTime } from "query/queryConfigs";
 export const useLogin = () => {
   return useMutation<ApiResponse<any>, Error>({
     mutationFn: async (payload) => {
+        console.log("payload =>", JSON.stringify(payload, null, 2));
       return apiClient.post<ApiResponse<any>>(AUTH.LOGIN, payload, true);
     },
     onSuccess: (data) => {
@@ -29,6 +30,7 @@ export const useLogin = () => {
 export const useSignUp = () => {
   return useMutation<ApiResponse<any>, Error>({
     mutationFn: async (payload) => {
+      console.log("payload =>", JSON.stringify(payload, null, 2));
       return apiClient.post<ApiResponse<any>>(AUTH.SEND_OTP, payload, true);
     },
   });
@@ -68,7 +70,7 @@ export const useStepCount = () => {
 export const usePatchUserDetails = () => {
   return useMutation<ApiResponse<any>, Error>({
     mutationFn: async (payload) => {
-      console.log("payload =>", JSON.stringify(payload,null,2));
+      console.log("payload 2 =>", JSON.stringify(payload,null,2));
       const data = apiClient.patch<ApiResponse<any>>(
         AUTH.UPDATE_ACCOUNT,
         payload,
@@ -178,8 +180,9 @@ export const useKYCStatus = () => {
 
 export const useSendOTP = () => {
   return useMutation<ApiResponse<any>, Error>({
-    mutationFn: async () => {
-      const data = apiClient.post<ApiResponse<any>>(AUTH.SEND_OTP_FOR_TRANSACTION, {}, false);
+    mutationFn: async (payload) => {
+      console.log("payload =>", JSON.stringify(payload, null, 2));
+      const data = apiClient.post<ApiResponse<any>>(AUTH.SEND_OTP_FOR_TRANSACTION, payload, false);
       return data;
     },
     onSuccess: (data) => {

@@ -8,8 +8,13 @@ import {
   ScrollView,
   Button,
   Pressable,
+  Platform,
 } from "react-native";
 import { OtpInput, OtpInputRef } from "react-native-otp-entry";
+import {
+  startOtpListener,
+  removeListener,
+} from "react-native-otp-verify";
 import Container from "../../HOC/Container";
 import HeaderTitle from "../../components/HeaderTitle";
 import { SVGLeftArrow } from "../../constants/images";
@@ -19,6 +24,7 @@ import { getPin, setPin } from "storage/mmkv";
 import { ScreenContainer } from "HOC";
 import { globalStyles, useGlobalStyles } from "styles/GlobalStyles";
 import { showError, showSuccess } from "../../utils/toast";
+import { getSmsHash } from "utils/smsHash";
 import { useDispatch, useSelector } from "react-redux";
 import { patchPin } from "services/Services";
 import {
@@ -32,7 +38,6 @@ import { CustomText } from "tsx-components";
 import { useAppLock } from "hooks/useAppLock";
 import { useNavigation } from "@react-navigation/native";
 import { SvgIcons } from "constants/svgs";
-import { Platform } from "react-native";
 
 const ChangePinScreen = () => {
   const globalStyles = useGlobalStyles();
@@ -57,6 +62,7 @@ const ChangePinScreen = () => {
   const [isUserVerfied, setIsUserVerfied] = useState(false);
   const [otpError, setOtpError] = useState("");
   const [newPinError, setNewPinError] = useState("");
+  const [smsHash, setSmsHash] = useState("");
 
   const pinRefs = [useRef(), useRef(), useRef(), useRef()];
   const newPinRefs = [useRef(), useRef(), useRef(), useRef()];
@@ -97,6 +103,16 @@ const ChangePinScreen = () => {
     return newPin.join("") === confirmPin.join("") && newPin.join("") !== "";
   };
 
+  // Get SMS hash for Android OTP auto-read
+  useEffect(() => {
+    const fetchSmsHash = async () => {
+      const hash = await getSmsHash();
+      if (hash) {
+        setSmsHash(hash);
+      }
+    };
+    fetchSmsHash();
+  }, []);
 
   const getMaskedEmail = (emailAddress) => {
     if (!emailAddress || !emailAddress.includes("@")) {
@@ -163,10 +179,17 @@ const ChangePinScreen = () => {
   };
 
   const handleVerfyUserChangePIN = async () => {
+    const payload = {
+      send_phone_otp: true,
+      country_code: "91",
+    };
+    if (smsHash) {
+      payload.hash = smsHash;
+    }
     if (isCurrentPinCorrect()) {
       console.log("step 1");
       handlVerifyUserForChangePin(
-        {},
+        payload,
         {
           onSuccess: (data) => {
             console.log("step 2", data.data);
@@ -367,6 +390,30 @@ const ChangePinScreen = () => {
       hasAutoVerifiedRef.current = false;
     }
   }, [isOtpComplete]);
+
+  // Auto OTP reading for Android using SMS Retriever API
+  useEffect(() => {
+    if (Platform.OS === "android" && showVerifyModal) {
+      // Start listening for OTP SMS
+      startOtpListener((message) => {
+        console.log("Received SMS (Change PIN):", message);
+        // Extract 6-digit OTP from message using regex
+        const otpMatch = /(\d{6})/g.exec(message);
+        if (otpMatch && otpMatch[1]) {
+          const extractedOtp = otpMatch[1];
+          console.log("Extracted OTP:", extractedOtp);
+          setOtp(extractedOtp);
+          // Auto-fill the OTP input
+          otpInputRef.current?.setValue(extractedOtp);
+        }
+      });
+
+      // Cleanup listener on unmount or when modal closes
+      return () => {
+        removeListener();
+      };
+    }
+  }, [showVerifyModal]);
 
   return (
     <ScreenContainer scrollable safeArea padding={0}>

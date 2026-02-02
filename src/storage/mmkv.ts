@@ -53,4 +53,5 @@ export const STORAGE_KEYS = {
   APP_LOCK_LAST_ACTIVE_TIME: "app.lock.last_active_time",
   APP_LOCK_TIMEOUT: "app.lock.timeout",
   KYC_CONGRATULATIONS_SHOWN: "kyc_congratulations_shown",
+  SMS_HASH: "sms_hash",
 };

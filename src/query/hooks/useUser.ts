@@ -142,11 +142,11 @@ export const useChangePin = () => {
  */
 export const useVerifyUserForChangePin = () => {
   return useMutation<ApiResponse<any>, Error, AddContactPayload>({
-    mutationFn: async () => {
+    mutationFn: async (payload) => {
       return await apiClient.post<ApiResponse<any>>(
         AUTH.VERIFY_OTP_WITH_MAIL,
-        {},
-        false
+        payload,
+        true
       );
     },
     onSuccess: () => {},
@@ -169,16 +169,25 @@ export const useVerifyUserForChangePinOtp = () => {
   });
 };
 
+// Interface for forgot PIN send OTP payload
+interface ForgotPinSendOtpPayload {
+  send_phone_otp?: boolean;
+  country_code?: string;
+  hash?: string;
+}
+
 /**
  * Hook to send OTP for forgot PIN
- * Sends OTP to user's registered email for PIN reset verification
+ * Sends OTP to user's registered email or phone for PIN reset verification
+ * @param send_phone_otp - If true, sends OTP to phone instead of email
+ * @param country_code - Country code for phone OTP (e.g., "1" for US)
  */
 export const useForgotPinSendOtp = () => {
-  return useMutation<ApiResponse<any>, Error, Record<string, never>>({
-    mutationFn: async () => {
+  return useMutation<ApiResponse<any>, Error, ForgotPinSendOtpPayload>({
+    mutationFn: async (payload) => {
       return await apiClient.post<ApiResponse<any>>(
         AUTH.FORGOT_PIN_SEND_OTP,
-        {},
+        payload,
         false
       );
     },

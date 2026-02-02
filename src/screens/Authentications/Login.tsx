@@ -1,13 +1,10 @@
 import { useNavigation } from "@react-navigation/native";
 import HeaderTitle from "components/HeaderTitle";
-import { SvgIcons } from "constants/svgs";
 import { ScreenContainer } from "HOC";
-import { useLogin, useStepCount } from "query/hooks/useAPIAuth";
-import React, { useRef, useState } from "react";
+import { useLogin } from "query/hooks/useAPIAuth";
+import React, { useEffect, useRef, useState } from "react";
 import {
   StyleSheet,
-  Text,
-  TouchableOpacity,
   View
 } from "react-native";
 import { Theme, useTheme } from "styles";
@@ -19,16 +16,14 @@ import PoliticalModal from "../../components/PolitaclModal";
 import TextInputField from "../../components/TextInputField";
 import { SCREENS } from "../../constants/SCREENS";
 import { showError, showSuccess } from "../../utils/toast";
-import { clearAll } from "storage/mmkv";
+import { validateEmailOrPhone } from "../../utils/validation";
+import { getSmsHash } from "../../utils/smsHash";
 import { appContent } from "utils/appContent";
+import { ILoginPayload } from "./types";
+import { isProduction } from "config/env.config";
 
 export default function Login() {
   const navigation = useNavigation();
-
-  const locations = LOCATIONS.map((location) => ({
-    label: location.charAt(0).toUpperCase() + location.slice(1),
-    value: location.toLowerCase(),
-  }));
 
   const { theme } = useTheme();
   const styles = customStyles(theme);
@@ -38,49 +33,82 @@ export default function Login() {
   const [checked, setchecked] = useState(false);
   const [checked1, setchecked1] = useState(false);
   const [isvisible, setisvisible] = useState(false);
-  const [email, setemail] = useState("");
+  const [emailOrPhone, setEmailOrPhone] = useState("");
   const [buttonDisabled, setButtonDisabled] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState("");
+  const [smsHash, setSmsHash] = useState("");
 
-  const { mutate: login, isPending, error } = useLogin();
-  const { mutate: stepCount } = useStepCount();
+  const isProductionEnv = isProduction();
+
+  const { mutate: login, isPending } = useLogin();
+
+  // Get SMS hash for Android OTP auto-read
+  useEffect(() => {
+    const fetchSmsHash = async () => {
+      const hash = await getSmsHash();
+      if (hash) {
+        setSmsHash(hash);
+      }
+    };
+    fetchSmsHash();
+  }, []);
 
   const handleLogin = () => {
-    if (!email.trim()) {
-      showError("E-Mail Fields cannot be empty");
+    // Validate email or phone using common utility
+    const validationResult = validateEmailOrPhone(emailOrPhone);
+    
+    if (!validationResult.isValid) {
+      showError(validationResult.errorMessage || "Invalid input", validationResult.helperText || "");
       return;
     }
-    // if (!selectedMethod.trim()) {
-    //   showError("Location Fields cannot be empty");
-    //   return;
-    // }
-    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
-      showError("Please enter valid email address");
-      return;
-    }
+
     setButtonDisabled(true);
 
-    login({ email: email.trim().toLowerCase() } as any, {
+    // Build payload based on input type (email or phone)
+    const payload: ILoginPayload = {
+      location: isProductionEnv ? "United States" : "india",
+    };
+
+    if (validationResult.inputType === "email") {
+      payload.email = validationResult.formattedValue;
+    } else if (validationResult.inputType === "phone") {
+      payload.phone = validationResult.formattedValue;
+      // Include SMS hash for Android OTP auto-read
+      if (smsHash) {
+        payload.hash = smsHash;
+      }
+    }
+
+    const isEmailInput = validationResult.inputType === "email";
+    const successMessage = isEmailInput
+      ? "OTP has been sent to your email"
+      : "OTP has been sent to your phone number";
+    const errorMessage = isEmailInput
+      ? "Email address not found"
+      : "Phone number not found";
+
+    login(payload as any, {
       onSuccess: (data) => {
         setButtonDisabled(false);
         if (data?.status && data) {
           console.log("data =>", JSON.stringify(data, null, 2));
-          showSuccess("OTP has been sent to email");
+          showSuccess(successMessage);
           (navigation as any).navigate(SCREENS.OTP, {
-            email,
+            email: isEmailInput ? validationResult.formattedValue : undefined,
+            phone: !isEmailInput ? validationResult.formattedValue : undefined,
+            inputType: validationResult.inputType,
+            isEmail: isEmailInput,
           });
         } else {
-          showError("Email Address Already Exists");
+          showError(errorMessage, "Please check and try again");
         }
       },
       onError: (error: any) => {
-        console.log("error =>", JSON.stringify(error.response,null,2));
-        const errorMessage = error?.response?.data?.message || "Something went wrong";
-        showError(errorMessage);
-        console.log("error?.response =>", JSON.stringify(error?.response,null,2));
+        console.log("error =>", JSON.stringify(error.response, null, 2));
+        const errorMsg = error?.response?.data?.message || "Something went wrong";
+        showError(errorMsg, "Please try again");
         setButtonDisabled(false);
       },
-  });
+    });
   };
 
 
@@ -122,10 +150,10 @@ export default function Login() {
         </View>
         <View style={styles.fieldAndCheckboxContainer}>
           <TextInputField
-            placeholder={appContent.login.emailPlaceholder}
-            value={email}
-            onChange={setemail}
-            label={appContent.login.emailLabel}
+            placeholder={isProductionEnv ? "joe@gmail.com" : "joe@gmail.com or 9876543210"}
+            value={emailOrPhone}
+            onChange={setEmailOrPhone}
+            label={isProductionEnv ? "Enter your email" : "Enter your email or phone number"}
             required={true}
           />
           <GenericButton
@@ -134,7 +162,7 @@ export default function Login() {
             onPress={handleLogin}
             isLoading={isPending}
             showLoader={true}
-            disabled={buttonDisabled || !email.trim()}
+            disabled={buttonDisabled || !emailOrPhone.trim()}
           />
         </View>
       </View>
@@ -184,65 +212,3 @@ const customStyles = (theme: Theme) =>
     },
   });
 
-const LOCATIONS = [
-  "puerto rico",
-  "hawaii",
-  "alaska",
-  "district of columbia",
-  "washington dc",
-  "american samoa",
-  "guam",
-  "u.s. virgin islands",
-  "us virgin islands",
-  "northern mariana islands",
-  "alabama",
-  "alaska",
-  "arizona",
-  "arkansas",
-  "california",
-  "colorado",
-  "connecticut",
-  "delaware",
-  "florida",
-  "georgia",
-  "hawaii",
-  "idaho",
-  "illinois",
-  "indiana",
-  "iowa",
-  "kansas",
-  "kentucky",
-  "louisiana",
-  "maine",
-  "maryland",
-  "massachusetts",
-  "michigan",
-  "minnesota",
-  "mississippi",
-  "missouri",
-  "montana",
-  "nebraska",
-  "nevada",
-  "new hampshire",
-  "new jersey",
-  "new mexico",
-  "new york",
-  "north carolina",
-  "north dakota",
-  "ohio",
-  "oklahoma",
-  "oregon",
-  "pennsylvania",
-  "rhode island",
-  "south carolina",
-  "south dakota",
-  "tennessee",
-  "texas",
-  "utah",
-  "vermont",
-  "virginia",
-  "washington",
-  "west virginia",
-  "wisconsin",
-  "wyoming",
-];

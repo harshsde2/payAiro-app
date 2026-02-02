@@ -10,12 +10,17 @@ import {
   BackHandler,
 } from "react-native";
 import { OtpInput, OtpInputRef } from "react-native-otp-entry";
+import {
+  startOtpListener,
+  removeListener,
+} from "react-native-otp-verify";
 import HeaderTitle from "components/HeaderTitle";
 import GenericButton from "components/GenericButton";
 import { getPin, setPin } from "storage/mmkv";
 import { ScreenContainer } from "HOC";
 import { globalStyles, useGlobalStyles } from "styles/GlobalStyles";
 import { showError, showSuccess } from "utils/toast";
+import { getSmsHash } from "utils/smsHash";
 import CommonModal from "tsx-components/modals/CommonModal";
 import { useTheme } from "styles";
 import { CustomText } from "tsx-components";
@@ -41,6 +46,7 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
 
   const { walletData } = useSelector((state: any) => state.authenticationSlice);
   const email = walletData?.account_email;
+  const phone = walletData?.mobile_number;
 
   /**
    * Masks email for privacy display
@@ -58,7 +64,27 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
     return `${maskedLocal}@${domain}`;
   };
 
+  /**
+   * Masks phone for privacy display
+   * Example: "+19876543210" -> "******3210"
+   */
+  const getMaskedPhone = (phoneNumber: string | undefined): string => {
+    if (!phoneNumber) {
+      return "your registered phone";
+    }
+
+    // Remove any non-digit characters except +
+    const cleanPhone = phoneNumber.replace(/[^\d+]/g, "");
+    const lastFourDigits = cleanPhone.slice(-4);
+    
+    return `******${lastFourDigits}`;
+  };
+
   const maskedEmail = getMaskedEmail(email);
+  const maskedPhone = getMaskedPhone(phone);
+  
+  // Check if user has phone number registered
+  const hasPhone = !!phone;
 
   const [newPin, setNewPin] = useState<string[]>(["", "", "", ""]);
   const [confirmPin, setConfirmPin] = useState<string[]>(["", "", "", ""]);
@@ -71,6 +97,8 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
   const [isUserVerified, setIsUserVerified] = useState<boolean>(false);
   const [otpError, setOtpError] = useState<string>("");
   const [newPinError, setNewPinError] = useState<string>("");
+  const [sendToPhone, setSendToPhone] = useState<boolean>(false); // Toggle for phone/email OTP
+  const [smsHash, setSmsHash] = useState<string>("");
 
   const newPinRefs = [
     useRef<TextInput>(null),
@@ -116,25 +144,52 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
     return newPin.join("") === confirmPin.join("") && newPin.join("") !== "";
   };
 
-  const handleSendOtp = () => {
-    handleForgotPinSendOtp(
-      {},
-      {
-        onSuccess: (data) => {
-          console.log("OTP sent successfully:", data);
-          showSuccess("OTP sent to your registered email.", "Please enter the OTP to verify your email.");
-          setShowVerifyModal(true);
-        },
-        onError: (err: any) => {
-          console.log("Send OTP error:", JSON.stringify(err, null, 2));
-          showError(
-            err?.response?.data?.data?.error ||
-            err?.response?.data?.message ||
-            "Failed to send OTP. Please try again."
-          );
-        },
+  // Get SMS hash for Android OTP auto-read
+  useEffect(() => {
+    const fetchSmsHash = async () => {
+      const hash = await getSmsHash();
+      if (hash) {
+        setSmsHash(hash);
       }
-    );
+    };
+    fetchSmsHash();
+  }, []);
+
+  const handleSendOtp = (usePhone: boolean = false) => {
+    // Build payload based on whether sending to phone or email
+    const payload = {
+      send_phone_otp: true,
+      country_code: "91",
+    } as any;
+
+    // Include SMS hash for Android OTP auto-read
+    if (smsHash) {
+      payload.hash = smsHash;
+    }
+
+    setSendToPhone(true);
+
+    handleForgotPinSendOtp(payload, {
+      onSuccess: (data) => {
+        console.log("OTP sent successfully:", data);
+        const successMessage = usePhone
+          ? "OTP sent to your registered phone."
+          : "OTP sent to your registered email.";
+        const successHelper = usePhone
+          ? "Please enter the OTP to verify your phone."
+          : "Please enter the OTP to verify your email.";
+        showSuccess(successMessage, successHelper);
+        setShowVerifyModal(true);
+      },
+      onError: (err: any) => {
+        console.log("Send OTP error:", JSON.stringify(err, null, 2));
+        showError(
+          err?.response?.data?.data?.error ||
+          err?.response?.data?.message ||
+          "Failed to send OTP. Please try again."
+        );
+      },
+    });
   };
 
   const handleVerifyOtp = useCallback((otpValue?: string) => {
@@ -156,7 +211,10 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
         otpInputRef.current?.clear();
         setShowVerifyModal(false);
         setIsUserVerified(true);
-        showSuccess("Email verified successfully.", "You can now reset your PIN.");
+        const verifySuccessMessage = sendToPhone
+          ? "Phone verified successfully."
+          : "Email verified successfully.";
+        showSuccess(verifySuccessMessage, "You can now reset your PIN.");
       },
       onError: (err: any) => {
         console.log(
@@ -325,6 +383,30 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
     }
   }, [isOtpComplete]);
 
+  // Auto OTP reading for Android using SMS Retriever API
+  useEffect(() => {
+    if (Platform.OS === "android" && showVerifyModal) {
+      // Start listening for OTP SMS
+      startOtpListener((message) => {
+        console.log("Received SMS (Forgot PIN):", message);
+        // Extract 6-digit OTP from message using regex
+        const otpMatch = /(\d{6})/g.exec(message);
+        if (otpMatch && otpMatch[1]) {
+          const extractedOtp = otpMatch[1];
+          console.log("Extracted OTP:", extractedOtp);
+          setOtp(extractedOtp);
+          // Auto-fill the OTP input
+          otpInputRef.current?.setValue(extractedOtp);
+        }
+      });
+
+      // Cleanup listener on unmount or when modal closes
+      return () => {
+        removeListener();
+      };
+    }
+  }, [showVerifyModal]);
+
   return (
     <ScreenContainer scrollable safeArea padding={0}>
       <KeyboardAvoidingView
@@ -374,11 +456,12 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
                   fontFamily={theme.typography.fontFamily.montserratSemiBold}
                   style={modalStyles.modalTitle}
                 >
-                  Verify Your Email
+                  {sendToPhone ? "Verify Your Phone" : "Verify Your Email"}
                 </CustomText>
                 <CustomText variant="caption" style={modalStyles.modalSubtitle}>
-                  Enter the 6-digit OTP sent to your registered email address
-                  to verify your identity and reset your PIN.
+                  {sendToPhone
+                    ? "Enter the 6-digit OTP sent to your registered phone number to verify your identity and reset your PIN."
+                    : "Enter the 6-digit OTP sent to your registered email address to verify your identity and reset your PIN."}
                 </CustomText>
               </View>
 
@@ -461,20 +544,38 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
               create a new <Text style={styles.bold}>4-digit code</Text> and
               confirm it below to reset your PIN.
             </Text>
-            <Text style={styles.emailHint}>
-              OTP will be sent to <Text style={styles.bold}>{maskedEmail}</Text>
-            </Text>
-
-            {/* Email Verification Section */}
+            {/* Email/Phone Verification Section */}
             {!isUserVerified && (
-              <View>
+              <View style={{ marginTop: 20 }}>
+                {/* Email Verification Button */}
+                <Text style={styles.emailHint}>
+                  OTP will be sent to <Text style={styles.bold}>{maskedEmail}</Text>
+                </Text>
                 <GenericButton
-                  onPress={handleSendOtp}
+                  onPress={() => handleSendOtp(true)}
                   title="Verify with Email"
-                  cStyle={{ width: "90%", alignSelf: "center" }}
+                  cStyle={{ width: "90%", alignSelf: "center", marginBottom: 15 }}
                   showLoader={true}
-                  isLoading={isPendingSendOtp}
+                  isLoading={isPendingSendOtp && !sendToPhone}
+                  disabled={isPendingSendOtp}
                 />
+
+                {/* Phone Verification Button - Only show if user has phone */}
+                {hasPhone && (
+                  <>
+                    <Text style={[styles.emailHint, { marginTop: 10 }]}>
+                      Or send OTP to <Text style={styles.bold}>{maskedPhone}</Text>
+                    </Text>
+                    <GenericButton
+                      onPress={() => handleSendOtp(true)}
+                      title="Verify with Phone"
+                      cStyle={{ width: "90%", alignSelf: "center" }}
+                      showLoader={true}
+                      isLoading={isPendingSendOtp && sendToPhone}
+                      disabled={isPendingSendOtp}
+                    />
+                  </>
+                )}
               </View>
             )}
 

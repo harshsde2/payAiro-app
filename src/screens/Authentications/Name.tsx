@@ -28,16 +28,21 @@ import {
   setWalletData,
 } from "../../redux/slices/authenticationSlice";
 import { showError, showSuccess } from "../../utils/toast";
+import { validateEmail, validatePhoneNumber } from "../../utils/validation";
 import { setItem, STORAGE_KEYS } from "storage/mmkv";
 import { useDispatch } from "react-redux";
 import { useWalletDetails } from "query/hooks";
 import { setWalletDataAuth } from "services/Auth";
 
 export default function Name(props: any) {
-  const { email, data } = props.route.params || {};
+  const { email: emailFromSignup, phone: phoneFromSignup, inputType, data } = props.route.params || {};
+  
+  // Determine if user signed up with email or phone
+  const isSignedUpWithEmail = inputType === "email" || !!emailFromSignup;
+  console.log("inputType =>", inputType, "isSignedUpWithEmail =>", isSignedUpWithEmail);
+  
   const stepcount = "2";
   const dispatch = useDispatch();
-  
 
   const globalStyles = useGlobalStyles();
   const navigation = useNavigation<any>();
@@ -49,6 +54,7 @@ export default function Name(props: any) {
   const [name, setname] = useState("");
   const [uname, setuname] = useState("");
   const [phone, setphone] = useState("");
+  const [userEmail, setUserEmail] = useState(""); // For phone signup users to enter email
   const [fname, setfname] = useState("");
   const [lname, setlname] = useState("");
   const [isPending, setIsPending] = useState(false);
@@ -89,34 +95,63 @@ export default function Name(props: any) {
     });
   };
 
-  // Handle From
+  // Handle Form
   const handleForm = () => {
+    // Validate required name fields
     if (fname.length === 0 || lname.length === 0 || uname.length === 0) {
-      showError("Fields cannot be empty");
+      showError("Fields cannot be empty", "Please fill all required fields");
       return;
     }
-    if (phone.length < 10) {
-      showError("Phone Number Must be 10 digit");
-      return;
+
+    // Validate based on signup type
+    if (isSignedUpWithEmail) {
+      // User signed up with email, validate phone number
+      const phoneValidation = validatePhoneNumber(phone);
+      if (!phoneValidation.isValid) {
+        showError(phoneValidation.errorMessage || "Invalid phone number", phoneValidation.helperText || "");
+        return;
+      }
+    } else {
+      // User signed up with phone, validate email
+      const emailValidation = validateEmail(userEmail);
+      if (!emailValidation.isValid) {
+        showError(emailValidation.errorMessage || "Invalid email", emailValidation.helperText || "");
+        return;
+      }
     }
+
     if (!checked) {
-      showError("Terms & Conditions are required");
+      showError("Terms & Conditions are required", "Please accept the terms and conditions");
       return;
     }
 
     if (!checkedCybridUserAgreement) {
-      showError("Cybrid User Agreement is required");
+      showError("Cybrid User Agreement is required", "Please accept the Cybrid User Agreement");
       return;
     }
 
     console.log("handleForm called with:");
-    const payload = new FormData();
-    payload.append("name", fname);
-    payload.append("mobile_number", "+1" + phone);
-    payload.append("usernames", uname);
-    payload.append("lastname", lname);
-    payload.append("patriot_esign", checked);
+    // const payload = new FormData();
+    // payload.append("name", fname);
+    // payload.append("usernames", uname);
+    // payload.append("lastname", lname);
+    // payload.append("patriot_esign", checked);
+    const payload = {
+      name: fname,
+      usernames: uname,
+      lastname: lname,
+      patriot_esign: checked,
+    } as any;
+
+    // Add phone or email based on signup type
+    if (isSignedUpWithEmail) {
+      payload.mobile_number = phone;
+    } else {
+      payload.email = userEmail.trim().toLowerCase();
+    }
     setIsPending(true);
+
+    console.log("payload =>", JSON.stringify(payload, null, 2));
     patchUser(payload as any, {
       onSuccess: (datas : any) => {
         setIsPending(false);
@@ -266,27 +301,41 @@ export default function Name(props: any) {
               setShowInfo(true);
             }}
           />
-          <View style={[styles.textInputContainer]}>
+          {/* Conditionally render Phone or Email based on signup type */}
+          {isSignedUpWithEmail ? (
+            // User signed up with email, show phone input
+            <View style={[styles.textInputContainer]}>
+              <TextInputField
+                countryCode={countryCode}
+                label="Country"
+                placeholder="Country"
+                value={countryCode.code}
+                onChange={() => {}}
+                cStyle={{ width: 80, marginRight: 10 }}
+                isCountry={true}
+                editable={true}
+              />
+              <TextInputField
+                label="Phone Number"
+                placeholder="Enter your phone number"
+                value={phone}
+                onChange={setphone}
+                keyboardType="numeric"
+                cStyle={{ flex: 1 }}
+                maxLength={10}
+              />
+            </View>
+          ) : (
+            // User signed up with phone, show email input
             <TextInputField
-              countryCode={countryCode}
-              label="Country"
-              placeholder="Country"
-              value={countryCode.code}
-              cStyle={{ width: 80, marginRight: 10 }}
-              // onSelected={setCountryCode}
-              isCountry={true}
-              editable={true}
+              label="Email Address"
+              placeholder="Enter your email address"
+              value={userEmail}
+              onChange={setUserEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
             />
-            <TextInputField
-              label="Phone Number"
-              placeholder="Phone Number"
-              value={phone}
-              onChange={setphone}
-              keyboardType="numeric"
-              cStyle={{ flex: 1 }}
-              maxLength={10}
-            />
-          </View>
+          )}
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => {

@@ -13,12 +13,13 @@ import TextInputField from "components/TextInputField";
 import Fonts from "constants/Fonts";
 import { SvgIcons } from "constants/svgs";
 import { SCREENS } from "constants/SCREENS";
-import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { showError, showSuccess } from "utils/toast";
+import { validateEmailOrPhone } from "utils/validation";
+import { getSmsHash } from "utils/smsHash";
 import { useSignUp } from "query/hooks/useAPIAuth";
 import { getItem, removeItem, STORAGE_KEYS } from "storage/mmkv";
-
-const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
+import { isProduction } from "config/env.config";
+import { ISignupPayload } from "./types";
 
 export default function Signup() {
   const navigation = useNavigation<any>();
@@ -33,6 +34,10 @@ export default function Signup() {
   const [isPoliticalModalVisible, setIsPoliticalModalVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [referralCode, setReferralCode] = useState("");
+  const [smsHash, setSmsHash] = useState("");
+
+ const isProductionEnv = isProduction();
+console.log("isProductionEnv =>", isProductionEnv);
 
   const { mutate: signUp, isPending } = useSignUp();
 
@@ -45,74 +50,104 @@ export default function Signup() {
     }
   }, []);
 
-  const validateForm = (): boolean => {
-    const trimmedEmail = email.trim();
-    const trimmedState = selectedState.trim();
+  // Get SMS hash for Android OTP auto-read
+  useEffect(() => {
+    const fetchSmsHash = async () => {
+      const hash = await getSmsHash();
+      if (hash) {
+        setSmsHash(hash);
+      }
+    };
+    fetchSmsHash();
+  }, []);
 
-     if (isPoliticallyExposed) {
+  const validateForm = () => {
+    // Check for politically exposed person first
+    if (isPoliticallyExposed) {
       setIsPoliticalModalVisible(true);
-      return false;
+      return null;
     }
 
-    if (!trimmedEmail) {
-      showError("Email field cannot be empty");
-      return false;
+    // Validate email or phone using common utility
+    const validationResult = validateEmailOrPhone(email);
+    
+    if (!validationResult.isValid) {
+      showError(validationResult.errorMessage || "Invalid input", validationResult.helperText || "");
+      return null;
     }
 
-    if (!EMAIL_REGEX.test(trimmedEmail)) {
-      showError("Please enter a valid email address");
-      return false;
-    }
-
-    // if (!trimmedState) {
-    //   showError("Location field cannot be empty");
-    //   return false;
-    // }
-
+    // Check terms acceptance
     if (!isTermsAccepted) {
-      showError("Terms & Conditions are required");
-      return false;
+      showError("Terms & Conditions are required", "Please accept the terms and conditions");
+      return null;
     }
 
-   
-
-    return true;
+    return validationResult;
   };
 
   const handleSubmit = () => {
-    if (!validateForm()) return;
+    const validationResult = validateForm();
+    if (!validationResult) return;
 
     setIsSubmitting(true);
 
-    const payload: any = {
-      email: email.trim().toLowerCase(),
-      location: "United States",
+    // Build payload based on input type (email or phone)
+    const payload: ISignupPayload = {
+      location: isProductionEnv ? "United States" : "india",
     };
+
+    // Add email or phone to payload based on input type
+    if (validationResult.inputType === "email") {
+      payload.email = validationResult.formattedValue;
+    } else if (validationResult.inputType === "phone") {
+      payload.phone = validationResult.formattedValue;
+      // Include SMS hash for Android OTP auto-read
+      if (smsHash) {
+        payload.hash = smsHash;
+      }
+    }
 
     // Include referral code if present
     if (referralCode && referralCode.trim().length > 0) {
       payload.ref_code = referralCode.trim();
     }
 
-    signUp(payload, {
+    const isEmailInput = validationResult.inputType === "email";
+    const successMessage = isEmailInput
+      ? "OTP has been sent to your email"
+      : "OTP has been sent to your phone number";
+    const errorMessage = isEmailInput
+      ? "Email address already exists"
+      : "Phone number already exists";
+
+
+    console.log("payload =>", JSON.stringify(payload, null, 2));
+
+    signUp(payload as any, {
       onSuccess: (data: any) => {
         setIsSubmitting(false);
         if (data?.status) {
           console.log("data =>", JSON.stringify(data, null, 2));
-          showSuccess("OTP has been sent to your email");
+          showSuccess(successMessage);
           
           // Clear referral code from storage after successful submission
           removeItem(STORAGE_KEYS.REFERRAL_CODE);
           
-          navigation.navigate(SCREENS.OTP, { email });
+          // Navigate with email or phone based on input type
+          navigation.navigate(SCREENS.OTP, {
+            email: isEmailInput ? validationResult.formattedValue : undefined,
+            phone: !isEmailInput ? validationResult.formattedValue : undefined,
+            inputType: validationResult.inputType,
+            isEmail: isEmailInput,
+          });
         } else {
-          showError("Email address already exists");
+          showError(errorMessage, "Please try again");
         }
       },
       onError: (error: any) => {
         setIsSubmitting(false);
         console.log("error =>", JSON.stringify(error.response, null, 2));
-        showError("Failed to send OTP. Please try again");
+        showError("Failed to send OTP. Please try again", "Please try again");
       },
     });
   };
@@ -202,10 +237,10 @@ export default function Signup() {
           </View> */}
 
           <TextInputField
-            placeholder="joe@gmail.com"
+            placeholder={isProductionEnv ? "joe@gmail.com" : "joe@gmail.com or 9876543210"}
             value={email}
             onChange={setEmail}
-            label="Enter your email"
+            label={isProductionEnv ? "Enter your email" : "Enter your email or phone number"}
             required={true}
           />
           <TextInputField
