@@ -67,24 +67,24 @@ export const useStoreFCMTokenOnLogin = (options: IStoreFCMTokenOptions = {}) => 
     async (token: string, isRetry = false) => {
       // Prevent duplicate/concurrent calls
       if (isStoringRef.current) {
-        console.log("[useStoreFCMTokenOnLogin] Already storing, skipping...");
+        // console.log("[useStoreFCMTokenOnLogin] Already storing, skipping...");
         return;
       }
 
       // Check if we've already stored this exact token
       if (hasStoredTokenRef.current && lastStoredTokenRef.current === token) {
-        console.log("[useStoreFCMTokenOnLogin] Token already stored, skipping...");
+        // console.log("[useStoreFCMTokenOnLogin] Token already stored, skipping...");
         return;
       }
 
       // Validate prerequisites
       if (!isLogin || !tokens?.access) {
-        console.log("[useStoreFCMTokenOnLogin] User not logged in, skipping...");
+        // console.log("[useStoreFCMTokenOnLogin] User not logged in, skipping...");
         return;
       }
 
       if (!token || token.trim() === "") {
-        console.log("[useStoreFCMTokenOnLogin] No token available, skipping...");
+        // console.log("[useStoreFCMTokenOnLogin] No token available, skipping...");
         return;
       }
 
@@ -97,7 +97,7 @@ export const useStoreFCMTokenOnLogin = (options: IStoreFCMTokenOptions = {}) => 
 
         // Validate device ID
         if (!deviceId || deviceId.trim() === "") {
-          console.error("[useStoreFCMTokenOnLogin] Invalid device ID, skipping...");
+          // console.error("[useStoreFCMTokenOnLogin] Invalid device ID, skipping...");
           isStoringRef.current = false;
           return;
         }
@@ -109,18 +109,18 @@ export const useStoreFCMTokenOnLogin = (options: IStoreFCMTokenOptions = {}) => 
           return;
         }
 
-        console.log("[useStoreFCMTokenOnLogin] Storing token to backend...");
-        console.log("[useStoreFCMTokenOnLogin] Token (first 20 chars):", token?.substring(0, 20) + "...");
-        console.log("[useStoreFCMTokenOnLogin] Token length:", token.length);
-        console.log("[useStoreFCMTokenOnLogin] Device ID:", deviceId);
-        console.log("[useStoreFCMTokenOnLogin] Full payload:", JSON.stringify({ fcm_token: token, device_id: deviceId }, null, 2));
+        // console.log("[useStoreFCMTokenOnLogin] Storing token to backend...");
+        // console.log("[useStoreFCMTokenOnLogin] Token (first 20 chars):", token?.substring(0, 20) + "...");
+        // console.log("[useStoreFCMTokenOnLogin] Token length:", token.length);
+        // console.log("[useStoreFCMTokenOnLogin] Device ID:", deviceId);
+        // console.log("[useStoreFCMTokenOnLogin] Full payload:", JSON.stringify({ fcm_token: token, device_id: deviceId }, null, 2));
 
         // Call API to store token
         storeFCMToken(
           { fcm_token: token, device_id: deviceId },
           {
             onSuccess: () => {
-              console.log("[useStoreFCMTokenOnLogin] Token stored successfully!");
+              // console.log("[useStoreFCMTokenOnLogin] Token stored successfully!");
               hasStoredTokenRef.current = true;
               lastStoredTokenRef.current = token;
               retryCountRef.current = 0; // Reset retry count on success
@@ -166,7 +166,7 @@ export const useStoreFCMTokenOnLogin = (options: IStoreFCMTokenOptions = {}) => 
     if (isLogin && fcmToken && tokens?.access) {
       // Only store if token changed or not stored yet
       if (!hasStoredTokenRef.current || lastStoredTokenRef.current !== fcmToken) {
-        console.log("[useStoreFCMTokenOnLogin] Conditions met, storing token...");
+        // console.log("[useStoreFCMTokenOnLogin] Conditions met, storing token...");
         storeTokenToBackend(fcmToken);
       }
     }
@@ -177,7 +177,7 @@ export const useStoreFCMTokenOnLogin = (options: IStoreFCMTokenOptions = {}) => 
    */
   useEffect(() => {
     if (!isLogin) {
-      console.log("[useStoreFCMTokenOnLogin] User logged out, resetting state...");
+      // console.log("[useStoreFCMTokenOnLogin] User logged out, resetting state...");
       hasStoredTokenRef.current = false;
       lastStoredTokenRef.current = null;
       retryCountRef.current = 0;
@@ -200,7 +200,7 @@ export const useStoreFCMTokenOnLogin = (options: IStoreFCMTokenOptions = {}) => 
   useEffect(() => {
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
       if (nextAppState === "active" && isLogin && tokens?.access) {
-        console.log("[useStoreFCMTokenOnLogin] App came to foreground...");
+        // console.log("[useStoreFCMTokenOnLogin] App came to foreground...");
         
         // Refresh FCM token
         const fcmService = FCMService.getInstance();
@@ -209,7 +209,7 @@ export const useStoreFCMTokenOnLogin = (options: IStoreFCMTokenOptions = {}) => 
         if (freshToken) {
           // Only store if token changed or we haven't stored yet
           if (!hasStoredTokenRef.current || lastStoredTokenRef.current !== freshToken) {
-            console.log("[useStoreFCMTokenOnLogin] Token changed or not stored, updating...");
+            // console.log("[useStoreFCMTokenOnLogin] Token changed or not stored, updating...");
             storeTokenToBackend(freshToken);
           }
         }
@@ -237,7 +237,7 @@ export const useStoreFCMTokenOnLogin = (options: IStoreFCMTokenOptions = {}) => 
       lastStoredTokenRef.current = null;
       await storeTokenToBackend(token);
     } else {
-      console.log("[useStoreFCMTokenOnLogin] No FCM token available for manual trigger");
+      // console.log("[useStoreFCMTokenOnLogin] No FCM token available for manual trigger");
     }
   }, [storeTokenToBackend]);
 

@@ -1,14 +1,15 @@
 import React, { createContext, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { useSelector } from 'react-redux';
-import { storage, removeItem, STORAGE_KEYS, getPin } from 'storage/mmkv';
+import { getPin, getNumber, setNumber, removeItem, STORAGE_KEYS } from 'storage/mmkv';
+import { getBiometric } from 'services/Auth';
 import { AppLockContextType } from 'types/appLock.types';
+import { LOCK_CONFIG } from 'types/appLock.types';
 
 // Create the context
 export const AppLockContext = createContext<AppLockContextType | undefined>(undefined);
 
-// Grace period constant (60 seconds in milliseconds)
-const GRACE_PERIOD_MS = 60000;
+const GRACE_PERIOD_MS = LOCK_CONFIG.GRACE_PERIOD_MS;
 
 // Provider props
 interface AppLockProviderProps {
@@ -19,6 +20,8 @@ interface AppLockProviderProps {
 export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) => {
   const [isLocked, setIsLocked] = useState(false);
   const [hasPin, setHasPin] = useState(false);
+  const [showPinScreen, setShowPinScreen] = useState(false);
+  const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
   const appState = useRef<AppStateStatus>(AppState.currentState);
   
   // Track if user was already logged in when app started (cold start)
@@ -36,10 +39,26 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
     wasLoggedInOnMount.current = isLogin === true;
   }
   
-  // Function to check and update PIN status - call this after setting PIN
+  // Load user's biometric preference (same source as Settings)
+  const refreshBiometricStatus = useCallback(async () => {
+    if (!isLogin) {
+      setIsBiometricEnabled(false);
+      return;
+    }
+    try {
+      const data = await getBiometric();
+      setIsBiometricEnabled(data === true);
+    } catch {
+      setIsBiometricEnabled(false);
+    }
+  }, [isLogin]);
+
+  useEffect(() => {
+    refreshBiometricStatus();
+  }, [refreshBiometricStatus]);
+
   const refreshPinStatus = useCallback(() => {
     const storedPin = getPin();
-    console.log("refreshPinStatus - storedPin =>", storedPin);
     const pinExists = storedPin !== undefined && storedPin.length > 0;
     setHasPin(pinExists);
   }, []);
@@ -55,8 +74,8 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
   // Monitor auth state changes - auto-dismiss lock if user logs out or removes PIN
   useEffect(() => {
     if (!isLogin || !hasPin) {
-      // User logged out or removed PIN - dismiss lock immediately
       setIsLocked(false);
+      setShowPinScreen(false);
       removeItem(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME);
     }
   }, [isLogin, hasPin]);
@@ -73,8 +92,7 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
       if (appState.current === 'active' && nextAppState.match(/inactive|background/)) {
         // Only save timestamp if user has account + PIN
         const timestamp = Date.now();
-        storage.set(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME, timestamp);
-        console.log('[AppLock] App going to background, saved timestamp:', timestamp);
+        setNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME, timestamp);
       }
       
       // Coming to foreground - check grace period before locking
@@ -83,26 +101,16 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
         // The flag will be reset by the component that set it (with a delay)
         if (!isNativeModalVisibleRef.current) {
           // Check if we're within the grace period (60 seconds)
-          const lastActiveTime = storage.getNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME);
+          const lastActiveTime = getNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME);
           const currentTime = Date.now();
-          
-          console.log('[AppLock] Checking grace period - lastActiveTime:', lastActiveTime, 'currentTime:', currentTime);
           if (lastActiveTime !== undefined) {
             const timeSinceLastActive = currentTime - lastActiveTime;
-            console.log('[AppLock] Time since last active:', timeSinceLastActive, 'ms (Grace period:', GRACE_PERIOD_MS, 'ms)');
-            
-            // Only lock if more than 60 seconds have passed
             if (timeSinceLastActive >= GRACE_PERIOD_MS) {
-              console.log('[AppLock] Grace period EXPIRED - LOCKING APP');
               setIsLocked(true);
             } else {
-              // Within grace period - update last active time and don't lock
-              console.log('[AppLock] Within grace period - NOT locking');
-              storage.set(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME, currentTime);
+              setNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME, currentTime);
             }
           } else {
-            // No last active time found - lock immediately (first time or after logout)
-            console.log('[AppLock] No last active time found or invalid - LOCKING APP');
             setIsLocked(true);
           }
         }
@@ -128,28 +136,16 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
       hasCheckedColdStart.current = true;
       
       // Check if we're within the grace period (60 seconds)
-      const lastActiveTime = storage.getNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME);
+      const lastActiveTime = getNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME);
       const currentTime = Date.now();
-      
-      console.log('[AppLock] Cold start - checking grace period - lastActiveTime:', lastActiveTime, 'currentTime:', currentTime);
-      
       if (lastActiveTime !== undefined) {
         const timeSinceLastActive = currentTime - lastActiveTime;
-        
-        console.log('[AppLock] Cold start - Time since last active:', timeSinceLastActive, 'ms (Grace period:', GRACE_PERIOD_MS, 'ms)');
-        
-        // Only lock if more than 60 seconds have passed
         if (timeSinceLastActive >= GRACE_PERIOD_MS) {
-          console.log("AppLock: Cold start detected, locking app (grace period expired)");
           setIsLocked(true);
         } else {
-          // Within grace period - update last active time and don't lock
-          console.log("AppLock: Cold start detected, within grace period - not locking");
-          storage.set(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME, currentTime);
+          setNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME, currentTime);
         }
       } else {
-        // No last active time found - lock immediately (first time or after logout)
-        console.log("AppLock: Cold start detected, locking app (no last active time)");
         setIsLocked(true);
       }
     }
@@ -163,23 +159,22 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
     }
   }, [isLogin]);
   
-  const lockApp = () => {
-    if (shouldShowLock) {
-      setIsLocked(true);
-    }
-  };
-  
-  const unlockApp = () => {
+  const lockApp = useCallback(() => {
+    if (shouldShowLock) setIsLocked(true);
+  }, [shouldShowLock]);
+
+  const unlockApp = useCallback(() => {
     setIsLocked(false);
-    // Update last active time on successful unlock
-    storage.set(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME, Date.now());
-  };
-  
-  const updateLastActive = () => {
-    if (shouldShowLock) {
-      storage.set(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME, Date.now());
-    }
-  };
+    setShowPinScreen(false);
+    setNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME, Date.now());
+  }, []);
+
+  const updateLastActive = useCallback(() => {
+    if (shouldShowLock) setNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME, Date.now());
+  }, [shouldShowLock]);
+
+  const requestShowPinScreen = useCallback(() => setShowPinScreen(true), []);
+  const resetBiometricFailures = useCallback(() => setShowPinScreen(false), []);
   
   // Function to set/unset native modal visibility flag
   const setNativeModalVisible = useCallback((visible: boolean) => {
@@ -187,15 +182,20 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
   }, []);
   
   return (
-    <AppLockContext.Provider 
-      value={{ 
-        isLocked, 
-        lockApp, 
-        unlockApp, 
+    <AppLockContext.Provider
+      value={{
+        isLocked,
+        lockApp,
+        unlockApp,
         updateLastActive,
         shouldShowLock,
         refreshPinStatus,
-        setNativeModalVisible
+        setNativeModalVisible,
+        isBiometricEnabled,
+        refreshBiometricStatus,
+        showPinScreen,
+        requestShowPinScreen,
+        resetBiometricFailures,
       }}
     >
       {children}

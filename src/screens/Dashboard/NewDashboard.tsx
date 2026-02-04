@@ -295,7 +295,7 @@ const NewDashboard = () => {
   const { data, isLoading, error, refetch } = useAllCryptoBalances();
   const balances = data?.data?.balances || [];
   
-  console.log("balances =>", JSON.stringify(balances, null, 2))
+  // console.log("balances =>", JSON.stringify(balances, null, 2))
 
 
   const {

@@ -141,7 +141,7 @@ export const SETTINGS_LISTS = [
   // },
 ];
 export const SECURITY_LISTS = [
-  // { name: "App Lock", icon: SVG2FA, route: "2FA" },
+  { name: "App Lock", icon: SVG2FA, route: "2FA" },
   { name: "Change Pin", icon: SVGChangePin, route: "ChangePinScreen" },
   // { name: "Forgot Pin", icon: SVGChangePin, route: "" },
   // { name: "Device Management", icon: SVGChangePin, route: "DeviceManagement" },

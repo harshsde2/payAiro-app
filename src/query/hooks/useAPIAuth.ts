@@ -227,8 +227,8 @@ export const useContentData = () => {
 export const useStoreFCMToken = () => {
   return useMutation<ApiResponse<any>, Error, { fcm_token: string; device_id: string }>({
     mutationFn: async (payload) => {
-      console.log("[useStoreFCMToken] Storing FCM token to backend");
-      console.log("[useStoreFCMToken] Payload:", JSON.stringify(payload, null, 2));
+      // console.log("[useStoreFCMToken] Storing FCM token to backend");
+      // console.log("[useStoreFCMToken] Payload:", JSON.stringify(payload, null, 2));
       return apiClient.post<ApiResponse<any>>(
         AUTH.STORE_TOKEN,
         payload,
@@ -236,7 +236,7 @@ export const useStoreFCMToken = () => {
       );
     },
     onSuccess: (data) => {
-      console.log("[useStoreFCMToken] FCM token stored successfully:", data?.message || "Success");
+      // console.log("[useStoreFCMToken] FCM token stored successfully:", data?.message || "Success");
     },
     onError: (error: any) => {
       console.error("[useStoreFCMToken] Error storing FCM token");

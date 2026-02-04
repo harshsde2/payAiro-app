@@ -16,7 +16,6 @@ export const NAVIGATION_SCREENS = {
   PINCODE: "Pincode",
   SUCCESS_SCREEN: "SuccesScreen",
   SELFIE_SCREEN: "SelfieScreen",
-  BIOMETRIC: "Biometcric",
   DOB: "Dob",
   PDF_VIEWER: "PDFViewer",
   SELECT_STATES: "SelectStates",

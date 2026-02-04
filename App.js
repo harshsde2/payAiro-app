@@ -3,7 +3,6 @@ import messaging from "@react-native-firebase/messaging";
 import { NavigationContainer } from "@react-navigation/native";
 import React, { useEffect, useState, useRef } from "react";
 import { AppState, Linking, Platform } from "react-native";
-import ReactNativeBiometrics from "react-native-biometrics";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
 import useDispatchAction from "./src/hooks/useDispatchAction";
@@ -14,7 +13,6 @@ import { PersistQueryProvider } from "./src/query/index";
 import {
   setActiveTab,
   setAllCryptoBalances,
-  setBiometricAvailable,
   setCryptoData,
   setCurrentRoute,
   setFcmToken,
@@ -40,7 +38,7 @@ import {
 import UseNet from "./src/utils/UseNet";
 import KycWatchdog from "./src/components/common-components/KycWatchdog";
 import KycBanner from "./src/components/common-components/KycBanner";
-import AppLockScreen from "./src/components/common-components/AppLockScreen";
+import LockScreen from "./src/components/common-components/LockScreen";
 import Toast from "./src/components/common-components/Toast";
 import ForceUpdateModal from "./src/components/common-components/ForceUpdateModal";
 import { AppLockProvider } from "./src/contexts/AppLockContext";
@@ -65,7 +63,7 @@ export default function App() {
   // }
   // ====================================================
   // -------------------- Redux State --------------------
-  const { isLogin, tokens, biometricAvailable, showLoader, isCrypto } =
+  const { isLogin, tokens, showLoader, isCrypto } =
     useSelector((state) => state.authenticationSlice);
 
   const dispatch = useDispatch();
@@ -85,11 +83,6 @@ export default function App() {
   const [appState, setAppState] = useState(AppState.currentState);
   const [isFetching, setisFetching] = useState(true);
   const [lastBackgroundTime, setLastBackgroundTime] = useState(null);
-
-  // Initialize biometrics library
-  const rnBiometrics = new ReactNativeBiometrics({
-    allowDeviceCredentials: true,
-  });
 
   // -------------------- App Initialization --------------------
   // Fetch initial data when app loads
@@ -116,9 +109,6 @@ export default function App() {
 
     // const redeem = getItem(STORAGE_KEYS.REDEEM_REWARD);
     const wallet = await getWalletDataAuth();
-    // App Lock feature has been removed - always set biometric to false
-    // This ensures users who had it enabled don't get stuck
-    const biometric = false;
 
     if (token && wallet) {
       // Store token in MMKV for React Query
@@ -129,7 +119,6 @@ export default function App() {
       useDispatchAction(setWalletData(wallet));
       getMerchentRequest(token);
       useDispatchAction(setLogin(true));
-      useDispatchAction(setBiometricAvailable(biometric));
 
       // Restore selectedCurrency, totalDisbursable, cryptoData, and allCryptoBalances from MMKV storage
       if (selectedCurrency) {
@@ -149,89 +138,7 @@ export default function App() {
     setisFetching(false);
   };
 
-  // -------------------- Biometric Authentication --------------------
-  // Handle biometric authentication when app comes to foreground
-  useEffect(() => {
-    if (isLogin && biometricAvailable) {
-      const handleAppStateChange = (nextAppState) => {
-        if (
-          appState.match(/inactive|background/) &&
-          nextAppState === "active"
-        ) {
-          // App has come to the foreground
-          if (lastBackgroundTime) {
-            const timeElapsed = new Date().getTime() - lastBackgroundTime;
-            // Show biometrics if app was in background for more than 1 minute
-            if (timeElapsed > 60000) {
-              authenticateWithBiometrics();
-            }
-          }
-        }
 
-        if (nextAppState.match(/inactive|background/)) {
-          // App is going to the background
-          setLastBackgroundTime(new Date().getTime());
-        }
-
-        setAppState(nextAppState);
-      };
-
-      // Trigger biometrics on app load/reload
-      const currentTime = new Date().getTime();
-      if (lastBackgroundTime) {
-        const timeElapsed = currentTime - lastBackgroundTime;
-        if (timeElapsed > 60000) {
-          // If the app was inactive for more than 1 minute, trigger biometrics
-          authenticateWithBiometrics();
-        }
-      } else {
-        // If there's no `lastBackgroundTime` (fresh reload), trigger biometrics
-        authenticateWithBiometrics();
-      }
-
-      // Add event listener for app state changes
-      const subscription = AppState.addEventListener(
-        "change",
-        handleAppStateChange
-      );
-
-      return () => {
-        // Cleanup the event listener
-        subscription.remove();
-      };
-    }
-  }, [appState, lastBackgroundTime, isLogin, biometricAvailable]);
-
-  // Function to handle biometric authentication
-  const authenticateWithBiometrics = async (val) => {
-    try {
-      const { success } = await rnBiometrics.simplePrompt({
-        promptMessage: "Verify With PayAiro",
-      });
-
-      if (success) {
-        // Biometric authentication successful
-        let newVal = success;
-        // onCfm(); // Uncomment if needed
-        // Proceed with secure action after successful authentication
-      } else {
-        authenticateWithBiometrics();
-      }
-    } catch (error) {
-      authenticateWithBiometrics();
-    }
-  };
-
-  // Open device settings for biometric configuration
-  const openSettings = () => {
-    if (Platform.OS === "ios") {
-      Linking.openURL("app-settings:");
-    } else if (Platform.OS === "android") {
-      Linking.openSettings();
-    } else {
-      // setErrorMessage('Biometric settings not supported on this platform.');
-    }
-  };
 
   // -------------------- Push Notifications (iOS + Android) --------------------
   // Request notification permissions (iOS: AUTHORIZED or PROVISIONAL)
@@ -380,7 +287,7 @@ export default function App() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState(null);
 
-  // Show modal when update is available - with 10 second delay to let AppLockScreen work first
+  // Show modal when update is available - with 10 second delay to let LockScreen work first
   useEffect(() => {
     let timeoutId = null;
     
@@ -388,7 +295,7 @@ export default function App() {
       console.log('[App] Update available - will show modal after 10 seconds. needsForceUpdate:', needsForceUpdate);
       
       // Delay showing the update modal by 10 seconds
-      // This ensures AppLockScreen has priority and can open/close properly
+      // This ensures LockScreen has priority and can open/close properly
       timeoutId = setTimeout(() => {
         console.log('[App] 10 seconds passed - showing update modal now');
         setShowUpdateModal(true);
@@ -526,7 +433,7 @@ export default function App() {
                 {showLoader && <GlobalLoader />}
                 {isLogin && <KycWatchdog />}
                 {isLogin && <KycBanner />}
-                <AppLockScreen />
+                <LockScreen />
 
                 {!isLogin ? <AuthStack /> : <AppStack />}
               </NavigationContainer>

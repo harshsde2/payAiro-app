@@ -23,6 +23,14 @@ export const getPin = () => {
   return storage.getString(STORAGE_KEYS.PIN);
 };
 
+export const setNumber = (key: string, value: number): void => {
+  storage.set(key, value);
+};
+
+export const getNumber = (key: string): number | undefined => {
+  return storage.getNumber(key);
+};
+
 export const removeItem = (key: string): void => {
   storage.delete(key);
 };

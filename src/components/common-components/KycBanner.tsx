@@ -29,7 +29,7 @@ const KycBanner: React.FC = () => {
 
   const mode = useMemo(() => toKycMode(kycStatus), [kycStatus]);
 
-  console.log("kycStatus =>", kycStatus);
+  // console.log("kycStatus =>", kycStatus);
 
   // Animation values
   const animatedHeight = useSharedValue(COLLAPSED_HEIGHT);

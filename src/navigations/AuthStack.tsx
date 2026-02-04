@@ -3,7 +3,6 @@ import React from "react";
 import Login from "../screens/Authentications/Login";
 import Name from "../screens/Authentications/Name";
 import OTP from "../screens/Authentications/OTP";
-import Biometcric from "../screens/Dashboard/Biometcric";
 import { NAVIGATION_SCREENS } from "./navigationConstants";
 import PDFViewer from "tsx-components/PDFViewer";
 import CybridWebView from "screens/Authentications/CybridWebView";
@@ -45,17 +44,7 @@ export default function AuthStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.NAME}
         component={Name}
-      />
-    
-     
-      
-      
-      <Stack.Screen
-        options={{ headerShown: false }}
-        name={NAVIGATION_SCREENS.BIOMETRIC}
-        component={Biometcric}
-      />
-     
+      />   
       <Stack.Screen
         options={{ 
           headerShown: false ,

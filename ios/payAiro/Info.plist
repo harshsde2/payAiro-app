@@ -52,6 +52,8 @@
 	<string>We use the camera to let users scan QR codes for sending crypto.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>This app needs access to your contacts to enhance your experience by allowing easy communication.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>PayAiro uses Face ID to securely unlock your account and protect sensitive financial data.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app uses your location to provide better recommendations and nearby services.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

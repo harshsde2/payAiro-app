@@ -1,20 +1,9 @@
-import { useNavigation } from "@react-navigation/native";
 import { SvgIcons } from "constants/svgs";
-import React, { useState } from "react";
+import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import ReactNativeBiometrics from "react-native-biometrics";
 import Fonts from "../constants/Fonts";
-import useSelectorAction from "../hooks/useSelectorAction";
 
 const CustomModal = ({ isVisible, onClose, onCancel }) => {
-  const { biometricAvailable } = useSelectorAction();
-  const rnBiometrics = new ReactNativeBiometrics({
-    allowDeviceCredentials: true,
-  });
-
-  const [isEnabled, setIsEnabled] = useState(false);
-  const [enableBiometric, setenableBiometric] = useState(biometricAvailable);
-  const navigation = useNavigation();
   return (
     // <Modal visible={isVisible} transparent={true} animationType="slide">
     <View style={styles.modalContainer}>

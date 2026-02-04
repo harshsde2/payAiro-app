@@ -1,25 +1,14 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {
   Alert,
-  Image,
   Linking,
   Modal,
-  Platform,
-  ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import Fonts from '../constants/Fonts';
 import GenericButton from './GenericButton';
-import {SCREENS} from '../constants/SCREENS';
-import {useNavigation} from '@react-navigation/native';
-import ReactNativeBiometrics from 'react-native-biometrics';
-import useSelectorAction from '../hooks/useSelectorAction';
-import {setBiometricAvailable} from '../redux/slices/authenticationSlice';
-import useDispatchAction from '../hooks/useDispatchAction';
-import {setBiometric} from '../services/Auth';
 
 const PoliticalModal = ({isVisible, onClose, onConfirm}) => {
   const handleLearnMore = async () => {

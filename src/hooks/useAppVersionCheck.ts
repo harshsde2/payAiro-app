@@ -48,7 +48,7 @@ export const useAppVersionCheck = (
       
       // Verify state was set
       if (__DEV__) {
-        console.log('[useAppVersionCheck] State updated - shouldUpdate:', result.shouldUpdate, 'needsForceUpdate:', result.needsForceUpdate);
+        // console.log('[useAppVersionCheck] State updated - shouldUpdate:', result.shouldUpdate, 'needsForceUpdate:', result.needsForceUpdate);
       }
 
       // Auto-start flexible update if enabled (only for optional updates)

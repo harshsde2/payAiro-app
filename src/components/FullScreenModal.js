@@ -3,7 +3,6 @@ import { SvgIcons } from "constants/svgs";
 import { ScreenContainer } from "HOC";
 import React, { useState } from "react";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import ReactNativeBiometrics from "react-native-biometrics";
 import Fonts from "../constants/Fonts";
 import useSelectorAction from "../hooks/useSelectorAction";
 import GenericButton from "./GenericButton";
@@ -18,14 +17,10 @@ const FullScreenModal = ({
   onSelected,
 }) => {
   const { bankLists, bankBalance } = useSelectorAction();
-  const { biometricAvailable } = useSelectorAction();
   const [selectedBank, setselectedBank] = useState(data ?? bankLists[0]);
-  const rnBiometrics = new ReactNativeBiometrics({
-    allowDeviceCredentials: true,
-  });
+
 
   const [isDropdown, setisDropdown] = useState(false);
-  const [enableBiometric, setenableBiometric] = useState(biometricAvailable);
   const navigation = useNavigation();
   return (
     <Modal

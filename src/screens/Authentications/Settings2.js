@@ -4,15 +4,17 @@ import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 import React, { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  Alert,
+  Linking,
 } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import { useSelector } from 'react-redux';
-import BiometricModal from '../../components/BiometricModal';
 import HeaderTitle from '../../components/HeaderTitle';
 import Fonts from '../../constants/Fonts';
 import { SECURITY_LISTS } from '../../constants/constant';
@@ -21,13 +23,20 @@ import {
   SVGRightIcon
 } from '../../constants/images';
 import useSelectorAction from '../../hooks/useSelectorAction';
+import { useAppLock } from 'hooks/useAppLock';
 import {
   getBiometric,
   getPin,
+  setBiometric,
   setPin
 } from '../../services/Auth';
 import { getKYC, patchPin } from '../../services/Services';
 import { showError, showSuccess } from '../../utils/toast';
+import {
+  checkBiometricAvailability,
+  authenticateWithBiometric,
+  authenticateWithBiometricDetailed,
+} from 'services/BiometricService';
 
 
 export default function Settings2() {
@@ -42,10 +51,17 @@ export default function Settings2() {
   const [isConfirm, setisConfirm] = useState(false);
   const [pinOld, setpinOld] = useState('');
   const [biometricStatus, setBiometricStatus] = useState(false);
+  const [isUpdatingBiometric, setIsUpdatingBiometric] = useState(false);
+
+  const {
+    setNativeModalVisible,
+    refreshBiometricStatus: refreshBiometricStatusInContext,
+    resetBiometricFailures,
+  } = useAppLock();
 
   const kycStatus = useSelector((s) => s.authenticationSlice?.kycStatus);
 
-  console.log(kycStatus, 'kycStatus');
+  // console.log(kycStatus, 'kycStatus');
   useEffect(() => {
     getkycStep();
     getBiometricStatus();
@@ -67,16 +83,109 @@ export default function Settings2() {
       setkycStep(kycData?.data?.step_count?.toString());
     }
   };
+
+  const handleAppLockPress = async () => {
+    if (isUpdatingBiometric) return;
+    setIsUpdatingBiometric(true);
+
+    // Mark native biometric prompt as a native modal so AppState lock logic
+    // doesn't accidentally lock/unlock during the system UI transition.
+    setNativeModalVisible(true);
+
+    try {
+      if (biometricStatus) {
+        Alert.alert(
+          'Disable Biometric Unlock',
+          'Are you sure you want to disable biometric unlock for PayAiro?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Disable',
+              style: 'destructive',
+              onPress: async () => {
+                try {
+                  await setBiometric(false);
+                  setBiometricStatus(false);
+                  resetBiometricFailures();
+                  await refreshBiometricStatusInContext();
+                  showSuccess('Biometric unlock disabled');
+                } catch (e) {
+                  showError('Unable to disable biometric unlock');
+                }
+              },
+            },
+          ]
+        );
+        return;
+      }
+
+      const availability = await checkBiometricAvailability();
+      if (!availability.available) {
+        const code = (availability?.errorCode || '').toLowerCase();
+        const message = (availability?.error || '').toLowerCase();
+        const isNotEnrolled =
+          code.includes('not_enrolled') ||
+          code.includes('noneenrolled') ||
+          code.includes('biometrynotenrolled') ||
+          message.includes('not enrolled') ||
+          message.includes('no biometric');
+
+        if (isNotEnrolled) {
+          Alert.alert(
+            'No biometrics enrolled',
+            'To enable biometric unlock, first add Face ID / Touch ID / Fingerprint in your device settings.',
+            [
+              { text: 'Not now', style: 'cancel' },
+              {
+                text: 'Open Settings',
+                onPress: () => {
+                  // Opens the OS settings page for this app (best effort).
+                  Linking.openSettings?.();
+                },
+              },
+            ]
+          );
+        } else {
+          showError(
+            availability?.error ||
+              'Biometric authentication is not available on this device.'
+          );
+        }
+        return;
+      }
+
+      const authResult = await authenticateWithBiometricDetailed(
+        'Enable biometric unlock for PayAiro'
+      );
+      console.log('biometric auth result =>', JSON.stringify(authResult, null, 2));
+      if (!authResult?.success) {
+        // Security: do not enable biometric if user cancels/fails.
+        const code = (authResult?.errorCode || '').toLowerCase();
+        if (code.includes('user_cancel') || code.includes('cancel')) {
+          showError('Biometric authentication cancelled');
+        } else if (code.includes('lockout')) {
+          showError('Biometrics locked. Please try again later or use PIN.');
+        } else if (code.includes('passcode_not_set')) {
+          showError('Set a device passcode to use Face ID / Touch ID.');
+        } else {
+          showError(authResult?.error || 'Biometric authentication failed');
+        }
+        return;
+      }
+
+      await setBiometric(true);
+      setBiometricStatus(true);
+      await refreshBiometricStatusInContext();
+      showSuccess('Biometric unlock enabled');
+    } finally {
+      // Delay reset to handle multiple AppState transitions during system UI dismissal.
+      setTimeout(() => setNativeModalVisible(false), 800);
+      setIsUpdatingBiometric(false);
+    }
+  };
   return (
     <ScreenContainer padding={0} >
-      <BiometricModal
-        isVisible={isVisible}
-        onCancel={() => {
-          setisVisible(false);
-          getBiometricStatus(); // Refresh status when modal closes
-        }}
-        onClose={() => console.log('object')}
-      />
+
       <KeyboardAvoidingView
         style={{flex: 1}}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -109,7 +218,7 @@ export default function Settings2() {
                 key={k}
                 onPress={() => {
                   if (i.name === 'App Lock') {
-                    setisVisible(true);
+                    handleAppLockPress();
                     return;
                   }
                   if (i.name === 'Change Pin') {
