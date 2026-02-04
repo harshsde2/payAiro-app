@@ -3,9 +3,11 @@ import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 import Firebase
+import FirebaseMessaging
+import UserNotifications
 
 @main
-class AppDelegate: UIResponder, UIApplicationDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUserNotificationCenterDelegate {
   var window: UIWindow?
   
   var reactNativeDelegate: ReactNativeDelegate?
@@ -16,8 +18,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
 
-    FirebaseApp.configure()
-    application.registerForRemoteNotifications()
+    // Configure Firebase only when GoogleService-Info.plist is present
+    if Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil {
+      FirebaseApp.configure()
+      Messaging.messaging().delegate = self
+      UNUserNotificationCenter.current().delegate = self
+      application.registerForRemoteNotifications()
+    }
     
     let delegate = ReactNativeDelegate()
     let factory = RCTReactNativeFactory(delegate: delegate)
@@ -36,6 +43,54 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     return true
   }
+  
+  // // MARK: - APNs Token (required for FCM on iOS / TestFlight / Production)
+  // func application(
+  //   _ application: UIApplication,
+  //   didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+  // ) {
+  //   Messaging.messaging().apnsToken = deviceToken
+  // }
+  
+  // func application(
+  //   _ application: UIApplication,
+  //   didFailToRegisterForRemoteNotificationsWithError error: Error
+  // ) {
+  //   #if DEBUG
+  //   print("[AppDelegate] Push registration failed: \(error.localizedDescription)")
+  //   #endif
+  // }
+  
+  // // MARK: - Firebase Messaging Delegate (FCM token for React Native)
+  // func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+  //   let dataDict: [String: String] = ["token": fcmToken ?? ""]
+  //   NotificationCenter.default.post(
+  //     name: Notification.Name("FCMToken"),
+  //     object: nil,
+  //     userInfo: dataDict
+  //   )
+  // }
+  
+  // // MARK: - UNUserNotificationCenter Delegate (foreground display + tap)
+  // func userNotificationCenter(
+  //   _ center: UNUserNotificationCenter,
+  //   willPresent notification: UNNotification,
+  //   withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+  // ) {
+  //   if #available(iOS 14.0, *) {
+  //     completionHandler([[.banner, .sound, .badge]])
+  //   } else {
+  //     completionHandler([[.alert, .sound, .badge]])
+  //   }
+  // }
+  
+  // func userNotificationCenter(
+  //   _ center: UNUserNotificationCenter,
+  //   didReceive response: UNNotificationResponse,
+  //   withCompletionHandler completionHandler: @escaping () -> Void
+  // ) {
+  //   completionHandler()
+  // }
   
   // MARK: - Deep Linking (Custom URL Scheme: payairo://)
   func application(

@@ -12,7 +12,7 @@
  */
 
 import { useEffect, useRef, useCallback } from "react";
-import { AppState, AppStateStatus, Platform } from "react-native";
+import { AppState, AppStateStatus } from "react-native";
 import { useSelector } from "react-redux";
 import { useStoreFCMToken } from "query/hooks/useAPIAuth";
 import FCMService from "services/FCMService";
@@ -158,15 +158,11 @@ export const useStoreFCMTokenOnLogin = (options: IStoreFCMTokenOptions = {}) => 
   );
 
   /**
-   * SCENARIO 1 & 2: Store token when conditions are met
+   * SCENARIO 1 & 2: Store token when conditions are met (iOS + Android)
    * - User already logged in and app opens
    * - User logs in or registers
    */
   useEffect(() => {
-    if (Platform.OS !== "android") {
-      return;
-    }
-
     if (isLogin && fcmToken && tokens?.access) {
       // Only store if token changed or not stored yet
       if (!hasStoredTokenRef.current || lastStoredTokenRef.current !== fcmToken) {
@@ -199,13 +195,9 @@ export const useStoreFCMTokenOnLogin = (options: IStoreFCMTokenOptions = {}) => 
   }, [isLogin]);
 
   /**
-   * SCENARIO 6: App foreground - refresh and store token
+   * SCENARIO 6: App foreground - refresh and store token (iOS + Android)
    */
   useEffect(() => {
-    if (Platform.OS !== "android") {
-      return;
-    }
-
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
       if (nextAppState === "active" && isLogin && tokens?.access) {
         console.log("[useStoreFCMTokenOnLogin] App came to foreground...");
@@ -232,14 +224,10 @@ export const useStoreFCMTokenOnLogin = (options: IStoreFCMTokenOptions = {}) => 
   }, [isLogin, tokens?.access, storeTokenToBackend]);
 
   /**
-   * Manual trigger for storing token
+   * Manual trigger for storing token (iOS + Android)
    * Use this in OTP.tsx and Name.tsx after login/registration
    */
   const triggerStore = useCallback(async () => {
-    if (Platform.OS !== "android") {
-      return;
-    }
-
     const fcmService = FCMService.getInstance();
     const token = fcmService.getCachedToken() || (await fcmService.getToken());
 

@@ -1,4 +1,4 @@
-import notifee, { AndroidStyle } from "@notifee/react-native";
+import notifee from "@notifee/react-native";
 import messaging from "@react-native-firebase/messaging";
 import { NavigationContainer } from "@react-navigation/native";
 import React, { useEffect, useState, useRef } from "react";
@@ -233,82 +233,67 @@ export default function App() {
     }
   };
 
-  // -------------------- Push Notifications --------------------
-  // Set up notification listener when component mounts
-  useEffect(() => {
-    if (Platform.OS == "android") {
-      console.log("step 1");
-      const unsubscribe = messaging().onMessage(async (remoteMessage) => {
-        console.log("step 3");
-        // Handle foreground messages
-        console.log(
-          "A new FCM message arrived!",
-          JSON.stringify(remoteMessage, null, 2)
-        );
-        onDisplayNotification(remoteMessage);
-      });
-
-      requestPermission();
-
-      return unsubscribe;
-    }
-  }, []);
-
-  // console.log("step 1");
-  // Request notification permissions and get FCM token
-  React.useEffect(() => {
-    if (Platform.OS == "android") {
-      console.log("step 2");
-      getFCMToken();
-
-      const unsubscribe = messaging().onMessage(async (remoteMessage) => {
-        onDisplayNotification(remoteMessage);
-      });
-
-      requestPermission();
-
-      return unsubscribe;
-    }
-  }, []);
-
-  // Request notification permissions
+  // -------------------- Push Notifications (iOS + Android) --------------------
+  // Request notification permissions (iOS: AUTHORIZED or PROVISIONAL)
   const requestPermission = async () => {
-    const authorizationStatus = await messaging().requestPermission();
-    if (authorizationStatus === messaging.AuthorizationStatus.AUTHORIZED) {
-      // console.log('FCM permission granted');
-    } else {
-      console.log("FCM permission denied");
+    try {
+      const authorizationStatus = await messaging().requestPermission();
+      const granted =
+        authorizationStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+        authorizationStatus === messaging.AuthorizationStatus.PROVISIONAL;
+      if (!granted) {
+        console.log("FCM permission denied");
+      }
+      await notifee.requestPermission();
+    } catch (error) {
+      console.error("[App] Permission request error:", error);
     }
-    await notifee.requestPermission();
   };
 
-  // Display a notification
+  // Display notification (foreground) - Android uses Notifee channel; iOS uses system
   const onDisplayNotification = async (remoteMessage) => {
-    const channelId = await notifee.createChannel({
-      id: "default",
-      name: "PayAiro Channel",
-      sound: "default",
-    });
-
     if (remoteMessage?.data?.deeplink) {
       Linking.openURL(remoteMessage.data.deeplink);
     }
-    console.log("remoteMessage =>", JSON.stringify(remoteMessage, null, 2));
 
-    await notifee.displayNotification({
-      title: remoteMessage?.notification?.title,
-      body: remoteMessage?.notification?.body,
-      data: remoteMessage?.data,
-      android: {
-        channelId,
-        sound: remoteMessage?.notification?.android?.sound,
-        // style: {
-        //   type: AndroidStyle.BIGPICTURE,
-        //   picture: "https://gift.utribe.app/demo/images/avatar/GIFT-Icon.png",
-        // },
-      },
-    });
+    const payload = {
+      title: remoteMessage?.notification?.title || "PayAiro",
+      body: remoteMessage?.notification?.body || "",
+      data: remoteMessage?.data || {},
+    };
+
+    if (Platform.OS === "android") {
+      const channelId = await notifee.createChannel({
+        id: "default",
+        name: "PayAiro Channel",
+        sound: "default",
+      });
+      await notifee.displayNotification({
+        ...payload,
+        android: {
+          channelId,
+          sound: remoteMessage?.notification?.android?.sound || "default",
+        },
+      });
+    } else {
+      await notifee.displayNotification({
+        ...payload,
+        ios: { sound: "default" },
+      });
+    }
   };
+
+  // Set up FCM: permission, token, foreground listener (iOS + Android)
+  useEffect(() => {
+    requestPermission();
+    getFCMToken();
+
+    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+      onDisplayNotification(remoteMessage);
+    });
+
+    return unsubscribe;
+  }, []);
 
   // Get FCM token for push notifications
   const getFCMToken = async () => {
@@ -350,39 +335,23 @@ export default function App() {
     }
   };
 
-  // Handle notification when app is opened from background/quit state
+  // Handle notification when app opened from background/quit (iOS + Android)
   useEffect(() => {
-    if (Platform.OS === 'android') {
-      // Handle notification when app is opened from quit state
-      messaging()
-        .getInitialNotification()
-        .then(remoteMessage => {
-          if (remoteMessage) {
-            console.log(
-              'Notification caused app to open from quit state:',
-              remoteMessage.notification
-            );
-            // Handle navigation or other actions
-            if (remoteMessage.data?.deeplink) {
-              Linking.openURL(remoteMessage.data.deeplink);
-            }
-          }
-        });
-
-      // Handle notification when app is opened from background state
-      const unsubscribe = messaging().onNotificationOpenedApp(remoteMessage => {
-        console.log(
-          'Notification caused app to open from background state:',
-          remoteMessage.notification
-        );
-        // Handle navigation or other actions
-        if (remoteMessage.data?.deeplink) {
+    messaging()
+      .getInitialNotification()
+      .then((remoteMessage) => {
+        if (remoteMessage?.data?.deeplink) {
           Linking.openURL(remoteMessage.data.deeplink);
         }
       });
 
-      return unsubscribe;
-    }
+    const unsubscribe = messaging().onNotificationOpenedApp((remoteMessage) => {
+      if (remoteMessage?.data?.deeplink) {
+        Linking.openURL(remoteMessage.data.deeplink);
+      }
+    });
+
+    return unsubscribe;
   }, []);
 
   // -------------------- API Requests --------------------
@@ -586,3 +555,4 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
+

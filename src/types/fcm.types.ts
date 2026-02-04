@@ -1,6 +1,6 @@
 /**
  * FCM (Firebase Cloud Messaging) Types
- * Type definitions for push notification token management
+ * Type definitions for push notification token management (iOS + Android)
  */
 
 /**

@@ -1,6 +1,6 @@
 /**
  * FCMTokenManager Component
- * Wrapper component that uses useStoreFCMTokenOnLogin hook
+ * Wrapper that uses useStoreFCMTokenOnLogin to store FCM token to backend (iOS + Android)
  * Must be placed inside PersistQueryProvider to have access to QueryClient
  */
 

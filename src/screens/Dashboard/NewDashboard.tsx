@@ -291,11 +291,11 @@ const NewDashboard = () => {
     refetch: refectWalletDashboardData,
   } = useWalletDashboardData();
 
-  // console.log("WalletDashboardData =>", JSON.stringify(WalletDashboardData, null, 2))
-
+  
   const { data, isLoading, error, refetch } = useAllCryptoBalances();
   const balances = data?.data?.balances || [];
-
+  
+  console.log("balances =>", JSON.stringify(balances, null, 2))
 
 
   const {

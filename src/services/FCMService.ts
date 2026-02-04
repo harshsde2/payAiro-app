@@ -1,6 +1,6 @@
 /**
  * FCM Service - Core Firebase Cloud Messaging Service
- * Handles FCM token management for push notifications (Android)
+ * Handles FCM token management for push notifications (iOS + Android)
  */
 
 import messaging from "@react-native-firebase/messaging";
