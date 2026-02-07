@@ -89,7 +89,7 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
   } = usePendingPaymentRequests();
 
 
-  console.log("pendingRequestsData =>", JSON.stringify(pendingRequestsData, null, 2));
+  // console.log("pendingRequestsData =>", JSON.stringify(pendingRequestsData, null, 2));
 
   // Get isCrypto from Redux
   const { isCrypto } = useSelector((state: any) => state.authenticationSlice);
@@ -116,7 +116,7 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
   } = useUnifiedTransactionsPaginated(filterQueryString, PAGE_SIZE, isCrypto);
 
 
-  console.log("transactionsPaginatedResponse ->", JSON.stringify(transactionsPaginatedResponse,null,2))
+  // console.log("transactionsPaginatedResponse ->", JSON.stringify(transactionsPaginatedResponse,null,2))
 
   const {
     data: formattedTradesPaginatedResponse,

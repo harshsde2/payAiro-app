@@ -22,6 +22,7 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
   const [hasPin, setHasPin] = useState(false);
   const [showPinScreen, setShowPinScreen] = useState(false);
   const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
+  const [paymentVerificationRequest, setPaymentVerificationRequest] = useState<{ onVerified: () => void } | null>(null);
   const appState = useRef<AppStateStatus>(AppState.currentState);
   
   // Track if user was already logged in when app started (cold start)
@@ -175,7 +176,15 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
 
   const requestShowPinScreen = useCallback(() => setShowPinScreen(true), []);
   const resetBiometricFailures = useCallback(() => setShowPinScreen(false), []);
-  
+
+  const requestPaymentVerification = useCallback((onVerified: () => void) => {
+    setPaymentVerificationRequest({ onVerified });
+  }, []);
+
+  const clearPaymentVerification = useCallback(() => {
+    setPaymentVerificationRequest(null);
+  }, []);
+
   // Function to set/unset native modal visibility flag
   const setNativeModalVisible = useCallback((visible: boolean) => {
     isNativeModalVisibleRef.current = visible;
@@ -196,6 +205,9 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
         showPinScreen,
         requestShowPinScreen,
         resetBiometricFailures,
+        requestPaymentVerification,
+        clearPaymentVerification,
+        paymentVerificationRequest,
       }}
     >
       {children}

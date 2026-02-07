@@ -105,6 +105,8 @@ const NewPersonal: React.FC = () => {
         return "Pending";
     }
   };
+
+  console.log('walletData =>', JSON.stringify(walletData, null, 2));
   return (
     <ScreenContainer scrollable padding={0}>
       <HeaderTitle

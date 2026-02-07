@@ -19,13 +19,14 @@ import { showError, showSuccess } from "../../../utils/toast";
 import { useDispatch } from "react-redux";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import PinScreen from "tsx-components/modals/PinScreen";
+import { useAppLock } from "hooks/useAppLock";
 
 const CryptoSell = () => {
   const route = useRoute();
   const navigation = useNavigation<any>();
   const dispatch = useDispatch();
   const pinScreenRef = useRef<any>(null);
-  
+  const { requestPaymentVerification } = useAppLock();
   const { details } = route.params as any;
 
   // console.log("details =>", JSON.stringify(details, null, 2));
@@ -76,9 +77,11 @@ const CryptoSell = () => {
   const availableBalance = cryptoBalanceData?.data?.platform_available || "0.00";
 
   const handleCheckPin = () => {
-    if (pinScreenRef.current) {
-      pinScreenRef.current?.checkUserPin();
-    }
+    // if (pinScreenRef.current) {
+    //   pinScreenRef.current?.checkUserPin();
+    // }
+    if (!validateSellData()) return;
+    requestPaymentVerification(handleActionsAfterPinVerified);
   };
 
   const handleActionsAfterPinVerified = () => {

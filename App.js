@@ -38,7 +38,7 @@ import {
 import UseNet from "./src/utils/UseNet";
 import KycWatchdog from "./src/components/common-components/KycWatchdog";
 import KycBanner from "./src/components/common-components/KycBanner";
-import LockScreen from "./src/components/common-components/LockScreen";
+import AppLockScreen from "./src/components/common-components/AppLockScreen";
 import Toast from "./src/components/common-components/Toast";
 import ForceUpdateModal from "./src/components/common-components/ForceUpdateModal";
 import { AppLockProvider } from "./src/contexts/AppLockContext";
@@ -433,7 +433,7 @@ export default function App() {
                 {showLoader && <GlobalLoader />}
                 {isLogin && <KycWatchdog />}
                 {isLogin && <KycBanner />}
-                <LockScreen />
+                <AppLockScreen />
 
                 {!isLogin ? <AuthStack /> : <AppStack />}
               </NavigationContainer>

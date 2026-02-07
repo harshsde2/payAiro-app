@@ -20,12 +20,14 @@ import PinScreen from "tsx-components/modals/PinScreen";
 import { userContactKeys } from "query/queryKeys";
 import { queryClient } from "query/queryClient";
 import { SvgUri } from "react-native-svg";
+import { useAppLock } from "hooks/useAppLock";
 
 const CryptoBuy = () => {
   const route = useRoute();
   const navigation = useNavigation<any>();
   const dispatch = useDispatch();
   const pinScreenRef = useRef<any>(null);
+  const { requestPaymentVerification } = useAppLock();
 
 
   const { details } = route.params as any;
@@ -73,9 +75,11 @@ const CryptoBuy = () => {
   const { refreshBalance } = useRefreshCryptoBalance();
 
   const handleCheckPin = () => {
-    if (pinScreenRef.current) {
-      pinScreenRef.current?.checkUserPin();
-    }
+    // if (pinScreenRef.current) {
+    //   pinScreenRef.current?.checkUserPin();
+    // }
+    if (!validateBuyData()) return;
+    requestPaymentVerification(handleActionsAfterPinVerified);
   };
 
   const handleActionsAfterPinVerified = () => {

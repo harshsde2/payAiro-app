@@ -1,0 +1,1962 @@
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build.gradle b/node_modules/@sbaiahmed1/react-native-biometrics/android/build.gradle
+index 0a6a300..5061440 100644
+--- a/node_modules/@sbaiahmed1/react-native-biometrics/android/build.gradle
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build.gradle
+@@ -25,6 +25,13 @@ def getExtOrIntegerDefault(name) {
+   return rootProject.ext.has(name) ? rootProject.ext.get(name) : (project.properties["ReactNativeBiometrics_" + name]).toInteger()
+ }
+ 
++// Determine whether this library should run in New Architecture (TurboModules).
++// Apps can override via ReactNativeBiometrics_newArchEnabled in gradle.properties.
++def biometricsNewArchEnabled = project.findProperty("ReactNativeBiometrics_newArchEnabled")
++if (biometricsNewArchEnabled == null) {
++  biometricsNewArchEnabled = project.findProperty("newArchEnabled")
++}
++
+ android {
+   namespace "com.sbaiahmed1.reactnativebiometrics"
+ 
+@@ -63,7 +70,7 @@ android {
+     }
+     
+     // Support for both old and new architecture
+-    if (project.findProperty("newArchEnabled") == "true") {
++    if (biometricsNewArchEnabled == "true") {
+       main {
+         java.srcDirs += ["src/newarch/java"]
+       }
+@@ -88,8 +95,11 @@ dependencies {
+   implementation("androidx.biometric:biometric:1.4.0-alpha04")
+ }
+ 
+-react {
+-  jsRootDir = file("../src/")
+-  libraryName = "ReactNativeBiometrics"
+-  codegenJavaPackageName = "com.sbaiahmed1.reactnativebiometrics"
++// Only enable codegen / TurboModule integration when new-arch is enabled for this module.
++if (biometricsNewArchEnabled == "true") {
++  react {
++    jsRootDir = file("../src/")
++    libraryName = "ReactNativeBiometrics"
++    codegenJavaPackageName = "com.sbaiahmed1.reactnativebiometrics"
++  }
+ }
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/bcaa798e069e375f19c3024fe78c192a/results.bin b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/bcaa798e069e375f19c3024fe78c192a/results.bin
+new file mode 100644
+index 0000000..0d259dd
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/bcaa798e069e375f19c3024fe78c192a/results.bin
+@@ -0,0 +1 @@
++o/classes
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/bcaa798e069e375f19c3024fe78c192a/transformed/classes/classes_dex/classes.dex b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/bcaa798e069e375f19c3024fe78c192a/transformed/classes/classes_dex/classes.dex
+new file mode 100644
+index 0000000..371e6d2
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/bcaa798e069e375f19c3024fe78c192a/transformed/classes/classes_dex/classes.dex differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/results.bin b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/results.bin
+new file mode 100644
+index 0000000..7ed749e
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/results.bin
+@@ -0,0 +1 @@
++o/bundleLibRuntimeToDirDebug
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/fbreact/specs/NativeReactNativeBiometricsSpec.dex b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/fbreact/specs/NativeReactNativeBiometricsSpec.dex
+new file mode 100644
+index 0000000..81ccf96
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/fbreact/specs/NativeReactNativeBiometricsSpec.dex differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/BiometricUtils$BiometricAuthenticatorResult.dex b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/BiometricUtils$BiometricAuthenticatorResult.dex
+new file mode 100644
+index 0000000..5694534
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/BiometricUtils$BiometricAuthenticatorResult.dex differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/BiometricUtils.dex b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/BiometricUtils.dex
+new file mode 100644
+index 0000000..01dc1e5
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/BiometricUtils.dex differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/BuildConfig.dex b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/BuildConfig.dex
+new file mode 100644
+index 0000000..b219ef9
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/BuildConfig.dex differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/NativeReactNativeBiometricsSpec.dex b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/NativeReactNativeBiometricsSpec.dex
+new file mode 100644
+index 0000000..8600a3e
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/NativeReactNativeBiometricsSpec.dex differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsModule.dex b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsModule.dex
+new file mode 100644
+index 0000000..ad04b38
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsModule.dex differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsPackage.dex b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsPackage.dex
+new file mode 100644
+index 0000000..f11691d
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsPackage.dex differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$BiometricState.dex b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$BiometricState.dex
+new file mode 100644
+index 0000000..efee8f8
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$BiometricState.dex differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$Companion.dex b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$Companion.dex
+new file mode 100644
+index 0000000..18295da
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$Companion.dex differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$authenticateWithOptions$callback$1.dex b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$authenticateWithOptions$callback$1.dex
+new file mode 100644
+index 0000000..6e6e664
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$authenticateWithOptions$callback$1.dex differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$lifecycleListener$1.dex b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$lifecycleListener$1.dex
+new file mode 100644
+index 0000000..273bbb9
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$lifecycleListener$1.dex differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$simplePrompt$callback$1.dex b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$simplePrompt$callback$1.dex
+new file mode 100644
+index 0000000..d96b146
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$simplePrompt$callback$1.dex differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$validateKeyIntegrity$biometricPrompt$1.dex b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$validateKeyIntegrity$biometricPrompt$1.dex
+new file mode 100644
+index 0000000..a1f2a0c
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$validateKeyIntegrity$biometricPrompt$1.dex differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$verifyKeySignature$biometricPrompt$1.dex b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$verifyKeySignature$biometricPrompt$1.dex
+new file mode 100644
+index 0000000..1ac0039
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$verifyKeySignature$biometricPrompt$1.dex differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl.dex b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl.dex
+new file mode 100644
+index 0000000..6c05cea
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl.dex differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/desugar_graph.bin b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/desugar_graph.bin
+new file mode 100644
+index 0000000..601f245
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/.transforms/d5cdd45e9d6807c6ddf4fe86a2a2beae/transformed/bundleLibRuntimeToDirDebug/desugar_graph.bin differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/buildConfig/debug/com/sbaiahmed1/reactnativebiometrics/BuildConfig.java b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/buildConfig/debug/com/sbaiahmed1/reactnativebiometrics/BuildConfig.java
+new file mode 100644
+index 0000000..cbe1814
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/buildConfig/debug/com/sbaiahmed1/reactnativebiometrics/BuildConfig.java
+@@ -0,0 +1,10 @@
++/**
++ * Automatically generated file. DO NOT MODIFY
++ */
++package com.sbaiahmed1.reactnativebiometrics;
++
++public final class BuildConfig {
++  public static final boolean DEBUG = Boolean.parseBoolean("true");
++  public static final String LIBRARY_PACKAGE_NAME = "com.sbaiahmed1.reactnativebiometrics";
++  public static final String BUILD_TYPE = "debug";
++}
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/java/com/sbaiahmed1/reactnativebiometrics/NativeReactNativeBiometricsSpec.java b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/java/com/sbaiahmed1/reactnativebiometrics/NativeReactNativeBiometricsSpec.java
+new file mode 100644
+index 0000000..e780cc8
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/java/com/sbaiahmed1/reactnativebiometrics/NativeReactNativeBiometricsSpec.java
+@@ -0,0 +1,120 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateModuleJavaSpec.js
++ *
++ * @nolint
++ */
++
++package com.sbaiahmed1.reactnativebiometrics;
++
++import com.facebook.proguard.annotations.DoNotStrip;
++import com.facebook.react.bridge.Promise;
++import com.facebook.react.bridge.ReactApplicationContext;
++import com.facebook.react.bridge.ReactContextBaseJavaModule;
++import com.facebook.react.bridge.ReactMethod;
++import com.facebook.react.bridge.ReadableMap;
++import com.facebook.react.turbomodule.core.interfaces.TurboModule;
++import javax.annotation.Nonnull;
++import javax.annotation.Nullable;
++
++public abstract class NativeReactNativeBiometricsSpec extends ReactContextBaseJavaModule implements TurboModule {
++  public static final String NAME = "ReactNativeBiometrics";
++
++  public NativeReactNativeBiometricsSpec(ReactApplicationContext reactContext) {
++    super(reactContext);
++  }
++
++  @Override
++  public @Nonnull String getName() {
++    return NAME;
++  }
++
++  protected final void emitOnBiometricChange(ReadableMap value) {
++    mEventEmitterCallback.invoke("onBiometricChange", value);
++  }
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void isSensorAvailable(@Nullable String biometricStrength, Promise promise);
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void simplePrompt(String promptMessage, @Nullable String biometricStrength, Promise promise);
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void authenticateWithOptions(ReadableMap options, Promise promise);
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void createKeys(@Nullable String keyAlias, @Nullable String keyType, @Nullable String biometricStrength, Promise promise);
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void deleteKeys(@Nullable String keyAlias, Promise promise);
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void configureKeyAlias(String keyAlias, Promise promise);
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void getAllKeys(@Nullable String customAlias, Promise promise);
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void validateKeyIntegrity(@Nullable String keyAlias, Promise promise);
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void verifyKeySignature(String keyAlias, String data, @Nullable String promptTitle, @Nullable String promptSubtitle, @Nullable String cancelButtonText, Promise promise);
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void verifyKeySignatureWithOptions(@Nullable String keyAlias, String data, @Nullable String promptTitle, @Nullable String promptSubtitle, @Nullable String cancelButtonText, @Nullable String biometricStrength, @Nullable Boolean disableDeviceFallback, @Nullable String inputEncoding, Promise promise);
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void verifyKeySignatureWithEncoding(@Nullable String keyAlias, String data, @Nullable String promptTitle, @Nullable String promptSubtitle, @Nullable String cancelButtonText, @Nullable String inputEncoding, Promise promise);
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void validateSignature(String keyAlias, String data, String signature, Promise promise);
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void getKeyAttributes(@Nullable String keyAlias, Promise promise);
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void getDiagnosticInfo(Promise promise);
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void runBiometricTest(Promise promise);
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void setDebugMode(boolean enabled, Promise promise);
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void getDefaultKeyAlias(Promise promise);
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void getDeviceIntegrityStatus(Promise promise);
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void startBiometricChangeDetection(Promise promise);
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void stopBiometricChangeDetection(Promise promise);
++}
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/CMakeLists.txt b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/CMakeLists.txt
+new file mode 100644
+index 0000000..b8f1d02
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/CMakeLists.txt
+@@ -0,0 +1,28 @@
++# Copyright (c) Meta Platforms, Inc. and affiliates.
++#
++# This source code is licensed under the MIT license found in the
++# LICENSE file in the root directory of this source tree.
++
++cmake_minimum_required(VERSION 3.13)
++set(CMAKE_VERBOSE_MAKEFILE on)
++
++file(GLOB react_codegen_SRCS CONFIGURE_DEPENDS *.cpp react/renderer/components/ReactNativeBiometricsSpec/*.cpp)
++
++add_library(
++  react_codegen_ReactNativeBiometricsSpec
++  OBJECT
++  ${react_codegen_SRCS}
++)
++
++target_include_directories(react_codegen_ReactNativeBiometricsSpec PUBLIC . react/renderer/components/ReactNativeBiometricsSpec)
++
++target_link_libraries(
++  react_codegen_ReactNativeBiometricsSpec
++  fbjni
++  jsi
++  # We need to link different libraries based on whether we are building rncore or not, that's necessary
++  # because we want to break a circular dependency between react_codegen_rncore and reactnative
++  reactnative
++)
++
++target_compile_reactnative_options(react_codegen_ReactNativeBiometricsSpec PRIVATE)
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/ReactNativeBiometricsSpec-generated.cpp b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/ReactNativeBiometricsSpec-generated.cpp
+new file mode 100644
+index 0000000..21cf491
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/ReactNativeBiometricsSpec-generated.cpp
+@@ -0,0 +1,148 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateModuleJniCpp.js
++ */
++
++#include "ReactNativeBiometricsSpec.h"
++
++namespace facebook::react {
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_isSensorAvailable(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "isSensorAvailable", "(Ljava/lang/String;Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_simplePrompt(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "simplePrompt", "(Ljava/lang/String;Ljava/lang/String;Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_authenticateWithOptions(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "authenticateWithOptions", "(Lcom/facebook/react/bridge/ReadableMap;Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_createKeys(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "createKeys", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_deleteKeys(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "deleteKeys", "(Ljava/lang/String;Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_configureKeyAlias(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "configureKeyAlias", "(Ljava/lang/String;Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_getAllKeys(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "getAllKeys", "(Ljava/lang/String;Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_validateKeyIntegrity(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "validateKeyIntegrity", "(Ljava/lang/String;Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_verifyKeySignature(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "verifyKeySignature", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_verifyKeySignatureWithOptions(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "verifyKeySignatureWithOptions", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_verifyKeySignatureWithEncoding(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "verifyKeySignatureWithEncoding", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_validateSignature(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "validateSignature", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_getKeyAttributes(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "getKeyAttributes", "(Ljava/lang/String;Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_getDiagnosticInfo(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "getDiagnosticInfo", "(Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_runBiometricTest(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "runBiometricTest", "(Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_setDebugMode(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "setDebugMode", "(ZLcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_getDefaultKeyAlias(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "getDefaultKeyAlias", "(Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_getDeviceIntegrityStatus(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "getDeviceIntegrityStatus", "(Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_startBiometricChangeDetection(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "startBiometricChangeDetection", "(Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++static facebook::jsi::Value __hostFunction_NativeReactNativeBiometricsSpecJSI_stopBiometricChangeDetection(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "stopBiometricChangeDetection", "(Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++NativeReactNativeBiometricsSpecJSI::NativeReactNativeBiometricsSpecJSI(const JavaTurboModule::InitParams &params)
++  : JavaTurboModule(params) {
++  methodMap_["isSensorAvailable"] = MethodMetadata {1, __hostFunction_NativeReactNativeBiometricsSpecJSI_isSensorAvailable};
++  methodMap_["simplePrompt"] = MethodMetadata {2, __hostFunction_NativeReactNativeBiometricsSpecJSI_simplePrompt};
++  methodMap_["authenticateWithOptions"] = MethodMetadata {1, __hostFunction_NativeReactNativeBiometricsSpecJSI_authenticateWithOptions};
++  methodMap_["createKeys"] = MethodMetadata {3, __hostFunction_NativeReactNativeBiometricsSpecJSI_createKeys};
++  methodMap_["deleteKeys"] = MethodMetadata {1, __hostFunction_NativeReactNativeBiometricsSpecJSI_deleteKeys};
++  methodMap_["configureKeyAlias"] = MethodMetadata {1, __hostFunction_NativeReactNativeBiometricsSpecJSI_configureKeyAlias};
++  methodMap_["getAllKeys"] = MethodMetadata {1, __hostFunction_NativeReactNativeBiometricsSpecJSI_getAllKeys};
++  methodMap_["validateKeyIntegrity"] = MethodMetadata {1, __hostFunction_NativeReactNativeBiometricsSpecJSI_validateKeyIntegrity};
++  methodMap_["verifyKeySignature"] = MethodMetadata {5, __hostFunction_NativeReactNativeBiometricsSpecJSI_verifyKeySignature};
++  methodMap_["verifyKeySignatureWithOptions"] = MethodMetadata {8, __hostFunction_NativeReactNativeBiometricsSpecJSI_verifyKeySignatureWithOptions};
++  methodMap_["verifyKeySignatureWithEncoding"] = MethodMetadata {6, __hostFunction_NativeReactNativeBiometricsSpecJSI_verifyKeySignatureWithEncoding};
++  methodMap_["validateSignature"] = MethodMetadata {3, __hostFunction_NativeReactNativeBiometricsSpecJSI_validateSignature};
++  methodMap_["getKeyAttributes"] = MethodMetadata {1, __hostFunction_NativeReactNativeBiometricsSpecJSI_getKeyAttributes};
++  methodMap_["getDiagnosticInfo"] = MethodMetadata {0, __hostFunction_NativeReactNativeBiometricsSpecJSI_getDiagnosticInfo};
++  methodMap_["runBiometricTest"] = MethodMetadata {0, __hostFunction_NativeReactNativeBiometricsSpecJSI_runBiometricTest};
++  methodMap_["setDebugMode"] = MethodMetadata {1, __hostFunction_NativeReactNativeBiometricsSpecJSI_setDebugMode};
++  methodMap_["getDefaultKeyAlias"] = MethodMetadata {0, __hostFunction_NativeReactNativeBiometricsSpecJSI_getDefaultKeyAlias};
++  methodMap_["getDeviceIntegrityStatus"] = MethodMetadata {0, __hostFunction_NativeReactNativeBiometricsSpecJSI_getDeviceIntegrityStatus};
++  methodMap_["startBiometricChangeDetection"] = MethodMetadata {0, __hostFunction_NativeReactNativeBiometricsSpecJSI_startBiometricChangeDetection};
++  methodMap_["stopBiometricChangeDetection"] = MethodMetadata {0, __hostFunction_NativeReactNativeBiometricsSpecJSI_stopBiometricChangeDetection};
++  eventEmitterMap_["onBiometricChange"] = std::make_shared<AsyncEventEmitter<folly::dynamic>>();
++  configureEventEmitterCallback();
++}
++
++std::shared_ptr<TurboModule> ReactNativeBiometricsSpec_ModuleProvider(const std::string &moduleName, const JavaTurboModule::InitParams &params) {
++  if (moduleName == "ReactNativeBiometrics") {
++    return std::make_shared<NativeReactNativeBiometricsSpecJSI>(params);
++  }
++  return nullptr;
++}
++
++} // namespace facebook::react
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/ReactNativeBiometricsSpec.h b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/ReactNativeBiometricsSpec.h
+new file mode 100644
+index 0000000..06f390d
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/ReactNativeBiometricsSpec.h
+@@ -0,0 +1,31 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateModuleJniH.js
++ */
++
++#pragma once
++
++#include <ReactCommon/JavaTurboModule.h>
++#include <ReactCommon/TurboModule.h>
++#include <jsi/jsi.h>
++
++namespace facebook::react {
++
++/**
++ * JNI C++ class for module 'NativeReactNativeBiometrics'
++ */
++class JSI_EXPORT NativeReactNativeBiometricsSpecJSI : public JavaTurboModule {
++public:
++  NativeReactNativeBiometricsSpecJSI(const JavaTurboModule::InitParams &params);
++};
++
++
++JSI_EXPORT
++std::shared_ptr<TurboModule> ReactNativeBiometricsSpec_ModuleProvider(const std::string &moduleName, const JavaTurboModule::InitParams &params);
++
++} // namespace facebook::react
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/ComponentDescriptors.cpp b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/ComponentDescriptors.cpp
+new file mode 100644
+index 0000000..fa61b79
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/ComponentDescriptors.cpp
+@@ -0,0 +1,22 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateComponentDescriptorCpp.js
++ */
++
++#include <react/renderer/components/ReactNativeBiometricsSpec/ComponentDescriptors.h>
++#include <react/renderer/core/ConcreteComponentDescriptor.h>
++#include <react/renderer/componentregistry/ComponentDescriptorProviderRegistry.h>
++
++namespace facebook::react {
++
++void ReactNativeBiometricsSpec_registerComponentDescriptorsFromCodegen(
++  std::shared_ptr<const ComponentDescriptorProviderRegistry> registry) {
++
++}
++
++} // namespace facebook::react
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/ComponentDescriptors.h b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/ComponentDescriptors.h
+new file mode 100644
+index 0000000..c9e460c
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/ComponentDescriptors.h
+@@ -0,0 +1,24 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateComponentDescriptorH.js
++ */
++
++#pragma once
++
++#include <react/renderer/components/ReactNativeBiometricsSpec/ShadowNodes.h>
++#include <react/renderer/core/ConcreteComponentDescriptor.h>
++#include <react/renderer/componentregistry/ComponentDescriptorProviderRegistry.h>
++
++namespace facebook::react {
++
++
++
++void ReactNativeBiometricsSpec_registerComponentDescriptorsFromCodegen(
++  std::shared_ptr<const ComponentDescriptorProviderRegistry> registry);
++
++} // namespace facebook::react
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/EventEmitters.cpp b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/EventEmitters.cpp
+new file mode 100644
+index 0000000..1815250
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/EventEmitters.cpp
+@@ -0,0 +1,16 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateEventEmitterCpp.js
++ */
++
++#include <react/renderer/components/ReactNativeBiometricsSpec/EventEmitters.h>
++
++
++namespace facebook::react {
++
++} // namespace facebook::react
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/EventEmitters.h b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/EventEmitters.h
+new file mode 100644
+index 0000000..2845a63
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/EventEmitters.h
+@@ -0,0 +1,17 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateEventEmitterH.js
++ */
++#pragma once
++
++#include <react/renderer/components/view/ViewEventEmitter.h>
++
++
++namespace facebook::react {
++
++} // namespace facebook::react
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/Props.cpp b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/Props.cpp
+new file mode 100644
+index 0000000..07ed75b
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/Props.cpp
+@@ -0,0 +1,19 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GeneratePropsCpp.js
++ */
++
++#include <react/renderer/components/ReactNativeBiometricsSpec/Props.h>
++#include <react/renderer/core/PropsParserContext.h>
++#include <react/renderer/core/propsConversions.h>
++
++namespace facebook::react {
++
++
++
++} // namespace facebook::react
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/Props.h b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/Props.h
+new file mode 100644
+index 0000000..870864b
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/Props.h
+@@ -0,0 +1,18 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GeneratePropsH.js
++ */
++#pragma once
++
++
++
++namespace facebook::react {
++
++
++
++} // namespace facebook::react
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/ReactNativeBiometricsSpecJSI-generated.cpp b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/ReactNativeBiometricsSpecJSI-generated.cpp
+new file mode 100644
+index 0000000..523f307
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/ReactNativeBiometricsSpecJSI-generated.cpp
+@@ -0,0 +1,175 @@
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateModuleCpp.js
++ */
++
++#include "ReactNativeBiometricsSpecJSI.h"
++
++namespace facebook::react {
++
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_isSensorAvailable(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->isSensorAvailable(
++    rt,
++    count <= 0 || args[0].isUndefined() ? std::nullopt : std::make_optional(args[0].asString(rt))
++  );
++}
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_simplePrompt(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->simplePrompt(
++    rt,
++    count <= 0 ? throw jsi::JSError(rt, "Expected argument in position 0 to be passed") : args[0].asString(rt),
++    count <= 1 || args[1].isUndefined() ? std::nullopt : std::make_optional(args[1].asString(rt))
++  );
++}
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_authenticateWithOptions(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->authenticateWithOptions(
++    rt,
++    count <= 0 ? throw jsi::JSError(rt, "Expected argument in position 0 to be passed") : args[0].asObject(rt)
++  );
++}
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_createKeys(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->createKeys(
++    rt,
++    count <= 0 || args[0].isNull() || args[0].isUndefined() ? std::nullopt : std::make_optional(args[0].asString(rt)),
++    count <= 1 || args[1].isNull() || args[1].isUndefined() ? std::nullopt : std::make_optional(args[1].asString(rt)),
++    count <= 2 || args[2].isNull() || args[2].isUndefined() ? std::nullopt : std::make_optional(args[2].asString(rt))
++  );
++}
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_deleteKeys(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->deleteKeys(
++    rt,
++    count <= 0 || args[0].isNull() || args[0].isUndefined() ? std::nullopt : std::make_optional(args[0].asString(rt))
++  );
++}
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_configureKeyAlias(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->configureKeyAlias(
++    rt,
++    count <= 0 ? throw jsi::JSError(rt, "Expected argument in position 0 to be passed") : args[0].asString(rt)
++  );
++}
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_getAllKeys(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->getAllKeys(
++    rt,
++    count <= 0 || args[0].isNull() || args[0].isUndefined() ? std::nullopt : std::make_optional(args[0].asString(rt))
++  );
++}
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_validateKeyIntegrity(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->validateKeyIntegrity(
++    rt,
++    count <= 0 || args[0].isNull() || args[0].isUndefined() ? std::nullopt : std::make_optional(args[0].asString(rt))
++  );
++}
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_verifyKeySignature(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->verifyKeySignature(
++    rt,
++    count <= 0 ? throw jsi::JSError(rt, "Expected argument in position 0 to be passed") : args[0].asString(rt),
++    count <= 1 ? throw jsi::JSError(rt, "Expected argument in position 1 to be passed") : args[1].asString(rt),
++    count <= 2 || args[2].isUndefined() ? std::nullopt : std::make_optional(args[2].asString(rt)),
++    count <= 3 || args[3].isUndefined() ? std::nullopt : std::make_optional(args[3].asString(rt)),
++    count <= 4 || args[4].isUndefined() ? std::nullopt : std::make_optional(args[4].asString(rt))
++  );
++}
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_verifyKeySignatureWithOptions(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->verifyKeySignatureWithOptions(
++    rt,
++    count <= 0 || args[0].isNull() || args[0].isUndefined() ? std::nullopt : std::make_optional(args[0].asString(rt)),
++    count <= 1 ? throw jsi::JSError(rt, "Expected argument in position 1 to be passed") : args[1].asString(rt),
++    count <= 2 || args[2].isNull() || args[2].isUndefined() ? std::nullopt : std::make_optional(args[2].asString(rt)),
++    count <= 3 || args[3].isNull() || args[3].isUndefined() ? std::nullopt : std::make_optional(args[3].asString(rt)),
++    count <= 4 || args[4].isNull() || args[4].isUndefined() ? std::nullopt : std::make_optional(args[4].asString(rt)),
++    count <= 5 || args[5].isNull() || args[5].isUndefined() ? std::nullopt : std::make_optional(args[5].asString(rt)),
++    count <= 6 || args[6].isUndefined() ? std::nullopt : std::make_optional(args[6].asBool()),
++    count <= 7 || args[7].isNull() || args[7].isUndefined() ? std::nullopt : std::make_optional(args[7].asString(rt))
++  );
++}
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_verifyKeySignatureWithEncoding(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->verifyKeySignatureWithEncoding(
++    rt,
++    count <= 0 || args[0].isNull() || args[0].isUndefined() ? std::nullopt : std::make_optional(args[0].asString(rt)),
++    count <= 1 ? throw jsi::JSError(rt, "Expected argument in position 1 to be passed") : args[1].asString(rt),
++    count <= 2 || args[2].isNull() || args[2].isUndefined() ? std::nullopt : std::make_optional(args[2].asString(rt)),
++    count <= 3 || args[3].isNull() || args[3].isUndefined() ? std::nullopt : std::make_optional(args[3].asString(rt)),
++    count <= 4 || args[4].isNull() || args[4].isUndefined() ? std::nullopt : std::make_optional(args[4].asString(rt)),
++    count <= 5 || args[5].isNull() || args[5].isUndefined() ? std::nullopt : std::make_optional(args[5].asString(rt))
++  );
++}
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_validateSignature(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->validateSignature(
++    rt,
++    count <= 0 ? throw jsi::JSError(rt, "Expected argument in position 0 to be passed") : args[0].asString(rt),
++    count <= 1 ? throw jsi::JSError(rt, "Expected argument in position 1 to be passed") : args[1].asString(rt),
++    count <= 2 ? throw jsi::JSError(rt, "Expected argument in position 2 to be passed") : args[2].asString(rt)
++  );
++}
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_getKeyAttributes(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->getKeyAttributes(
++    rt,
++    count <= 0 || args[0].isNull() || args[0].isUndefined() ? std::nullopt : std::make_optional(args[0].asString(rt))
++  );
++}
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_getDiagnosticInfo(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->getDiagnosticInfo(
++    rt
++  );
++}
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_runBiometricTest(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->runBiometricTest(
++    rt
++  );
++}
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_setDebugMode(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->setDebugMode(
++    rt,
++    count <= 0 ? throw jsi::JSError(rt, "Expected argument in position 0 to be passed") : args[0].asBool()
++  );
++}
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_getDefaultKeyAlias(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->getDefaultKeyAlias(
++    rt
++  );
++}
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_getDeviceIntegrityStatus(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->getDeviceIntegrityStatus(
++    rt
++  );
++}
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_startBiometricChangeDetection(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->startBiometricChangeDetection(
++    rt
++  );
++}
++static jsi::Value __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_stopBiometricChangeDetection(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeReactNativeBiometricsCxxSpecJSI *>(&turboModule)->stopBiometricChangeDetection(
++    rt
++  );
++}
++
++NativeReactNativeBiometricsCxxSpecJSI::NativeReactNativeBiometricsCxxSpecJSI(std::shared_ptr<CallInvoker> jsInvoker)
++  : TurboModule("ReactNativeBiometrics", jsInvoker) {
++  methodMap_["isSensorAvailable"] = MethodMetadata {1, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_isSensorAvailable};
++  methodMap_["simplePrompt"] = MethodMetadata {2, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_simplePrompt};
++  methodMap_["authenticateWithOptions"] = MethodMetadata {1, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_authenticateWithOptions};
++  methodMap_["createKeys"] = MethodMetadata {3, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_createKeys};
++  methodMap_["deleteKeys"] = MethodMetadata {1, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_deleteKeys};
++  methodMap_["configureKeyAlias"] = MethodMetadata {1, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_configureKeyAlias};
++  methodMap_["getAllKeys"] = MethodMetadata {1, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_getAllKeys};
++  methodMap_["validateKeyIntegrity"] = MethodMetadata {1, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_validateKeyIntegrity};
++  methodMap_["verifyKeySignature"] = MethodMetadata {5, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_verifyKeySignature};
++  methodMap_["verifyKeySignatureWithOptions"] = MethodMetadata {8, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_verifyKeySignatureWithOptions};
++  methodMap_["verifyKeySignatureWithEncoding"] = MethodMetadata {6, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_verifyKeySignatureWithEncoding};
++  methodMap_["validateSignature"] = MethodMetadata {3, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_validateSignature};
++  methodMap_["getKeyAttributes"] = MethodMetadata {1, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_getKeyAttributes};
++  methodMap_["getDiagnosticInfo"] = MethodMetadata {0, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_getDiagnosticInfo};
++  methodMap_["runBiometricTest"] = MethodMetadata {0, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_runBiometricTest};
++  methodMap_["setDebugMode"] = MethodMetadata {1, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_setDebugMode};
++  methodMap_["getDefaultKeyAlias"] = MethodMetadata {0, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_getDefaultKeyAlias};
++  methodMap_["getDeviceIntegrityStatus"] = MethodMetadata {0, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_getDeviceIntegrityStatus};
++  methodMap_["startBiometricChangeDetection"] = MethodMetadata {0, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_startBiometricChangeDetection};
++  methodMap_["stopBiometricChangeDetection"] = MethodMetadata {0, __hostFunction_NativeReactNativeBiometricsCxxSpecJSI_stopBiometricChangeDetection};
++}
++
++
++} // namespace facebook::react
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/ReactNativeBiometricsSpecJSI.h b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/ReactNativeBiometricsSpecJSI.h
+new file mode 100644
+index 0000000..46401bb
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/ReactNativeBiometricsSpecJSI.h
+@@ -0,0 +1,316 @@
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateModuleH.js
++ */
++
++#pragma once
++
++#include <ReactCommon/TurboModule.h>
++#include <react/bridging/Bridging.h>
++
++namespace facebook::react {
++
++
++  
++#pragma mark - NativeReactNativeBiometricsBiometricChangeEvent
++
++template <typename P0, typename P1, typename P2, typename P3, typename P4>
++struct NativeReactNativeBiometricsBiometricChangeEvent {
++  P0 timestamp;
++  P1 changeType;
++  P2 biometryType;
++  P3 available;
++  P4 enrolled;
++  bool operator==(const NativeReactNativeBiometricsBiometricChangeEvent &other) const {
++    return timestamp == other.timestamp && changeType == other.changeType && biometryType == other.biometryType && available == other.available && enrolled == other.enrolled;
++  }
++};
++
++template <typename T>
++struct NativeReactNativeBiometricsBiometricChangeEventBridging {
++  static T types;
++
++  static T fromJs(
++      jsi::Runtime &rt,
++      const jsi::Object &value,
++      const std::shared_ptr<CallInvoker> &jsInvoker) {
++    T result{
++      bridging::fromJs<decltype(types.timestamp)>(rt, value.getProperty(rt, "timestamp"), jsInvoker),
++      bridging::fromJs<decltype(types.changeType)>(rt, value.getProperty(rt, "changeType"), jsInvoker),
++      bridging::fromJs<decltype(types.biometryType)>(rt, value.getProperty(rt, "biometryType"), jsInvoker),
++      bridging::fromJs<decltype(types.available)>(rt, value.getProperty(rt, "available"), jsInvoker),
++      bridging::fromJs<decltype(types.enrolled)>(rt, value.getProperty(rt, "enrolled"), jsInvoker)};
++    return result;
++  }
++
++#ifdef DEBUG
++  static double timestampToJs(jsi::Runtime &rt, decltype(types.timestamp) value) {
++    return bridging::toJs(rt, value);
++  }
++
++  static jsi::String changeTypeToJs(jsi::Runtime &rt, decltype(types.changeType) value) {
++    return bridging::toJs(rt, value);
++  }
++
++  static jsi::String biometryTypeToJs(jsi::Runtime &rt, decltype(types.biometryType) value) {
++    return bridging::toJs(rt, value);
++  }
++
++  static bool availableToJs(jsi::Runtime &rt, decltype(types.available) value) {
++    return bridging::toJs(rt, value);
++  }
++
++  static bool enrolledToJs(jsi::Runtime &rt, decltype(types.enrolled) value) {
++    return bridging::toJs(rt, value);
++  }
++#endif
++
++  static jsi::Object toJs(
++      jsi::Runtime &rt,
++      const T &value,
++      const std::shared_ptr<CallInvoker> &jsInvoker) {
++    auto result = facebook::jsi::Object(rt);
++    result.setProperty(rt, "timestamp", bridging::toJs(rt, value.timestamp, jsInvoker));
++    result.setProperty(rt, "changeType", bridging::toJs(rt, value.changeType, jsInvoker));
++    result.setProperty(rt, "biometryType", bridging::toJs(rt, value.biometryType, jsInvoker));
++    result.setProperty(rt, "available", bridging::toJs(rt, value.available, jsInvoker));
++    result.setProperty(rt, "enrolled", bridging::toJs(rt, value.enrolled, jsInvoker));
++    return result;
++  }
++};
++
++class JSI_EXPORT NativeReactNativeBiometricsCxxSpecJSI : public TurboModule {
++protected:
++  NativeReactNativeBiometricsCxxSpecJSI(std::shared_ptr<CallInvoker> jsInvoker);
++
++public:
++  virtual jsi::Value isSensorAvailable(jsi::Runtime &rt, std::optional<jsi::String> biometricStrength) = 0;
++  virtual jsi::Value simplePrompt(jsi::Runtime &rt, jsi::String promptMessage, std::optional<jsi::String> biometricStrength) = 0;
++  virtual jsi::Value authenticateWithOptions(jsi::Runtime &rt, jsi::Object options) = 0;
++  virtual jsi::Value createKeys(jsi::Runtime &rt, std::optional<jsi::String> keyAlias, std::optional<jsi::String> keyType, std::optional<jsi::String> biometricStrength) = 0;
++  virtual jsi::Value deleteKeys(jsi::Runtime &rt, std::optional<jsi::String> keyAlias) = 0;
++  virtual jsi::Value configureKeyAlias(jsi::Runtime &rt, jsi::String keyAlias) = 0;
++  virtual jsi::Value getAllKeys(jsi::Runtime &rt, std::optional<jsi::String> customAlias) = 0;
++  virtual jsi::Value validateKeyIntegrity(jsi::Runtime &rt, std::optional<jsi::String> keyAlias) = 0;
++  virtual jsi::Value verifyKeySignature(jsi::Runtime &rt, jsi::String keyAlias, jsi::String data, std::optional<jsi::String> promptTitle, std::optional<jsi::String> promptSubtitle, std::optional<jsi::String> cancelButtonText) = 0;
++  virtual jsi::Value verifyKeySignatureWithOptions(jsi::Runtime &rt, std::optional<jsi::String> keyAlias, jsi::String data, std::optional<jsi::String> promptTitle, std::optional<jsi::String> promptSubtitle, std::optional<jsi::String> cancelButtonText, std::optional<jsi::String> biometricStrength, std::optional<bool> disableDeviceFallback, std::optional<jsi::String> inputEncoding) = 0;
++  virtual jsi::Value verifyKeySignatureWithEncoding(jsi::Runtime &rt, std::optional<jsi::String> keyAlias, jsi::String data, std::optional<jsi::String> promptTitle, std::optional<jsi::String> promptSubtitle, std::optional<jsi::String> cancelButtonText, std::optional<jsi::String> inputEncoding) = 0;
++  virtual jsi::Value validateSignature(jsi::Runtime &rt, jsi::String keyAlias, jsi::String data, jsi::String signature) = 0;
++  virtual jsi::Value getKeyAttributes(jsi::Runtime &rt, std::optional<jsi::String> keyAlias) = 0;
++  virtual jsi::Value getDiagnosticInfo(jsi::Runtime &rt) = 0;
++  virtual jsi::Value runBiometricTest(jsi::Runtime &rt) = 0;
++  virtual jsi::Value setDebugMode(jsi::Runtime &rt, bool enabled) = 0;
++  virtual jsi::Value getDefaultKeyAlias(jsi::Runtime &rt) = 0;
++  virtual jsi::Value getDeviceIntegrityStatus(jsi::Runtime &rt) = 0;
++  virtual jsi::Value startBiometricChangeDetection(jsi::Runtime &rt) = 0;
++  virtual jsi::Value stopBiometricChangeDetection(jsi::Runtime &rt) = 0;
++
++};
++
++template <typename T>
++class JSI_EXPORT NativeReactNativeBiometricsCxxSpec : public TurboModule {
++public:
++  jsi::Value create(jsi::Runtime &rt, const jsi::PropNameID &propName) override {
++    return delegate_.create(rt, propName);
++  }
++
++  std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime& runtime) override {
++    return delegate_.getPropertyNames(runtime);
++  }
++
++  static constexpr std::string_view kModuleName = "ReactNativeBiometrics";
++
++protected:
++  NativeReactNativeBiometricsCxxSpec(std::shared_ptr<CallInvoker> jsInvoker)
++    : TurboModule(std::string{NativeReactNativeBiometricsCxxSpec::kModuleName}, jsInvoker),
++      delegate_(reinterpret_cast<T*>(this), jsInvoker) {}
++
++  template <typename OnBiometricChangeType> void emitOnBiometricChange(OnBiometricChangeType value) {
++    static_assert(bridging::supportsFromJs<OnBiometricChangeType, jsi::Object>, "value cannnot be converted to jsi::Object");
++    static_cast<AsyncEventEmitter<jsi::Value>&>(*delegate_.eventEmitterMap_["onBiometricChange"]).emit([jsInvoker = jsInvoker_, eventValue = value](jsi::Runtime& rt) -> jsi::Value {
++      return bridging::toJs(rt, eventValue, jsInvoker);
++    });
++  }
++
++private:
++  class Delegate : public NativeReactNativeBiometricsCxxSpecJSI {
++  public:
++    Delegate(T *instance, std::shared_ptr<CallInvoker> jsInvoker) :
++      NativeReactNativeBiometricsCxxSpecJSI(std::move(jsInvoker)), instance_(instance) {
++      eventEmitterMap_["onBiometricChange"] = std::make_shared<AsyncEventEmitter<jsi::Value>>();
++    }
++
++    jsi::Value isSensorAvailable(jsi::Runtime &rt, std::optional<jsi::String> biometricStrength) override {
++      static_assert(
++          bridging::getParameterCount(&T::isSensorAvailable) == 2,
++          "Expected isSensorAvailable(...) to have 2 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::isSensorAvailable, jsInvoker_, instance_, std::move(biometricStrength));
++    }
++    jsi::Value simplePrompt(jsi::Runtime &rt, jsi::String promptMessage, std::optional<jsi::String> biometricStrength) override {
++      static_assert(
++          bridging::getParameterCount(&T::simplePrompt) == 3,
++          "Expected simplePrompt(...) to have 3 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::simplePrompt, jsInvoker_, instance_, std::move(promptMessage), std::move(biometricStrength));
++    }
++    jsi::Value authenticateWithOptions(jsi::Runtime &rt, jsi::Object options) override {
++      static_assert(
++          bridging::getParameterCount(&T::authenticateWithOptions) == 2,
++          "Expected authenticateWithOptions(...) to have 2 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::authenticateWithOptions, jsInvoker_, instance_, std::move(options));
++    }
++    jsi::Value createKeys(jsi::Runtime &rt, std::optional<jsi::String> keyAlias, std::optional<jsi::String> keyType, std::optional<jsi::String> biometricStrength) override {
++      static_assert(
++          bridging::getParameterCount(&T::createKeys) == 4,
++          "Expected createKeys(...) to have 4 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::createKeys, jsInvoker_, instance_, std::move(keyAlias), std::move(keyType), std::move(biometricStrength));
++    }
++    jsi::Value deleteKeys(jsi::Runtime &rt, std::optional<jsi::String> keyAlias) override {
++      static_assert(
++          bridging::getParameterCount(&T::deleteKeys) == 2,
++          "Expected deleteKeys(...) to have 2 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::deleteKeys, jsInvoker_, instance_, std::move(keyAlias));
++    }
++    jsi::Value configureKeyAlias(jsi::Runtime &rt, jsi::String keyAlias) override {
++      static_assert(
++          bridging::getParameterCount(&T::configureKeyAlias) == 2,
++          "Expected configureKeyAlias(...) to have 2 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::configureKeyAlias, jsInvoker_, instance_, std::move(keyAlias));
++    }
++    jsi::Value getAllKeys(jsi::Runtime &rt, std::optional<jsi::String> customAlias) override {
++      static_assert(
++          bridging::getParameterCount(&T::getAllKeys) == 2,
++          "Expected getAllKeys(...) to have 2 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::getAllKeys, jsInvoker_, instance_, std::move(customAlias));
++    }
++    jsi::Value validateKeyIntegrity(jsi::Runtime &rt, std::optional<jsi::String> keyAlias) override {
++      static_assert(
++          bridging::getParameterCount(&T::validateKeyIntegrity) == 2,
++          "Expected validateKeyIntegrity(...) to have 2 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::validateKeyIntegrity, jsInvoker_, instance_, std::move(keyAlias));
++    }
++    jsi::Value verifyKeySignature(jsi::Runtime &rt, jsi::String keyAlias, jsi::String data, std::optional<jsi::String> promptTitle, std::optional<jsi::String> promptSubtitle, std::optional<jsi::String> cancelButtonText) override {
++      static_assert(
++          bridging::getParameterCount(&T::verifyKeySignature) == 6,
++          "Expected verifyKeySignature(...) to have 6 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::verifyKeySignature, jsInvoker_, instance_, std::move(keyAlias), std::move(data), std::move(promptTitle), std::move(promptSubtitle), std::move(cancelButtonText));
++    }
++    jsi::Value verifyKeySignatureWithOptions(jsi::Runtime &rt, std::optional<jsi::String> keyAlias, jsi::String data, std::optional<jsi::String> promptTitle, std::optional<jsi::String> promptSubtitle, std::optional<jsi::String> cancelButtonText, std::optional<jsi::String> biometricStrength, std::optional<bool> disableDeviceFallback, std::optional<jsi::String> inputEncoding) override {
++      static_assert(
++          bridging::getParameterCount(&T::verifyKeySignatureWithOptions) == 9,
++          "Expected verifyKeySignatureWithOptions(...) to have 9 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::verifyKeySignatureWithOptions, jsInvoker_, instance_, std::move(keyAlias), std::move(data), std::move(promptTitle), std::move(promptSubtitle), std::move(cancelButtonText), std::move(biometricStrength), std::move(disableDeviceFallback), std::move(inputEncoding));
++    }
++    jsi::Value verifyKeySignatureWithEncoding(jsi::Runtime &rt, std::optional<jsi::String> keyAlias, jsi::String data, std::optional<jsi::String> promptTitle, std::optional<jsi::String> promptSubtitle, std::optional<jsi::String> cancelButtonText, std::optional<jsi::String> inputEncoding) override {
++      static_assert(
++          bridging::getParameterCount(&T::verifyKeySignatureWithEncoding) == 7,
++          "Expected verifyKeySignatureWithEncoding(...) to have 7 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::verifyKeySignatureWithEncoding, jsInvoker_, instance_, std::move(keyAlias), std::move(data), std::move(promptTitle), std::move(promptSubtitle), std::move(cancelButtonText), std::move(inputEncoding));
++    }
++    jsi::Value validateSignature(jsi::Runtime &rt, jsi::String keyAlias, jsi::String data, jsi::String signature) override {
++      static_assert(
++          bridging::getParameterCount(&T::validateSignature) == 4,
++          "Expected validateSignature(...) to have 4 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::validateSignature, jsInvoker_, instance_, std::move(keyAlias), std::move(data), std::move(signature));
++    }
++    jsi::Value getKeyAttributes(jsi::Runtime &rt, std::optional<jsi::String> keyAlias) override {
++      static_assert(
++          bridging::getParameterCount(&T::getKeyAttributes) == 2,
++          "Expected getKeyAttributes(...) to have 2 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::getKeyAttributes, jsInvoker_, instance_, std::move(keyAlias));
++    }
++    jsi::Value getDiagnosticInfo(jsi::Runtime &rt) override {
++      static_assert(
++          bridging::getParameterCount(&T::getDiagnosticInfo) == 1,
++          "Expected getDiagnosticInfo(...) to have 1 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::getDiagnosticInfo, jsInvoker_, instance_);
++    }
++    jsi::Value runBiometricTest(jsi::Runtime &rt) override {
++      static_assert(
++          bridging::getParameterCount(&T::runBiometricTest) == 1,
++          "Expected runBiometricTest(...) to have 1 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::runBiometricTest, jsInvoker_, instance_);
++    }
++    jsi::Value setDebugMode(jsi::Runtime &rt, bool enabled) override {
++      static_assert(
++          bridging::getParameterCount(&T::setDebugMode) == 2,
++          "Expected setDebugMode(...) to have 2 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::setDebugMode, jsInvoker_, instance_, std::move(enabled));
++    }
++    jsi::Value getDefaultKeyAlias(jsi::Runtime &rt) override {
++      static_assert(
++          bridging::getParameterCount(&T::getDefaultKeyAlias) == 1,
++          "Expected getDefaultKeyAlias(...) to have 1 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::getDefaultKeyAlias, jsInvoker_, instance_);
++    }
++    jsi::Value getDeviceIntegrityStatus(jsi::Runtime &rt) override {
++      static_assert(
++          bridging::getParameterCount(&T::getDeviceIntegrityStatus) == 1,
++          "Expected getDeviceIntegrityStatus(...) to have 1 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::getDeviceIntegrityStatus, jsInvoker_, instance_);
++    }
++    jsi::Value startBiometricChangeDetection(jsi::Runtime &rt) override {
++      static_assert(
++          bridging::getParameterCount(&T::startBiometricChangeDetection) == 1,
++          "Expected startBiometricChangeDetection(...) to have 1 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::startBiometricChangeDetection, jsInvoker_, instance_);
++    }
++    jsi::Value stopBiometricChangeDetection(jsi::Runtime &rt) override {
++      static_assert(
++          bridging::getParameterCount(&T::stopBiometricChangeDetection) == 1,
++          "Expected stopBiometricChangeDetection(...) to have 1 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::stopBiometricChangeDetection, jsInvoker_, instance_);
++    }
++
++  private:
++    friend class NativeReactNativeBiometricsCxxSpec;
++    T *instance_;
++  };
++
++  Delegate delegate_;
++};
++
++} // namespace facebook::react
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/ShadowNodes.cpp b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/ShadowNodes.cpp
+new file mode 100644
+index 0000000..38b2d8d
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/ShadowNodes.cpp
+@@ -0,0 +1,17 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateShadowNodeCpp.js
++ */
++
++#include <react/renderer/components/ReactNativeBiometricsSpec/ShadowNodes.h>
++
++namespace facebook::react {
++
++
++
++} // namespace facebook::react
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/ShadowNodes.h b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/ShadowNodes.h
+new file mode 100644
+index 0000000..09b7f92
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/ShadowNodes.h
+@@ -0,0 +1,23 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateShadowNodeH.js
++ */
++
++#pragma once
++
++#include <react/renderer/components/ReactNativeBiometricsSpec/EventEmitters.h>
++#include <react/renderer/components/ReactNativeBiometricsSpec/Props.h>
++#include <react/renderer/components/ReactNativeBiometricsSpec/States.h>
++#include <react/renderer/components/view/ConcreteViewShadowNode.h>
++#include <jsi/jsi.h>
++
++namespace facebook::react {
++
++
++
++} // namespace facebook::react
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/States.cpp b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/States.cpp
+new file mode 100644
+index 0000000..bbcc5dc
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/States.cpp
+@@ -0,0 +1,16 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateStateCpp.js
++ */
++#include <react/renderer/components/ReactNativeBiometricsSpec/States.h>
++
++namespace facebook::react {
++
++
++
++} // namespace facebook::react
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/States.h b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/States.h
+new file mode 100644
+index 0000000..2e55bce
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeBiometricsSpec/States.h
+@@ -0,0 +1,20 @@
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateStateH.js
++ */
++#pragma once
++
++#include <react/renderer/core/StateData.h>
++#ifdef RN_SERIALIZABLE_STATE
++#include <folly/dynamic.h>
++#endif
++
++namespace facebook::react {
++
++
++
++} // namespace facebook::react
+\ No newline at end of file
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/schema.json b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/schema.json
+new file mode 100644
+index 0000000..44b2809
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/source/codegen/schema.json
+@@ -0,0 +1 @@
++{"libraryName":"","modules":{"NativeReactNativeBiometrics":{"type":"NativeModule","aliasMap":{"BiometricChangeEvent":{"type":"ObjectTypeAnnotation","properties":[{"name":"timestamp","optional":false,"typeAnnotation":{"type":"NumberTypeAnnotation"}},{"name":"changeType","optional":false,"typeAnnotation":{"type":"StringLiteralUnionTypeAnnotation","types":[{"type":"StringLiteralTypeAnnotation","value":"BIOMETRIC_ENABLED"},{"type":"StringLiteralTypeAnnotation","value":"BIOMETRIC_DISABLED"},{"type":"StringLiteralTypeAnnotation","value":"ENROLLMENT_CHANGED"},{"type":"StringLiteralTypeAnnotation","value":"HARDWARE_CHANGED"},{"type":"StringLiteralTypeAnnotation","value":"STATE_CHANGED"}]}},{"name":"biometryType","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"available","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"enrolled","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}}]}},"enumMap":{},"spec":{"eventEmitters":[{"name":"onBiometricChange","optional":false,"typeAnnotation":{"type":"EventEmitterTypeAnnotation","typeAnnotation":{"type":"TypeAliasTypeAnnotation","name":"BiometricChangeEvent"}}}],"methods":[{"name":"isSensorAvailable","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"ObjectTypeAnnotation","properties":[{"name":"available","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"biometryType","optional":true,"typeAnnotation":{"type":"StringLiteralUnionTypeAnnotation","types":[{"type":"StringLiteralTypeAnnotation","value":"Biometrics"},{"type":"StringLiteralTypeAnnotation","value":"FaceID"},{"type":"StringLiteralTypeAnnotation","value":"TouchID"},{"type":"StringLiteralTypeAnnotation","value":"None"},{"type":"StringLiteralTypeAnnotation","value":"Unknown"}]}},{"name":"error","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}}]}},"params":[{"name":"biometricStrength","optional":true,"typeAnnotation":{"type":"StringLiteralUnionTypeAnnotation","types":[{"type":"StringLiteralTypeAnnotation","value":"weak"},{"type":"StringLiteralTypeAnnotation","value":"strong"}]}}]}},{"name":"simplePrompt","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"ObjectTypeAnnotation","properties":[{"name":"success","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"error","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"errorCode","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}}]}},"params":[{"name":"promptMessage","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"biometricStrength","optional":true,"typeAnnotation":{"type":"StringLiteralUnionTypeAnnotation","types":[{"type":"StringLiteralTypeAnnotation","value":"weak"},{"type":"StringLiteralTypeAnnotation","value":"strong"}]}}]}},{"name":"authenticateWithOptions","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"ObjectTypeAnnotation","properties":[{"name":"success","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"error","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"errorCode","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}}]}},"params":[{"name":"options","optional":false,"typeAnnotation":{"type":"ObjectTypeAnnotation","properties":[{"name":"title","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"subtitle","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"description","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"fallbackLabel","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"cancelLabel","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"disableDeviceFallback","optional":true,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"allowDeviceCredentials","optional":true,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"biometricStrength","optional":true,"typeAnnotation":{"type":"StringLiteralUnionTypeAnnotation","types":[{"type":"StringLiteralTypeAnnotation","value":"weak"},{"type":"StringLiteralTypeAnnotation","value":"strong"}]}}]}}]}},{"name":"createKeys","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"ObjectTypeAnnotation","properties":[{"name":"publicKey","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}}]}},"params":[{"name":"keyAlias","optional":true,"typeAnnotation":{"type":"NullableTypeAnnotation","typeAnnotation":{"type":"StringTypeAnnotation"}}},{"name":"keyType","optional":true,"typeAnnotation":{"type":"NullableTypeAnnotation","typeAnnotation":{"type":"StringTypeAnnotation"}}},{"name":"biometricStrength","optional":true,"typeAnnotation":{"type":"NullableTypeAnnotation","typeAnnotation":{"type":"StringLiteralUnionTypeAnnotation","types":[{"type":"StringLiteralTypeAnnotation","value":"weak"},{"type":"StringLiteralTypeAnnotation","value":"strong"}]}}}]}},{"name":"deleteKeys","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"ObjectTypeAnnotation","properties":[{"name":"success","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}}]}},"params":[{"name":"keyAlias","optional":true,"typeAnnotation":{"type":"NullableTypeAnnotation","typeAnnotation":{"type":"StringTypeAnnotation"}}}]}},{"name":"configureKeyAlias","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"VoidTypeAnnotation"}},"params":[{"name":"keyAlias","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}}]}},{"name":"getAllKeys","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"ObjectTypeAnnotation","properties":[{"name":"keys","optional":false,"typeAnnotation":{"type":"ArrayTypeAnnotation","elementType":{"type":"ObjectTypeAnnotation","properties":[{"name":"alias","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"publicKey","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}}]}}}]}},"params":[{"name":"customAlias","optional":true,"typeAnnotation":{"type":"NullableTypeAnnotation","typeAnnotation":{"type":"StringTypeAnnotation"}}}]}},{"name":"validateKeyIntegrity","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"ObjectTypeAnnotation","properties":[{"name":"valid","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"keyExists","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"keyAttributes","optional":true,"typeAnnotation":{"type":"ObjectTypeAnnotation","properties":[{"name":"algorithm","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"keySize","optional":false,"typeAnnotation":{"type":"NumberTypeAnnotation"}},{"name":"creationDate","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"securityLevel","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}}]}},{"name":"integrityChecks","optional":false,"typeAnnotation":{"type":"ObjectTypeAnnotation","properties":[{"name":"keyFormatValid","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"keyAccessible","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"signatureTestPassed","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"hardwareBacked","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}}]}},{"name":"error","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}}]}},"params":[{"name":"keyAlias","optional":true,"typeAnnotation":{"type":"NullableTypeAnnotation","typeAnnotation":{"type":"StringTypeAnnotation"}}}]}},{"name":"verifyKeySignature","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"ObjectTypeAnnotation","properties":[{"name":"success","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"signature","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"error","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"errorCode","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}}]}},"params":[{"name":"keyAlias","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"data","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"promptTitle","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"promptSubtitle","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"cancelButtonText","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}}]}},{"name":"verifyKeySignatureWithOptions","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"ObjectTypeAnnotation","properties":[{"name":"success","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"signature","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"error","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"errorCode","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}}]}},"params":[{"name":"keyAlias","optional":false,"typeAnnotation":{"type":"NullableTypeAnnotation","typeAnnotation":{"type":"StringTypeAnnotation"}}},{"name":"data","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"promptTitle","optional":true,"typeAnnotation":{"type":"NullableTypeAnnotation","typeAnnotation":{"type":"StringTypeAnnotation"}}},{"name":"promptSubtitle","optional":true,"typeAnnotation":{"type":"NullableTypeAnnotation","typeAnnotation":{"type":"StringTypeAnnotation"}}},{"name":"cancelButtonText","optional":true,"typeAnnotation":{"type":"NullableTypeAnnotation","typeAnnotation":{"type":"StringTypeAnnotation"}}},{"name":"biometricStrength","optional":true,"typeAnnotation":{"type":"NullableTypeAnnotation","typeAnnotation":{"type":"StringLiteralUnionTypeAnnotation","types":[{"type":"StringLiteralTypeAnnotation","value":"weak"},{"type":"StringLiteralTypeAnnotation","value":"strong"}]}}},{"name":"disableDeviceFallback","optional":true,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"inputEncoding","optional":true,"typeAnnotation":{"type":"NullableTypeAnnotation","typeAnnotation":{"type":"StringLiteralUnionTypeAnnotation","types":[{"type":"StringLiteralTypeAnnotation","value":"utf8"},{"type":"StringLiteralTypeAnnotation","value":"base64"}]}}}]}},{"name":"verifyKeySignatureWithEncoding","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"ObjectTypeAnnotation","properties":[{"name":"success","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"signature","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"error","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"errorCode","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}}]}},"params":[{"name":"keyAlias","optional":false,"typeAnnotation":{"type":"NullableTypeAnnotation","typeAnnotation":{"type":"StringTypeAnnotation"}}},{"name":"data","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"promptTitle","optional":true,"typeAnnotation":{"type":"NullableTypeAnnotation","typeAnnotation":{"type":"StringTypeAnnotation"}}},{"name":"promptSubtitle","optional":true,"typeAnnotation":{"type":"NullableTypeAnnotation","typeAnnotation":{"type":"StringTypeAnnotation"}}},{"name":"cancelButtonText","optional":true,"typeAnnotation":{"type":"NullableTypeAnnotation","typeAnnotation":{"type":"StringTypeAnnotation"}}},{"name":"inputEncoding","optional":true,"typeAnnotation":{"type":"NullableTypeAnnotation","typeAnnotation":{"type":"StringLiteralUnionTypeAnnotation","types":[{"type":"StringLiteralTypeAnnotation","value":"utf8"},{"type":"StringLiteralTypeAnnotation","value":"base64"}]}}}]}},{"name":"validateSignature","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"ObjectTypeAnnotation","properties":[{"name":"valid","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"error","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}}]}},"params":[{"name":"keyAlias","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"data","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"signature","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}}]}},{"name":"getKeyAttributes","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"ObjectTypeAnnotation","properties":[{"name":"exists","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"attributes","optional":true,"typeAnnotation":{"type":"ObjectTypeAnnotation","properties":[{"name":"algorithm","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"keySize","optional":false,"typeAnnotation":{"type":"NumberTypeAnnotation"}},{"name":"purposes","optional":false,"typeAnnotation":{"type":"ArrayTypeAnnotation","elementType":{"type":"StringTypeAnnotation"}}},{"name":"digests","optional":false,"typeAnnotation":{"type":"ArrayTypeAnnotation","elementType":{"type":"StringTypeAnnotation"}}},{"name":"padding","optional":false,"typeAnnotation":{"type":"ArrayTypeAnnotation","elementType":{"type":"StringTypeAnnotation"}}},{"name":"creationDate","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"securityLevel","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"hardwareBacked","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"userAuthenticationRequired","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}}]}},{"name":"error","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}}]}},"params":[{"name":"keyAlias","optional":true,"typeAnnotation":{"type":"NullableTypeAnnotation","typeAnnotation":{"type":"StringTypeAnnotation"}}}]}},{"name":"getDiagnosticInfo","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"ObjectTypeAnnotation","properties":[{"name":"platform","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"osVersion","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"deviceModel","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"biometricCapabilities","optional":false,"typeAnnotation":{"type":"ArrayTypeAnnotation","elementType":{"type":"StringTypeAnnotation"}}},{"name":"securityLevel","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}},{"name":"keyguardSecure","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"enrolledBiometrics","optional":false,"typeAnnotation":{"type":"ArrayTypeAnnotation","elementType":{"type":"StringTypeAnnotation"}}},{"name":"lastError","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}}]}},"params":[]}},{"name":"runBiometricTest","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"ObjectTypeAnnotation","properties":[{"name":"success","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"results","optional":false,"typeAnnotation":{"type":"ObjectTypeAnnotation","properties":[{"name":"sensorAvailable","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"canAuthenticate","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"hardwareDetected","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"hasEnrolledBiometrics","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"secureHardware","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}}]}},{"name":"errors","optional":false,"typeAnnotation":{"type":"ArrayTypeAnnotation","elementType":{"type":"StringTypeAnnotation"}}},{"name":"warnings","optional":false,"typeAnnotation":{"type":"ArrayTypeAnnotation","elementType":{"type":"StringTypeAnnotation"}}}]}},"params":[]}},{"name":"setDebugMode","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"VoidTypeAnnotation"}},"params":[{"name":"enabled","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}}]}},{"name":"getDefaultKeyAlias","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"StringTypeAnnotation"}},"params":[]}},{"name":"getDeviceIntegrityStatus","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"ObjectTypeAnnotation","properties":[{"name":"isRooted","optional":true,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"isJailbroken","optional":true,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"isKeyguardSecure","optional":true,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"hasSecureHardware","optional":true,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"isCompromised","optional":false,"typeAnnotation":{"type":"BooleanTypeAnnotation"}},{"name":"riskLevel","optional":false,"typeAnnotation":{"type":"StringLiteralUnionTypeAnnotation","types":[{"type":"StringLiteralTypeAnnotation","value":"NONE"},{"type":"StringLiteralTypeAnnotation","value":"LOW"},{"type":"StringLiteralTypeAnnotation","value":"MEDIUM"},{"type":"StringLiteralTypeAnnotation","value":"HIGH"},{"type":"StringLiteralTypeAnnotation","value":"UNKNOWN"}]}},{"name":"error","optional":true,"typeAnnotation":{"type":"StringTypeAnnotation"}}]}},"params":[]}},{"name":"startBiometricChangeDetection","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"VoidTypeAnnotation"}},"params":[]}},{"name":"stopBiometricChangeDetection","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"VoidTypeAnnotation"}},"params":[]}}]},"moduleName":"ReactNativeBiometrics"}}}
+\ No newline at end of file
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml
+new file mode 100644
+index 0000000..0911567
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.sbaiahmed1.reactnativebiometrics" >
++
++    <uses-sdk android:minSdkVersion="24" />
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json
+new file mode 100644
+index 0000000..262fc29
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json
+@@ -0,0 +1,18 @@
++{
++  "version": 3,
++  "artifactType": {
++    "type": "AAPT_FRIENDLY_MERGED_MANIFESTS",
++    "kind": "Directory"
++  },
++  "applicationId": "com.sbaiahmed1.reactnativebiometrics",
++  "variantName": "debug",
++  "elements": [
++    {
++      "type": "SINGLE",
++      "filters": [],
++      "attributes": [],
++      "outputFile": "AndroidManifest.xml"
++    }
++  ],
++  "elementType": "File"
++}
+\ No newline at end of file
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties
+new file mode 100644
+index 0000000..1211b1e
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties
+@@ -0,0 +1,6 @@
++aarFormatVersion=1.0
++aarMetadataVersion=1.0
++minCompileSdk=1
++minCompileSdkExtension=0
++minAndroidGradlePluginVersion=1.0.0
++coreLibraryDesugaringEnabled=false
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json
+new file mode 100644
+index 0000000..9e26dfe
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json
+@@ -0,0 +1 @@
++{}
+\ No newline at end of file
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar
+new file mode 100644
+index 0000000..794a9c8
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar
+new file mode 100644
+index 0000000..0813cb9
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+new file mode 100644
+index 0000000..455d146
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+@@ -0,0 +1 @@
++#Wed Feb 04 13:51:48 IST 2026
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+new file mode 100644
+index 0000000..6791c45
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/src/main/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main" generated-set="main$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/src/main/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/src/debug/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug" generated-set="debug$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/src/debug/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/res/resValues/debug"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated" generated-set="generated$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/build/generated/res/resValues/debug"/></dataSet><mergedItems/></merger>
+\ No newline at end of file
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/incremental/mergeDebugAssets/merger.xml b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/incremental/mergeDebugAssets/merger.xml
+new file mode 100644
+index 0000000..4f4d3e2
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/incremental/mergeDebugAssets/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/src/main/assets"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/src/debug/assets"/></dataSet><dataSet config="generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/shader_assets/debug/compileDebugShaders/out"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml
+new file mode 100644
+index 0000000..d0bc643
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/src/main/jniLibs"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/src/debug/jniLibs"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/incremental/mergeDebugShaders/merger.xml b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
+new file mode 100644
+index 0000000..3d2f0ef
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/src/main/shaders"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/src/debug/shaders"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/java_res/debug/processDebugJavaRes/out/META-INF/sbaiahmed1_react-native-biometrics_debug.kotlin_module b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/java_res/debug/processDebugJavaRes/out/META-INF/sbaiahmed1_react-native-biometrics_debug.kotlin_module
+new file mode 100644
+index 0000000..9dbc290
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/java_res/debug/processDebugJavaRes/out/META-INF/sbaiahmed1_react-native-biometrics_debug.kotlin_module differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/fbreact/specs/NativeReactNativeBiometricsSpec.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/fbreact/specs/NativeReactNativeBiometricsSpec.class
+new file mode 100644
+index 0000000..8c5478e
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/fbreact/specs/NativeReactNativeBiometricsSpec.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/sbaiahmed1/reactnativebiometrics/BuildConfig.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/sbaiahmed1/reactnativebiometrics/BuildConfig.class
+new file mode 100644
+index 0000000..89ce39e
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/sbaiahmed1/reactnativebiometrics/BuildConfig.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/sbaiahmed1/reactnativebiometrics/NativeReactNativeBiometricsSpec.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/sbaiahmed1/reactnativebiometrics/NativeReactNativeBiometricsSpec.class
+new file mode 100644
+index 0000000..27a9933
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/sbaiahmed1/reactnativebiometrics/NativeReactNativeBiometricsSpec.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt
+new file mode 100644
+index 0000000..78ac5b8
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt
+@@ -0,0 +1,2 @@
++R_DEF: Internal format may change without notice
++local
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt
+new file mode 100644
+index 0000000..8996229
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt
+@@ -0,0 +1,7 @@
++1<?xml version="1.0" encoding="utf-8"?>
++2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++3    package="com.sbaiahmed1.reactnativebiometrics" >
++4
++5    <uses-sdk android:minSdkVersion="24" />
++6
++7</manifest>
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml
+new file mode 100644
+index 0000000..0911567
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.sbaiahmed1.reactnativebiometrics" >
++
++    <uses-sdk android:minSdkVersion="24" />
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json
+new file mode 100644
+index 0000000..0637a08
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json
+@@ -0,0 +1 @@
++[]
+\ No newline at end of file
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt
+new file mode 100644
+index 0000000..08f4ebe
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt
+@@ -0,0 +1 @@
++0 Warning/Error
+\ No newline at end of file
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/META-INF/sbaiahmed1_react-native-biometrics_debug.kotlin_module b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/META-INF/sbaiahmed1_react-native-biometrics_debug.kotlin_module
+new file mode 100644
+index 0000000..9dbc290
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/META-INF/sbaiahmed1_react-native-biometrics_debug.kotlin_module differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/fbreact/specs/NativeReactNativeBiometricsSpec.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/fbreact/specs/NativeReactNativeBiometricsSpec.class
+new file mode 100644
+index 0000000..8c5478e
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/fbreact/specs/NativeReactNativeBiometricsSpec.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/BiometricUtils$BiometricAuthenticatorResult.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/BiometricUtils$BiometricAuthenticatorResult.class
+new file mode 100644
+index 0000000..b2cfb55
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/BiometricUtils$BiometricAuthenticatorResult.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/BiometricUtils.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/BiometricUtils.class
+new file mode 100644
+index 0000000..893d433
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/BiometricUtils.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/BuildConfig.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/BuildConfig.class
+new file mode 100644
+index 0000000..89ce39e
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/BuildConfig.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/NativeReactNativeBiometricsSpec.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/NativeReactNativeBiometricsSpec.class
+new file mode 100644
+index 0000000..27a9933
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/NativeReactNativeBiometricsSpec.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsModule.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsModule.class
+new file mode 100644
+index 0000000..15c34b2
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsModule.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsPackage.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsPackage.class
+new file mode 100644
+index 0000000..362585f
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsPackage.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$BiometricState.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$BiometricState.class
+new file mode 100644
+index 0000000..bdb6362
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$BiometricState.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$Companion.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$Companion.class
+new file mode 100644
+index 0000000..073e75f
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$Companion.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$authenticateWithOptions$callback$1.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$authenticateWithOptions$callback$1.class
+new file mode 100644
+index 0000000..b097ed7
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$authenticateWithOptions$callback$1.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$lifecycleListener$1.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$lifecycleListener$1.class
+new file mode 100644
+index 0000000..1210fa7
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$lifecycleListener$1.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$simplePrompt$callback$1.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$simplePrompt$callback$1.class
+new file mode 100644
+index 0000000..5a73e2d
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$simplePrompt$callback$1.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$validateKeyIntegrity$biometricPrompt$1.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$validateKeyIntegrity$biometricPrompt$1.class
+new file mode 100644
+index 0000000..d894d96
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$validateKeyIntegrity$biometricPrompt$1.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$verifyKeySignature$biometricPrompt$1.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$verifyKeySignature$biometricPrompt$1.class
+new file mode 100644
+index 0000000..2241d89
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$verifyKeySignature$biometricPrompt$1.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl.class
+new file mode 100644
+index 0000000..2ce9691
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar
+new file mode 100644
+index 0000000..9f57f50
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
+new file mode 100644
+index 0000000..262186e
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
+@@ -0,0 +1 @@
++com.sbaiahmed1.reactnativebiometrics
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab
+new file mode 100644
+index 0000000..1c8812f
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream
+new file mode 100644
+index 0000000..c460e7e
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream.len
+new file mode 100644
+index 0000000..4af2953
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.len
+new file mode 100644
+index 0000000..93a595b
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.values.at b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.values.at
+new file mode 100644
+index 0000000..26c46fa
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.values.at differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i
+new file mode 100644
+index 0000000..aa6986b
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab
+new file mode 100644
+index 0000000..ced23ca
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream
+new file mode 100644
+index 0000000..4fad52f
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream.len
+new file mode 100644
+index 0000000..c4614b7
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.len
+new file mode 100644
+index 0000000..817b326
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.values.at b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.values.at
+new file mode 100644
+index 0000000..92b2b7d
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.values.at differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i
+new file mode 100644
+index 0000000..a65bb99
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab
+new file mode 100644
+index 0000000..0e192a3
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream
+new file mode 100644
+index 0000000..4fad52f
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream.len
+new file mode 100644
+index 0000000..c4614b7
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.len
+new file mode 100644
+index 0000000..817b326
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.values.at b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.values.at
+new file mode 100644
+index 0000000..b51ed99
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.values.at differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i
+new file mode 100644
+index 0000000..a65bb99
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab
+new file mode 100644
+index 0000000..bdf584a
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.keystream b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.keystream
+new file mode 100644
+index 0000000..d9e8e97
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.keystream differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.keystream.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.keystream.len
+new file mode 100644
+index 0000000..81031c2
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.keystream.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.len
+new file mode 100644
+index 0000000..2a17e6e
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.values.at b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.values.at
+new file mode 100644
+index 0000000..55450f4
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.values.at differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab_i b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab_i
+new file mode 100644
+index 0000000..0227142
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab_i differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab_i.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab_i.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab
+new file mode 100644
+index 0000000..746d63f
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream
+new file mode 100644
+index 0000000..7cbcbce
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream.len
+new file mode 100644
+index 0000000..e761719
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.len
+new file mode 100644
+index 0000000..a363176
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.values.at b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.values.at
+new file mode 100644
+index 0000000..49a91b0
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.values.at differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i
+new file mode 100644
+index 0000000..23c6920
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab
+new file mode 100644
+index 0000000..b339a87
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream
+new file mode 100644
+index 0000000..bcc20a1
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream.len
+new file mode 100644
+index 0000000..d75b8ca
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.len
+new file mode 100644
+index 0000000..fa606b6
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.values.at b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.values.at
+new file mode 100644
+index 0000000..e5afd49
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.values.at differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i
+new file mode 100644
+index 0000000..6aacb8b
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab
+new file mode 100644
+index 0000000..18096e7
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream
+new file mode 100644
+index 0000000..c460e7e
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream.len
+new file mode 100644
+index 0000000..4af2953
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.len
+new file mode 100644
+index 0000000..93a595b
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.values.at b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.values.at
+new file mode 100644
+index 0000000..d72b14b
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.values.at differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i
+new file mode 100644
+index 0000000..aa6986b
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab
+new file mode 100644
+index 0000000..fd96087
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream
+new file mode 100644
+index 0000000..b425921
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream.len
+new file mode 100644
+index 0000000..1cf91b4
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.len
+new file mode 100644
+index 0000000..01bdaa1
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.values.at b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.values.at
+new file mode 100644
+index 0000000..cc06953
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.values.at differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i
+new file mode 100644
+index 0000000..13aca7b
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab
+new file mode 100644
+index 0000000..47e1841
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream
+new file mode 100644
+index 0000000..2eed249
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream.len
+new file mode 100644
+index 0000000..6b14139
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.len
+new file mode 100644
+index 0000000..01bdaa1
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.values.at b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.values.at
+new file mode 100644
+index 0000000..fdc18fe
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.values.at differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i
+new file mode 100644
+index 0000000..4522f52
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/counters.tab b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/counters.tab
+new file mode 100644
+index 0000000..26d3b09
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/counters.tab
+@@ -0,0 +1,2 @@
++4
++0
+\ No newline at end of file
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab
+new file mode 100644
+index 0000000..c16cb8b
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream
+new file mode 100644
+index 0000000..c460e7e
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream.len
+new file mode 100644
+index 0000000..4af2953
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.len
+new file mode 100644
+index 0000000..93a595b
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.values.at b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.values.at
+new file mode 100644
+index 0000000..3e23c2a
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.values.at differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i
+new file mode 100644
+index 0000000..aa6986b
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab
+new file mode 100644
+index 0000000..db33fcf
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream
+new file mode 100644
+index 0000000..6e7a926
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream.len
+new file mode 100644
+index 0000000..eb52963
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.len
+new file mode 100644
+index 0000000..93a595b
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.values.at b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.values.at
+new file mode 100644
+index 0000000..5fb4f84
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.values.at differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i
+new file mode 100644
+index 0000000..6936967
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab
+new file mode 100644
+index 0000000..558da44
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream
+new file mode 100644
+index 0000000..072413b
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream.len
+new file mode 100644
+index 0000000..0d29dd3
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.len
+new file mode 100644
+index 0000000..adb941c
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.values.at b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.values.at
+new file mode 100644
+index 0000000..a71b550
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.values.at differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab_i b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab_i
+new file mode 100644
+index 0000000..2dd2697
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab_i differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab_i.len b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab_i.len differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/last-build.bin b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/last-build.bin
+new file mode 100644
+index 0000000..605a6c0
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/cacheable/last-build.bin differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/classpath-snapshot/shrunk-classpath-snapshot.bin b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/classpath-snapshot/shrunk-classpath-snapshot.bin
+new file mode 100644
+index 0000000..b1dfc63
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/classpath-snapshot/shrunk-classpath-snapshot.bin differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/local-state/build-history.bin b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/local-state/build-history.bin
+new file mode 100644
+index 0000000..85c3c91
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/kotlin/compileDebugKotlin/local-state/build-history.bin differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/outputs/logs/manifest-merger-debug-report.txt b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/outputs/logs/manifest-merger-debug-report.txt
+new file mode 100644
+index 0000000..0f99612
+--- /dev/null
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/outputs/logs/manifest-merger-debug-report.txt
+@@ -0,0 +1,16 @@
++-- Merging decision tree log ---
++manifest
++ADDED from /Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/src/main/AndroidManifest.xml:1:1-2:12
++INJECTED from /Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/src/main/AndroidManifest.xml:1:1-2:12
++	package
++		INJECTED from /Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/src/main/AndroidManifest.xml
++	xmlns:android
++		ADDED from /Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/src/main/AndroidManifest.xml:1:11-69
++uses-sdk
++INJECTED from /Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/src/main/AndroidManifest.xml reason: use-sdk injection requested
++INJECTED from /Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/src/main/AndroidManifest.xml
++INJECTED from /Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/src/main/AndroidManifest.xml
++	android:targetSdkVersion
++		INJECTED from /Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/src/main/AndroidManifest.xml
++	android:minSdkVersion
++		INJECTED from /Users/harshpal/Personal-Work/React-native/SimplicityLabs/payAiro-app/node_modules/@sbaiahmed1/react-native-biometrics/android/src/main/AndroidManifest.xml
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin
+new file mode 100644
+index 0000000..ed04327
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/META-INF/sbaiahmed1_react-native-biometrics_debug.kotlin_module b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/META-INF/sbaiahmed1_react-native-biometrics_debug.kotlin_module
+new file mode 100644
+index 0000000..9dbc290
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/META-INF/sbaiahmed1_react-native-biometrics_debug.kotlin_module differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/BiometricUtils$BiometricAuthenticatorResult.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/BiometricUtils$BiometricAuthenticatorResult.class
+new file mode 100644
+index 0000000..b2cfb55
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/BiometricUtils$BiometricAuthenticatorResult.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/BiometricUtils.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/BiometricUtils.class
+new file mode 100644
+index 0000000..893d433
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/BiometricUtils.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsModule.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsModule.class
+new file mode 100644
+index 0000000..15c34b2
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsModule.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsPackage.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsPackage.class
+new file mode 100644
+index 0000000..362585f
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsPackage.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$BiometricState.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$BiometricState.class
+new file mode 100644
+index 0000000..bdb6362
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$BiometricState.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$Companion.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$Companion.class
+new file mode 100644
+index 0000000..073e75f
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$Companion.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$authenticateWithOptions$callback$1.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$authenticateWithOptions$callback$1.class
+new file mode 100644
+index 0000000..b097ed7
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$authenticateWithOptions$callback$1.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$lifecycleListener$1.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$lifecycleListener$1.class
+new file mode 100644
+index 0000000..1210fa7
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$lifecycleListener$1.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$simplePrompt$callback$1.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$simplePrompt$callback$1.class
+new file mode 100644
+index 0000000..5a73e2d
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$simplePrompt$callback$1.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$validateKeyIntegrity$biometricPrompt$1.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$validateKeyIntegrity$biometricPrompt$1.class
+new file mode 100644
+index 0000000..d894d96
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$validateKeyIntegrity$biometricPrompt$1.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$verifyKeySignature$biometricPrompt$1.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$verifyKeySignature$biometricPrompt$1.class
+new file mode 100644
+index 0000000..2241d89
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl$verifyKeySignature$biometricPrompt$1.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl.class b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl.class
+new file mode 100644
+index 0000000..2ce9691
+Binary files /dev/null and b/node_modules/@sbaiahmed1/react-native-biometrics/android/build/tmp/kotlin-classes/debug/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsSharedImpl.class differ
+diff --git a/node_modules/@sbaiahmed1/react-native-biometrics/android/src/oldarch/java/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsModule.kt b/node_modules/@sbaiahmed1/react-native-biometrics/android/src/oldarch/java/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsModule.kt
+index 3390218..4032af8 100644
+--- a/node_modules/@sbaiahmed1/react-native-biometrics/android/src/oldarch/java/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsModule.kt
++++ b/node_modules/@sbaiahmed1/react-native-biometrics/android/src/oldarch/java/com/sbaiahmed1/reactnativebiometrics/ReactNativeBiometricsModule.kt
+@@ -21,11 +21,6 @@ class ReactNativeBiometricsModule(reactContext: ReactApplicationContext) :
+ 
+   override fun getName(): String = "ReactNativeBiometrics"
+ 
+-  @ReactMethod
+-  fun isSensorAvailable(promise: Promise) {
+-    sharedImpl.isSensorAvailable(promise)
+-  }
+-
+   @ReactMethod
+   fun isSensorAvailable(biometricStrength: String?, promise: Promise) {
+     sharedImpl.isSensorAvailable(biometricStrength, promise)

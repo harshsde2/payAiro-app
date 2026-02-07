@@ -932,7 +932,7 @@ const NewDashboard = () => {
               <>
                 <MemoizedDashboardSection
                   title="Your Accounts"
-                  actionText="see all"
+                  actionText="View all"
                   onActionPress={() => {
                     navigation.navigate(NAVIGATION_SCREENS.BANK_DETAILS, {
                       item: processedBankAccounts,
@@ -1187,7 +1187,7 @@ const NewDashboard = () => {
                 {isCrypto && (
                   <MemoizedDashboardSection
                     title="PayAiro Contacts"
-                    actionText="see all"
+                    actionText="View all"
                     onActionPress={onContactSeeALl}
                   >
                     {isDashBoardDataPending ? (
@@ -1258,7 +1258,7 @@ const NewDashboard = () => {
                 {isCrypto && (
                   <MemoizedDashboardSection
                     title="Rewards & Referrals"
-                    actionText="see all"
+                    actionText="Explore"
                     onActionPress={onRewardSeeALl}
                     contentContainerStyle={{
                       flexDirection: "row",

@@ -1,4 +1,4 @@
-import { View, Text } from "react-native";
+import { View, Text, Image } from "react-native";
 import React from "react";
 import Fonts from "../../constants/Fonts";
 import moment from "moment";
@@ -6,6 +6,7 @@ import { FasterImageView } from "@rraut/react-native-faster-image";
 import { CustomText } from "tsx-components";
 
 export default function Notificatiom({ item }) {
+  // console.log('item =>', JSON.stringify(item, null, 2));
   return (
     <>
       <View
@@ -24,7 +25,7 @@ export default function Notificatiom({ item }) {
           }}
         >
           {item?.image && (
-            <FasterImageView
+            <Image
               source={{ uri: item?.image }}
               style={{ width: 50, height: 50 }}
               radius={25}

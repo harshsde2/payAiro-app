@@ -7,6 +7,8 @@ export type KycBadgeStatus = "Pending" | "Verified" | "Rejected";
 export type ImagePickerSource = "camera" | "gallery";
 
 export interface IWalletData {
+  account_email?: string;
+  account_number?: string;
   name?: string;
   last_name?: string;
   username?: string;

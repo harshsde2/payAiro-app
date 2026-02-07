@@ -24,6 +24,7 @@ import SelectionNetwork from "../../components/SelectionNetwork";
 import Fonts from "../../constants/Fonts";
 import { SCREENS } from "../../constants/SCREENS";
 import useSelectorAction from "../../hooks/useSelectorAction";
+import { useAppLock } from "../../hooks/useAppLock";
 import { showError, showSuccess } from "../../utils/toast";
 import {
   confirmPayment,
@@ -41,6 +42,7 @@ export default function ScanPay(props: IScanPayProps) {
   const { theme } = useTheme();
 
   const { tokens, isCrypto, walletData, bankLists } = useSelectorAction() as any;
+  const { requestPaymentVerification } = useAppLock();
 
   const DROPDOWN_LISTS = (bankLists || []).map((item: any) => {
     const last4 = item?.account_number?.slice(-4);
@@ -93,7 +95,9 @@ export default function ScanPay(props: IScanPayProps) {
   useEffect(() => {
     getBlockchain();
     if(type === "request") {
-      handleCheckPin()
+      // handleCheckPin()
+      // if (!validateBeforeTransaction()) return;
+      // requestPaymentVerification(handleActionsAfterPinVerified);
     }
   }, []);
 
@@ -744,7 +748,8 @@ export default function ScanPay(props: IScanPayProps) {
               title={"Pay"}
               cStyle={{ width: "100%" }}
               onPress={() => {
-                handleCheckPin();
+                if (!validateBeforeTransaction()) return;
+                requestPaymentVerification(handleActionsAfterPinVerified);
               }}
             />
           )}
@@ -753,7 +758,8 @@ export default function ScanPay(props: IScanPayProps) {
               title={"Pay"}
               cStyle={{ width: "100%" }}
               onPress={() => {
-                handleCheckPin();
+                if (!validateBeforeTransaction()) return;
+                requestPaymentVerification(handleActionsAfterPinVerified);
               }}
             />
           )}
@@ -762,7 +768,8 @@ export default function ScanPay(props: IScanPayProps) {
               title={"Pay"}
               cStyle={{ width: "100%" }}
               onPress={() => {
-                handleCheckPin();
+                if (!validateBeforeTransaction()) return;
+                requestPaymentVerification(handleActionsAfterPinVerified);
               }}
               isLoading={isPendingPayPaymentRequest}
             />
@@ -791,7 +798,8 @@ export default function ScanPay(props: IScanPayProps) {
               title={"Pay"}
               cStyle={{ width: "100%" }}
               onPress={() => {
-                handleCheckPin();
+                if (!validateBeforeTransaction()) return;
+                requestPaymentVerification(handleActionsAfterPinVerified);
               }}
             />
           )}

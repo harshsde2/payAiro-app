@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../../api";
 import { AUTH } from "../../api/endpoints";
 import { ApiResponse, CryptoAsset } from "../../api/types";
-import { queryStaleTime } from "query/queryConfigs";
+import { queryStaleTime, CRYPTO_LIST_STALE_TIME_MS, CRYPTO_LIST_GC_TIME_MS } from "query/queryConfigs";
 import useSelectorAction from "hooks/useSelectorAction";
 import { useDispatch } from "react-redux";
 import { setAllCryptoBalances, setTotalDisbursable, setCryptoData, setAggregatedCryptoBalances } from "../../redux/slices/authenticationSlice";
@@ -45,11 +45,12 @@ export const useGetCrypto = () => {
     : `${AUTH.COMBINED_CRYPTO_BALANCE}cybrid`;
 
   return useQuery<ApiResponse<any>>({
-    queryKey: cryptoKeys.cryptoBalanceFortress(),
+    queryKey: [...cryptoKeys.cryptoBalanceFortress(), isFortress],
     queryFn: async () => {
       return await apiClient.get<ApiResponse<any>>(url);
     },
-    staleTime: 1000 * 60, // 24 hours
+    staleTime: CRYPTO_LIST_STALE_TIME_MS,
+    gcTime: CRYPTO_LIST_GC_TIME_MS,
   });
 };
 

@@ -25,6 +25,12 @@ export interface AppLockContextType {
   requestShowPinScreen: () => void;
   /** Reset biometric failure count on successful PIN unlock. */
   resetBiometricFailures: () => void;
+  /** Request PIN/biometric verification for payment or other action. Shows AppLockScreen; on success calls callback and closes. */
+  requestPaymentVerification: (onVerified: () => void) => void;
+  /** Clear any active payment verification request (e.g. user cancelled). */
+  clearPaymentVerification: () => void;
+  /** Non-null when payment verification modal is active; onVerified is the callback to run on success. */
+  paymentVerificationRequest: { onVerified: () => void } | null;
 }
 
 export const LOCK_CONFIG = {

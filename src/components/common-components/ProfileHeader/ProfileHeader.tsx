@@ -388,6 +388,9 @@ const ProfileHeader: FC<IProfileHeaderProps> = ({
             {walletData?.username || "N/A"}
           </CustomText>
           <CustomText variant="caption" fontWeight="medium">
+            {walletData?.account_email || walletData?.account_number || "N/A"}
+          </CustomText>
+          <CustomText variant="caption" fontWeight="medium">
             Member since . {memberSince}
           </CustomText>
         </View>

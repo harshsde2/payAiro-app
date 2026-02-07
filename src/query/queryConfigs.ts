@@ -1,3 +1,7 @@
+/** Cache duration for crypto list (combined balance) – 2 hours */
+export const CRYPTO_LIST_STALE_TIME_MS = 2 * 60 * 60 * 1000;
+export const CRYPTO_LIST_GC_TIME_MS = 2 * 60 * 60 * 1000;
+
 export const queryStaleTime = {
   INSTANT_STALE_TIME: 0,
   VERY_FAST_STALE_TIME: 0, // 0 seconds

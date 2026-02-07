@@ -1,5 +1,5 @@
 import Fonts from "constants/Fonts";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -17,12 +17,28 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppLock } from "hooks/useAppLock";
 import { useNavigation } from "@react-navigation/native";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { authenticateWithBiometric } from "services/BiometricService";
+import { LOCK_CONFIG } from "types/appLock.types";
 
 const AppLockScreen: React.FC = () => {
   const { theme } = useTheme();
   const styles = customStyles(theme);
   const navigation = useNavigation<any>();
-  const { isLocked, unlockApp, shouldShowLock } = useAppLock();
+  const {
+    isLocked,
+    unlockApp,
+    shouldShowLock,
+    isBiometricEnabled,
+    showPinScreen,
+    requestShowPinScreen,
+    resetBiometricFailures,
+    paymentVerificationRequest,
+    clearPaymentVerification,
+  } = useAppLock();
+
+  const biometricFailureCount = useRef(0);
+  const paymentMode = !!paymentVerificationRequest;
+  const [paymentShowPin, setPaymentShowPin] = useState(false);
 
   const [pin, setPin] = useState("");
   const [isVerifyingPin, setIsVerifyingPin] = useState(false);
@@ -66,10 +82,15 @@ const AppLockScreen: React.FC = () => {
     try {
       const isValid = verifyPin(pinToCheck);
       if (isValid) {
-        // PIN is correct, unlock the app
         setPin("");
         setErrorMessage("");
-        unlockApp();
+        if (paymentMode && paymentVerificationRequest) {
+          paymentVerificationRequest.onVerified();
+          clearPaymentVerification();
+        } else {
+          resetBiometricFailures();
+          unlockApp();
+        }
       } else {
         // PIN is incorrect
         setErrorMessage("Invalid PIN. Please try again.");
@@ -96,34 +117,86 @@ const AppLockScreen: React.FC = () => {
     }
   }, [isLocked]);
 
-  // Block Android hardware back button when locked
+  // When overlay is visible and biometric enabled, show native biometric on top; success → unlock or payment callback, fail → after N show PIN
+  const shouldRunBiometric =
+    (shouldShowLock && isLocked && !showPinScreen && isBiometricEnabled) ||
+    (paymentMode && isBiometricEnabled && !paymentShowPin);
+
   useEffect(() => {
-    if (isLocked && shouldShowLock) {
+    if (!shouldRunBiometric) return;
+
+    let cancelled = false;
+
+    const runBiometric = async () => {
+      const success = await authenticateWithBiometric(
+        paymentMode ? "Verify to continue" : "Unlock PayAiro"
+      );
+      if (cancelled) return;
+      if (success) {
+        biometricFailureCount.current = 0;
+        if (paymentMode && paymentVerificationRequest) {
+          paymentVerificationRequest.onVerified();
+          clearPaymentVerification();
+        } else {
+          unlockApp();
+        }
+      } else {
+        biometricFailureCount.current += 1;
+        if (biometricFailureCount.current >= LOCK_CONFIG.MAX_BIOMETRIC_FAILURES_BEFORE_PIN) {
+          if (paymentMode) setPaymentShowPin(true);
+          else requestShowPinScreen();
+        }
+      }
+    };
+
+    runBiometric();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    shouldRunBiometric,
+    paymentMode,
+    paymentShowPin,
+    paymentVerificationRequest,
+    clearPaymentVerification,
+    unlockApp,
+    requestShowPinScreen,
+  ]);
+
+  useEffect(() => {
+    if (!isLocked && !paymentMode) biometricFailureCount.current = 0;
+  }, [isLocked, paymentMode]);
+
+  useEffect(() => {
+    if (paymentMode) {
+      setPaymentShowPin(false);
+      setPin("");
+      setErrorMessage("");
+    }
+  }, [paymentMode]);
+
+  // Block Android hardware back button when in app lock mode (allow cancel in payment mode)
+  useEffect(() => {
+    if (isLocked && shouldShowLock && !paymentMode) {
       const backHandler = BackHandler.addEventListener(
         "hardwareBackPress",
-        () => {
-          // Prevent going back when locked
-          return true;
-        }
+        () => true
       );
-
       return () => backHandler.remove();
     }
-  }, [isLocked, shouldShowLock]);
+  }, [isLocked, shouldShowLock, paymentMode]);
 
-  // Don't render if user doesn't have PIN or not logged in, or not locked
-  if (!shouldShowLock || !isLocked) {
-    return null;
-  }
+  const showModal = (shouldShowLock && isLocked) || paymentMode;
+  if (!showModal) return null;
 
   return (
     <SafeAreaView edges={[]} style={styles.modalContainer}>
       <Modal
         animationType="fade"
         transparent={false}
-        visible={isLocked}
+        visible={showModal}
         onRequestClose={() => {
-          // Prevent closing without PIN
+          if (paymentMode) clearPaymentVerification();
         }}
         style={{ flex: 1 }}
         presentationStyle="fullScreen"
@@ -209,22 +282,20 @@ const AppLockScreen: React.FC = () => {
               </View>
             ) : null}
 
-            {/* Forgot PIN Link */}
-            <TouchableOpacity
-              style={styles.forgotPinContainer}
-              onPress={() => {
-
-                unlockApp();
-                // First hide the lock modal, then navigate   
-                //              // Use setTimeout to ensure modal is hidden before navigation
-                setTimeout(() => {
-                  navigation.navigate(NAVIGATION_SCREENS.FORGOT_PIN_SCREEN);
-                }, 100);
-              }}
-              activeOpacity={0.7}
-            >
-              <CustomText style={styles.forgotPinText}>Forgot PIN?</CustomText>
-            </TouchableOpacity>
+            {!paymentMode && (
+              <TouchableOpacity
+                style={styles.forgotPinContainer}
+                onPress={() => {
+                  unlockApp();
+                  setTimeout(() => {
+                    navigation.navigate(NAVIGATION_SCREENS.FORGOT_PIN_SCREEN);
+                  }, 100);
+                }}
+                activeOpacity={0.7}
+              >
+                <CustomText style={styles.forgotPinText}>Forgot PIN?</CustomText>
+              </TouchableOpacity>
+            )}
           </View>
 
           <View style={styles.keypadContainer}>

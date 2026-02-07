@@ -202,7 +202,7 @@ export default function CryptoScreen() {
           })}
         </View>
         <View style={{ flex: 1, marginTop: 10 }}>
-          {isFetching && loadingView}
+          {isPending && loadingView}
           {isSuccess && (
             <FlatList
               data={data?.data}

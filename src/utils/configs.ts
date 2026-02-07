@@ -2,11 +2,15 @@ import { queryClient } from "query/queryClient";
 import { resetState } from "redux/slices/authenticationSlice";
 import { store } from "redux/store";
 import { clearAll } from "storage/mmkv";
+import { clearBiometric } from "services/Auth";
 import FCMService from "services/FCMService";
 
 export const resetAppState = () => {
   // Clear all MMKV data
   clearAll();
+
+  // Clear biometric preference so next user does not inherit previous user's setting
+  clearBiometric().catch(() => {});
 
   // Dispatch Redux reset
   store.dispatch(resetState());

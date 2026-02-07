@@ -84,3 +84,8 @@ export const getBiometric = async () => {
   }
   return JSON.parse(data);
 };
+
+/** Clear biometric preference (call on logout so next user starts with biometric disabled). */
+export const clearBiometric = async () => {
+  await EncryptedStorage.removeItem("biometric");
+};

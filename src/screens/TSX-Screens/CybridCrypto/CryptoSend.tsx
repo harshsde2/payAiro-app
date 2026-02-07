@@ -37,6 +37,7 @@ import {
   ContactSuggestion,
   IContactItem,
 } from "components/common-components/ContactSuggestion";
+import { useAppLock } from "hooks/useAppLock";
 
 const CryptoSend = () => {
   const route = useRoute();
@@ -50,6 +51,7 @@ const CryptoSend = () => {
 
   console.log("details ->",details)
   const { walletData } = useSelectorAction() as any;
+  const { requestPaymentVerification } = useAppLock();
 
   const { symbol, buy_price, logo } = details;
   const chainName = symbol.slice(0, 3);
@@ -116,9 +118,11 @@ const CryptoSend = () => {
   } = useVerifyUser();
 
   const handleCheckPin = () => {
-    if (pinScreenRef.current) {
-      pinScreenRef.current?.checkUserPin();
-    }
+    // if (pinScreenRef.current) {
+    //   pinScreenRef.current?.checkUserPin();
+    // }
+    if (!validateForm()) return;
+    requestPaymentVerification(handleActionsAfterPinVerified);
   };
 
   const handleActionsAfterPinVerified = () => {
