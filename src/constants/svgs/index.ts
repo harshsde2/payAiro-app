@@ -157,11 +157,9 @@ import UnlockRewards from "./UnlockRewards.svg";
 import ArrowUp from "./ArrowUp.svg";
 import ArrowDown from "./ArrowDown.svg";
 import ArrowDownBlack from "./ArrowDownBlack.svg";
-
-
-
-
-
+import BankOfAmerica from "./BankOfAmerica.svg";
+import PayPal from "./Paypal.svg";
+import Venmo from "./Venmo.svg";
 
 export const SvgIcons = {
   PayAiorRoundIcon,
@@ -322,5 +320,8 @@ export const SvgIcons = {
   UnlockRewards,
   ArrowUp,
   ArrowDown,
-  ArrowDownBlack
+  ArrowDownBlack,
+  BankOfAmerica,
+  PayPal,
+  Venmo,
 };

@@ -36,6 +36,9 @@
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>itms-apps</string>
+		<string>paypal</string>
+		<string>venmo</string>
+		<string>bankofamerica</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>

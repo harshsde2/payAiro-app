@@ -27,7 +27,13 @@ import LocationUnavailableModal from "components/common-components/LocationUnava
 
 // Helper function to get icon component by key
 const getPaymentIcon = (
-  iconKey: "DebitCard" | "ApplePay" | "ACHTransfer" | "CryptoWallet" | "Bank"
+  iconKey:
+    | "DebitCard"
+    | "ApplePay"
+    | "ACHTransfer"
+    | "CryptoWallet"
+    | "Bank"
+    | "PaymentApp"
 ) => {
   switch (iconKey) {
     case "DebitCard":
@@ -39,7 +45,9 @@ const getPaymentIcon = (
     case "CryptoWallet":
       return <SvgIcons.CryptoWallet />;
     case "Bank":
-      return <SvgIcons.Bank width={30} height={30} style={{ marginHorizontal:8 }} />;
+      return <SvgIcons.Bank width={30} height={30} style={{ marginHorizontal:8,marginVertical:8 }} />;
+    case "PaymentApp":
+      return <SvgIcons.DollarCircleIcon width={40} height={40} style={{ marginHorizontal:8,marginVertical:8 }} />;
     default:
       return null;
   }
@@ -85,6 +93,14 @@ const PAYMENT_METHOD_CONFIGS = [
     type: "Bank" as const,
     navigation: NAVIGATION_SCREENS.ADD_CRYPTO,
     showInProduction: true, // Always show
+    isDisabled: false,
+  },
+  {
+    title: "Choose payment app",
+    iconKey: "PaymentApp" as const,
+    type: "PaymentAppList" as const,
+    navigation: NAVIGATION_SCREENS.PAYMENT_APP_LIST,
+    showInProduction: true,
     isDisabled: false,
   },
 ] as const;
@@ -375,9 +391,14 @@ const AddBalance = () => {
                       item,
                     });
                   } else if (method.type === "Bank") {
-                    navigation.navigate(NAVIGATION_SCREENS.ADD_BALANCE_BANK_DETAILS, {
-                      bankList: BANK_LISTS,
-                    });
+                    navigation.navigate(
+                      NAVIGATION_SCREENS.ADD_BALANCE_BANK_DETAILS,
+                      {
+                        bankList: BANK_LISTS,
+                      }
+                    );
+                  } else if (method.type === "PaymentAppList") {
+                    navigation.navigate(NAVIGATION_SCREENS.PAYMENT_APP_LIST);
                   }
                 }}
                 disabled={isDisabled}

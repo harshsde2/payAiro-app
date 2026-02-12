@@ -66,6 +66,7 @@ import UserProfile from "screens/TSX-Screens/UserProfile/UserProfile";
 import NewPersonal from "screens/SettingScreen/NewPersonal";
 import Settings2 from "screens/Authentications/Settings2";
 import AddBalanceBankDetails from "screens/TSX-Screens/AddBalance/AddBalanceBankDetails";
+import PaymentAppList from "screens/TSX-Screens/AddBalance/PaymentAppList";
 
 const Stack = createNativeStackNavigator();
 
@@ -457,6 +458,11 @@ export default function AppStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.ADD_BALANCE_BANK_DETAILS}
         component={AddBalanceBankDetails}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.PAYMENT_APP_LIST}
+        component={PaymentAppList}
       />
     </Stack.Navigator>
   );
