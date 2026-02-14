@@ -42,6 +42,7 @@ class FCMService {
     try {
       // Register device for remote messages (iOS only)
       if (Platform.OS === "ios") {
+        
         await messaging().registerDeviceForRemoteMessages();
       }
 
@@ -71,7 +72,7 @@ class FCMService {
       await this.getDeviceId();
 
       return token;
-    } catch (error) {
+    } catch (error: any) {
       console.error("[FCMService] Initialization error:", error);
       if (this.options.onError) {
         this.options.onError(error as Error);

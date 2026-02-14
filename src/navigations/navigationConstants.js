@@ -2,6 +2,7 @@
 export const NAVIGATION_SCREENS = {
   // Auth Stack Screens
   LANDING_PAGE: "LandingPage",
+  DEBUG_TEST: "DebugTest",
   LOGIN: "Login",
   SIGNUP: "signup",
   OTP: "OTP",

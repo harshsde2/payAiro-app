@@ -90,6 +90,7 @@ api.interceptors.request.use(
           "auth/V1/login/",
           "/auth/query/", // USER_SUPPORT: allow users to submit support requests even when KYC is pending
           "auth/query/", // without leading slash variant
+          AUTH.CONTACT_FORM, // contact form should be accessible even without KYC
           "auth/V1/update-account/",
           "wallet/details/",
           AUTH.CREATE_PIN,

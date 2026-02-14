@@ -62,4 +62,6 @@ export const STORAGE_KEYS = {
   APP_LOCK_TIMEOUT: "app.lock.timeout",
   KYC_CONGRATULATIONS_SHOWN: "kyc_congratulations_shown",
   SMS_HASH: "sms_hash",
+  /** Debug: last time a push notification was received (ISO string). For TestFlight debugging. */
+  DEBUG_LAST_NOTIFICATION_AT: "debug_last_notification_at",
 };

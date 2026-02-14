@@ -5,7 +5,8 @@ import { useLogin } from "query/hooks/useAPIAuth";
 import React, { useEffect, useRef, useState } from "react";
 import {
   StyleSheet,
-  View
+  View,
+  TouchableOpacity,
 } from "react-native";
 import { Theme, useTheme } from "styles";
 import { CustomText } from "tsx-components";
@@ -15,6 +16,7 @@ import GenericButton from "../../components/GenericButton";
 import PoliticalModal from "../../components/PolitaclModal";
 import TextInputField from "../../components/TextInputField";
 import { SCREENS } from "../../constants/SCREENS";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { showError, showSuccess } from "../../utils/toast";
 import { validateEmailOrPhone } from "../../utils/validation";
 import { getSmsHash } from "../../utils/smsHash";
@@ -150,10 +152,10 @@ export default function Login() {
         </View>
         <View style={styles.fieldAndCheckboxContainer}>
           <TextInputField
-            placeholder={isProductionEnv ? "joe@gmail.com" : "joe@gmail.com or 9876543210"}
+            placeholder={"joe@gmail.com or 9876543210"}
             value={emailOrPhone}
             onChange={setEmailOrPhone}
-            label={isProductionEnv ? "Enter your email" : "Enter your email or phone number"}
+            label={"Enter your email or phone number"}
             required={true}
           />
           <GenericButton
@@ -164,6 +166,21 @@ export default function Login() {
             showLoader={true}
             disabled={buttonDisabled || !emailOrPhone.trim()}
           />
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={styles.accountRecoveryLinkContainer}
+            onPress={() => {
+              (navigation as any).navigate(NAVIGATION_SCREENS.SUPPORT_SCREEN);
+            }}
+          >
+            <CustomText
+              variant={"caption"}
+              style={styles.accountRecoveryLinkText}
+              color={theme.colors.palette.green500}
+            >
+              Having trouble logging in? Recover your account
+            </CustomText>
+          </TouchableOpacity>
         </View>
       </View>
     </ScreenContainer>
@@ -209,6 +226,14 @@ const customStyles = (theme: Theme) =>
     checkboxContainer: {
       paddingHorizontal: 10,
       marginVertical: 10,
+    },
+    accountRecoveryLinkContainer: {
+      marginTop: theme.spacing.spacing?.[4],
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    accountRecoveryLinkText: {
+      textAlign: "center",
     },
   });
 

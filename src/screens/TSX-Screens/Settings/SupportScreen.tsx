@@ -8,14 +8,16 @@ import { useCommonAddBalanceStyles } from "../AddBalance/Styles";
 import { SvgIcons } from "constants/svgs";
 import { CustomText } from "tsx-components";
 import TextInputField from "components/TextInputField";
-import UploadFile from "components/UploadFile";
+// import UploadFile from "components/UploadFile"; // Image upload temporarily disabled for account recovery
 import useSelectorAction from "hooks/useSelectorAction";
 import GenericButton from "components/GenericButton";
-import { useSupport } from "query/hooks";
 import useDispatchAction from "hooks/useDispatchAction";
 import { setShowLoader } from "redux/slices/authenticationSlice";
 import { showError, showSuccess } from "utils/toast";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { validateEmailOrPhone } from "utils/validation";
+import { apiClient } from "api";
+import { AUTH } from "api/endpoints";
 
 const SupportScreen = () => {
   const { theme } = useTheme();
@@ -23,74 +25,95 @@ const SupportScreen = () => {
   const customStyle = customStyles(theme);
   const styles = { ...useCommonAddBalanceStyles(), ...customStyle };
 
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [registeredContact, setRegisteredContact] = useState("");
   const [message, setMessage] = useState("");
   const [subject, setSubject] = useState("");
-  const [attachment, setAttachment] = useState<any>(null);
-
-  const {
-    isError,
-    isPaused,
-    isPending,
-    mutate: handleSubmitSupport,
-  } = useSupport();
+  // const [attachment, setAttachment] = useState<any>(null); // Image upload is disabled for now
 
   const { walletData } = useSelectorAction();
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     try {
-      if (subject.length == 0) {
-        showError("Subject is Empty");
+      const trimmedFirstName = firstName.trim();
+      const trimmedLastName = lastName.trim();
+      const trimmedRegisteredContact = registeredContact.trim();
+
+      if (!trimmedFirstName) {
+        showError("First name is required", "Please enter your first name.");
         return;
       }
-      if (message.length == 0) {
-        showError("Message is Empty");
+
+      if (!trimmedLastName) {
+        showError("Last name is required", "Please enter your last name.");
         return;
       }
 
-      const formData = new FormData();
-
-      // Append the attachment image only if it exists
-      if (attachment && attachment.uri) {
-        formData.append("selfimage", {
-          uri: attachment.uri,
-          name: attachment.name || `attachment${Date.now()}.jpg`,
-          type: attachment.type || "image/jpeg",
-        });
+      if (!trimmedRegisteredContact) {
+        showError(
+          "Registered email is required",
+          "Please enter the email address linked to your account."
+        );
+        return;
       }
 
-      formData.append("message", message);
-      formData.append("subject", subject);
+      const validationResult = validateEmailOrPhone(trimmedRegisteredContact);
+
+      if (!validationResult.isValid) {
+        showError(validationResult.errorMessage || "Invalid contact", validationResult.helperText || "Enter a valid email or phone number linked to your account.");
+        return;
+      }
+
+      // Contact form requires an email; ensure we have one
+      if (validationResult.inputType !== "email") {
+        showError(
+          "Email address required",
+          "Please enter the email address linked to your account so we can reach you."
+        );
+        return;
+      }
+
+      if (subject.length === 0) {
+        showError("Reason for recovery is empty", "Please tell us why you need to recover your account.");
+        return;
+      }
+      if (message.length === 0) {
+        showError("Details are empty", "Please describe your issue so we can help you recover your account.");
+        return;
+      }
+
+      const formattedRegisteredContact = validationResult.formattedValue;
+      const composedMessage = `Name: ${trimmedFirstName} ${trimmedLastName}\nRegistered contact: ${formattedRegisteredContact}\nReason: ${subject}\n\nDetails:\n${message}`;
+
       useDispatchAction(setShowLoader(true));
 
-      handleSubmitSupport(formData as any, {
-        onSuccess: (data) => {
-          // console.log("data => ✅", JSON.stringify(data, null, 2));
-          showSuccess("Your Query Submit Successfully");
-          // Reset form after successful submission
-          setMessage("");
-          setSubject("");
-          setAttachment(null);
-          // handleAddBankAccounts();
-          navigation.goBack();
-        },
-        onError: (error: any) => {
-          useDispatchAction(setShowLoader(false));
-          const errorMessage =
-            error?.response?.data?.message ||
-            error?.message ||
-            "Something went wrong!";
-          showError(errorMessage);
-        },
-        onSettled: () => {
-          useDispatchAction(setShowLoader(false));
-        },
-      });
+      const payload = {
+        first_name: trimmedFirstName,
+        last_name: trimmedLastName,
+        email: formattedRegisteredContact,
+        message: composedMessage,
+      };
+
+      await apiClient.post<any>(AUTH.CONTACT_FORM, payload);
+
+      showSuccess("Your account recovery request has been submitted");
+      // Reset form after successful submission
+      setFirstName("");
+      setLastName("");
+      setRegisteredContact("");
+      setMessage("");
+      setSubject("");
+      // setAttachment(null);
+      navigation.goBack();
     } catch (error: any) {
       useDispatchAction(setShowLoader(false));
       const errorMessage =
         error?.message || "An unexpected error occurred. Please try again.";
       showError(errorMessage);
       console.error("Support form submission error:", error);
+    } finally {
+      useDispatchAction(setShowLoader(false));
     }
   };
 
@@ -101,7 +124,7 @@ const SupportScreen = () => {
   return (
     <ScreenContainer avoidKeyboard scrollable padding={0}>
       <HeaderTitle
-        title="Support"
+        title="Account Recovery"
         leftIcon="true"
         rightIcon={<SvgIcons.ChatWithAi width={30} height={30} />}
         onPressRight={() => {
@@ -115,27 +138,46 @@ const SupportScreen = () => {
             variant="caption"
             style={{ flex: 1, color: theme.colors.palette.grey600 }}
           >
-            Submit the support form below and our team will get in touch within
-            48 hours.
+            Tell us about your account and how you lost access. Our team will help you recover it within 48 hours.
           </CustomText>
         </View>
         <View style={{ marginVertical: 20 }}>
           <TextInputField
             required
-            label="Subject"
-            placeholder={"Your Subject"}
-            value={subject}
+            label="First name"
+            placeholder={"Enter your first name"}
+            value={firstName}
             cStyle={{ marginBottom: 15 }}
             onChange={(e) => {
-              setSubject(e);
+              setFirstName(e);
+            }}
+          />
+          <TextInputField
+            required
+            label="Last name"
+            placeholder={"Enter your last name"}
+            value={lastName}
+            cStyle={{ marginBottom: 15 }}
+            onChange={(e) => {
+              setLastName(e);
+            }}
+          />
+          <TextInputField
+            required
+            label="Registered email"
+            placeholder={"Enter the email address linked to your account"}
+            value={registeredContact}
+            cStyle={{ marginBottom: 15 }}
+            onChange={(e) => {
+              setRegisteredContact(e);
             }}
           />
 
           <TextInputField
             required
-            label="Message"
-            placeholder={"Write your query"}
-            value={message}
+            label="Reason for recovery"
+            placeholder={"e.g. Lost access to phone, forgot password, suspicious activity"}
+            value={subject}
             isMultiLine={true}
             iStyle={{
               height: 120,
@@ -144,13 +186,32 @@ const SupportScreen = () => {
             }}
             cStyle={{ marginBottom: 15 }}
             onChange={(m) => {
+              setSubject(m);
+            }}
+          />
+
+          <TextInputField
+            required
+            label="Describe your issue"
+            placeholder={
+              "Include any details that can help us verify your identity (last successful login, device, approximate balance, etc.)"
+            }
+            value={message}
+            isMultiLine={true}
+            iStyle={{
+              height: 160,
+              textAlignVertical: "top",
+              paddingVertical: 10,
+            }}
+            cStyle={{ marginBottom: 15 }}
+            onChange={(m) => {
               setMessage(m);
             }}
           />
+          {/* Image upload disabled for now
           <UploadFile
-            label={"Upload file"}
+            label={"Add an attachment (optional)"}
             selectedFile={(result: any) => {
-              //   setidProof1(result);
               if (result && result.length > 0 && result[0]) {
                 setAttachment(result[0]);
               } else {
@@ -176,7 +237,6 @@ const SupportScreen = () => {
                     padding: 10,
                     backgroundColor: theme.colors.palette.grey120,
                     borderRadius: 50,
-                    // marginBottom: 10,
                   }}
                 >
                   <SvgIcons.UploadIcon width={30} height={30} />
@@ -202,15 +262,16 @@ const SupportScreen = () => {
                   color={theme.colors.palette.grey400}
                   style={{ marginTop: 15 }}
                 >
-                  Accepted formats: PNG, JPG • Max size: 5MB
+                  You can upload a photo ID or a screenshot related to your account.
                 </CustomText>
               </View>
             )}
           </UploadFile>
+          */}
         </View>
         <View style={{ gap: 10 }}>
           <GenericButton
-            title="Submit"
+            title="Submit recovery request"
             onPress={() => {
               handleSubmit();
             }}

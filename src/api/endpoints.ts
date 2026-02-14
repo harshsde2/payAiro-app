@@ -80,6 +80,7 @@ export const AUTH = {
   SELL_RWA: "/auth/rwa/sell/",
   RWA_USER_HOLDINGS: "/auth/user/rwa-holdings/",
   USER_SUPPORT: "/auth/query/",
+  CONTACT_FORM: "auth/contact-form/",
   USER_TO_USER_FORTRESS_TRANSFER: "auth/fortreetrust-bankaccount-transfer/",
   USER_TO_USER_CYBRID_TRANSFER: "auth/cybrid/transfer/",
   COMBINED_CRYPTO_BALANCE: "auth/CombinedCryptoPrices/?type=",

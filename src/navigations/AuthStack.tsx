@@ -9,6 +9,8 @@ import CybridWebView from "screens/Authentications/CybridWebView";
 import LandingPage from "screens/Authentications/LandingPage";
 import Signup from "screens/Authentications/Signup";
 import SelectStates from "tsx-components/modals/SelectStates";
+import SupportScreen from "screens/TSX-Screens/Settings/SupportScreen";
+import DebugTestScreen from "screens/TSX-Screens/DebugTestScreen";
 
 const Stack = createNativeStackNavigator();
 export default function AuthStack() {
@@ -23,6 +25,11 @@ export default function AuthStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.LANDING_PAGE}
         component={LandingPage}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.DEBUG_TEST}
+        component={DebugTestScreen}
       />
       <Stack.Screen
         options={{ headerShown: false }}
@@ -70,6 +77,11 @@ export default function AuthStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.CYBRID_WEB_VIEW}
         component={CybridWebView}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.SUPPORT_SCREEN}
+        component={SupportScreen}
       />
     </Stack.Navigator>
   );

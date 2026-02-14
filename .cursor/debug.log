@@ -1,6 +1,0 @@
-{"location":"App.js:238","message":"Notification setup useEffect called","data":{"platform":"ios"},"timestamp":1769360165289,"sessionId":"debug-session","runId":"run2","hypothesisId":"A"}
-{"location":"App.js:247","message":"iOS registerDeviceForRemoteMessages called","data":{"platform":"ios"},"timestamp":1769360165297,"sessionId":"debug-session","runId":"run2","hypothesisId":"A"}
-{"location":"App.js:274","message":"requestPermission called","data":{"platform":"ios"},"timestamp":1769360165503,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
-{"location":"App.js:278","message":"Permission status received","data":{"platform":"ios","status":1,"AUTHORIZED":1},"timestamp":1769360167250,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
-{"location":"App.js:295","message":"Notifee permission received","data":{"platform":"ios","authorized":true},"timestamp":1769360167926,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
-{"location":"App.js:285","message":"onMessage listener registered","data":{"platform":"ios"},"timestamp":1769360167929,"sessionId":"debug-session","runId":"run2","hypothesisId":"A"}

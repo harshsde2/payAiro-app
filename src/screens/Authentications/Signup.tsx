@@ -13,6 +13,7 @@ import TextInputField from "components/TextInputField";
 import Fonts from "constants/Fonts";
 import { SvgIcons } from "constants/svgs";
 import { SCREENS } from "constants/SCREENS";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { showError, showSuccess } from "utils/toast";
 import { validateEmailOrPhone } from "utils/validation";
 import { getSmsHash } from "utils/smsHash";
@@ -237,10 +238,10 @@ console.log("isProductionEnv =>", isProductionEnv);
           </View> */}
 
           <TextInputField
-            placeholder={isProductionEnv ? "joe@gmail.com" : "joe@gmail.com or 9876543210"}
+            placeholder={"joe@gmail.com or 9876543210"}
             value={email}
             onChange={setEmail}
-            label={isProductionEnv ? "Enter your email" : "Enter your email or phone number"}
+            label={"Enter your email or phone number"}
             required={true}
           />
           <TextInputField
@@ -297,6 +298,21 @@ console.log("isProductionEnv =>", isProductionEnv);
           showLoader={true}
           disabled={isSubmitting}
         />
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={styles.accountRecoveryLinkContainer}
+          onPress={() => {
+            navigation.navigate(NAVIGATION_SCREENS.SUPPORT_SCREEN);
+          }}
+        >
+          <CustomText
+            variant={"caption"}
+            style={styles.accountRecoveryLinkText}
+            color={theme.colors.palette.green500}
+          >
+            Already signed up but can’t access your account? Recover it
+          </CustomText>
+        </TouchableOpacity>
       </View>
     </ScreenContainer>
   );
@@ -374,5 +390,13 @@ const customStyles = (theme: Theme) =>
     },
     submitButton: {
       marginTop: 20,
+    },
+    accountRecoveryLinkContainer: {
+      marginTop: 16,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    accountRecoveryLinkText: {
+      textAlign: "center",
     },
   });

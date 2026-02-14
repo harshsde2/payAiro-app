@@ -94,6 +94,13 @@ target 'payAiro' do
       # :ccache_enabled => true
     )
     
+    # Fix "non-modular-include-in-framework-module" build errors (React-Core and other pods)
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+      end
+    end
+    
     # Configure react-native-config to use the .env file
     # The .env file is copied by pre-build scripts or npm scripts before the build
     installer.pods_project.targets.each do |target|
