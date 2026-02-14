@@ -2,6 +2,8 @@ import Fonts from "constants/Fonts";
 import React, { useState, useEffect, useRef } from "react";
 import {
   ActivityIndicator,
+  AppState,
+  type AppStateStatus,
   Modal,
   StyleSheet,
   Text,
@@ -17,7 +19,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppLock } from "hooks/useAppLock";
 import { useNavigation } from "@react-navigation/native";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import { authenticateWithBiometric } from "services/BiometricService";
+import {
+  authenticateWithBiometricDetailed,
+  type BiometricAuthResult,
+} from "services/BiometricService";
 import { LOCK_CONFIG } from "types/appLock.types";
 
 const AppLockScreen: React.FC = () => {
@@ -39,6 +44,8 @@ const AppLockScreen: React.FC = () => {
   const biometricFailureCount = useRef(0);
   const paymentMode = !!paymentVerificationRequest;
   const [paymentShowPin, setPaymentShowPin] = useState(false);
+  /** Incremented when app returns to foreground so biometric effect re-runs and re-shows native modal (e.g. after phone lock). */
+  const [biometricRetriggerKey, setBiometricRetriggerKey] = useState(0);
 
   const [pin, setPin] = useState("");
   const [isVerifyingPin, setIsVerifyingPin] = useState(false);
@@ -122,17 +129,44 @@ const AppLockScreen: React.FC = () => {
     (shouldShowLock && isLocked && !showPinScreen && isBiometricEnabled) ||
     (paymentMode && isBiometricEnabled && !paymentShowPin);
 
+  // Re-show native biometric modal when app returns to foreground (e.g. after phone lock dismissed the dialog)
+  useEffect(() => {
+    const subscription = AppState.addEventListener(
+      "change",
+      (nextAppState: AppStateStatus) => {
+        if (nextAppState !== "active") return;
+        const shouldRun =
+          (shouldShowLock &&
+            isLocked &&
+            !showPinScreen &&
+            isBiometricEnabled) ||
+          (paymentMode && isBiometricEnabled && !paymentShowPin);
+        if (shouldRun) setBiometricRetriggerKey((k) => k + 1);
+      }
+    );
+    return () => subscription.remove();
+  }, [
+    shouldShowLock,
+    isLocked,
+    showPinScreen,
+    isBiometricEnabled,
+    paymentMode,
+    paymentShowPin,
+  ]);
+
   useEffect(() => {
     if (!shouldRunBiometric) return;
 
     let cancelled = false;
 
     const runBiometric = async () => {
-      const success = await authenticateWithBiometric(
-        paymentMode ? "Verify to continue" : "Unlock PayAiro"
-      );
+      const result: BiometricAuthResult =
+        await authenticateWithBiometricDetailed(
+          paymentMode ? "Verify to continue" : "Unlock PayAiro",
+          { cancelLabel: "Use PIN" }
+        );
       if (cancelled) return;
-      if (success) {
+      if (result.success) {
         biometricFailureCount.current = 0;
         if (paymentMode && paymentVerificationRequest) {
           paymentVerificationRequest.onVerified();
@@ -141,10 +175,26 @@ const AppLockScreen: React.FC = () => {
           unlockApp();
         }
       } else {
-        biometricFailureCount.current += 1;
-        if (biometricFailureCount.current >= LOCK_CONFIG.MAX_BIOMETRIC_FAILURES_BEFORE_PIN) {
+        const userChosePin =
+          result.errorCode === "USER_CANCELED" ||
+          result.errorCode === "ERROR_NEGATIVE_BUTTON";
+        const systemCanceled =
+          result.errorCode === "SYSTEM_CANCELED" ||
+          result.errorCode === "ERROR_CANCELED";
+        if (userChosePin) {
           if (paymentMode) setPaymentShowPin(true);
           else requestShowPinScreen();
+        } else if (systemCanceled) {
+          // Dialog was dismissed by system (e.g. phone locked); don't count as failure. AppState listener will re-trigger when user returns.
+        } else {
+          biometricFailureCount.current += 1;
+          if (
+            biometricFailureCount.current >=
+            LOCK_CONFIG.MAX_BIOMETRIC_FAILURES_BEFORE_PIN
+          ) {
+            if (paymentMode) setPaymentShowPin(true);
+            else requestShowPinScreen();
+          }
         }
       }
     };
@@ -155,6 +205,7 @@ const AppLockScreen: React.FC = () => {
     };
   }, [
     shouldRunBiometric,
+    biometricRetriggerKey,
     paymentMode,
     paymentShowPin,
     paymentVerificationRequest,
@@ -215,6 +266,13 @@ const AppLockScreen: React.FC = () => {
           ]}
         >
           <View style={styles.header}>
+          {paymentMode ? (
+            <SvgIcons.LeftArrow
+              width={60}
+              height={60}
+              onPress={() => clearPaymentVerification()}
+            />
+          ) : null}
             <View>
               <CustomText style={styles.appTitle}>PayAiro App</CustomText>
               <CustomText style={styles.subtitleText}>

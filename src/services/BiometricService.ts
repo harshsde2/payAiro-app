@@ -13,6 +13,8 @@ import {
   authenticateWithOptions,
 } from '@sbaiahmed1/react-native-biometrics';
 
+export type { BiometricAuthResult } from '@sbaiahmed1/react-native-biometrics';
+
 const DEFAULT_PROMPT_MESSAGE = 'Unlock PayAiro';
 
 export type BiometricAvailability = {
@@ -67,19 +69,30 @@ export async function authenticateWithBiometric(
   }
 }
 
+export type BiometricAuthOptions = {
+  /** Custom label for the negative button (e.g. "Use PIN" on Android). */
+  cancelLabel?: string;
+};
+
+/**
+ * Same as authenticateWithBiometric but returns full result including errorCode.
+ * Use when you need a custom cancel button label (e.g. "Use PIN") or to distinguish cancel vs other errors.
+ */
 export async function authenticateWithBiometricDetailed(
-  promptMessage: string = DEFAULT_PROMPT_MESSAGE
+  promptMessage: string = DEFAULT_PROMPT_MESSAGE,
+  options?: BiometricAuthOptions
 ): Promise<BiometricAuthResult> {
   try {
     return await authenticateWithOptions({
       title: 'PayAiro',
       subtitle: promptMessage,
-      cancelLabel: 'Cancel',
+      cancelLabel: options?.cancelLabel ?? 'Cancel',
       allowDeviceCredentials: false,
       disableDeviceFallback: true,
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    return { success: false, error: message };
+    const errorCode = (e as { code?: string })?.code;
+    return { success: false, error: message, errorCode };
   }
 }

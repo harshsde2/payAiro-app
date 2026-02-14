@@ -29,6 +29,8 @@ export interface PendingRequest {
 export interface Wallet {
   name?: string;
   username?: string;
+  /** App-lock (biometric) enabled on backend. */
+  is_locked?: boolean;
   btc?: CryptoWallet;
   eth?: CryptoWallet;
   matic?: CryptoWallet;

@@ -30,11 +30,11 @@ import {
   setBiometric,
   setPin
 } from '../../services/Auth';
+import { usePatchUserLock } from 'query/hooks';
 import { getKYC, patchPin } from '../../services/Services';
 import { showError, showSuccess } from '../../utils/toast';
 import {
   checkBiometricAvailability,
-  authenticateWithBiometric,
   authenticateWithBiometricDetailed,
 } from 'services/BiometricService';
 
@@ -58,6 +58,7 @@ export default function Settings2() {
     refreshBiometricStatus: refreshBiometricStatusInContext,
     resetBiometricFailures,
   } = useAppLock();
+  const { mutateAsync: patchUserLockMutation } = usePatchUserLock();
 
   const kycStatus = useSelector((s) => s.authenticationSlice?.kycStatus);
 
@@ -108,6 +109,11 @@ export default function Settings2() {
                   setBiometricStatus(false);
                   resetBiometricFailures();
                   await refreshBiometricStatusInContext();
+                  try {
+                    await patchUserLockMutation({ is_locked: false });
+                  } catch (apiErr) {
+                    showError('Biometric disabled locally; sync with server failed.');
+                  }
                   showSuccess('Biometric unlock disabled');
                 } catch (e) {
                   showError('Unable to disable biometric unlock');
@@ -176,6 +182,11 @@ export default function Settings2() {
       await setBiometric(true);
       setBiometricStatus(true);
       await refreshBiometricStatusInContext();
+      try {
+        await patchUserLockMutation({ is_locked: true });
+      } catch (apiErr) {
+        showError('Biometric enabled locally; sync with server failed.');
+      }
       showSuccess('Biometric unlock enabled');
     } finally {
       // Delay reset to handle multiple AppState transitions during system UI dismissal.

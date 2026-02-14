@@ -1,5 +1,6 @@
-import { View, Text, StyleSheet, TextInputComponent } from "react-native";
+import { View, StyleSheet } from "react-native";
 import React, { useState } from "react";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { Theme, useTheme } from "styles";
 import { useNavigation } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
@@ -122,7 +123,7 @@ const SupportScreen = () => {
   // console.log("wallet data. =>", JSON.stringify(walletData, null, 2));
 
   return (
-    <ScreenContainer avoidKeyboard scrollable padding={0}>
+    <ScreenContainer scrollable={false} padding={0}>
       <HeaderTitle
         title="Account Recovery"
         leftIcon="true"
@@ -131,6 +132,15 @@ const SupportScreen = () => {
           navigation.navigate(NAVIGATION_SCREENS.FRESHCHAT_SCREEN);
         }}
       />
+      <KeyboardAwareScrollView
+        style={customStyle.keyboardScrollView}
+        contentContainerStyle={customStyle.keyboardScrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid
+        extraScrollHeight={24}
+        enableAutomaticScroll
+      >
       <View style={[styles.whiteSheetContainer]}>
         <View style={customStyle.infoContainer}>
           {/* <SvgIcons.InfoNote /> */}
@@ -278,6 +288,7 @@ const SupportScreen = () => {
           />
         </View>
       </View>
+      </KeyboardAwareScrollView>
     </ScreenContainer>
   );
 };
@@ -286,6 +297,12 @@ export default SupportScreen;
 
 const customStyles = (theme: Theme) =>
   StyleSheet.create({
+    keyboardScrollView: {
+      flex: 1,
+    },
+    keyboardScrollContent: {
+      flexGrow: 1,
+    },
     infoContainer: {
       width: "100%",
       flexDirection: "row",

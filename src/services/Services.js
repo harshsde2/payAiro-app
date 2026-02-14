@@ -83,6 +83,14 @@ export const patchPin = async (payload, token) =>
 
 export const getPinFromSev = async (token) => getReq2("auth/get-pin/", token);
 
+/** GET user app-lock (biometric) preference from backend. Returns { data: { is_locked: boolean } } or similar. */
+export const getUserLock = async (token) =>
+  getReq2("auth/user-lock/", token);
+
+/** PATCH user app-lock (biometric) preference on backend. payload: { is_locked: boolean }. */
+export const patchUserLock = async (payload, token) =>
+  patchReq2("auth/user-lock/", payload, token, false);
+
 export const getStatementsTX = async (filters, token) => {
   const queryString = filters && filters.trim() !== "" ? `?${filters}` : "";
   return getReq2(`wallet/filtered-transactions${queryString}`, token);

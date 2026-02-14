@@ -35,7 +35,7 @@ import {
   setTokens,
   setWalletData
 } from "../../redux/slices/authenticationSlice";
-import { setToken, setWalletDataAuth } from "../../services/Auth";
+import { setBiometric, setToken, setWalletDataAuth } from "../../services/Auth";
 import { showError, showSuccess } from "../../utils/toast";
 import { appContent } from "utils/appContent";
 
@@ -49,7 +49,7 @@ export default function ConfirmOTP() {
 
   const dispatch = useDispatch();
   const navigation = useNavigation();
-  const { refreshPinStatus } = useAppLock();
+  const { refreshPinStatus, refreshBiometricStatus } = useAppLock();
 
   const { fcmToken, tokens } = useSelectorAction();
   const route = useRoute();
@@ -259,6 +259,10 @@ export default function ConfirmOTP() {
         setItem(STORAGE_KEYS.WALLET_DATA, JSON.stringify(walletData));
         setPin(pin);
         refreshPinStatus(); // Update app lock context with new PIN status
+        // Persist app-lock (biometric) preference from backend so it survives logout/login
+        const isLocked = walletData?.is_locked === true;
+        await setBiometric(isLocked);
+        await refreshBiometricStatus();
         dispatch(setLogin(true));
         showSuccess("Logged in Successfully");
       } else {

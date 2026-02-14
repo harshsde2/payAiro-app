@@ -1,4 +1,4 @@
-import notifee from "@notifee/react-native";
+import notifee, { AndroidImportance } from "@notifee/react-native";
 import messaging from "@react-native-firebase/messaging";
 import { NavigationContainer } from "@react-navigation/native";
 import React, { useEffect, useState, useRef } from "react";
@@ -183,12 +183,15 @@ export default function App() {
         id: "default",
         name: "PayAiro Channel",
         sound: "default",
+        importance: AndroidImportance.HIGH,
+        vibration: true,
       });
       await notifee.displayNotification({
         ...payload,
         android: {
           channelId,
           sound: remoteMessage?.notification?.android?.sound || "default",
+          importance: AndroidImportance.HIGH,
         },
       });
     } else {
@@ -205,6 +208,16 @@ export default function App() {
     fetch('http://127.0.0.1:7244/ingest/29f1b34d-8424-4516-a8dc-528eb6502b04',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.js:useEffect:FCMSetup',message:'Setting up FCM (permission + token + listener)',data:{platform: Platform.OS, isDevMode: __DEV__},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
     // #endregion
     requestPermission();
+    // Create default channel with HIGH importance at startup so background FCM notifications show as heads-up (popup)
+    if (Platform.OS === "android") {
+      notifee.createChannel({
+        id: "default",
+        name: "PayAiro Channel",
+        sound: "default",
+        importance: AndroidImportance.HIGH,
+        vibration: true,
+      }).catch((err) => console.warn("[App] createChannel at startup:", err));
+    }
     getFCMToken();
 
     const unsubscribe = messaging().onMessage(async (remoteMessage) => {

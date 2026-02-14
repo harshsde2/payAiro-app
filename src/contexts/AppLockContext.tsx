@@ -2,7 +2,8 @@ import React, { createContext, useState, useEffect, useRef, ReactNode, useCallba
 import { AppState, AppStateStatus } from 'react-native';
 import { useSelector } from 'react-redux';
 import { getPin, getNumber, setNumber, removeItem, STORAGE_KEYS } from 'storage/mmkv';
-import { getBiometric } from 'services/Auth';
+import { getBiometric, setBiometric } from 'services/Auth';
+import { getUserLock } from 'services/Services';
 import { AppLockContextType } from 'types/appLock.types';
 import { LOCK_CONFIG } from 'types/appLock.types';
 
@@ -32,13 +33,32 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
   // Track if a native modal/permission dialog is currently showing
   const isNativeModalVisibleRef = useRef<boolean>(false);
   
-  // Get authentication state from Redux
+  // Get authentication state and token from Redux
   const isLogin = useSelector((state: any) => state.authenticationSlice?.isLogin);
+  const accessToken = useSelector((state: any) => state.authenticationSlice?.tokens?.access);
   
   // Capture the initial login state on first render
   if (wasLoggedInOnMount.current === null) {
     wasLoggedInOnMount.current = isLogin === true;
   }
+
+  // On login (or app open while logged in), sync biometric preference from backend
+  useEffect(() => {
+    if (!isLogin || !accessToken) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await getUserLock(accessToken);
+        if (cancelled) return;
+        const isLocked = res?.data?.is_locked ?? res?.is_locked ?? false;
+        await setBiometric(!!isLocked);
+        setIsBiometricEnabled(!!isLocked);
+      } catch {
+        // Keep local preference on error; refreshBiometricStatus will still run below
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isLogin, accessToken]);
   
   // Load user's biometric preference (same source as Settings)
   const refreshBiometricStatus = useCallback(async () => {

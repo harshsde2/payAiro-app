@@ -9,6 +9,7 @@ export * from "./useBank";
 // export * from './useDeviceContacts';
 export * from "./useContact";
 export * from "./useAPIAuth";
+export * from "./useUserLock";
 export * from "./useRewards";
 export * from "./useRWA";
 export * from "./useKyc";

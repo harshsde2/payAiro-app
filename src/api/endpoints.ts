@@ -34,6 +34,8 @@ export const AUTH = {
   GET_WALLET_DASHBOARD_DATA: "auth/v1/wallet-dashboard/",
   CREATE_PIN: "auth/create-pin/",
   CHANGE_PIN: "auth/change-pin/",
+  /** GET/PATCH user app-lock (biometric) preference. */
+  USER_LOCK: "auth/user-lock/",
   FORGOT_PIN_SEND_OTP: "auth/forget-pin/send-otp/",
   FORGOT_PIN_RESET: "auth/forget-pin/",
   VERIFY_OTP_WITH_MAIL: "auth/verify/sendotp/",
