@@ -238,10 +238,10 @@ console.log("isProductionEnv =>", isProductionEnv);
           </View> */}
 
           <TextInputField
-            placeholder={"joe@gmail.com or 9876543210"}
+            placeholder={isProductionEnv ? "joe@gmail.com" : "joe@gmail.com or 9876543210"}
             value={email}
             onChange={setEmail}
-            label={"Enter your email or phone number"}
+            label={isProductionEnv ? "Enter your email" : "Enter your email or phone number"}
             required={true}
           />
           <TextInputField

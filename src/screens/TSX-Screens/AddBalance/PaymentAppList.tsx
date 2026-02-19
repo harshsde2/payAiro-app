@@ -1,11 +1,5 @@
-import React from "react";
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  Linking,
-} from "react-native";
+import React, { useState, useCallback } from "react";
+import { View, StyleSheet, TouchableOpacity, Linking, Platform } from "react-native";
 import { Theme, useTheme } from "styles";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
@@ -13,6 +7,7 @@ import { CustomText } from "tsx-components";
 import DashboardSection from "tsx-components/DashboardSection";
 import { SvgIcons } from "constants/svgs";
 import { showError } from "utils/toast";
+import { TransferInfoModal } from "components/common-components/TransferInfoModal";
 import { IPaymentApp } from "./types";
 
 const PAYMENT_APPS: IPaymentApp[] = [
@@ -49,39 +44,36 @@ const getPaymentAppIcon = (id: IPaymentApp["id"]) => {
 const PaymentAppList: React.FC = () => {
   const { theme } = useTheme();
   const styles = paymentAppListStyles(theme);
+  const [infoModalApp, setInfoModalApp] = useState<IPaymentApp | null>(null);
+
+  const openApp = useCallback(
+    async (app: IPaymentApp) => {
+      try {
+        await Linking.openURL(app.deepLink);
+      } catch {
+        showError(`${app.name} is not installed on this device.`);
+      }
+      setInfoModalApp(null);
+    },
+    []
+  );
 
   const handleAppPress = async (app: IPaymentApp) => {
     try {
-      const canOpen = await Linking.canOpenURL(app.deepLink);
-
-      if (!canOpen) {
-        showError(`${app.name} is not installed on this device.`);
-        return;
+      if (Platform.OS === "ios") {
+        const canOpen = await Linking.canOpenURL(app.deepLink);
+        if (!canOpen) {
+          showError(`${app.name} is not installed on this device.`);
+          return;
+        }
       }
-
-      Alert.alert(
-        "Choose payment app",
-        `You will be redirected to ${app.name} to continue this process.`,
-        [
-          {
-            text: "Cancel",
-            style: "cancel",
-          },
-          {
-            text: "Continue",
-            onPress: async () => {
-              try {
-                await Linking.openURL(app.deepLink);
-              } catch {
-                showError("Unable to open app. Please try again.");
-              }
-            },
-          },
-        ]
-      );
+      setInfoModalApp(app);
     } catch {
-      showError(`${app.name} is not installed on this device.`);
-      return;
+      if (Platform.OS === "ios") {
+        showError(`${app.name} is not installed on this device.`);
+      } else {
+        setInfoModalApp(app);
+      }
     }
   };
 
@@ -109,6 +101,15 @@ const PaymentAppList: React.FC = () => {
           ))}
         </DashboardSection>
       </View>
+      {infoModalApp && (
+        <TransferInfoModal
+          isVisible={!!infoModalApp}
+          appName={infoModalApp.name}
+          isBankApp={infoModalApp.id === "bank_of_america"}
+          onContinue={() => openApp(infoModalApp)}
+          onClose={() => setInfoModalApp(null)}
+        />
+      )}
     </ScreenContainer>
   );
 };

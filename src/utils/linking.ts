@@ -29,13 +29,10 @@ export const LinkingPath: LinkingOptions<RootStackParamList> = {
     "https://www.payairo.com",
   ],
   
-  // Custom function to get the initial URL (handles both deep links and universal links)
+  // Return null so React Navigation does not process initial URL at mount.
+  // Initial URL (from notification tap or direct deep link) is handled in App.js
+  // via onReady + stored URL to avoid "navigation not initialized" on cold start.
   async getInitialURL() {
-    // Check if app was opened from a deep link
-    const url = await Linking.getInitialURL();
-    if (url != null) {
-      return url;
-    }
     return null;
   },
 
@@ -52,34 +49,39 @@ export const LinkingPath: LinkingOptions<RootStackParamList> = {
   },
   
   config: {
-    // Initial route name when no matching route is found
-    initialRouteName: NAVIGATION_SCREENS.NEW_DASHBOARD,
-    
+    // Initial route when no matching path; must match root Stack
+    initialRouteName: "MainTabs",
     screens: {
       // ============================================
-      // REFERRAL LINKS (Primary use case)
-      // Handles: payairo://ref/CODE, https://payairo.com/ref/CODE
+      // MAIN TABS (nested: dashboard, settings, etc. are tabs)
+      // payairo://settings -> MainTabs -> SettingScreen tab
       // ============================================
-      // Note: Referral codes are handled by deepLinkHandler.ts
-      // which extracts the code, stores it, and navigates to Signup if user is logged out
-      // Signup screen auto-fills the code from storage (see Signup.tsx lines 39-46)
-      
+      MainTabs: {
+        path: "",
+        initialRouteName: NAVIGATION_SCREENS.NEW_DASHBOARD,
+        screens: {
+          [NAVIGATION_SCREENS.NEW_DASHBOARD]: "dashboard",
+          CryptoTab: "crypto-tab",
+          [NAVIGATION_SCREENS.SCANS]: "scans",
+          [NAVIGATION_SCREENS.UNIFIED_TRANSACTION]: "transactions",
+          [NAVIGATION_SCREENS.SETTING_SCREEN]: "settings",
+        },
+      },
+
       // ============================================
-      // AUTH SCREENS
+      // REFERRAL LINKS – handled by deepLinkHandler.ts
+      // payairo://ref/CODE, https://payairo.com/ref/CODE
+      // ============================================
+
+      // ============================================
+      // AUTH SCREENS (root stack)
       // ============================================
       [NAVIGATION_SCREENS.SIGNUP]: {
         path: "signup",
       },
-      
+
       // ============================================
-      // DASHBOARD & MAIN SCREENS
-      // ============================================
-      [NAVIGATION_SCREENS.NEW_DASHBOARD]: {
-        path: "dashboard",
-      },
-      
-      // ============================================
-      // TRANSACTIONS
+      // TRANSACTIONS (root stack)
       // ============================================
       [NAVIGATION_SCREENS.TRANSACTION]: "transaction",
       [NAVIGATION_SCREENS.TRANSACTION_SUCCESS]: "transaction/success",
@@ -92,35 +94,34 @@ export const LinkingPath: LinkingOptions<RootStackParamList> = {
       [NAVIGATION_SCREENS.TRANSACTION_SUCCESS_SCREEN]: "transaction/final",
 
       // ============================================
-      // SEND & RECEIVE
+      // SEND & RECEIVE (root stack)
       // ============================================
       [NAVIGATION_SCREENS.SEND]: "send",
       [NAVIGATION_SCREENS.RECEIVE]: "receive",
 
       // ============================================
-      // SETTINGS
+      // SETTINGS SUB-SCREENS (root stack)
       // ============================================
-      [NAVIGATION_SCREENS.SETTING_SCREEN]: "settings",
       [NAVIGATION_SCREENS.NOTIFICATION]: "settings/notification",
       [NAVIGATION_SCREENS.NEW_PERSONAL]: "settings/personal",
       [NAVIGATION_SCREENS.REFERRAL_SCREEN]: "settings/referral",
 
       // ============================================
-      // REWARDS
+      // REWARDS (root stack)
       // ============================================
       [NAVIGATION_SCREENS.REWARDS]: "rewards",
       [NAVIGATION_SCREENS.SCRATCH]: "rewards/scratch",
       [NAVIGATION_SCREENS.SCRATCH_DETAILS]: "rewards/scratch/details",
 
       // ============================================
-      // CONTACTS
+      // CONTACTS (root stack)
       // ============================================
       [NAVIGATION_SCREENS.ADD_CONTACT]: "contacts/add",
       [NAVIGATION_SCREENS.CONTACT_SCREEN]: "contacts",
       [NAVIGATION_SCREENS.CONTACT_TX]: "contacts/tx",
 
       // ============================================
-      // CRYPTO
+      // CRYPTO (root stack)
       // ============================================
       [NAVIGATION_SCREENS.CRYPTO_DASHBOARD]: "crypto",
       [NAVIGATION_SCREENS.CRYPTO_SCREEN]: "crypto/details",
@@ -135,12 +136,12 @@ export const LinkingPath: LinkingOptions<RootStackParamList> = {
       },
 
       // ============================================
-      // EXTERNAL ACCOUNTS
+      // EXTERNAL ACCOUNTS (root stack)
       // ============================================
       [NAVIGATION_SCREENS.MX_CONNECT_WIDGET_SCREEN]: "external-account",
 
       // ============================================
-      // RWA (Real World Assets)
+      // RWA (root stack)
       // ============================================
       [NAVIGATION_SCREENS.TRUSTED_CIRCLE]: "trusted-circle",
       [NAVIGATION_SCREENS.RWA]: "rwa",
@@ -162,10 +163,9 @@ export const LinkingPath: LinkingOptions<RootStackParamList> = {
       [NAVIGATION_SCREENS.COMMON_ASSETS_SCREEN]: "rwa/common-assets",
 
       // ============================================
-      // INVITE / REFERRAL (Alternative paths)
+      // INVITE / REFERRAL (root stack)
       // ============================================
-      // These paths also trigger referral flow
-      "Invite": {
+      Invite: {
         path: "invite/:code?",
         parse: {
           code: (code: string) => code,

@@ -71,6 +71,8 @@ export default function App() {
   // -------------------- Navigation Ref --------------------
   // Create navigation ref for deep link navigation
   const navigationRef = useRef(null);
+  // Store initial URL (notification / direct deep link) to replay after navigator is ready
+  const initialUrlRef = useRef(null);
 
   // Set navigation ref for deep link handler
   useEffect(() => {
@@ -279,9 +281,6 @@ export default function App() {
       try {
         await messaging().registerDeviceForRemoteMessages();
         const token = await messaging().getToken();
-        // #region agent log
-        fetch('http://127.0.0.1:7244/ingest/29f1b34d-8424-4516-a8dc-528eb6502b04',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.js:getFCMToken:fallback',message:'Fallback token result',data:{hasToken: !!token, tokenLength: token?.length},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
-        // #endregion
         if (token) {
           useDispatchAction(setFcmToken(token));
         }
@@ -296,15 +295,25 @@ export default function App() {
 
   // Handle notification when app opened from background/quit (iOS + Android)
   useEffect(() => {
+    // Cold start: store deeplink and replay in NavigationContainer onReady (avoids "navigation not initialized")
     messaging()
       .getInitialNotification()
       .then((remoteMessage) => {
         if (remoteMessage?.data?.deeplink) {
-          Linking.openURL(remoteMessage.data.deeplink);
+          initialUrlRef.current = remoteMessage.data.deeplink;
         }
       });
 
+    // Also capture direct deep link (e.g. from Safari) if not from notification
+    Linking.getInitialURL().then((url) => {
+      if (url && !initialUrlRef.current) {
+        initialUrlRef.current = url;
+      }
+    });
+
+    // Background: navigator already ready, safe to open URL directly
     const unsubscribe = messaging().onNotificationOpenedApp((remoteMessage) => {
+      console.log("remoteMessage =>", JSON.stringify(remoteMessage,null,2))
       if (remoteMessage?.data?.deeplink) {
         Linking.openURL(remoteMessage.data.deeplink);
       }
@@ -424,6 +433,13 @@ export default function App() {
               <NavigationContainer
                 ref={navigationRef}
                 linking={LinkingPath}
+                onReady={() => {
+                  if (initialUrlRef.current) {
+                    const url = initialUrlRef.current;
+                    initialUrlRef.current = null;
+                    Linking.openURL(url);
+                  }
+                }}
                 onStateChange={(state) => {
                   // Helper function to get the focused route recursively (handles nested navigators)
                   const getFocusedRoute = (navState) => {

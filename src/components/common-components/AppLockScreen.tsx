@@ -44,6 +44,8 @@ const AppLockScreen: React.FC = () => {
   const biometricFailureCount = useRef(0);
   const paymentMode = !!paymentVerificationRequest;
   const [paymentShowPin, setPaymentShowPin] = useState(false);
+  /** True while native biometric dialog is visible; shows full white background instead of PIN UI. */
+  const [isBiometricRunning, setIsBiometricRunning] = useState(false);
   /** Incremented when app returns to foreground so biometric effect re-runs and re-shows native modal (e.g. after phone lock). */
   const [biometricRetriggerKey, setBiometricRetriggerKey] = useState(0);
 
@@ -160,42 +162,47 @@ const AppLockScreen: React.FC = () => {
     let cancelled = false;
 
     const runBiometric = async () => {
-      const result: BiometricAuthResult =
-        await authenticateWithBiometricDetailed(
-          paymentMode ? "Verify to continue" : "Unlock PayAiro",
-          { cancelLabel: "Use PIN" }
-        );
-      if (cancelled) return;
-      if (result.success) {
-        biometricFailureCount.current = 0;
-        if (paymentMode && paymentVerificationRequest) {
-          paymentVerificationRequest.onVerified();
-          clearPaymentVerification();
+      setIsBiometricRunning(true);
+      try {
+        const result: BiometricAuthResult =
+          await authenticateWithBiometricDetailed(
+            paymentMode ? "Verify to continue" : "Unlock PayAiro",
+            { cancelLabel: "Use PIN" }
+          );
+        if (cancelled) return;
+        if (result.success) {
+          biometricFailureCount.current = 0;
+          if (paymentMode && paymentVerificationRequest) {
+            paymentVerificationRequest.onVerified();
+            clearPaymentVerification();
+          } else {
+            unlockApp();
+          }
         } else {
-          unlockApp();
-        }
-      } else {
-        const userChosePin =
-          result.errorCode === "USER_CANCELED" ||
-          result.errorCode === "ERROR_NEGATIVE_BUTTON";
-        const systemCanceled =
-          result.errorCode === "SYSTEM_CANCELED" ||
-          result.errorCode === "ERROR_CANCELED";
-        if (userChosePin) {
-          if (paymentMode) setPaymentShowPin(true);
-          else requestShowPinScreen();
-        } else if (systemCanceled) {
-          // Dialog was dismissed by system (e.g. phone locked); don't count as failure. AppState listener will re-trigger when user returns.
-        } else {
-          biometricFailureCount.current += 1;
-          if (
-            biometricFailureCount.current >=
-            LOCK_CONFIG.MAX_BIOMETRIC_FAILURES_BEFORE_PIN
-          ) {
+          const userChosePin =
+            result.errorCode === "USER_CANCELED" ||
+            result.errorCode === "ERROR_NEGATIVE_BUTTON";
+          const systemCanceled =
+            result.errorCode === "SYSTEM_CANCELED" ||
+            result.errorCode === "ERROR_CANCELED";
+          if (userChosePin) {
             if (paymentMode) setPaymentShowPin(true);
             else requestShowPinScreen();
+          } else if (systemCanceled) {
+            // Dialog was dismissed by system (e.g. phone locked); don't count as failure. AppState listener will re-trigger when user returns.
+          } else {
+            biometricFailureCount.current += 1;
+            if (
+              biometricFailureCount.current >=
+              LOCK_CONFIG.MAX_BIOMETRIC_FAILURES_BEFORE_PIN
+            ) {
+              if (paymentMode) setPaymentShowPin(true);
+              else requestShowPinScreen();
+            }
           }
         }
+      } finally {
+        setIsBiometricRunning(false);
       }
     };
 
@@ -252,37 +259,42 @@ const AppLockScreen: React.FC = () => {
         style={{ flex: 1 }}
         presentationStyle="fullScreen"
       >
-        <View
-          style={[
-            {
-              flexDirection: "row",
-              width: "100%",
-              backgroundColor: theme.colors.palette.green700,
-              paddingVertical: 5,
-              paddingHorizontal: 10,
-              justifyContent: "space-between",
-              alignItems: "center",
-            },
-          ]}
-        >
-          <View style={styles.header}>
-          {paymentMode ? (
-            <SvgIcons.LeftArrow
-              width={60}
-              height={60}
-              onPress={() => clearPaymentVerification()}
-            />
-          ) : null}
-            <View>
-              <CustomText style={styles.appTitle}>PayAiro App</CustomText>
-              <CustomText style={styles.subtitleText}>
-                Enter Transaction PIN to unlock
-              </CustomText>
+        {!isBiometricRunning && (
+          <View
+            style={[
+              {
+                flexDirection: "row",
+                width: "100%",
+                backgroundColor: theme.colors.palette.green700,
+                paddingVertical: 5,
+                paddingHorizontal: 10,
+                justifyContent: "space-between",
+                alignItems: "center",
+              },
+            ]}
+          >
+            <View style={styles.header}>
+              {paymentMode ? (
+                <SvgIcons.LeftArrow
+                  width={60}
+                  height={60}
+                  onPress={() => clearPaymentVerification()}
+                />
+              ) : null}
+              <View>
+                <CustomText style={styles.appTitle}>PayAiro App</CustomText>
+                <CustomText style={styles.subtitleText}>
+                  Enter Transaction PIN to unlock
+                </CustomText>
+              </View>
+              <SvgIcons.PayairoWhiteLogo width={40} height={40} />
             </View>
-            <SvgIcons.PayairoWhiteLogo width={40} height={40} />
           </View>
-        </View>
+        )}
 
+        {isBiometricRunning ? (
+          <View style={styles.biometricOverlay} />
+        ) : (
         <View style={styles.mainContent}>
           <View style={styles.pinEntryContainer}>
             <View style={styles.pinEntryLabelRow}>
@@ -409,6 +421,7 @@ const AppLockScreen: React.FC = () => {
             </View>
           </View>
         </View>
+        )}
       </Modal>
     </SafeAreaView>
   );
@@ -419,6 +432,10 @@ export default AppLockScreen;
 const customStyles = (theme: Theme) =>
   StyleSheet.create({
     modalContainer: {
+      backgroundColor: "#FFFFFF",
+    },
+    biometricOverlay: {
+      flex: 1,
       backgroundColor: "#FFFFFF",
     },
     header: {

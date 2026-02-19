@@ -152,10 +152,10 @@ export default function Login() {
         </View>
         <View style={styles.fieldAndCheckboxContainer}>
           <TextInputField
-            placeholder={"joe@gmail.com or 9876543210"}
+            placeholder={isProductionEnv ? "joe@gmail.com" : "joe@gmail.com or 9876543210"}
             value={emailOrPhone}
             onChange={setEmailOrPhone}
-            label={"Enter your email or phone number"}
+            label={isProductionEnv ? "Enter your email" : "Enter your email or phone number"}
             required={true}
           />
           <GenericButton

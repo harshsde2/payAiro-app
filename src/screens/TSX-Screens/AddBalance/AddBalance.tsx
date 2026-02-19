@@ -47,7 +47,7 @@ const getPaymentIcon = (
     case "Bank":
       return <SvgIcons.Bank width={30} height={30} style={{ marginHorizontal:8,marginVertical:8 }} />;
     case "PaymentApp":
-      return <SvgIcons.DollarCircleIcon width={40} height={40} style={{ marginHorizontal:8,marginVertical:8 }} />;
+      return <SvgIcons.Transfer width={40} height={40} style={{ marginVertical:8 }} />;
     default:
       return null;
   }
@@ -96,7 +96,7 @@ const PAYMENT_METHOD_CONFIGS = [
     isDisabled: false,
   },
   {
-    title: "Choose payment app",
+    title: "Transfer Money",
     iconKey: "PaymentApp" as const,
     type: "PaymentAppList" as const,
     navigation: NAVIGATION_SCREENS.PAYMENT_APP_LIST,
