@@ -52,6 +52,13 @@ const LandingPage = () => {
         />
         <CustomText
           variant="caption"
+          onPress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_ONBOARDING)}
+          style={[styles.signHeaderCaptionTextStyles, { marginTop: 12, color: theme.colors.palette.primary, textDecorationLine: "underline" }]}
+        >
+          Try new design (Onboarding)
+        </CustomText>
+        <CustomText
+          variant="caption"
           onPress={() => navigation.navigate(NAVIGATION_SCREENS.DEBUG_TEST)}
           style={[styles.signHeaderCaptionTextStyles, { marginTop: 16, color: theme.colors.palette.primary, textDecorationLine: "underline" }]}
         >

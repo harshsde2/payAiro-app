@@ -6,7 +6,7 @@ export const appContent = {
         createAccountButton: "Create an Account",
     },
     login: {
-        title: "Sign In",
+        title: "Welcome Back!",
         description: "Enter your email to continue!",
         emailPlaceholder: "you@example.com",
         emailLabel: "Enter your email",
@@ -15,7 +15,7 @@ export const appContent = {
     },
     OTP: {
         title: "Confirm OTP",
-        description: "Enter the code sent to your email",
+        description: "Enter 6-digit verification code, send on",
         headerTitle: "Confirm OTP",
     },
 }

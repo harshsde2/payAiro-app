@@ -7,7 +7,8 @@ module.exports = {
         root: ['./src'],
         extensions: ['.ios.js', '.android.js', '.js', '.ts', '.tsx', '.json'],
         alias: {
-          '@tsx-components': './src/tsx-components'
+          '@tsx-components': './src/tsx-components',
+          '@new-ui': './src/new-ui'
         }
       }
     ],

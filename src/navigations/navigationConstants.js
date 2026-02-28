@@ -1,5 +1,13 @@
 // Navigation Screen Names
 export const NAVIGATION_SCREENS = {
+  // New UI (design v2) Auth & App screens
+  NEW_ONBOARDING: "NewOnboarding",
+  NEW_LOGIN: "NewLogin",
+  NEW_CREATE_ACCOUNT: "NewCreateAccount",
+  NEW_OTP_VERIFICATION: "NewOTPVerification",
+  NEW_KYC: "NewKYC",
+  NEW_FORGOT_PASSWORD: "NewForgotPassword",
+  NEW_FORGOT_PASSWORD_VERIFICATION: "NewForgotPasswordVerification",
   // Auth Stack Screens
   LANDING_PAGE: "LandingPage",
   DEBUG_TEST: "DebugTest",

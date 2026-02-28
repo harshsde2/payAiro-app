@@ -29,6 +29,7 @@ import { getWalletDataAuth } from "./src/services/Auth";
 import { getMechentPay } from "./src/services/Services";
 import { getItem, setItem, STORAGE_KEYS } from "./src/storage/mmkv";
 import { ThemeProvider } from "./src/styles";
+import { ThemeProvider as NewUIThemeProvider } from "./src/new-ui/styles/ThemeContext";
 import GlobalLoader from "./src/tsx-components/GlobalLoader";
 import { LinkingPath } from "./src/utils/linking";
 import {
@@ -427,6 +428,7 @@ export default function App() {
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <ThemeProvider>
+          <NewUIThemeProvider>
           <PersistQueryProvider>
             <FCMTokenManager />
             <AppLockProvider>
@@ -525,6 +527,7 @@ export default function App() {
               />
             </AppLockProvider>
           </PersistQueryProvider>
+          </NewUIThemeProvider>
         </ThemeProvider>
       </GestureHandlerRootView>
     </SafeAreaProvider>

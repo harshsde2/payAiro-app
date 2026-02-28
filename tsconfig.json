@@ -18,7 +18,8 @@
     "paths": {
       "*": ["src/*"],
       "@tsx-components/*": ["src/tsx-components/*"],
-      "@tsx-components": ["src/tsx-components"]
+      "@tsx-components": ["src/tsx-components"],
+      "@new-ui/*": ["src/new-ui/*"]
     },
     "types": ["react", "react-native"]
   },

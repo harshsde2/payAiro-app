@@ -11,12 +11,30 @@ import Signup from "screens/Authentications/Signup";
 import SelectStates from "tsx-components/modals/SelectStates";
 import SupportScreen from "screens/TSX-Screens/Settings/SupportScreen";
 import DebugTestScreen from "screens/TSX-Screens/DebugTestScreen";
+// New UI (design v2) auth screens
+import NewOnboardingScreen from "../new-ui/screens/Auth/Onboarding";
+import NewLoginScreen from "../new-ui/screens/Auth/Login";
+import NewCreateAccountScreen from "../new-ui/screens/Auth/CreateAccount";
+import NewOTPVerificationScreen from "../new-ui/screens/Auth/OTPVerification";
+import NewKYCScreen from "../new-ui/screens/Auth/KYC";
+import NewForgotPasswordScreen from "../new-ui/screens/Auth/ForgotPassword";
+import NewForgotPasswordVerificationScreen from "../new-ui/screens/Auth/ForgotPasswordVerification";
+import CustomHeader from "../new-ui/components/common-components/CustomHeader";
 
 const Stack = createNativeStackNavigator();
+
+function AuthStackHeader(props: React.ComponentProps<typeof CustomHeader>) {
+  const title =
+    typeof props.options?.headerTitle === "string"
+      ? props.options.headerTitle
+      : undefined;
+  return <CustomHeader {...props} title={title} />;
+}
+
 export default function AuthStack() {
   return (
     <Stack.Navigator
-      initialRouteName={NAVIGATION_SCREENS.LANDING_PAGE}
+      initialRouteName={NAVIGATION_SCREENS.NEW_ONBOARDING}
       screenOptions={{
         headerShown: false,
       }}
@@ -82,6 +100,60 @@ export default function AuthStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.SUPPORT_SCREEN}
         component={SupportScreen}
+      />
+      {/* New UI (design v2) auth flow */}
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.NEW_ONBOARDING}
+        component={NewOnboardingScreen}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          header: AuthStackHeader,
+        }}
+        name={NAVIGATION_SCREENS.NEW_LOGIN}
+        component={NewLoginScreen}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          header: AuthStackHeader,
+        }}
+        name={NAVIGATION_SCREENS.NEW_CREATE_ACCOUNT}
+        component={NewCreateAccountScreen}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          header: AuthStackHeader,
+        }}
+        name={NAVIGATION_SCREENS.NEW_OTP_VERIFICATION}
+        component={NewOTPVerificationScreen}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          header: AuthStackHeader,
+        }}
+        name={NAVIGATION_SCREENS.NEW_KYC}
+        component={NewKYCScreen}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          header: AuthStackHeader,
+        }}
+        name={NAVIGATION_SCREENS.NEW_FORGOT_PASSWORD}
+        component={NewForgotPasswordScreen}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          header: AuthStackHeader,
+        }}
+        name={NAVIGATION_SCREENS.NEW_FORGOT_PASSWORD_VERIFICATION}
+        component={NewForgotPasswordVerificationScreen}
       />
     </Stack.Navigator>
   );
