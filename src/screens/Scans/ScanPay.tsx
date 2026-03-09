@@ -332,6 +332,13 @@ export default function ScanPay(props: IScanPayProps) {
           return prev.includes(".") ? prev : prev + key;
         }
         const newAmount = prev === "0" ? key : prev + key;
+        // Limit to 2 decimal places
+        if (newAmount.includes(".")) {
+          const [, decimalPart] = newAmount.split(".");
+          if (decimalPart && decimalPart.length > 2) {
+            return prev;
+          }
+        }
         // Limit to 1 lakh (100,000)
         if (Number(newAmount) > 100000) {
           showError("Amount cannot exceed ₹1,00,000");

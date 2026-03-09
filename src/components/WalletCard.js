@@ -54,6 +54,7 @@ const WalletCard = ({ data, bankbalance, index }) => {
       ? `$${formatBalance(bankbalance)}` 
       : '$****';
   
+  console.log("data =>", JSON.stringify(data, null, 2));
   return (
     <View style={styles.card}>
       {/* Top Section: Bank Name, MAIN button, and Open status */}

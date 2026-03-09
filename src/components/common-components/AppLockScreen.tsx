@@ -301,7 +301,7 @@ const AppLockScreen: React.FC = () => {
               <CustomText style={styles.pinEntryText}>
                 ENTER PIN
               </CustomText>
-              {!showPin ? (
+              {showPin ? (
                 <SvgIcons.EyeOnGreenbg onPress={handleShowAndHidePin} width={22} height={22} />
               ) : (
                 <SvgIcons.EyeOffGreenbg onPress={handleShowAndHidePin} width={22} height={22} />

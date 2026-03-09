@@ -1,14 +1,13 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
-
+<manifest
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools">
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
   <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-  <!-- <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-  <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" /> -->
+
   <uses-permission android:name="android.permission.CAMERA" />
   <uses-permission android:name="android.permission.READ_CONTACTS" />
-  <!-- POST_NOTIFICATIONS permission for Android 13+ -->
+
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
   <application
     android:name=".MainApplication"
@@ -17,78 +16,67 @@
     android:allowBackup="false"
     android:theme="@style/AppTheme"
     android:usesCleartextTraffic="${usesCleartextTraffic}"
-    android:supportsRtl="true"
-  >
-      <!-- Firebase Messaging Service -->
-      <service
-        android:name="com.google.firebase.messaging.FirebaseMessagingService"
-        android:exported="false">
-        <intent-filter>
-          <action android:name="com.google.firebase.MESSAGING_EVENT" />
-        </intent-filter>
-      </service>
-      
-      <!-- Default notification channel metadata -->
-      <meta-data
-        android:name="com.google.firebase.messaging.default_notification_channel_id"
-        android:value="default"
-        tools:replace="android:value" />
-      
-      <!-- Default notification icon -->
-      <meta-data
-        android:name="com.google.firebase.messaging.default_notification_icon"
-        android:resource="@mipmap/ic_launcher" />
-      
-      <!-- Default notification color -->
-      <meta-data
-        android:name="com.google.firebase.messaging.default_notification_color"
-        android:resource="@android:color/transparent"
-        tools:replace="android:resource" />
-      
-      <activity
-        android:name=".MainActivity"
-        android:label="@string/app_name"
-        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
-        android:launchMode="singleTask"
-        android:windowSoftInputMode="adjustResize"
-        android:screenOrientation="portrait"
-        android:exported="true">
-        
-        <!-- Main launcher intent -->
-        <intent-filter>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
-        
-        <!-- Custom URL scheme: payairo:// -->
-        <intent-filter>
-          <action android:name="android.intent.action.VIEW" />
-          <category android:name="android.intent.category.DEFAULT" />
-          <category android:name="android.intent.category.BROWSABLE" />
-          <data android:scheme="payairo" />
-        </intent-filter>
-        
-        <!-- App Links (Android Universal Links): https://payairo.com -->
-        <!-- autoVerify="true" enables automatic verification via assetlinks.json -->
-        <intent-filter android:autoVerify="true">
-          <action android:name="android.intent.action.VIEW" />
-          <category android:name="android.intent.category.DEFAULT" />
-          <category android:name="android.intent.category.BROWSABLE" />
-          <data 
-            android:scheme="https" 
-            android:host="payairo.com" />
-        </intent-filter>
-        
-        <!-- App Links for www subdomain -->
-        <intent-filter android:autoVerify="true">
-          <action android:name="android.intent.action.VIEW" />
-          <category android:name="android.intent.category.DEFAULT" />
-          <category android:name="android.intent.category.BROWSABLE" />
-          <data 
-            android:scheme="https" 
-            android:host="www.payairo.com" />
-        </intent-filter>
-        
-      </activity>
+    android:supportsRtl="true">
+    <service
+      android:name="com.google.firebase.messaging.FirebaseMessagingService"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="com.google.firebase.MESSAGING_EVENT" />
+      </intent-filter>
+    </service>
+
+    <meta-data
+      android:name="com.google.firebase.messaging.default_notification_channel_id"
+      android:value="default"
+      tools:replace="android:value" />
+
+    <meta-data
+      android:name="com.google.firebase.messaging.default_notification_icon"
+      android:resource="@mipmap/ic_launcher" />
+
+    <meta-data
+      android:name="com.google.firebase.messaging.default_notification_color"
+      android:resource="@android:color/transparent"
+      tools:replace="android:resource" />
+
+    <activity
+      android:name=".MainActivity"
+      android:label="@string/app_name"
+      android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+      android:launchMode="singleTask"
+      android:windowSoftInputMode="adjustResize"
+      android:screenOrientation="portrait"
+      android:exported="true"
+      android:theme="@style/BootTheme">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="payairo" />
+      </intent-filter>
+
+      <intent-filter android:autoVerify="true">
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data
+          android:scheme="https"
+          android:host="payairo.com" />
+      </intent-filter>
+
+      <intent-filter android:autoVerify="true">
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data
+          android:scheme="https"
+          android:host="www.payairo.com" />
+      </intent-filter>
+    </activity>
   </application>
 </manifest>

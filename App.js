@@ -1,8 +1,8 @@
-import notifee, { AndroidImportance } from "@notifee/react-native";
+import notifee, { AndroidImportance, EventType } from "@notifee/react-native";
 import messaging from "@react-native-firebase/messaging";
 import { NavigationContainer } from "@react-navigation/native";
 import React, { useEffect, useState, useRef } from "react";
-import { AppState, Linking, Platform } from "react-native";
+import { AppState, Linking, Platform, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
 import useDispatchAction from "./src/hooks/useDispatchAction";
@@ -24,7 +24,7 @@ import {
   setTotalDisbursable,
   setWalletData,
 } from "./src/redux/slices/authenticationSlice";
-import SplashScreen from "./src/screens/Authentications/SplashScreen";
+import AnimatedBootSplashV3 from "./src/screens/TSX-Screens/AnimatedBootSplash/AnimatedBootSplashV3";
 import { getWalletDataAuth } from "./src/services/Auth";
 import { getMechentPay } from "./src/services/Services";
 import { getItem, setItem, STORAGE_KEYS } from "./src/storage/mmkv";
@@ -39,6 +39,7 @@ import UseNet from "./src/utils/UseNet";
 import KycWatchdog from "./src/components/common-components/KycWatchdog";
 import KycBanner from "./src/components/common-components/KycBanner";
 import AppLockScreen from "./src/components/common-components/AppLockScreen";
+import AppGateOverlay from "./src/components/common-components/AppGateOverlay";
 import Toast from "./src/components/common-components/Toast";
 import ForceUpdateModal from "./src/components/common-components/ForceUpdateModal";
 import { AppLockProvider } from "./src/contexts/AppLockContext";
@@ -169,11 +170,9 @@ export default function App() {
   };
 
   // Display notification (foreground) - Android uses Notifee channel; iOS uses system
+  // NOTE: Do NOT open deeplink here - that would redirect on receive, not on tap.
+  // Deeplink is opened only when user TAPS the notification (via onForegroundEvent below).
   const onDisplayNotification = async (remoteMessage) => {
-    if (remoteMessage?.data?.deeplink) {
-      Linking.openURL(remoteMessage.data.deeplink);
-    }
-
     const payload = {
       title: remoteMessage?.notification?.title || "PayAiro",
       body: remoteMessage?.notification?.body || "",
@@ -232,7 +231,17 @@ export default function App() {
       onDisplayNotification(remoteMessage);
     });
 
-    return unsubscribe;
+    // When app is in foreground: open deeplink only when user TAPS the notification
+    const unsubscribeNotifee = notifee.onForegroundEvent(({ type, detail }) => {
+      if (type === EventType.PRESS && detail?.notification?.data?.deeplink) {
+        Linking.openURL(detail.notification.data.deeplink);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeNotifee();
+    };
   }, []);
 
   // Get FCM token for push notifications
@@ -415,14 +424,10 @@ export default function App() {
     }, [shouldUpdate, storeVersion, needsForceUpdate, showUpdateModal]);
   }
 
-  // -------------------- Render Logic --------------------
-  // Show splash screen while initializing
-  if (isFetching) {
-    return <SplashScreen />;
-  }
+  // -------------------- Splash State --------------------
+  const [splashVisible, setSplashVisible] = useState(true);
 
-  // console.log("isLogin =>", isLogin);
-  // Render main app navigation
+  // -------------------- Render Logic --------------------
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
@@ -430,6 +435,7 @@ export default function App() {
           <PersistQueryProvider>
             <FCMTokenManager />
             <AppLockProvider>
+              <View style={{ flex: 1 }}>
               <NavigationContainer
                 ref={navigationRef}
                 linking={LinkingPath}
@@ -501,7 +507,7 @@ export default function App() {
                 {showLoader && <GlobalLoader />}
                 {isLogin && <KycWatchdog />}
                 {isLogin && <KycBanner />}
-                <AppLockScreen />
+                {!splashVisible && <AppLockScreen />}
 
                 {!isLogin ? <AuthStack /> : <AppStack />}
               </NavigationContainer>
@@ -523,6 +529,14 @@ export default function App() {
                 isUpdating={isUpdating}
                 updateError={updateError}
               />
+
+              <AppGateOverlay />
+              {splashVisible && (
+                <AnimatedBootSplashV3
+                  onAnimationEnd={() => setSplashVisible(false)}
+                />
+              )}
+              </View>
             </AppLockProvider>
           </PersistQueryProvider>
         </ThemeProvider>

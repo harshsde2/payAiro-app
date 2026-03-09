@@ -160,7 +160,7 @@ const TextInputField: FC<InputProps> = (props) => {
               editable={editable}
               style={{
                 color: "#000",
-                paddingRight: rightIconComponent === "scanner" ? 45 : 10,
+                paddingRight: rightIconComponent === "scanner" ? 20 : 10,
                 paddingLeft: 15,
                 fontFamily: Fonts.semibold,
                 width: "90%",

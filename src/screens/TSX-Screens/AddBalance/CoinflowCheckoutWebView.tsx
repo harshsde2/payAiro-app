@@ -7,7 +7,6 @@ import WebView from "react-native-webview";
 import { Card, CustomText } from "tsx-components";
 import { useGlobalStyles } from "styles/GlobalStyles";
 import { useTheme } from "styles";
-import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { showError } from "utils/toast";
 
 interface RouteParams {
@@ -26,12 +25,22 @@ const CoinflowCheckoutWebView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const retryCountRef = React.useRef(0);
+  const hasHandledTerminalEventRef = React.useRef(false);
+  const isMountedRef = React.useRef(true);
   const maxRetries = 2;
+
+  React.useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Timeout handler - if page doesn't load in 60 seconds (longer for iOS), show error
   React.useEffect(() => {
     const timeoutDuration = Platform.OS === "ios" ? 60000 : 30000; // iOS gets 60 seconds
     const timeout = setTimeout(() => {
+      if (!isMountedRef.current) return;
       if (isLoading && retryCountRef.current < maxRetries) {
         console.warn(`WebView loading timeout after ${timeoutDuration / 1000} seconds, retrying...`);
         retryCountRef.current += 1;
@@ -100,145 +109,255 @@ const CoinflowCheckoutWebView: React.FC = () => {
     })();
   `;
 
+  const handleCheckoutSuccess = () => {
+    if (hasHandledTerminalEventRef.current) return;
+    hasHandledTerminalEventRef.current = true;
+    setTimeout(() => {
+      if (!isMountedRef.current) return;
+      navigation.goBack();
+    }, 1500);
+  };
+
+  const handleCheckoutFailure = (status?: string, message?: string) => {
+    if (hasHandledTerminalEventRef.current) return;
+    hasHandledTerminalEventRef.current = true;
+    if (isMountedRef.current) {
+      setIsLoading(false);
+      setHasError(true);
+    }
+    const readableStatus = status ? ` (${status})` : "";
+    showError(message || `Payment was not completed${readableStatus}.`);
+  };
+
   const handleMessage = (event: any) => {
-    const message = event.nativeEvent.data;
-    if (message === "PAYMENT_SUCCESS") {
-      // Show success page for 2 seconds before redirecting to dashboard
-      setTimeout(() => {
-        if (navigation.canGoBack()) {
-          navigation.popToTop();
-        } else {
-          navigation.goBack();
-        }
-      }, 2000);
+    const rawMessage = event?.nativeEvent?.data;
+    if (!rawMessage) return;
+
+    if (rawMessage === "PAYMENT_SUCCESS") {
+      handleCheckoutSuccess();
+      return;
+    }
+
+    let parsedMessage: any = null;
+    try {
+      parsedMessage = JSON.parse(rawMessage);
+    } catch (_error) {
+      return;
+    }
+
+    const eventType = parsedMessage?.type || parsedMessage?.event;
+    const payload = parsedMessage?.data || parsedMessage?.payload || {};
+
+    if (eventType === "payment-status") {
+      const status = payload?.status || parsedMessage?.status;
+      if (status === "success") {
+        handleCheckoutSuccess();
+        return;
+      }
+      if (["failed", "canceled", "cancelled", "failover"].includes(String(status))) {
+        handleCheckoutFailure(String(status), payload?.message);
+        return;
+      }
+    }
+
+    if (eventType === "close") {
+      hasHandledTerminalEventRef.current = true; // Prevent late success/failure race
+      navigation.goBack();
+      return;
+    }
+
+    if (eventType === "error") {
+      handleCheckoutFailure("error", payload?.message || parsedMessage?.message);
     }
   };
 
   const handleLoadEnd = (syntheticEvent: any) => {
-    const { nativeEvent } = syntheticEvent;
-    console.log("WebView load ended: ", nativeEvent.url);
-    setIsLoading(false);
-    setHasError(false);
+    const nativeEvent = syntheticEvent?.nativeEvent;
+    if (!nativeEvent) return;
+    if (__DEV__) {
+      console.log("WebView load ended: ", nativeEvent.url);
+    }
+    if (isMountedRef.current) {
+      setIsLoading(false);
+      setHasError(false);
+    }
     retryCountRef.current = 0; // Reset retry count on successful load
   };
 
   const handleLoadStart = (syntheticEvent: any) => {
-    const { nativeEvent } = syntheticEvent;
-    console.log("WebView load started: ", nativeEvent.url);
-    setIsLoading(true);
-    setHasError(false);
+    const nativeEvent = syntheticEvent?.nativeEvent;
+    if (!nativeEvent) return;
+    if (__DEV__) {
+      console.log("WebView load started: ", nativeEvent.url);
+    }
+    if (isMountedRef.current) {
+      setIsLoading(true);
+      setHasError(false);
+    }
   };
 
   const handleLoadProgress = (syntheticEvent: any) => {
-    const { nativeEvent } = syntheticEvent;
-    console.log("WebView load progress: ", Math.round(nativeEvent.progress * 100) + "%");
+    if (__DEV__ && syntheticEvent?.nativeEvent) {
+      const progress = Math.round((syntheticEvent.nativeEvent.progress ?? 0) * 100);
+      console.log("WebView load progress: ", progress + "%");
+    }
   };
 
   const handleError = (syntheticEvent: any) => {
-    const { nativeEvent } = syntheticEvent;
-    console.error("WebView error: ", JSON.stringify(nativeEvent, null, 2));
-    
-    // iOS network errors that should be retried: -1001 (timeout), -1005 (connection lost)
-    const retryableErrors = [-1001, -1005];
-    const shouldRetry = Platform.OS === "ios" && 
-                       retryableErrors.includes(nativeEvent?.code) && 
-                       retryCountRef.current < maxRetries;
-    
+    const nativeEvent = syntheticEvent?.nativeEvent;
+    if (!nativeEvent) return;
+    if (__DEV__) {
+      console.error("WebView error: ", JSON.stringify(nativeEvent, null, 2));
+    }
+
+    // Retryable network errors: iOS (-1001 timeout, -1005 connection lost), Android (-2, -6, -7, -8, -9)
+    const iosRetryable = [-1001, -1005];
+    const androidRetryable = [-2, -6, -7, -8, -9]; // ERR_FAILED, CONNECTION_REFUSED, TIMED_OUT, CONNECTION_TIMEOUT, CONNECTION_RESET
+    const retryableErrors = Platform.OS === "ios" ? iosRetryable : androidRetryable;
+    const shouldRetry =
+      retryableErrors.includes(nativeEvent?.code) && retryCountRef.current < maxRetries;
+
     if (shouldRetry) {
       const errorNames: Record<number, string> = {
         [-1001]: "timeout",
-        [-1005]: "connection lost"
+        [-1005]: "connection lost",
+        [-6]: "connection refused",
+        [-7]: "timed out",
+        [-8]: "connection timeout",
+        [-9]: "connection reset",
       };
-      const errorName = errorNames[nativeEvent?.code] || "network";
-      console.log(`iOS ${errorName} error detected (attempt ${retryCountRef.current + 1}/${maxRetries}), attempting automatic reload...`);
+      const errorName = errorNames[nativeEvent?.code] ?? "network";
+      if (__DEV__) {
+        console.log(`${Platform.OS} ${errorName} error detected (attempt ${retryCountRef.current + 1}/${maxRetries}), attempting automatic reload...`);
+      }
       retryCountRef.current += 1;
       // Wait a bit then reload
       setTimeout(() => {
+        if (!isMountedRef.current) return;
         if (webviewRef.current) {
-          console.log("Reloading WebView after network error...");
+          if (__DEV__) {
+            console.log("Reloading WebView after network error...");
+          }
           webviewRef.current.reload();
           setIsLoading(true);
           setHasError(false);
-          return;
         }
       }, 3000); // 3 second delay before retry
       return; // Exit early, don't set error state yet
     }
     
-    setIsLoading(false);
-    setHasError(true);
+    if (isMountedRef.current) {
+      setIsLoading(false);
+      setHasError(true);
+    }
     const errorMessage = nativeEvent?.description || nativeEvent?.message || "Unknown error";
-    console.error("Error details:", {
-      code: nativeEvent?.code,
-      domain: nativeEvent?.domain,
-      description: nativeEvent?.description,
-      url: nativeEvent?.url,
-      retryCount: retryCountRef.current,
-    });
-    
+    if (__DEV__) {
+      console.error("Error details:", {
+        code: nativeEvent?.code,
+        domain: nativeEvent?.domain,
+        description: nativeEvent?.description,
+        url: nativeEvent?.url,
+        retryCount: retryCountRef.current,
+      });
+    }
+
     // Show error with option to open in external browser
     if (retryCountRef.current >= maxRetries && checkoutLink) {
-      Alert.alert(
-        "Failed to Load Checkout",
-        "Unable to load the checkout page in the app. Would you like to open it in Safari instead?",
-        [
-          {
-            text: "Cancel",
-            style: "cancel",
-            onPress: () => {
-              showError(`Failed to load checkout page: ${errorMessage}`);
-            }
+      const openInBrowserLabel = Platform.OS === "ios" ? "Open in Safari" : "Open in Browser";
+      const openInBrowserMessage =
+        Platform.OS === "ios"
+          ? "Unable to load the checkout page in the app. Would you like to open it in Safari instead?"
+          : "Unable to load the checkout page in the app. Would you like to open it in your browser instead?";
+
+      Alert.alert("Failed to Load Checkout", openInBrowserMessage, [
+        {
+          text: "Cancel",
+          style: "cancel",
+          onPress: () => {
+            showError(`Failed to load checkout page: ${errorMessage}`);
           },
-          {
-            text: "Open in Safari",
-            onPress: async () => {
-              try {
-                const canOpen = await Linking.canOpenURL(checkoutLink);
-                if (canOpen) {
-                  await Linking.openURL(checkoutLink);
-                  // Navigate back after opening in browser
-                  setTimeout(() => {
-                    navigation.goBack();
-                  }, 500);
-                } else {
-                  showError("Unable to open link in browser");
+        },
+        {
+          text: openInBrowserLabel,
+          onPress: async () => {
+            try {
+              const canOpen = await Linking.canOpenURL(checkoutLink);
+              if (canOpen) {
+                await Linking.openURL(checkoutLink);
+                if (isMountedRef.current) {
+                  setTimeout(() => navigation.goBack(), 500);
                 }
-              } catch (error) {
-                console.error("Error opening URL:", error);
+              } else {
                 showError("Unable to open link in browser");
               }
+            } catch (error) {
+              if (__DEV__) {
+                console.error("Error opening URL:", error);
+              }
+              showError("Unable to open link in browser");
             }
-          }
-        ]
-      );
+          },
+        },
+      ]);
     } else if (retryCountRef.current >= maxRetries) {
       showError(`Failed to load checkout page: ${errorMessage}`);
     }
   };
 
   const handleHttpError = (syntheticEvent: any) => {
-    const { nativeEvent } = syntheticEvent;
-    console.error("WebView HTTP error: ", JSON.stringify(nativeEvent, null, 2));
-    setIsLoading(false);
-    showError(`HTTP Error ${nativeEvent?.statusCode || "Unknown"}: ${nativeEvent?.description || "Failed to load page"}`);
+    const nativeEvent = syntheticEvent?.nativeEvent;
+    if (!nativeEvent) return;
+    if (__DEV__) {
+      console.error("WebView HTTP error: ", JSON.stringify(nativeEvent, null, 2));
+    }
+    if (isMountedRef.current) {
+      setIsLoading(false);
+      setHasError(true);
+    }
+    const statusCode = nativeEvent?.statusCode ?? "Unknown";
+    const description = nativeEvent?.description ?? "Failed to load page";
+    showError(`HTTP Error ${statusCode}: ${description}`);
   };
 
   const handleShouldStartLoadWithRequest = (request: any) => {
-    console.log("WebView navigation request: ", request.url);
+    const requestUrl = request?.url ?? "";
+    if (__DEV__) {
+      console.log("WebView navigation request: ", requestUrl);
+    }
+
+    const lowerCaseUrl = requestUrl.toLowerCase();
+    if (
+      lowerCaseUrl.includes("payment_status=success") ||
+      lowerCaseUrl.includes("status=success") ||
+      lowerCaseUrl.includes("order_complete")
+    ) {
+      handleCheckoutSuccess();
+    }
+
+    if (
+      lowerCaseUrl.includes("payment_status=failed") ||
+      lowerCaseUrl.includes("payment_status=canceled") ||
+      lowerCaseUrl.includes("payment_status=cancelled") ||
+      lowerCaseUrl.includes("order_failed") ||
+      lowerCaseUrl.includes("order_cancelled")
+    ) {
+      handleCheckoutFailure("failed");
+    }
+
     // Allow all navigation
     return true;
   };
 
   const handleNavigationStateChange = (navState: any) => {
-    console.log("WebView navigation state changed: ", {
-      url: navState.url,
-      title: navState.title,
-      loading: navState.loading,
-      canGoBack: navState.canGoBack,
-      canGoForward: navState.canGoForward,
-    });
-    // Reset error state when navigation starts successfully
-    if (navState.loading && !hasError) {
+    if (__DEV__ && navState) {
+      console.log("WebView navigation state changed: ", {
+        url: navState.url,
+        title: navState.title,
+        loading: navState.loading,
+      });
+    }
+    // Show loading when navigating within WebView (e.g. redirects) - only if not in error state
+    if (navState?.loading && !hasError && isMountedRef.current) {
       setIsLoading(true);
     }
   };
@@ -329,7 +448,9 @@ const CoinflowCheckoutWebView: React.FC = () => {
                       showError("Unable to open link in browser");
                     }
                   } catch (error) {
-                    console.error("Error opening URL:", error);
+                    if (__DEV__) {
+                      console.error("Error opening URL:", error);
+                    }
                     showError("Unable to open link in browser");
                   }
                 }}
@@ -342,7 +463,7 @@ const CoinflowCheckoutWebView: React.FC = () => {
                 }}
               >
                 <CustomText variant="body1" style={{ color: "white" }}>
-                  Open in Safari
+                  {Platform.OS === "ios" ? "Open in Safari" : "Open in Browser"}
                 </CustomText>
               </TouchableOpacity>
             )}

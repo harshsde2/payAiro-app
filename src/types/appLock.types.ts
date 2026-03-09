@@ -31,6 +31,8 @@ export interface AppLockContextType {
   clearPaymentVerification: () => void;
   /** Non-null when payment verification modal is active; onVerified is the callback to run on success. */
   paymentVerificationRequest: { onVerified: () => void } | null;
+  /** True once we've determined whether to show lock on cold start; used to avoid flashing dashboard before AppLock. */
+  isLockCheckComplete: boolean;
 }
 
 export const LOCK_CONFIG = {
