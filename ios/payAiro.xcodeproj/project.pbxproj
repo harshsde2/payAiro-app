@@ -25,6 +25,7 @@
 		6711D27DBED44B0386C3AD7B /* Neue Plak Condensed Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C9FFF32E50234E14A3E02299 /* Neue Plak Condensed Thin.ttf */; };
 		6A9A4987BFA74434907D0716 /* Neue Plak Text Bold Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B78B550DA6E24291B200337B /* Neue Plak Text Bold Italic.ttf */; };
 		6FABE76F59DC45419755FD82 /* Montserrat-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A75EC8C0E9DA48FCB9A2D29F /* Montserrat-SemiBold.ttf */; };
+		708C53FFC14E4E13A4036848 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ED3CDCC33A494798A5A30632 /* Colors.xcassets */; };
 		742EE2B2B54742ACAF2C9BD5 /* Neue Plak Text Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F28A8566198646C7843F0EED /* Neue Plak Text Italic.ttf */; };
 		7593A7FD4B5544D2B7704888 /* Neue Plak Text Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7D05A5B824EA45D8A46676C5 /* Neue Plak Text Bold.ttf */; };
 		7718BAA7F1AC4560BF164274 /* Neue Plak Extended Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 1AC1AD42F9AA4F60A76769C4 /* Neue Plak Extended Regular.ttf */; };
@@ -48,6 +49,7 @@
 		BEFDD9BBF8EF46DB9874ED62 /* Neue Plak Text Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 473008983E4D4328998080B4 /* Neue Plak Text Thin.ttf */; };
 		C60B5E2BF2E942F29CDE6BB9 /* Neue Plak Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F004C8E5AA2D4C048686AEB7 /* Neue Plak Thin.ttf */; };
 		C6199536F63A414292ABDC74 /* Neue Plak Condensed UltraLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2EC770F56EC54EF9A25D4276 /* Neue Plak Condensed UltraLight.ttf */; };
+		CC00EEB745064BA9B1CBD910 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C0A2131BE5D34455AD0E9F9D /* BootSplash.storyboard */; };
 		D841793F8B794AA1BF982946 /* Neue Plak Condensed SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A0792AED21AC44CDA2DA3E25 /* Neue Plak Condensed SemiBold.ttf */; };
 		E4810FFCB8FC4B62A77FBEA2 /* Neue Plak Condensed Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5FEA830A39CD469BAED2AD76 /* Neue Plak Condensed Light.ttf */; };
 		E9F687D508EA49B0B90377CA /* Neue Plak Extended Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 184B0A336A424FEEB85B33C4 /* Neue Plak Extended Bold.ttf */; };
@@ -120,6 +122,7 @@
 		B6E59B51755147B090BB0653 /* Neue Plak SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak SemiBold.ttf"; path = "../assets/fonts/Neue Plak SemiBold.ttf"; sourceTree = "<group>"; };
 		B78B550DA6E24291B200337B /* Neue Plak Text Bold Italic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Text Bold Italic.ttf"; path = "../assets/fonts/Neue Plak Text Bold Italic.ttf"; sourceTree = "<group>"; };
 		BFD78522002B4BDAA53AD3E9 /* Neue Plak UltraLight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak UltraLight.ttf"; path = "../assets/fonts/Neue Plak UltraLight.ttf"; sourceTree = "<group>"; };
+		C0A2131BE5D34455AD0E9F9D /* BootSplash.storyboard */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = BootSplash.storyboard; path = payAiro/BootSplash.storyboard; sourceTree = "<group>"; };
 		C9FFF32E50234E14A3E02299 /* Neue Plak Condensed Thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Condensed Thin.ttf"; path = "../assets/fonts/Neue Plak Condensed Thin.ttf"; sourceTree = "<group>"; };
 		CA37AA5B114EC9533EEB723F /* Pods-payAiro.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-payAiro.release.xcconfig"; path = "Target Support Files/Pods-payAiro/Pods-payAiro.release.xcconfig"; sourceTree = "<group>"; };
 		D7BC9EED82BC4408BEF484AF /* Neue Plak Extended UltraLight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Extended UltraLight.ttf"; path = "../assets/fonts/Neue Plak Extended UltraLight.ttf"; sourceTree = "<group>"; };
@@ -127,6 +130,7 @@
 		E03087DF93A04A8CBA7C77C4 /* Neue Plak Condensed ExtraBlack.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Condensed ExtraBlack.ttf"; path = "../assets/fonts/Neue Plak Condensed ExtraBlack.ttf"; sourceTree = "<group>"; };
 		EA49A3132CE640438544E782 /* Neue Plak Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Light.ttf"; path = "../assets/fonts/Neue Plak Light.ttf"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		ED3CDCC33A494798A5A30632 /* Colors.xcassets */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; name = Colors.xcassets; path = payAiro/Colors.xcassets; sourceTree = "<group>"; };
 		F004C8E5AA2D4C048686AEB7 /* Neue Plak Thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Thin.ttf"; path = "../assets/fonts/Neue Plak Thin.ttf"; sourceTree = "<group>"; };
 		F03B76B657BC4D2BA7D201F4 /* Neue Plak Condensed Black.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Condensed Black.ttf"; path = "../assets/fonts/Neue Plak Condensed Black.ttf"; sourceTree = "<group>"; };
 		F1DFBF62BD76881D04F69102 /* Pods-payAiro-payAiroTests.stagingrelease.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-payAiro-payAiroTests.stagingrelease.xcconfig"; path = "Target Support Files/Pods-payAiro-payAiroTests/Pods-payAiro-payAiroTests.stagingrelease.xcconfig"; sourceTree = "<group>"; };
@@ -183,6 +187,8 @@
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
 				13B07FB71A68108700A75B9A /* FreshchatCustomTheme.plist */,
+				C0A2131BE5D34455AD0E9F9D /* BootSplash.storyboard */,
+				ED3CDCC33A494798A5A30632 /* Colors.xcassets */,
 			);
 			name = payAiro;
 			sourceTree = "<group>";
@@ -428,6 +434,8 @@
 				7BE6D847D2254811B99ECA9D /* Montserrat-Regular.ttf in Resources */,
 				6FABE76F59DC45419755FD82 /* Montserrat-SemiBold.ttf in Resources */,
 				7F59CA2815B44926A9A3D113 /* Nexa-Heavy.ttf in Resources */,
+				CC00EEB745064BA9B1CBD910 /* BootSplash.storyboard in Resources */,
+				708C53FFC14E4E13A4036848 /* Colors.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -697,7 +705,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = payAiro/payAiro.entitlements;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = 8T3V6TMY34;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = payAiro/Info.plist;
@@ -707,7 +715,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 6.74;
+				MARKETING_VERSION = 6.78;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -733,7 +741,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = payAiro/payAiro.entitlements;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = 8T3V6TMY34;
 				INFOPLIST_FILE = payAiro/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PayAiro;
@@ -742,7 +750,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 6.74;
+				MARKETING_VERSION = 6.78;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -849,7 +857,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = payAiro/payAiro.entitlements;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = 8T3V6TMY34;
 				INFOPLIST_FILE = payAiro/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "PayAiro Staging";
@@ -858,7 +866,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 6.74;
+				MARKETING_VERSION = 6.78;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

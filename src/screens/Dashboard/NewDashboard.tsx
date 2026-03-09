@@ -527,6 +527,9 @@ const NewDashboard = () => {
       })).reverse();
   }, [bankLists, bankBalance]);
 
+  // console.log("processedBankAccounts =>", JSON.stringify(processedBankAccounts, null, 2));
+  // console.log("DashBoardData =>", JSON.stringify(DashBoardData?.data, null, 2));
+
 
   const userHasExternalAccount = useMemo(() => {
     return processedBankAccounts.some((item: any) => item?.bank_type === "external");

@@ -94,6 +94,8 @@ export const AUTH = {
   CRYPTO_WITHDRAWAL: "auth/cybrid/Withdrawal/",
   CRYPTO_MARKET_DATA: "auth/coingecko/markets/",
   COINFLOW_CHECKOUT: "auth/coinflow/checkout/",
+  WERT_HPP_SESSION: "auth/wert-hpp-session/",
+  WERT_HPP: "auth/wert-hpp/",
   GET_REFERRAL_DATA: "auth/users/ref/",
   CONTENT_DATA: "auth/r1/content-data/",
   USER_DETAILS: "auth/r1/user-details/",

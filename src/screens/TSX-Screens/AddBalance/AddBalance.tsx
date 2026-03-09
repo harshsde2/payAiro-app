@@ -17,13 +17,12 @@ import { CustomText } from "tsx-components";
 import { useNavigation } from "@react-navigation/native";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import AmountInputDisplay from "./AmountInputDisplay";
-import { apiClient } from "api";
-import { AUTH } from "api/endpoints";
 import { showError } from "utils/toast";
-import InAppBrowser from "react-native-inappbrowser-reborn";
-import { isProduction } from "config/env.config";
+import { isProduction, getApiUrl } from "config/env.config";
+import { AUTH } from "api/endpoints";
 import BankDetailsModal from "components/common-components/BankDetailsModal";
 import LocationUnavailableModal from "components/common-components/LocationUnavailableModal";
+
 
 // Helper function to get icon component by key
 const getPaymentIcon = (
@@ -56,21 +55,21 @@ const getPaymentIcon = (
 // Payment method configurations (without icons - icons are created in component)
 const PAYMENT_METHOD_CONFIGS = [
   {
-    title: "Debit Card",
+    title: "Debit Card/Google Pay",
     iconKey: "DebitCard" as const,
     type: "coinflow" as const,
     navigation: NAVIGATION_SCREENS.COINFLOW_CHECKOUT_WEBVIEW,
-    showInProduction: false, // Hide in production
-    isDisabled: true,
+    showInProduction: true, // Hide in production
+    isDisabled: false,
   },
-  {
-    title: "Apple Pay/Google Pay",
-    iconKey: "ApplePay" as const,
-    type: "coinflow" as const,
-    navigation: NAVIGATION_SCREENS.COINFLOW_CHECKOUT_WEBVIEW,
-    showInProduction: false, // Hide in production
-    isDisabled: true,
-  },
+  // {
+  //   title: "Apple Pay/Google Pay",
+  //   iconKey: "ApplePay" as const,
+  //   type: "coinflow" as const,
+  //   navigation: NAVIGATION_SCREENS.COINFLOW_CHECKOUT_WEBVIEW,
+  //   showInProduction: false, // Hide in production
+  //   isDisabled: false,
+  // },
   {
     title: "Account Transfer",
     iconKey: "ACHTransfer" as const,
@@ -106,7 +105,7 @@ const PAYMENT_METHOD_CONFIGS = [
 ] as const;
 
 const AddBalance = () => {
-  const { bankBalance, bankLists } = useSelectorAction();
+  const { bankBalance, bankLists, tokens } = useSelectorAction();
 
   // Filter and create payment methods with icons based on environment
   const PAYMENT_METHODS = useMemo(() => {
@@ -150,7 +149,7 @@ const AddBalance = () => {
     });
   }, [bankLists]);
 
-  console.log("BANK_LISTS =>", JSON.stringify(BANK_LISTS, null, 2));
+  // console.log("BANK_LISTS =>", JSON.stringify(BANK_LISTS, null, 2));
 
   const { theme } = useTheme();
   const navigation = useNavigation<any>();
@@ -188,121 +187,18 @@ const AddBalance = () => {
     }
   }, [externalAccount]);
 
-  // Handle coinflow checkout
-  const handleCoinflowCheckout = async (paymentMethodTitle: string) => {
-    if (!amount || parseInt(amount) <= 0) {
-      setHasAmountError(true);
-      showError("Please enter a valid amount");
-      // Reset error after animation completes
-      setTimeout(() => {
-        setHasAmountError(false);
-      }, 1000);
+  // Handle coinflow checkout - builds WERT HPP URL with access token
+  const handleCoinflowCheckout = async (_paymentMethodTitle: string) => {
+    const accessToken = tokens?.access;
+    if (!accessToken) {
+      showError("Please log in again to continue");
       return;
     }
-
-    // Clear error if amount is valid
-    setHasAmountError(false);
-
-    setLoadingPaymentMethod(paymentMethodTitle);
-    try {
-      const amountInCents = Math.round(parseFloat(amount));
-      const response = await apiClient.post<{
-        status: boolean;
-        message: string;
-        data: {
-          status: boolean;
-          message: string;
-          checkout_link: string;
-          amount_usd: number;
-          amount_cents: number;
-        };
-      }>(AUTH.COINFLOW_CHECKOUT, {
-        amount: amountInCents,
-      });
-
-      if (response?.data?.checkout_link) {
-        console.log("✅ Checkout link generated successfully");
-        console.log("🔗 Checkout URL:", response.data.checkout_link);
-        console.log("⏰ Timestamp:", new Date().toISOString());
-
-        navigation.navigate(NAVIGATION_SCREENS.TEST_WEBVIEW, {
-          checkoutLink: response.data.checkout_link,
-        });
-        // Check if InAppBrowser is available
-        // const isAvailable = await InAppBrowser.isAvailable();
-
-        // if (isAvailable) {
-        //   try {
-        //     // Open in-app browser with payment success detection
-        //     const result = await InAppBrowser.open(
-        //       response.data.checkout_link,
-        //       {
-        //         // iOS options
-        //         dismissButtonStyle: "cancel",
-        //         preferredBarTintColor:
-        //           theme?.colors?.palette?.primary || "#4F378B",
-        //         preferredControlTintColor: "#FFFFFF",
-        //         readerMode: false,
-        //         animated: true,
-        //         modalPresentationStyle: "fullScreen",
-        //         modalTransitionStyle: "coverVertical",
-        //         modalEnabled: true,
-        //         enableBarCollapsing: false,
-        //         // Android options
-        //         showTitle: true,
-        //         toolbarColor: theme?.colors?.palette?.primary || "#4F378B",
-        //         secondaryToolbarColor: "#000000",
-        //         navigationBarColor: "#000000",
-        //         navigationBarDividerColor: "transparent",
-        //         enableUrlBarHiding: true,
-        //         enableDefaultShare: true,
-        //         forceCloseOnRedirection: false,
-        //         animations: {
-        //           startEnter: "slide_in_right",
-        //           startExit: "slide_out_left",
-        //           endEnter: "slide_in_left",
-        //           endExit: "slide_out_right",
-        //         },
-        //         headers: {
-        //           "Accept-Language": "en-US",
-        //         },
-        //       }
-        //     );
-
-        //     // Handle browser result
-        //     if (result.type === "cancel") {
-        //       console.log("User cancelled the checkout");
-        //       // User closed the browser, no action needed
-        //     } else if (result.type === "dismiss") {
-        //       console.log("Browser was dismissed");
-        //     }
-        //   } catch (error: any) {
-        //     console.error("InAppBrowser error:", error);
-        //     showError("Failed to open checkout page. Please try again.");
-        //   }
-        // } else {
-        //   // Fallback to WebView screen if InAppBrowser is not available
-        //   navigation.navigate(
-        //     NAVIGATION_SCREENS.COINFLOW_CHECKOUT_WEBVIEW as never,
-        //     {
-        //       checkoutLink: response.data.checkout_link,
-        //     }
-        //   );
-        // }
-      } else {
-        showError(response?.message || "Failed to generate checkout link");
-      }
-    } catch (error: any) {
-      // console.error("Coinflow checkout error:", JSON.stringify(error.response, null, 2));
-      const errorMessage =
-        error?.response?.data?.data?.message ||
-        error?.message ||
-        "Failed to initiate checkout. Please try again.";
-      // showError('jsasaksa ');
-      setIsLocationUnavailableModalVisible(true)
-    } finally {
-      setLoadingPaymentMethod(null);
-    }
+    const baseUrl = getApiUrl(AUTH.WERT_HPP);
+    const checkoutUrl = `${baseUrl}?access=${encodeURIComponent(accessToken)}`;
+    navigation.navigate(NAVIGATION_SCREENS.COINFLOW_CHECKOUT_WEBVIEW, {
+      checkoutLink: checkoutUrl,
+    });
   };
 
 
@@ -338,8 +234,8 @@ const AddBalance = () => {
           }
         }}
         hasError={hasAmountError}
-      />
-      <CustomText align="center" size={14} variant="caption">
+      /> */}
+      {/* <CustomText align="center" size={14} variant="caption">
         Current Balance: ${current_balance}
       </CustomText> */}
       {/* Payment Method Selection */}
@@ -347,7 +243,7 @@ const AddBalance = () => {
         <DashboardSection title="Select Payment Method">
           {PAYMENT_METHODS.map((method, index) => {
             const isCoinflow = method.type === "coinflow";
-            const isValidAmount = amount !== "" && parseInt(amount) > 0;
+            const isValidAmount = amount !== "" && Number(amount) > 0;
             const isThisMethodLoading = loadingPaymentMethod === method.title;
             const isOtherMethodLoading =
               loadingPaymentMethod !== null &&

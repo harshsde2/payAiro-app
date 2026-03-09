@@ -52,6 +52,11 @@ export interface IEnvConfig {
   TEST_VERSION_OVERRIDE?: string;
   TEST_FORCE_UPDATE?: boolean;
   FORCE_UPDATE_ENABLED?: boolean; // Production: true = force all updates, false = optional updates
+
+  // Wert Checkout Settings (non-secret values only)
+  WERT_CHECKOUT_PAGE_BASE_URL?: string;
+  WERT_PARTNER_ID?: string;
+  WERT_WIDGET_ORIGIN?: string;
 }
 
 /**
@@ -83,6 +88,9 @@ const OPTIONAL_VARS: Partial<Record<keyof IEnvConfig, any>> = {
   TEST_VERSION_OVERRIDE: undefined,
   TEST_FORCE_UPDATE: false,
   FORCE_UPDATE_ENABLED: true, // Default: force all updates in production
+  WERT_CHECKOUT_PAGE_BASE_URL: undefined,
+  WERT_PARTNER_ID: undefined,
+  WERT_WIDGET_ORIGIN: undefined,
 };
 
 // ========================================
@@ -333,6 +341,15 @@ function buildConfig(): IEnvConfig {
       OPTIONAL_VARS.FORCE_UPDATE_ENABLED as boolean,
       'FORCE_UPDATE_ENABLED'
     ),
+    WERT_CHECKOUT_PAGE_BASE_URL: (Config as any).WERT_CHECKOUT_PAGE_BASE_URL
+      ? String((Config as any).WERT_CHECKOUT_PAGE_BASE_URL).trim()
+      : undefined,
+    WERT_PARTNER_ID: (Config as any).WERT_PARTNER_ID
+      ? String((Config as any).WERT_PARTNER_ID).trim()
+      : undefined,
+    WERT_WIDGET_ORIGIN: (Config as any).WERT_WIDGET_ORIGIN
+      ? String((Config as any).WERT_WIDGET_ORIGIN).trim()
+      : undefined,
   };
   
   return config;

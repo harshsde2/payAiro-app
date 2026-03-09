@@ -161,6 +161,8 @@ import BankOfAmerica from "./BankOfAmerica.svg";
 import PayPal from "./Paypal.svg";
 import Venmo from "./Venmo.svg";
 import Transfer from "./Transfer.svg";
+import FlashlightOff from "./FlashlightOff.svg";
+import FlashlightOn from "./FlashlightOn.svg";
 
 export const SvgIcons = {
   PayAiorRoundIcon,
@@ -326,4 +328,6 @@ export const SvgIcons = {
   PayPal,
   Venmo,
   Transfer,
+  FlashlightOff,
+  FlashlightOn,
 };

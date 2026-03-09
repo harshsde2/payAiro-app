@@ -24,6 +24,7 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
   const [showPinScreen, setShowPinScreen] = useState(false);
   const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
   const [paymentVerificationRequest, setPaymentVerificationRequest] = useState<{ onVerified: () => void } | null>(null);
+  const [isLockCheckComplete, setIsLockCheckComplete] = useState(false);
   const appState = useRef<AppStateStatus>(AppState.currentState);
   
   // Track if user was already logged in when app started (cold start)
@@ -86,9 +87,16 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
 
   // Check PIN status on mount and when isLogin changes
   useEffect(() => {
-    refreshPinStatus();
+    const pinExists = getPin() !== undefined && (getPin()?.length ?? 0) > 0;
+    setHasPin(pinExists);
+
+    // Set isLockCheckComplete only when we're SURE we don't need lock (use sync getPin, not state)
+    const needLock = isLogin && pinExists;
+    if (!needLock) {
+      setIsLockCheckComplete(true);
+    }
   }, [isLogin, refreshPinStatus]);
-  
+
   // Computed value: should we even consider locking?
   const shouldShowLock = isLogin && hasPin;
 
@@ -97,9 +105,17 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
     if (!isLogin || !hasPin) {
       setIsLocked(false);
       setShowPinScreen(false);
+      setIsLockCheckComplete(true);
       removeItem(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME);
     }
   }, [isLogin, hasPin]);
+
+  // Lock check complete when user just logged in (no cold start)
+  useEffect(() => {
+    if (shouldShowLock && wasLoggedInOnMount.current === false) {
+      setIsLockCheckComplete(true);
+    }
+  }, [shouldShowLock]);
 
   // Monitor app state changes
   useEffect(() => {
@@ -155,7 +171,7 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
   useEffect(() => {
     if (shouldShowLock && !hasCheckedColdStart.current && wasLoggedInOnMount.current) {
       hasCheckedColdStart.current = true;
-      
+
       // Check if we're within the grace period (60 seconds)
       const lastActiveTime = getNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME);
       const currentTime = Date.now();
@@ -169,6 +185,7 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
       } else {
         setIsLocked(true);
       }
+      setIsLockCheckComplete(true);
     }
   }, [shouldShowLock]);
 
@@ -228,6 +245,7 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
         requestPaymentVerification,
         clearPaymentVerification,
         paymentVerificationRequest,
+        isLockCheckComplete,
       }}
     >
       {children}

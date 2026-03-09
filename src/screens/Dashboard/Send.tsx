@@ -216,12 +216,14 @@ const Send: React.FC<ISendProps> = ({ route }) => {
                 editable={isEditable}
                 label={type === "requested" ? "From" : "To"}
                 placeholder="PayAiroTag, Phone, Email"
-                rightIcon={type === "requested" ? "" : SVGScan}
+                // rightIcon={type === "requested" ? "" : SVGScan}
+                rightIconComponent="scanner"
                 onRightIconClick={() => {
                   navigation.navigate('MainTabs', { screen: NAVIGATION_SCREENS.SCANS });
                   // Active tab is now handled automatically by App.js navigation listener
                 }}
                 value={sender}
+                
                 onChange={handleSenderChange}
                 onFocus={handleInputFocus}
                 onBlur={handleInputBlur}

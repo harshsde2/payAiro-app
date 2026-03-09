@@ -235,13 +235,19 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
   }, [otp, handleForgotPinVerifyOtp]);
 
   const handleResetPin = () => {
+
+    if(newPin.join("").length === 0 || confirmPin.join("").length === 0) {
+      showError("Please enter a new PIN","Please enter the new PIN in both fields");
+      return;
+    }
+
     if (!isUserVerified) {
       showError("Please verify your email first");
       return;
     }
 
     if (!isNewPinAndConfirmPinSame()) {
-      showError("New PIN does not match with confirm PIN");
+      showError("New PIN does not match","Please enter the same PIN in both fields");
       return;
     }
 
@@ -290,6 +296,13 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
     }
     setOtp(text);
   }, [otpError]);
+
+  const handleResendOtp = useCallback(() => {
+    setOtpError("");
+    setOtp("");
+    otpInputRef.current?.clear();
+    handleSendOtp(sendToPhone);
+  }, [sendToPhone]);
 
   // Handle OTP filled - auto verify
   const handleOtpFilled = useCallback((filledOtp: string) => {
@@ -431,7 +444,7 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
               style={[
                 globalStyles.whiteSheetContainer,
                 {
-                  maxHeight: otpError ? 440 : 380,
+                  maxHeight: otpError ? 490 : 380,
                   width: "90%",
                   borderRadius: theme.spacing.spacing[8],
                   padding: theme.spacing.spacing[6],
@@ -504,6 +517,24 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
                     {otpError}
                   </CustomText>
                 </View>
+              ) : null}
+
+              {/* Resend OTP Link - shown when OTP expired or invalid */}
+              {otpError ? (
+                <Pressable
+                  onPress={() => {
+                    setOtpError("");
+                    setOtp("");
+                    otpInputRef.current?.clear();
+                    handleSendOtp(sendToPhone);
+                  }}
+                  style={modalStyles.resendOtpLink}
+                  disabled={isPendingSendOtp}
+                >
+                  <CustomText variant="caption" style={modalStyles.resendOtpLinkText}>
+                    {isPendingSendOtp ? "Sending..." : "Resend OTP"}
+                  </CustomText>
+                </Pressable>
               ) : null}
 
               {/* Action Buttons */}
