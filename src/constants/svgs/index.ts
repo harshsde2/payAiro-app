@@ -163,6 +163,7 @@ import Venmo from "./Venmo.svg";
 import Transfer from "./Transfer.svg";
 import FlashlightOff from "./FlashlightOff.svg";
 import FlashlightOn from "./FlashlightOn.svg";
+import NewOnBoarding from "./NewOnBoarding.svg";
 
 export const SvgIcons = {
   PayAiorRoundIcon,
@@ -330,4 +331,5 @@ export const SvgIcons = {
   Transfer,
   FlashlightOff,
   FlashlightOn,
+  NewOnBoarding,
 };

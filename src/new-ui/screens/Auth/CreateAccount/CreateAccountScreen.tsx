@@ -243,15 +243,16 @@ const CreateAccountScreen: React.FC = () => {
             variant="bodySmall"
             style={styles.checkboxText}
           >
-            I agree with the{" "}
+            By adding your number above, you accept the{" "}
             <CustomText
               fontFamily="inter"
               variant="bodySmall"
               color={theme.colors.primary}
               onPress={handleTermsAcceptance}
             >
-              Terms & Conditions
+              Terms of Service & Privacy Policy
             </CustomText>
+            {" "}and agree to receive transactional/informational SMS from PayAiro Inc. Message frequency may vary. Message and data rates may apply. Reply HELP for help or STOP to opt-out.
           </CustomText>
         </TouchableOpacity>
 

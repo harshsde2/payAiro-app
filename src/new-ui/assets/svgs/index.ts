@@ -13,6 +13,7 @@ import TickCheckedBox from './TickCheckedBox.svg';
 import UntickCheckedBox from './UntickCheckedBox.svg';
 import ChevronDown from './ChevronDown.svg';
 import ArrowRight from './ArrowRight.svg';
+import NewOnBoarding from './NewOnBoarding.svg';
 
 export const AppIcon = {
   Home,
@@ -30,4 +31,5 @@ export const AppIcon = {
   UntickCheckedBox,
   ChevronDown,
   ArrowRight,
+  NewOnBoarding,
 };

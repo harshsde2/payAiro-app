@@ -42,7 +42,7 @@ const OnboardingScreen: React.FC = () => {
       </View>
 
       <View style={styles.graphicsContainer}>
-        <AppIcon.OnBoardingImage />
+        <AppIcon.NewOnBoarding />
       </View>
 
       <View style={styles.textContainer}>
