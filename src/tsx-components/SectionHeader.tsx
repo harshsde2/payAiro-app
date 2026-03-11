@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { View, StyleSheet, TouchableOpacity, TextStyle } from "react-native";
-import { useTheme } from "../styles/ThemeContext";
-import CustomText from "./CustomText";
+import CustomText from "@new-ui/components/common-components/CustomText";
+import { useTheme } from '@new-ui/styles/ThemeContext';
 
 interface SectionHeaderProps {
   title?: string;
@@ -24,8 +24,6 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   return (
     <View style={styles.container}>
       <CustomText
-        variant="h4"
-        fontWeight="bold"
         style={[styles.title, titleStyle]}
       >
         {title}
@@ -33,8 +31,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
       {actionText && onActionPress && (
         <TouchableOpacity onPress={onActionPress}>
           <CustomText
-            variant="button"
-            color={theme.colors.palette.primary}
+            variant="body"
+            color={'#838383'}
             style={styles.actionText}
           >
             {actionText}
@@ -51,11 +49,13 @@ const createStyles = (theme: any) =>
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      marginBottom: theme.spacing.spacing.sm,
-      marginTop: theme.spacing.spacing.md,
+      marginBottom: theme.spacing.sm,
+      marginTop: theme.spacing.md,
     },
     title: {
-      color: theme.colors.text.primary,
+      color: theme.colors.black,
+      fontFamily: theme.typography.fontFamily.semiBold,
+      fontSize: theme.typography.fontSize.lg,
     },
     actionText: {
       fontSize: theme.typography.fontSize.sm,

@@ -21,7 +21,7 @@ const CoinflowCheckoutWebView: React.FC = () => {
   const { theme } = useTheme();
   const { checkoutLink } = (route.params as RouteParams) || {};
 
-  // console.log("checkoutLink ->", checkoutLink);
+  console.log("checkoutLink ->", JSON.stringify(checkoutLink, null, 2));
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const retryCountRef = React.useRef(0);

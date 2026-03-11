@@ -2,9 +2,13 @@ import React, { useMemo, useCallback, useEffect, memo } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { View, Text, StyleSheet, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BlurView } from "@react-native-community/blur";
 import { useTheme } from "styles";
-import { SvgIcons } from "constants/svgs";
+import { AppIcon } from "../new-ui/assets/svgs";
 import { NAVIGATION_SCREENS } from "./navigationConstants";
+
+// Type assertion for payAiro-app screen keys (avoids conflicts with other project types)
+const NAV = NAVIGATION_SCREENS as Record<string, string>;
 import NewDashboard from "screens/Dashboard/NewDashboard";
 import Scans from "screens/Scans/Scans";
 import UnifiedTransactionScreen from "screens/TSX-Screens/UnifiedTransactions/UnifiedTransactionScreen";
@@ -18,56 +22,77 @@ import { useSelector, useDispatch } from "react-redux";
 const Tab = createBottomTabNavigator();
 
 // ============================================
-// MEMOIZED TAB ICON COMPONENTS
-// These prevent re-renders when switching tabs
+// MEMOIZED TAB ICON COMPONENTS (AppIcon style - matches image 1)
 // ============================================
 
 interface TabIconProps {
   focused: boolean;
+  color?: string;
+  size?: number;
 }
 
-const HomeIcon = memo(({ focused }: TabIconProps) => (
-  <SvgIcons.HomeIcon style={{ opacity: focused ? 1 : 0.6 }} />
-));
+const ACTIVE_GREEN = "#008143";
+const INACTIVE_GREY = "#8E8E93";
 
-const CryptoIcon = memo(({ focused }: TabIconProps) => (
-  <SvgIcons.BottomCryptoIcon
-    color="white"
-    width={22}
-    height={22}
-    style={{ opacity: focused ? 1 : 0.6 }}
+const HomeIcon = memo(({ focused, color }: TabIconProps) => (
+  <AppIcon.Home
+    width={24}
+    height={24}
+    color={color || (focused ? ACTIVE_GREEN : INACTIVE_GREY)}
   />
 ));
 
-const ScanIcon = memo(({ focused }: TabIconProps) => (
-  <SvgIcons.NewScannerIcon style={{ opacity: focused ? 1 : 0.6 }} />
+const CryptoIcon = memo(({ focused, color }: TabIconProps) => (
+  <AppIcon.Crypto
+    width={24}
+    height={24}
+    color={color || (focused ? ACTIVE_GREEN : INACTIVE_GREY)}
+  />
+));
+
+const ScanIcon = memo(() => (
+  <View style={styles.scanButtonWrapper}>
+    <AppIcon.Scan
+      width={90}
+      height={90}
+      color="white"
+    />
+  </View>
 ));
 
 interface ActivityIconProps extends TabIconProps {
   pendingCount: number;
 }
 
-const ActivityIcon = memo(({ focused, pendingCount }: ActivityIconProps) => (
-  <View>
-    <SvgIcons.TransactionIcon style={{ opacity: focused ? 1 : 0.6 }} />
-    {pendingCount > 0 && (
-      <View style={styles.badgeContainer}>
-        <Text style={styles.badgeText}>
-          {pendingCount > 99 ? "99+" : pendingCount}
-        </Text>
-      </View>
-    )}
-  </View>
-));
+const ActivityIcon = memo(
+  ({ focused, pendingCount, color }: ActivityIconProps) => (
+    <View>
+      <AppIcon.Transactions
+        width={24}
+        height={24}
+        color={color || (focused ? ACTIVE_GREEN : INACTIVE_GREY)}
+      />
+      {pendingCount > 0 && (
+        <View style={styles.badgeContainer}>
+          <Text style={styles.badgeText}>
+            {pendingCount > 99 ? "99+" : pendingCount}
+          </Text>
+        </View>
+      )}
+    </View>
+  ));
 
-const ProfileIcon = memo(({ focused }: TabIconProps) => (
-  <SvgIcons.Person
-    width={20}
-    height={20}
-    color="white"
-    style={{ opacity: focused ? 1 : 0.6 }}
-  />
-));
+const ProfileIcon = memo(({ focused, color }: TabIconProps) => {
+  const iconColor = color || (focused ? ACTIVE_GREEN : INACTIVE_GREY);
+  return (
+    <AppIcon.Person
+      width={24}
+      height={24}
+      color={iconColor}
+      fill={iconColor}
+    />
+  );
+});
 
 // ============================================
 // STATIC SCREEN OPTIONS (never change)
@@ -78,6 +103,31 @@ const STATIC_SCREEN_OPTIONS = {
   tabBarHideOnKeyboard: true,
   freezeOnBlur: true,
 };
+
+// ============================================
+// BLUR TAB BAR BACKGROUND - Light frosted glass (no black overlay)
+// Shows background content through with blur effect
+// ============================================
+const TabBarBackground = memo(() => {
+  if (Platform.OS === "ios") {
+    return (
+      <BlurView
+        style={StyleSheet.absoluteFill}
+        blurType="light"
+        blurAmount={10}
+        reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.75)"
+      />
+    );
+  }
+  return (
+    <View
+      style={[
+        StyleSheet.absoluteFill,
+        { backgroundColor: "rgba(255, 255, 255, 0.85)" },
+      ]}
+    />
+  );
+});
 
 // ============================================
 // MAIN NAVIGATOR COMPONENT
@@ -123,57 +173,80 @@ const BottomTabNavigator = () => {
     }
   }, [isCrypto]);
 
+  const bottomPadding = Math.max(insets.bottom, 10);
+  const tabBarHeight = 60;
 
-  // Memoize ONLY the dynamic parts of screen options
-  const tabBarStyle = useMemo(() => ({
-    backgroundColor: "black",
-    borderTopWidth: 0,
-    paddingTop: 10,
-    paddingBottom: Math.max(insets.bottom, 10),
-    height: Platform.OS === "ios" ? 70 + insets.bottom : 70,
-    elevation: 0,
-    shadowOpacity: 0,
-  }), [insets.bottom]);
+  // Memoize ONLY the dynamic parts of screen options - blur UI with transparent bg
+  const tabBarStyle = useMemo(
+    () => ({
+      borderTopWidth: 0,
+      backgroundColor: "transparent",
+      paddingTop: 10,
+      paddingBottom: bottomPadding,
+      height: tabBarHeight + bottomPadding,
+      elevation: 0,
+      shadowOpacity: 0,
+      position: "absolute" as const,
+      bottom: 0,
+      left: 0,
+      right: 0,
+    }),
+    [bottomPadding]
+  );
 
-  const tabBarLabelStyle = useMemo(() => ({
-    fontSize: 11,
-    fontFamily: theme.typography.fontFamily.montserratMedium,
-  }), [theme.typography.fontFamily.montserratMedium]);
+  const tabBarLabelStyle = useMemo(
+    () => ({
+      fontSize: 11,
+      fontFamily: theme.typography.fontFamily.montserratMedium,
+    }),
+    [theme.typography.fontFamily.montserratMedium]
+  );
 
-  // Combine static and dynamic options
-  const screenOptions = useMemo(() => ({
-    ...STATIC_SCREEN_OPTIONS,
-    tabBarStyle,
-    tabBarActiveTintColor: "white",
-    tabBarInactiveTintColor: "white",
-    tabBarLabelStyle,
-  }), [tabBarStyle, tabBarLabelStyle]);
+  // Combine static and dynamic options - light blur, green/grey colors
+  const screenOptions = useMemo(
+    () => ({
+      ...STATIC_SCREEN_OPTIONS,
+      tabBarStyle,
+      tabBarActiveTintColor: ACTIVE_GREEN,
+      tabBarInactiveTintColor: INACTIVE_GREY,
+      tabBarLabelStyle,
+      tabBarBackground: () => <TabBarBackground />,
+    }),
+    [tabBarStyle, tabBarLabelStyle]
+  );
 
   // Memoized icon render functions - these return the memoized components
   const renderHomeIcon = useCallback(
-    ({ focused }: { focused: boolean }) => <HomeIcon focused={focused} />,
+    ({ focused, color }: { focused: boolean; color: string }) => (
+      <HomeIcon focused={focused} color={color} />
+    ),
     []
   );
 
   const renderCryptoIcon = useCallback(
-    ({ focused }: { focused: boolean }) => <CryptoIcon focused={focused} />,
+    ({ focused, color }: { focused: boolean; color: string }) => (
+      <CryptoIcon focused={focused} color={color} />
+    ),
     []
   );
 
-  const renderScanIcon = useCallback(
-    ({ focused }: { focused: boolean }) => <ScanIcon focused={focused} />,
-    []
-  );
+  const renderScanIcon = useCallback(() => <ScanIcon />, []);
 
   const renderActivityIcon = useCallback(
-    ({ focused }: { focused: boolean }) => (
-      <ActivityIcon focused={focused} pendingCount={pendingRequestCount} />
+    ({ focused, color }: { focused: boolean; color: string }) => (
+      <ActivityIcon
+        focused={focused}
+        color={color}
+        pendingCount={pendingRequestCount}
+      />
     ),
     [pendingRequestCount]
   );
 
   const renderProfileIcon = useCallback(
-    ({ focused }: { focused: boolean }) => <ProfileIcon focused={focused} />,
+    ({ focused, color }: { focused: boolean; color: string }) => (
+      <ProfileIcon focused={focused} color={color} />
+    ),
     []
   );
 
@@ -192,10 +265,13 @@ const BottomTabNavigator = () => {
     tabBarIcon: renderCryptoIcon,
   }), [renderCryptoIcon]);
 
-  const scanOptions = useMemo(() => ({
-    tabBarLabel: "Scan",
-    tabBarIcon: renderScanIcon,
-  }), [renderScanIcon]);
+  const scanOptions = useMemo(
+    () => ({
+      tabBarLabel: "",
+      tabBarIcon: renderScanIcon,
+    }),
+    [renderScanIcon]
+  );
 
   const activityOptions = useMemo(() => ({
     tabBarLabel: "Activity",
@@ -210,12 +286,12 @@ const BottomTabNavigator = () => {
   return (
     <Tab.Navigator
       screenOptions={screenOptions}
-      initialRouteName={NAVIGATION_SCREENS.NEW_DASHBOARD}
+      initialRouteName={NAV.NEW_DASHBOARD}
       detachInactiveScreens={false}
       backBehavior="history"
     >
       <Tab.Screen
-        name={NAVIGATION_SCREENS.NEW_DASHBOARD}
+        name={NAV.NEW_DASHBOARD}
         component={NewDashboard}
         options={homeOptions}
         listeners={homeListeners}
@@ -227,17 +303,17 @@ const BottomTabNavigator = () => {
         listeners={cryptoListeners}
       />
       <Tab.Screen
-        name={NAVIGATION_SCREENS.SCANS}
+        name={NAV.SCANS}
         component={Scans}
         options={scanOptions}
       />
       <Tab.Screen
-        name={NAVIGATION_SCREENS.UNIFIED_TRANSACTION}
+        name={NAV.UNIFIED_TRANSACTION}
         component={UnifiedTransactionScreen}
         options={activityOptions}
       />
       <Tab.Screen
-        name={NAVIGATION_SCREENS.SETTING_SCREEN}
+        name={NAV.SETTING_SCREEN}
         component={SettingScreen}
         options={profileOptions}
       />
@@ -246,6 +322,31 @@ const BottomTabNavigator = () => {
 };
 
 const styles = StyleSheet.create({
+  scanButtonWrapper: {
+    position: "absolute",
+    top: -20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scanButtonCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#008143",
+    alignItems: "center",
+    justifyContent: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#10AA3C",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.6,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
   badgeContainer: {
     minWidth: 18,
     height: 18,
@@ -258,7 +359,7 @@ const styles = StyleSheet.create({
     right: -8,
     paddingHorizontal: 4,
     borderWidth: 2,
-    borderColor: "#000",
+    borderColor: "rgba(255, 255, 255, 0.9)",
   },
   badgeText: {
     color: "white",

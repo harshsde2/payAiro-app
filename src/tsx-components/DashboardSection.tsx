@@ -50,6 +50,7 @@ const styles = StyleSheet.create({
   container: {
     // flex:1,
   marginVertical:5,
+  gap: 10,
   },
   contentContainer: {
     // flex: 1,

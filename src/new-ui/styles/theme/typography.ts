@@ -28,6 +28,7 @@ export const TYPOGRAPHY = {
     interBold: 'Inter_18pt-Bold',
   },
   fontSize: {
+    xxs: 11,
     xs: 12,
     sm: 14,
     base: 16,

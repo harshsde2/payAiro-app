@@ -121,7 +121,7 @@ export const NAVIGATION_SCREENS = {
   OTP_SCREEN: "OTPScreen",
   CRYPTO_LIST: "CryptoList",
   BANK_SELECTION: "BankSelection",
-  QR_SCANNER:'QRScanner',
+  QR_SCANNER: "QRScanner",
   NEW_TRANSACTION_DETAILS: "NewTransactionDetails",
   UNIFIED_TRANSACTION: "UnifiedTransaction",
   HOW_TO_EARN_POINTS: "HowToEarnPoints",
@@ -133,4 +133,4 @@ export const NAVIGATION_SCREENS = {
   NEW_PERSONAL: "NewPersonal",
   ADD_BALANCE_BANK_DETAILS: "AddBalanceBankDetails",
   PAYMENT_APP_LIST: "PaymentAppList",
-};
+} as const;

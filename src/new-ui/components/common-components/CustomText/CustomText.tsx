@@ -144,11 +144,12 @@ const CustomText: React.FC<ICustomTextProps> = ({
   const textStyle: StyleProp<TextStyle> = [
     getVariantStyle(),
     { color: getTextColor() },
-    fontWeight || fontFamily ? { fontFamily: getFontFamily(fontFamily, fontWeight) } : undefined,
-    fontWeight ? { fontWeight: getRNFontWeight(fontWeight) } : undefined,
     size !== undefined ? { fontSize: size } : undefined,
     align ? { textAlign: align } : undefined,
     style,
+    // Apply fontFamily/fontWeight last so props take precedence over style
+    fontWeight || fontFamily ? { fontFamily: getFontFamily(fontFamily, fontWeight) } : undefined,
+    fontWeight ? { fontWeight: getRNFontWeight(fontWeight) } : undefined,
   ];
 
   return (

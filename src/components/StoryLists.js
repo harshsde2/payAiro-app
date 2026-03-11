@@ -113,7 +113,7 @@ export default function StoryLists({ data, isVisble3 }) {
 export const styles = StyleSheet.create({
   container: {
     // padding: -20,
-    backgroundColor: "#fff",
+    // backgroundColor: "#fff",
     // flex: 1,
   },
   title: {

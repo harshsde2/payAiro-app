@@ -63,7 +63,8 @@ import { size } from "tsx-components/components.configs";
 import CommonModal from "tsx-components/modals/CommonModal";
 import PinScreen from "tsx-components/modals/PinScreen";
 import RewardModal from "tsx-components/modals/RewardModal";
-import { ScreenContainer } from "../../HOC";
+import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
+import { useTheme as useNewUITheme } from "@new-ui/styles/ThemeContext";
 import {
   setBankLists,
   setBankbalances,
@@ -74,9 +75,12 @@ import {
   setTotalDisbursablePending
 } from "../../redux/slices/authenticationSlice";
 import { useTheme } from "../../styles/ThemeContext";
-import { Card, CustomText, DashboardHeader } from "../../utils/moduleAlias";
+import { CustomText } from "../../utils/moduleAlias";
+import DashboardHeader from "@new-ui/components/common-components/DashboardHeader";
 import { showError, showSuccess } from "../../utils/toast";
 import { toKycMode } from "types/kyc";
+import DashboardBalanceCard from "new-ui/components/common-components/DashboardBalanceCard";
+import DashboardCardWrapper from "new-ui/components/common-components/DashboardCardWrapper";
 
 
 const categories = {
@@ -213,6 +217,7 @@ const NewDashboard = () => {
     walletData,
     tokens,
     bankLists,
+    aggregatedCryptoBalances,
   } = useSelector((state: any) => state.authenticationSlice);
 
   // console.log("walletData =>", JSON.stringify(walletData, null, 2));
@@ -220,6 +225,7 @@ const NewDashboard = () => {
   const { width: screenWidth } = useWindowDimensions();
   const dispatch = useDispatch();
   const { theme } = useTheme();
+  const { theme: newUITheme } = useNewUITheme();
 
   const navigation = useNavigation<any>();
   const pinScreenRef = useRef<any>(null);
@@ -549,23 +555,16 @@ const NewDashboard = () => {
   const handleRefreshBalance = useCallback(async () => {
     setIsBalanceRefreshing(true);
     try {
-      const refreshPromises: Promise<any>[] = [];
-
-      if (isCrypto) {
-        refreshPromises.push(refetchBankBalanceData());
-      }
-
-      if (!isCrypto) {
-        refreshPromises.push(refetch());
-      }
-
-      await Promise.all(refreshPromises);
+      await Promise.all([
+        refetchBankBalanceData(),
+        refetch(),
+      ]);
     } catch (error) {
       console.log("Error refreshing balance data:", error);
     } finally {
       setIsBalanceRefreshing(false);
     }
-  }, [isCrypto, refetchBankBalanceData, refetch]);
+  }, [refetchBankBalanceData, refetch]);
 
 
   const renderCryptoAssetItem = ({
@@ -670,24 +669,36 @@ const NewDashboard = () => {
 
 
   return (
-    <ScreenContainer
-      style={{
-        paddingHorizontal: 0,
-      }}
-    >
-      <ScrollView
-        refreshControl={
+    <ScreenWrapper
+      safeArea
+      safeAreaEdges={["top"]}
+      scrollable
+      contentStyle={{ flexGrow: 1, paddingBottom: 80 }}
+      gradient="linear"
+      gradientColors={[
+        newUITheme.colors.greenLight2,
+        newUITheme.colors.greenLight2,
+        newUITheme.colors.white,
+        newUITheme.colors.greenLight2,
+        newUITheme.colors.greenLight1,
+        newUITheme.colors.tertiary,
+        newUITheme.colors.greenLight1,
+        newUITheme.colors.greenLight2,
+        newUITheme.colors.white,
+      ]}
+      gradientStart={{ x: 1, y: 1 }}
+      gradientEnd={{ x: 0, y: 0 }}
+      scrollViewProps={{
+        refreshControl: (
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             colors={[theme.colors.palette.green700]}
             tintColor={theme.colors.palette.green700}
           />
-        }
-        style={{
-          flex: 1,
-        }}
-      >
+        ),
+      }}
+    >
         <DashboardHeader
           style={{
             marginBottom: theme.spacing.spacing.md,
@@ -703,15 +714,31 @@ const NewDashboard = () => {
             visible={true}
           />
         ) : (
-          <View style={{ width: "100%" }}>
-            <NewDashboardCard
+          <View style={{ width: "100%", alignItems: 'center', justifyContent: 'center', marginBottom: theme.spacing.spacing.lg }}>
+            {/* <NewDashboardCard
               isBalanceVisible={isMainCardBalanceVisible}
+              onRefreshBalance={handleRefreshBalance}
+              isRefreshing={isBalanceRefreshing}
+            /> */}
+            <DashboardBalanceCard
+              userId={walletData?.username || ''}
+              bankBalance={bankBalance}
+              aggregatedCryptoBalances={aggregatedCryptoBalances}
+              isBalanceVisible={isMainCardBalanceVisible}
+              onToggleVisibility={() => setIsMainCardBalanceVisible((v) => !v)}
+              onAccountDetailsPress={() => {
+                if (isKYCCompleted) {
+                  navigation.navigate(NAVIGATION_SCREENS.RECEIVE);
+                } else {
+                  handleKYCAlert();
+                }
+              }}
               onRefreshBalance={handleRefreshBalance}
               isRefreshing={isBalanceRefreshing}
             />
           </View>
         )}
-        {isCrypto ? (
+        {/* {isCrypto ? (
           <View style={{ marginHorizontal: 15 }}>
             {(() => {
               // Calculate responsive sizes based on screen width
@@ -918,22 +945,12 @@ const NewDashboard = () => {
 
             </View>
           </View>
-        )}
-        <Card
-          style={{
-            backgroundColor: theme.colors.palette.white,
-            borderWidth: 0,
-            marginBottom: 80,
-            borderBottomLeftRadius: 0,
-            borderBottomRightRadius: 0,
-          }}
-          padding={10}
-          borderRadius={theme.spacing.spacing[10]}
-        >
+        )} */}
+        <DashboardCardWrapper>
           <View style={{ width: "100%", padding: 5 }}>
             {isCrypto && (
               <>
-                <MemoizedDashboardSection
+                {/* <MemoizedDashboardSection
                   title="Your Accounts"
                   actionText="View all"
                   onActionPress={() => {
@@ -1064,7 +1081,6 @@ const NewDashboard = () => {
                                       }}
                                     >
                                       {``}
-                                      {/* {`( ${BANK_TYPE} )`} */}
                                     </CustomText>
                                   </View>
                                 )}
@@ -1186,79 +1202,23 @@ const NewDashboard = () => {
                       }}
                     />
                   </ScrollView>
-                </MemoizedDashboardSection>
+                </MemoizedDashboardSection> */}
                 {isCrypto && (
                   <MemoizedDashboardSection
-                    title="PayAiro Contacts"
-                    actionText="View all"
+                    title="Contacts"
+                    actionText="See all"
                     onActionPress={onContactSeeALl}
                   >
-                    {isDashBoardDataPending ? (
-                      // Skeleton loading for contacts
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-around",
-                          marginVertical: 15,
-                        }}
-                      >
-                        {[1, 2, 3, 4].map((_, index) => (
-                          <View key={index} style={{ alignItems: "center" }}>
-                            <View
-                              style={{
-                                width: 60,
-                                height: 60,
-                                borderRadius: 30,
-                                backgroundColor: theme.colors.palette.grey200,
-                              }}
-                            />
-                            <View
-                              style={{
-                                width: 40,
-                                height: 12,
-                                backgroundColor: theme.colors.palette.grey200,
-                                borderRadius: 4,
-                                marginTop: 8,
-                              }}
-                            />
-                          </View>
-                        ))}
-                      </View>
-                    ) : DashBoardData?.data?.contacts &&
-                      DashBoardData?.data?.contacts.length > 0 ? (
+                    { DashBoardData?.data?.contacts &&
+                      DashBoardData?.data?.contacts.length > 0 && (
                       <MemoizedStoryLists
                         data={DashBoardData?.data?.contacts}
                         isVisble3={isCrypto}
                       />
-                    ) : (
-                      <TouchableOpacity
-                        onPress={() =>
-                          navigation.navigate(NAVIGATION_SCREENS.ADD_CONTACT)
-                        }
-                        style={{
-                          backgroundColor: "rgba(44, 106, 63, 1)",
-                          paddingBottom: 10,
-                          paddingTop: 7,
-                          paddingHorizontal: 10,
-                          borderRadius: 30,
-                          alignSelf: "center",
-                          marginTop: 20,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            color: "white",
-                            fontSize: 12,
-                            fontFamily: Fonts.semibold,
-                          }}
-                        >
-                          + Add Contact
-                        </Text>
-                      </TouchableOpacity>
                     )}
                   </MemoizedDashboardSection>
                 )}
-                {isCrypto && (
+                {/* {isCrypto && (
                   <MemoizedDashboardSection
                     title="Rewards & Referrals"
                     actionText="Explore"
@@ -1274,7 +1234,7 @@ const NewDashboard = () => {
                       <MemoizedRewards key={index} item={item} />
                     ))}
                   </MemoizedDashboardSection>
-                )}
+                )} */}
               </>
             )}
             {!isCrypto && (
@@ -1365,9 +1325,8 @@ const NewDashboard = () => {
 
             <ReferralCard />
           </View>
-        </Card>
-      </ScrollView>
-    </ScreenContainer>
+        </DashboardCardWrapper>
+    </ScreenWrapper>
   );
 };
 

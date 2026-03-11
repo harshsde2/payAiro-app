@@ -14,6 +14,14 @@ import UntickCheckedBox from './UntickCheckedBox.svg';
 import ChevronDown from './ChevronDown.svg';
 import ArrowRight from './ArrowRight.svg';
 import NewOnBoarding from './NewOnBoarding.svg';
+import Person from './Person.svg';
+import VerticalMenuThreeDots from './VerticalMenuThreeDots.svg';
+import MoreVertical from './MoreVertical.svg';
+import Send from './Send.svg';
+import Receive from './Receive.svg';
+import Withdraw from './Withdraw.svg';
+import AddBalance from './AddBalance.svg';
+import Copygreen from './CopyGreen.svg';
 
 export const AppIcon = {
   Home,
@@ -32,4 +40,12 @@ export const AppIcon = {
   ChevronDown,
   ArrowRight,
   NewOnBoarding,
+  Person,
+  VerticalMenuThreeDots,
+  MoreVertical,
+  Send,
+  Receive,
+  Withdraw,
+  AddBalance,
+  Copygreen,
 };
