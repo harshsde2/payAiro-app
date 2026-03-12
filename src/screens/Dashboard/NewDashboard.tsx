@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   Alert,
   BackHandler,
-  FlatList,
   Image,
   Modal,
   RefreshControl,
@@ -25,7 +24,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import GuideModal from "components/GuideModal";
 import Rewards from "components/Rewards";
-import StoryLists from "components/StoryLists";
+import ContactsList from "@new-ui/components/common-components/ContactsList";
 import Fonts from "constants/Fonts";
 import { REWARDS } from "constants/constant";
 import { BASE_URL } from "constants/mockData";
@@ -81,6 +80,7 @@ import { showError, showSuccess } from "../../utils/toast";
 import { toKycMode } from "types/kyc";
 import DashboardBalanceCard from "new-ui/components/common-components/DashboardBalanceCard";
 import DashboardCardWrapper from "new-ui/components/common-components/DashboardCardWrapper";
+import CryptoAssetsList from "@new-ui/components/common-components/CryptoAssetsList";
 
 
 const categories = {
@@ -203,7 +203,6 @@ const SkeletonTransactionCard = () => {
 };
 
 // Memoized components for better performance
-const MemoizedStoryLists = React.memo(StoryLists);
 const MemoizedTransactionCard = React.memo(UnifiedTransactionCard);
 const MemoizedRewards = React.memo(Rewards);
 const MemoizedDashboardSection = React.memo(DashboardSection);
@@ -565,107 +564,6 @@ const NewDashboard = () => {
       setIsBalanceRefreshing(false);
     }
   }, [refetchBankBalanceData, refetch]);
-
-
-  const renderCryptoAssetItem = ({
-    item,
-    index,
-  }: {
-    item: any;
-    index: number;
-  }) => {
-    const {
-      asset,
-      rounded_balance,
-      platform_available,
-      platform_pending,
-      platform_total_balance,
-      usd_value_total,
-      usd_value_available,
-      usd_value_pending,
-      usd_price,
-      logo,
-    } = item;
-
-    const availableBalance = platform_available ?? 0;
-    const pendingBalance = platform_pending ?? 0;
-    const totalBalance = platform_total_balance ?? rounded_balance ?? 0;
-    const usdValue = usd_value_total ?? usd_value_available ?? 0;
-
-    return (
-      <TouchableOpacity
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          paddingVertical: 12,
-          paddingHorizontal: 16,
-          backgroundColor: "white",
-          marginVertical: 2,
-          borderRadius: 8,
-          borderWidth: 1,
-          borderColor: "#f0f0f0",
-        }}
-        onPress={() => {
-          if (item?.asset != 'Bank Balance') {
-            navigation.navigate(NAVIGATION_SCREENS.CRYPTO_DETAILS, { item: item });
-          }
-        }}
-      >
-        <View style={{ width: 40, height: 40, marginRight: 12 }}>
-          {(() => {
-            const logoUri = logo as string | undefined;
-            const isValidLogo =
-              typeof logoUri === "string" && logoUri.trim().length > 0;
-            const isSvgLogo =
-              isValidLogo &&
-              (logoUri!.toLowerCase().endsWith(".svg") ||
-                logoUri!.toLowerCase().includes("svg+xml"));
-
-            if (!isValidLogo) {
-              return <SvgIcons.DollarIcon width={40} height={40} />;
-            }
-
-            return (
-              <View style={{ width: 40, height: 40 }}>
-                {isSvgLogo ? (
-                  <></>
-                ) : (
-                  <Image
-                    source={{ uri: logoUri! }}
-                    style={{ width: 40, height: 40 }}
-                    resizeMode="contain"
-                  />
-                )}
-              </View>
-            );
-          })()}
-        </View>
-
-        {/* Crypto Info */}
-        <View style={{ flex: 1 }}>
-          <CustomText variant="subtitle2" style={{ fontWeight: "600" }}>
-            {asset}
-          </CustomText>
-          <CustomText variant="caption" color="grey">
-            Available Balance: {availableBalance}
-          </CustomText>
-          <CustomText variant="caption" color="grey">
-            Pending Balance: {pendingBalance}
-          </CustomText>
-        </View>
-
-        {/* USD Value */}
-        <View style={{ alignItems: "flex-end" }}>
-          <CustomText variant="subtitle2" style={{ fontWeight: "600" }}>
-            ${typeof usdValue === 'number' ? usdValue.toFixed(2) : "0.00"}
-          </CustomText>
-          <CustomText variant="caption" color="grey">
-            USD
-          </CustomText>
-        </View>
-      </TouchableOpacity>
-    );
-  };
 
 
   return (
@@ -1209,13 +1107,7 @@ const NewDashboard = () => {
                     actionText="See all"
                     onActionPress={onContactSeeALl}
                   >
-                    { DashBoardData?.data?.contacts &&
-                      DashBoardData?.data?.contacts.length > 0 && (
-                      <MemoizedStoryLists
-                        data={DashBoardData?.data?.contacts}
-                        isVisble3={isCrypto}
-                      />
-                    )}
+                    <ContactsList data={DashBoardData?.data?.contacts ?? []} />
                   </MemoizedDashboardSection>
                 )}
                 {/* {isCrypto && (
@@ -1237,36 +1129,15 @@ const NewDashboard = () => {
                 )} */}
               </>
             )}
-            {!isCrypto && (
-              <DashboardSection title="Assets">
-                {isLoading ? (
-                  <View style={{ padding: 20, alignItems: "center" }}>
-                    <ActivityIndicator size="small" color="#2F6B3B" />
-                    <CustomText variant="caption" style={{ marginTop: 8 }}>
-                      Loading assets...
-                    </CustomText>
-                  </View>
-                ) : balances.length > 0 ? (
-                  <FlatList
-                    data={balances}
-                    showsVerticalScrollIndicator={false}
-                    renderItem={renderCryptoAssetItem}
-                    keyExtractor={(item, index) => `${item?.asset}-${index}`}
-                    scrollEnabled={false}
-                  />
-                ) : (
-                  <View style={{ padding: 20, alignItems: "center" }}>
-                    <CustomText variant="caption" color="grey">
-                      No crypto assets found
-                    </CustomText>
-                  </View>
-                )}
+            {isCrypto && (
+              <DashboardSection title="Crypto" actionText="See all" onActionPress={() => { }}>
+                <CryptoAssetsList data={balances} isLoading={isLoading} />
               </DashboardSection>
             )}
 
             {isCrypto && sortedTxLists.length > 0 && (
               <MemoizedDashboardSection
-                title="Recent Transactions"
+                title="Recent Activity"
                 onActionPress={() => { }}
               >
                 {isDashBoardDataPending ? (

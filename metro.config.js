@@ -12,6 +12,7 @@ const customConfig = {
     sourceExts: [...defaultConfig.resolver.sourceExts, "svg"],
     extraNodeModules: {
       "@tsx-components": path.resolve(__dirname, "src/tsx-components"),
+      "@new-ui": path.resolve(__dirname, "src/new-ui"),
     },
   },
   transformer: {

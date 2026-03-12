@@ -22,6 +22,7 @@ import Receive from './Receive.svg';
 import Withdraw from './Withdraw.svg';
 import AddBalance from './AddBalance.svg';
 import Copygreen from './CopyGreen.svg';
+import Add from './Add.svg';
 
 export const AppIcon = {
   Home,
@@ -48,4 +49,5 @@ export const AppIcon = {
   Withdraw,
   AddBalance,
   Copygreen,
+  Add,
 };

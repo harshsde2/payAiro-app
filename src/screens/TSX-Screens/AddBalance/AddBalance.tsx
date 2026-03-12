@@ -55,21 +55,21 @@ const getPaymentIcon = (
 // Payment method configurations (without icons - icons are created in component)
 const PAYMENT_METHOD_CONFIGS = [
   {
-    title: "Debit Card/Google Pay",
+    title: "Debit Card",
     iconKey: "DebitCard" as const,
     type: "coinflow" as const,
     navigation: NAVIGATION_SCREENS.COINFLOW_CHECKOUT_WEBVIEW,
     showInProduction: true, // Hide in production
     isDisabled: false,
   },
-  // {
-  //   title: "Apple Pay/Google Pay",
-  //   iconKey: "ApplePay" as const,
-  //   type: "coinflow" as const,
-  //   navigation: NAVIGATION_SCREENS.COINFLOW_CHECKOUT_WEBVIEW,
-  //   showInProduction: false, // Hide in production
-  //   isDisabled: false,
-  // },
+  {
+    title: "Apple Pay/Google Pay",
+    iconKey: "ApplePay" as const,
+    type: "coinflow" as const,
+    navigation: NAVIGATION_SCREENS.COINFLOW_CHECKOUT_WEBVIEW,
+    showInProduction: false, // Hide in production
+    isDisabled: false,
+  },
   {
     title: "Account Transfer",
     iconKey: "ACHTransfer" as const,

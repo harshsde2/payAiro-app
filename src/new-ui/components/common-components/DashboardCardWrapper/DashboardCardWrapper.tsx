@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 
-const BACKGROUND_COLOR = 'rgba(255, 255, 255, 0.8)';
+const BACKGROUND_COLOR = 'rgba(255, 255, 255, 0.6)';
 
 export interface IDashboardCardWrapperProps {
   children: React.ReactNode;
