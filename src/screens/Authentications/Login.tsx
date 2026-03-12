@@ -14,7 +14,7 @@ import AuthHeader from "tsx-components/AuthHeader";
 import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
 import GenericButton from "../../components/GenericButton";
 import PoliticalModal from "../../components/PolitaclModal";
-import TextInputField from "../../components/TextInputField";
+import EmailOrPhoneInput from "../../components/EmailOrPhoneInput";
 import { SCREENS } from "../../constants/SCREENS";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { showError, showSuccess } from "../../utils/toast";
@@ -151,7 +151,7 @@ export default function Login() {
           </CustomText>
         </View>
         <View style={styles.fieldAndCheckboxContainer}>
-          <TextInputField
+          <EmailOrPhoneInput
             placeholder={isProductionEnv ? "joe@gmail.com" : "joe@gmail.com or 9876543210"}
             value={emailOrPhone}
             onChange={setEmailOrPhone}

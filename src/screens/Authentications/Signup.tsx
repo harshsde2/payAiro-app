@@ -9,6 +9,7 @@ import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
 import GenericButton from "components/GenericButton";
 import HeaderTitle from "components/HeaderTitle";
 import PoliticalModal from "components/PolitaclModal";
+import EmailOrPhoneInput from "components/EmailOrPhoneInput";
 import TextInputField from "components/TextInputField";
 import Fonts from "constants/Fonts";
 import { SvgIcons } from "constants/svgs";
@@ -237,7 +238,7 @@ console.log("isProductionEnv =>", isProductionEnv);
             </TouchableOpacity>
           </View> */}
 
-          <TextInputField
+          <EmailOrPhoneInput
             placeholder={isProductionEnv ? "joe@gmail.com" : "joe@gmail.com or 9876543210"}
             value={email}
             onChange={setEmail}

@@ -1,19 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import Fonts from "../constants/Fonts";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
+import Clipboard from "@react-native-clipboard/clipboard";
 import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "styles";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import {
-  SVG_Bank_tab,
-  SVG_credit_tab,
-  SVGBankLogo,
-  SVGCreditCard,
-  SVGStatements,
-} from "constants/images";
+import { showSuccess } from "utils/toast";
 import { CustomText } from "tsx-components";
-import { SvgXml } from "react-native-svg";
-import { useSelector } from "react-redux";
 import { SvgIcons } from "constants/svgs";
 
 const WalletCard = ({ data, bankbalance, index }) => {
@@ -21,9 +13,6 @@ const WalletCard = ({ data, bankbalance, index }) => {
   const { theme } = useTheme();
   const [isNumbersVisible, setIsNumbersVisible] = useState(false);
   
-  // Redux store
-  const { walletData } = useSelector((state) => state.authenticationSlice);
-
   const styles = customStyles(theme);
   
   // Function to mask numbers - show only last 4 digits
@@ -39,6 +28,13 @@ const WalletCard = ({ data, bankbalance, index }) => {
   // Toggle visibility handler
   const toggleNumbersVisibility = () => {
     setIsNumbersVisible(!isNumbersVisible);
+  };
+
+  // Copy to clipboard with toast feedback
+  const copyToClipboard = (text, label) => {
+    if (!text || !String(text).trim()) return;
+    Clipboard.setString(String(text).trim());
+    showSuccess(`${label} copied`, `Copied to clipboard`);
   };
   
   // Format balance for display
@@ -123,15 +119,28 @@ const WalletCard = ({ data, bankbalance, index }) => {
             >
               Account No:
             </CustomText>
-            <CustomText
-              variant={"body1"}
-              color={theme.colors.palette.white}
-              fontWeight={"medium"}
-            >
-              {isNumbersVisible
-                ? `${data?.accountNumber || ""}`
-                : maskNumber(data?.accountNumber || "")}
-            </CustomText>
+            <View style={styles.accountValueRow}>
+              <CustomText
+                variant={"body1"}
+                color={theme.colors.palette.white}
+                fontWeight={"medium"}
+              >
+                {isNumbersVisible
+                  ? `${data?.accountNumber || ""}`
+                  : maskNumber(data?.accountNumber || "")}
+              </CustomText>
+              {data?.accountNumber && (
+                <TouchableOpacity
+                  onPress={() =>
+                    copyToClipboard(data.accountNumber, "Account number")
+                  }
+                  style={styles.copyButton}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <SvgIcons.Copy width={16} height={16} />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
           <View style={styles.separator} />
           <View style={styles.accountInfoItem}>
@@ -142,15 +151,28 @@ const WalletCard = ({ data, bankbalance, index }) => {
             >
               Routing No
             </CustomText>
-            <CustomText
-              variant={"body1"}
-              color={theme.colors.palette.white}
-              fontWeight={"medium"}
-            >
-              {isNumbersVisible
-                ? `${data?.ref_code ?? ""}`
-                : maskNumber(data?.ref_code || "")}
-            </CustomText>
+            <View style={styles.accountValueRow}>
+              <CustomText
+                variant={"body1"}
+                color={theme.colors.palette.white}
+                fontWeight={"medium"}
+              >
+                {isNumbersVisible
+                  ? `${data?.ref_code ?? ""}`
+                  : maskNumber(data?.ref_code || "")}
+              </CustomText>
+              {data?.ref_code && (
+                <TouchableOpacity
+                  onPress={() =>
+                    copyToClipboard(data.ref_code, "Routing number")
+                  }
+                  style={styles.copyButton}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <SvgIcons.Copy width={16} height={16} />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </View>
       </View>
@@ -249,6 +271,14 @@ const customStyles = (theme) =>
     },
     accountInfoItem: {
       flex: 1,
+    },
+    accountValueRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    copyButton: {
+      padding: 4,
     },
     accountLabel: {
       marginBottom: 4,

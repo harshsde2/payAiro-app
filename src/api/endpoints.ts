@@ -101,6 +101,7 @@ export const AUTH = {
   ASSET_LIST: "auth/r1/assetlist",
   UNREAD_NOTIFICATIONS_COUNT: "auth/unread-notifications-count/",
   MARK_ALL_NOTIFICATIONS_READ: "auth/r1/mark-all-read/",
+  WERT_HPP: "auth/wert-hpp/",
 };
 // Wallet endpoints
 export const WALLET = {

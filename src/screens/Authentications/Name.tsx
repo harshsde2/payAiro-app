@@ -28,7 +28,7 @@ import {
   setWalletData,
 } from "../../redux/slices/authenticationSlice";
 import { showError, showSuccess } from "../../utils/toast";
-import { validateEmail, validatePhoneNumber } from "../../utils/validation";
+import { toAlphanumericOnly, validateEmail, validatePayAiroTag, validatePhoneNumber } from "../../utils/validation";
 import { setItem, STORAGE_KEYS } from "storage/mmkv";
 import { useDispatch } from "react-redux";
 import { useWalletDetails } from "query/hooks";
@@ -100,6 +100,13 @@ export default function Name(props: any) {
     // Validate required name fields
     if (fname.length === 0 || lname.length === 0 || uname.length === 0) {
       showError("Fields cannot be empty", "Please fill all required fields");
+      return;
+    }
+
+    // Validate PayAiro Tag (alphanumeric only)
+    const payAiroTagValidation = validatePayAiroTag(uname);
+    if (!payAiroTagValidation.isValid) {
+      showError(payAiroTagValidation.errorMessage || "Invalid PayAiro Tag", payAiroTagValidation.helperText || "");
       return;
     }
 
@@ -292,9 +299,15 @@ export default function Name(props: any) {
           </View>
           <TextInputField
             label="PayAiro Tag"
-            placeholder={"Create PayAiro Tag"}
+            placeholder={"Create PayAiro Tag (e.g., john123)"}
             value={uname}
-            onChange={setuname}
+            onChange={(text) => {
+              const filtered = toAlphanumericOnly(text);
+              if (filtered !== text) {
+                showError("Special characters not allowed", "PayAiro Tag can only contain letters and numbers (A-Z, a-z, 0-9)");
+              }
+              setuname(filtered);
+            }}
             cStyle={{}}
             info={true}
             onInfoPress={() => {

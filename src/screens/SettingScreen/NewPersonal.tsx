@@ -20,6 +20,8 @@ import { useAppLock } from "../../hooks/useAppLock";
 import ProfileHeader from "components/common-components/ProfileHeader/ProfileHeader";
 import { ReceiveQRCard } from "components/common-components/ReceiveQRCard";
 import type { IReceiveQRCardRef } from "components/common-components/ReceiveQRCard";
+import { BankDetailsDisplay, CapturingProvider, useCapturing } from "components/common-components/BankDetailsDisplay";
+import { sharePayAiroBankDetails } from "utils/helper";
 import { SvgIcons } from "constants/svgs";
 
 interface IKycStep {
@@ -33,13 +35,16 @@ interface IKycStep {
   selfimage?: string;
 }
 
-const NewPersonal: React.FC = () => {
+const NewPersonalContent: React.FC = () => {
   const { theme } = useTheme();
   const customTheme = styles(theme);
-  const { walletData } = useSelectorAction() as any;
+  const { walletData, bankLists } = useSelectorAction() as any;
   const navigation = useNavigation<any>();
   const { setNativeModalVisible } = useAppLock();
+  const { setIsCapturing } = useCapturing();
   const qrCardRef = useRef<IReceiveQRCardRef>(null);
+
+  const payairoBankDetails = sharePayAiroBankDetails(walletData, bankLists) as string;
 
   const kycStatus = useSelector((s: any) => s.authenticationSlice?.kycStatus);
   const mode = useMemo(() => toKycMode(kycStatus), [kycStatus]);
@@ -57,36 +62,39 @@ const NewPersonal: React.FC = () => {
 
   const handleShare = async (uri: string) => {
     try {
-      await Share.open({
-        title: "PayAiro QR Code",
-        subject: "PayAiro QR Code",
+      const shareOptions: any = {
+        title: "PayAiro Bank Details",
+        subject: "PayAiro Bank Details",
         url: uri,
         type: "image/png",
-        filename: `PayAiro_QR_${walletData?.username || "qr"}`,
+        filename: `PayAiro_BankDetails_${walletData?.username || "details"}`,
         failOnCancel: false,
-        message: `PayAiro Payment Details\n\n PayAiro Tag: ${walletData?.username}`,
-      });
+        message: payairoBankDetails,
+      };
+      await Share.open(shareOptions);
     } catch (err: any) {
       if (err?.message !== "User did not share") {
-        console.log("Error sharing QR:", err);
+        console.log("Error sharing bank details:", err);
       }
     }
   };
 
   const handleDownload = async (uri: string) => {
     try {
-      await Share.open({
-        title: "PayAiro QR Code",
-        subject: "PayAiro QR Code",
+      const shareOptions: any = {
+        title: "PayAiro Bank Details",
+        subject: "PayAiro Bank Details",
         url: uri,
         type: "image/png",
-        filename: `PayAiro_QR_${walletData?.username || "qr"}`,
+        filename: `PayAiro_BankDetails_${walletData?.username || "details"}`,
         failOnCancel: false,
         saveToFiles: true,
-      });
+      };
+      await Share.open(shareOptions);
     } catch (err: any) {
       if (err?.message !== "User did not share") {
-        console.log("Error downloading QR:", err);
+        console.log("Error downloading bank details:", err);
+        Alert.alert("Failed to download bank details");
       }
     }
   };
@@ -153,12 +161,20 @@ const NewPersonal: React.FC = () => {
             onAfterCapture={() => {
               setTimeout(() => setNativeModalVisible(false), 1000);
             }}
+            onCapturingChange={(capturing: boolean) => setIsCapturing(capturing)}
+            bankDetails={<BankDetailsDisplay />}
           />
         </View>
       </View>
     </ScreenContainer>
   );
 };
+
+const NewPersonal: React.FC = () => (
+  <CapturingProvider>
+    <NewPersonalContent />
+  </CapturingProvider>
+);
 
 const styles = (theme: any) =>
   StyleSheet.create({

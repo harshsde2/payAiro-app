@@ -11,6 +11,7 @@ import Signup from "screens/Authentications/Signup";
 import SelectStates from "tsx-components/modals/SelectStates";
 import SupportScreen from "screens/TSX-Screens/Settings/SupportScreen";
 import DebugTestScreen from "screens/TSX-Screens/DebugTestScreen";
+import FreshchatScreen from "screens/TSX-Screens/Settings/FreshchatScreen";
 
 const Stack = createNativeStackNavigator();
 export default function AuthStack() {
@@ -46,15 +47,15 @@ export default function AuthStack() {
         name={NAVIGATION_SCREENS.OTP}
         component={OTP}
       />
-   
+
       <Stack.Screen
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.NAME}
         component={Name}
-      />   
+      />
       <Stack.Screen
-        options={{ 
-          headerShown: false ,
+        options={{
+          headerShown: false,
           presentation: "modal",
           gestureEnabled: true,
           animationTypeForReplace: "push",
@@ -63,11 +64,11 @@ export default function AuthStack() {
         component={PDFViewer as any}
       />
       <Stack.Screen
-        options={{ 
-          headerShown: false ,
+        options={{
+          headerShown: false,
           presentation: 'transparentModal',
           gestureEnabled: true,
-          animation:'slide_from_bottom',
+          animation: 'slide_from_bottom',
           animationTypeForReplace: "push",
         }}
         name={NAVIGATION_SCREENS.SELECT_STATES}
@@ -82,6 +83,11 @@ export default function AuthStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.SUPPORT_SCREEN}
         component={SupportScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.FRESHCHAT_SCREEN}
+        component={FreshchatScreen}
       />
     </Stack.Navigator>
   );

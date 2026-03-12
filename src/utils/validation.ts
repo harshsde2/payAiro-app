@@ -26,6 +26,34 @@ export const extractDigits = (value: string): string => {
 };
 
 /**
+ * Detect input intent for UI (e.g. showing +1 prefix).
+ * Uses first-character heuristic: digit = phone, letter/@ = email.
+ * For frontend display only; does not affect validation or API payload.
+ */
+export const detectInputIntent = (input: string): "phone" | "email" | null => {
+  const trimmedInput = input.trim();
+
+  if (!trimmedInput) {
+    return null;
+  }
+
+  if (trimmedInput.includes("@")) {
+    return "email";
+  }
+
+  const firstChar = trimmedInput[0];
+  if (/^\d$/.test(firstChar)) {
+    return "phone";
+  }
+
+  if (/^[a-zA-Z]/.test(firstChar)) {
+    return "email";
+  }
+
+  return null;
+};
+
+/**
  * Detect if input is email, phone, or invalid
  */
 export const detectInputType = (input: string): InputType => {
@@ -206,4 +234,41 @@ export const isPhoneInput = (input: string): boolean => {
  */
 export const isEmailInput = (input: string): boolean => {
   return detectInputType(input) === "email";
+};
+
+// PayAiro Tag: alphanumeric only (A-Z, a-z, 0-9)
+const PAYAIRO_TAG_REGEX = /^[a-zA-Z0-9]+$/;
+
+/**
+ * Strip non-alphanumeric characters from input (for real-time filtering)
+ */
+export const toAlphanumericOnly = (value: string): string => {
+  return value.replace(/[^a-zA-Z0-9]/g, "");
+};
+
+/**
+ * Validate PayAiro Tag format (alphanumeric only, no special characters)
+ */
+export const validatePayAiroTag = (
+  input: string
+): { isValid: boolean; errorMessage?: string; helperText?: string } => {
+  const trimmed = input.trim();
+
+  if (!trimmed) {
+    return {
+      isValid: false,
+      errorMessage: "PayAiro Tag is required",
+      helperText: "Please create your PayAiro Tag",
+    };
+  }
+
+  if (!PAYAIRO_TAG_REGEX.test(trimmed)) {
+    return {
+      isValid: false,
+      errorMessage: "Invalid PayAiro Tag",
+      helperText: "Only letters and numbers allowed (e.g., manjeet123)",
+    };
+  }
+
+  return { isValid: true };
 };
