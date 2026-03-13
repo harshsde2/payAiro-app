@@ -4072,7 +4072,7 @@ SPEC CHECKSUMS:
   React-timing: 5717558f0bea206d7557df53015ee9efe1eb57b2
   React-utils: 55e54e497e3d3f373ebfcf844eb77e24ed013356
   ReactAppDependencyProvider: c277c5b231881ad4f00cd59e3aa0671b99d7ebee
-  ReactCodegen: 1e847cf77c1402fe7394dae41b3829c95569e76e
+  ReactCodegen: 05aa5b5f25e6f430b455ca5110e8fb7ea91fb77e
   ReactCommon: 5cfd842fcd893bb40fc835f98fadc60c42906a20
   ReactNativeBiometrics: 82efed595c44ad9b12d975b7f8a56a92f5f07e13
   ReactNativeCameraKit: bd7f2f57836ad11fbf5cefb43015fc4c1ea69cb9
