@@ -26,6 +26,18 @@ export const getModalStyles = (theme: Theme) =>
       flex: 1,
       textAlign: "center",
     },
+    resendOtpLink: {
+      marginTop: theme.spacing.spacing[3],
+      alignSelf: "center",
+      paddingVertical: theme.spacing.spacing[2],
+      paddingHorizontal: theme.spacing.spacing[4],
+    },
+    resendOtpLinkText: {
+      color: theme.colors.palette.green800,
+      fontSize: 14,
+      fontFamily: theme.typography.fontFamily.montserratSemiBold,
+      textDecorationLine: "underline",
+    },
     otpContainer: {
       width: "100%",
       marginVertical: theme.spacing.spacing[5],
@@ -111,7 +123,6 @@ export const getStyles = (theme: Theme) =>
     },
     subtitle: {
       fontSize: 16,
-      color: "#666",
       marginBottom: 8,
       fontFamily: Fonts.regular,
       color: "black",

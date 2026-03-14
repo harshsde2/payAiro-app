@@ -181,16 +181,17 @@ export default function Name(props: any) {
         }
       },
       onError: (error: any) => {
-        console.log("error =>", JSON.stringify(error, null, 2));
-        setIsPending(false);
-
-        if (error?.response?.data?.errors?.mobile_number. length > 0) {
-          showError(error.response.data.errors.mobile_number[0]);
+        let errorMessage = '';
+        if(error?.response?.data?.errors?.mobile_number. length > 0) {
+          errorMessage = error.response.data.errors.mobile_number[0];
         } else if (error?.response?.data?.errors?.usernames. length > 0) {
-          showError(error.response.data.errors.usernames[0]);
+          errorMessage = error.response.data.errors.usernames[0];
         } else {
-          showError("Failed to submit details");
+          errorMessage = "Failed to submit details";
         }
+        showError(errorMessage);
+        console.log("error =>", JSON.stringify(error.response, null, 2));
+        setIsPending(false);
       },
     });
   };

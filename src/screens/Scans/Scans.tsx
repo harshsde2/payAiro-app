@@ -30,6 +30,8 @@ import { useAppLock } from "hooks/useAppLock";
 import { useCameraPermission } from "hooks/useCameraPermission";
 import QRScannerOverlay from "./QRScannerOverlay";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { showError } from "utils/toast";
+import useSelectorAction from "hooks/useSelectorAction";
 
 const { width, height } = Dimensions.get("window");
 
@@ -155,6 +157,9 @@ const processQRCodeData = (
 export default function Scans(): React.ReactElement {
   const { theme } = useTheme();
   const { isCrypto } = useSelector((state: unknown) => (state as { authenticationSlice: { isCrypto: boolean } }).authenticationSlice);
+  const { walletData } = useSelectorAction() as any;
+  const myUsername = walletData?.username;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const [isVisible, setisVisible] = useState<boolean>(false);
@@ -209,6 +214,15 @@ export default function Scans(): React.ReactElement {
     }
 
     const { type, sender } = processQRCodeData(parsedValue);
+
+
+    if(sender === myUsername){
+      showError("You cannot scan your own QR code");
+      isProcessingRef.current = false;
+      setIsScanning(true);
+      setIsCameraActive(true);
+      return;
+    }
 
     if (type === "receiveMerchant") {
       navigation.navigate(NAVIGATION_SCREENS.SEND, {
@@ -459,12 +473,7 @@ export default function Scans(): React.ReactElement {
             width={25}
             height={25}
           />
-          
-          <SvgIcons.TorchIcon
-            onPress={toggleTorchMode}
-            width={25}
-            height={25}
-          />
+          {torchMode === "on" ? <SvgIcons.FlashlightOn onPress={toggleTorchMode} width={25} height={25} /> : <SvgIcons.FlashlightOff onPress={toggleTorchMode} width={25} height={25} />}
           <SvgIcons.QRCodeWhite
             onPress={() => navigation.navigate(NAVIGATION_SCREENS.RECEIVE)}
             width={30}

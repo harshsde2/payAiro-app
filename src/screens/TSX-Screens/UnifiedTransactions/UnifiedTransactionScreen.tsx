@@ -513,7 +513,7 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
               placeholder={
                 isCrypto
                   ? "Search Name or PayAiro tag..."
-                  : "Search crypto transactions..."
+                  : "Search cryptocurrencies (e.g., BTC)"
               }
               style={styles.searchInput}
               placeholderTextColor={theme.colors.palette.green700}

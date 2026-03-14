@@ -258,6 +258,13 @@ const ChangePinScreen = () => {
     setOtp(text);
   }, [otpError]);
 
+  const handleResendOtp = useCallback(() => {
+    setOtpError("");
+    setOtp("");
+    otpInputRef.current?.clear();
+    handleVerfyUserChangePIN();
+  }, [handleVerfyUserChangePIN]);
+
   // Handle OTP filled - auto verify
   const handleOtpFilled = useCallback((filledOtp) => {
     if (hasAutoVerifiedRef.current || !showVerifyModal || isPendingVerifyUserForChangePinOtp) {
@@ -438,7 +445,7 @@ const ChangePinScreen = () => {
               style={[
                 globalStyles.whiteSheetContainer,
                 {
-                  maxHeight: otpError ? 420 : 360,
+                  maxHeight: otpError ? 470 : 360,
                   width: "90%",
                   borderRadius: theme.spacing.spacing[8],
                   padding: theme.spacing.spacing[6],
@@ -512,6 +519,19 @@ const ChangePinScreen = () => {
                     {otpError}
                   </CustomText>
                 </View>
+              ) : null}
+
+              {/* Resend OTP Link - shown when OTP expired or invalid */}
+              {otpError ? (
+                <Pressable
+                  onPress={handleResendOtp}
+                  style={modalStyles.resendOtpLink}
+                  disabled={isPendingVerifyUserForChangePin}
+                >
+                  <CustomText variant="caption" style={modalStyles.resendOtpLinkText}>
+                    {isPendingVerifyUserForChangePin ? "Sending..." : "Resend OTP"}
+                  </CustomText>
+                </Pressable>
               ) : null}
 
               {/* Action Buttons */}
@@ -679,6 +699,18 @@ const getModalStyles = (theme) =>
       marginLeft: theme.spacing.spacing[2],
       flex: 1,
       textAlign: "center",
+    },
+    resendOtpLink: {
+      marginTop: theme.spacing.spacing[3],
+      alignSelf: "center",
+      paddingVertical: theme.spacing.spacing[2],
+      paddingHorizontal: theme.spacing.spacing[4],
+    },
+    resendOtpLinkText: {
+      color: theme.colors.palette.green800,
+      fontSize: 14,
+      fontFamily: theme.typography.fontFamily.montserratSemiBold,
+      textDecorationLine: "underline",
     },
     otpContainer: {
       width: "100%",

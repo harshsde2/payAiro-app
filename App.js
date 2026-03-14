@@ -170,9 +170,9 @@ export default function App() {
 
   // Display notification (foreground) - Android uses Notifee channel; iOS uses system
   const onDisplayNotification = async (remoteMessage) => {
-    if (remoteMessage?.data?.deeplink) {
-      Linking.openURL(remoteMessage.data.deeplink);
-    }
+    // Do NOT auto-navigate on foreground notifications.
+    // Navigation for deeplinks is handled only when the app is opened
+    // from background/quit via getInitialNotification/onNotificationOpenedApp.
 
     const payload = {
       title: remoteMessage?.notification?.title || "PayAiro",
