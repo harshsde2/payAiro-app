@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, TouchableOpacity, Image, Text } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation } from '@react-navigation/native';
@@ -11,6 +11,8 @@ import { AppIcon } from '@new-ui/assets/svgs';
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 import { showSuccess } from 'utils/toast';
 import { IDashboardHeaderProps } from './types';
+import DashboardMenuModal from '@new-ui/components/common-components/DashboardHeader/DashboardMenuModal';
+import { useUnreadNotificationsCount } from 'query/hooks/useUser';
 
 const getInitials = (name: string): string => {
   if (!name) return '';
@@ -36,7 +38,8 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
 }) => {
   const navigation = useNavigation();
   const { theme } = useTheme();
-  const styles = dashboardHeaderStyles(theme);
+  const styles = dashboardHeaderStyles(theme) as any;
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
 
   const { walletData } = useSelector((state: any) => state.authenticationSlice);
 
@@ -51,8 +54,21 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
   }, [navigation]);
 
   const handleMenuPress = useCallback(() => {
+    setIsMenuVisible(true);
     onMenuPress?.();
   }, [onMenuPress]);
+
+  const closeMenu = useCallback(() => {
+    setIsMenuVisible(false);
+  }, []);
+
+  const handleNavigate = useCallback(
+    (screen: keyof typeof NAVIGATION_SCREENS) => {
+      closeMenu();
+      navigation.navigate(NAVIGATION_SCREENS[screen] as never);
+    },
+    [closeMenu, navigation]
+  );
 
   const handleCopyUsername = useCallback(() => {
     const username = walletData?.username;
@@ -64,6 +80,14 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
 
   const MenuIcon = AppIcon.MoreVertical;
 
+  const { data: unreadData } = useUnreadNotificationsCount();
+
+  console.log("unreadData =>", JSON.stringify(unreadData, null, 2));
+  const unreadCountRaw = (unreadData as any)?.data?.unread_count as number | undefined;
+  const unreadCount =
+    typeof unreadCountRaw === 'number' && unreadCountRaw > 0 ? unreadCountRaw : 0;
+
+  console.log("unreadCount =>", unreadCount);
   return (
     <View style={[styles.container, style]}>
       <View style={styles.leftSection}>
@@ -109,9 +133,21 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
           borderWidth={1}
           borderColor="rgba(255, 255, 255, 0.6)"
         >
-          <MenuIcon width={25} height={25} />
+          <View style={styles.menuIconWrapper}>
+            <MenuIcon width={25} height={25} />
+          </View>
         </GlassyWrapper>
+            {unreadCount > 0 && (
+              <View style={styles.menuIconDot} />
+            )}
       </TouchableOpacity>
+
+      <DashboardMenuModal
+        visible={isMenuVisible}
+        onClose={closeMenu}
+        onNavigate={handleNavigate}
+        unreadCount={unreadCount}
+      />
     </View>
   );
 };

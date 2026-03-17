@@ -151,14 +151,14 @@ const LoginScreen: React.FC = () => {
           />
         </View> */}
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.forgotPasswordLink}
           onPress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_FORGOT_PASSWORD)}
         >
           <CustomText fontFamily="inter" size={12} color={theme.colors.primary}>
             Forgot Password?
           </CustomText>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity
           style={styles.forgotPasswordLink}

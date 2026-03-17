@@ -9,10 +9,10 @@ export const cryptoAssetCardStyles = (theme: ITheme) =>
       paddingVertical: 12,
       paddingHorizontal: 12,
       backgroundColor: theme.colors.white,
-      marginBottom: theme.spacing.lg,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      marginBottom: theme.spacing.md,
       borderRadius: theme.radius.lg,
-
-      ...theme.shadows.sm,
       gap: theme.spacing.base,
     },
     iconContainer: {

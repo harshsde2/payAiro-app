@@ -20,6 +20,7 @@ import NewKYCScreen from "../new-ui/screens/Auth/KYC";
 import NewForgotPasswordScreen from "../new-ui/screens/Auth/ForgotPassword";
 import NewForgotPasswordVerificationScreen from "../new-ui/screens/Auth/ForgotPasswordVerification";
 import CustomHeader from "../new-ui/components/common-components/CustomHeader";
+import FreshchatScreen from "screens/TSX-Screens/Settings/FreshchatScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -100,6 +101,11 @@ export default function AuthStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.SUPPORT_SCREEN}
         component={SupportScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.FRESHCHAT_SCREEN}
+        component={FreshchatScreen}
       />
       {/* New UI (design v2) auth flow */}
       <Stack.Screen

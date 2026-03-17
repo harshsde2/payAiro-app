@@ -3,7 +3,6 @@ import {
   Modal,
   Pressable,
   View,
-  Text,
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
@@ -26,6 +25,14 @@ const formatBalance = (amount: number): string =>
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+
+const splitBalanceForDisplay = (formatted: string): { integer: string; decimal: string } => {
+  if (formatted.includes('.')) {
+    const [integer, decimal] = formatted.split('.');
+    return { integer: integer ?? formatted, decimal: decimal ?? '00' };
+  }
+  return { integer: formatted, decimal: '00' };
+};
 
 export interface IBalanceBreakdownModalProps {
   visible: boolean;
@@ -57,7 +64,8 @@ const BalanceBreakdownModal: React.FC<IBalanceBreakdownModalProps> = ({
     showSuccess('Copied!', `${label} copied to clipboard`);
   };
 
-  const totalFormatted = isBalanceVisible ? `$${formatBalance(totalBalance)}` : '$••••••';
+  const totalFormattedRaw = isBalanceVisible ? formatBalance(totalBalance) : '••••••';
+  const { integer: totalInteger, decimal: totalDecimal } = splitBalanceForDisplay(totalFormattedRaw);
   const payAiroFormatted = isBalanceVisible ? `$${formatBalance(payAiroBalance)}` : '$••••••';
   const cryptoFormatted = isBalanceVisible ? `$${formatBalance(cryptoBalance)}` : '$••••••';
 
@@ -69,15 +77,26 @@ const BalanceBreakdownModal: React.FC<IBalanceBreakdownModalProps> = ({
       onRequestClose={onClose}
     >
       <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={[styles.modalContent, { backgroundColor: theme.colors.white }]} onPress={e => e.stopPropagation()}>
-          {/* Header */}
+        <Pressable
+          style={[styles.modalContent, { backgroundColor: theme.colors.white }]}
+          onPress={(e: any) => e?.stopPropagation?.()}
+        >
           <View style={styles.headerRow}>
-            <CustomText variant="body" style={[styles.title, { color: theme.colors.greyDark }]}>
-              PayAiro Balance
-            </CustomText>
-            <View style={styles.headerIcons}>
+            <View style={styles.headerTitleRow}>
+              <CustomText
+                variant="body"
+                fontFamily="inter"
+                fontWeight="regular"
+                style={[styles.title, { color: theme.colors.greyDark }]}
+              >
+                PayAiro Balance
+              </CustomText>
               {onToggleVisibility && (
-                <TouchableOpacity onPress={onToggleVisibility} style={styles.iconButton}>
+                <TouchableOpacity
+                  onPress={onToggleVisibility}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  style={styles.iconButton}
+                >
                   {isBalanceVisible ? (
                     <AppIcon.EyeOn width={18} height={18} color={theme.colors.greyDark} />
                   ) : (
@@ -85,12 +104,17 @@ const BalanceBreakdownModal: React.FC<IBalanceBreakdownModalProps> = ({
                   )}
                 </TouchableOpacity>
               )}
-              <TouchableOpacity onPress={onClose} style={styles.chevronButton}>
-                <View style={{ transform: [{ rotate: '180deg' }] }}>
-                  <AppIcon.ChevronDown width={20} height={20} color={theme.colors.black} />
-                </View>
-              </TouchableOpacity>
             </View>
+
+            <TouchableOpacity
+              onPress={onClose}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={styles.chevronButton}
+            >
+              <View style={{ transform: [{ rotate: '180deg' }] }}>
+                <AppIcon.ChevronDown width={18} height={18} color={theme.colors.black} />
+              </View>
+            </TouchableOpacity>
           </View>
 
           {/* Total Balance */}
@@ -98,57 +122,112 @@ const BalanceBreakdownModal: React.FC<IBalanceBreakdownModalProps> = ({
             {isRefreshing ? (
               <ActivityIndicator size="small" color={theme.colors.primary} />
             ) : (
-              <CustomText variant="h2" fontWeight="bold" style={{ color: theme.colors.black }}>
-                {totalFormatted}
-              </CustomText>
+              <View style={styles.totalAmountRow}>
+                <CustomText
+                  variant="h1"
+                  size={40}
+                  fontFamily="poppins"
+                  fontWeight="bold"
+                  style={{ color: theme.colors.black }}
+                >
+                  $
+                </CustomText>
+                <View style={styles.totalAmountParts}>
+                  <CustomText
+                    variant="h1"
+                    size={40}
+                    fontFamily="poppins"
+                    fontWeight="bold"
+                    style={{ color: theme.colors.black }}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.6}
+                  >
+                    {totalInteger}
+                  </CustomText>
+                  {totalDecimal ? (
+                    <CustomText
+                      variant="h1"
+                      size={30}
+                      fontFamily="poppins"
+                      fontWeight="bold"
+                      style={{ color: theme.colors.greyDark }}
+                      numberOfLines={1}
+                    >
+                      .{totalDecimal}
+                    </CustomText>
+                  ) : null}
+                </View>
+                <View style={styles.totalCaret}>
+                  <AppIcon.ChevronDown width={16} height={16} color={theme.colors.black} />
+                </View>
+              </View>
             )}
           </View>
 
           {/* PayAiro Account */}
-          <View style={[styles.breakdownCard, { backgroundColor: theme.colors.greyLight }]}>
+          <View
+            style={[
+              styles.breakdownCard,
+              { backgroundColor: theme.colors.white, borderColor: theme.colors.border },
+            ]}
+          >
             <View style={styles.breakdownRow}>
-              <View style={[styles.iconCircle, { backgroundColor: theme.colors.border }]}>
-                <AppIcon.Send width={24} height={24} color={theme.colors.black} />
+              <View style={[styles.iconCircle, { backgroundColor: theme.colors.white }]}>
+                <AppIcon.PayairoLogoBlack width={26} height={26} />
               </View>
               <View style={styles.breakdownInfo}>
-                <CustomText variant="subtitle2" fontWeight="semiBold">
+                <CustomText variant="body" fontFamily="poppins" fontWeight="semiBold" style={{ color: theme.colors.black }}>
                   PayAiro Account
                 </CustomText>
                 <View style={styles.subtitleRow}>
-                  <CustomText variant="caption" style={{ color: theme.colors.grey }}>
+                  <CustomText variant="caption" fontFamily="inter" fontWeight="regular" style={{ color: theme.colors.grey }}>
                     {userId ? maskUserId(userId) : '—'}
                   </CustomText>
-                  <TouchableOpacity onPress={() => handleCopy(userId, 'PayAiro Tag')} style={styles.copyButton}>
-                    <View style={[styles.copyIcon, { backgroundColor: theme.colors.primary }]} />
+                  <TouchableOpacity
+                    onPress={() => handleCopy(userId, 'PayAiro Tag')}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={styles.copyButton}
+                  >
+                    <AppIcon.Copygreen width={16} height={16} />
                   </TouchableOpacity>
                 </View>
               </View>
-              <CustomText variant="subtitle2" fontWeight="semiBold">
+              <CustomText variant="body" fontFamily="poppins" fontWeight="semiBold" style={{ color: theme.colors.black }}>
                 {payAiroFormatted}
               </CustomText>
             </View>
           </View>
 
           {/* Crypto Assets */}
-          <View style={[styles.breakdownCard, { backgroundColor: theme.colors.greyLight }]}>
+          <View
+            style={[
+              styles.breakdownCard,
+              { backgroundColor: theme.colors.white, borderColor: theme.colors.border },
+            ]}
+          >
             <View style={styles.breakdownRow}>
-              <View style={[styles.iconCircle, { backgroundColor: theme.colors.border }]}>
-                <AppIcon.Crypto width={24} height={24} color={theme.colors.black} />
+              <View style={[styles.iconCircle, { backgroundColor: theme.colors.white }]}>
+                <AppIcon.AllCryptos width={30} height={30} />
               </View>
               <View style={styles.breakdownInfo}>
-                <CustomText variant="subtitle2" fontWeight="semiBold">
+                <CustomText variant="body" fontFamily="poppins" fontWeight="semiBold" style={{ color: theme.colors.black }}>
                   Crypto Assets
                 </CustomText>
                 <View style={styles.subtitleRow}>
-                  <CustomText variant="caption" style={{ color: theme.colors.grey }}>
+                  <CustomText variant="caption" fontFamily="inter" fontWeight="regular" style={{ color: theme.colors.grey }}>
                     {userId ? maskUserId(userId) : 'S5********N0x1'}
                   </CustomText>
-                  <TouchableOpacity onPress={() => handleCopy(userId || '', 'Wallet')} style={styles.copyButton}>
-                    <View style={[styles.copyIcon, { backgroundColor: theme.colors.primary }]} />
+                  <TouchableOpacity
+                    onPress={() => handleCopy(userId || '', 'Wallet')}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={styles.copyButton}
+                  >
+                    <AppIcon.Copygreen width={16} height={16} />
                   </TouchableOpacity>
                 </View>
               </View>
-              <CustomText variant="subtitle2" fontWeight="semiBold">
+              <CustomText variant="body" fontFamily="poppins" fontWeight="semiBold" style={{ color: theme.colors.black }}>
                 {cryptoFormatted}
               </CustomText>
             </View>
@@ -171,7 +250,9 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     borderRadius: 20,
-    padding: 20,
+    paddingTop: 18,
+    paddingHorizontal: 18,
+    paddingBottom: 14,
   },
   headerRow: {
     flexDirection: 'row',
@@ -179,16 +260,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  title: {
-    fontFamily: 'Inter-Regular',
-  },
-  headerIcons: {
+  headerTitleRow: {
+    flex: 1,
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 12,
+    marginLeft: 18, // offsets right chevron button to keep title visually centered
+  },
+  title: {
+    fontSize: 14,
   },
   iconButton: {
     padding: 4,
+    marginLeft: 8,
   },
   chevronButton: {
     padding: 4,
@@ -198,19 +282,37 @@ const styles = StyleSheet.create({
     minHeight: 40,
     justifyContent: 'center',
   },
+  totalAmountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+  },
+  totalAmountParts: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    maxWidth: '72%',
+    flexShrink: 1,
+  },
+  totalCaret: {
+    marginLeft: 6,
+    alignSelf: 'center',
+  },
   breakdownCard: {
     borderRadius: 12,
-    padding: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
     marginBottom: 12,
+    borderWidth: 1,
   },
   breakdownRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -226,11 +328,6 @@ const styles = StyleSheet.create({
   },
   copyButton: {
     padding: 2,
-  },
-  copyIcon: {
-    width: 12,
-    height: 12,
-    borderRadius: 2,
   },
 });
 

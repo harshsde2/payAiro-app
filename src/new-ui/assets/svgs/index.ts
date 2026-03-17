@@ -23,6 +23,17 @@ import Withdraw from './Withdraw.svg';
 import AddBalance from './AddBalance.svg';
 import Copygreen from './CopyGreen.svg';
 import Add from './Add.svg';
+import NewOnboardingIcon from './NewOnboardingIcon.svg';
+import AllCryptos from './AllCryptos.svg';
+import PayairoLogoBlack from './PayairoLogoBlack.svg';
+import LogOut from './LogOut.svg';
+import Notification from './Notification.svg';
+import Settings from './Settings.svg';
+import User from './User.svg';
+import Headphones from './Headphones.svg';
+import HelpCircle from './HelpCircle.svg';
+import ChevronRight from './ChevronRight.svg';
+import QrCode from './QrCode.svg';
 
 export const AppIcon = {
   Home,
@@ -50,4 +61,15 @@ export const AppIcon = {
   AddBalance,
   Copygreen,
   Add,
+  NewOnboardingIcon,
+  AllCryptos,
+  PayairoLogoBlack,
+  LogOut,
+  Notification,
+  Settings,
+  User,
+  Headphones,
+  HelpCircle,
+  ChevronRight,
+  QrCode,
 };

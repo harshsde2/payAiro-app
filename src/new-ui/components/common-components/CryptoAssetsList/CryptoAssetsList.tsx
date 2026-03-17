@@ -18,7 +18,7 @@ const CryptoAssetsList: React.FC<ICryptoAssetsListProps> = ({
   data = [],
   isLoading = false,
 }) => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const { theme } = useTheme();
   const styles = cryptoAssetCardStyles(theme);
 
@@ -82,7 +82,7 @@ const CryptoAssetsList: React.FC<ICryptoAssetsListProps> = ({
           <CustomText variant="body" style={styles.assetName} fontWeight="semiBold">
             {asset}
           </CustomText>
-          <CustomText variant="caption" style={styles.quantityText}>
+          <CustomText variant='caption' fontWeight='regular' style={styles.quantityText}>
             {quantityBalance} {asset}
           </CustomText>
         </View>

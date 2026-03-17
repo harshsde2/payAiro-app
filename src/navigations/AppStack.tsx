@@ -1,4 +1,4 @@
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createNativeStackNavigator, NativeStackHeaderProps } from "@react-navigation/native-stack";
 import React from "react";
 import BottomTabNavigator from "./BottomTabNavigator";
 import ACHTransfer from "screens/TSX-Screens/AddBalance/ACHTransfer";
@@ -67,8 +67,31 @@ import NewPersonal from "screens/SettingScreen/NewPersonal";
 import Settings2 from "screens/Authentications/Settings2";
 import AddBalanceBankDetails from "screens/TSX-Screens/AddBalance/AddBalanceBankDetails";
 import PaymentAppList from "screens/TSX-Screens/AddBalance/PaymentAppList";
+import NewSend from "@new-ui/screens/Send/Send/index";
+import SelectPaymentMethod from "@new-ui/screens/Send/SelectPaymentMethod/SelectPaymentMethod";
+import EnterAmount from "@new-ui/screens/Send/EnterAmount/EnterAmount";
+import CustomHeader from "../new-ui/components/common-components/CustomHeader";
+import { AppIcon } from "new-ui/assets/svgs";
+import theme from "styles/theme";
+import { useTheme as useNewTheme } from "@new-ui/styles/ThemeContext";
 
 const Stack = createNativeStackNavigator();
+
+function AppStackHeader(props: NativeStackHeaderProps) {
+  const { theme: newTheme } = useNewTheme();
+  const title =
+    typeof props.options?.headerTitle === "string"
+      ? props.options.headerTitle
+      : undefined;
+
+  const isNewSendScreen = props.route?.name === NAVIGATION_SCREENS.NEW_SEND;
+
+  const rightButton = isNewSendScreen
+    ? { icon: <AppIcon.QrCode width={24} height={24} color={newTheme.colors.primary}/> }
+    : undefined;
+
+  return <CustomHeader {...props} title={title} rightButton={rightButton} />;
+}
 
 export default function AppStack() {
   return (
@@ -463,6 +486,21 @@ export default function AppStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.PAYMENT_APP_LIST}
         component={PaymentAppList}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader }}
+        name={NAVIGATION_SCREENS.NEW_SEND}
+        component={NewSend as any}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader }}
+        name="SelectPaymentMethod"
+        component={SelectPaymentMethod as any}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader }}
+        name="EnterAmount"
+        component={EnterAmount as any}
       />
     </Stack.Navigator>
   );

@@ -9,13 +9,11 @@ export const customHeaderStyles = (theme: ITheme) =>
       backgroundColor: theme.colors.background,
       paddingHorizontal: theme.spacing.xs,
       minHeight: 56,
-      position: 'relative',
     },
     contentWrapper: {
       flexDirection: 'row',
       alignItems: 'center',
       width: '100%',
-      position: 'relative',
     },
     leftButton: {
       justifyContent: 'center',
@@ -32,14 +30,9 @@ export const customHeaderStyles = (theme: ITheme) =>
       height: 40,
     },
     titleContainer: {
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      top: 0,
-      bottom: 0,
+      flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      zIndex: 0,
     },
   });
 

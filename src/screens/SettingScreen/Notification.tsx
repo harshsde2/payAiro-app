@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   BackHandler,
@@ -13,7 +13,7 @@ import Notificatiom from "../Authentications/Notificatiom";
 import { useTheme } from "../../styles/ThemeContext";
 import CustomText from "../../tsx-components/CustomText";
 import { ScreenContainer } from "HOC";
-import { useNotificationsPaginated } from "../../query/hooks";
+import { useNotificationsPaginated, useMarkAllNotificationsRead } from "../../query/hooks";
 import { INotificationItem } from "../../query/hooks/types";
 
 const { SVGLeftArrow } = require("../../constants/images");
@@ -24,6 +24,7 @@ export default function Notification() {
   const navigation = useNavigation();
   const { theme } = useTheme();
   const styles = customStyles(theme);
+  const [hasMarkedRead, setHasMarkedRead] = useState(false);
 
   const {
     data,
@@ -36,6 +37,8 @@ export default function Notification() {
     isFetchingNextPage,
     isRefetching,
   } = useNotificationsPaginated(PAGE_SIZE, true);
+
+  const { mutate: markAllNotificationsRead } = useMarkAllNotificationsRead();
 
   const notifications = useMemo(
     () => data?.pages?.flatMap((page) => page?.data ?? []) ?? [],
@@ -71,6 +74,19 @@ export default function Notification() {
 
     return () => backHandler.remove();
   }, [handleGoBack]);
+
+  // Mark all notifications as read once the list has successfully loaded
+  useEffect(() => {
+    if (
+      !hasMarkedRead &&
+      !isLoading &&
+      !isError &&
+      notifications.length > 0
+    ) {
+      markAllNotificationsRead();
+      setHasMarkedRead(true);
+    }
+  }, [hasMarkedRead, isLoading, isError, notifications.length, markAllNotificationsRead]);
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {

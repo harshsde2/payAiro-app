@@ -221,13 +221,8 @@ const UnifiedTransactionCard: React.FC<IUnifiedTransactionCardProps> = ({
           >
             {displayName}
           </CustomText>
-          <CustomText
-            variant="caption"
-            color={theme.colors.text.tertiary}
-            style={styles.subtitle}
-            numberOfLines={1}
-          >
-            {getSubtitle()}
+           <CustomText variant="caption" color={theme.colors.text.tertiary}>
+            {formattedDate}
           </CustomText>
         </View>
 
@@ -241,9 +236,7 @@ const UnifiedTransactionCard: React.FC<IUnifiedTransactionCardProps> = ({
             {sign}
             {getCurrencyDisplay()} {formattedAmount}
           </CustomText>
-          <CustomText variant="caption" color={theme.colors.text.tertiary}>
-            {formattedDate}
-          </CustomText>
+         
         </View>
       </View>
 
@@ -275,7 +268,7 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       backgroundColor: theme.colors.card.background,
-      borderRadius: 12,
+      borderRadius: 16,
       padding: theme.spacing.spacing.sm,
       marginBottom: theme.spacing.spacing.xs,
       borderWidth: 1,

@@ -74,7 +74,8 @@ const KYCScreen: React.FC = () => {
   };
 
   const handleSkipKYC = () => {
-    dispatch(setLogin(true));
+    // dispatch(setLogin(true));
+    return;
   };
 
   const handlePDFViewCybridUserAgreement = () => {

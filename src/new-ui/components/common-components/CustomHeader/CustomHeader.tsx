@@ -19,7 +19,7 @@ const formatScreenTitle = (routeName: string): string => {
   // Legacy / other
   if (routeName === NAVIGATION_SCREENS.OTP) return 'OTP Verification';
   if (routeName === NAVIGATION_SCREENS.LOGIN) return 'Login';
-
+  if (routeName === NAVIGATION_SCREENS.NEW_SEND) return 'Send';
   const title = routeName
     .replace(/([A-Z])/g, ' $1')
     .trim()

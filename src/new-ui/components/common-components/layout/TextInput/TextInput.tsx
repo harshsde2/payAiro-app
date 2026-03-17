@@ -92,7 +92,7 @@ const TextInput: React.FC<ITextInputProps> = ({
       {label && (
         <CustomText
           variant="label"
-          fontWeight="medium"
+          fontWeight='semiBold'
           size={16}
           style={[
             {

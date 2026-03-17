@@ -41,6 +41,7 @@ export const NAVIGATION_SCREENS = {
   SCANS: "Scans",
   SCAN_PAY: "ScanPay",
   SEND: "Send",
+  NEW_SEND: "NewSend",
   RECEIVE: "Receive",
   REWARDS: "Rewards",
   SETTING_SCREEN: "SettingScreen",

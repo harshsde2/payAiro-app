@@ -3,7 +3,7 @@ import { AppIcon } from "new-ui/assets/svgs/index";
 
 export type DashboardActionScreen =
   | "ADD_BALANCE"
-  | "SEND"
+  | "NEW_SEND"
   | "RECEIVE"
   | "WITHDRAW_BALANCE";
 
@@ -23,7 +23,7 @@ export const DASHBOARD_BALANCE_CARD_CONSTANTS: IDashboardActionConfig[] = [
   {
     icon: AppIcon.Send,
     name: "Send",
-    screen: "SEND",
+    screen: "NEW_SEND",
     params: { requested: false },
   },
   { icon: AppIcon.Receive, name: "Receive", screen: "RECEIVE" },
