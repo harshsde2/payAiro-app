@@ -38,6 +38,7 @@
     "generate:sphere-splash": "node scripts/generate-sphere-splash.js && npx react-native-bootsplash generate assets/images/GreenSphereSplash.png --background=#FFFFFF --logo-width=192"
   },
   "dependencies": {
+    "@gorhom/bottom-sheet": "^5.2.8",
     "@legendapp/list": "^1.0.14",
     "@mxenabled/react-native-widget-sdk": "^1.1.4",
     "@notifee/react-native": "9.1.8",

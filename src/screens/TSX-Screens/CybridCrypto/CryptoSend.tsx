@@ -199,9 +199,9 @@ const CryptoSend = () => {
   const validateForm = (): string[] => {
     const errors: string[] = [];
 
-    if (!amount || parseFloat(amount) <= 1.99) {
-      errors.push("$2.00 or more is required to send");
-    }
+    // if (!amount || parseFloat(amount) <= 1.99) {
+    //   errors.push("$2.00 or more is required to send");
+    // }
 
     if (cryptoAmount <= 0) {
       errors.push("Invalid crypto amount");

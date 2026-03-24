@@ -14,7 +14,8 @@ import {
 import { Theme, useTheme } from "styles";
 import { SvgIcons } from "constants/svgs";
 import { getPin } from "storage/mmkv";
-import CustomText from "tsx-components/CustomText";
+// import CustomText from "tsx-components/CustomText";
+import CustomText from "@new-ui/components/common-components/CustomText";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppLock } from "hooks/useAppLock";
 import { useNavigation } from "@react-navigation/native";
@@ -24,6 +25,8 @@ import {
   type BiometricAuthResult,
 } from "services/BiometricService";
 import { LOCK_CONFIG } from "types/appLock.types";
+import { AppIcon } from "@new-ui/assets/svgs";
+import { Button } from "new-ui/components/common-components/layout";
 
 const AppLockScreen: React.FC = () => {
   const { theme } = useTheme();
@@ -265,9 +268,9 @@ const AppLockScreen: React.FC = () => {
               {
                 flexDirection: "row",
                 width: "100%",
-                backgroundColor: theme.colors.palette.green700,
-                paddingVertical: 5,
-                paddingHorizontal: 10,
+                // backgroundColor: theme.colors.palette.green700,
+                // paddingVertical: 15,
+                paddingHorizontal: 5,
                 justifyContent: "space-between",
                 alignItems: "center",
               },
@@ -275,19 +278,15 @@ const AppLockScreen: React.FC = () => {
           >
             <View style={styles.header}>
               {paymentMode ? (
-                <SvgIcons.LeftArrow
-                  width={60}
-                  height={60}
+                <AppIcon.ArrowLeft
+                  width={25}
+                  height={25}
                   onPress={() => clearPaymentVerification()}
                 />
               ) : null}
-              <View>
-                <CustomText style={styles.appTitle}>PayAiro App</CustomText>
-                <CustomText style={styles.subtitleText}>
-                  Enter Transaction PIN to unlock
-                </CustomText>
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', marginRight: 40, }}>
+                <CustomText variant='h1' fontWeight='bold' size={20}>M-PIN</CustomText>
               </View>
-              <SvgIcons.PayairoWhiteLogo width={40} height={40} />
             </View>
           </View>
         )}
@@ -295,118 +294,118 @@ const AppLockScreen: React.FC = () => {
         {isBiometricRunning ? (
           <View style={styles.biometricOverlay} />
         ) : (
-        <View style={styles.mainContent}>
-          <View style={styles.pinEntryContainer}>
-            <View style={styles.pinEntryLabelRow}>
-              <CustomText style={styles.pinEntryText}>
-                ENTER PIN
-              </CustomText>
-              {showPin ? (
-                <SvgIcons.EyeOnGreenbg onPress={handleShowAndHidePin} width={22} height={22} />
-              ) : (
-                <SvgIcons.EyeOffGreenbg onPress={handleShowAndHidePin} width={22} height={22} />
-              )}
-              
-            </View>
+          <View style={styles.mainContent}>
+            <View style={styles.pinEntryContainer}>
+              <View style={styles.pinEntryLabelRow}>
+                <CustomText variant='caption' fontWeight='light' size={14} style={{ marginRight: 10 }}>
+                  Confirm your M-PIN
+                </CustomText>
+                {showPin ? (
+                  <SvgIcons.EyeOnGreenbg onPress={handleShowAndHidePin} width={22} height={22} />
+                ) : (
+                  <SvgIcons.EyeOffGreenbg onPress={handleShowAndHidePin} width={22} height={22} />
+                )}
 
-            <View style={styles.pinDotContainer}>
-              {[0, 1, 2, 3].map((index) => (
-                <View key={index} style={styles.pinDotWrapper}>
-                  <Text
-                    style={[
-                      styles.pinDot,
-                      { opacity: pin.length > index ? 1 : 0 },
-                    ]}
-                  >
-                    {showPin && pin[index] ? pin[index] : "*"}
-                  </Text>
-                  <View
-                    style={[
-                      styles.pinUnderline,
-                      {
-                        backgroundColor:
-                          pin.length > index
-                            ? theme.colors.palette.green700
-                            : "#CCCCCC",
-                      },
-                    ]}
-                  />
-                </View>
-              ))}
-            </View>
-
-            {/* Error Message Display */}
-            {errorMessage && (
-              <View style={styles.errorContainer}>
-                <SvgIcons.ToastCross width={16} height={16} fill="#C92A2A" />
-                <CustomText style={styles.errorText}>{errorMessage}</CustomText>
               </View>
-            )}
 
-            {isVerifyingPin ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator
-                  size="small"
-                  color={theme.colors.palette.green700}
-                />
-              </View>
-            ) : null}
-
-            {!paymentMode && (
-              <TouchableOpacity
-                style={styles.forgotPinContainer}
-                onPress={() => {
-                  unlockApp();
-                  setTimeout(() => {
-                    navigation.navigate(NAVIGATION_SCREENS.FORGOT_PIN_SCREEN);
-                  }, 100);
-                }}
-                activeOpacity={0.7}
-              >
-                <CustomText style={styles.forgotPinText}>Forgot PIN?</CustomText>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <View style={styles.keypadContainer}>
-            {[
-              ["1", "2", "3"],
-              ["4", "5", "6"],
-              ["7", "8", "9"],
-            ].map((row, i) => (
-              <View key={i} style={styles.keypadRow}>
-                {row.map((num) => (
-                  <TouchableOpacity
-                    key={num}
-                    style={styles.keypadButton}
-                    onPress={() => handlePinDigit(num)}
-                    disabled={isVerifyingPin}
-                  >
-                    <Text style={styles.keypadNumber}>{num}</Text>
-                  </TouchableOpacity>
+              <View style={styles.pinDotContainer}>
+                {[0, 1, 2, 3].map((index) => (
+                  <View key={index} style={styles.pinDotWrapper}>
+                    <Text
+                      style={[
+                        styles.pinDot,
+                        { opacity: pin.length > index ? 1 : 0 },
+                      ]}
+                    >
+                      {showPin && pin[index] ? pin[index] : "*"}
+                    </Text>
+                    <View
+                      style={[
+                        styles.pinUnderline,
+                        {
+                          backgroundColor:
+                            pin.length > index
+                              ? theme.colors.palette.green700
+                              : "#CCCCCC",
+                        },
+                      ]}
+                    />
+                  </View>
                 ))}
               </View>
-            ))}
 
-            <View style={styles.keypadRow}>
-              <TouchableOpacity
-                style={styles.keypadButton}
-                onPress={handlePinBackspace}
-                disabled={isVerifyingPin}
-              >
-                <SvgIcons.KeyboardBack width={35} height={35} />
-              </TouchableOpacity>
+              {/* Error Message Display */}
+              {errorMessage && (
+                <View style={styles.errorContainer}>
+                  <SvgIcons.ToastCross width={16} height={16} fill="#C92A2A" />
+                  <CustomText style={styles.errorText}>{errorMessage}</CustomText>
+                </View>
+              )}
 
-              <TouchableOpacity
-                style={styles.keypadButton}
-                onPress={() => handlePinDigit("0")}
-                disabled={isVerifyingPin}
-              >
-                <Text style={styles.keypadNumber}>0</Text>
-              </TouchableOpacity>
+              {isVerifyingPin ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator
+                    size="small"
+                    color={theme.colors.palette.green700}
+                  />
+                </View>
+              ) : null}
 
-              <View style={styles.actionButtonWrapper}>
+              {!paymentMode && (
                 <TouchableOpacity
+                  style={styles.forgotPinContainer}
+                  onPress={() => {
+                    unlockApp();
+                    setTimeout(() => {
+                      navigation.navigate(NAVIGATION_SCREENS.FORGOT_PIN_SCREEN);
+                    }, 100);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <CustomText style={styles.forgotPinText}>Forgot PIN?</CustomText>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <View style={styles.keypadContainer}>
+              {[
+                ["1", "2", "3"],
+                ["4", "5", "6"],
+                ["7", "8", "9"],
+              ].map((row, i) => (
+                <View key={i} style={styles.keypadRow}>
+                  {row.map((num) => (
+                    <TouchableOpacity
+                      key={num}
+                      style={styles.keypadButton}
+                      onPress={() => handlePinDigit(num)}
+                      disabled={isVerifyingPin}
+                    >
+                      <Text style={styles.keypadNumber}>{num}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              ))}
+
+              <View style={[styles.keypadRow,]}>
+                <TouchableOpacity
+                  style={[styles.keypadButton, { marginLeft: 125 }]}
+                  onPress={() => handlePinDigit("0")}
+                  disabled={isVerifyingPin}
+                >
+                  <Text style={styles.keypadNumber}>0</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.keypadButton, { marginRight: 5 }]}
+                  onPress={handlePinBackspace}
+                  disabled={isVerifyingPin}
+                >
+                  <SvgIcons.KeyboardBack width={30} height={30} />
+                </TouchableOpacity>
+
+              </View>
+              <View style={styles.actionButtonWrapper}>
+                {/* <TouchableOpacity
                   style={(styles as any).actionButton(pin.length === 4)}
                   onPress={() => handleVerifyPin()}
                   disabled={pin.length !== 4 || isVerifyingPin}
@@ -416,11 +415,17 @@ const AppLockScreen: React.FC = () => {
                   ) : (
                     <SvgIcons.DoneIcon width={35} height={35} />
                   )}
-                </TouchableOpacity>
+                </TouchableOpacity> */}
+                <Button
+                onPress={() => handleVerifyPin()}
+                disabled={pin.length !== 4 || isVerifyingPin}
+                loading={isVerifyingPin}
+                >
+                  Confirm
+                </Button>
               </View>
             </View>
           </View>
-        </View>
         )}
       </Modal>
     </SafeAreaView>
@@ -440,13 +445,13 @@ const customStyles = (theme: Theme) =>
     },
     header: {
       flex: 1,
-      backgroundColor: theme.colors.palette.green700,
+      // backgroundColor: theme.colors.palette.green700,
       paddingVertical: 5,
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
       marginLeft: 10,
-      marginTop: 40,
+      marginTop: 60,
     },
     appTitle: {
       color: "#FFFFFF",
@@ -545,7 +550,7 @@ const customStyles = (theme: Theme) =>
     },
     keypadContainer: {
       width: "90%",
-      backgroundColor: "#F8F8F8",
+      // backgroundColor: "#F8F8F8",
       borderRadius: 10,
       paddingVertical: 20,
       paddingHorizontal: 20,
@@ -553,7 +558,7 @@ const customStyles = (theme: Theme) =>
     keypadRow: {
       flexDirection: "row",
       justifyContent: "space-between",
-      marginBottom: 30,
+      marginBottom: 10,
     },
     keypadButton: {
       width: 70,
@@ -563,11 +568,11 @@ const customStyles = (theme: Theme) =>
     },
     keypadNumber: {
       fontSize: 30,
-      color: theme.colors.palette.green700,
-      fontFamily: Fonts.bold,
+      color: '#6A6A6A',
+      fontWeight: '400',
+      // fontFamily: Fonts.bold,
     },
     actionButtonWrapper: {
-      width: 70,
       height: 70,
       borderRadius: 35,
       justifyContent: "center",

@@ -14,7 +14,6 @@ import { showError } from 'utils/toast';
 import { IBankBalance, IBankItem } from 'screens/Dashboard/types';
 import useSelectorAction from 'hooks/useSelectorAction';
 import { SendContactsList, ISendContactItem } from '@new-ui/components/common-components/SendContactsList';
-import { SCREENS } from 'constants/SCREENS';
 import { INewSendProps } from './types';
 
 const NewSend: React.FC<INewSendProps> = ({ route }) => {
@@ -46,6 +45,7 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
     useState<boolean>(false);
   const [selectedContactUuid, setSelectedContactUuid] =
     useState<string | null>(null);
+  const [selectedContact, setSelectedContact] = useState<ISendContactItem | null>(null);
 
   const isEditable =
     senderFromParams === '' || senderFromParams === undefined;
@@ -83,15 +83,12 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
 
       if (data && data.status) {
         navigation.navigate(
-          'SelectPaymentMethod' as never,
+          NAVIGATION_SCREENS.ENTER_AMOUNT as never,
           {
-            type:
-              (requested || type === 'requested')
-                ? 'requested'
-                : 'receive',
-            sender: trimmedSender,
-            bank: selectedBank,
-          } as never
+            type: 'send',
+            recipient_identifier: trimmedSender,
+            selectedContact: selectedContact,
+          }
         );
       } else {
         showValidationError(
@@ -161,24 +158,24 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
         '';
       const uuid = contact.uuid;
 
+      // console.log("contact =>", JSON.stringify(contact, null, 2));
+
       if (!identifier) {
         return;
       }
 
       setSender(identifier);
       setSelectedContactUuid(uuid);
+      setSelectedContact(contact);
 
       const trimmedSender = identifier.trim();
 
       navigation.navigate(
-        'SelectPaymentMethod' as never,
+        NAVIGATION_SCREENS.ENTER_AMOUNT as never,
         {
-          type:
-            (requested || type === 'requested')
-              ? 'requested'
-              : 'receive',
-          sender: trimmedSender,
-          bank: selectedBank,
+          type: 'send',
+          recipient_identifier: trimmedSender,
+          selectedContact: contact,
         } as never
       );
     },
@@ -224,7 +221,7 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
               value={note}
               onChangeText={setNote}
               multiline
-              height={88}
+              // height={88}
               borderRadius={10}
               borderWidth={1}
               borderColor={theme.colors.grey}
@@ -255,7 +252,7 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
           />
         </View>
 
-        <View style={styles.proceedButtonContainer}>
+        {/* <View style={styles.proceedButtonContainer}>
           <Button
             onPress={handleNextPress}
             loading={isLoading}
@@ -263,7 +260,7 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
           >
             Proceed
           </Button>
-        </View>
+        </View> */}
       </KeyboardAvoidingView>
     </ScreenWrapper>
   );

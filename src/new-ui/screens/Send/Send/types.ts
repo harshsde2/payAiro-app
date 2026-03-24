@@ -1,5 +1,7 @@
 import { RouteProp } from '@react-navigation/native';
 import { ISendScreenRouteParams } from 'screens/Dashboard/types';
+import type { FundingSource } from '../EnterAmount/enterAmount.types';
+import { ISendContactItem } from 'new-ui/components/common-components/SendContactsList';
 
 export type SendRouteProp = RouteProp<
   { Send: ISendScreenRouteParams },
@@ -11,9 +13,9 @@ export interface INewSendProps {
 }
 
 export interface IEnterAmountRouteParams {
-  type?: 'requested' | 'receive';
-  sender: string;
-  bank?: any;
+  type?: 'send' | 'request';
+  recipient_identifier: string;
+  selectedContact?: ISendContactItem;
 }
 
 export type EnterAmountRouteProp = RouteProp<

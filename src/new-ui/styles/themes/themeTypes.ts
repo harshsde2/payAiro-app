@@ -15,6 +15,7 @@ export interface ITheme {
     grey: string;
     greyLight: string;
     greyDark: string;
+    greyLight2: string;
     white: string;
     black: string;
     background: string;

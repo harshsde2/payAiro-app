@@ -5,17 +5,21 @@ import LottieView from "lottie-react-native";
 import { LOTTIE_APP_LOADER, TRANSACTION_FAILED_LOTTIE, TRANSACTION_SUCCESS } from "lottie/lottie";
 import moment from "moment";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { Button } from "new-ui/components/common-components/layout";
 import React, { FC, useEffect, useState } from "react";
-import { 
-  SafeAreaView, 
-  ScrollView, 
-  StyleSheet, 
+import {
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
   View,
-  BackHandler 
+  BackHandler
 } from "react-native";
 import { Theme, useTheme } from "styles";
 import { useGlobalStyles } from "styles/GlobalStyles";
-import { CustomText } from "tsx-components";
+// import { CustomText } from "tsx-components";
+import CustomText from "@new-ui/components/common-components/CustomText";
+import { useTheme as useNewTheme } from "@new-ui/styles/ThemeContext";
+
 
 interface TransactionData {
   id: number;
@@ -68,30 +72,34 @@ const keyLabels = {
   network: "Network",
   timestamp: "Transfer Date",
   sender_username: "Sender",
-  recipient_username: "Receiver ID", 
+  recipient_username: "Receiver ID",
   amount: "Amount",
   asset: "Asset",
   status: "Status",
   final_amount: "Final Amount",
   Transaction_fee_persentage: "Transaction Fee",
-
 } as const;
 
 const TransactionResult: FC = () => {
   const route = useRoute();
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
+  const { theme: newTheme } = useNewTheme();
   const styles = { ...useGlobalStyles(), ...customStyles(theme) };
 
   const params = route.params as RouteParams;
-  const { 
-    isLoading = true, 
-    transactionData, 
-    isSuccess = false, 
+
+  console.log("params =>", JSON.stringify(params, null, 2));
+  const {
+    isLoading = true,
+    transactionData,
+    isSuccess = false,
     isError = false,
     customTitle,
     customDescription
   } = params || {};
+
+  // console.log("transactionData =>", JSON.stringify(transactionData, null, 2));
 
   const [showLoader, setShowLoader] = useState(isLoading);
 
@@ -116,35 +124,9 @@ const TransactionResult: FC = () => {
   }, [transactionData, isSuccess, isError]);
 
   const handleClose = () => {
-    // Option 1: popToTop() - Smoother with native slide-back animations
-    // Pops all screens until MainTabs, then navigates to NewDashboard tab
-    // This feels more natural as it uses the native pop animation
     if (navigation.canGoBack()) {
       navigation.popToTop();
     }
-    // Small delay ensures pop completes before tab navigation
-    // setTimeout(() => {
-    //   navigation.navigate('MainTabs', {
-    //     screen: NAVIGATION_SCREENS.NEW_DASHBOARD,
-    //   } as any);
-    // }, 150);
-    
-    // Option 2: Reset (more abrupt but ensures clean state)
-    // Uncomment below and comment above if you prefer reset approach
-    // navigation.dispatch(
-    //   CommonActions.reset({
-    //     index: 0,
-    //     routes: [
-    //       {
-    //         name: 'MainTabs',
-    //         state: {
-    //           routes: [{ name: NAVIGATION_SCREENS.NEW_DASHBOARD }],
-    //           index: 0,
-    //         },
-    //       },
-    //     ],
-    //   })
-    // );
   };
 
   const getTransactionStatus = () => {
@@ -156,7 +138,7 @@ const TransactionResult: FC = () => {
 
   const renderLottieAnimation = () => {
     const status = getTransactionStatus();
-    
+
     if (status === 'loading') {
       return (
         <LottieView
@@ -167,7 +149,7 @@ const TransactionResult: FC = () => {
         />
       );
     }
-    
+
     if (status === 'success') {
       return (
         <LottieView
@@ -178,7 +160,7 @@ const TransactionResult: FC = () => {
         />
       );
     }
-    
+
     if (status === 'failed') {
       return (
         <LottieView
@@ -190,50 +172,50 @@ const TransactionResult: FC = () => {
         />
       );
     }
-    
+
     return null;
   };
 
   const renderTitle = () => {
     const status = getTransactionStatus();
-    
+
     // Use custom title if provided
     if (customTitle) {
-      const titleStyle = status === 'success' 
+      const titleStyle = status === 'success'
         ? [styles.title, styles.successTitle]
         : status === 'failed'
-        ? [styles.title, styles.errorTitle]
-        : styles.title;
-      
+          ? [styles.title, styles.errorTitle]
+          : styles.title;
+
       return (
         <CustomText variant="h3" style={titleStyle}>
           {customTitle}
         </CustomText>
       );
     }
-    
+
     switch (status) {
       case 'loading':
         return (
-          <CustomText variant="h3" style={styles.title}>
+          <CustomText variant="h3" fontWeight='semiBold' style={[styles.title]}>
             Processing Transaction
           </CustomText>
         );
       case 'success':
         return (
-          <CustomText variant="h3" style={[styles.title, styles.successTitle]}>
-            Transaction Initiated
+          <CustomText variant="h3" fontWeight='semiBold' style={[styles.title]} >
+            Payment Successful
           </CustomText>
         );
       case 'failed':
         return (
-          <CustomText variant="h3" style={[styles.title, styles.errorTitle]}>
+          <CustomText variant="h3" fontWeight='semiBold' style={[styles.title]}>
             Transaction Failed
           </CustomText>
         );
       default:
         return (
-          <CustomText variant="h3" style={styles.title}>
+          <CustomText variant="h3" fontWeight='semiBold' style={[styles.title]}>
             Transaction Result
           </CustomText>
         );
@@ -242,7 +224,7 @@ const TransactionResult: FC = () => {
 
   const renderDescription = () => {
     const status = getTransactionStatus();
-    
+
     // Use custom description if provided
     if (customDescription) {
       return (
@@ -251,29 +233,29 @@ const TransactionResult: FC = () => {
         </CustomText>
       );
     }
-    
+
     switch (status) {
       case 'loading':
         return (
-          <CustomText variant="subtitle2" style={styles.description}>
+          <CustomText variant="caption" size={16} fontFamily="inter" style={styles.description}>
             Please wait while we process your transaction...
           </CustomText>
         );
       case 'success':
         return (
-          <CustomText variant="subtitle2" style={styles.description}>
-            Your transaction has been submitted and is being processed.
+          <CustomText variant="caption" size={16} fontFamily="inter" style={styles.description}>
+            Your payment of <CustomText size={16} variant="caption" fontWeight="semiBold" color={newTheme.colors.primary} fontFamily="inter" >{`$${(transactionData as any)?.data?.amount || 0}`}</CustomText> has successfully sent to <CustomText size={16} variant="caption" fontWeight="semiBold" color={newTheme.colors.primary} fontFamily="inter" >{(transactionData as any)?.data?.recipient_username || 'N/A'}</CustomText>.
           </CustomText>
         );
       case 'failed':
         return (
-          <CustomText variant="subtitle2" style={styles.description}>
+          <CustomText variant="caption" size={16} fontFamily="inter" style={styles.description}>
             There was an error processing your transaction. Please try again.
           </CustomText>
         );
       default:
         return (
-          <CustomText variant="subtitle2" style={styles.description}>
+          <CustomText variant="caption" size={16} fontFamily="inter" style={styles.description}>
             Transaction status unknown.
           </CustomText>
         );
@@ -287,17 +269,17 @@ const TransactionResult: FC = () => {
     // Handle different response structures
     // For crypto transactions: data.data.transaction
     // For regular transactions: data.data
-    const actualData = 'transaction' in transactionData.data 
-      ? transactionData.data.transaction 
+    const actualData = 'transaction' in transactionData.data
+      ? transactionData.data.transaction
       : transactionData.data;
 
     const displayArray = Object.entries(keyLabels).map(([key, label]) => {
       let value = actualData[key as keyof TransactionData];
-      
+
       if (key === "timestamp" && value) {
         value = moment(value).format("DD MMM YYYY  h:mm A");
       }
-      
+
       if (key === "amount" || key === "final_amount") {
         if (value) {
           // Check if this is a crypto transaction (has asset field)
@@ -311,7 +293,7 @@ const TransactionResult: FC = () => {
           }
         }
       }
-      
+
       return { label, value };
     });
 
@@ -320,26 +302,28 @@ const TransactionResult: FC = () => {
         showsVerticalScrollIndicator={false}
         style={styles.detailsContainer}
       >
+        <View style={{borderColor: newTheme.colors.greyLight2, borderWidth: 1, borderRadius:newTheme.spacing.base, paddingHorizontal:newTheme.spacing.md,paddingVertical:newTheme.spacing.xsm}}>
         {displayArray.map((item, index) => (
           <View key={index}>
-          {item?.value &&
-          <View key={index} style={styles.detailRow}>
-            <CustomText size={14} variant="caption" style={styles.detailLabel}>
-              {item.label}
-            </CustomText>
-            <CustomText
-              ellipsizeMode="tail"
-              style={styles.detailValue}
-              numberOfLines={1}
-              size={14}
-              variant="subtitle2"
-            >
-              {item.value || "N/A"}
-            </CustomText>
-          </View>
-          }
+            {item?.value &&
+              <View key={index} style={styles.detailRow}>
+                <CustomText size={14} variant="caption" style={styles.detailLabel}>
+                  {item.label}
+                </CustomText>
+                <CustomText
+                  ellipsizeMode="tail"
+                  style={styles.detailValue}
+                  numberOfLines={1}
+                  size={14}
+                  variant="subtitle2"
+                >
+                  {item.value || "N/A"}
+                </CustomText>
+              </View>
+            }
           </View>
         ))}
+        </View>
       </ScrollView>
     );
   };
@@ -349,34 +333,37 @@ const TransactionResult: FC = () => {
 
     return (
       <View style={styles.buttonContainer}>
-        <GenericButton
+        {/* <GenericButton
           title="Done"
           cStyle={styles.doneButton}
           onPress={handleClose}
-        />
+        /> */}
+        <Button onPress={handleClose} >
+          Done
+        </Button>
       </View>
     );
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <HeaderTitle 
-        leftIcon="sd" 
+      <HeaderTitle
+        leftIcon="sd"
         onPressLeft={showLoader ? undefined : handleClose}
         title="Transaction"
       />
-      
+
       <View style={styles.animationContainer}>
         {renderLottieAnimation()}
       </View>
-      
+
       <View style={styles.contentContainer}>
         {renderTitle()}
-        
+
         <View style={styles.descriptionContainer}>
           {renderDescription()}
         </View>
-        
+
         {renderTransactionDetails()}
         {renderActionButton()}
       </View>
@@ -400,7 +387,7 @@ const customStyles = (theme: Theme) =>
     },
     lottieAnimation: {
       width: 250,
-      height: 200,
+      height: 150,
     },
     contentContainer: {
       flex: 1,
@@ -416,7 +403,8 @@ const customStyles = (theme: Theme) =>
       marginBottom: theme.spacing.spacing[3],
     },
     successTitle: {
-      color: theme.colors.palette.green600,
+      // color: theme.colors.palette.green600,
+      color: '#000',
     },
     errorTitle: {
       color: theme.colors.palette.error,
@@ -427,11 +415,14 @@ const customStyles = (theme: Theme) =>
     },
     description: {
       textAlign: "center",
-      color: theme.colors.text.secondary,
+      color: '#838383',
+      letterSpacing: 0.1,
+      fontWeight: '400',
+      fontFamily: 'inter',
     },
     detailsContainer: {
       width: "100%",
-      maxHeight: 300,
+      // maxHeight: 300,
       marginBottom: theme.spacing.spacing[4],
     },
     detailRow: {

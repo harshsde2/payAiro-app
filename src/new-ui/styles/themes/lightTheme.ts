@@ -16,6 +16,7 @@ export const lightTheme: ITheme = {
     grey: COLORS.grey,
     greyLight: COLORS.greyLight,
     greyDark: COLORS.greyDark,
+    greyLight2: COLORS.greyLight2,
     white: COLORS.white,
     black: COLORS.black,
     background: COLORS.white,

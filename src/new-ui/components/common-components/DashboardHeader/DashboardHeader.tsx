@@ -87,7 +87,7 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
   const unreadCount =
     typeof unreadCountRaw === 'number' && unreadCountRaw > 0 ? unreadCountRaw : 0;
 
-  console.log("unreadCount =>", unreadCount);
+  // console.log("unreadCount =>", unreadCount);
   return (
     <View style={[styles.container, style]}>
       <View style={styles.leftSection}>

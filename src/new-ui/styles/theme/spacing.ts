@@ -1,6 +1,7 @@
 export const SPACING = {
   xs: 4,
   sm: 8,
+  xsm: 10,
   md: 12,
   base: 16,
   lg: 20,

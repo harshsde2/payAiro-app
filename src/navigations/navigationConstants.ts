@@ -134,4 +134,5 @@ export const NAVIGATION_SCREENS = {
   NEW_PERSONAL: "NewPersonal",
   ADD_BALANCE_BANK_DETAILS: "AddBalanceBankDetails",
   PAYMENT_APP_LIST: "PaymentAppList",
+  ENTER_AMOUNT: "EnterAmount",
 } as const;

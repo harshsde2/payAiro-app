@@ -8,6 +8,8 @@ export const bottomSheetStyles = (theme: ITheme) => {
     backdrop: {
       ...StyleSheet.absoluteFillObject,
       backgroundColor: 'black',
+      zIndex: 9999,
+      elevation: 9999,
     },
     container: {
       position: 'absolute',
@@ -17,6 +19,8 @@ export const bottomSheetStyles = (theme: ITheme) => {
       backgroundColor: theme.colors.background,
       borderTopLeftRadius: theme.radius.xl,
       borderTopRightRadius: theme.radius.xl,
+      zIndex: 10000,
+      elevation: 10000,
       shadowColor: '#000',
       shadowOffset: {
         width: 0,

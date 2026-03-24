@@ -3,10 +3,12 @@ import { View, TouchableOpacity, Clipboard, Platform, ToastAndroid, Alert, Style
 import { useRoute } from "@react-navigation/native";
 import { useTheme } from "styles/ThemeContext";
 import { Theme } from "styles";
-import { CustomText } from "tsx-components";
 import { SvgIcons } from "constants/svgs";
 import useSelectorAction from "hooks/useSelectorAction";
 import { getPayAiroBankDetails } from "utils/helper";
+import CustomText from "new-ui/components/common-components/CustomText";
+import { useTheme as useNewTheme } from "new-ui/styles/ThemeContext";
+import { ITheme } from "new-ui/styles";
 
 // Context for capturing state
 const CapturingContext = createContext<{ isCapturing: boolean; setIsCapturing: (value: boolean) => void } | null>(null);
@@ -23,17 +25,18 @@ export const CapturingProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 export const useCapturing = () => {
   const context = useContext(CapturingContext);
   if (!context) {
-    return { isCapturing: false, setIsCapturing: () => {} };
+    return { isCapturing: false, setIsCapturing: () => { } };
   }
   return context;
 };
 
 const BankDetailsDisplay: React.FC = () => {
   const { theme } = useTheme();
+  const newTheme = useNewTheme();
   const { walletData, bankLists } = useSelectorAction() as any;
   const route = useRoute<any>();
   const { isCapturing } = useCapturing();
-  
+
   // const { bankList } = route?.params as any;
 
   const bankList = useMemo(() => {
@@ -50,9 +53,8 @@ const BankDetailsDisplay: React.FC = () => {
         : "external";
 
       return {
-        label: `${item?.bank_name || ""} (${maskedAccount || ""}) ${
-          accountType || ""
-        }`,
+        label: `${item?.bank_name || ""} (${maskedAccount || ""}) ${accountType || ""
+          }`,
         value: accountType?.toLowerCase() || "",
         bank_name: item?.bank_name || "",
         account_number: item?.account_number || "",
@@ -82,7 +84,7 @@ const BankDetailsDisplay: React.FC = () => {
     return null;
   }
 
-  const styles = getStyles(theme);
+  const styles = getStyles(newTheme.theme);
 
 
 
@@ -92,90 +94,104 @@ const BankDetailsDisplay: React.FC = () => {
   // console.log("payairoBank ->", JSON.stringify(payairoBank, null, 2))
   return (
     <View style={styles.accountDetailsContainer}>
-      {/* Account Holder */}
-      <View style={styles.accountDetailRow}>
-        <CustomText variant="caption" style={styles.detailLabel}>
-          Account Holder
-        </CustomText>
-        <View style={styles.detailValueContainer}>
-          <CustomText
-            variant="body2"
-            fontWeight="medium"
-            style={styles.detailValue}
-          >
-            {walletData?.name}
-          </CustomText>
-          {!isCapturing && (
-            <TouchableOpacity
-              onPress={() => copyToClipboard(walletData?.name, "Name")}
-              style={styles.iconButton}
-            >
-              <SvgIcons.CopyOutlineBlack width={20} height={20} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
+      <CustomText variant='h5' fontFamily='poppins' fontWeight='semiBold' >Bank Details</CustomText>
 
-      {/* Account Number */}
-      <View style={styles.accountDetailRow}>
-        <CustomText variant="caption" style={styles.detailLabel}>
-          Account number
-        </CustomText>
-        <View style={styles.detailValueContainer}>
-          <CustomText
-            variant="body2"
-            fontWeight="medium"
-            style={styles.detailValue}
-          >
-            {payairoBank?.account_number || "N/A"}
+      <View style={styles.accountDetailsContent}>
+        {/* Account Holder */}
+        <View style={styles.accountDetailRow}>
+          <CustomText variant="caption" style={styles.detailLabel}>
+            A/C Holder
           </CustomText>
-          {!isCapturing && (
-            <TouchableOpacity
-              onPress={() =>
-                copyToClipboard(payairoBank?.account_number, "Account number")
-              }
-              style={styles.iconButton}
+          <View style={styles.detailValueContainer}>
+            <CustomText
+              variant='caption'
+              fontWeight="medium"
+              style={styles.detailValue}
             >
-              <SvgIcons.CopyOutlineBlack width={20} height={20} />
-            </TouchableOpacity>
-          )}
+              {walletData?.name}
+            </CustomText>
+            {!isCapturing && (
+              <TouchableOpacity
+                onPress={() => copyToClipboard(walletData?.name, "Name")}
+                style={styles.iconButton}
+              >
+                <SvgIcons.CopyOutlineBlack width={20} height={20} />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
-      </View>
 
-      {/* IFSC Code / Routing Number */}
-      <View style={styles.accountDetailRow}>
-        <CustomText variant="caption" style={styles.detailLabel}>
-          {payairoBank?.ref_code ? "Routing Number" : "IFSC Code"}
-        </CustomText>
-        <View style={styles.detailValueContainer}>
-          <CustomText
-            variant="body2"
-            fontWeight="medium"
-            style={styles.detailValue}
-          >
-            {payairoBank?.ref_code || "N/A"}
+        {/* Account Number */}
+        <View style={styles.accountDetailRow}>
+          <CustomText variant="caption" style={styles.detailLabel}>
+            A/C Number
           </CustomText>
-          {!isCapturing && payairoBank?.ref_code && (
-            <TouchableOpacity
-              onPress={() =>
-                copyToClipboard(payairoBank?.ref_code, "Routing Number")
-              }
-              style={styles.iconButton}
+          <View style={styles.detailValueContainer}>
+            <CustomText
+              variant='caption'
+              fontWeight="medium"
+              style={styles.detailValue}
             >
-              <SvgIcons.CopyOutlineBlack width={20} height={20} />
-            </TouchableOpacity>
-          )}
+              {payairoBank?.account_number || "N/A"}
+            </CustomText>
+            {!isCapturing && (
+              <TouchableOpacity
+                onPress={() =>
+                  copyToClipboard(payairoBank?.account_number, "Account number")
+                }
+                style={styles.iconButton}
+              >
+                <SvgIcons.CopyOutlineBlack width={20} height={20} />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
+
+        {/* IFSC Code / Routing Number */}
+        <View style={styles.accountDetailRow}>
+          <CustomText variant="caption" style={styles.detailLabel}>
+            {payairoBank?.ref_code ? "R/C Number" : "IFSC Code"}
+          </CustomText>
+          <View style={styles.detailValueContainer}>
+            <CustomText
+              variant='caption'
+              fontWeight="medium"
+              style={styles.detailValue}
+            >
+              {payairoBank?.ref_code || "N/A"}
+            </CustomText>
+            {!isCapturing && payairoBank?.ref_code && (
+              <TouchableOpacity
+                onPress={() =>
+                  copyToClipboard(payairoBank?.ref_code, "Routing Number")
+                }
+                style={styles.iconButton}
+              >
+                <SvgIcons.CopyOutlineBlack width={20} height={20} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
       </View>
     </View>
   );
 };
 
-const getStyles = (theme: Theme) =>
+const getStyles = (theme: ITheme) =>
   StyleSheet.create({
     accountDetailsContainer: {
       width: "100%",
-      gap: theme.spacing.spacing[4] || 16,
+      gap: theme.spacing.md,
+      marginTop: theme.spacing.lg,
+
+    },
+    accountDetailsContent: {
+      gap: theme.spacing.md,
+      borderWidth: 1,
+      borderColor: theme.colors.greyLight2,
+      borderRadius: theme.radius.xl,
+      padding: theme.spacing.md,
     },
     accountDetailRow: {
       flexDirection: "row",
@@ -184,21 +200,21 @@ const getStyles = (theme: Theme) =>
       paddingVertical: 2,
     },
     detailLabel: {
-      color: theme.colors.palette.grey600 || "#4B5563",
+      color: theme.colors.greyDark,
       flex: 1,
     },
     detailValueContainer: {
       flexDirection: "row",
       alignItems: "center",
-      gap: theme.spacing.spacing[2] || 8,
+      gap: theme.spacing.sm,
       flex: 2,
       justifyContent: "flex-end",
     },
     detailValue: {
-      color: theme.colors.palette.grey900 || "#111827",
+      color: theme.colors.black,
     },
     iconButton: {
-      padding: theme.spacing.spacing[1] || 4,
+      padding: theme.spacing.xs,
     },
   });
 

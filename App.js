@@ -50,6 +50,8 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useAppVersionCheck } from "./src/hooks/useAppVersionCheck";
 import FCMService from "./src/services/FCMService";
 import FCMTokenManager from "./src/components/common-components/FCMTokenManager";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { GorhomBottomSheetProvider } from "@new-ui/components/common-components/GorhomBottomSheet";
 
 export default function App() {
   // ========== ENVIRONMENT CONFIG VERIFICATION ==========
@@ -434,113 +436,117 @@ export default function App() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <ThemeProvider>
           <NewUIThemeProvider>
-          <PersistQueryProvider>
-            <FCMTokenManager />
-            <AppLockProvider>
-              <View style={{ flex: 1 }}>
-              <NavigationContainer
-                ref={navigationRef}
-                linking={LinkingPath}
-                onReady={() => {
-                  if (initialUrlRef.current) {
-                    const url = initialUrlRef.current;
-                    initialUrlRef.current = null;
-                    Linking.openURL(url);
-                  }
-                }}
-                onStateChange={(state) => {
-                  // Helper function to get the focused route recursively (handles nested navigators)
-                  const getFocusedRoute = (navState) => {
-                    if (!navState) return null;
-                    const route = navState.routes[navState.index];
-                    if (!route) return null;
+            <BottomSheetModalProvider>
+              <GorhomBottomSheetProvider>
+                <PersistQueryProvider>
+                  <FCMTokenManager />
+                  <AppLockProvider>
+                    <View style={{ flex: 1 }}>
+                      <NavigationContainer
+                        ref={navigationRef}
+                        linking={LinkingPath}
+                        onReady={() => {
+                          if (initialUrlRef.current) {
+                            const url = initialUrlRef.current;
+                            initialUrlRef.current = null;
+                            Linking.openURL(url);
+                          }
+                        }}
+                        onStateChange={(state) => {
+                          // Helper function to get the focused route recursively (handles nested navigators)
+                          const getFocusedRoute = (navState) => {
+                            if (!navState) return null;
+                            const route = navState.routes[navState.index];
+                            if (!route) return null;
 
-                    // If this route has nested state, get the focused route from it
-                    if (route.state) {
-                      const nestedRoute = getFocusedRoute(route.state);
-                      if (nestedRoute) return nestedRoute;
-                    }
+                            // If this route has nested state, get the focused route from it
+                            if (route.state) {
+                              const nestedRoute = getFocusedRoute(route.state);
+                              if (nestedRoute) return nestedRoute;
+                            }
 
-                    return route;
-                  };
+                            return route;
+                          };
 
-                  const focusedRoute = getFocusedRoute(state);
-                  const currentRouteName = focusedRoute?.name || null;
+                          const focusedRoute = getFocusedRoute(state);
+                          const currentRouteName = focusedRoute?.name || null;
 
-                  // Dispatch current route to Redux
-                  dispatch(setCurrentRoute(currentRouteName));
+                          // Dispatch current route to Redux
+                          dispatch(setCurrentRoute(currentRouteName));
 
-                  // Existing logic for active tabs
-                  const currentRoute = state.routes[state.index];
-                  // console.log('Current Screen:', currentRoute.name);
-                  let activeTabs = "1"; // Default to home (or whichever default)
+                          // Existing logic for active tabs
+                          const currentRoute = state.routes[state.index];
+                          // console.log('Current Screen:', currentRoute.name);
+                          let activeTabs = "1"; // Default to home (or whichever default)
 
-                  switch (currentRoute.name) {
-                    case NAVIGATION_SCREENS.NEW_DASHBOARD:
-                      // isCrypto true = fiat (activeTab "1"), false = crypto (activeTab "7")
-                      if (isCrypto) {
-                        activeTabs = "1";
-                      } else {
-                        activeTabs = "7";
-                      }
-                      break;
-                    case NAVIGATION_SCREENS.TRANSACTION:
-                    case NAVIGATION_SCREENS.UNIFIED_TRANSACTION:
-                      activeTabs = "2";
-                      break;
-                    case NAVIGATION_SCREENS.SCANS:
-                      activeTabs = "3";
-                      break;
-                    case NAVIGATION_SCREENS.REWARDS:
-                      activeTabs = "4";
-                      break;
-                    case NAVIGATION_SCREENS.SETTING_SCREEN:
-                      activeTabs = "5";
-                      break;
-                    default:
-                      activeTabs = "1"; // Default to home
-                  }
+                          switch (currentRoute.name) {
+                            case NAVIGATION_SCREENS.NEW_DASHBOARD:
+                              // isCrypto true = fiat (activeTab "1"), false = crypto (activeTab "7")
+                              if (isCrypto) {
+                                activeTabs = "1";
+                              } else {
+                                activeTabs = "7";
+                              }
+                              break;
+                            case NAVIGATION_SCREENS.TRANSACTION:
+                            case NAVIGATION_SCREENS.UNIFIED_TRANSACTION:
+                              activeTabs = "2";
+                              break;
+                            case NAVIGATION_SCREENS.SCANS:
+                              activeTabs = "3";
+                              break;
+                            case NAVIGATION_SCREENS.REWARDS:
+                              activeTabs = "4";
+                              break;
+                            case NAVIGATION_SCREENS.SETTING_SCREEN:
+                              activeTabs = "5";
+                              break;
+                            default:
+                              activeTabs = "1"; // Default to home
+                          }
 
-                  // Dispatch to update Redux store
-                  dispatch(setActiveTab(activeTabs));
-                }}
-              >
-                <UseNet />
-                {showLoader && <GlobalLoader />}
-                {isLogin && <KycWatchdog />}
-                {isLogin && <KycBanner />}
-                {!splashVisible && <AppLockScreen />}
+                          // Dispatch to update Redux store
+                          dispatch(setActiveTab(activeTabs));
+                        }}
+                      >
+                        <UseNet />
+                        {showLoader && <GlobalLoader />}
+                        {isLogin && <KycWatchdog />}
+                        {isLogin && <KycBanner />}
+                        {!splashVisible && <AppLockScreen />}
 
-                {!isLogin ? <AuthStack /> : <AppStack />}
-              </NavigationContainer>
-              {/* Toast moved outside NavigationContainer for proper z-index on iOS */}
-              <Toast />
-              
-              {/* Force Update Modal - MUST be outside NavigationContainer for iOS */}
-              <ForceUpdateModal
-                isVisible={showUpdateModal}
-                message={
-                  needsForceUpdate
-                    ? "This update is required to continue using PayAiro. Please update now."
-                    : `A new version (${storeVersion || "latest"}) is available with new features and improvements.`
-                }
-                storeVersion={storeVersion}
-                onUpdate={handleUpdate}
-                onClose={handleCloseUpdateModal}
-                forceUpdate={needsForceUpdate}
-                isUpdating={isUpdating}
-                updateError={updateError}
-              />
+                        {!isLogin ? <AuthStack /> : <AppStack />}
+                      </NavigationContainer>
+                      {/* Toast moved outside NavigationContainer for proper z-index on iOS */}
+                      <Toast />
 
-              <AppGateOverlay />
-              {splashVisible && (
-                <AnimatedBootSplashV3
-                  onAnimationEnd={() => setSplashVisible(false)}
-                />
-              )}
-              </View>
-            </AppLockProvider>
-          </PersistQueryProvider>
+                      {/* Force Update Modal - MUST be outside NavigationContainer for iOS */}
+                      <ForceUpdateModal
+                        isVisible={showUpdateModal}
+                        message={
+                          needsForceUpdate
+                            ? "This update is required to continue using PayAiro. Please update now."
+                            : `A new version (${storeVersion || "latest"}) is available with new features and improvements.`
+                        }
+                        storeVersion={storeVersion}
+                        onUpdate={handleUpdate}
+                        onClose={handleCloseUpdateModal}
+                        forceUpdate={needsForceUpdate}
+                        isUpdating={isUpdating}
+                        updateError={updateError}
+                      />
+
+                      <AppGateOverlay />
+                      {splashVisible && (
+                        <AnimatedBootSplashV3
+                          onAnimationEnd={() => setSplashVisible(false)}
+                        />
+                      )}
+                    </View>
+                  </AppLockProvider>
+                </PersistQueryProvider>
+              </GorhomBottomSheetProvider>
+            </BottomSheetModalProvider>
           </NewUIThemeProvider>
         </ThemeProvider>
       </GestureHandlerRootView>

@@ -240,7 +240,8 @@ export default function ScanPay(props: IScanPayProps) {
     } as never);
 
     setspin(true);
-
+    console.log("formData =>", JSON.stringify(formData, null, 2));
+    
     handleUserToUserTransfer(formData, {
       onSuccess: (data: any) => {
         if (data?.data && data?.status) {

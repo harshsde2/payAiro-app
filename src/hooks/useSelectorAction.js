@@ -20,6 +20,7 @@ export default function useSelectorAction() {
     bankBalance,
     bankLists,
     kycStatus,
+    allCryptoBalances,
   } = store.getState().authenticationSlice;
 
   return {
@@ -41,5 +42,6 @@ export default function useSelectorAction() {
     bankBalance,
     bankLists,
     kycStatus,
+    allCryptoBalances,
   };
 }

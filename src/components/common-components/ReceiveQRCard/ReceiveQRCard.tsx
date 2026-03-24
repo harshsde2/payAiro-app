@@ -6,12 +6,14 @@ import {
   View,
 } from "react-native";
 import { useTheme } from "styles";
-import { CustomText } from "tsx-components";
-import Share from "react-native-share";
 import { SvgIcons } from "constants/svgs";
 import QRCode from "react-native-qrcode-svg";
 import ViewShot from "react-native-view-shot";
 import type { IReceiveQRCardProps, IReceiveQRCardRef } from "./types";
+import CustomText from "new-ui/components/common-components/CustomText";
+import { useTheme as useNewTheme } from "new-ui/styles/ThemeContext";
+import { ITheme } from "new-ui/styles";
+import { Button } from "new-ui/components/common-components/layout";
 
 const QR_SIZE = 200;
 const LOGO_OVERLAY_SIZE = 44;
@@ -35,8 +37,10 @@ const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
   onCapturingChange,
 }, ref) => {
   const { theme } = useTheme();
+  const newTheme = useNewTheme();
+
   const viewShotRef = useRef<any>(null);
-  const styles = getStyles(theme);
+  const styles = getStyles(newTheme.theme);
   const [isCapturing, setIsCapturing] = useState(false);
   const [stableBankDetails, setStableBankDetails] = useState<React.ReactNode>(null);
   const tagLabelText = tagLabel || "PayAiro Tag:";
@@ -94,27 +98,29 @@ const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
 
   const managePayAiroTagFontWeight = useMemo(() => {
     if (payAiroTag.length > 16) {
-      return "semiBold";
+      return "medium";
     }
-    return "bold";
+    return "semiBold";
   }, [payAiroTag]);
 
   return (
     <View style={[styles.container, containerStyle]}>
-      <View style={[{}]}>
+      <View style={{  }}>
         <ViewShot
           ref={viewShotRef}
           options={{ format: "png", quality: 0.9, result: "tmpfile" }}
           style={styles.viewShot}
         >
+          {Boolean(title) && (
           <View style={styles.titleRow}>
             {titleIcon && <View style={styles.titleIcon}>{titleIcon}</View>}
             <CustomText variant="h3" fontWeight="bold" style={styles.title}>
               {title}
             </CustomText>
           </View>
+          )}
           {Boolean(subtitle) && (
-            <CustomText variant="body2" style={styles.subtitle}>
+            <CustomText  style={styles.subtitle}>
               {subtitle}
             </CustomText>
           )}
@@ -133,17 +139,13 @@ const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
           {
             Platform.OS === 'ios' && (
               <View style={styles.tagRow}>
-                <CustomText variant="body2" fontWeight="medium" style={styles.tagLabel}>
-                  {tagLabelText}
-                </CustomText>
-
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
                   <CustomText
-                    variant="body2"
+                    variant='caption'
                     fontWeight={managePayAiroTagFontWeight}
                     size={managePayAiroTagFontSize}
-                    // numberOfLines={1}
-                    // ellipsizeMode="middle"
+                    numberOfLines={1}
+                    ellipsizeMode="middle"
                     style={[
                       styles.tagValue,
                       tagValueStyle,
@@ -152,7 +154,7 @@ const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
                     {payAiroTag}
                   </CustomText>
                   <TouchableOpacity onPress={onCopyTag} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <SvgIcons.CopyOutlineBlack width={20} height={20} />
+                    <SvgIcons.CopyOutlineBlack width={15} height={15} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -171,17 +173,13 @@ const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
         {
           Platform.OS === 'android' && (
             <View style={styles.tagRow}>
-              <CustomText variant="body2" fontWeight="medium" style={styles.tagLabel}>
-                {tagLabelText}
-              </CustomText>
-
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
                 <CustomText
-                  variant="body2"
+                  variant='caption'
                   fontWeight={managePayAiroTagFontWeight}
                   size={managePayAiroTagFontSize}
-                  // numberOfLines={1}
-                  // ellipsizeMode="middle"
+                  numberOfLines={1}
+                  ellipsizeMode="middle"
                   style={[
                     styles.tagValue,
                     tagValueStyle,
@@ -190,7 +188,7 @@ const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
                   {payAiroTag}
                 </CustomText>
                 <TouchableOpacity onPress={onCopyTag} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                  <SvgIcons.CopyOutlineBlack width={20} height={20} />
+                  <SvgIcons.CopyOutlineBlack width={15} height={15} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -213,10 +211,13 @@ const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
             onPress={leftButton.onPress}
             activeOpacity={0.7}
           >
+            <View style={styles.actionButtonIcon}>
+
             {leftButton.icon}
-            <CustomText variant="body2" fontWeight="medium" style={styles.actionText}>
+            <CustomText variant='caption' size={16} fontWeight="semiBold" style={styles.actionText}>
               {leftButton.text}
             </CustomText>
+            </View>
           </TouchableOpacity>
         )}
         {rightButton && (
@@ -225,10 +226,13 @@ const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
             onPress={rightButton.onPress}
             activeOpacity={0.7}
           >
+            <View style={styles.actionButtonIcon}>
+
             {rightButton.icon}
-            <CustomText variant="body2" fontWeight="medium" style={styles.actionText}>
+            <CustomText variant='caption' size={16} fontWeight="semiBold" style={styles.actionText}>
               {rightButton.text}
             </CustomText>
+            </View>
           </TouchableOpacity>
         )}
       </View>
@@ -238,14 +242,14 @@ const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
 
 export default ReceiveQRCard;
 
-const getStyles = (theme: any) =>
+const getStyles = (theme: ITheme) =>
   StyleSheet.create({
     container: {
       alignItems: "center",
       alignSelf: "center",
     },
     viewShot: {
-      backgroundColor: theme.colors.palette.white,
+      backgroundColor: theme.colors.white,
       padding: 20,
       borderRadius: 12,
       alignItems: "center",
@@ -264,13 +268,13 @@ const getStyles = (theme: any) =>
       justifyContent: "center",
     },
     title: {
-      color: theme.colors.palette.black,
+      color: theme.colors.black,
       textAlign: "center",
     },
     subtitle: {
       marginBottom: 20,
       textAlign: "center",
-      color: theme.colors.palette.green700,
+      color: theme.colors.primary,
     },
     qrWrapper: {
       width: QR_SIZE,
@@ -285,10 +289,10 @@ const getStyles = (theme: any) =>
       justifyContent: "center",
       gap: 8,
       marginVertical: 10,
-      paddingHorizontal: 20,
+      // paddingHorizontal: 20,
     },
     bankDetailsText: {
-      color: theme.colors.palette.black,
+      color: theme.colors.black,
     },
     logoOverlay: {
       position: "absolute",
@@ -309,33 +313,39 @@ const getStyles = (theme: any) =>
       gap: 8,
     },
     tagLabel: {
-      color: theme.colors.palette.black,
+      color: theme.colors.black,
     },
-    tagValue: {
-      color: theme.colors.palette.black,
+  tagValue: {
       flexShrink: 1,
       marginRight: 8,
+      color: theme.colors.greyDark,
     },
     buttonsRow: {
-      flexDirection: "row",
+      // flexDirection: "row",
       justifyContent: "center",
       alignItems: "center",
       gap: 12,
       marginTop: 16,
     },
+    actionButtonIcon: {
+      width:'100%',
+      justifyContent: "center",
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 8,
+    },
     actionButton: {
+      width: '100%',
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
       gap: 8,
-      backgroundColor: theme.colors.palette.white,
-      borderWidth: 1,
-      borderColor: theme.colors.palette.grey300,
-      borderRadius: 8,
+      backgroundColor: theme.colors.primary,
+      borderRadius: 16,
       paddingVertical: 12,
       paddingHorizontal: 20,
     },
     actionText: {
-      color: theme.colors.palette.black,
+      color: theme.colors.white,
     },
   });

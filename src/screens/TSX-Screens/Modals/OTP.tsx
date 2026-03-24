@@ -13,7 +13,8 @@ import {
   startOtpListener,
   removeListener,
 } from "react-native-otp-verify";
-import { CustomText } from "tsx-components";
+// import { CustomText } from "tsx-components";
+import CustomText from "@new-ui/components/common-components/CustomText";
 import GenericButton from "../../../components/GenericButton";
 import { Theme, useTheme } from "styles";
 import { useSendOTP, useVerifyUserForSendOTP } from "query/hooks/useAPIAuth";
@@ -22,6 +23,10 @@ import { getSmsHash } from "utils/smsHash";
 import HeaderTitle from "components/HeaderTitle";
 import { SvgIcons } from "constants/svgs";
 import { isProduction } from "config/env.config";
+import { AppIcon } from "@new-ui/assets/svgs";
+import { useTheme as useNewTheme } from "@new-ui/styles/ThemeContext";
+import { ITheme } from "@new-ui/styles/themes/themeTypes";
+import { Button } from "new-ui/components/common-components/layout";
 
 interface ITransactionOTPRouteParams {
   onOTPVerified?: () => void;
@@ -31,7 +36,9 @@ interface ITransactionOTPRouteParams {
 const OTP = () => {
   const navigation = useNavigation<any>();
   const route = useRoute();
+  const { theme: newTheme } = useNewTheme();
   const { theme } = useTheme();
+
   const styles = customStyles(theme);
   const isProductionEnv = isProduction();
 
@@ -54,7 +61,7 @@ const OTP = () => {
   useEffect(() => {
     // Send OTP when screen opens
     handleSendOTP();
-    
+
     // Reset states
     setOtp("");
     setCountdown(60);
@@ -145,7 +152,7 @@ const OTP = () => {
     setIsVerifying(true);
     setErrorMessage(""); // Clear previous error
     const enteredOtp = otpValue || otp;
-    
+
     if (enteredOtp.length < 6) {
       showError("Please enter complete OTP");
       setErrorMessage("Please enter complete OTP");
@@ -163,7 +170,7 @@ const OTP = () => {
         showSuccess("OTP verified successfully");
         setIsVerifying(false);
         setErrorMessage("");
-        
+
         // Navigate back and execute the transaction
         navigation.goBack();
         if (onOTPVerified) {
@@ -214,18 +221,26 @@ const OTP = () => {
     <ScreenContainer avoidKeyboard padding={0}>
       <View style={styles.container}>
         {/* Header */}
-        <HeaderTitle title="Transaction Verification" leftIcon="true" />
+        {/* <HeaderTitle title="Transaction Verification" leftIcon="true" /> */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 15, }} >
+          <TouchableOpacity onPress={handleClose}>
+            <AppIcon.ArrowLeft width={25} height={25} />
+          </TouchableOpacity>
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', marginRight: 20, }}>
+            <CustomText variant='h1' fontWeight='bold' size={20}>Transaction Verification</CustomText>
+          </View>
+        </View>
 
         {/* Content */}
         <View style={styles.content}>
           <CustomText
             variant="h3"
-            fontFamily={theme.typography.fontFamily.montserratSemiBold}
+            fontWeight='bold'
             style={styles.title}
           >
             Verify OTP
           </CustomText>
-          <CustomText variant="caption" style={styles.subtitle}>
+          <CustomText variant="caption" fontWeight='light' size={14} style={styles.subtitle}>
             Enter the OTP sent to your registered email address to complete
             the transaction.
           </CustomText>
@@ -259,54 +274,49 @@ const OTP = () => {
                 disabledPinCodeContainerStyle: styles.otpInputDisabled,
               }}
             />
-          </View>
+            {/* Error Message Display */}
+            {errorMessage ? (
+              <View style={styles.errorContainer}>
+                <SvgIcons.ToastCross width={16} height={16} />
+                <CustomText style={styles.errorText}>{errorMessage}</CustomText>
+              </View>
+            ) : null}
 
-          {/* Error Message Display */}
-          {errorMessage ? (
-            <View style={styles.errorContainer}>
-              <SvgIcons.ToastCross width={16} height={16} />
-              <CustomText style={styles.errorText}>{errorMessage}</CustomText>
-            </View>
-          ) : null}
-
-          {/* Resend Section */}
-          <View style={styles.resendSection}>
-            <CustomText variant="caption" style={styles.resendText}>
-              Didn't receive the code?
-            </CustomText>
-            <TouchableOpacity
-              style={styles.resendButton}
-              disabled={!resendEnabled || isSendingOTP}
-              onPress={handleResend}
-            >
-              <CustomText
-                variant="subtitle2"
-                style={[
-                  styles.resendButtonText,
-                  (!resendEnabled || isSendingOTP) && styles.disabledText,
-                ]}
-              >
-                {isSendingOTP
-                  ? "Sending..."
-                  : resendEnabled
-                  ? "Resend OTP"
-                  : `Resend in ${countdown}s`}
+            {/* Resend Section */}
+            <View style={styles.resendSection}>
+              <CustomText variant="caption" style={styles.resendText}>
+                Didn't receive the code?
               </CustomText>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.resendButton}
+                disabled={!resendEnabled || isSendingOTP}
+                onPress={handleResend}
+              >
+                <CustomText
+                  variant="caption"
+                  style={[
+                    styles.resendButtonText,
+                    (!resendEnabled || isSendingOTP) && styles.disabledText,
+                  ]}
+                >
+                  {isSendingOTP
+                    ? "Sending..."
+                    : resendEnabled
+                      ? "Resend OTP"
+                      : `Resend in ${countdown}s`}
+                </CustomText>
+              </TouchableOpacity>
+            </View>
           </View>
-
-          {/* Verify Button */}
-          <GenericButton
-            title={
-              isVerifying || isVerifyingOTP ? "Verifying..." : "Verify & Continue"
-            }
-            onPress={() => handleVerifyOTP()}
-            disabled={
-              !isOtpComplete || isVerifying || isVerifyingOTP || isSendingOTP
-            }
-            cStyle={styles.verifyButton}
-          />
         </View>
+          <View style={{ width: '90%', marginBottom: 40, alignSelf: 'center', }}>
+            <Button
+              onPress={() => handleVerifyOTP()}
+              disabled={!isOtpComplete || isVerifying || isVerifyingOTP || isSendingOTP}
+            >
+              {isVerifying || isVerifyingOTP ? "Verifying..." : "Verify & Continue"}
+            </Button>
+          </View>
       </View>
     </ScreenContainer>
   );
@@ -316,7 +326,7 @@ const customStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: '#fff',
     },
     header: {
       flexDirection: "row",
@@ -349,7 +359,8 @@ const customStyles = (theme: Theme) =>
       paddingHorizontal: 20,
       paddingVertical: 30,
       alignItems: "center",
-      justifyContent: "center",
+      // justifyContent: "center",
+      // backgroundColor: 'red',
     },
     title: {
       textAlign: "center",
@@ -359,7 +370,6 @@ const customStyles = (theme: Theme) =>
     subtitle: {
       textAlign: "center",
       marginBottom: 40,
-      color: theme.colors.text.secondary,
       lineHeight: 20,
       paddingHorizontal: 10,
     },
@@ -380,7 +390,7 @@ const customStyles = (theme: Theme) =>
       borderRadius: 12,
       borderWidth: 1.5,
       borderColor: theme.colors.palette.grey300,
-      backgroundColor: theme.colors.background.primary,
+      // backgroundColor: theme.colors.background.primary,
     },
     otpInputText: {
       fontSize: 20,
@@ -415,6 +425,7 @@ const customStyles = (theme: Theme) =>
       paddingHorizontal: 16,
       borderRadius: 8,
       marginBottom: 20,
+      marginTop: 20,
       width: "100%",
       borderWidth: 1,
       borderColor: "#C92A2A",
@@ -430,6 +441,7 @@ const customStyles = (theme: Theme) =>
     resendSection: {
       alignItems: "center",
       marginBottom: 40,
+      marginTop: 20,
     },
     resendText: {
       color: theme.colors.text.secondary,
