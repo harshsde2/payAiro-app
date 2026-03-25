@@ -44,6 +44,8 @@ const SendContactsList: React.FC<ISendContactsListProps> = ({
     20
   );
 
+  console.log("data =>", JSON.stringify(data, null, 2));
+
   const contacts: ISendContactItem[] = useMemo(() => {
     const users = data?.data?.data ?? [];
     return users

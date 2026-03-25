@@ -38,7 +38,7 @@ import { IScanPayProps, PinScreenRef } from "./types";
 export default function ScanPay(props: IScanPayProps) {
   const { type, sender, bank } = props?.route?.params;
 
-  console.log("sender ->",JSON.stringify(props?.route?.params,null,2))
+  console.log("params ->",JSON.stringify(props?.route?.params,null,2))
   const { theme } = useTheme();
 
   const { tokens, isCrypto, walletData, bankLists } = useSelectorAction() as any;
@@ -47,6 +47,7 @@ export default function ScanPay(props: IScanPayProps) {
   const DROPDOWN_LISTS = (bankLists || []).map((item: any) => {
     const last4 = item?.account_number?.slice(-4);
     const maskedAccount = `•••• ${last4}`;
+    
     const isExternalAccount =
       item?.account_type === "checking" || item?.account_type === "savings";
     const accountType = !isExternalAccount
@@ -370,6 +371,8 @@ export default function ScanPay(props: IScanPayProps) {
         ? (sender as any)?.orderID
         : (sender as string),
     };
+
+    console.log("payload =>", JSON.stringify(payload, null, 2));
 
     // Navigate to transaction result screen with loading state
     navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {

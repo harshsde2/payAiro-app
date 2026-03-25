@@ -2,6 +2,7 @@ import { RouteProp } from '@react-navigation/native';
 import { ISendScreenRouteParams } from 'screens/Dashboard/types';
 import type { FundingSource } from '../EnterAmount/enterAmount.types';
 import { ISendContactItem } from 'new-ui/components/common-components/SendContactsList';
+import type { IReceivedPendingRequest } from 'query/hooks/types';
 
 export type SendRouteProp = RouteProp<
   { Send: ISendScreenRouteParams },
@@ -13,9 +14,10 @@ export interface INewSendProps {
 }
 
 export interface IEnterAmountRouteParams {
-  type?: 'send' | 'request';
-  recipient_identifier: string;
+  type?: 'send' | 'request' | 'requested';
+  recipient_identifier?: string;
   selectedContact?: ISendContactItem;
+  request_data?: IReceivedPendingRequest;
 }
 
 export type EnterAmountRouteProp = RouteProp<

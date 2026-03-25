@@ -1,7 +1,7 @@
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import { SvgIcons } from "constants/svgs";
-import React, { useState, useRef, useCallback, useMemo } from "react";
+import React, { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import {
   Alert,
   Dimensions,
@@ -32,6 +32,8 @@ import QRScannerOverlay from "./QRScannerOverlay";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import useSelectorAction from "hooks/useSelectorAction";
 import { showError } from "utils/toast";
+import { useUserSearch } from "query/hooks";
+import type { ISendContactItem } from "@new-ui/components/common-components/SendContactsList";
 
 const { width, height } = Dimensions.get("window");
 
@@ -73,7 +75,7 @@ const processQRCodeData = (
 
     // If object has a type field, use it directly
     if (qrObject.type) {
-      const validTypes: QRCodeType[] = ["request", "merchantSend", "receive", "receiveMerchant"];
+      const validTypes: QRCodeType[] = ["request", "merchantSend", "send", "receiveMerchant"];
 
       const type = validTypes.includes(qrObject.type as QRCodeType)
         ? (qrObject.type as QRCodeType)
@@ -142,14 +144,14 @@ const processQRCodeData = (
 
   if (codeString.includes("sending")) {
     return {
-      type: "receive",
+      type: "send",
       sender: codeString.replace("sending: ", ""),
     };
   }
 
   // Default case
   return {
-    type: "receiveMerchant",
+    type: "send",
     sender: codeString.replace("sending: ", ""),
   };
 };
@@ -168,6 +170,52 @@ export default function Scans(): React.ReactElement {
   const [isCameraActive, setIsCameraActive] = useState<boolean>(true);
   const cameraRef = useRef<Camera>(null);
   const isProcessingRef = useRef<boolean>(false);
+
+  // For send QR scans, we pause scanning and resolve the scanned identifier via user-search,
+  // then navigate to EnterAmount with the matched contact object.
+  const [pendingSendIdentifier, setPendingSendIdentifier] = useState<string | null>(null);
+  const {
+    data: pendingSendSearchData,
+    isLoading: isPendingSendSearchLoading,
+  } = useUserSearch(pendingSendIdentifier ?? '', 1, 1, 20);
+
+  useEffect(() => {
+    if (!pendingSendIdentifier) return;
+    if (isPendingSendSearchLoading) return;
+
+    const users = pendingSendSearchData?.data?.data ?? [];
+    const matchUser = users.find((u: any) => u?.usernames === pendingSendIdentifier);
+
+    if (matchUser) {
+      const selectedContact: ISendContactItem = {
+        uuid: matchUser.email || matchUser.mobile_number || '',
+        nickname: `${matchUser.name || ''} ${matchUser.lastname || ''}`.trim() || matchUser.usernames || '',
+        username: matchUser.usernames || '',
+        email: matchUser.email || '',
+        profile_photo: matchUser.profile_photo || null,
+      };
+
+      setPendingSendIdentifier(null);
+      navigation.navigate(NAVIGATION_SCREENS.ENTER_AMOUNT as any, {
+        type: "send",
+        recipient_identifier: pendingSendIdentifier,
+        selectedContact,
+      } as any);
+      return;
+    }
+
+    // No exact match found => resume scanning.
+    showError("Recipient not found");
+    setPendingSendIdentifier(null);
+    isProcessingRef.current = false;
+    setIsScanning(true);
+    setIsCameraActive(true);
+  }, [
+    isPendingSendSearchLoading,
+    navigation,
+    pendingSendIdentifier,
+    pendingSendSearchData,
+  ]);
   
   const { setNativeModalVisible } = useAppLock();
   
@@ -230,11 +278,21 @@ export default function Scans(): React.ReactElement {
         requested: false,
         sender,
       });
-    } else {
-      navigation.navigate(NAVIGATION_SCREENS.SCAN_PAY, {
-        type,
-        sender,
-      });
+    } else if(type === "send"){
+
+      const trimmedSender =
+        typeof sender === "string" ? sender.trim() : String(sender).trim();
+
+      if (!trimmedSender) {
+        showError("Recipient not found");
+        isProcessingRef.current = false;
+        setIsScanning(true);
+        setIsCameraActive(true);
+        return;
+      }
+
+      // Pause scanning until user-search resolves.
+      setPendingSendIdentifier(trimmedSender);
     }
   }, [navigation]);
 
@@ -332,7 +390,7 @@ export default function Scans(): React.ReactElement {
             sender,
           });
         } else {
-          navigation.navigate(NAVIGATION_SCREENS.SCAN_PAY, {
+          navigation.navigate(NAVIGATION_SCREENS.ENTER_AMOUNT, {
             type,
             sender,
           });

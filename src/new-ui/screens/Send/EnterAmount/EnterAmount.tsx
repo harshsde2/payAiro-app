@@ -18,7 +18,13 @@ import { IEnterAmountProps } from '../Send/types';
 import useSelectorAction from 'hooks/useSelectorAction';
 import { useAppLock } from 'hooks/useAppLock';
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
-import { cryptoKeys, useCryptoTransfer, useUserToUserTransfer } from 'query/hooks';
+import {
+  cryptoKeys,
+  useCreatePaymentRequest,
+  useCryptoTransfer,
+  usePayPaymentRequest,
+  useUserToUserTransfer,
+} from 'query/hooks';
 import { bankKeys } from 'query/hooks/useBank';
 import { queryClient } from 'query/queryClient';
 import { showError } from 'utils/toast';
@@ -45,8 +51,53 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   const { width } = useWindowDimensions();
   const navigation = useNavigation<any>();
 
-  const { recipient_identifier, type, selectedContact } = route.params || ({} as any);
-  // console.log("selectedContact in EnterAmount =>", JSON.stringify(selectedContact, null, 2));
+  const PAYMENT_PROCEED_METHOD_TYPE = {
+    send: ()=>{
+      handleSendPayment();
+    },
+    request: ()=>{
+      handleRequestPayment();
+    },
+    requested: ()=>{
+      handleRequestedPayment();
+    },
+  }
+
+  const { recipient_identifier, type, selectedContact, request_data } =
+    route.params || ({} as any);
+  console.log("route.params =>", JSON.stringify(route.params, null, 2));
+
+  const isRequestedFlow = type === 'requested';
+  const requestDetails = (request_data as any)?.request_details;
+  const requesterDetails = (request_data as any)?.requester_details;
+
+  const requestId: string | undefined = requestDetails?.request_id;
+  const requestAmount: number | undefined = requestDetails?.amount;
+  const requesterName: string | undefined = requesterDetails?.name;
+  const requesterUsername: string | undefined = requesterDetails?.username;
+
+  const requestedRecipientIdentifier =
+    requesterUsername || requesterDetails?.email || recipient_identifier || '';
+
+  const requestedSelectedContact = isRequestedFlow
+    ? {
+        uuid: String(
+          requestId ??
+            requesterDetails?.wallet_address ??
+            requesterDetails?.email ??
+            'requested'
+        ),
+        nickname: String(requesterName ?? requesterUsername ?? ''),
+        username: String(requesterUsername ?? ''),
+        email: String(requesterDetails?.email ?? ''),
+        profile_photo: requesterDetails?.profile_photo ?? null,
+      }
+    : undefined;
+
+  const requestedInitialInputValue = isRequestedFlow
+    ? String(requestAmount ?? '')
+    : undefined;
+
   const selectorData = useSelectorAction() as any;
   const { bankLists, walletData, allCryptoBalances } = selectorData;
   // console.log("walletData =>", JSON.stringify(walletData, null, 2));
@@ -55,6 +106,8 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   const { requestPaymentVerification } = useAppLock();
   const { mutate: handleUserToUserTransfer } = useUserToUserTransfer() as any;
   const { mutate: handleCryptoTransfer } = useCryptoTransfer() as any;
+  const { mutate: createPaymentRequest } = useCreatePaymentRequest();
+  const { mutate: payPaymentRequest } = usePayPaymentRequest();
 
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
@@ -143,6 +196,12 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     return allCryptoBalances.filter((item: CryptoFundingItem) => item?.asset !== 'Bank Balance');
   }, [allCryptoBalances]);
 
+  // For request/requested flows, show only fiat/bank funding sources in the selector.
+  const cryptoSourcesForModal = useMemo<CryptoFundingItem[]>(() => {
+    const shouldHideCrypto = type === 'request' || type === 'requested';
+    return shouldHideCrypto ? [] : cryptoSources;
+  }, [cryptoSources, type]);
+
   const transactionFeePercent = useMemo(() => {
     const raw = walletData?.TransactionFees_persentage;
     const n = typeof raw === 'string' ? parseFloat(raw) : Number(raw);
@@ -178,6 +237,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   } = useEnterAmountState({
     initialSelectedSource,
     transactionFeePercent,
+    initialInputValue: requestedInitialInputValue,
   });
 
   useEffect(() => {
@@ -264,6 +324,148 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     });
   }, [navigation, showError, handleUserToUserTransfer, queryClient, bankKeys]);
 
+  const handleRequestPayment = useCallback(() => {
+    const pending = pendingPaymentRef.current;
+
+    const rawAmount = pending?.amount ?? amount;
+    const transactionAmount = Number(rawAmount) || 0;
+
+    if (transactionAmount <= 0) {
+      showError('Please enter a valid amount');
+      return;
+    }
+
+    if (transactionAmount > 100000) {
+      showError('Amount cannot exceed ₹1,00,000');
+      return;
+    }
+
+    const recipient_email_or_wallet_public_key =
+      pending?.recipient_identifier ?? recipient_identifier ?? '';
+
+    const payload = {
+      amount: String(pending?.amount ?? amount),
+      recipient_email_or_wallet_public_key,
+    };
+
+    navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+      isLoading: true,
+      transactionData: null,
+      isSuccess: false,
+      isError: false,
+      customTitle: 'Sending Payment Request',
+      customDescription: 'Please wait while we send your payment request...',
+    } as never);
+
+    createPaymentRequest(payload, {
+      onSuccess: (data: any) => {
+        if (data?.status) {
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+            isLoading: false,
+            transactionData: null,
+            isSuccess: true,
+            isError: false,
+            customTitle: 'Payment Request Sent Successfully',
+            customDescription:
+              'Your payment request has been sent successfully!',
+          } as never);
+        } else {
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+            isLoading: false,
+            transactionData: data,
+            isSuccess: false,
+            isError: true,
+          } as never);
+
+          showError(
+            data?.message || 'Already have pending request with this account'
+          );
+        }
+      },
+      onError: (error: unknown) => {
+        console.log('Payment request error:', error);
+        navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+          isLoading: false,
+          transactionData: null,
+          isSuccess: false,
+          isError: true,
+        } as never);
+        showError('Already have pending request with this account');
+      },
+    });
+  }, [
+    amount,
+    createPaymentRequest,
+    navigation,
+    recipient_identifier,
+    showError,
+  ]);
+
+  const handleRequestedPayment = useCallback(() => {
+    if (!requestId) {
+      showError('Session expired. Please try again.');
+      return;
+    }
+
+    const requestAmountForUi = requestAmount ?? 0;
+    const requesterNameOrUsername = requesterName || requesterUsername;
+
+    // Navigate to transaction result screen with loading state
+    navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+      isLoading: true,
+      transactionData: null,
+      isSuccess: false,
+      isError: false,
+      customTitle: 'Processing Payment',
+      customDescription: 'Please wait while we process your payment...',
+    } as never);
+
+    payPaymentRequest(requestId, {
+      onSuccess: (data: any) => {
+        if (data?.status) {
+          queryClient.invalidateQueries({ queryKey: bankKeys.balance() });
+
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+            isLoading: false,
+            transactionData: data,
+            isSuccess: true,
+            isError: false,
+            customTitle: 'Payment Initiated',
+            customDescription: `Your payment of $${requestAmountForUi} to ${requesterNameOrUsername} has been sent for processing.`,
+          } as never);
+        } else {
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+            isLoading: false,
+            transactionData: data,
+            isSuccess: false,
+            isError: true,
+          } as never);
+          showError(data?.message || 'Did not have enough balance or some error occurred');
+        }
+      },
+      onError: (error: unknown) => {
+        console.log('Pay request error:', JSON.stringify(error, null, 2));
+        navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+          isLoading: false,
+          transactionData: null,
+          isSuccess: false,
+          isError: true,
+        } as never);
+        showError('Did not have enough balance or some error occurred');
+      },
+    });
+  }, [
+    bankKeys,
+    navigation,
+    payPaymentRequest,
+    queryClient,
+    requestAmount,
+    requestId,
+    requesterName,
+    requesterUsername,
+    showError,
+  ]);
+
   const handleCryptoSendPayment = useCallback(() => {
     const draft = cryptoPaymentRef.current;
     if (!draft) {
@@ -329,13 +531,21 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
 
   const handleActionsAfterOTPVerified = useCallback(() => {
     if (!isCryptoMode) {
-      if (type === 'send') {
-        handleSendPayment();
-      }
+      // if (type === 'send') {
+      //   handleSendPayment();
+      // }
+      PAYMENT_PROCEED_METHOD_TYPE[type as keyof typeof PAYMENT_PROCEED_METHOD_TYPE]?.();
       return;
     }
     handleCryptoSendPayment();
-  }, [handleCryptoSendPayment, handleSendPayment, isCryptoMode, type]);
+  }, [
+    handleCryptoSendPayment,
+    handleRequestedPayment,
+    handleRequestPayment,
+    handleSendPayment,
+    isCryptoMode,
+    type,
+  ]);
 
   const handleActionsAfterPinVerified = useCallback(() => {
     navigation.navigate(NAVIGATION_SCREENS.OTP_SCREEN, {
@@ -347,6 +557,15 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
 
   const handlePayPress = useCallback(() => {
     if (!isCryptoMode) {
+      if (type === 'requested') {
+        if (!requestId) {
+          showError('Session expired. Please try again.');
+          return;
+        }
+        requestPaymentVerification(handleActionsAfterPinVerified);
+        return;
+      }
+
       if (!selectedSource) {
         showError('Please select a bank account');
         return;
@@ -395,6 +614,8 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     amount,
     assetAmount,
     isCryptoMode,
+    requestId,
+    type,
     selectedSource,
     recipient_identifier,
     requestPaymentVerification,
@@ -447,7 +668,13 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
           )}
         </View>
 
-          <RecipientHeader recipient_identifier={recipient_identifier || ''} type={type} selectedContact={selectedContact} />
+          <RecipientHeader
+            recipient_identifier={
+              isRequestedFlow ? requestedRecipientIdentifier : recipient_identifier || ''
+            }
+            type={isRequestedFlow ? ('send' as any) : type}
+            selectedContact={isRequestedFlow ? requestedSelectedContact : selectedContact}
+          />
 
           <AmountInput
             inputValue={inputValue}
@@ -455,6 +682,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
             inputRef={inputRef}
             dynamicFontSize={dynamicFontSize}
             onPressFocus={handlePressAmountFocus}
+            editable={!isRequestedFlow}
             leftPrefix={leftPrefix}
             rightSuffix={rightSuffix}
           />
@@ -495,7 +723,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
         {isSelectorOpen ? (
           <FundingSourceSelectorModal
             sources={sources}
-            cryptoSources={cryptoSources}
+            cryptoSources={cryptoSourcesForModal}
             selectedSource={selectedSource}
             onSelect={(source) => setSelectedSource(source)}
             onClose={() => setIsSelectorOpen(false)}

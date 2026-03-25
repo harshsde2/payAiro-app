@@ -7,12 +7,35 @@ type UseEnterAmountStateArgs = {
   transactionFeePercent?: number; // platform fee percentage for crypto transfers
 };
 
-const sanitizeAmountInput = (text: string): string => {
+const sanitizeAmountInput = (
+  text: string,
+  maxIntDigits: number,
+  maxDecimals: number
+): string => {
   // Allow only digits and a single decimal point.
   const cleaned = text.replace(/[^0-9.]/g, '');
-  const parts = cleaned.split('.');
-  if (parts.length <= 2) return cleaned;
-  return parts[0] + '.' + parts.slice(1).join('');
+  if (!cleaned) return '';
+
+  const dotIndex = cleaned.indexOf('.');
+  if (dotIndex === -1) {
+    // No decimal typed yet.
+    return cleaned.slice(0, maxIntDigits);
+  }
+
+  // Keep a single decimal (collapse extra dots by removing them).
+  const intPartRaw = cleaned.slice(0, dotIndex);
+  const decCombined = cleaned.slice(dotIndex + 1).replace(/\./g, '');
+
+  const intCapped = intPartRaw.slice(0, maxIntDigits);
+  const shouldKeepDotOnly = cleaned.endsWith('.') && decCombined.length === 0;
+
+  if (shouldKeepDotOnly) {
+    // Preserve trailing "." so user can continue typing decimals.
+    return `${intCapped}.`;
+  }
+
+  const decCapped = decCombined.slice(0, maxDecimals);
+  return `${intCapped}.${decCapped}`;
 };
 
 const safeParseAmount = (sanitizedInput: string): number => {
@@ -42,6 +65,15 @@ export const useEnterAmountState = ({
     () => (selectedSource?.type === 'crypto' ? 'crypto' : 'fiat'),
     [selectedSource?.type]
   );
+
+  const amountInputLimits = useMemo(() => {
+    // Fiat/banking rule: max 5 digits before decimal, max 2 decimals.
+    if (viewMode !== 'crypto') {
+      return { maxIntDigits: 5, maxDecimals: 2 };
+    }
+    // Crypto rule: max 5 digits before decimal, max 5 decimals.
+    return { maxIntDigits: 5, maxDecimals: 5 };
+  }, [viewMode]);
 
   const parsedInput = useMemo(() => safeParseAmount(inputValue), [inputValue]);
 
@@ -91,10 +123,17 @@ export const useEnterAmountState = ({
     return inputValue || '0.00';
   }, [inputValue]);
 
-  const onChangeAmountText = useCallback((text: string) => {
-    const sanitized = sanitizeAmountInput(text);
-    setInputValue(sanitized);
-  }, []);
+  const onChangeAmountText = useCallback(
+    (text: string) => {
+      const sanitized = sanitizeAmountInput(
+        text,
+        amountInputLimits.maxIntDigits,
+        amountInputLimits.maxDecimals
+      );
+      setInputValue(sanitized);
+    },
+    [amountInputLimits.maxDecimals, amountInputLimits.maxIntDigits]
+  );
 
   const toggleInputMode = useCallback(() => {
     setInputMode((prev) => (prev === 'fiat' ? 'asset' : 'fiat'));
@@ -106,9 +145,14 @@ export const useEnterAmountState = ({
     setInputMode('asset');
     const next = Number.isFinite(maxAsset) ? maxAsset : 0;
     // Keep enough precision for crypto but avoid scientific notation.
-    const nextText = next.toFixed(8);
+    const nextText = next.toFixed(amountInputLimits.maxDecimals);
     onChangeAmountText(nextText);
-  }, [maxAsset, onChangeAmountText, viewMode]);
+  }, [
+    amountInputLimits.maxDecimals,
+    maxAsset,
+    onChangeAmountText,
+    viewMode,
+  ]);
 
   const handleSetSelectedSource = useCallback((source: FundingSource | null) => {
     setSelectedSource(source);

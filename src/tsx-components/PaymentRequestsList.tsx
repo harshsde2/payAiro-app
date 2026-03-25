@@ -17,6 +17,7 @@ import {
   IReceivedPendingRequest,
   IPendingPaymentRequestsResponse,
 } from "query/hooks/types";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 
 interface IPaymentRequestsListProps {
   data: IPendingPaymentRequestsResponse | undefined;
@@ -49,9 +50,9 @@ const PaymentRequestsList: FC<IPaymentRequestsListProps> = ({
 
   const handlePayRequest = (request: IReceivedPendingRequest) => {
     // Navigate to ScanPay screen with request details
-    navigation.navigate(SCREENS.ScanPay as never, {
-      type: "request",
-      sender: request,
+    navigation.navigate(NAVIGATION_SCREENS.ENTER_AMOUNT as never, {
+      type: "requested",
+      request_data: request,
     } as never);
   };
 

@@ -9,14 +9,12 @@ import {
   TouchableOpacity,
 } from "react-native";
 import React, { useMemo, useRef, useState } from "react";
-import HeaderTitle from '../../../components/HeaderTitle';
 import GenericButton from '../../../components/GenericButton';
 import { useNavigation } from "@react-navigation/native";
 import useSelectorAction from '../../../hooks/useSelectorAction';
 import Share from "react-native-share";
 import ViewShot from "react-native-view-shot";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import { ScreenContainer } from "HOC";
 import { CustomText } from "tsx-components";
 import { Theme, useTheme } from "styles";
 import { SvgIcons } from "constants/svgs";
@@ -253,7 +251,7 @@ const ReceiveContent = () => {
             // title="PayAiro"
             // subtitle="Scan to receive payment"
             qrValue={{
-              type: "receive",
+              type: "send",
               username: walletData?.username,
               tag: walletData?.username,
             }}
@@ -270,14 +268,18 @@ const ReceiveContent = () => {
               text: "Request",
               icon: <SvgIcons.PaymentRequest width={20} height={20} color={'white'} />,
               onPress: () =>
-                navigation.navigate(NAVIGATION_SCREENS.SEND, {
+                navigation.navigate(NAVIGATION_SCREENS.NEW_SEND, {
                   requested: true,
-                  type: "requested",
+                  type: "request",
                 }),
             }}
           />
         </View>
-
+        <View style={styles.infotextContainer}>
+          <CustomText variant='caption' size={10} fontWeight="regular" style={styles.infotext}>
+          This QR or Bank Details can only be used to receive compatible currency/tokens.
+          </CustomText>
+        </View>
       </View>
 
       <View
@@ -408,6 +410,17 @@ const customStyles = (theme: Theme) =>
       fontWeight: "bold",
       textAlign: "center",
       marginBottom: 15,
+    },
+    infotextContainer: {
+      width: "100%",
+      alignItems: "center",
+      marginTop: 10,
+      // backgroundColor: 'red',
+    },
+    infotext: {
+      textAlign: "center",
+      color: theme.colors.palette.grey700,
+      width: '80%',
     },
     whiteSheetContainer: {
       flex: 1,

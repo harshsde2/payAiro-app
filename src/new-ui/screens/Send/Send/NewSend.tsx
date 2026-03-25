@@ -20,6 +20,8 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
   const params = route?.params ?? {};
   const { requested, type, sender: senderFromParams } = params;
 
+  // console.log("params =>", JSON.stringify(params, null, 2));
+
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
   const styles = newSendStyles(theme);
@@ -173,7 +175,7 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
       navigation.navigate(
         NAVIGATION_SCREENS.ENTER_AMOUNT as never,
         {
-          type: 'send',
+          type: type,
           recipient_identifier: trimmedSender,
           selectedContact: contact,
         } as never

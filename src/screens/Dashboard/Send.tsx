@@ -160,7 +160,7 @@ const Send: React.FC<ISendProps> = ({ route }) => {
       navigation.navigate(NAVIGATION_SCREENS.BLOCKCHAIN_NAME_SERVICE_TERMS, {
         serviceType: serviceType,
         onAgreeCallback: () => {
-          console.log("onAgreeCallback =>", trimmedSender);
+          // console.log("onAgreeCallback =>", trimmedSender);
           setTimeout(() => {
             navigation.navigate(SCREENS.ScanPay, {
               type: requested || type === "requested" ? "requested" : "receive",

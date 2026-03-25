@@ -8,13 +8,13 @@ export interface IQRCodeEvent {
 }
 
 export interface IScanPayParams {
-  type: 'request' | 'merchantSend' | 'receive' | 'receiveMerchant';
+  type: 'request' | 'merchantSend' | 'send' | 'receiveMerchant';
   sender: string | object;
 }
 
 export type ScansNavigationProp = NavigationProp<any>;
 
-export type QRCodeType = 'request' | 'merchantSend' | 'receive' | 'receiveMerchant';
+export type QRCodeType = 'request' | 'merchantSend' | 'send' | 'receiveMerchant';
 
 export interface IProcessedQRCode {
   type: QRCodeType;

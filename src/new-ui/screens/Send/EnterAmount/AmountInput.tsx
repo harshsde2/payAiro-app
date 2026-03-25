@@ -17,6 +17,7 @@ type AmountInputProps = {
   onPressFocus: () => void;
   leftPrefix?: string;
   rightSuffix?: string;
+  editable?: boolean;
 };
 
 const AmountInput: React.FC<AmountInputProps> = ({
@@ -27,12 +28,17 @@ const AmountInput: React.FC<AmountInputProps> = ({
   onPressFocus,
   leftPrefix = '$',
   rightSuffix,
+  editable = true,
 }) => {
   const { theme } = useTheme();
   const styles = enterAmountStyles(theme);
 
   return (
-    <TouchableOpacity activeOpacity={0.8} onPress={onPressFocus}>
+    <TouchableOpacity
+      activeOpacity={0.8}
+      disabled={!editable}
+      onPress={editable ? onPressFocus : undefined}
+    >
       <View style={styles.amountRow}>
         <CustomText
           variant="h1"
@@ -61,6 +67,7 @@ const AmountInput: React.FC<AmountInputProps> = ({
           returnKeyType="done"
           // Controlled TextInput: keep it single-line for amount entry.
           multiline={false}
+          editable={editable}
         />
         {rightSuffix ? (
           <CustomText
