@@ -404,7 +404,7 @@ const ProfileHeader: FC<IProfileHeaderProps> = ({
       </View>
 
       {/* KYC Button */}
-      {showKycButton && (
+      {/* {showKycButton && (
         <View style={[styles.kycButtonContainer, { marginTop: 16 }]}>
           <TouchableOpacity
             style={[
@@ -424,7 +424,7 @@ const ProfileHeader: FC<IProfileHeaderProps> = ({
             </CustomText>
           </TouchableOpacity>
         </View>
-      )}
+      )} */}
     </View>
     </>
   );

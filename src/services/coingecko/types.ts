@@ -40,6 +40,8 @@ export interface CoinGeckoChartData {
 
 export interface CryptoRouteParams {
   asset: string;
+  /** Human-readable name when available (API or client mapping) */
+  name?: string;
   platform_balance: number;
   platform_available: number;
   rounded_balance: number;

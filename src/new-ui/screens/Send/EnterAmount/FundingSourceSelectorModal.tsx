@@ -36,11 +36,19 @@ const FundingSourceSelectorModal: React.FC<FundingSourceSelectorModalProps> = ({
 
   const handleSelectCrypto = (item: CryptoFundingItem) => {
     const assetSymbol = item.asset || 'CRYPTO';
-    const priceUSD = Number(item.usd_price ?? 0);
+    const rawPrice = Number(item.usd_price ?? (item as any).price ?? 0);
     const maxAssetBalance = Number(
       item.platform_available ?? item.platform_total_balance ?? item.rounded_balance ?? 0
     );
     const maxUsdBalance = Number(item.usd_value_total ?? item.usd_value_available ?? 0);
+    const derivedPriceFromTotals =
+      maxAssetBalance > 0 && maxUsdBalance > 0 ? maxUsdBalance / maxAssetBalance : 0;
+    const priceUSD =
+      Number.isFinite(rawPrice) && rawPrice > 0
+        ? rawPrice
+        : Number.isFinite(derivedPriceFromTotals) && derivedPriceFromTotals > 0
+          ? derivedPriceFromTotals
+          : 0;
 
     onSelect({
       id: `crypto-${assetSymbol}`,
@@ -50,7 +58,7 @@ const FundingSourceSelectorModal: React.FC<FundingSourceSelectorModalProps> = ({
       cryptoMeta: {
         symbol: assetSymbol,
         network: assetSymbol,
-        priceUSD: Number.isFinite(priceUSD) && priceUSD > 0 ? priceUSD : 0,
+        priceUSD,
         maxAssetBalance: Number.isFinite(maxAssetBalance) ? maxAssetBalance : 0,
         maxUsdBalance: Number.isFinite(maxUsdBalance) ? maxUsdBalance : 0,
         logo: item.logo,
@@ -86,14 +94,16 @@ const FundingSourceSelectorModal: React.FC<FundingSourceSelectorModalProps> = ({
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <CustomText
-              variant="label"
-              fontWeight="semiBold"
-              size={16}
-              style={styles.selectorTitle}
-            >
-              Select bank
-            </CustomText>
+            {Array.isArray(sources) && sources.length > 0 ? (
+              <CustomText
+                variant="label"
+                fontWeight="semiBold"
+                size={16}
+                style={styles.selectorTitle}
+              >
+                Select bank
+              </CustomText>
+            ) : null}
 
             {sources.map((item: FundingSource) => {
                 const isSelected = item.id === selectedSource?.id;

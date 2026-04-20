@@ -17,6 +17,7 @@ import NewLoginScreen from "../new-ui/screens/Auth/Login";
 import NewCreateAccountScreen from "../new-ui/screens/Auth/CreateAccount";
 import NewOTPVerificationScreen from "../new-ui/screens/Auth/OTPVerification";
 import NewKYCScreen from "../new-ui/screens/Auth/KYC";
+import NewAddressScreen from "../new-ui/screens/Auth/Address";
 import NewForgotPasswordScreen from "../new-ui/screens/Auth/ForgotPassword";
 import NewForgotPasswordVerificationScreen from "../new-ui/screens/Auth/ForgotPasswordVerification";
 import CustomHeader from "../new-ui/components/common-components/CustomHeader";
@@ -144,6 +145,14 @@ export default function AuthStack() {
         }}
         name={NAVIGATION_SCREENS.NEW_KYC}
         component={NewKYCScreen}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          header: AuthStackHeader,
+        }}
+        name={NAVIGATION_SCREENS.NEW_ADDRESS}
+        component={NewAddressScreen}
       />
       <Stack.Screen
         options={{

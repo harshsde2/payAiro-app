@@ -55,7 +55,7 @@ const createStyles = (theme: any) =>
     title: {
       color: theme.colors.black,
       fontFamily: theme.typography.fontFamily.semiBold,
-      fontSize: theme.typography.fontSize.lg,
+      fontSize: theme.typography.fontSize.base,
     },
     actionText: {
       fontSize: theme.typography.fontSize.sm,

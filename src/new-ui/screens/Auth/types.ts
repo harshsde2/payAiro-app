@@ -40,3 +40,9 @@ export type KYCScreenNavigationProp = AuthScreenNavigationProp<
 export type KYCScreenRouteProp = AuthScreenRouteProp<
   typeof NAVIGATION_SCREENS.NEW_KYC
 >;
+export type AddressScreenNavigationProp = AuthScreenNavigationProp<
+  typeof NAVIGATION_SCREENS.NEW_ADDRESS
+>;
+export type AddressScreenRouteProp = AuthScreenRouteProp<
+  typeof NAVIGATION_SCREENS.NEW_ADDRESS
+>;

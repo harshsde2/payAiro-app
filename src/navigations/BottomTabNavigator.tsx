@@ -18,6 +18,7 @@ import { setisCrypto } from "redux/slices/authenticationSlice";
 import { setTheme } from "redux/slices/animationSlice";
 import { usePendingPaymentRequests } from "query/hooks";
 import { useSelector, useDispatch } from "react-redux";
+import NewCrypto from "new-ui/screens/Crypto/NewCrypto";
 
 const Tab = createBottomTabNavigator();
 
@@ -139,7 +140,7 @@ const BottomTabNavigator = () => {
   const { isCrypto } = useSelector((state: any) => state.authenticationSlice);
 
   // Use staleTime to avoid refetching on every render
-  const { data: pendingRequestsData } = usePendingPaymentRequests();
+  const { data: pendingRequestsData } = usePendingPaymentRequests(false);
 
   const pendingRequestCount = useMemo(() => {
     return pendingRequestsData?.data?.received_pending_requests?.length ?? 0;
@@ -298,7 +299,7 @@ const BottomTabNavigator = () => {
       />
       <Tab.Screen
         name="CryptoTab"
-        component={NewDashboard}
+        component={NewCrypto}
         options={cryptoOptions}
         listeners={cryptoListeners}
       />

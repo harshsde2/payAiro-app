@@ -70,11 +70,21 @@ import PaymentAppList from "screens/TSX-Screens/AddBalance/PaymentAppList";
 import NewSend from "@new-ui/screens/Send/Send/index";
 import SelectPaymentMethod from "@new-ui/screens/Send/SelectPaymentMethod/SelectPaymentMethod";
 import EnterAmount from "@new-ui/screens/Send/EnterAmount/EnterAmount";
+import CryptoWithdraw from "@new-ui/screens/WithdrawCrypto/CryptoWithdraw";
+import NewAddBalance from "@new-ui/screens/AddBalance";
 import CustomHeader from "../new-ui/components/common-components/CustomHeader";
 import { AppIcon } from "new-ui/assets/svgs";
 import theme from "styles/theme";
 import { useTheme as useNewTheme } from "@new-ui/styles/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
+import SettingsScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/SettingsScreen";
+import NotificationScreen from "new-ui/screens/KebabMenuScreens/NotificationScreen/NotificationScreen";
+import ContactsScreen from "@new-ui/screens/Contacts/ContactsScreen";
+import AddContactScreen from "@new-ui/screens/Contacts/AddContactScreen";
+import BankStatementScreen from "@new-ui/screens/KebabMenuScreens/BankStatementScreen/BankStatementScreen";
+import ViewStatementScreen from "@new-ui/screens/KebabMenuScreens/BankStatementScreen/ViewStatementScreen";
+import RewardsAndReferralsScreen from "@new-ui/screens/KebabMenuScreens/RewardsScreen/RewardsAndReferralsScreen";
+import ScratchCardScreen from "@new-ui/screens/KebabMenuScreens/RewardsScreen/ScratchCardScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -311,7 +321,7 @@ export default function AppStack() {
         component={CryptoSend}
       />
       <Stack.Screen
-        options={{ headerShown: false }}
+        options={{ headerShown: true, header: AppStackHeader }}
         name={NAVIGATION_SCREENS.CRYPTO_RECEIVE}
         component={CryptoReceive}
       />
@@ -452,7 +462,7 @@ export default function AppStack() {
         component={CybridWebView}
       />
       <Stack.Screen
-        options={{ headerShown: false }}
+        options={{ headerShown: true, header: AppStackHeader }}
         name={NAVIGATION_SCREENS.CRYPTO_DETAILS}
         component={CyrptoDetails}
         
@@ -474,10 +484,10 @@ export default function AppStack() {
         component={UserProfile}
       />
       <Stack.Screen
-        options={{ headerShown: false }}
+        options={{ headerShown: true, header: AppStackHeader }}
         name={NAVIGATION_SCREENS.NEW_PERSONAL}
         component={NewPersonal}
-      /> 
+      />
       <Stack.Screen
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.ADD_BALANCE_BANK_DETAILS}
@@ -495,6 +505,21 @@ export default function AppStack() {
       />
       <Stack.Screen
         options={{ headerShown: true, header: AppStackHeader }}
+        name={NAVIGATION_SCREENS.NEW_ADD_BALANCE}
+        component={NewAddBalance as any}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader,headerTitle: 'Settings' }}
+        name={NAVIGATION_SCREENS.NEW_SETTINGS_SCREEN}
+        component={SettingsScreen as any}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader,headerTitle: 'Notifications' }}
+        name={NAVIGATION_SCREENS.NEW_NOTIFICATION_SCREEN}
+        component={NotificationScreen as any}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader }}
         name="SelectPaymentMethod"
         component={SelectPaymentMethod as any}
       />
@@ -502,6 +527,41 @@ export default function AppStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.ENTER_AMOUNT}
         component={EnterAmount as any}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.CRYPTO_WITHDRAW}
+        component={CryptoWithdraw as any}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Contacts' }}
+        name={NAVIGATION_SCREENS.NEW_CONTACTS_SCREEN}
+        component={ContactsScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Contacts' }}
+        name={NAVIGATION_SCREENS.NEW_ADD_CONTACT_SCREEN}
+        component={AddContactScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Bank Statement' }}
+        name={NAVIGATION_SCREENS.NEW_BANK_STATEMENT_SCREEN}
+        component={BankStatementScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Details' }}
+        name={NAVIGATION_SCREENS.NEW_VIEW_STATEMENT_SCREEN}
+        component={ViewStatementScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Rewards and Referrals' }}
+        name={NAVIGATION_SCREENS.NEW_REWARDS_AND_REFERRALS_SCREEN}
+        component={RewardsAndReferralsScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Scratch Card' }}
+        name={NAVIGATION_SCREENS.NEW_SCRATCH_CARD_SCREEN}
+        component={ScratchCardScreen}
       />
     </Stack.Navigator>
   );

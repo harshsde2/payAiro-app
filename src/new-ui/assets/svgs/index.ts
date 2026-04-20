@@ -34,6 +34,20 @@ import Headphones from './Headphones.svg';
 import HelpCircle from './HelpCircle.svg';
 import ChevronRight from './ChevronRight.svg';
 import QrCode from './QrCode.svg';
+import Cancel from './Cancel.svg';
+import DebitCard from './DebitCard.svg';
+import Privacy from './Privacy.svg';
+import PrivacyPolicy from './PrivacyPolicy.svg';
+import TermsAndConditions from './TermsAndConditions.svg';
+import Agreement from './Agreement.svg';
+import BankStatement from './BankStatement.svg';
+import RewardsIcon from './RewardIcon.svg';
+import AllRightReserves from './AllRightReserves.svg';
+import CreditOffer from './CreditOffer.svg';
+import PayairoOffer from './PayairoOffer.svg';
+import AddContact from './AddContact.svg';
+import Invite from './Invite.svg';
+
 
 export const AppIcon = {
   Home,
@@ -72,4 +86,17 @@ export const AppIcon = {
   HelpCircle,
   ChevronRight,
   QrCode,
+  Cancel,
+  DebitCard,
+  Privacy,
+  PrivacyPolicy,
+  TermsAndConditions,
+  Agreement,
+  BankStatement,
+  RewardsIcon,
+  AllRightReserves,
+  CreditOffer,
+  PayairoOffer,
+  AddContact,
+  Invite,
 };

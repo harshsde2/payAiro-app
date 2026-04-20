@@ -41,13 +41,26 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
   const styles = dashboardHeaderStyles(theme) as any;
   const [isMenuVisible, setIsMenuVisible] = useState(false);
 
-  const { walletData } = useSelector((state: any) => state.authenticationSlice);
+  const { walletData, userData } = useSelector(
+    (state: any) => state.authenticationSlice
+  );
 
   const profilePhotoUri = walletData?.profile_photo
-    ? walletData.profile_photo.replace(/^http:\/\//i, 'https://')
+    ? walletData.profile_photo.replace(/^http:\/\//i, "https://")
     : null;
 
-  const userName = walletData?.name || '';
+  const userName =
+    walletData?.name ||
+    [
+      userData?.first_name ? String(userData.first_name) : "",
+      userData?.last_name ? String(userData.last_name) : "",
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .trim() ||
+    "";
+
+  const username = walletData?.username || userData?.username || "";
 
   const handleProfilePress = useCallback(() => {
     navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL as never);
@@ -71,18 +84,16 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
   );
 
   const handleCopyUsername = useCallback(() => {
-    const username = walletData?.username;
     if (username) {
       Clipboard.setString(username);
       showSuccess('Copied!', 'PayAiro Tag copied to clipboard');
     }
-  }, [walletData?.username]);
+  }, [username]);
 
   const MenuIcon = AppIcon.MoreVertical;
 
-  const { data: unreadData } = useUnreadNotificationsCount();
+  const { data: unreadData } = useUnreadNotificationsCount(false);
 
-  console.log("unreadData =>", JSON.stringify(unreadData, null, 2));
   const unreadCountRaw = (unreadData as any)?.data?.unread_count as number | undefined;
   const unreadCount =
     typeof unreadCountRaw === 'number' && unreadCountRaw > 0 ? unreadCountRaw : 0;
@@ -113,7 +124,9 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
             onPress={handleCopyUsername}
             activeOpacity={0.7}
           >
-            <CustomText variant="bodySmall" style={styles.welcomeText}>{walletData?.username}</CustomText>
+            <CustomText variant="bodySmall" style={styles.welcomeText}>
+              {username}
+            </CustomText>
             <AppIcon.Copygreen width={16} height={16} />
           </TouchableOpacity>
         </View>

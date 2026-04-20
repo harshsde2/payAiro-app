@@ -39,7 +39,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ name, style }) => {
     return initials;
   };
 
-  const { data: unreadCountResponse } = useUnreadNotificationsCount();
+  const { data: unreadCountResponse } = useUnreadNotificationsCount(false);
 
   const { mutateAsync: markAllNotificationsRead } =
     useMarkAllNotificationsRead();

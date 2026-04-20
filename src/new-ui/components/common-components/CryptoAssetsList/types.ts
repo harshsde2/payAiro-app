@@ -1,5 +1,6 @@
 export interface ICryptoAssetItem {
   asset?: string;
+  name?: string;
   rounded_balance?: number;
   platform_available?: number;
   platform_pending?: number;

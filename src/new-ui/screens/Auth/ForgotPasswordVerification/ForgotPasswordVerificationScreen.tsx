@@ -3,7 +3,7 @@ import { View, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 import { useDispatch } from 'react-redux';
-import { setLogin } from 'redux/slices/authenticationSlice';
+import { setLogin } from 'redux/slices/newBackendAuthSlice';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 import { forgotPasswordVerificationStyles } from '@new-ui/styles/screens/auth/forgotPasswordVerificationStyles';
 import CustomText from '@new-ui/components/common-components/CustomText';

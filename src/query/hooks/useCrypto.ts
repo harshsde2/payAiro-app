@@ -1,6 +1,7 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../../api";
-import { AUTH } from "../../api/endpoints";
+import { AUTH, USER_AUTH } from "../../api/endpoints";
 import { ApiResponse, CryptoAsset } from "../../api/types";
 import { queryStaleTime, CRYPTO_LIST_STALE_TIME_MS, CRYPTO_LIST_GC_TIME_MS } from "query/queryConfigs";
 import useSelectorAction from "hooks/useSelectorAction";
@@ -8,6 +9,12 @@ import { useDispatch } from "react-redux";
 import { setAllCryptoBalances, setTotalDisbursable, setCryptoData, setAggregatedCryptoBalances } from "../../redux/slices/authenticationSlice";
 import { setItem, getItem, STORAGE_KEYS } from "../../storage/mmkv";
 import { useSelector } from "react-redux";
+import { userApiClient } from "api/userApiClient";
+import { ICryptoAssetItem } from "new-ui/components/common-components/CryptoAssetsList/types";
+import {
+  mergeCryptoMarketWithBalances,
+  type ICryptoFastApiBalanceRow,
+} from "query/utils/mergeCryptoMarketWithBalances";
 
 // Query keys
 export const cryptoKeys = {
@@ -19,6 +26,298 @@ export const cryptoKeys = {
   trades: () => [...cryptoKeys.all, "trades"] as const,
   prices: () => [...cryptoKeys.all, "prices"] as const,
   cryptoMarketData: () => [...cryptoKeys.all, "cryptoMarketData"] as const,
+  userCryptoMarket: (fiat: string) => [...cryptoKeys.all, "userCryptoMarket", fiat] as const,
+  userCryptoBalance: () => [...cryptoKeys.all, "userCryptoBalance"] as const,
+  walletAddresses: () => [...cryptoKeys.all, "walletAddresses"] as const,
+};
+
+/** FastAPI GET /api/v1/wallets/addresses/ */
+export interface IWalletAddressRow {
+  walletAddress: string;
+  currencyName: string;
+  currencySymbol: string;
+  assetId: string;
+  chain: string;
+}
+
+export interface IWalletAddressesResponse {
+  walletAddresses?: IWalletAddressRow[];
+  errorResponse?: unknown;
+}
+
+interface IUserCryptoMarketItem {
+  currency?: string;
+  /** Full display name when provided by the market API */
+  name?: string;
+  currency_name?: string;
+  price?: string | number;
+  usd_price?: string | number;
+  icon_url?: string;
+}
+
+interface IUserCryptoMarketResponse {
+  ok?: boolean;
+  message?: string;
+  data?: {
+    items?: IUserCryptoMarketItem[];
+  };
+}
+
+interface IUserCryptoChartItem {
+  timestamp: number;
+  close?: string | number;
+}
+
+interface IUserCryptoChartResponse {
+  ok?: boolean;
+  message?: string;
+  data?: {
+    currency?: string;
+    fiat?: string;
+    range?: string;
+    latest_price?: string | number;
+    latest_high?: string | number;
+    latest_low?: string | number;
+    items?: IUserCryptoChartItem[];
+  };
+}
+
+export interface PaymentTransactionSendPayload {
+  type: "external";
+  amount: string;
+  currency: string;
+  chain: string;
+  destinationWalletAddress: string;
+}
+
+export interface PaymentTransactionSendResponse {
+  message: string;
+  data: {
+    transaction: {
+      partnerTransactionId: string;
+      transactionStatus: string;
+    };
+    paymentTransaction: {
+      id: number;
+      type: string;
+      status: string;
+      currency: string;
+      chain: string;
+      amount: string;
+      destinationWalletAddress: string;
+      providerTransactionId: string;
+      providerStatus: string;
+    };
+  };
+  errorResponse: unknown;
+}
+
+export interface IUserCryptoChartPoint {
+  x: number;
+  y: number;
+  date?: string;
+}
+
+/** Matches `PERIODS` order in `CryptoChart.tsx` (1D … All). */
+export type ChartPeriodTab = "1D" | "1W" | "1M" | "1Y" | "All";
+
+export const CHART_PERIOD_ORDER: ChartPeriodTab[] = [
+  "1D",
+  "1W",
+  "1M",
+  "1Y",
+  "All",
+];
+
+const MS_DAY = 24 * 60 * 60 * 1000;
+
+/** Builds chart query string for FastAPI: `range=24h` for 1D, else `range=custom` + window. */
+export function buildCryptoChartQueryString(
+  currency: string,
+  fiat: string,
+  period: ChartPeriodTab
+): string {
+  const c = encodeURIComponent(currency);
+  const f = encodeURIComponent(fiat);
+  if (period === "1D") {
+    return `${USER_AUTH.CRYPTO_CHART}?currency=${c}&fiat=${f}&range=24h`;
+  }
+  const endTs = Date.now();
+  let startTs = endTs;
+  let interval: "HOURS" | "DAYS" = "DAYS";
+  switch (period) {
+    case "1W":
+      startTs = endTs - 7 * MS_DAY;
+      interval = "HOURS";
+      break;
+    case "1M":
+      startTs = endTs - 30 * MS_DAY;
+      interval = "DAYS";
+      break;
+    case "1Y":
+      startTs = endTs - 365 * MS_DAY;
+      interval = "DAYS";
+      break;
+    case "All":
+      startTs = endTs - 10 * 365 * MS_DAY;
+      interval = "DAYS";
+      break;
+    default:
+      startTs = endTs - 24 * MS_DAY;
+      interval = "HOURS";
+  }
+  return `${USER_AUTH.CRYPTO_CHART}?currency=${c}&fiat=${f}&range=custom&interval=${interval}&start_ts=${startTs}&end_ts=${endTs}`;
+}
+
+const mapMarketItemToCryptoListItem = (
+  item: IUserCryptoMarketItem
+): ICryptoAssetItem => {
+  const parsedPrice = Number(item?.price ?? 0);
+  const parsedUsdPrice = Number(item?.usd_price ?? item?.price ?? 0);
+  const unitUsd = Number.isFinite(parsedUsdPrice)
+    ? parsedUsdPrice
+    : Number.isFinite(parsedPrice)
+      ? parsedPrice
+      : 0;
+
+  return {
+    asset: item?.currency ?? "",
+    logo: item?.icon_url ?? "",
+    name: item?.name ?? item?.currency_name,
+    platform_available: 0,
+    platform_total_balance: 0,
+    usd_value_total: 0,
+    usd_value_available: 0,
+    usd_price: unitUsd,
+    platform_pending: 0,
+  };
+};
+
+interface IUserCryptoBalanceApiBody {
+  data?: {
+    cryptoAssetsBalance?: ICryptoFastApiBalanceRow[];
+  };
+  errorResponse?: unknown;
+}
+
+export const useUserCryptoMarketList = (fiat: string = "USD") => {
+  return useQuery<ICryptoAssetItem[]>({
+    queryKey: cryptoKeys.userCryptoMarket(fiat),
+    queryFn: async () => {
+      const response = await userApiClient.get<IUserCryptoMarketResponse>(
+        `${USER_AUTH.CRYPTO_MARKET}?fiat=${encodeURIComponent(fiat)}`
+      );
+      const items = response?.data?.items ?? [];
+      return items.map(mapMarketItemToCryptoListItem);
+    },
+    staleTime: queryStaleTime.INSTANT_STALE_TIME,
+    gcTime: CRYPTO_LIST_GC_TIME_MS,
+  });
+};
+
+export const useUserCryptoBalanceFastApi = () => {
+  const isLogin = useSelector(
+    (state: any) => state.authenticationSlice?.isLogin === true
+  );
+
+  return useQuery<ICryptoFastApiBalanceRow[]>({
+    queryKey: cryptoKeys.userCryptoBalance(),
+    queryFn: async () => {
+      const response = await userApiClient.get<IUserCryptoBalanceApiBody>(
+        USER_AUTH.CRYPTO_BALANCE
+      );
+      return response?.data?.cryptoAssetsBalance ?? [];
+    },
+    staleTime: queryStaleTime.INSTANT_STALE_TIME,
+    gcTime: CRYPTO_LIST_GC_TIME_MS,
+    enabled: isLogin,
+  });
+};
+
+export const useWalletAddresses = () => {
+  const isLogin = useSelector(
+    (state: any) => state.authenticationSlice?.isLogin === true
+  );
+
+  return useQuery<IWalletAddressesResponse>({
+    queryKey: cryptoKeys.walletAddresses(),
+    queryFn: () => userApiClient.get<IWalletAddressesResponse>(USER_AUTH.WALLET_ADDRESSES),
+    staleTime: queryStaleTime.INSTANT_STALE_TIME,
+    gcTime: CRYPTO_LIST_GC_TIME_MS,
+    enabled: isLogin,
+  });
+};
+
+export const useCryptoAssetsListData = (fiat: string = "USD") => {
+  const marketQuery = useUserCryptoMarketList(fiat);
+  const balanceQuery = useUserCryptoBalanceFastApi();
+
+  const data = useMemo(
+    () =>
+      mergeCryptoMarketWithBalances(
+        marketQuery.data ?? [],
+        balanceQuery.data ?? []
+      ),
+    [marketQuery.data, balanceQuery.data]
+  );
+
+  return {
+    data,
+    isMarketLoading: marketQuery.isLoading,
+    isBalanceLoading: balanceQuery.isLoading,
+    isBalanceFetching: balanceQuery.isFetching,
+    refetchMarket: marketQuery.refetch,
+    refetchBalance: balanceQuery.refetch,
+  };
+};
+
+const mapChartResponseToState = (response: IUserCryptoChartResponse) => {
+  const data = response?.data;
+  const items = data?.items ?? [];
+  const chartData = items
+    .map((item) => {
+      const y = Number(item?.close ?? 0);
+      return {
+        x: item?.timestamp,
+        y: Number.isFinite(y) ? y : 0,
+        date: new Date(item?.timestamp).toISOString(),
+      };
+    })
+    .sort((a, b) => a.x - b.x);
+
+  const latestPrice = Number(data?.latest_price ?? 0);
+  const latestHigh = Number(data?.latest_high ?? 0);
+  const latestLow = Number(data?.latest_low ?? 0);
+
+  return {
+    latestPrice: Number.isFinite(latestPrice) ? latestPrice : 0,
+    latestHigh: Number.isFinite(latestHigh) ? latestHigh : 0,
+    latestLow: Number.isFinite(latestLow) ? latestLow : 0,
+    chartData,
+  };
+};
+
+export const useUserCryptoChart = (
+  currency: string,
+  fiat: string = "USD",
+  period: ChartPeriodTab = "1D"
+) => {
+  return useQuery<{
+    latestPrice: number;
+    latestHigh: number;
+    latestLow: number;
+    chartData: IUserCryptoChartPoint[];
+  }>({
+    queryKey: [...cryptoKeys.all, "userCryptoChart", currency, fiat, period] as const,
+    queryFn: async () => {
+      const qs = buildCryptoChartQueryString(currency, fiat, period);
+      const response = await userApiClient.get<IUserCryptoChartResponse>(qs);
+      return mapChartResponseToState(response);
+    },
+    enabled: !!currency,
+    staleTime: queryStaleTime.INSTANT_STALE_TIME,
+    gcTime: CRYPTO_LIST_GC_TIME_MS,
+  });
 };
 
 /**
@@ -204,6 +503,20 @@ export const useCryptoWithdrawal = () => {
     },
     onError: (error) => {
       console.log("Error initiating withdrawal =>", JSON.stringify(error?.response || error, null, 2));
+    },
+  });
+};
+
+/**
+ * Hook to send crypto withdrawal via FastAPI payment-transactions endpoint.
+ */
+export const usePaymentTransactionSend = () => {
+  return useMutation<PaymentTransactionSendResponse, any, PaymentTransactionSendPayload>({
+    mutationFn: async (payload) => {
+      return await userApiClient.post<PaymentTransactionSendResponse>(
+        USER_AUTH.PAYMENT_TRANSACTIONS_SEND,
+        payload
+      );
     },
   });
 };

@@ -81,6 +81,7 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
 
   const refreshPinStatus = useCallback(() => {
     const storedPin = getPin();
+    // console.log('storedPin', storedPin);
     const pinExists = storedPin !== undefined && storedPin.length > 0;
     setHasPin(pinExists);
   }, []);
@@ -88,6 +89,8 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
   // Check PIN status on mount and when isLogin changes
   useEffect(() => {
     const pinExists = getPin() !== undefined && (getPin()?.length ?? 0) > 0;
+
+    // console.log('pinExists', pinExists);
     setHasPin(pinExists);
 
     // Set isLockCheckComplete only when we're SURE we don't need lock (use sync getPin, not state)

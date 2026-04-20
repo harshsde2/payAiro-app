@@ -5,12 +5,93 @@ import {
   UseQueryResult,
 } from "@tanstack/react-query";
 import { apiClient } from "api";
-import { AUTH, KYC } from "api/endpoints";
+import { USER_AUTH, AUTH, KYC } from "api/endpoints";
 import { ApiResponse, IContentDataResponse } from "api/types";
+import { userApiClient } from "api/userApiClient";
 import useDispatchAction from "hooks/useDispatchAction";
-import { setKycStatus } from "redux/slices/authenticationSlice";
+import { setKycStatus } from "redux/slices/newBackendAuthSlice";
 import { showError, showSuccess } from "../../utils/toast";
 import { queryStaleTime } from "query/queryConfigs";
+
+const mapFastApiOkResponseToApiResponse = (
+  body: any
+): ApiResponse<any> => ({
+  status: !!body?.ok,
+  data: body?.data,
+  message: body?.message || "",
+  toast_message: body?.message || body?.toast_message || "",
+});
+
+const mapFastApiOtpVerifyToApiResponse = (body: any): ApiResponse<any> => {
+  const tokens = body?.data?.tokens ?? {};
+  const stepCount =
+    body?.data?.step_count ??
+    body?.data?.step ??
+    body?.data?.onboarding_step_count ??
+    undefined;
+
+  return {
+    status: !!body?.ok,
+    data: {
+      access: tokens?.access,
+      refresh: tokens?.refresh,
+      step: stepCount,
+    },
+    message: body?.message || "",
+    toast_message: body?.message || body?.toast_message || "",
+  };
+};
+
+const mapOtpRequestPayload = (payload: any) => {
+  const location = payload?.location;
+  const phoneCountryCode = 1;
+
+  if (payload?.phone) {
+    return {
+      channel: "phone",
+      phone_country_code: phoneCountryCode,
+      phone_national_number: String(payload.phone),
+    };
+  }
+
+  if (payload?.email) {
+    return {
+      channel: "email",
+      email: String(payload.email).trim().toLowerCase(),
+    };
+  }
+
+  // Backend may return a helpful message; keep shape minimal.
+  return { channel: "email", email: String(payload?.email || "") };
+};
+
+const mapProfileUpdatePayloadToFormData = (payload: any) => {
+  const form = new FormData();
+
+  const firstName = payload?.first_name ?? payload?.name ?? payload?.firstName;
+  const lastName =
+    payload?.last_name ?? payload?.lastname ?? payload?.lastName;
+  const email = payload?.email;
+  const payairoName = payload?.payairo_name ?? payload?.usernames;
+
+  if (firstName) form.append("first_name", String(firstName));
+  if (lastName) form.append("last_name", String(lastName));
+  if (email) form.append("email", String(email));
+  if (payairoName) form.append("payairo_name", String(payairoName));
+
+  const dob = payload?.dob ?? payload?.date_of_birth;
+  if (dob) form.append("dob", String(dob));
+
+  const ssn = payload?.ssn;
+  if (ssn) form.append("ssn", String(ssn));
+
+  // KYCScreen currently doesn't provide image; keep support for future.
+  if (payload?.image) {
+    form.append("image", payload.image);
+  }
+
+  return form;
+};
 
 export const useLogin = () => {
   return useMutation<ApiResponse<any>, Error>({
@@ -49,6 +130,74 @@ export const useVerifyOTP = () => {
     },
     onSuccess: (data) => {
       // console.log("data =>", JSON.stringify(data, null, 2));
+    },
+  });
+};
+
+// =============================
+// FastAPI user auth/profile
+// =============================
+
+export const useUserOtpRequest = () => {
+  return useMutation<ApiResponse<any>, Error, any>({
+    mutationFn: async (payload) => {
+      const body = mapOtpRequestPayload(payload);
+      const resp = await userApiClient.post<any>(
+        USER_AUTH.OTP_REQUEST,
+        body,
+        false
+      );
+      return mapFastApiOkResponseToApiResponse(resp);
+    },
+  });
+};
+
+export const useUserOtpVerify = () => {
+  return useMutation<ApiResponse<any>, Error, any>({
+    mutationFn: async (payload) => {
+      // console.log("payload =>", JSON.stringify(payload, null, 2));
+      const resp = await userApiClient.post<any>(
+        USER_AUTH.OTP_VERIFY,
+        payload,
+        false
+      );
+      return mapFastApiOtpVerifyToApiResponse(resp);
+    },
+  });
+};
+
+export const useUserProfileUpdate = () => {
+  return useMutation<ApiResponse<any>, Error, any>({
+    mutationFn: async (payload) => {
+      const form = mapProfileUpdatePayloadToFormData(payload);
+      const resp = await userApiClient.post<any>(
+        USER_AUTH.PROFILE_UPDATE,
+        form,
+        true
+      );
+      return mapFastApiOkResponseToApiResponse(resp);
+    },
+  });
+};
+
+export const useUserAddressUpdate = () => {
+  return useMutation<ApiResponse<any>, Error, any>({
+    mutationFn: async (payload) => {
+      const resp = await userApiClient.post<any>(
+        USER_AUTH.ADDRESS_UPDATE,
+        payload,
+        false
+      );
+      return mapFastApiOkResponseToApiResponse(resp);
+    },
+  });
+};
+
+export const useUserMe = () => {
+  return useMutation<ApiResponse<any>, Error>({
+    mutationFn: async () => {
+      const resp = await userApiClient.get<any>(USER_AUTH.USERS_ME);
+      return mapFastApiOkResponseToApiResponse(resp);
     },
   });
 };

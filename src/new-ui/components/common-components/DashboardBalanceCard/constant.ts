@@ -2,10 +2,11 @@ import React from "react";
 import { AppIcon } from "new-ui/assets/svgs/index";
 
 export type DashboardActionScreen =
-  | "ADD_BALANCE"
+  | "NEW_ADD_BALANCE"
   | "NEW_SEND"
-  | "RECEIVE"
-  | "WITHDRAW_BALANCE";
+  | "NEW_PERSONAL"
+  | "WITHDRAW_BALANCE"
+  | "CRYPTO_WITHDRAW";
 
 export interface IDashboardActionConfig {
   icon: React.ComponentType<{
@@ -26,12 +27,11 @@ export const DASHBOARD_BALANCE_CARD_CONSTANTS: IDashboardActionConfig[] = [
     screen: "NEW_SEND",
     params: { requested: false },
   },
-  { icon: AppIcon.Receive, name: "Receive", screen: "RECEIVE" },
-  { icon: AppIcon.AddBalance, name: "Add Balance", screen: "ADD_BALANCE" },
+  { icon: AppIcon.Receive, name: "Receive", screen: 'NEW_PERSONAL' },
+  { icon: AppIcon.AddBalance, name: "Add Balance", screen: "NEW_ADD_BALANCE" },
   {
     icon: AppIcon.Withdraw,
     name: "Withdraw",
-    screen: "WITHDRAW_BALANCE",
-    requiresExternalAccount: true,
+    screen: "CRYPTO_WITHDRAW",
   },
 ];

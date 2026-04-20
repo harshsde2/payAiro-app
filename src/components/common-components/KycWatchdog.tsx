@@ -16,9 +16,8 @@ const KycWatchdog: React.FC = () => {
   const kycStatus = useSelector((s: any) => s.authenticationSlice?.kycStatus);
   const mode = useMemo(() => toKycMode(kycStatus), [kycStatus]);
 
-  // Start polling when status is unknown/pending/expired, but NOT when not_started
-  const shouldPoll = mode !== "approved" && mode !== "not_started";
-  useKycStatusPolling(shouldPoll);
+  // Legacy polling disabled during new backend migration.
+  useKycStatusPolling(false);
 
   // console.log("KycWatchdog mode ->", mode);
 

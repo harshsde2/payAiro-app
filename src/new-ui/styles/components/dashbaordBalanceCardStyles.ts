@@ -11,6 +11,9 @@ const dashboardBalanceCardStyles = (theme: ITheme) => StyleSheet.create({
     paddingHorizontal: theme.spacing.base,
     borderBottomLeftRadius: theme.radius.xl,
     borderBottomRightRadius: theme.radius.xl,
+    borderTopLeftRadius: theme.radius.xl,
+    borderTopRightRadius: theme.radius.xl,
+    flex: 1,
   },
   headerRow: {
     flexDirection: 'row',

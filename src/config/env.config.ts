@@ -20,6 +20,8 @@ import Config from 'react-native-config';
 export interface IEnvConfig {
   // API Configuration
   API_BASE_URL: string;
+  /** Base URL for the new FastAPI user service (OTP/profile/address). */
+  USER_API_BASE_URL?: string;
   API_TIMEOUT: number;
   
   // Environment Info
@@ -91,6 +93,7 @@ const OPTIONAL_VARS: Partial<Record<keyof IEnvConfig, any>> = {
   WERT_CHECKOUT_PAGE_BASE_URL: undefined,
   WERT_PARTNER_ID: undefined,
   WERT_WIDGET_ORIGIN: undefined,
+  USER_API_BASE_URL: undefined,
 };
 
 // ========================================
@@ -269,6 +272,9 @@ function buildConfig(): IEnvConfig {
   const config: IEnvConfig = {
     // Required variables (validated above)
     API_BASE_URL: validateUrl((Config as any).API_BASE_URL, 'API_BASE_URL'),
+    USER_API_BASE_URL: (Config as any).USER_API_BASE_URL
+      ? validateUrl((Config as any).USER_API_BASE_URL, 'USER_API_BASE_URL')
+      : undefined,
     ENV_NAME: String((Config as any).ENV_NAME).trim(),
     ENV_TYPE: envTypeValue,
     PRIVACY_POLICY_URL: validateUrl(
@@ -433,6 +439,21 @@ export function isDevelopment(): boolean {
  */
 export function getApiBaseUrl(): string {
   return EnvConfig.API_BASE_URL.replace(/\/+$/, '');
+}
+
+/**
+ * Get the base user-service API URL without trailing slash.
+ * @throws Error if `USER_API_BASE_URL` is not configured.
+ */
+export function getUserApiBaseUrl(): string {
+  if (!EnvConfig.USER_API_BASE_URL) {
+    const msg =
+      "[EnvConfig] USER_API_BASE_URL is missing. Add it to your .env files to enable FastAPI auth/profile calls.";
+    console.error(msg);
+    throw new Error(msg);
+  }
+
+  return EnvConfig.USER_API_BASE_URL.replace(/\/+$/, '');
 }
 
 /**

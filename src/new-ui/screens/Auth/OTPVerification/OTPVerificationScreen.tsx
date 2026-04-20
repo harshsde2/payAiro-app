@@ -19,14 +19,15 @@ import {
 } from "@new-ui/screens/Auth/types";
 import { useAppLock } from "hooks/useAppLock";
 import { useWalletDetails, useUserPin } from "query/hooks";
-import { useLogin, useSignUp, useVerifyOTP } from "query/hooks/useAPIAuth";
+import { useUserOtpRequest, useUserOtpVerify, useUserMe } from "query/hooks/useAPIAuth";
 import { getItem, setItem, setPin, STORAGE_KEYS } from "storage/mmkv";
 import {
   setLogin,
   setTokens,
+  setAuthBootstrapFromUserMe,
   setWalletData,
   setShowLoader,
-} from "redux/slices/authenticationSlice";
+} from "redux/slices/newBackendAuthSlice";
 import { setBiometric, setToken, setWalletDataAuth } from "services/Auth";
 import { showError, showSuccess } from "utils/toast";
 import { appContent } from "utils/appContent";
@@ -62,9 +63,9 @@ const OTPVerificationScreen: React.FC = () => {
 
   const { refetch: refetchWalletDetails } = useWalletDetails(false);
   const { refetch: refetchUserPin } = useUserPin(false);
-  const { mutate: verifyOtp } = useVerifyOTP();
-  const { mutate: login } = useLogin();
-  const { mutate: signUp } = useSignUp();
+  const { mutate: verifyOtp } = useUserOtpVerify();
+  const { mutate: otpRequest } = useUserOtpRequest();
+  const { mutateAsync: fetchUserMe } = useUserMe();
 
   const [otp, setOtp] = useState("");
   const otpInputRef = useRef<OtpInputRef>(null);
@@ -175,7 +176,7 @@ const OTPVerificationScreen: React.FC = () => {
     const location = isProductionEnv ? "United States" : "india";
 
     // Signup flow: use signUp endpoint
-    if (type === "signup") {
+      if (type === "signup") {
       const payload: ISignupPayload = {
         location,
       };
@@ -189,7 +190,7 @@ const OTPVerificationScreen: React.FC = () => {
         payload.email = email.trim().toLowerCase();
       }
 
-      signUp(payload as any, {
+        otpRequest(payload as any, {
         onSuccess: (data) => {
           if (data?.status && data) {
             showSuccess(successMessage);
@@ -210,9 +211,7 @@ const OTPVerificationScreen: React.FC = () => {
     }
 
     // Login / forgot flows: use login endpoint
-    const payload: ILoginPayload = {
-      location,
-    };
+    const payload: ILoginPayload = { location };
 
     if (isPhoneLogin && phone) {
       payload.phone = phone;
@@ -223,7 +222,7 @@ const OTPVerificationScreen: React.FC = () => {
       payload.email = email.trim().toLowerCase();
     }
 
-    login(payload as any, {
+    otpRequest(payload as any, {
       onSuccess: (data) => {
         if (data?.status && data) {
           showSuccess(successMessage);
@@ -244,8 +243,7 @@ const OTPVerificationScreen: React.FC = () => {
     isPhoneLogin,
     phone,
     email,
-    login,
-    signUp,
+    otpRequest,
     smsHash,
     isProductionEnv,
   ]);
@@ -278,10 +276,14 @@ const OTPVerificationScreen: React.FC = () => {
       isVerifyingRef.current = true;
       setIsVerifying(true);
 
+      const phoneCountryCode = 1;
       const verifyPayload: any = { otp: enteredOtp };
       if (isPhoneLogin && phone) {
-        verifyPayload.phone = phone;
+        verifyPayload.channel = "phone";
+        verifyPayload.phone_country_code = phoneCountryCode;
+        verifyPayload.phone_national_number = phone;
       } else if (email) {
+        verifyPayload.channel = "email";
         verifyPayload.email = email.trim().toLowerCase();
       }
 
@@ -292,6 +294,8 @@ const OTPVerificationScreen: React.FC = () => {
             await setToken(data?.data);
             setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(data?.data));
             showSuccess("OTP Verified Successfully");
+
+            console.log("data =>", JSON.stringify(data, null, 2));
 
             const { step } = data?.data ?? {};
 
@@ -309,9 +313,51 @@ const OTPVerificationScreen: React.FC = () => {
               if (isOldUser) {
                 setItem(STORAGE_KEYS.KYC_CONGRATULATIONS_SHOWN, "true");
               }
-              await getWalletD();
+              try {
+                dispatch(setShowLoader(true));
+                const meResp = await fetchUserMe();
+                if (meResp?.status && meResp?.data) {
+                  setItem(
+                    STORAGE_KEYS.USER_DATA,
+                    JSON.stringify(meResp.data?.user || {})
+                  );
+                  dispatch(setAuthBootstrapFromUserMe(meResp.data));
+                } else {
+                  showError("Failed to load profile", "Please try again");
+                }
+              } catch (e: any) {
+                showError(
+                  e?.response?.data?.message ||
+                    e?.message ||
+                    "Failed to load profile",
+                  "Please try again"
+                );
+              } finally {
+                dispatch(setShowLoader(false));
+              }
             } else if (step === 2) {
-              await getWalletD();
+              try {
+                dispatch(setShowLoader(true));
+                const meResp = await fetchUserMe();
+                if (meResp?.status && meResp?.data) {
+                  setItem(
+                    STORAGE_KEYS.USER_DATA,
+                    JSON.stringify(meResp.data?.user || {})
+                  );
+                  dispatch(setAuthBootstrapFromUserMe(meResp.data));
+                } else {
+                  showError("Failed to load profile", "Please try again");
+                }
+              } catch (e: any) {
+                showError(
+                  e?.response?.data?.message ||
+                    e?.message ||
+                    "Failed to load profile",
+                  "Please try again"
+                );
+              } finally {
+                dispatch(setShowLoader(false));
+              }
             }
           } else {
             showError("Invalid OTP. Please Try Again.");

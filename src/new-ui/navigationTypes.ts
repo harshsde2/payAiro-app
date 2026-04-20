@@ -14,17 +14,27 @@ export type NewUIAuthStackParamList = {
     isEmail?: boolean;
   };
   [NAVIGATION_SCREENS.NEW_KYC]: {
-    fullName?: string;
+    firstName?: string;
+    lastName?: string;
     email?: string;
     phone?: string;
     inputType?: "email" | "phone" | "invalid";
     isEmail?: boolean;
     data?: any;
   };
+  [NAVIGATION_SCREENS.NEW_ADDRESS]: undefined;
   [NAVIGATION_SCREENS.NEW_FORGOT_PASSWORD]: undefined;
   [NAVIGATION_SCREENS.NEW_FORGOT_PASSWORD_VERIFICATION]: { email?: string };
 };
 
 export type NewUIDashboardStackParamList = {
   [NAVIGATION_SCREENS.NEW_DASHBOARD]: undefined;
+  [NAVIGATION_SCREENS.NEW_ADD_BALANCE]: undefined;
+  [NAVIGATION_SCREENS.CRYPTO_WITHDRAW]: undefined;
+  [NAVIGATION_SCREENS.NEW_CONTACTS_SCREEN]: undefined;
+  [NAVIGATION_SCREENS.NEW_ADD_CONTACT_SCREEN]: undefined;
+  [NAVIGATION_SCREENS.NEW_BANK_STATEMENT_SCREEN]: undefined;
+  [NAVIGATION_SCREENS.NEW_VIEW_STATEMENT_SCREEN]: undefined;
+  [NAVIGATION_SCREENS.NEW_REWARDS_AND_REFERRALS_SCREEN]: undefined;
+  [NAVIGATION_SCREENS.NEW_SCRATCH_CARD_SCREEN]: { points: number; voucherId: string };
 };

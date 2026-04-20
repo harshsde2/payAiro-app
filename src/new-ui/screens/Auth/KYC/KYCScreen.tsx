@@ -1,34 +1,26 @@
 import React, { useState, useCallback, useRef } from "react";
-import { View, TouchableOpacity, Pressable, Text as RNText } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { useDispatch } from "react-redux";
 import {
-  setLogin,
-  setShowLoader,
   setUserData,
-  setWalletData,
-} from "redux/slices/authenticationSlice";
+} from "redux/slices/newBackendAuthSlice";
+import { setProfileCompleted } from "redux/slices/newOnboardingSlice";
 import { useTheme } from "@new-ui/styles/ThemeContext";
 import { kycStyles } from "@new-ui/styles/screens/auth/kycStyles";
 import CustomText from "@new-ui/components/common-components/CustomText";
 import { TextInput, Button } from "@new-ui/components/common-components/layout";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
-import { ICountryCode } from "@new-ui/components/general-components/CountryCodePicker";
 import {
   KYCScreenNavigationProp,
   KYCScreenRouteProp,
 } from "@new-ui/screens/Auth/types";
 import { AppIcon } from "@new-ui/assets/svgs";
 import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
-import CommonModal from "tsx-components/modals/CommonModal";
-import { SvgIcons } from "constants/svgs";
-import { usePatchUserDetails } from "query/hooks/useAPIAuth";
-import { useWalletDetails } from "query/hooks";
-import { validateEmail, validatePhoneNumber } from "utils/validation";
+import { useUserProfileUpdate } from "query/hooks/useAPIAuth";
+import { validateEmail } from "utils/validation";
 import { showError, showSuccess } from "utils/toast";
-import { setItem, STORAGE_KEYS } from "storage/mmkv";
-import { setWalletDataAuth } from "services/Auth";
 
 const KYCScreen: React.FC = () => {
   const navigation = useNavigation<KYCScreenNavigationProp>();
@@ -39,35 +31,23 @@ const KYCScreen: React.FC = () => {
   const termsAndConditionRef = useRef<any>(null);
 
   const params = (route.params || {}) as {
-    fullName?: string;
+    firstName?: string;
+    lastName?: string;
     email?: string;
-    phone?: string;
-    inputType?: "email" | "phone" | "invalid";
-    isEmail?: boolean;
     data?: any;
   };
 
-  const [fullName, setFullName] = useState(params.fullName || "");
-  const [selectedCountry, setSelectedCountry] = useState<ICountryCode>({
-    name: 'United States',
-    code: 'US',
-    dialCode: '+1',
-    flag: '🇺🇸',
-  });
-  const [mobile, setMobile] = useState("");
-  const [payAiroTag, setPayAiroTag] = useState("");
-  const [userEmail, setUserEmail] = useState("");
+  const [firstName, setFirstName] = useState(params.firstName || "");
+  const [lastName, setLastName] = useState(params.lastName || "");
+  const [userEmail, setUserEmail] = useState((params.email || "").toLowerCase());
+  const [dob, setDob] = useState("");
+  const [ssn, setSsn] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [checked, setChecked] = useState(false);
   const [checkedCybridUserAgreement, setCheckedCybridUserAgreement] =
     useState(false);
-  const [showInfo, setShowInfo] = useState(false);
 
-  const isSignedUpWithEmail =
-    params.inputType === "email" || !!params.email;
-
-  const { mutate: patchUser } = usePatchUserDetails();
-  const { refetch: refetchWalletDetails } = useWalletDetails(false);
+  const { mutate: patchUser } = useUserProfileUpdate();
 
   const handleProceed = () => {
     handleForm();
@@ -93,65 +73,42 @@ const KYCScreen: React.FC = () => {
     });
   };
 
-  const getWalletDetails = async () => {
-    dispatch(setShowLoader(true));
-    try {
-      const res = await refetchWalletDetails();
-      const payload = (res as any)?.data;
-
-      if (payload?.data) {
-        dispatch(setWalletData(payload.data));
-        setWalletDataAuth(payload.data);
-        setItem(STORAGE_KEYS.WALLET_DATA, JSON.stringify(payload.data));
-        dispatch(setLogin(true));
-        showSuccess("Create Account Successfully");
-      } else {
-        showError("Failed to fetch wallet details");
-      }
-    } finally {
-      dispatch(setShowLoader(false));
-    }
-  };
-
   const handleForm = () => {
-    const trimmedFullName = fullName.trim();
-    const trimmedTag = payAiroTag.trim();
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
+    const trimmedEmail = userEmail.trim().toLowerCase();
+    const trimmedDob = dob.trim();
+    const trimmedSsn = ssn.trim();
 
-    if (!trimmedFullName || !trimmedTag) {
+    if (
+      !trimmedFirstName ||
+      !trimmedLastName ||
+      !trimmedEmail ||
+      !trimmedDob ||
+      !trimmedSsn
+    ) {
       showError("Fields cannot be empty", "Please fill all required fields");
       return;
     }
 
-    const [firstName, ...rest] = trimmedFullName.split(" ");
-    const lastName = rest.join(" ").trim();
-
-    if (!firstName || !lastName) {
+    const emailValidation = validateEmail(trimmedEmail);
+    if (!emailValidation.isValid) {
       showError(
-        "Name is incomplete",
-        "Please enter both first name and last name"
+        emailValidation.errorMessage || "Invalid email",
+        emailValidation.helperText || ""
       );
       return;
     }
 
-    if (isSignedUpWithEmail) {
-      const phoneValidation = validatePhoneNumber(mobile);
-      if (!phoneValidation.isValid) {
-        showError(
-          phoneValidation.errorMessage || "Invalid phone number",
-          phoneValidation.helperText || ""
-        );
-        return;
-      }
-    } else {
-      const emailValidation = validateEmail(userEmail);
-      if (!emailValidation.isValid) {
-        showError(
-          emailValidation.errorMessage || "Invalid email",
-          emailValidation.helperText || ""
-        );
-        return;
-      }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmedDob)) {
+      showError("Invalid DOB format", "Please use YYYY-MM-DD format");
+      return;
     }
+
+    // if (!/^\d{3}-\d{2}-\d{4}$/.test(trimmedSsn)) {
+    //   showError("Invalid SSN format", "Please use XXX-XX-XXXX format");
+    //   return;
+    // }
 
     if (!checked) {
       showError(
@@ -170,17 +127,12 @@ const KYCScreen: React.FC = () => {
     }
 
     const payload: any = {
-      name: firstName,
-      usernames: trimmedTag,
-      lastname: lastName,
-      patriot_esign: checked,
+      first_name: trimmedFirstName,
+      last_name: trimmedLastName,
+      email: trimmedEmail,
+      dob: trimmedDob,
+      ssn: trimmedSsn,
     };
-
-    if (isSignedUpWithEmail) {
-      payload.mobile_number = mobile;
-    } else {
-      payload.email = userEmail.trim().toLowerCase();
-    }
 
     setIsPending(true);
 
@@ -190,72 +142,22 @@ const KYCScreen: React.FC = () => {
         dispatch(setUserData(datas?.data));
 
         if (datas && datas?.status) {
-          showSuccess("Name & PayAiro Has Been Updated Successfully");
-
-          if (datas?.fortress === true) {
-            navigation.navigate(NAVIGATION_SCREENS.ADDRESS);
-          } else {
-            await getWalletDetails();
-          }
+          showSuccess("Profile updated successfully");
+          dispatch(setProfileCompleted(true));
+          navigation.navigate(NAVIGATION_SCREENS.NEW_ADDRESS);
         } else {
-          showError("Username Already Exists");
+          showError("Failed to update profile");
         }
       },
       onError: (error: any) => {
         setIsPending(false);
-
-        const mobileErrors = error?.response?.data?.errors?.mobile_number;
-        const usernameErrors = error?.response?.data?.errors?.usernames;
-
-        if (Array.isArray(mobileErrors) && mobileErrors.length > 0) {
-          showError(mobileErrors[0]);
-        } else if (Array.isArray(usernameErrors) && usernameErrors.length > 0) {
-          showError(usernameErrors[0]);
-        } else {
-          showError("Failed to submit details");
-        }
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to submit details";
+        showError(errorMessage);
       },
     });
-  };
-
-  const renderCountryCodeSelector = () => {
-    return (
-      <TouchableOpacity
-        style={styles.countryCodeContainer}
-        activeOpacity={0.7}
-      >
-        <CustomText style={styles.countryFlag}>
-          {selectedCountry.flag}
-        </CustomText>
-        <CustomText
-          variant="body"
-          fontFamily="inter"
-          color={theme.colors.text}
-          style={styles.countryCodeText}
-        >
-          {selectedCountry.dialCode}
-        </CustomText>
-        <AppIcon.ChevronDown width={16} height={16} />
-      </TouchableOpacity>
-    );
-  };
-
-  const renderPayAiroSuffix = () => {
-    return (
-      <TouchableOpacity
-        style={styles.payAiroSuffix}
-        onPress={() => setShowInfo(true)}
-        activeOpacity={0.7}
-      >
-        <CustomText
-          variant="body"
-          fontFamily="inter"
-          color={theme.colors.text}
-        >
-          @payairo
-        </CustomText>
-      </TouchableOpacity>
-    );
   };
 
   return (
@@ -267,50 +169,6 @@ const KYCScreen: React.FC = () => {
       contentStyle={styles.content}
     >
       <TermAndConditionModal ref={termsAndConditionRef} />
-      <CommonModal
-        isVisible={showInfo}
-        onClose={() => setShowInfo(false)}
-        containerStyle={{ justifyContent: "center" }}
-      >
-        <Pressable onPress={(e) => e.stopPropagation()}>
-          <View
-            style={{
-              backgroundColor: theme.colors.white,
-              borderRadius: 20,
-              padding: 24,
-              marginHorizontal: 20,
-              maxWidth: "90%",
-              alignSelf: "center",
-            }}
-          >
-            <TouchableOpacity
-              style={{ alignSelf: "flex-end", padding: 4, marginBottom: 8 }}
-              onPress={() => setShowInfo(false)}
-            >
-              <SvgIcons.CrossIcon width={24} height={24} />
-            </TouchableOpacity>
-            <CustomText
-              variant="h3"
-              fontWeight="semiBold"
-              style={{ textAlign: "center", marginBottom: 8 }}
-            >
-              PayAiro Tag
-            </CustomText>
-            <CustomText
-              variant="body"
-              style={{
-                textAlign: "center",
-                lineHeight: 20,
-                color: theme.colors.textSecondary,
-              }}
-            >
-              Your PayAiro tag is like a username for payments. Share it with
-              others so they can send you money quickly and securely, without
-              needing your account details.
-            </CustomText>
-          </View>
-        </Pressable>
-      </CommonModal>
       <View style={styles.subtitleContainer}>
         <CustomText variant="h2" style={styles.subtitle} fontWeight="semiBold">
           Details
@@ -329,48 +187,51 @@ const KYCScreen: React.FC = () => {
 
       <View style={styles.inputContainer}>
         <TextInput
-          label="Full Name"
-          placeholder="e.g. John Carter"
-          value={fullName}
-          onChangeText={setFullName}
+          label="First Name"
+          placeholder="e.g. Jane"
+          value={firstName}
+          onChangeText={setFirstName}
         />
       </View>
 
-      {isSignedUpWithEmail ? (
-        <View style={styles.inputContainer}>
-          <TextInput
-            label="Mobile"
-            placeholder="e.g. 112 34567"
-            value={mobile}
-            onChangeText={setMobile}
-            keyboardType="phone-pad"
-            maxLength={10}
-            leftIcon={renderCountryCodeSelector()}
-            showLeftSeparator={true}
-          />
-        </View>
-      ) : (
-        <View style={styles.inputContainer}>
-          <TextInput
-            label="Email Address"
-            placeholder="Enter your email address"
-            value={userEmail}
-            onChangeText={setUserEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
-      )}
+      <View style={styles.inputContainer}>
+        <TextInput
+          label="Last Name"
+          placeholder="e.g. Doe"
+          value={lastName}
+          onChangeText={setLastName}
+        />
+      </View>
 
       <View style={styles.inputContainer}>
         <TextInput
-          label="PayAiro Tag"
-          placeholder="e.g. john.c323"
-          value={payAiroTag}
-          onChangeText={setPayAiroTag}
+          label="Email Address"
+          placeholder="jane.doe@example.com"
+          value={userEmail}
+          onChangeText={setUserEmail}
+          keyboardType="email-address"
           autoCapitalize="none"
-          rightIcon={renderPayAiroSuffix()}
-          showRightSeparator={true}
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          label="Date of Birth"
+          placeholder="YYYY-MM-DD"
+          value={dob}
+          onChangeText={setDob}
+          autoCapitalize="none"
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          label="SSN"
+          placeholder="123-45-6789"
+          value={ssn}
+          onChangeText={setSsn}
+          autoCapitalize="none"
+          keyboardType="number-pad"
         />
       </View>
 
@@ -461,7 +322,7 @@ const KYCScreen: React.FC = () => {
       </View>
       <View style={styles.buttonContainer}>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.skipKYCContainer}
           onPress={handleSkipKYC}
           activeOpacity={0.7}
@@ -476,7 +337,7 @@ const KYCScreen: React.FC = () => {
             Skip KYC
           </CustomText>
           <AppIcon.ArrowRight width={16} height={16} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <Button
           onPress={handleProceed}

@@ -83,12 +83,12 @@ export const SETTINGS_LISTS = [
   //   isDisvled: false,
   //   route: "AddCard",
   // },
-  {
-    name: "Bank Statement",
-    icon: <SvgIcons.BankStatement />,
-    isDisvled: false,
-    route: NAVIGATION_SCREENS.STATEMENT,
-  },
+  // {
+  //   name: "Bank Statement",
+  //   icon: <SvgIcons.BankStatement />,
+  //   isDisvled: false,
+  //   route: NAVIGATION_SCREENS.STATEMENT,
+  // },
   {
     name: "Rewards & Referrals",
     icon: <View style={{backgroundColor: themes.dark.colors.palette.green700, justifyContent: 'center', alignItems: 'center',borderRadius: 25,width: 55,height:45}}>
@@ -109,12 +109,12 @@ export const SETTINGS_LISTS = [
     isDisvled: false,
     route: "",
   },
-  {
-    name: "Cybrid User Agreement",
-    icon: <SvgIcons.UserPolicy width={55} height={55} />,
-    isDisvled: false,
-    route: "",
-  },
+  // {
+  //   name: "Cybrid User Agreement",
+  //   icon: <SvgIcons.UserPolicy width={55} height={55} />,
+  //   isDisvled: false,
+  //   route: "",
+  // },
   {
     name: "Support",
     icon: <SvgIcons.ChatSupport />,

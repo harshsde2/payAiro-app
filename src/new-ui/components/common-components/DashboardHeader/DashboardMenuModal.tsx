@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
-import { Modal, Pressable, View, TouchableOpacity } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Modal, Pressable, View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Button } from '@new-ui/components/common-components/layout';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 import CustomText from '@new-ui/components/common-components/CustomText';
 import { AppIcon } from '@new-ui/assets/svgs';
@@ -23,6 +24,7 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
 }) => {
   const { theme } = useTheme();
   const styles = dashboardHeaderStyles(theme) as any;
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const unreadLabel =
     typeof unreadCount === 'number' && unreadCount > 0
@@ -37,7 +39,7 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
         key: 'notification' as const,
         label: 'Notification',
         icon: <AppIcon.Notification width={18} height={18} />,
-        screen: 'NOTIFICATION' as ScreenKey,
+        screen: 'NEW_NOTIFICATION_SCREEN' as ScreenKey,
         badgeLabel: unreadLabel,
       },
       {
@@ -46,24 +48,24 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
         icon: <AppIcon.User width={18} height={18} />,
         screen: 'NEW_PERSONAL' as ScreenKey,
       },
-      // {
-      //   key: 'settings' as const,
-      //   label: 'Settings',
-      //   icon: <AppIcon.Settings width={18} height={18} />,
-      //   screen: 'SETTING_SCREEN' as ScreenKey,
-      // },
+      {
+        key: 'settings' as const,
+        label: 'Settings',
+        icon: <AppIcon.Settings width={18} height={18} />,
+        screen: 'NEW_SETTINGS_SCREEN' as ScreenKey,
+      },
       {
         key: 'support' as const,
         label: 'Support',
         icon: <AppIcon.Headphones width={18} height={18} />,
         screen: 'SUPPORT_SCREEN' as ScreenKey,
       },
-      {
-        key: 'about' as const,
-        label: 'About',
-        icon: <AppIcon.HelpCircle width={18} height={18} />,
-        screen: 'COMING_SOON' as ScreenKey,
-      },
+      // {
+      //   key: 'about' as const,
+      //   label: 'About',
+      //   icon: <AppIcon.HelpCircle width={18} height={18} />,
+      //   screen: 'COMING_SOON' as ScreenKey,
+      // },
     ],
     [unreadLabel]
   );
@@ -72,7 +74,22 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
     onNavigate(screen);
   };
 
+  const handleLogoutPress = () => {
+    onClose();
+    setShowLogoutConfirm(true);
+  };
+
+  const handleLogoutConfirm = () => {
+    setShowLogoutConfirm(false);
+    onNavigate('LOGIN');
+  };
+
+  const handleLogoutCancel = () => {
+    setShowLogoutConfirm(false);
+  };
+
   return (
+    <>
     <Modal
       visible={visible}
       transparent
@@ -113,7 +130,7 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
             <TouchableOpacity
               style={styles.menuItem}
               activeOpacity={0.7}
-              onPress={() => handlePress('LOGIN')}
+              onPress={handleLogoutPress}
             >
               <View style={styles.menuItemLeft}>
                 <AppIcon.LogOut width={18} height={18} />
@@ -129,8 +146,101 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
         </View>
       </Pressable>
     </Modal>
+
+    <Modal
+      visible={showLogoutConfirm}
+      transparent
+      animationType="slide"
+      onRequestClose={handleLogoutCancel}
+    >
+      <Pressable style={logoutModalStyles.backdrop} onPress={handleLogoutCancel}>
+        <Pressable style={[logoutModalStyles.sheet, { backgroundColor: theme.colors.white }]} onPress={() => {}}>
+          <CustomText variant="h4" fontWeight="bold" style={logoutModalStyles.title}>
+            Logout
+          </CustomText>
+
+          <View style={logoutModalStyles.warningBox}>
+            <CustomText variant="body" style={logoutModalStyles.warningIcon}>⚠️</CustomText>
+            <CustomText
+              variant="body"
+              size={14}
+              fontWeight="regular"
+              color="#8B6914"
+              style={logoutModalStyles.warningText}
+            >
+              This will remove all accounts and clear all data from the app.
+            </CustomText>
+          </View>
+
+          <View style={logoutModalStyles.buttonRow}>
+            <Button
+              color={theme.colors.primary}
+              borderRadius={999}
+              height={52}
+              style={{ flex: 1 }}
+              onPress={handleLogoutCancel}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              color={theme.colors.error}
+              borderRadius={999}
+              height={52}
+              style={{ flex: 1 }}
+              onPress={handleLogoutConfirm}
+            >
+              Logout
+            </Button>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+    </>
   );
 };
+
+const logoutModalStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+    paddingBottom: 40,
+    paddingHorizontal: 15,
+  },
+  sheet: {
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 28,
+    paddingBottom: 40,
+    gap: 20,
+  },
+  title: {
+    textAlign: 'center',
+  },
+  warningBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF8E1',
+    borderColor: '#FFD54F',
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    gap: 10,
+  },
+  warningIcon: {
+    fontSize: 20,
+  },
+  warningText: {
+    flex: 1,
+    textAlign: 'center',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+});
 
 export default DashboardMenuModal;
 

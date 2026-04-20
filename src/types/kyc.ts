@@ -16,6 +16,7 @@ export const toKycMode = (raw?: IKycStatusPayload | null): KycMode => {
   if (str === "pending") return "pending";
   if (str === "expired") return "expired";
   if (str === "approved") return "approved";
+  if (str === "succeeded" || str === "completed") return "approved";
 
   if (raw.status === true) return "approved";
   if (raw.status === false) return "pending";

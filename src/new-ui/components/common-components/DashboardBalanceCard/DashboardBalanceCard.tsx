@@ -166,7 +166,7 @@ const DashboardBalanceCard: React.FC<IDashboardBalanceCardProps> = ({
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.accountDetailsLink}
             onPress={handleAccountDetailsPress}
             activeOpacity={0.7}
@@ -174,7 +174,7 @@ const DashboardBalanceCard: React.FC<IDashboardBalanceCardProps> = ({
             <CustomText style={[styles.accountDetailsText, { color: theme.colors.primary }]}>
               Account Details
             </CustomText>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         <View style={styles.footerContainer}>

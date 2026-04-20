@@ -74,7 +74,7 @@ export const useAllBankAccounts = () => {
 /**
  * Hook to get bank account balances
  */
-export const useBankBalances = () => {
+export const useBankBalances = ({ enabled = false }: { enabled?: boolean } = {}) => {
   const dispatch = useDispatch();
   const { walletData } = useSelectorAction() as any;
   const isFortress = walletData?.fortress;
@@ -86,6 +86,7 @@ export const useBankBalances = () => {
       const response = await apiClient.get<ApiResponse<any>>(url);
       return response.data;
     },
+    enabled,
     staleTime: queryStaleTime.VERY_FAST_STALE_TIME, // 5 second
   });
 

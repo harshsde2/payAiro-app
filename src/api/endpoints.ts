@@ -144,3 +144,21 @@ export const MERCHANT = {
 export const CHAT = {
   SEND_MESSAGE: "chat/send-message/",
 };
+
+// FastAPI (users + onboarding) endpoints
+// NOTE: These are relative to `USER_API_BASE_URL` (no host, no leading slash).
+export const USER_AUTH = {
+  OTP_REQUEST: "api/v1/users/auth/otp/request/",
+  OTP_VERIFY: "api/v1/users/auth/otp/verify/",
+  TOKEN_REFRESH: "api/v1/users/auth/token/refresh/",
+  PROFILE_UPDATE: "api/v1/users/profile/update/",
+  ADDRESS_UPDATE: "api/v1/users/address/update/",
+  USERS_ME: "api/v1/users/me/",
+  CRYPTO_MARKET: "api/v1/integrations/crypto/market/",
+  CRYPTO_BALANCE: "api/v1/integrations/crypto/balance/",
+  CRYPTO_CHART: "api/v1/integrations/crypto/chart/",
+  PAYMENT_TRANSACTIONS_SEND: "api/v1/payment-transactions/send/",
+  PAYMENT_METHODS: "api/v1/integrations/payment-methods/",
+  WALLET_ADDRESSES: "api/v1/wallets/addresses/",
+};
+ 

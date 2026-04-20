@@ -86,7 +86,7 @@ const UnifiedTransactionScreen: React.FC<IUnifiedTransactionScreenProps> = () =>
     data: pendingRequestsData, 
     isLoading: isLoadingPendingPaymentRequests, 
     refetch: refetchPendingPaymentRequests 
-  } = usePendingPaymentRequests();
+  } = usePendingPaymentRequests(false);
 
 
   // console.log("pendingRequestsData =>", JSON.stringify(pendingRequestsData, null, 2));

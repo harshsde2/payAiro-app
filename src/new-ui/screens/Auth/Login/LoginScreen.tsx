@@ -9,7 +9,7 @@ import { TextInput, Button } from "@new-ui/components/common-components/layout";
 import { AppIcon } from "@new-ui/assets/svgs";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
 import { LoginScreenNavigationProp } from "@new-ui/screens/Auth/types";
-import { useLogin } from "query/hooks/useAPIAuth";
+import { useUserOtpRequest } from "query/hooks/useAPIAuth";
 import { showError, showSuccess } from "utils/toast";
 import { validateEmailOrPhone } from "utils/validation";
 import { getSmsHash } from "utils/smsHash";
@@ -28,7 +28,7 @@ const LoginScreen: React.FC = () => {
   const [smsHash, setSmsHash] = useState("");
 
   const isProductionEnv = isProduction();
-  const { mutate: login, isPending } = useLogin();
+  const { mutate: otpRequest, isPending } = useUserOtpRequest();
 
   useEffect(() => {
     const fetchSmsHash = async () => {
@@ -68,7 +68,8 @@ const LoginScreen: React.FC = () => {
       ? "Email address not found"
       : "Phone number not found";
 
-    login(payload as any, {
+    console.log("payload =>", JSON.stringify(payload, null, 2));
+    otpRequest(payload as any, {
       onSuccess: (data) => {
         setButtonDisabled(false);
         if (data?.status && data) {
@@ -122,17 +123,17 @@ const LoginScreen: React.FC = () => {
             label={
               isProductionEnv
                 ? appContent.login.emailLabel
-                : "Enter your email or phone number"
+                : "Enter phone number"
             }
-            leftIcon={<AppIcon.Mail />}
+            leftIcon={<View style={{ flexDirection: 'row', alignItems: 'center', gap: 1, }} > <CustomText>+</CustomText> <CustomText>1</CustomText>  </View>}
             placeholder={
               isProductionEnv
                 ? appContent.login.emailPlaceholder
-                : "e.g. john@email.com or 9876543210"
+                : "Enter number"
             }
             value={emailOrPhone}
             onChangeText={setEmailOrPhone}
-            keyboardType="email-address"
+            keyboardType="phone-pad"
             autoCapitalize="none"
           />
         </View>
@@ -162,7 +163,7 @@ const LoginScreen: React.FC = () => {
 
         <TouchableOpacity
           style={styles.forgotPasswordLink}
-          onPress={() => navigation.navigate(NAVIGATION_SCREENS.SUPPORT_SCREEN)}
+          onPress={() => (navigation as any).navigate(NAVIGATION_SCREENS.SUPPORT_SCREEN)}
         >
           <CustomText fontFamily="inter" size={12} color={theme.colors.primary}>
             Having trouble logging in? Recover your account

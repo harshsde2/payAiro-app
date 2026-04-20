@@ -233,11 +233,11 @@ export default function Settings2() {
                     return;
                   }
                   if (i.name === 'Change Pin') {
-                    if(kycStatus?.state === 'approved' || kycStatus?.status == true) {
-                      navigation.navigate(NAVIGATION_SCREENS.CHANGE_PIN_SCREEN);
-                    } else {
-                      showError('KYC is Pending');
-                    }
+                    // if(kycStatus?.state === 'approved' || kycStatus?.status == true) {
+                      navigation.navigate(NAVIGATION_SCREENS.FORGOT_PIN_SCREEN);
+                    // } else {
+                    //   showError('KYC is Pending');
+                    // }
                     return;
                   }
                   if (i.name === 'Forgot Pin') {

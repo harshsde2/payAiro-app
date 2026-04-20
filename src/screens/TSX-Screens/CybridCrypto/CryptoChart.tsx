@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { CartesianChart, Line, useChartPressState } from 'victory-native';
 import { PaintStyle, Path, Skia, vec } from '@shopify/react-native-skia';
 import { axisOptions, padding, xKey, yKeys } from 'tsx-components/performance-chart/config';
@@ -19,6 +19,11 @@ interface CryptoChartProps {
   showHeader?: boolean;
   lineColor?: string;
   fillArea?: boolean;
+  /** Controlled period tab (0 = 1D … 4 = All). Parent refetches chart data on change. */
+  selectedPeriodIndex?: number;
+  onPeriodChange?: (index: number) => void;
+  /** True while React Query is refetching chart for a new period. */
+  chartFetching?: boolean;
 }
 
 const CryptoChart: React.FC<CryptoChartProps> = ({
@@ -28,6 +33,9 @@ const CryptoChart: React.FC<CryptoChartProps> = ({
   showHeader = false,
   lineColor,
   fillArea = true,
+  selectedPeriodIndex,
+  onPeriodChange,
+  chartFetching = false,
 }) => {
   const { theme } = useTheme();
   const { performanceData, isLoading, error } = useCryptoPerformance({
@@ -36,17 +44,19 @@ const CryptoChart: React.FC<CryptoChartProps> = ({
     priceChange,
   });
 
-  const [selectedTimelineIndex, setSelectedTimelineIndex] = useState(2); // Default to '1M'
+  const [internalPeriodIndex, setInternalPeriodIndex] = useState(0);
+  const selectedTimelineIndex =
+    selectedPeriodIndex !== undefined ? selectedPeriodIndex : internalPeriodIndex;
   const [currentData, setCurrentData] = useState<ChartDataPoint[]>([]);
 
   const { state, isActive } = useChartPressState({ x: 0, y: { y: 0 } });
 
   const chartColor = lineColor || theme.colors.palette.red500;
 
-  const updateChartData = (index: number) => {
+  const updateChartData = () => {
     if (!performanceData) return;
 
-    const period = performanceData.periods[index];
+    const period = performanceData.periods[0];
     if (period && period.series && period.series.length > 0) {
       const chartData = period.series.map((item, idx) => ({
         x: idx,
@@ -61,8 +71,11 @@ const CryptoChart: React.FC<CryptoChartProps> = ({
   };
 
   const handleTimelineChange = (newIndex: number) => {
-    if (newIndex !== selectedTimelineIndex) {
-      setSelectedTimelineIndex(newIndex);
+    if (newIndex === selectedTimelineIndex) return;
+    if (onPeriodChange) {
+      onPeriodChange(newIndex);
+    } else {
+      setInternalPeriodIndex(newIndex);
     }
   };
 
@@ -78,9 +91,9 @@ const CryptoChart: React.FC<CryptoChartProps> = ({
 
   useEffect(() => {
     if (performanceData) {
-      updateChartData(selectedTimelineIndex);
+      updateChartData();
     }
-  }, [performanceData, selectedTimelineIndex]);
+  }, [performanceData]);
 
   // Helper function to render a chart
   const renderChart = (data: ChartDataPoint[], chartState: any) => {
@@ -230,7 +243,19 @@ const CryptoChart: React.FC<CryptoChartProps> = ({
       )}
 
       {dataPointsCount >= 2 ? (
-        <View style={[styles.cartisianContainer]}>
+        <View style={[styles.cartisianContainer, { position: 'relative' }]}>
+          {chartFetching && (
+            <View
+              style={{
+                ...StyleSheet.absoluteFillObject,
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: 'rgba(255,255,255,0.65)',
+                zIndex: 10,
+              }}>
+              <ActivityIndicator size="large" color={chartColor} />
+            </View>
+          )}
           {renderChart(currentData, state)}
         </View>
       ) : (
@@ -267,6 +292,7 @@ const CryptoChart: React.FC<CryptoChartProps> = ({
           return (
             <TouchableOpacity
               key={period}
+              disabled={chartFetching}
               onPress={() => handleTimelineChange(index)}
               style={[
                 styles.timelineSelectorItem,
@@ -277,6 +303,7 @@ const CryptoChart: React.FC<CryptoChartProps> = ({
                       : theme.colors.palette.white,
                   borderWidth: selectedTimelineIndex === index ? 0 : 1,
                   borderColor: theme.colors.border.default,
+                  opacity: chartFetching ? 0.6 : 1,
                 },
               ]}
               activeOpacity={0.8}>

@@ -91,9 +91,9 @@ const CryptoAssetsList: React.FC<ICryptoAssetsListProps> = ({
           <CustomText variant="body" style={styles.usdValue} fontWeight="semiBold">
             ${typeof usdValue === 'number' ? usdValue.toFixed(2) : '0.00'}
           </CustomText>
-          <CustomText variant="caption" style={styles.availableText}>
+          {/* <CustomText variant="caption" style={styles.availableText}>
             Pending: {pendingBalance}
-          </CustomText>
+          </CustomText> */}
         </View>
       </TouchableOpacity>
     );

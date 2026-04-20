@@ -28,6 +28,9 @@ import AnimatedBootSplashV3 from "./src/screens/TSX-Screens/AnimatedBootSplash/A
 import { getWalletDataAuth } from "./src/services/Auth";
 import { getMechentPay } from "./src/services/Services";
 import { getItem, setItem, STORAGE_KEYS } from "./src/storage/mmkv";
+import { userApiClient } from "./src/api/userApiClient";
+import { USER_AUTH } from "./src/api/endpoints";
+import { setAuthBootstrapFromUserMe } from "./src/redux/slices/newBackendAuthSlice";
 import { ThemeProvider } from "./src/styles";
 import { ThemeProvider as NewUIThemeProvider } from "./src/new-ui/styles/ThemeContext";
 import GlobalLoader from "./src/tsx-components/GlobalLoader";
@@ -54,18 +57,7 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { GorhomBottomSheetProvider } from "@new-ui/components/common-components/GorhomBottomSheet";
 
 export default function App() {
-  // ========== ENVIRONMENT CONFIG VERIFICATION ==========
-  // This log helps verify environment configuration is working
-  // Remove or comment out after verification
-  // if (__DEV__) {
-  //   console.log("=== ENVIRONMENT CONFIG TEST ===");
-  //   console.log("ENV_NAME:", EnvConfig.ENV_NAME);
-  //   console.log("ENV_TYPE:", EnvConfig.ENV_TYPE);
-  //   console.log("API_BASE_URL:", EnvConfig.API_BASE_URL);
-  //   console.log("APP_NAME:", EnvConfig.APP_NAME);
-  //   console.log("=================================");
-  // }
-  // ====================================================
+  
   // -------------------- Redux State --------------------
   const { isLogin, tokens, showLoader, isCrypto } =
     useSelector((state) => state.authenticationSlice);
@@ -113,16 +105,32 @@ export default function App() {
     const allCryptoBalances = getItem(STORAGE_KEYS.ALL_CRYPTO_BALANCES) || null;
     // setItem(STORAGE_KEYS.GUIDE, JSON.stringify(true));
 
+    // console.log("token =>", token);
     // const redeem = getItem(STORAGE_KEYS.REDEEM_REWARD);
     const wallet = await getWalletDataAuth();
 
-    if (token && wallet) {
+    if (token) {
       // Store token in MMKV for React Query
       // setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(token));]
       // console.log("Token:", token?.token);
       useDispatchAction(setTokens(JSON.parse(token)));
       useDispatchAction(setShowGuide(JSON.parse(guide)));
-      useDispatchAction(setWalletData(wallet));
+
+      // FastAPI profile bootstrap (new backend): `/api/v1/users/me/`
+      try {
+        const me = await userApiClient.get(USER_AUTH.USERS_ME);
+        if (me?.ok && me?.data) {
+          setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(me?.data?.user || {}));
+          useDispatchAction(setAuthBootstrapFromUserMe(me.data));
+        }
+      } catch (e) {
+        // Keep legacy behavior as fallback if profile bootstrap fails.
+        console.log("[App] Failed to fetch /users/me:", e?.message || e);
+      }
+
+      if (wallet) {
+        useDispatchAction(setWalletData(wallet));
+      }
       getMerchentRequest(token);
       useDispatchAction(setLogin(true));
 
