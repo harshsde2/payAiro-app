@@ -5,31 +5,37 @@ import CustomText from '@new-ui/components/common-components/CustomText';
 import Button from '@new-ui/components/common-components/layout/Button';
 import { enterAmountStyles } from '@new-ui/styles/screens/send/enterAmountStyles';
 
+type CryptoReceiptVariant = 'full' | 'fiatOnly';
+
 type CryptoReceiptModalProps = {
   visible: boolean;
   onClose: () => void;
   onPayNow: () => void;
-  tokenSymbol: string;
-  tokenAmount: number; // token units
-  priceUSD: number;
   usdAmount: number;
   feePercent: number;
+  variant?: CryptoReceiptVariant;
+  /** Required when variant is `full` (default). */
+  tokenSymbol?: string;
+  tokenAmount?: number;
+  priceUSD?: number;
 };
 
 const CryptoReceiptModal: React.FC<CryptoReceiptModalProps> = ({
   visible,
   onClose,
   onPayNow,
-  tokenSymbol,
-  tokenAmount,
-  priceUSD,
+  tokenSymbol = '',
+  tokenAmount = 0,
+  priceUSD = 0,
   usdAmount,
   feePercent,
+  variant = 'full',
 }) => {
   const { theme } = useTheme();
   const styles = enterAmountStyles(theme);
   const feeAmount = useMemo(() => (usdAmount * feePercent) / 100, [feePercent, usdAmount]);
   const total = useMemo(() => usdAmount + feeAmount, [feeAmount, usdAmount]);
+  const isFiatOnly = variant === 'fiatOnly';
 
   if (!visible) return null;
 
@@ -41,32 +47,37 @@ const CryptoReceiptModal: React.FC<CryptoReceiptModalProps> = ({
             Summary
           </CustomText>
 
-          <View style={styles.cryptoReceiptRow}>
-            <CustomText variant="caption" fontWeight="light" style={styles.cryptoReceiptLabel}>
-              Token
-            </CustomText>
-            <CustomText>{tokenSymbol}</CustomText>
-          </View>
+          {!isFiatOnly ? (
+            <>
+              <View style={styles.cryptoReceiptRow}>
+                <CustomText variant="caption" fontWeight="light" style={styles.cryptoReceiptLabel}>
+                  Token
+                </CustomText>
+                <CustomText>{tokenSymbol}</CustomText>
+              </View>
+
+              <View style={styles.cryptoReceiptRow}>
+                <CustomText variant="caption" fontWeight="light" style={styles.cryptoReceiptLabel}>
+                  Amount
+                </CustomText>
+                <CustomText>
+                  {tokenAmount > 0 ? tokenAmount.toFixed(8).replace(/\.?0+$/, '') : '0.00'}{' '}
+                  {tokenSymbol}
+                </CustomText>
+              </View>
+
+              <View style={styles.cryptoReceiptRow}>
+                <CustomText variant="caption" fontWeight="light" style={styles.cryptoReceiptLabel}>
+                  Price per {tokenSymbol}
+                </CustomText>
+                <CustomText>${priceUSD.toFixed(2)}</CustomText>
+              </View>
+            </>
+          ) : null}
 
           <View style={styles.cryptoReceiptRow}>
             <CustomText variant="caption" fontWeight="light" style={styles.cryptoReceiptLabel}>
-              Amount
-            </CustomText>
-            <CustomText>
-              {tokenAmount > 0 ? tokenAmount.toFixed(8).replace(/\.?0+$/, '') : '0.00'} {tokenSymbol}
-            </CustomText>
-          </View>
-
-          <View style={styles.cryptoReceiptRow}>
-            <CustomText variant="caption" fontWeight="light" style={styles.cryptoReceiptLabel}>
-              Price per {tokenSymbol}
-            </CustomText>
-            <CustomText>${priceUSD.toFixed(2)}</CustomText>
-          </View>
-
-          <View style={styles.cryptoReceiptRow}>
-            <CustomText variant="caption" fontWeight="light" style={styles.cryptoReceiptLabel}>
-              Subtotal
+              {isFiatOnly ? 'Amount' : 'Subtotal'}
             </CustomText>
             <CustomText>${usdAmount.toFixed(2)}</CustomText>
           </View>
@@ -89,7 +100,7 @@ const CryptoReceiptModal: React.FC<CryptoReceiptModalProps> = ({
 
           <View style={styles.cryptoReceiptButtonArea}>
             <Button onPress={onPayNow} height={46} loading={false}>
-              Pay Now
+              Proceed
             </Button>
 
             <TouchableOpacity
@@ -114,4 +125,3 @@ const CryptoReceiptModal: React.FC<CryptoReceiptModalProps> = ({
 };
 
 export default CryptoReceiptModal;
-

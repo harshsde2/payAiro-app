@@ -13,6 +13,9 @@ declare module 'react-native-config' {
    * Maps to variables defined in .env files
    */
   export interface NativeConfig {
+    /** Allow any .env key; known keys are listed below for autocomplete. */
+    [key: string]: string | undefined;
+
     // API Configuration
     API_BASE_URL?: string;
     API_TIMEOUT?: string;
@@ -41,6 +44,12 @@ declare module 'react-native-config' {
     // Development Settings
     SHOW_ENV_BANNER?: string;
     ALLOW_DEV_TOOLS?: string;
+
+    // Coinme Risk SDK (iOS native bridge)
+    COINME_CLIENT_ID?: string;
+    COINME_PARTNER_ID?: string;
+    /** "test" | "prod"; falls back to `__DEV__ ? "test" : "prod"`. */
+    COINME_MODE?: string;
   }
 
   /**

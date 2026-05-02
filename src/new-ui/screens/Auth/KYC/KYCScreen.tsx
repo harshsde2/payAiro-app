@@ -39,6 +39,7 @@ const KYCScreen: React.FC = () => {
 
   const [firstName, setFirstName] = useState(params.firstName || "");
   const [lastName, setLastName] = useState(params.lastName || "");
+  const [username, setUsername] = useState("");
   const [userEmail, setUserEmail] = useState((params.email || "").toLowerCase());
   const [dob, setDob] = useState("");
   const [ssn, setSsn] = useState("");
@@ -76,6 +77,7 @@ const KYCScreen: React.FC = () => {
   const handleForm = () => {
     const trimmedFirstName = firstName.trim();
     const trimmedLastName = lastName.trim();
+    const trimmedUsername = username.trim();
     const trimmedEmail = userEmail.trim().toLowerCase();
     const trimmedDob = dob.trim();
     const trimmedSsn = ssn.trim();
@@ -83,6 +85,7 @@ const KYCScreen: React.FC = () => {
     if (
       !trimmedFirstName ||
       !trimmedLastName ||
+      !trimmedUsername ||
       !trimmedEmail ||
       !trimmedDob ||
       !trimmedSsn
@@ -112,8 +115,8 @@ const KYCScreen: React.FC = () => {
 
     if (!checked) {
       showError(
-        "Terms & Conditions are required",
-        "Please accept the terms and conditions"
+        "Terms of Service are required",
+        "Please accept the terms of service"
       );
       return;
     }
@@ -129,6 +132,7 @@ const KYCScreen: React.FC = () => {
     const payload: any = {
       first_name: trimmedFirstName,
       last_name: trimmedLastName,
+      username: trimmedUsername,
       email: trimmedEmail,
       dob: trimmedDob,
       ssn: trimmedSsn,
@@ -200,6 +204,16 @@ const KYCScreen: React.FC = () => {
           placeholder="e.g. Doe"
           value={lastName}
           onChangeText={setLastName}
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          label="PayAiro Tag"
+          placeholder="e.g. you@example.com"
+          value={username}
+          onChangeText={setUsername}
+          autoCapitalize="none"
         />
       </View>
 
@@ -297,17 +311,6 @@ const KYCScreen: React.FC = () => {
             <CustomText variant="caption">
               By clicking the button you agree with the
             </CustomText>
-            {" "}
-            <CustomText
-              onPress={handlePDFViewCybridUserAgreement}
-              fontFamily="inter"
-              variant="bodySmall"
-              color={theme.colors.primary}
-            >
-              {" "}
-              Cybrid User Agreement{" "}
-            </CustomText>
-            {"and"}
             <CustomText
               onPress={handlePDFViewAMLPolicy}
               fontFamily="inter"

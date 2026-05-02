@@ -9,18 +9,56 @@ type RecipientHeaderProps = {
   recipient_identifier: string;
   type?: 'request' | 'send';
   selectedContact?: ISendContactItem;
+  mode?: 'send' | 'trade';
+  tradeMode?: 'buy' | 'sell';
+  assetSymbol?: string;
+  pricePreview?: string;
+  /** Fiat-style withdrawal: no asset ticker or per-coin price line. */
+  fiatCashout?: boolean;
+  fiatCashoutTitle?: string;
+  fiatCashoutSubtitle?: string;
 };
 
-const RecipientHeader: React.FC<RecipientHeaderProps> = ({ recipient_identifier, type, selectedContact }) => {
+const RecipientHeader: React.FC<RecipientHeaderProps> = ({
+  recipient_identifier,
+  type,
+  selectedContact,
+  mode = 'send',
+  tradeMode,
+  assetSymbol,
+  pricePreview,
+  fiatCashout = false,
+  fiatCashoutTitle = 'Withdraw',
+  fiatCashoutSubtitle = 'Funds go to your selected debit card.',
+}) => {
   const { theme } = useTheme();
   const styles = enterAmountStyles(theme);
-  console.log("selectedContact =>", JSON.stringify(selectedContact, null, 2));
 
+  const isTradeFlow = mode === 'trade';
   const isRequestFlow = type === 'request';
-  const title = useMemo(
-    () => (isRequestFlow ? 'Requesting from' : 'Paying'),
-    [isRequestFlow]
-  );
+
+  const title = useMemo(() => {
+    if (fiatCashout && isTradeFlow) {
+      return fiatCashoutTitle;
+    }
+    if (isTradeFlow) {
+      return tradeMode === 'sell' ? 'Selling' : 'Buying';
+    }
+    return isRequestFlow ? 'Requesting from' : 'Paying';
+  }, [fiatCashout, fiatCashoutTitle, isTradeFlow, tradeMode, isRequestFlow]);
+
+  const trailingLine1 = fiatCashout && isTradeFlow
+    ? ''
+    : isTradeFlow
+      ? (assetSymbol || '').toUpperCase()
+      : selectedContact?.nickname || '';
+
+  const line2 =
+    fiatCashout && isTradeFlow
+      ? fiatCashoutSubtitle
+      : isTradeFlow
+        ? pricePreview || ''
+        : recipient_identifier;
 
   return (
     <View style={styles.headerArea}>
@@ -32,9 +70,11 @@ const RecipientHeader: React.FC<RecipientHeaderProps> = ({ recipient_identifier,
         >
           {title}
         </CustomText>
-        <CustomText fontWeight="semiBold" size={18}>
-          {selectedContact?.nickname}
-        </CustomText>
+        {trailingLine1 ? (
+          <CustomText fontWeight="semiBold" size={18}>
+            {trailingLine1}
+          </CustomText>
+        ) : null}
       </View>
       <CustomText
         variant="caption"
@@ -42,7 +82,7 @@ const RecipientHeader: React.FC<RecipientHeaderProps> = ({ recipient_identifier,
         color={theme.colors.primary}
         style={styles.identifier}
       >
-        {recipient_identifier}
+        {line2}
       </CustomText>
     </View>
   );

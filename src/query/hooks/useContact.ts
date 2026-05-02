@@ -3,7 +3,8 @@ import Contacts from "react-native-contacts";
 import { ApiResponse, RecentContact, User } from "../../api/types";
 import { userContactKeys } from "query/queryKeys";
 import { apiClient } from "api";
-import { AUTH } from "api/endpoints";
+import { AUTH, USER_AUTH } from "api/endpoints";
+import { userApiClient } from "api/userApiClient";
 import { Platform } from "react-native";
 import { queryStaleTime } from "query/queryConfigs";
 import { useAppLock } from "hooks/useAppLock";
@@ -163,5 +164,61 @@ export const useUserSearch = (
     },
     enabled: !!query && query.length >= minCharacters,
     staleTime: 30000, // 30 seconds
+  });
+};
+
+/** FastAPI `GET /api/v1/users/search/` (relative to USER_API_BASE_URL). */
+export interface IFastApiUserSearchUser {
+  id: number;
+  username: string;
+  payairo_tag: string | null;
+  first_name: string;
+  last_name: string;
+  avatar_url: string | null;
+}
+
+export interface IFastApiUserSearchData {
+  query: string;
+  count: number;
+  users: IFastApiUserSearchUser[];
+}
+
+export interface IFastApiUserSearchResponse {
+  ok: boolean;
+  message: string;
+  data: IFastApiUserSearchData;
+}
+
+const emptyFastApiUserSearch: IFastApiUserSearchResponse = {
+  ok: true,
+  message: "",
+  data: { query: "", count: 0, users: [] },
+};
+
+/**
+ * Search users on FastAPI (`userApiClient`, Bearer token).
+ * @param limit — capped at 25 to match typical API max.
+ */
+export const useFastApiUsersSearch = (
+  query: string,
+  limit: number,
+  minCharacters: number = 1
+) => {
+  const apiLimit = Math.min(Math.max(limit, 1), 25);
+
+  return useQuery<IFastApiUserSearchResponse>({
+    queryKey: userContactKeys.fastApiUsersSearch(query, apiLimit),
+    queryFn: async () => {
+      if (!query || query.length < minCharacters) {
+        return emptyFastApiUserSearch;
+      }
+
+      const qs = `?q=${encodeURIComponent(query)}&limit=${apiLimit}`;
+      return userApiClient.get<IFastApiUserSearchResponse>(
+        `${USER_AUTH.USERS_SEARCH}${qs}`
+      );
+    },
+    enabled: !!query && query.length >= minCharacters,
+    staleTime: 30000,
   });
 };

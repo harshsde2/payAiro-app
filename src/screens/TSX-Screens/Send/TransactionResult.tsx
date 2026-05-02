@@ -80,6 +80,55 @@ const keyLabels = {
   Transaction_fee_persentage: "Transaction Fee",
 } as const;
 
+// Label map used when rendering a Coinme buy/sell trade response (detected
+// via `transactionData.meta.tradeType`). Keys are read from `meta` plus a
+// few opportunistic fields from `data.transaction` / `data.quote`.
+const coinmeTradeKeyLabels = {
+  tradeType: "Trade Type",
+  cryptoCurrencyCode: "Crypto Currency",
+  fiatCurrencyCode: "Fiat Currency",
+  chain: "Network",
+  quoteId: "Quote ID",
+  providerId: "Provider ID",
+  customerId: "Customer ID",
+  paymentMethodId: "Payment Method ID",
+  webSessionId: "Session ID",
+} as const;
+
+type CoinmeTradeResponse = {
+  ok?: boolean;
+  message?: string;
+  data?: {
+    quote?: Record<string, any>;
+    transaction?: Record<string, any>;
+  };
+  meta?: {
+    tradeType?: "buy" | "sell";
+    chain?: string;
+    cryptoCurrencyCode?: string;
+    fiatCurrencyCode?: string;
+    customerId?: string;
+    paymentMethodId?: string;
+    providerId?: string;
+    quoteId?: string;
+    webSessionId?: string;
+    [k: string]: any;
+  };
+};
+
+const isCoinmeTradeResponse = (tx: any): tx is CoinmeTradeResponse => {
+  return !!(tx && tx.meta && typeof tx.meta.tradeType === "string");
+};
+
+const formatTradeLabel = (key: string, value: any): string => {
+  if (value === null || value === undefined || value === "") return "";
+  if (key === "tradeType") {
+    const v = String(value).toLowerCase();
+    return v === "buy" ? "Buy" : v === "sell" ? "Sell" : String(value);
+  }
+  return String(value);
+};
+
 const TransactionResult: FC = () => {
   const route = useRoute();
   const navigation = useNavigation<any>();
@@ -129,10 +178,23 @@ const TransactionResult: FC = () => {
     }
   };
 
+  const isCoinmeTrade = isCoinmeTradeResponse(transactionData);
+
   const getTransactionStatus = () => {
     if (showLoader) return 'loading';
-    if (transactionData?.status === true || isSuccess) return 'success';
-    if (transactionData?.status === false || isError) return 'failed';
+    // Coinme trade response uses `ok` instead of `status`.
+    if (
+      transactionData?.status === true ||
+      (transactionData as any)?.ok === true ||
+      isSuccess
+    )
+      return 'success';
+    if (
+      transactionData?.status === false ||
+      (transactionData as any)?.ok === false ||
+      isError
+    )
+      return 'failed';
     return 'unknown';
   };
 
@@ -228,7 +290,7 @@ const TransactionResult: FC = () => {
     // Use custom description if provided
     if (customDescription) {
       return (
-        <CustomText variant="subtitle2" style={styles.description}>
+        <CustomText variant="body" style={styles.description}>
           {customDescription}
         </CustomText>
       );
@@ -242,6 +304,25 @@ const TransactionResult: FC = () => {
           </CustomText>
         );
       case 'success':
+        if (isCoinmeTrade) {
+          const tradeMeta = (transactionData as any)?.meta || {};
+          const verb = tradeMeta.tradeType === 'sell' ? 'Sell' : 'Buy';
+          const crypto = tradeMeta.cryptoCurrencyCode || 'crypto';
+          const fiat = tradeMeta.fiatCurrencyCode || 'USD';
+          return (
+            <CustomText variant="caption" size={16} fontFamily="inter" style={styles.description}>
+              Your{' '}
+              <CustomText size={16} variant="caption" fontWeight="semiBold" color={newTheme.colors.primary} fontFamily="inter">
+                {verb}
+              </CustomText>
+              {' '}of{' '}
+              <CustomText size={16} variant="caption" fontWeight="semiBold" color={newTheme.colors.primary} fontFamily="inter">
+                {crypto}
+              </CustomText>
+              {' '}({fiat}) has been completed.
+            </CustomText>
+          );
+        }
         return (
           <CustomText variant="caption" size={16} fontFamily="inter" style={styles.description}>
             Your payment of <CustomText size={16} variant="caption" fontWeight="semiBold" color={newTheme.colors.primary} fontFamily="inter" >{`$${(transactionData as any)?.data?.amount || 0}`}</CustomText> has successfully sent to <CustomText size={16} variant="caption" fontWeight="semiBold" color={newTheme.colors.primary} fontFamily="inter" >{(transactionData as any)?.data?.recipient_username || 'N/A'}</CustomText>.
@@ -263,8 +344,92 @@ const TransactionResult: FC = () => {
   };
 
   const renderTransactionDetails = () => {
-    // Don't show transaction details when showing custom messages (like payment request success)
-    if (showLoader || !transactionData?.data || customTitle || customDescription) return null;
+    if (showLoader || !transactionData) return null;
+
+    // Coinme buy/sell: render a dedicated list built from `meta` (plus a few
+    // opportunistic fields from `data.transaction` / `data.quote`). This
+    // renders even when `customTitle` is provided because the Coinme flow
+    // passes "Purchase Submitted" / "Sale Submitted" as the title.
+    if (isCoinmeTrade) {
+      const tx = transactionData as any as CoinmeTradeResponse;
+      const meta = tx.meta || {};
+      const transaction = tx.data?.transaction || {};
+      const quote = tx.data?.quote || {};
+
+      const metaRows = Object.entries(coinmeTradeKeyLabels)
+        .map(([key, label]) => {
+          const raw = (meta as any)[key];
+          const value = formatTradeLabel(key, raw);
+          return value ? { label, value } : null;
+        })
+        .filter(Boolean) as { label: string; value: string }[];
+
+      // Try a handful of common fields from the transaction/quote sub-objects.
+      const extraRows: { label: string; value: string }[] = [];
+      const pushIf = (label: string, value: any) => {
+        if (value === null || value === undefined || value === "") return;
+        extraRows.push({ label, value: String(value) });
+      };
+      pushIf(
+        "Transaction ID",
+        (transaction as any).id || (transaction as any).transactionId
+      );
+      pushIf("Status", (transaction as any).status);
+      pushIf(
+        "Fiat Amount",
+        (transaction as any).fiatAmount ?? (quote as any).fiatAmount
+      );
+      pushIf(
+        "Crypto Amount",
+        (transaction as any).cryptoAmount ?? (quote as any).cryptoAmount
+      );
+      pushIf(
+        "Rate",
+        (quote as any).rate ?? (quote as any).price ?? (quote as any).exchangeRate
+      );
+      pushIf("Fee", (transaction as any).fee ?? (quote as any).fee);
+      const ts =
+        (transaction as any).completedAt ||
+        (transaction as any).createdAt ||
+        (quote as any).createdAt;
+      if (ts) {
+        const m = moment(ts);
+        pushIf("Timestamp", m.isValid() ? m.format("DD MMM YYYY  h:mm A") : ts);
+      }
+
+      const displayArray = [...extraRows, ...metaRows];
+      if (displayArray.length === 0) return null;
+
+      return (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={styles.detailsContainer}
+        >
+          <View style={{ borderColor: newTheme.colors.greyLight2, borderWidth: 1, borderRadius: newTheme.spacing.base, paddingHorizontal: newTheme.spacing.md, paddingVertical: newTheme.spacing.xsm }}>
+            {displayArray.map((item, index) => (
+              <View key={index} style={styles.detailRow}>
+                <CustomText size={14} variant="caption" style={styles.detailLabel}>
+                  {item.label}
+                </CustomText>
+                <CustomText
+                  ellipsizeMode="tail"
+                  style={styles.detailValue}
+                  numberOfLines={1}
+                  size={14}
+                  fontWeight="semiBold"
+                >
+                  {item.value}
+                </CustomText>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      );
+    }
+
+    // Don't show legacy transaction details when showing custom messages
+    // (like payment request success).
+    if (!transactionData?.data || customTitle || customDescription) return null;
 
     // Handle different response structures
     // For crypto transactions: data.data.transaction
@@ -315,7 +480,7 @@ const TransactionResult: FC = () => {
                   style={styles.detailValue}
                   numberOfLines={1}
                   size={14}
-                  variant="subtitle2"
+                  variant="body"
                 >
                   {item.value || "N/A"}
                 </CustomText>

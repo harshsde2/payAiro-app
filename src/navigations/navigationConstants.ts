@@ -45,6 +45,7 @@ export const NAVIGATION_SCREENS = {
   NEW_SEND: "NewSend",
   NEW_ADD_BALANCE: "NewAddBalance",
   NEW_SETTINGS_SCREEN: "NewSettingsScreen",
+  NEW_COINME_AGREEMENT_SCREEN: "NewCoinmeAgreementScreen",
   NEW_NOTIFICATION_SCREEN: "NewNotificationScreen",
   RECEIVE: "Receive",
   REWARDS: "Rewards",
@@ -146,4 +147,5 @@ export const NAVIGATION_SCREENS = {
   NEW_VIEW_STATEMENT_SCREEN: "NewViewStatementScreen",
   NEW_REWARDS_AND_REFERRALS_SCREEN: "NewRewardsAndReferralsScreen",
   NEW_SCRATCH_CARD_SCREEN: "NewScratchCardScreen",
+  NEW_ACTIVITY_SCREEN: "NewActivityScreen",
 } as const;

@@ -121,7 +121,7 @@ export default function Name(props: any) {
     }
 
     if (!checked) {
-      showError("Terms & Conditions are required", "Please accept the terms and conditions");
+      showError("Terms of Service are required", "Please accept the terms of service");
       return;
     }
 

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { isAxiosError } from "axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../../api";
 import { AUTH, USER_AUTH } from "../../api/endpoints";
@@ -11,6 +12,7 @@ import { setItem, getItem, STORAGE_KEYS } from "../../storage/mmkv";
 import { useSelector } from "react-redux";
 import { userApiClient } from "api/userApiClient";
 import { ICryptoAssetItem } from "new-ui/components/common-components/CryptoAssetsList/types";
+import type { SendHistoryResponse } from "new-ui/components/common-components/RecentActivityCard/types";
 import {
   mergeCryptoMarketWithBalances,
   type ICryptoFastApiBalanceRow,
@@ -29,6 +31,8 @@ export const cryptoKeys = {
   userCryptoMarket: (fiat: string) => [...cryptoKeys.all, "userCryptoMarket", fiat] as const,
   userCryptoBalance: () => [...cryptoKeys.all, "userCryptoBalance"] as const,
   walletAddresses: () => [...cryptoKeys.all, "walletAddresses"] as const,
+  paymentTransactionHistory: (scope: string, limit: number) =>
+    [...cryptoKeys.all, "paymentTransactionHistory", scope, limit] as const,
 };
 
 /** FastAPI GET /api/v1/wallets/addresses/ */
@@ -52,6 +56,9 @@ interface IUserCryptoMarketItem {
   currency_name?: string;
   price?: string | number;
   usd_price?: string | number;
+  high?: string | number;
+  low?: string | number;
+  change_24h?: string | number;
   icon_url?: string;
 }
 
@@ -82,34 +89,45 @@ interface IUserCryptoChartResponse {
   };
 }
 
-export interface PaymentTransactionSendPayload {
-  type: "external";
-  amount: string;
-  currency: string;
-  chain: string;
-  destinationWalletAddress: string;
-}
-
-export interface PaymentTransactionSendResponse {
-  message: string;
-  data: {
-    transaction: {
-      partnerTransactionId: string;
-      transactionStatus: string;
-    };
-    paymentTransaction: {
-      id: number;
-      type: string;
-      status: string;
+export type PaymentTransactionSendPayload =
+  | {
+      type: "external";
+      amount: string;
       currency: string;
       chain: string;
-      amount: string;
       destinationWalletAddress: string;
-      providerTransactionId: string;
-      providerStatus: string;
+    }
+  | {
+      type: "internal";
+      amount: string;
+      currency: string;
+      chain: string;
+      recipientUserId: string;
+      recipientWalletAddress?: string;
+    };
+
+export interface PaymentTransactionSendResponse {
+  message?: string;
+  ok?: boolean;
+  status?: boolean;
+  data?: {
+    transaction?: {
+      partnerTransactionId?: string;
+      transactionStatus?: string;
+    };
+    paymentTransaction?: {
+      id?: number;
+      type?: string;
+      status?: string;
+      currency?: string;
+      chain?: string;
+      amount?: string;
+      destinationWalletAddress?: string;
+      providerTransactionId?: string;
+      providerStatus?: string;
     };
   };
-  errorResponse: unknown;
+  errorResponse?: unknown;
 }
 
 export interface IUserCryptoChartPoint {
@@ -169,16 +187,19 @@ export function buildCryptoChartQueryString(
   return `${USER_AUTH.CRYPTO_CHART}?currency=${c}&fiat=${f}&range=custom&interval=${interval}&start_ts=${startTs}&end_ts=${endTs}`;
 }
 
+const toFiniteNumber = (value: unknown): number | undefined => {
+  const n = Number(value ?? NaN);
+  return Number.isFinite(n) ? n : undefined;
+};
+
 const mapMarketItemToCryptoListItem = (
   item: IUserCryptoMarketItem
 ): ICryptoAssetItem => {
-  const parsedPrice = Number(item?.price ?? 0);
-  const parsedUsdPrice = Number(item?.usd_price ?? item?.price ?? 0);
-  const unitUsd = Number.isFinite(parsedUsdPrice)
-    ? parsedUsdPrice
-    : Number.isFinite(parsedPrice)
-      ? parsedPrice
-      : 0;
+  const parsedPrice = toFiniteNumber(item?.price);
+  const parsedUsdPrice = toFiniteNumber(item?.usd_price) ?? parsedPrice ?? 0;
+  const high = toFiniteNumber(item?.high);
+  const low = toFiniteNumber(item?.low);
+  const change = toFiniteNumber(item?.change_24h);
 
   return {
     asset: item?.currency ?? "",
@@ -188,7 +209,10 @@ const mapMarketItemToCryptoListItem = (
     platform_total_balance: 0,
     usd_value_total: 0,
     usd_value_available: 0,
-    usd_price: unitUsd,
+    usd_price: parsedUsdPrice,
+    high,
+    low,
+    change_24h: change,
     platform_pending: 0,
   };
 };
@@ -215,6 +239,19 @@ export const useUserCryptoMarketList = (fiat: string = "USD") => {
   });
 };
 
+const isCoinmeOnboardingBalanceError = (error: unknown): boolean => {
+  if (!isAxiosError(error) || error.response?.status !== 400) return false;
+  const body = error.response?.data as
+    | { errorResponse?: { message?: string } }
+    | undefined;
+  const msg = String(body?.errorResponse?.message ?? "").toLowerCase();
+  return (
+    msg.includes("coinme") ||
+    msg.includes("caas") ||
+    msg.includes("onboarding")
+  );
+};
+
 export const useUserCryptoBalanceFastApi = () => {
   const isLogin = useSelector(
     (state: any) => state.authenticationSlice?.isLogin === true
@@ -223,10 +260,17 @@ export const useUserCryptoBalanceFastApi = () => {
   return useQuery<ICryptoFastApiBalanceRow[]>({
     queryKey: cryptoKeys.userCryptoBalance(),
     queryFn: async () => {
-      const response = await userApiClient.get<IUserCryptoBalanceApiBody>(
-        USER_AUTH.CRYPTO_BALANCE
-      );
-      return response?.data?.cryptoAssetsBalance ?? [];
+      try {
+        const response = await userApiClient.get<IUserCryptoBalanceApiBody>(
+          USER_AUTH.CRYPTO_BALANCE
+        );
+        return response?.data?.cryptoAssetsBalance ?? [];
+      } catch (e) {
+        if (isCoinmeOnboardingBalanceError(e)) {
+          return [];
+        }
+        throw e;
+      }
     },
     staleTime: queryStaleTime.INSTANT_STALE_TIME,
     gcTime: CRYPTO_LIST_GC_TIME_MS,
@@ -266,6 +310,8 @@ export const useCryptoAssetsListData = (fiat: string = "USD") => {
     isMarketLoading: marketQuery.isLoading,
     isBalanceLoading: balanceQuery.isLoading,
     isBalanceFetching: balanceQuery.isFetching,
+    isRefetchingCrypto:
+      marketQuery.isRefetching || balanceQuery.isRefetching,
     refetchMarket: marketQuery.refetch,
     refetchBalance: balanceQuery.refetch,
   };
@@ -515,6 +561,69 @@ export const usePaymentTransactionSend = () => {
     mutationFn: async (payload) => {
       return await userApiClient.post<PaymentTransactionSendResponse>(
         USER_AUTH.PAYMENT_TRANSACTIONS_SEND,
+        payload
+      );
+    },
+  });
+};
+
+export const usePaymentTransactionHistory = (
+  scope: "all" | "sent" | "received" = "all",
+  limit: number = 20
+) => {
+  return useQuery<SendHistoryResponse>({
+    queryKey: cryptoKeys.paymentTransactionHistory(scope, limit),
+    queryFn: () =>
+      userApiClient.get<SendHistoryResponse>(
+        `${USER_AUTH.PAYMENT_TRANSACTIONS_SEND_HISTORY}?limit=${limit}&scope=${scope}`
+      ),
+    staleTime: queryStaleTime.INSTANT_STALE_TIME,
+  });
+};
+
+// ---------------------------------------------------------------------------
+// Coinme trade execute (FastAPI)
+// ---------------------------------------------------------------------------
+
+export type CoinmeTradeType = "buy" | "sell";
+
+export interface CoinmeTradeExecutePayload {
+  tradeType: CoinmeTradeType;
+  /** Wallet chain, e.g. "ETH". */
+  chain: string;
+  /** Asset symbol, e.g. "BTC". */
+  cryptoCurrencyCode: string;
+  /** Fiat code, e.g. "USD". */
+  fiatCurrencyCode: string;
+  /** Amount as string (decimal). */
+  amountValue: string;
+  /** Either fiatCurrencyCode (for buy) or cryptoCurrencyCode (for sell). */
+  amountCurrencyCode: string;
+  paymentMethodId: string;
+  sourceWalletAddress: string;
+  /** From `PayAiroCoinmeRisk.getPartnerSessionTag()` — the one value that must
+   *  be regenerated per trade. */
+  webSessionId: string;
+}
+
+export interface CoinmeTradeExecuteResponse {
+  ok?: boolean;
+  status?: boolean;
+  message?: string;
+  data?: any;
+  errorResponse?: unknown;
+}
+
+/**
+ * Execute a Coinme buy / sell trade via the new FastAPI endpoint.
+ * Must be called after the Coinme Risk SDK has produced a fresh
+ * `webSessionId` for this transaction (see `fetchWebSessionId`).
+ */
+export const useCoinmeTradeExecute = () => {
+  return useMutation<CoinmeTradeExecuteResponse, Error, CoinmeTradeExecutePayload>({
+    mutationFn: async (payload) => {
+      return await userApiClient.post<CoinmeTradeExecuteResponse>(
+        USER_AUTH.COINME_TRADE_EXECUTE,
         payload
       );
     },

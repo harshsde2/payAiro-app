@@ -68,7 +68,7 @@ const LoginScreen: React.FC = () => {
       ? "Email address not found"
       : "Phone number not found";
 
-    console.log("payload =>", JSON.stringify(payload, null, 2));
+    // console.log("payload =>", JSON.stringify(payload, null, 2));
     otpRequest(payload as any, {
       onSuccess: (data) => {
         setButtonDisabled(false);
@@ -125,7 +125,12 @@ const LoginScreen: React.FC = () => {
                 ? appContent.login.emailLabel
                 : "Enter phone number"
             }
-            leftIcon={<View style={{ flexDirection: 'row', alignItems: 'center', gap: 1, }} > <CustomText>+</CustomText> <CustomText>1</CustomText>  </View>}
+            leftIcon={
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 1 }}>
+                <CustomText>+</CustomText>
+                <CustomText>1</CustomText>
+              </View>
+            }
             placeholder={
               isProductionEnv
                 ? appContent.login.emailPlaceholder

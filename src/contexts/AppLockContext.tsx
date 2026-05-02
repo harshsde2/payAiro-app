@@ -1,9 +1,11 @@
 import React, { createContext, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { useSelector } from 'react-redux';
-import { getPin, getNumber, setNumber, removeItem, STORAGE_KEYS } from 'storage/mmkv';
+import { getPin, setPin, getNumber, setNumber, removeItem, STORAGE_KEYS } from 'storage/mmkv';
 import { getBiometric, setBiometric } from 'services/Auth';
-import { getUserLock } from 'services/Services';
+import { userApiClient } from 'api/userApiClient';
+import { USER_AUTH } from 'api/endpoints';
+import { showError } from 'utils/toast';
 import { AppLockContextType } from 'types/appLock.types';
 import { LOCK_CONFIG } from 'types/appLock.types';
 
@@ -11,6 +13,7 @@ import { LOCK_CONFIG } from 'types/appLock.types';
 export const AppLockContext = createContext<AppLockContextType | undefined>(undefined);
 
 const GRACE_PERIOD_MS = LOCK_CONFIG.GRACE_PERIOD_MS;
+const PIN_SETUP_REMINDER_MS = 10 * 60 * 1000;
 
 // Provider props
 interface AppLockProviderProps {
@@ -23,7 +26,10 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
   const [hasPin, setHasPin] = useState(false);
   const [showPinScreen, setShowPinScreen] = useState(false);
   const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
-  const [paymentVerificationRequest, setPaymentVerificationRequest] = useState<{ onVerified: () => void } | null>(null);
+  const [paymentVerificationRequest, setPaymentVerificationRequest] = useState<{
+    onVerified: () => void;
+    requirePinSetup?: boolean;
+  } | null>(null);
   const [isLockCheckComplete, setIsLockCheckComplete] = useState(false);
   const appState = useRef<AppStateStatus>(AppState.currentState);
   
@@ -43,23 +49,54 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
     wasLoggedInOnMount.current = isLogin === true;
   }
 
-  // On login (or app open while logged in), sync biometric preference from backend
+  const refreshPinStatus = useCallback(() => {
+    const storedPin = getPin();
+    const pinExists = storedPin !== undefined && storedPin.length > 0;
+    setHasPin(pinExists);
+  }, []);
+
+  const syncSecuritySettingsFromBackend = useCallback(async () => {
+    if (!isLogin || !accessToken) return { hasBackendPin: false, biometric: false };
+
+    const response = await userApiClient.get<any>(USER_AUTH.SECURITY_PIN_SETTINGS);
+    const data = response?.data || {};
+
+    const backendPin = typeof data?.pin === "string" ? data.pin : null;
+    const hasBackendPin = !!backendPin && backendPin.length > 0;
+    const biometric = data?.biometric === true;
+
+    if (hasBackendPin) {
+      const localPin = getPin();
+      // Don't overwrite local PIN with masked values from backend.
+      if (!backendPin.includes("*") && backendPin !== localPin) {
+        setPin(backendPin);
+      }
+    }
+
+    await setBiometric(biometric);
+    setIsBiometricEnabled(biometric);
+    refreshPinStatus();
+
+    return { hasBackendPin, biometric };
+  }, [isLogin, accessToken, refreshPinStatus]);
+
+  // On login (or app open while logged in), sync PIN + biometric preference from backend.
   useEffect(() => {
     if (!isLogin || !accessToken) return;
     let cancelled = false;
     (async () => {
       try {
-        const res = await getUserLock(accessToken);
+        const result = await syncSecuritySettingsFromBackend();
         if (cancelled) return;
-        const isLocked = res?.data?.is_locked ?? res?.is_locked ?? false;
-        await setBiometric(!!isLocked);
-        setIsBiometricEnabled(!!isLocked);
+        if (!result?.hasBackendPin) {
+          refreshPinStatus();
+        }
       } catch {
-        // Keep local preference on error; refreshBiometricStatus will still run below
+        // Keep local values on error.
       }
     })();
     return () => { cancelled = true; };
-  }, [isLogin, accessToken]);
+  }, [isLogin, accessToken, syncSecuritySettingsFromBackend, refreshPinStatus]);
   
   // Load user's biometric preference (same source as Settings)
   const refreshBiometricStatus = useCallback(async () => {
@@ -78,13 +115,6 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
   useEffect(() => {
     refreshBiometricStatus();
   }, [refreshBiometricStatus]);
-
-  const refreshPinStatus = useCallback(() => {
-    const storedPin = getPin();
-    // console.log('storedPin', storedPin);
-    const pinExists = storedPin !== undefined && storedPin.length > 0;
-    setHasPin(pinExists);
-  }, []);
 
   // Check PIN status on mount and when isLogin changes
   useEffect(() => {
@@ -217,9 +247,37 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
   const requestShowPinScreen = useCallback(() => setShowPinScreen(true), []);
   const resetBiometricFailures = useCallback(() => setShowPinScreen(false), []);
 
-  const requestPaymentVerification = useCallback((onVerified: () => void) => {
-    setPaymentVerificationRequest({ onVerified });
-  }, []);
+  const requestPaymentVerification = useCallback(async (onVerified: () => void) => {
+    const localPin = getPin();
+    if (localPin && localPin.length > 0) {
+      setPaymentVerificationRequest({ onVerified });
+      return;
+    }
+
+    let hasPinAfterSync = false;
+    try {
+      const security = await syncSecuritySettingsFromBackend();
+      hasPinAfterSync = security?.hasBackendPin === true;
+    } catch {
+      hasPinAfterSync = false;
+    }
+
+    const syncedPin = getPin();
+    if (hasPinAfterSync || (syncedPin && syncedPin.length > 0)) {
+      setPaymentVerificationRequest({ onVerified });
+      return;
+    }
+
+    const lastPromptAt = getNumber(STORAGE_KEYS.APP_LOCK_PIN_SETUP_PROMPT_AT);
+    const now = Date.now();
+    if (lastPromptAt !== undefined && now - lastPromptAt < PIN_SETUP_REMINDER_MS) {
+      showError("Please set your PIN to continue transactions.");
+      return;
+    }
+
+    setNumber(STORAGE_KEYS.APP_LOCK_PIN_SETUP_PROMPT_AT, now);
+    setPaymentVerificationRequest({ onVerified, requirePinSetup: true });
+  }, [syncSecuritySettingsFromBackend]);
 
   const clearPaymentVerification = useCallback(() => {
     setPaymentVerificationRequest(null);

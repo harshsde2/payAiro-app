@@ -1,16 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "../../api";
-import { AUTH } from "../../api/endpoints";
-import { UserDetailsResponse } from "../../screens/TSX-Screens/UserProfile/types";
+import { USER_AUTH } from "../../api/endpoints";
+import { userApiClient } from "../../api/userApiClient";
+import { UserProfileTransactionsResponse } from "../../screens/TSX-Screens/UserProfile/types";
 
-export const useUserDetails = (username: string) => {
-  return useQuery<UserDetailsResponse>({
-    queryKey: ["user-details", username],
+export const useUserProfileTransactions = (
+  targetUserId?: number | string,
+  limit: number = 50
+) => {
+  return useQuery<UserProfileTransactionsResponse>({
+    queryKey: ["user-profile-transactions", String(targetUserId || ""), limit],
     queryFn: async () => {
-      return await apiClient.get<UserDetailsResponse>(
-        `${AUTH.USER_DETAILS}?user=${username}`
+      return await userApiClient.get<UserProfileTransactionsResponse>(
+        USER_AUTH.USER_PROFILE_TRANSACTIONS(targetUserId as number | string, limit)
       );
     },
-    enabled: !!username,
+    enabled: !!targetUserId,
   });
 };
+
+export const useUserDetails = (targetUserId?: number | string, limit: number = 50) =>
+  useUserProfileTransactions(targetUserId, limit);

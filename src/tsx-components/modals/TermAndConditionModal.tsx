@@ -1,7 +1,12 @@
 import GenericButton from "components/GenericButton";
 import HeaderTitle from "components/HeaderTitle";
 import { SvgIcons } from "constants/svgs";
-import React, { forwardRef, useImperativeHandle, useState } from "react";
+import React, {
+  forwardRef,
+  useCallback,
+  useImperativeHandle,
+  useState,
+} from "react";
 import {
   Modal,
   SafeAreaView,
@@ -26,16 +31,27 @@ const TermAndConditionModal = forwardRef<
   const [modalHeaderTitle, setModalHeaderTitle] = useState("");
   const [conditionArray, setConditionArray] = useState<any>([]);
   const [showWebView, setShowWebView] = useState(false);
+  const [webViewUriOverride, setWebViewUriOverride] = useState<string | null>(
+    null
+  );
   const [layout, setLayout] = useState({});
   const [showButton, setShowButton] = useState(false);
   const { theme } = useTheme();
   const styles = customStyles(theme);
+
+  const dismissModal = useCallback(() => {
+    setIsVisible(false);
+    setShowWebView(false);
+    setWebViewUriOverride(null);
+    setShowButton(false);
+  }, []);
 
   useImperativeHandle(ref, () => ({
     showPatriotAct: () => {
       setIsVisible(true);
       setModalHeaderTitle("Patriot Act");
       setConditionArray(PatroitAct);
+      setWebViewUriOverride(null);
       setShowWebView(false);
       setShowButton(false);
     },
@@ -43,35 +59,43 @@ const TermAndConditionModal = forwardRef<
       setIsVisible(true);
       setModalHeaderTitle("E-Sign Disclosure");
       setConditionArray(ESignDisclosure);
+      setWebViewUriOverride(null);
       setShowWebView(false);
       setShowButton(false);
     },
     showTermsAndConditions: () => {
       setIsVisible(true);
-      setModalHeaderTitle("Terms and Conditions");
+      setModalHeaderTitle("Terms of Service");
+      setWebViewUriOverride(null);
       setShowWebView(true);
       setShowButton(true);
+    },
+    showWebDocument: (title: string, url: string) => {
+      setIsVisible(true);
+      setModalHeaderTitle(title);
+      setWebViewUriOverride(url);
+      setShowWebView(true);
+      setShowButton(false);
     },
     showConsumerDisclosure: () => {
       setIsVisible(true);
       setModalHeaderTitle("Consumer Disclosures");
       setConditionArray(ConsumerDisclosure);
+      setWebViewUriOverride(null);
       setShowWebView(false);
       setShowButton(false);
     },
     hide: () => {
       console.log("setchecked(state => !state)");
-      setIsVisible(false);
-      setShowWebView(false);
-      setShowButton(false);
+      dismissModal();
     },
-  }));
+  }), [dismissModal]);
   return (
     <Modal
       animationType="fade"
       transparent={false}
       visible={isVisible}
-      onRequestClose={() => setIsVisible(false)}
+      onRequestClose={dismissModal}
     >
       <SafeAreaView
         style={{ flex: 1, backgroundColor: theme.colors.palette.green50 }}
@@ -81,11 +105,13 @@ const TermAndConditionModal = forwardRef<
           rightIcon={<SvgIcons.CrossIcon />}
           title={modalHeaderTitle}
           isBack={true}
-          onPressRight={() => setIsVisible(false)}
+          onPressRight={dismissModal}
         />
         {showWebView ? (
           <WebView
-            source={{ uri: LINKS.termsAndConditions }}
+            source={{
+              uri: webViewUriOverride ?? LINKS.termsAndConditions,
+            }}
             style={{ flex: 1, marginTop: 20 }}
             javaScriptEnabled={true}
             domStorageEnabled={true}

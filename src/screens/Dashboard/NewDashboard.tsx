@@ -1,6 +1,16 @@
-import React, { useState } from "react";
-import { Image, NativeScrollEvent, NativeSyntheticEvent, ScrollView, View, useWindowDimensions } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  AppState,
+  Image,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  RefreshControl,
+  ScrollView,
+  View,
+  useWindowDimensions,
+} from "react-native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useTheme } from "../../styles/ThemeContext";
 import { useTheme as useNewUITheme } from "@new-ui/styles/ThemeContext";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
@@ -8,13 +18,23 @@ import DashboardHeader from "@new-ui/components/common-components/DashboardHeade
 import DashboardCardWrapper from "new-ui/components/common-components/DashboardCardWrapper";
 import CryptoAssetsList from "@new-ui/components/common-components/CryptoAssetsList";
 import DashboardBalanceCard from "new-ui/components/common-components/DashboardBalanceCard";
-import { useCryptoAssetsListData } from "query/hooks/useCrypto";
+import {
+  useCryptoAssetsListData,
+  usePaymentTransactionHistory,
+  useUserCryptoMarketList,
+} from "query/hooks/useCrypto";
+import RecentActivityCard, {
+  isTradeActivity,
+} from "@new-ui/components/common-components/RecentActivityCard";
 import DashboardSection from "tsx-components/DashboardSection";
 import GlassyWrapper from "new-ui/components/common-components/GlassyWrapper";
 import CustomText from "new-ui/components/common-components/CustomText";
 import { AppIcon } from "new-ui/assets/svgs";
 import IconWithNameContainer from "@new-ui/components/common-components/IconWithNameContainer";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { mapRecentActivityToUnified } from "query/utils/mapRecentActivityToUnified";
+
+const DASHBOARD_AUTO_REFRESH_MIN_MS = 45_000;
 
 const NewDashboard = () => {
   const { theme } = useTheme();
@@ -24,15 +44,81 @@ const NewDashboard = () => {
   const CARD_GAP = 12;
   const CARD_WIDTH = screenWidth - 30;
   const [activeCardIndex, setActiveCardIndex] = useState(0);
+  const lastAutoRefreshAtRef = useRef(0);
+  const didSkipFirstFocusRef = useRef(false);
 
   const handleCardScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const x = e.nativeEvent.contentOffset.x;
     setActiveCardIndex(Math.round(x / (CARD_WIDTH + CARD_GAP)));
   };
 
-  const { data: balances = [], isMarketLoading: isLoading } =
-    useCryptoAssetsListData("USD");
+  const {
+    data: balances = [],
+    isMarketLoading: isLoading,
+    isRefetchingCrypto,
+    refetchMarket,
+    refetchBalance,
+  } = useCryptoAssetsListData("USD");
 
+  const {
+    data: historyResponse,
+    isLoading: isHistoryLoading,
+    isRefetching: isHistoryRefetching,
+    refetch: refetchHistory,
+  } = usePaymentTransactionHistory("all", 20);
+  const { data: marketRows = [] } = useUserCryptoMarketList("USD");
+
+  const refreshAll = useCallback(() => {
+    return Promise.allSettled([
+      refetchMarket(),
+      refetchBalance(),
+      refetchHistory(),
+    ]);
+  }, [refetchMarket, refetchBalance, refetchHistory]);
+
+  const throttledAutoRefresh = useCallback(() => {
+    const now = Date.now();
+    if (now - lastAutoRefreshAtRef.current < DASHBOARD_AUTO_REFRESH_MIN_MS) {
+      return;
+    }
+    lastAutoRefreshAtRef.current = now;
+    void refreshAll();
+  }, [refreshAll]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!didSkipFirstFocusRef.current) {
+        didSkipFirstFocusRef.current = true;
+        return;
+      }
+      throttledAutoRefresh();
+    }, [throttledAutoRefresh])
+  );
+
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (next) => {
+      if (next === "active") {
+        throttledAutoRefresh();
+      }
+    });
+    return () => sub.remove();
+  }, [throttledAutoRefresh]);
+
+  const listRefreshing = isRefetchingCrypto || isHistoryRefetching;
+
+  const priceByCurrency = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const row of marketRows) {
+      const key = (row.asset ?? "").toUpperCase();
+      const price = row.usd_price;
+      if (key && typeof price === "number" && Number.isFinite(price)) {
+        map.set(key, price);
+      }
+    }
+    return map;
+  }, [marketRows]);
+
+  const recentActivityItems = historyResponse?.data?.items ?? [];
 
   const CONTACTS_DATA = [
     { id: 'add', name: 'Add Contact', avatar: null },
@@ -63,6 +149,15 @@ const NewDashboard = () => {
       safeArea
       safeAreaEdges={["top"]}
       scrollable
+      scrollViewProps={{
+        refreshControl: (
+          <RefreshControl
+            refreshing={listRefreshing}
+            onRefresh={refreshAll}
+            tintColor={newUITheme.colors.tertiary}
+          />
+        ),
+      }}
       contentStyle={{ flexGrow: 1, paddingBottom: 80, alignItems: 'center' }}
       gradient="linear"
       gradientColors={[
@@ -176,6 +271,62 @@ const NewDashboard = () => {
               ))}
             </ScrollView>
           </DashboardSection>
+          { recentActivityItems.length > 0 && (
+          <DashboardSection
+            title="Recent Activities"
+            actionText="See all"
+            onActionPress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_CONTACTS_SCREEN as never)}
+          >
+            {isHistoryLoading ? (
+              <View style={{ paddingVertical: 24, alignItems: "center" }}>
+                <ActivityIndicator color={newUITheme.colors.tertiary} />
+              </View>
+            ) : (
+              <View style={{ gap: 8 }}>
+                {recentActivityItems.slice(0, 4).map((item) => {
+                  let usdForRow: number | undefined;
+                  const activityType = String(item.activity ?? "").toUpperCase();
+                  if (isTradeActivity(item)) {
+                    const isSell =
+                      item.activity === "TRADE_SELL" || item.tradeType === "sell";
+                    if (isSell) {
+                      const k = (item.cryptoCurrencyCode ?? "").toUpperCase();
+                      usdForRow = k ? priceByCurrency.get(k) : undefined;
+                    } else {
+                      const spendCode = (item.amountCurrencyCode ?? "").toUpperCase();
+                      const fiat = (item.fiatCurrencyCode ?? "USD").toUpperCase();
+                      if (spendCode && spendCode !== fiat && spendCode !== "USD") {
+                        usdForRow = priceByCurrency.get(spendCode);
+                      }
+                    }
+                  } else {
+                    const isSendActivity = activityType === "SEND";
+                    if (!isSendActivity) {
+                      const assetKey = (item.currency ?? item.chain ?? "")
+                        .toString()
+                        .toUpperCase();
+                      usdForRow = assetKey ? priceByCurrency.get(assetKey) : undefined;
+                    }
+                  }
+                  return (
+                    <RecentActivityCard
+                      key={item.id}
+                      item={item}
+                      usdPrice={usdForRow}
+                      onPress={(selected) => {
+                        const mapped = mapRecentActivityToUnified(selected);
+                        navigation.navigate(
+                          NAVIGATION_SCREENS.NEW_TRANSACTION_DETAILS as never,
+                          { transactionData: mapped } as never
+                        );
+                      }}
+                    />
+                  );
+                })}
+              </View>
+            )}
+          </DashboardSection>
+          )}
           <DashboardSection title="Crypto">
             <CryptoAssetsList data={balances.slice(0, 5)} isLoading={isLoading} />
           </DashboardSection>

@@ -69,6 +69,7 @@ export const addBalanceStyles = (theme: ITheme) =>
       borderColor: theme.colors.border,
       borderRadius: theme.radius.lg,
       padding: theme.spacing.md,
+      minWidth: 0,
     },
     paymentIconCircle: {
       width: 48,
@@ -81,6 +82,7 @@ export const addBalanceStyles = (theme: ITheme) =>
     },
     paymentTextBlock: {
       flex: 1,
+      minWidth: 0,
     },
     addNewCard: {
       marginTop: theme.spacing.md,

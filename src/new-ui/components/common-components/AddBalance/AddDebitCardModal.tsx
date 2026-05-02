@@ -7,6 +7,8 @@ import { AppIcon } from '@new-ui/assets/svgs';
 import Button from '@new-ui/components/common-components/layout/Button';
 import TextInput from '@new-ui/components/common-components/layout/TextInput';
 import { useAddPaymentMethod } from 'query/hooks/usePaymentMethods';
+import { fetchWebSessionId, onUserLoggedIn as onCoinmeUserLoggedIn } from 'services/coinmeRiskLifecycle';
+import { useCoinmeAccountId } from 'hooks/useCoinmeAccountId';
 
 export type AddedCardResult = {
   payment_method_id: string;
@@ -38,6 +40,7 @@ const AddDebitCardModal: React.FC<AddDebitCardModalProps> = ({
   const { theme } = useTheme();
   const styles = addBalanceStyles(theme);
   const addMutation = useAddPaymentMethod();
+  const coinmeAccountId = useCoinmeAccountId();
 
   const [cardholderName, setCardholderName] = useState('');
   const [cardNumber, setCardNumber] = useState('');
@@ -73,6 +76,19 @@ const AddDebitCardModal: React.FC<AddDebitCardModalProps> = ({
       return;
     }
     try {
+      if (!coinmeAccountId) {
+        setError(
+          'Your Coinme account is not ready yet. Please complete onboarding and try again.'
+        );
+        return;
+      }
+
+      await onCoinmeUserLoggedIn(coinmeAccountId);
+
+      const webSessionId = await fetchWebSessionId({
+        accountId: coinmeAccountId,
+      });
+
       const res = await addMutation.mutateAsync({
         providerId: PROVIDER_ID,
         card: {
@@ -81,6 +97,7 @@ const AddDebitCardModal: React.FC<AddDebitCardModalProps> = ({
           year: cleanedYear,
           cvv: cleanedCvv,
         },
+        webSessionId,
         paymentProcessAssociation: 'BUY',
       });
 
@@ -105,7 +122,7 @@ const AddDebitCardModal: React.FC<AddDebitCardModalProps> = ({
         'Failed to add card. Please try again.';
       setError(String(msg));
     }
-  }, [addMutation, cleanedCardNumber, cleanedCvv, cleanedMonth, cleanedYear, onAdded, validation]);
+  }, [addMutation, cleanedCardNumber, cleanedCvv, cleanedMonth, cleanedYear, coinmeAccountId, onAdded, validation]);
 
   const isSubmitting = addMutation.isPending;
 

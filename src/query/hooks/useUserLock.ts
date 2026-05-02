@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "api";
 import { AUTH } from "api/endpoints";
 import { ApiResponse } from "api/types";
+import { userApiClient } from "api/userApiClient";
+import { USER_AUTH } from "api/endpoints";
 import { queryStaleTime } from "query/queryConfigs";
 
 export interface UserLockData {
@@ -17,6 +19,27 @@ export interface UserLockResponse {
 }
 
 const USER_LOCK_QUERY_KEY = ["userLock"] as const;
+const USER_SECURITY_PIN_QUERY_KEY = ["userSecurityPinSettings"] as const;
+
+export interface UserSecurityPinSettingsData {
+  pin: string | null;
+  biometric: boolean;
+}
+
+interface FastApiSecurityPinResponse {
+  ok: boolean;
+  message: string;
+  data: UserSecurityPinSettingsData;
+}
+
+const mapFastApiResponse = (
+  response: FastApiSecurityPinResponse
+): ApiResponse<UserSecurityPinSettingsData> => ({
+  status: !!response?.ok,
+  message: response?.message || "",
+  toast_message: response?.message || "",
+  data: response?.data || { pin: null, biometric: false },
+});
 
 /**
  * Fetches the user's app-lock (biometric) preference from the backend.
@@ -49,6 +72,42 @@ export const usePatchUserLock = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: USER_LOCK_QUERY_KEY });
+    },
+  });
+};
+
+export const useUserSecurityPinSettings = (enabled = true) => {
+  return useQuery<ApiResponse<UserSecurityPinSettingsData>>({
+    queryKey: USER_SECURITY_PIN_QUERY_KEY,
+    queryFn: async () => {
+      const response = await userApiClient.get<FastApiSecurityPinResponse>(
+        USER_AUTH.SECURITY_PIN_SETTINGS
+      );
+      return mapFastApiResponse(response);
+    },
+    staleTime: queryStaleTime.INSTANT_STALE_TIME,
+    enabled,
+  });
+};
+
+export const useUpsertUserSecurityPinSettings = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ApiResponse<UserSecurityPinSettingsData>,
+    Error,
+    { pin: string | null; biometric: boolean }
+  >({
+    mutationFn: async (payload) => {
+      const response = await userApiClient.post<FastApiSecurityPinResponse>(
+        USER_AUTH.SECURITY_PIN_SETTINGS,
+        payload,
+        false
+      );
+      return mapFastApiResponse(response);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: USER_SECURITY_PIN_QUERY_KEY });
     },
   });
 };

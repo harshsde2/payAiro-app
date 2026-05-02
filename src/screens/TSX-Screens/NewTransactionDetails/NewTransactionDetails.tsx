@@ -15,17 +15,17 @@ import Share from "react-native-share";
 import RNFS from "react-native-fs";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import moment from "moment";
-import { SvgUri } from "react-native-svg";
+import Svg, { SvgUri, Circle, Path } from "react-native-svg";
 import { useTheme, Theme } from "styles";
-import { ScreenContainer } from "HOC";
-import HeaderTitle from "components/HeaderTitle";
 import CustomText from "tsx-components/CustomText";
 import { SvgIcons } from "constants/svgs";
-import GenericButton from "components/GenericButton";
+import Button from "@new-ui/components/common-components/layout/Button";
+import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
 import { INewTransactionDetailsProps } from "./types";
 import useSelectorAction from "hooks/useSelectorAction";
 import { useAppLock } from "hooks/useAppLock";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { useTheme as useNewTheme } from "@new-ui/styles/ThemeContext";
 // OR use react-native's built-in method for Android
 
 // Typography variants for transaction slip - change these to adjust font size globally
@@ -37,9 +37,27 @@ const SLIP_VALUE_VARIANT = "caption" as const;
 const SLIP_LABEL_FONT_SIZE = 11; // Change this value to adjust label font size
 const SLIP_VALUE_FONT_SIZE = 11; // Change this value to adjust value font size
 
+const COINME_WEB_URL = "https://coinme.com";
+
+const CoinmeGlobeIcon: FC<{ color: string; size?: number }> = ({
+  color,
+  size = 14,
+}) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.4" />
+    <Path d="M12 3v18M3 12h18" stroke={color} strokeWidth="1.4" />
+    <Path
+      d="M5.5 5.5c3 4.5 3 8.5 0 13M18.5 5.5c-3 4.5-3 8.5 0 13"
+      stroke={color}
+      strokeWidth="1.2"
+    />
+  </Svg>
+);
+
 const NewTransactionDetails: FC = () => {
   const route = useRoute();
   const { theme } = useTheme();
+  const { theme: newUITheme } = useNewTheme();
   const screenshotRef = useRef<ViewShot>(null);
   const {walletData} = useSelectorAction() as any;
   const { setNativeModalVisible } = useAppLock();
@@ -68,15 +86,15 @@ const NewTransactionDetails: FC = () => {
   const isFailed = status === "failed" || status === "cancelled";
 
   let statusText = "Completed";
-  let statusBg = theme.colors.palette.green700;
+  let statusBg = newUITheme.colors.success;
 
   if (isPending) {
     statusText =
       status?.charAt(0).toUpperCase() + status?.slice(1) || "Pending";
-    statusBg = theme.colors.palette.orange500;
+    statusBg = newUITheme.colors.warning;
   } else if (isFailed) {
     statusText = status === "cancelled" ? "Cancelled" : "Failed";
-    statusBg = theme.colors.palette.red500;
+    statusBg = newUITheme.colors.error;
   }
 
   // Amount formatting
@@ -526,12 +544,12 @@ const NewTransactionDetails: FC = () => {
   };
 
   return (
-    <ScreenContainer padding={0} backgroundColor={theme.colors.palette.green50}>
-      <HeaderTitle
-        title="Transaction Details"
-        leftIcon="back"
-      />
-
+    <ScreenWrapper
+      safeArea
+      safeAreaEdges={["bottom"]}
+      backgroundColor={newUITheme.colors.white}
+      padding={0}
+    >
       <ScrollView showsVerticalScrollIndicator={false}>
         <ViewShot
           ref={screenshotRef}
@@ -915,7 +933,6 @@ const NewTransactionDetails: FC = () => {
                       </View>
                     )}
 
-                    {"//TODO: Fix this"}
                     {/* Exchange Rate */}
                     {exchangeRate && (
                       <View style={styles(theme).detailRow}>
@@ -1124,7 +1141,7 @@ const NewTransactionDetails: FC = () => {
                     </View>
 
                     {/* Network */}
-                    {cryptoNetwork && (
+                    {/* {cryptoNetwork && (
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
@@ -1142,7 +1159,7 @@ const NewTransactionDetails: FC = () => {
                           {cryptoNetwork}
                         </CustomText>
                       </View>
-                    )}
+                    )} */}
 
                     {/* From Address */}
                     {fromAddress && (
@@ -1186,7 +1203,7 @@ const NewTransactionDetails: FC = () => {
                     )}
 
                     {/* To Address */}
-                    {toAddress && (
+                    {/* {toAddress && (
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
@@ -1220,10 +1237,10 @@ const NewTransactionDetails: FC = () => {
                           />
                         </TouchableOpacity>
                       </View>
-                    )}
+                    )} */}
 
                     {/* Transaction Hash */}
-                    {txHash && (
+                    {/* {txHash && (
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
@@ -1257,7 +1274,7 @@ const NewTransactionDetails: FC = () => {
                           />
                         </TouchableOpacity>
                       </View>
-                    )}
+                    )} */}
 
                     {/* USD Value */}
                     {usdValue && (
@@ -1678,13 +1695,44 @@ const NewTransactionDetails: FC = () => {
               </View>
             )}
           </View>
+          <View style={slipStyles.coinmeFooter}>
+            <CustomText
+              variant="subtitle1"
+              fontWeight="semiBold"
+              color={theme.colors.text.primary}
+              style={slipStyles.coinmeFooterTitle}
+            >
+              Powered by Coinme
+            </CustomText>
+            <CustomText
+              variant="body2"
+              color={theme.colors.text.tertiary}
+              style={slipStyles.coinmeFooterAddress}
+            >
+              255 S. King Street Suite 800 Seattle, WA 98104
+            </CustomText>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={slipStyles.coinmeLinkRow}
+              onPress={() => Linking.openURL(COINME_WEB_URL)}
+            >
+              <CoinmeGlobeIcon color={theme.colors.palette.blue500} size={14} />
+              <CustomText
+                variant="body2"
+                color={theme.colors.palette.blue500}
+                style={slipStyles.coinmeLinkText}
+              >
+                coinme.com
+              </CustomText>
+            </TouchableOpacity>
+          </View>
         </ViewShot>
 
         <View style={{ paddingHorizontal: 20, marginBottom: 40 }}>
-          <GenericButton title="Share" onPress={handleScreenshotShare} />
+          <Button onPress={handleScreenshotShare}>{"Share"}</Button>
         </View>
       </ScrollView>
-    </ScreenContainer>
+    </ScreenWrapper>
   );
 };
 
@@ -1693,8 +1741,7 @@ const styles = (theme: Theme) =>
     headerSection: {
       alignItems: "center",
       paddingVertical: 20,
-      backgroundColor: theme.colors.palette.green50,
-      // backgroundColor: "red",
+      backgroundColor: theme.colors.palette.white,
     },
     avatarContainerBig: {
       marginBottom: 12,
@@ -1733,6 +1780,8 @@ const styles = (theme: Theme) =>
       paddingHorizontal: 20,
       paddingVertical: 10,
       marginVertical: 20,
+      borderWidth: 1,
+      borderColor: theme.colors.palette.grey300,
     },
     detailRow: {
       flexDirection: "row",
@@ -1750,9 +1799,30 @@ const styles = (theme: Theme) =>
       fontSize: SLIP_VALUE_FONT_SIZE, // Change this value to adjust value font size
     },
     screenshotContainer: {
-      backgroundColor: theme.colors.palette.green50,
+      backgroundColor: theme.colors.palette.white,
       borderRadius: 8,
       padding: 0,
+    },
+    coinmeFooter: {
+      paddingHorizontal: 20,
+      marginBottom: 40,
+      alignItems: "center",
+    },
+    coinmeFooterTitle: {
+      textAlign: "center",
+      marginBottom: 6,
+    },
+    coinmeFooterAddress: {
+      textAlign: "center",
+      marginBottom: 8,
+    },
+    coinmeLinkRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+    },
+    coinmeLinkText: {
+      marginTop: 1,
     },
   });
 

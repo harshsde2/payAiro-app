@@ -164,7 +164,7 @@ This document provides detailed user journeys and flow diagrams for all major fe
 └─────────────────────────────────────────────────────────────────┘
                               ↓
                     [Legal Screen]
-                    • Terms & Conditions (scrollable)
+                    • Terms of Service (scrollable)
                     • Privacy Policy link
                     • Checkboxes for agreements
                     • "Accept & Continue" button

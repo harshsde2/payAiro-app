@@ -79,7 +79,7 @@ console.log("isProductionEnv =>", isProductionEnv);
 
     // Check terms acceptance
     if (!isTermsAccepted) {
-      showError("Terms & Conditions are required", "Please accept the terms and conditions");
+      showError("Terms of Service are required", "Please accept the terms of service");
       return null;
     }
 
@@ -268,7 +268,7 @@ console.log("isProductionEnv =>", isProductionEnv);
                   style={styles.termsLink}
                 >
                   {" "}
-                  Terms & Conditions
+                  Terms of Service
                 </Text>
               </CustomText>
             </TouchableOpacity>

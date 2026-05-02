@@ -11,10 +11,20 @@ import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
 import { showError, showSuccess } from "utils/toast";
 import { validateEmailOrPhone } from "utils/validation";
 import { getSmsHash } from "utils/smsHash";
-import { useSignUp } from "query/hooks/useAPIAuth";
+import { useUserOtpRequest } from "query/hooks/useAPIAuth";
 import { getItem, removeItem, STORAGE_KEYS } from "storage/mmkv";
 import { isProduction } from "config/env.config";
 import PoliticalModal from "components/PolitaclModal";
+import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
+import type { TermAndConditionModalRef } from "tsx-components/modals/modal.types";
+import { LINKS } from "api/endpoints";
+
+const COINME_TERMS_URL =
+  "https://help.coinme.com/en/articles/9039676-terms-of-service";
+const COINME_PRIVACY_URL =
+  "https://help.coinme.com/en/articles/9039704-privacy-policy";
+const COINME_DISCLOSURES_URL =
+  "https://help.coinme.com/en/articles/10535881-disclosures";
 
 const CreateAccountScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -23,8 +33,9 @@ const CreateAccountScreen: React.FC = () => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [referralCode, setReferralCode] = useState("");
-  const [agreeTerms, setAgreeTerms] = useState(false);
-  const [agreePatriot, setAgreePatriot] = useState(true);
+  const [agreePayAiro, setAgreePayAiro] = useState(false);
+  const [agreeCoinme, setAgreeCoinme] = useState(false);
+  const webDocRef = useRef<TermAndConditionModalRef>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [smsHash, setSmsHash] = useState("");
   const [isPoliticallyExposed, setIsPoliticallyExposed] = useState(false);
@@ -33,7 +44,7 @@ const CreateAccountScreen: React.FC = () => {
 
 
   const isProductionEnv = isProduction();
-  const { mutate: signUp, isPending } = useSignUp();
+  const { mutate: otpRequest, isPending } = useUserOtpRequest();
 
   type SignupPayload = {
     email?: string;
@@ -77,10 +88,10 @@ const CreateAccountScreen: React.FC = () => {
       return null;
     }
 
-    if (!agreeTerms) {
+    if (!agreePayAiro || !agreeCoinme) {
       showError(
-        "Terms & conditions are required",
-        "Please accept all required terms to continue"
+        "Agreements required",
+        "Please accept both PayAiro and Coinme agreements to continue"
       );
       return null;
     }
@@ -121,10 +132,11 @@ const CreateAccountScreen: React.FC = () => {
       ? "Email address already exists"
       : "Phone number already exists";
 
-    signUp(payload as any, {
+    otpRequest(payload as any, {
       onSuccess: (data: any) => {
         setIsSubmitting(false);
         if (data?.status) {
+          console.log("data =>", JSON.stringify(data, null, 2));
           showSuccess(successMessage);
           removeItem(STORAGE_KEYS.REFERRAL_CODE);
 
@@ -145,22 +157,44 @@ const CreateAccountScreen: React.FC = () => {
           showError(errorMessage, "Please try again");
         }
       },
-      onError: () => {
+      onError: (error: any) => {
         setIsSubmitting(false);
-        showError(
-          "Failed to send OTP. Please try again",
-          "Please try again"
-        );
+        const errorMsg =
+          error?.response?.data?.message ||
+          "Failed to send OTP. Please try again";
+        showError(errorMsg, "Please try again");
       },
     });
   };
 
-  const handleTermsAcceptance = () => {
+  const openPayAiroTermsPdf = () => {
     navigation.navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
       url: require("../../../../assets/pdf/Terms_and_Conditions.pdf"),
       isFileFromLocal: true,
       fileName: "Terms_and_Conditions.pdf",
     });
+  };
+
+  const openPayAiroPrivacyPolicy = () => {
+    webDocRef.current?.showWebDocument?.(
+      "Privacy Policy",
+      LINKS.privacyPolicy
+    );
+  };
+
+  const openCoinmeTerms = () => {
+    webDocRef.current?.showWebDocument?.(
+      "Terms of Service",
+      COINME_TERMS_URL
+    );
+  };
+
+  const openCoinmeDisclosures = () => {
+    webDocRef.current?.showWebDocument?.("Disclosures", COINME_DISCLOSURES_URL);
+  };
+
+  const openCoinmePrivacy = () => {
+    webDocRef.current?.showWebDocument?.("Privacy Policy", COINME_PRIVACY_URL);
   };
 
   return (
@@ -199,13 +233,16 @@ const CreateAccountScreen: React.FC = () => {
           label={
             isProductionEnv
               ? "Enter your email"
-              : "Enter your email or phone number"
+              : "Enter phone number"
           }
-          leftIcon={<AppIcon.Mail />}
+          leftIcon={<View style={{ flexDirection: "row", alignItems: "center", gap: 1 }}>
+            <CustomText>+</CustomText>
+            <CustomText>1</CustomText>
+          </View>}
           placeholder={
             isProductionEnv
               ? "joe@gmail.com"
-              : "joe@gmail.com or 9876543210"
+              : "9876543210"
           }
           value={email}
           onChangeText={setEmail}
@@ -226,73 +263,104 @@ const CreateAccountScreen: React.FC = () => {
       </View>
 
       <View style={styles.checkboxContainer}>
-        <TouchableOpacity
-          style={styles.checkbox}
-          onPress={() => setAgreeTerms(!agreeTerms)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.checkboxIcon}>
-            {agreeTerms ? (
-              <AppIcon.TickCheckedBox />
-            ) : (
-              <AppIcon.UntickCheckedBox />
-            )}
-          </View>
+        <View style={styles.checkbox}>
+          <TouchableOpacity
+            onPress={() => setAgreePayAiro(!agreePayAiro)}
+            activeOpacity={0.7}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: agreePayAiro }}
+          >
+            <View style={styles.checkboxIcon}>
+              {agreePayAiro ? (
+                <AppIcon.TickCheckedBox />
+              ) : (
+                <AppIcon.UntickCheckedBox />
+              )}
+            </View>
+          </TouchableOpacity>
           <CustomText
             fontFamily="inter"
             variant="bodySmall"
             style={styles.checkboxText}
           >
-            By adding your number above, you accept the{" "}
+            {
+              "By adding your number above, you accept the PayAiro "
+            }
             <CustomText
               fontFamily="inter"
               variant="bodySmall"
               color={theme.colors.primary}
-              onPress={handleTermsAcceptance}
+              onPress={openPayAiroTermsPdf}
             >
-              Terms of Service & Privacy Policy
+              Terms of Service
             </CustomText>
-            {" "}and agree to receive transactional/informational SMS from PayAiro Inc. Message frequency may vary. Message and data rates may apply. Reply HELP for help or STOP to opt-out.
+            {" & "}
+            <CustomText
+              fontFamily="inter"
+              variant="bodySmall"
+              color={theme.colors.primary}
+              onPress={openPayAiroPrivacyPolicy}
+            >
+              Privacy Policy
+            </CustomText>
+            {
+              " and agree to receive transactional/informational SMS from PayAiro Inc. Message frequency may vary, Message and data rates may apply. Reply HELP for help or STOP to opt-out."
+            }
           </CustomText>
-        </TouchableOpacity>
+        </View>
+
+        <View style={styles.checkbox}>
+          <TouchableOpacity
+            onPress={() => setAgreeCoinme(!agreeCoinme)}
+            activeOpacity={0.7}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: agreeCoinme }}
+          >
+            <View style={styles.checkboxIcon}>
+              {agreeCoinme ? (
+                <AppIcon.TickCheckedBox />
+              ) : (
+                <AppIcon.UntickCheckedBox />
+              )}
+            </View>
+          </TouchableOpacity>
+          <CustomText
+            fontFamily="inter"
+            variant="bodySmall"
+            style={styles.checkboxText}
+          >
+            {"I agree to Coinme's "}
+            <CustomText
+              fontFamily="inter"
+              variant="bodySmall"
+              color={theme.colors.primary}
+              onPress={openCoinmeTerms}
+            >
+              Terms of Service
+            </CustomText>
+            ,{" "}
+            <CustomText
+              fontFamily="inter"
+              variant="bodySmall"
+              color={theme.colors.primary}
+              onPress={openCoinmeDisclosures}
+            >
+              Disclosures
+            </CustomText>
+            , and{" "}
+            <CustomText
+              fontFamily="inter"
+              variant="bodySmall"
+              color={theme.colors.primary}
+              onPress={openCoinmePrivacy}
+            >
+              Privacy Policy
+            </CustomText>
+            .
+          </CustomText>
+        </View>
 
         {/* <TouchableOpacity
-          style={styles.checkbox}
-          onPress={() => setAgreePatriot(!agreePatriot)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.checkboxIcon}>
-            {agreePatriot ? (
-              <AppIcon.TickCheckedBox />
-            ) : (
-              <AppIcon.UntickCheckedBox />
-            )}
-          </View>
-          <CustomText
-            fontFamily="inter"
-            variant="bodySmall"
-            style={styles.checkboxText}
-          >
-            By clicking the button you agree with the{" "}
-            <CustomText
-              fontFamily="inter"
-              variant="bodySmall"
-              color={theme.colors.primary}
-            >
-              Patriot Act
-            </CustomText>{" "}
-            and{" "}
-            <CustomText
-              fontFamily="inter"
-              variant="bodySmall"
-              color={theme.colors.primary}
-            >
-              e-Sign Disclosure
-            </CustomText>
-          </CustomText>
-        </TouchableOpacity> */}
-
-        <TouchableOpacity
           style={styles.checkbox}
           onPress={() => {
             const newValue = !isPoliticallyExposed;
@@ -317,12 +385,12 @@ const CreateAccountScreen: React.FC = () => {
           >
             Are you a politically exposed person (PEP)?
           </CustomText>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       <Button
         onPress={handleVerify}
-        disabled={!agreeTerms || isSubmitting}
+        disabled={!agreePayAiro || !agreeCoinme || isSubmitting}
         loading={isPending || isSubmitting}
         style={styles.verifyButton}
       >
@@ -355,6 +423,7 @@ const CreateAccountScreen: React.FC = () => {
         onClose={() => setIsPoliticalModalVisible(false)}
         onConfirm={() => { }}
       />
+      <TermAndConditionModal isAgree={false} ref={webDocRef} />
     </ScreenWrapper>
   );
 };

@@ -19,6 +19,9 @@ import { setTheme } from "redux/slices/animationSlice";
 import { usePendingPaymentRequests } from "query/hooks";
 import { useSelector, useDispatch } from "react-redux";
 import NewCrypto from "new-ui/screens/Crypto/NewCrypto";
+import ActivityScreen from "new-ui/screens/Activity/ActivityScreen";
+import { AppStackHeader } from "./AppStack";
+import { NativeStackHeaderProps } from "@react-navigation/native-stack";
 
 const Tab = createBottomTabNavigator();
 
@@ -309,9 +312,16 @@ const BottomTabNavigator = () => {
         options={scanOptions}
       />
       <Tab.Screen
-        name={NAV.UNIFIED_TRANSACTION}
-        component={UnifiedTransactionScreen}
-        options={activityOptions}
+        name={NAV.NEW_ACTIVITY_SCREEN}
+        component={ActivityScreen}
+        options={{
+          ...activityOptions,
+          headerShown: true,
+          header: (props) => (
+            <AppStackHeader {...(props as unknown as NativeStackHeaderProps)} />
+          ),
+          headerTitle: "Recent Activity",
+        }}
       />
       <Tab.Screen
         name={NAV.SETTING_SCREEN}

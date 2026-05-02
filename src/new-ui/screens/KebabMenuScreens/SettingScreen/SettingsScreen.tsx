@@ -28,14 +28,22 @@ const SettingsScreen = () => {
             onPress: () => navigation.navigate(NAVIGATION_SCREENS.NEW_REWARDS_AND_REFERRALS_SCREEN as never),
         },
         {
-            title: 'Agreement',
+            title: 'Coinme Legal',
             icon: <AppIcon.Agreement />,
-            onPress: () => {},
+            onPress: () =>
+                navigation.navigate(
+                    NAVIGATION_SCREENS.NEW_COINME_AGREEMENT_SCREEN as never
+                ),
         },
         {
-            title: 'Terms & Conditions',
+            title: 'Terms of Service',
             icon: <AppIcon.TermsAndConditions />,
-            onPress: () => {},
+            onPress: () =>
+                navigation.navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
+                    url: require('../../../../assets/pdf/Terms_and_Conditions.pdf'),
+                    isFileFromLocal: true,
+                    fileName: 'Terms_and_Conditions.pdf',
+                }),
         },
         {
             title: 'Privacy Policy',
@@ -67,7 +75,14 @@ const SettingsScreen = () => {
             </TouchableOpacity>
         ))}
       </View>
-      <AppIcon.AllRightReserves />
+      <View style={{ flex:1,alignItems: 'center', justifyContent: 'space-between',  }}>
+          <AppIcon.SocialMediaIcons />
+          <CustomText variant="h3" size={16} fontWeight='semiBold'>PayAiro</CustomText>
+          <View style={{  alignItems: 'center',paddingHorizontal: 20 }}>
+            <CustomText variant="h5" size={16} style={{ textAlign: 'center' }} fontWeight='light'>© 2026 PAYAIRO Inc.
+            All Rights Reserved. </CustomText>
+          </View>
+      </View>
     </ScreenWrapper>
   )
 }

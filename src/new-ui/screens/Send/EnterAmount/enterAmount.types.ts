@@ -15,6 +15,10 @@ export type FundingSource = {
   balance: number;
   type: FundingSourceType;
   cryptoMeta?: CryptoMeta;
+  /** Last digits (or full account_number) used for •••• 1234; avoids UUID-based masks. */
+  accountMaskHint?: string;
+  /** Main PayAiro custodial account — show PayAiro branding. */
+  isPayairoFunding?: boolean;
 };
 
 export type SendState = {

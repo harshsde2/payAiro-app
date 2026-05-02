@@ -14,7 +14,7 @@ const pointsInstructions = [
   "Rewards can be used for eligible crypto buy and sell transactions.",
   "Users can earn up to $100 in total rewards.",
   "Points have no cash value until redeemed.",
-  "Terms and conditions apply.",
+  "Terms of Service apply.",
 ];
 
 const HowToEarnPoints = () => {

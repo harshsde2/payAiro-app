@@ -24,6 +24,7 @@
 		5BA981A638F75E60FFFBF65A /* Pods_payAiro.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 283AAD985F52F66C16333657 /* Pods_payAiro.framework */; };
 		6711D27DBED44B0386C3AD7B /* Neue Plak Condensed Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C9FFF32E50234E14A3E02299 /* Neue Plak Condensed Thin.ttf */; };
 		6A9A4987BFA74434907D0716 /* Neue Plak Text Bold Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B78B550DA6E24291B200337B /* Neue Plak Text Bold Italic.ttf */; };
+		6DC3AF6C91E98FF04253A73C /* PayAiroCoinmeRiskModule.m in Sources */ = {isa = PBXBuildFile; fileRef = C4DD9875D0EE7281BAFD8509 /* PayAiroCoinmeRiskModule.m */; };
 		6FABE76F59DC45419755FD82 /* Montserrat-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A75EC8C0E9DA48FCB9A2D29F /* Montserrat-SemiBold.ttf */; };
 		708C53FFC14E4E13A4036848 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ED3CDCC33A494798A5A30632 /* Colors.xcassets */; };
 		742EE2B2B54742ACAF2C9BD5 /* Neue Plak Text Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F28A8566198646C7843F0EED /* Neue Plak Text Italic.ttf */; };
@@ -41,6 +42,7 @@
 		99FA4AFC25114E6588CE4303 /* Neue Plak Condensed Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F03B76B657BC4D2BA7D201F4 /* Neue Plak Condensed Black.ttf */; };
 		9EA2FD61DC8C479EAB1F43FA /* Neue Plak Text Thin Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2A5A19548ACC40A7BCE79623 /* Neue Plak Text Thin Italic.ttf */; };
 		A1098CD5E93E41DC9471BA34 /* Neue Plak Extended Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 15B3B53C91C74D61BB254973 /* Neue Plak Extended Black.ttf */; };
+		AAAAFCDAE9F8CB144A438FDE /* PayAiroCoinmeRiskModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 409889E8E3DC05874503428E /* PayAiroCoinmeRiskModule.swift */; };
 		AC4A211C755A4FE0A62FD297 /* Neue Plak Condensed Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 64665055D5D84204973B52DD /* Neue Plak Condensed Bold.ttf */; };
 		AD296A06B2094600A70189A3 /* Neue Plak Extended UltraLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D7BC9EED82BC4408BEF484AF /* Neue Plak Extended UltraLight.ttf */; };
 		AF98CF25505D4F7C9C3FBB47 /* Neue Plak Extended Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 50C1260983BF4C2D897EB7F3 /* Neue Plak Extended Thin.ttf */; };
@@ -95,6 +97,7 @@
 		2C1532709D8B44CC801A87A7 /* Neue Plak Condensed Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Condensed Regular.ttf"; path = "../assets/fonts/Neue Plak Condensed Regular.ttf"; sourceTree = "<group>"; };
 		2EC770F56EC54EF9A25D4276 /* Neue Plak Condensed UltraLight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Condensed UltraLight.ttf"; path = "../assets/fonts/Neue Plak Condensed UltraLight.ttf"; sourceTree = "<group>"; };
 		3C312ED049A13DF1574BB433 /* Pods-payAiro.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-payAiro.debug.xcconfig"; path = "Target Support Files/Pods-payAiro/Pods-payAiro.debug.xcconfig"; sourceTree = "<group>"; };
+		409889E8E3DC05874503428E /* PayAiroCoinmeRiskModule.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PayAiroCoinmeRiskModule.swift; path = payAiro/PayAiroCoinmeRiskModule.swift; sourceTree = "<group>"; };
 		428F6832D1BB4A069133EBA1 /* Neue Plak Extended Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Extended Light.ttf"; path = "../assets/fonts/Neue Plak Extended Light.ttf"; sourceTree = "<group>"; };
 		46A99155E84844D1934674EE /* Neue Plak Text Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Text Light.ttf"; path = "../assets/fonts/Neue Plak Text Light.ttf"; sourceTree = "<group>"; };
 		473008983E4D4328998080B4 /* Neue Plak Text Thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Text Thin.ttf"; path = "../assets/fonts/Neue Plak Text Thin.ttf"; sourceTree = "<group>"; };
@@ -123,6 +126,7 @@
 		B78B550DA6E24291B200337B /* Neue Plak Text Bold Italic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Text Bold Italic.ttf"; path = "../assets/fonts/Neue Plak Text Bold Italic.ttf"; sourceTree = "<group>"; };
 		BFD78522002B4BDAA53AD3E9 /* Neue Plak UltraLight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak UltraLight.ttf"; path = "../assets/fonts/Neue Plak UltraLight.ttf"; sourceTree = "<group>"; };
 		C0A2131BE5D34455AD0E9F9D /* BootSplash.storyboard */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = BootSplash.storyboard; path = payAiro/BootSplash.storyboard; sourceTree = "<group>"; };
+		C4DD9875D0EE7281BAFD8509 /* PayAiroCoinmeRiskModule.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = PayAiroCoinmeRiskModule.m; path = payAiro/PayAiroCoinmeRiskModule.m; sourceTree = "<group>"; };
 		C9FFF32E50234E14A3E02299 /* Neue Plak Condensed Thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Condensed Thin.ttf"; path = "../assets/fonts/Neue Plak Condensed Thin.ttf"; sourceTree = "<group>"; };
 		CA37AA5B114EC9533EEB723F /* Pods-payAiro.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-payAiro.release.xcconfig"; path = "Target Support Files/Pods-payAiro/Pods-payAiro.release.xcconfig"; sourceTree = "<group>"; };
 		D7BC9EED82BC4408BEF484AF /* Neue Plak Extended UltraLight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Neue Plak Extended UltraLight.ttf"; path = "../assets/fonts/Neue Plak Extended UltraLight.ttf"; sourceTree = "<group>"; };
@@ -189,6 +193,8 @@
 				13B07FB71A68108700A75B9A /* FreshchatCustomTheme.plist */,
 				C0A2131BE5D34455AD0E9F9D /* BootSplash.storyboard */,
 				ED3CDCC33A494798A5A30632 /* Colors.xcassets */,
+				409889E8E3DC05874503428E /* PayAiroCoinmeRiskModule.swift */,
+				C4DD9875D0EE7281BAFD8509 /* PayAiroCoinmeRiskModule.m */,
 			);
 			name = payAiro;
 			sourceTree = "<group>";
@@ -615,6 +621,8 @@
 				13B07FBD1A68108700A75B9A /* AppDelegate.swift in Sources */,
 				1B92B61A7B7A4CE9B782C7B1 /* PayAiroQRScannerModule.swift in Sources */,
 				1B92B61C7B7A4CE9B782C7B1 /* PayAiroQRScannerModule.m in Sources */,
+				AAAAFCDAE9F8CB144A438FDE /* PayAiroCoinmeRiskModule.swift in Sources */,
+				6DC3AF6C91E98FF04253A73C /* PayAiroCoinmeRiskModule.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -639,7 +647,7 @@
 					"$(inherited)",
 				);
 				INFOPLIST_FILE = payAiroTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -663,7 +671,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COPY_PHASE_STRIP = NO;
 				INFOPLIST_FILE = payAiroTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -692,7 +700,7 @@
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = payAiro/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PayAiro;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -727,7 +735,7 @@
 				DEVELOPMENT_TEAM = 8T3V6TMY34;
 				INFOPLIST_FILE = payAiro/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PayAiro;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -805,7 +813,7 @@
 					"${PODS_CONFIGURATION_BUILD_DIR}/React-runtimeexecutor/React_runtimeexecutor.framework/Headers",
 					"${PODS_CONFIGURATION_BUILD_DIR}/React-runtimeexecutor/React_runtimeexecutor.framework/Headers/platform/ios",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
@@ -846,7 +854,7 @@
 				DEVELOPMENT_TEAM = 8T3V6TMY34;
 				INFOPLIST_FILE = payAiro/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "PayAiro Staging";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -876,7 +884,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COPY_PHASE_STRIP = NO;
 				INFOPLIST_FILE = payAiroTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -955,7 +963,7 @@
 					"${PODS_CONFIGURATION_BUILD_DIR}/React-runtimeexecutor/React_runtimeexecutor.framework/Headers",
 					"${PODS_CONFIGURATION_BUILD_DIR}/React-runtimeexecutor/React_runtimeexecutor.framework/Headers/platform/ios",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
@@ -1041,7 +1049,7 @@
 					"${PODS_CONFIGURATION_BUILD_DIR}/React-runtimeexecutor/React_runtimeexecutor.framework/Headers",
 					"${PODS_CONFIGURATION_BUILD_DIR}/React-runtimeexecutor/React_runtimeexecutor.framework/Headers/platform/ios",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",

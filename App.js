@@ -31,6 +31,10 @@ import { getItem, setItem, STORAGE_KEYS } from "./src/storage/mmkv";
 import { userApiClient } from "./src/api/userApiClient";
 import { USER_AUTH } from "./src/api/endpoints";
 import { setAuthBootstrapFromUserMe } from "./src/redux/slices/newBackendAuthSlice";
+import {
+  bootstrapCoinmeRisk,
+  onUserLoggedIn as onCoinmeUserLoggedIn,
+} from "./src/services/coinmeRiskLifecycle";
 import { ThemeProvider } from "./src/styles";
 import { ThemeProvider as NewUIThemeProvider } from "./src/new-ui/styles/ThemeContext";
 import GlobalLoader from "./src/tsx-components/GlobalLoader";
@@ -109,6 +113,11 @@ export default function App() {
     // const redeem = getItem(STORAGE_KEYS.REDEEM_REWARD);
     const wallet = await getWalletDataAuth();
 
+    // Boot the Coinme Risk SDK exactly once per JS runtime, regardless of
+    // whether the user is currently logged in — setup is a prerequisite for
+    // every later SDK call and is cheap when the service is missing.
+    bootstrapCoinmeRisk().catch(() => {});
+
     if (token) {
       // Store token in MMKV for React Query
       // setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(token));]
@@ -122,6 +131,13 @@ export default function App() {
         if (me?.ok && me?.data) {
           setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(me?.data?.user || {}));
           useDispatchAction(setAuthBootstrapFromUserMe(me.data));
+          // Coinme keys risk data on the CAAS customer id (set during partner
+          // onboarding), not the Django user PK. Using the wrong one breaks
+          // every downstream partner call ("WebSessionId does not match").
+          const coinmeAccountId = me.data?.caas_onboarding?.caas_customer_id;
+          if (coinmeAccountId != null) {
+            onCoinmeUserLoggedIn(String(coinmeAccountId)).catch(() => {});
+          }
         }
       } catch (e) {
         // Keep legacy behavior as fallback if profile bootstrap fails.

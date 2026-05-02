@@ -192,11 +192,56 @@ const CyrptoDetails: React.FC = () => {
     </View>
   );
 
+  // Buy / Sell flow through `EnterAmount` (Confirm → PIN → Result). Trade uses
+  // Coinme execute after PIN only (no OTP). Send / Receive use legacy screens.
+  const cryptoAsset = {
+    asset: String(cryptoItem?.asset || "").toUpperCase(),
+    chain: String((cryptoItem as any)?.chain || "ETH").toUpperCase(),
+    logo: cryptoItem?.logo,
+    fiatCurrency: "USD",
+    currentPrice: Number(currentPrice || 0),
+    sourceWalletAddress: (cryptoItem as any)?.sourceWalletAddress,
+  };
+
   const actionButtons = [
-    { label: "Buy", icon: SvgIcons.NewDollarIcon ,route: NAVIGATION_SCREENS.CRYPTO_BUY },
-    { label: "Receive", icon: SvgIcons.NewReceiveIcon ,route: NAVIGATION_SCREENS.CRYPTO_RECEIVE },
-    { label: "Send", icon: SvgIcons.NewSendIcon ,route: NAVIGATION_SCREENS.CRYPTO_SEND },
-    { label: "Sell", icon: SvgIcons.NewSellIcon ,route: NAVIGATION_SCREENS.CRYPTO_SELL },
+    {
+      label: "Buy",
+      icon: SvgIcons.NewDollarIcon,
+      route: NAVIGATION_SCREENS.ENTER_AMOUNT,
+      params: { tradeMode: "buy" as const, cryptoAsset },
+    },
+    {
+      label: "Receive",
+      icon: SvgIcons.NewReceiveIcon,
+      route: NAVIGATION_SCREENS.CRYPTO_RECEIVE,
+      params: {
+        details: {
+          symbol: cryptoItem?.asset,
+          logo: cryptoItem?.logo,
+          buy_price: currentPrice,
+          sell_price: currentPrice,
+        },
+      },
+    },
+    {
+      label: "Send",
+      icon: SvgIcons.NewSendIcon,
+      route: NAVIGATION_SCREENS.CRYPTO_SEND,
+      params: {
+        details: {
+          symbol: cryptoItem?.asset,
+          logo: cryptoItem?.logo,
+          buy_price: currentPrice,
+          sell_price: currentPrice,
+        },
+      },
+    },
+    {
+      label: "Sell",
+      icon: SvgIcons.NewSellIcon,
+      route: NAVIGATION_SCREENS.ENTER_AMOUNT,
+      params: { tradeMode: "sell" as const, cryptoAsset },
+    },
   ];
 
 
@@ -278,9 +323,7 @@ const CyrptoDetails: React.FC = () => {
             const Icon = button?.icon;
             return (
               <TouchableOpacity onPress={() => {
-                navigation.navigate(button?.route, {
-                    details: {symbol: cryptoItem?.asset, logo: cryptoItem?.logo, buy_price: currentPrice, sell_price: currentPrice},
-                });
+                navigation.navigate(button?.route, button?.params as any);
               }} key={index} style={styles.actionButton}>
                 {button?.label != "Sell" ? (
                   <Icon />

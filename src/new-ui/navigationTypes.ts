@@ -16,6 +16,7 @@ export type NewUIAuthStackParamList = {
   [NAVIGATION_SCREENS.NEW_KYC]: {
     firstName?: string;
     lastName?: string;
+    username?: string;
     email?: string;
     phone?: string;
     inputType?: "email" | "phone" | "invalid";

@@ -42,6 +42,7 @@ export type AddPaymentMethodRequest = {
     year: string;
     cvv: string;
   };
+  webSessionId?: string;
   paymentProcessAssociation: 'BUY' | 'SELL' | string;
 };
 
@@ -72,6 +73,7 @@ export function useAddPaymentMethod() {
 
   return useMutation({
     mutationFn: async (payload: AddPaymentMethodRequest) => {
+      console.log("payload =>", JSON.stringify(payload, null, 2));
       return await userApiClient.post<AddPaymentMethodResponse>(
         USER_AUTH.PAYMENT_METHODS,
         payload

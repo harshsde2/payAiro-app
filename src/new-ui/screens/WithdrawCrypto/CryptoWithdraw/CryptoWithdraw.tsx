@@ -3,64 +3,106 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
-  TouchableOpacity,
+  TextInput as RNTextInput,
   View,
   useWindowDimensions,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
 import { useTheme } from "@new-ui/styles/ThemeContext";
-import { cryptoWithdrawStyles } from "@new-ui/styles/screens/withdrawCrypto/cryptoWithdrawStyles";
 import { enterAmountStyles } from "@new-ui/styles/screens/send/enterAmountStyles";
 import CustomText from "@new-ui/components/common-components/CustomText";
-import TextInput from "@new-ui/components/common-components/layout/TextInput";
 import { AppIcon } from "@new-ui/assets/svgs";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import useSelectorAction from "hooks/useSelectorAction";
-import { useCryptoAssetsListData } from "query/hooks/useCrypto";
-import { bankKeys } from "query/hooks/useBank";
+import {
+  bankKeys,
+  cryptoKeys,
+  useCryptoAssetsListData,
+  useCoinmeTradeExecute,
+  type CoinmeTradeExecutePayload,
+} from "query/hooks";
 import { queryClient } from "query/queryClient";
 import { useEnterAmountState } from "@new-ui/screens/Send/EnterAmount/useEnterAmountState";
 import AmountInput from "@new-ui/screens/Send/EnterAmount/AmountInput";
-import FundingSourceCard from "@new-ui/screens/Send/EnterAmount/FundingSourceCard";
 import PayButton from "@new-ui/screens/Send/EnterAmount/PayButton";
-import FundingSourceSelectorModal from "@new-ui/screens/Send/EnterAmount/FundingSourceSelectorModal";
+import RecipientHeader from "@new-ui/screens/Send/EnterAmount/RecipientHeader";
 import type { FundingSource } from "@new-ui/screens/Send/EnterAmount/enterAmount.types";
 import type { CryptoFundingItem } from "@new-ui/screens/Send/EnterAmount/cryptoFundingTypes";
-import { cryptoKeys, usePaymentTransactionSend } from "query/hooks";
 import { showError } from "utils/toast";
-import WithdrawConfirmationModal from "./WithdrawConfirmationModal";
+import { useAppLock } from "hooks/useAppLock";
+import { fetchWebSessionId } from "services/coinmeRiskLifecycle";
+import { useCoinmeAccountId } from "hooks/useCoinmeAccountId";
+import {
+  DebitCardPaymentRow,
+  AddNewCardPlaceholderModal,
+  AddDebitCardModal,
+} from "@new-ui/components/common-components/AddBalance";
+import type { AddedCardResult } from "@new-ui/components/common-components/AddBalance/AddDebitCardModal";
+import DashboardSection from "tsx-components/DashboardSection";
+import {
+  usePaymentMethodsList,
+  type PaymentMethodItem,
+} from "query/hooks/usePaymentMethods";
 
-type WithdrawDraft = {
-  type: "external";
-  amount: string;
-  currency: string;
-  chain: string;
-  destinationWalletAddress: string;
+const COINME_DEFAULTS = {
+  paymentMethodId: "uhygtfr5e354rtyu76g6b7i8",
+  sourceWalletAddress: ",mu9n7777777545e5vr",
 };
+
+const DEFAULT_SELL_ASSETS = new Set(["SOL", "SOLANA"]);
+
+function isSolBalanceRow(item: CryptoFundingItem): boolean {
+  const a = String(item?.asset ?? "").toUpperCase();
+  return DEFAULT_SELL_ASSETS.has(a);
+}
 
 const CryptoWithdraw: React.FC = () => {
   const navigation = useNavigation<any>();
   const { width } = useWindowDimensions();
   const { theme } = useTheme();
-  const styles = cryptoWithdrawStyles(theme);
-  const amountStyles = enterAmountStyles(theme);
+  const styles = enterAmountStyles(theme);
 
   const selectorData = useSelectorAction() as any;
-  const { allCryptoBalances, walletData } = selectorData;
+  const { allCryptoBalances } = selectorData;
   const { data: fetchedCryptoBalances = [] } = useCryptoAssetsListData("USD");
-  const { mutate: sendPaymentTransaction } = usePaymentTransactionSend();
+  const { requestPaymentVerification } = useAppLock();
+  const tradeExecute = useCoinmeTradeExecute();
 
-  const [walletAddress, setWalletAddress] = useState("");
-  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
-  const [isPaying, setIsPaying] = useState(false);
-  const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
-  const withdrawDraftRef = useRef<WithdrawDraft | null>(null);
-  useEffect(
-    () => () => {
-      withdrawDraftRef.current = null;
+  const coinmeAccountId = useCoinmeAccountId();
+
+  const [debitInfoVisible, setDebitInfoVisible] = useState(false);
+  const [addCardVisible, setAddCardVisible] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodItem | null>(null);
+  const paymentMethodsQuery = usePaymentMethodsList(20);
+
+  const paymentSubtitle = useMemo(() => {
+    if (!selectedPaymentMethod) return "Select a card";
+    const provider = (selectedPaymentMethod.card_provider || "Card").toUpperCase();
+    const last4 = selectedPaymentMethod.card_last4 || "••••";
+    return `${provider}  •••• ${last4}`;
+  }, [selectedPaymentMethod]);
+
+  const handleAddedCard = useCallback(
+    async (result: AddedCardResult) => {
+      setAddCardVisible(false);
+
+      const res = await paymentMethodsQuery.refetch();
+      const items = res.data?.data?.items ?? [];
+      const wanted = result.payment_method_id;
+
+      let selected: PaymentMethodItem | null = null;
+      if (wanted.startsWith("last4:")) {
+        const last4 = wanted.replace("last4:", "");
+        selected = items.find((i) => String(i.card_last4 ?? "") === String(last4)) ?? null;
+      } else {
+        selected = items.find((i) => i.payment_method_id === wanted) ?? null;
+      }
+
+      setSelectedPaymentMethod(selected);
+      setTimeout(() => setDebitInfoVisible(true), 350);
     },
-    []
+    [paymentMethodsQuery]
   );
 
   const mergedCryptoBalances = useMemo<CryptoFundingItem[]>(() => {
@@ -73,21 +115,41 @@ const CryptoWithdraw: React.FC = () => {
     return [];
   }, [allCryptoBalances, fetchedCryptoBalances]);
 
-  const cryptoSources = useMemo<CryptoFundingItem[]>(() => {
-    return mergedCryptoBalances.filter(
-      (item: CryptoFundingItem) => item?.asset && item?.asset !== "Bank Balance"
-    );
+  const solRow = useMemo(() => {
+    return mergedCryptoBalances.find((item) => isSolBalanceRow(item)) ?? null;
   }, [mergedCryptoBalances]);
+
+  const coinmeCryptoAsset = useMemo(() => {
+    if (!solRow?.asset) return null;
+    const rawPrice = Number(solRow.usd_price ?? (solRow as any).price ?? 0);
+    const maxAssetBalance = Number(
+      solRow.platform_available ?? solRow.platform_total_balance ?? solRow.rounded_balance ?? 0
+    );
+    const maxUsdBalance = Number(solRow.usd_value_total ?? solRow.usd_value_available ?? 0);
+    const derivedPriceFromTotals =
+      maxAssetBalance > 0 && maxUsdBalance > 0 ? maxUsdBalance / maxAssetBalance : 0;
+    const currentPrice =
+      Number.isFinite(rawPrice) && rawPrice > 0
+        ? rawPrice
+        : Number.isFinite(derivedPriceFromTotals) && derivedPriceFromTotals > 0
+          ? derivedPriceFromTotals
+          : 0;
+
+    return {
+      asset: String(solRow.asset).toUpperCase(),
+      chain: String((solRow as any)?.chain ?? "SOL").toUpperCase(),
+      logo: solRow.logo,
+      fiatCurrency: "USD" as const,
+      currentPrice,
+      sourceWalletAddress: (solRow as any)?.sourceWalletAddress,
+    };
+  }, [solRow]);
 
   const convertToFundingSource = useCallback((item: CryptoFundingItem): FundingSource | null => {
     const assetSymbol = item?.asset;
     if (!assetSymbol) return null;
 
-    const rawPrice = Number(
-      item.usd_price ??
-        (item as any).price ??
-        0
-    );
+    const rawPrice = Number(item.usd_price ?? (item as any).price ?? 0);
     const maxAssetBalance = Number(
       item.platform_available ?? item.platform_total_balance ?? item.rounded_balance ?? 0
     );
@@ -108,7 +170,7 @@ const CryptoWithdraw: React.FC = () => {
       type: "crypto",
       cryptoMeta: {
         symbol: assetSymbol,
-        network: assetSymbol,
+        network: String((item as any)?.chain ?? assetSymbol),
         priceUSD,
         maxAssetBalance: Number.isFinite(maxAssetBalance) ? maxAssetBalance : 0,
         maxUsdBalance: Number.isFinite(maxUsdBalance) ? maxUsdBalance : 0,
@@ -117,48 +179,32 @@ const CryptoWithdraw: React.FC = () => {
     };
   }, []);
 
-  const defaultSelectedSource = useMemo<FundingSource | null>(() => {
-    if (!cryptoSources.length) return null;
-    for (const source of cryptoSources) {
-      const converted = convertToFundingSource(source);
-      if (converted) return converted;
-    }
-    return null;
-  }, [convertToFundingSource, cryptoSources]);
-
-  const transactionFeePercent = useMemo(() => {
-    const raw = walletData?.TransactionFees_persentage;
-    const n = typeof raw === "string" ? parseFloat(raw) : Number(raw);
-    return Number.isFinite(n) ? n : 0;
-  }, [walletData?.TransactionFees_persentage]);
+  const solFundingSource = useMemo(() => {
+    if (!solRow) return null;
+    return convertToFundingSource(solRow);
+  }, [convertToFundingSource, solRow]);
 
   const {
     amount,
     inputValue,
     displayAmount,
-    displayFiatEquivalent,
-    displayAssetEquivalent,
     selectedSource,
     inputMode,
-    maxAsset,
-    maxUsd,
-    feePercent,
-    fillMax,
     assetAmount,
-    validateCrypto,
     onChangeAmountText,
     setSelectedSource,
-    toggleInputMode,
   } = useEnterAmountState({
-    initialSelectedSource: defaultSelectedSource,
-    transactionFeePercent,
+    initialSelectedSource: solFundingSource,
+    transactionFeePercent: 0,
+    initialInputMode: "fiat",
+    preferFiatCryptoEntry: true,
   });
 
   useEffect(() => {
-    if (!selectedSource && defaultSelectedSource) {
-      setSelectedSource(defaultSelectedSource);
+    if (!selectedSource && solFundingSource) {
+      setSelectedSource(solFundingSource);
     }
-  }, [defaultSelectedSource, selectedSource, setSelectedSource]);
+  }, [selectedSource, solFundingSource, setSelectedSource]);
 
   const dynamicFontSize = useMemo(() => {
     const totalChars = (displayAmount || "0.00").length + 1;
@@ -170,127 +216,119 @@ const CryptoWithdraw: React.FC = () => {
     return Math.min(max, Math.max(min, ideal));
   }, [displayAmount, width]);
 
-  const assetSymbol = useMemo(
-    () => selectedSource?.cryptoMeta?.symbol || selectedSource?.name || "CRYPTO",
-    [selectedSource?.cryptoMeta?.symbol, selectedSource?.name]
-  );
-
-  const leftPrefix = inputMode === "asset" ? "" : "$";
-  const rightSuffix = inputMode === "asset" ? assetSymbol : "";
-
-  const inputRef = useRef<any>(null);
+  const inputRef = useRef<RNTextInput | null>(null);
   const handlePressAmountFocus = useCallback(() => inputRef.current?.focus(), []);
 
-  const handlePressFundingSource = useCallback(() => {
-    Keyboard.dismiss();
-    setIsSelectorOpen(true);
-  }, []);
-
-  const handleWithdrawPayment = useCallback(() => {
-    const draft = withdrawDraftRef.current;
-    if (!draft) {
-      showError("Session expired. Please try again.");
+  const handleTradeExecute = useCallback(async () => {
+    if (!coinmeCryptoAsset) {
+      navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+        isLoading: false,
+        transactionData: null,
+        isSuccess: false,
+        isError: true,
+        customTitle: "Withdrawal unsuccessful",
+        customDescription: "Unable to complete withdrawal. Please try again.",
+      } as never);
+      showError("Unable to complete withdrawal. Please try again.");
       return;
     }
 
-    setIsPaying(true);
-    setIsConfirmModalVisible(false);
     navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
       isLoading: true,
       transactionData: null,
       isSuccess: false,
       isError: false,
+      customTitle: "Processing withdrawal",
+      customDescription: "Please wait while we complete your request…",
     } as never);
 
-    sendPaymentTransaction(draft, {
-      onSuccess: (data: any) => {
-        const isSuccess = !data?.errorResponse && !!data?.data?.paymentTransaction;
+    try {
+      if (!coinmeAccountId) {
+        throw new Error(
+          "Your Coinme account is not ready yet. Please complete onboarding and try again."
+        );
+      }
 
-        queryClient.invalidateQueries({ queryKey: cryptoKeys.allCryptoBalances() });
-        queryClient.invalidateQueries({ queryKey: bankKeys.balance() });
+      const webSessionId = await fetchWebSessionId({
+        accountId: coinmeAccountId,
+      });
 
-        navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
-          isLoading: false,
-          transactionData: {
-            status: isSuccess,
-            message: data?.message,
-            data: data?.data?.paymentTransaction ?? data?.data ?? null,
-          },
-          isSuccess,
-          isError: !isSuccess,
-        } as never);
+      const isFiatEntry = inputMode === "fiat";
+      const payloadAmountValue = isFiatEntry ? amount : assetAmount;
+      const payloadAmountCurrency = isFiatEntry
+        ? coinmeCryptoAsset.fiatCurrency || "USD"
+        : coinmeCryptoAsset.asset;
 
-        if (!isSuccess) {
-          const errorMessage =
-            data?.errorResponse?.message ||
-            data?.message ||
-            "Unable to process withdraw request.";
-          showError(errorMessage);
-        }
-        withdrawDraftRef.current = null;
-      },
-      onError: (error: any) => {
-        navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
-          isLoading: false,
-          transactionData: null,
-          isSuccess: false,
-          isError: true,
-        } as never);
-        const message =
-          error?.response?.data?.errorResponse?.message ||
-          error?.response?.data?.message ||
-          "Something went wrong while withdrawing crypto";
-        showError(message);
-        withdrawDraftRef.current = null;
-      },
-      onSettled: () => {
-        setIsPaying(false);
-      },
-    });
-  }, [bankKeys, cryptoKeys, navigation, sendPaymentTransaction]);
+      const payload: CoinmeTradeExecutePayload = {
+        tradeType: "sell",
+        chain: coinmeCryptoAsset.chain,
+        cryptoCurrencyCode: coinmeCryptoAsset.asset,
+        fiatCurrencyCode: coinmeCryptoAsset.fiatCurrency || "USD",
+        amountValue: String(payloadAmountValue),
+        amountCurrencyCode: payloadAmountCurrency,
+        paymentMethodId:
+          selectedPaymentMethod?.payment_method_id ?? COINME_DEFAULTS.paymentMethodId,
+        sourceWalletAddress:
+          coinmeCryptoAsset.sourceWalletAddress || COINME_DEFAULTS.sourceWalletAddress,
+        webSessionId,
+      };
 
-  const handleProceed = useCallback(() => {
-    if (isPaying) return;
-    const trimmedAddress = walletAddress.trim();
-    if (!trimmedAddress) {
-      showError("Wallet address is required");
-      return;
+      const res = await tradeExecute.mutateAsync(payload);
+      const ok = res?.ok ?? res?.status ?? true;
+
+      queryClient.invalidateQueries({ queryKey: cryptoKeys.allCryptoBalances() });
+      queryClient.invalidateQueries({ queryKey: bankKeys.balance() });
+
+      navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+        isLoading: false,
+        transactionData: res,
+        isSuccess: !!ok,
+        isError: !ok,
+        customTitle: ok ? "Withdrawal completed" : "Withdrawal unsuccessful",
+        customDescription: ok
+          ? "Your funds will be sent to your selected debit card according to your bank's timing."
+          : "Unable to complete withdrawal. Please try again.",
+        hideCoinmeCurrencyDetails: true,
+      } as never);
+
+      if (!ok) {
+        showError("Unable to complete withdrawal. Please try again.");
+      }
+    } catch {
+      navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+        isLoading: false,
+        transactionData: null,
+        isSuccess: false,
+        isError: true,
+        customTitle: "Withdrawal unsuccessful",
+        customDescription: "Unable to complete withdrawal. Please try again.",
+      } as never);
+      showError("Unable to complete withdrawal. Please try again.");
     }
-
-    const errors = validateCrypto();
-    if (errors.length > 0) {
-      showError(errors[0]);
-      return;
-    }
-
-    if (!selectedSource?.cryptoMeta) {
-      showError("Please select a crypto asset");
-      return;
-    }
-
-    if (amount <= 0 || assetAmount <= 0) {
-      showError("Please enter a valid amount");
-      return;
-    }
-
-    const symbol = selectedSource.cryptoMeta.symbol || selectedSource.name || "CRYPTO";
-    withdrawDraftRef.current = {
-      type: "external",
-      amount: String(assetAmount),
-      currency: symbol,
-      chain: symbol,
-      destinationWalletAddress: trimmedAddress,
-    };
-
-    setIsConfirmModalVisible(true);
   }, [
     amount,
     assetAmount,
-    isPaying,
-    selectedSource,
-    validateCrypto,
-    walletAddress,
+    coinmeCryptoAsset,
+    coinmeAccountId,
+    inputMode,
+    navigation,
+    selectedPaymentMethod?.payment_method_id,
+    tradeExecute,
   ]);
+
+  const handleActionsAfterPinVerified = useCallback(() => {
+    handleTradeExecute();
+  }, [handleTradeExecute]);
+
+  const handlePayPress = useCallback(() => {
+    const trimmed = inputValue.trim();
+    if (!trimmed || trimmed === "." || amount <= 0) {
+      showError("Please enter an amount");
+      return;
+    }
+
+    requestPaymentVerification(handleActionsAfterPinVerified);
+  }, [amount, handleActionsAfterPinVerified, inputValue, requestPaymentVerification]);
 
   return (
     <ScreenWrapper
@@ -303,31 +341,23 @@ const CryptoWithdraw: React.FC = () => {
         style={styles.keyboardAvoiding}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={styles.header}>
-          <AppIcon.ArrowLeft width={25} height={25} onPress={() => navigation.goBack()} />
-          <View style={styles.headerTitleContainer}>
-            <CustomText variant="h1" fontWeight="bold" size={20}>
-              Withdraw
-            </CustomText>
+        <View style={{ flex: 1 }}>
+          <View style={styles.header}>
+            <AppIcon.ArrowLeft width={25} height={25} onPress={() => navigation.goBack()} />
+            <View style={styles.headerTitleContainer}>
+              <CustomText variant="h1" fontWeight="bold" size={20}>
+                Withdraw
+              </CustomText>
+            </View>
+            <View style={styles.headerRightSpacer} />
           </View>
-          <TouchableOpacity
-            style={amountStyles.cryptoToggleButton}
-            activeOpacity={0.85}
-            onPress={toggleInputMode}
-          >
-            <CustomText style={amountStyles.cryptoToggleIcon} fontWeight="semiBold">
-              ↻
-            </CustomText>
-            <CustomText style={amountStyles.cryptoToggleText} fontWeight="semiBold">
-              {inputMode === "asset" ? "USD" : assetSymbol}
-            </CustomText>
-          </TouchableOpacity>
-        </View>
 
-        <View style={styles.content}>
-          <CustomText variant="caption" style={styles.selectedCryptoTitle}>
-            Selected Crypto: {assetSymbol}
-          </CustomText>
+          <RecipientHeader
+            recipient_identifier=""
+            mode="trade"
+            tradeMode="sell"
+            fiatCashout
+          />
 
           <AmountInput
             inputValue={inputValue}
@@ -335,70 +365,50 @@ const CryptoWithdraw: React.FC = () => {
             inputRef={inputRef}
             dynamicFontSize={dynamicFontSize}
             onPressFocus={handlePressAmountFocus}
-            leftPrefix={leftPrefix}
-            rightSuffix={rightSuffix}
+            leftPrefix="$"
+            rightSuffix=""
           />
+        </View>
 
-          <View style={amountStyles.cryptoModeContainer}>
-            <CustomText style={amountStyles.cryptoFeeText} variant="caption">
-              Fee: {feePercent}%
-            </CustomText>
-
-            <TouchableOpacity style={amountStyles.cryptoMaxContainer} activeOpacity={0.9} onPress={fillMax}>
-              <CustomText variant="caption" style={amountStyles.cryptoMaxText}>
-                Max: {maxAsset.toFixed(maxAsset >= 1 ? 4 : 8)} {assetSymbol} ~$
-                {maxUsd.toFixed(2)}
-              </CustomText>
-            </TouchableOpacity>
-
-            <CustomText variant="caption" style={amountStyles.cryptoEquivalentText}>
-              {inputMode === "asset"
-                ? `~$${Number(displayFiatEquivalent || 0).toFixed(2)}`
-                : `~${Number(displayAssetEquivalent || 0).toFixed(6)} ${assetSymbol}`}
-            </CustomText>
-          </View>
-
-          <View style={styles.walletInputContainer}>
-            <TextInput
-              label="Wallet Address"
-              placeholder="Enter wallet address"
-              value={walletAddress}
-              onChangeText={setWalletAddress}
-              autoCapitalize="none"
-              autoCorrect={false}
-              borderColor={theme.colors.border}
-              rightIcon={<AppIcon.QrCode width={20} height={20} color={theme.colors.primary} />}
-              showRightSeparator={false}
+        <View style={styles.bottomAreaTrade}>
+          <DashboardSection
+            title="Payment Method"
+            titleStyle={{ fontSize: 16 }}
+            style={{ marginVertical: 0, width: "100%" }}
+            contentContainerStyle={{ width: "100%" }}
+          >
+            <DebitCardPaymentRow
+              title="Debit Card"
+              maskedDetail={paymentSubtitle}
+              onPress={() => {
+                Keyboard.dismiss();
+                setDebitInfoVisible(true);
+              }}
+            />
+          </DashboardSection>
+          <View style={styles.bottomTradePayRow}>
+            <PayButton
+              disabled={tradeExecute.isPending}
+              onPress={handlePayPress}
             />
           </View>
         </View>
 
-        <View style={styles.bottomArea}>
-          <View style={styles.fundingSourceContainer}>
-            <FundingSourceCard source={selectedSource} onPress={handlePressFundingSource} />
-          </View>
-          <PayButton disabled={isPaying} onPress={handleProceed} />
-        </View>
+        <AddNewCardPlaceholderModal
+          visible={debitInfoVisible}
+          onClose={() => setDebitInfoVisible(false)}
+          title="Select Payment Method"
+          selectedPaymentMethodId={selectedPaymentMethod?.payment_method_id ?? null}
+          onConfirmSelection={(item) => {
+            setSelectedPaymentMethod(item);
+          }}
+          onRequestAddCard={() => setAddCardVisible(true)}
+        />
 
-        {isSelectorOpen ? (
-          <FundingSourceSelectorModal
-            sources={[]}
-            cryptoSources={cryptoSources}
-            selectedSource={selectedSource}
-            onSelect={(source) => setSelectedSource(source)}
-            onClose={() => setIsSelectorOpen(false)}
-          />
-        ) : null}
-
-        <WithdrawConfirmationModal
-          visible={isConfirmModalVisible}
-          assetSymbol={assetSymbol}
-          assetAmount={assetAmount}
-          usdAmount={amount}
-          walletAddress={walletAddress.trim()}
-          isSubmitting={isPaying}
-          onClose={() => setIsConfirmModalVisible(false)}
-          onConfirm={handleWithdrawPayment}
+        <AddDebitCardModal
+          visible={addCardVisible}
+          onClose={() => setAddCardVisible(false)}
+          onAdded={handleAddedCard}
         />
       </KeyboardAvoidingView>
     </ScreenWrapper>

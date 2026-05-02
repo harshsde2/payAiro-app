@@ -30,13 +30,14 @@ import {
   setBiometric,
   setPin
 } from '../../services/Auth';
-import { usePatchUserLock } from 'query/hooks';
+import { useUpsertUserSecurityPinSettings } from 'query/hooks';
 import { getKYC, patchPin } from '../../services/Services';
 import { showError, showSuccess } from '../../utils/toast';
 import {
   checkBiometricAvailability,
   authenticateWithBiometricDetailed,
 } from 'services/BiometricService';
+import { getPin as getLocalPin } from 'storage/mmkv';
 
 
 export default function Settings2() {
@@ -58,7 +59,7 @@ export default function Settings2() {
     refreshBiometricStatus: refreshBiometricStatusInContext,
     resetBiometricFailures,
   } = useAppLock();
-  const { mutateAsync: patchUserLockMutation } = usePatchUserLock();
+  const { mutateAsync: upsertSecurityPinSettings } = useUpsertUserSecurityPinSettings();
 
   const kycStatus = useSelector((s) => s.authenticationSlice?.kycStatus);
 
@@ -110,7 +111,10 @@ export default function Settings2() {
                   resetBiometricFailures();
                   await refreshBiometricStatusInContext();
                   try {
-                    await patchUserLockMutation({ is_locked: false });
+                    await upsertSecurityPinSettings({
+                      pin: getLocalPin() || null,
+                      biometric: false,
+                    });
                   } catch (apiErr) {
                     showError('Biometric disabled locally; sync with server failed.');
                   }
@@ -183,7 +187,10 @@ export default function Settings2() {
       setBiometricStatus(true);
       await refreshBiometricStatusInContext();
       try {
-        await patchUserLockMutation({ is_locked: true });
+        await upsertSecurityPinSettings({
+          pin: getLocalPin() || null,
+          biometric: true,
+        });
       } catch (apiErr) {
         showError('Biometric enabled locally; sync with server failed.');
       }

@@ -1,10 +1,15 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FundingSource, SendPayload } from './enterAmount.types';
 
 type UseEnterAmountStateArgs = {
   initialSelectedSource?: FundingSource | null;
   initialInputValue?: string;
   transactionFeePercent?: number; // platform fee percentage for crypto transfers
+  initialInputMode?: 'fiat' | 'asset';
+  /** When true, selecting a crypto source does not force asset input mode (fiat-first crypto screens). */
+  preferFiatCryptoEntry?: boolean;
+  /** When true, validateCrypto() returns messages with no asset tickers or crypto jargon. */
+  fiatNeutralCryptoValidation?: boolean;
 };
 
 const sanitizeAmountInput = (
@@ -49,12 +54,22 @@ export const useEnterAmountState = ({
   initialSelectedSource = null,
   initialInputValue = '',
   transactionFeePercent = 0,
+  initialInputMode = 'fiat',
+  preferFiatCryptoEntry = false,
+  fiatNeutralCryptoValidation = false,
 }: UseEnterAmountStateArgs) => {
   const [inputValue, setInputValue] = useState<string>(initialInputValue);
-  const [inputMode, setInputMode] = useState<'fiat' | 'asset'>('fiat');
+  const [inputMode, setInputMode] = useState<'fiat' | 'asset'>(initialInputMode);
   const [selectedSource, setSelectedSource] = useState<FundingSource | null>(
     initialSelectedSource
   );
+
+  useEffect(() => {
+    setSelectedSource((prev) => {
+      if (prev !== null) return prev;
+      return initialSelectedSource ?? null;
+    });
+  }, [initialSelectedSource]);
 
   const feePercent = useMemo(() => {
     const n = Number(transactionFeePercent);
@@ -71,9 +86,12 @@ export const useEnterAmountState = ({
     if (viewMode !== 'crypto') {
       return { maxIntDigits: 5, maxDecimals: 2 };
     }
+    if (preferFiatCryptoEntry && inputMode === 'fiat') {
+      return { maxIntDigits: 5, maxDecimals: 2 };
+    }
     // Crypto rule: max 5 digits before decimal, max 5 decimals.
     return { maxIntDigits: 5, maxDecimals: 5 };
-  }, [viewMode]);
+  }, [inputMode, preferFiatCryptoEntry, viewMode]);
 
   const parsedInput = useMemo(() => safeParseAmount(inputValue), [inputValue]);
 
@@ -154,14 +172,20 @@ export const useEnterAmountState = ({
     viewMode,
   ]);
 
-  const handleSetSelectedSource = useCallback((source: FundingSource | null) => {
-    setSelectedSource(source);
-    if (source?.type === 'crypto') {
-      setInputMode('asset');
-      return;
-    }
-    setInputMode('fiat');
-  }, []);
+  const handleSetSelectedSource = useCallback(
+    (source: FundingSource | null) => {
+      setSelectedSource(source);
+      if (preferFiatCryptoEntry) {
+        return;
+      }
+      if (source?.type === 'crypto') {
+        setInputMode('asset');
+        return;
+      }
+      setInputMode('fiat');
+    },
+    [preferFiatCryptoEntry]
+  );
 
   const displayFiatEquivalent = useMemo(() => {
     if (viewMode !== 'crypto') return '';
@@ -178,7 +202,11 @@ export const useEnterAmountState = ({
   const validateCrypto = useCallback((): string[] => {
     if (viewMode !== 'crypto') return [];
     if (!selectedSource || selectedSource.type !== 'crypto') {
-      return ['Please select a crypto asset'];
+      return [
+        fiatNeutralCryptoValidation
+          ? 'Withdrawal is unavailable right now.'
+          : 'Please select a crypto asset',
+      ];
     }
 
     const cryptoMeta = selectedSource.cryptoMeta;
@@ -187,28 +215,42 @@ export const useEnterAmountState = ({
 
     const errors: string[] = [];
     if (!priceUSD || priceUSD <= 0) {
-      errors.push('Invalid crypto price');
+      errors.push(
+        fiatNeutralCryptoValidation
+          ? 'Withdrawal is temporarily unavailable. Please try again later.'
+          : 'Invalid crypto price'
+      );
     }
 
     // In crypto mode, `amount` represents USD equivalent (based on inputMode).
     if (amount < 2) {
-      errors.push('$2.00 or more is required to send');
+      errors.push(
+        fiatNeutralCryptoValidation
+          ? '$2.00 or more is required.'
+          : '$2.00 or more is required to send'
+      );
     }
 
     if (assetAmount <= 0) {
-      errors.push('Invalid crypto amount');
+      errors.push(
+        fiatNeutralCryptoValidation ? 'Please enter a valid amount.' : 'Invalid crypto amount'
+      );
     }
 
     // `maxAsset` already includes platform fee percent (fee-adjusted max you can send).
     if (assetAmount > maxAsset) {
-      const maxDigits = maxAsset >= 1 ? 4 : 8;
-      errors.push(
-        `Insufficient balance. Max send after fees: ${maxAsset.toFixed(maxDigits)} ${symbol}`
-      );
+      if (fiatNeutralCryptoValidation) {
+        errors.push('Insufficient balance for this withdrawal.');
+      } else {
+        const maxDigits = maxAsset >= 1 ? 4 : 8;
+        errors.push(
+          `Insufficient balance. Max send after fees: ${maxAsset.toFixed(maxDigits)} ${symbol}`
+        );
+      }
     }
 
     return errors;
-  }, [amount, assetAmount, maxAsset, selectedSource, viewMode]);
+  }, [amount, assetAmount, fiatNeutralCryptoValidation, maxAsset, selectedSource, viewMode]);
 
   const cryptoIsValid = useMemo(() => validateCrypto().length === 0, [validateCrypto]);
 

@@ -47,7 +47,10 @@ import CreditOffer from './CreditOffer.svg';
 import PayairoOffer from './PayairoOffer.svg';
 import AddContact from './AddContact.svg';
 import Invite from './Invite.svg';
-
+import FilterIcon from './FilterIcon.svg';
+import Download from './Download.svg';
+import ApplePay from './ApplePay.svg';
+import SocialMediaIcons from './SocialMediaIcons.svg';
 
 export const AppIcon = {
   Home,
@@ -99,4 +102,8 @@ export const AppIcon = {
   PayairoOffer,
   AddContact,
   Invite,
+  FilterIcon,
+  Download,
+  ApplePay,
+  SocialMediaIcons,
 };

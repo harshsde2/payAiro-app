@@ -36,6 +36,7 @@ const mapFastApiOtpVerifyToApiResponse = (body: any): ApiResponse<any> => {
       access: tokens?.access,
       refresh: tokens?.refresh,
       step: stepCount,
+      username: body?.data?.username,
     },
     message: body?.message || "",
     toast_message: body?.message || body?.toast_message || "",
@@ -43,26 +44,40 @@ const mapFastApiOtpVerifyToApiResponse = (body: any): ApiResponse<any> => {
 };
 
 const mapOtpRequestPayload = (payload: any) => {
-  const location = payload?.location;
   const phoneCountryCode = 1;
 
+  let body: Record<string, any>;
+
   if (payload?.phone) {
-    return {
+    body = {
       channel: "phone",
       phone_country_code: phoneCountryCode,
       phone_national_number: String(payload.phone),
     };
-  }
-
-  if (payload?.email) {
-    return {
+  } else if (payload?.email) {
+    body = {
       channel: "email",
       email: String(payload.email).trim().toLowerCase(),
     };
+  } else {
+    body = {
+      channel: "email",
+      email: String(payload?.email || "").trim().toLowerCase(),
+    };
   }
 
-  // Backend may return a helpful message; keep shape minimal.
-  return { channel: "email", email: String(payload?.email || "") };
+  const ref = payload?.ref_code != null ? String(payload.ref_code).trim() : "";
+  if (ref) {
+    body.ref_code = ref;
+  }
+  if (payload?.hash) {
+    body.hash = String(payload.hash);
+  }
+  if (payload?.location) {
+    body.location = payload.location;
+  }
+
+  return body;
 };
 
 const mapProfileUpdatePayloadToFormData = (payload: any) => {
@@ -72,12 +87,17 @@ const mapProfileUpdatePayloadToFormData = (payload: any) => {
   const lastName =
     payload?.last_name ?? payload?.lastname ?? payload?.lastName;
   const email = payload?.email;
-  const payairoName = payload?.payairo_name ?? payload?.usernames;
+  const payairoName =
+    payload?.payairo_name ??
+    payload?.usernames ??
+    payload?.username;
 
   if (firstName) form.append("first_name", String(firstName));
   if (lastName) form.append("last_name", String(lastName));
   if (email) form.append("email", String(email));
-  if (payairoName) form.append("payairo_name", String(payairoName));
+  if (payairoName != null && String(payairoName).trim() !== "") {
+    form.append("payairo_name", String(payairoName).trim());
+  }
 
   const dob = payload?.dob ?? payload?.date_of_birth;
   if (dob) form.append("dob", String(dob));

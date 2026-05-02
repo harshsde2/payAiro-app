@@ -21,7 +21,13 @@ const PayButton: React.FC<PayButtonProps> = ({ disabled, onPress }) => {
       onPress={onPress}
       style={[styles.payButton, { opacity: disabled ? 0.5 : 1 }]}
     >
-      <SvgIcons.RightArrow width={20} height={20} color={theme.colors.white} />
+     <Button 
+     disabled={disabled} 
+     onPress={onPress} 
+     style={styles.payButton}
+     >
+      Proceed
+     </Button>
     </TouchableOpacity>
   );
 };

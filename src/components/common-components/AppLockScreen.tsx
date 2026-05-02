@@ -13,7 +13,12 @@ import {
 } from "react-native";
 import { Theme, useTheme } from "styles";
 import { SvgIcons } from "constants/svgs";
-import { getPin } from "storage/mmkv";
+import {
+  getPin,
+  removeItem,
+  setPin as setLocalPin,
+  STORAGE_KEYS,
+} from "storage/mmkv";
 // import CustomText from "tsx-components/CustomText";
 import CustomText from "@new-ui/components/common-components/CustomText";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -27,6 +32,7 @@ import {
 import { LOCK_CONFIG } from "types/appLock.types";
 import { AppIcon } from "@new-ui/assets/svgs";
 import { Button } from "new-ui/components/common-components/layout";
+import { useUpsertUserSecurityPinSettings } from "query/hooks";
 
 const AppLockScreen: React.FC = () => {
   const { theme } = useTheme();
@@ -42,10 +48,14 @@ const AppLockScreen: React.FC = () => {
     resetBiometricFailures,
     paymentVerificationRequest,
     clearPaymentVerification,
+    refreshPinStatus,
   } = useAppLock();
+  const { mutateAsync: upsertUserSecurityPinSettings } =
+    useUpsertUserSecurityPinSettings();
 
   const biometricFailureCount = useRef(0);
   const paymentMode = !!paymentVerificationRequest;
+  const requiresPinSetup = paymentVerificationRequest?.requirePinSetup === true;
   const [paymentShowPin, setPaymentShowPin] = useState(false);
   /** True while native biometric dialog is visible; shows full white background instead of PIN UI. */
   const [isBiometricRunning, setIsBiometricRunning] = useState(false);
@@ -56,6 +66,8 @@ const AppLockScreen: React.FC = () => {
   const [isVerifyingPin, setIsVerifyingPin] = useState(false);
   const [showPin, setShowPin] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [setupPinFirstEntry, setSetupPinFirstEntry] = useState("");
+  const [isSavingSetupPin, setIsSavingSetupPin] = useState(false);
 
   // Verify PIN against stored PIN
   const verifyPin = (enteredPin: string): boolean => {
@@ -72,10 +84,58 @@ const AppLockScreen: React.FC = () => {
 
       // Auto-verify when 4 digits are entered
       if (newPin.length === 4) {
-        handleVerifyPin(newPin);
+        if (requiresPinSetup) {
+          handleSetupPinEntry(newPin);
+        } else {
+          handleVerifyPin(newPin);
+        }
       }
     }
   };
+  const completePinSetup = async (pinToSave: string) => {
+    setIsSavingSetupPin(true);
+    setErrorMessage("");
+    try {
+      await upsertUserSecurityPinSettings({
+        pin: pinToSave,
+        biometric: isBiometricEnabled,
+      });
+      setLocalPin(pinToSave);
+      refreshPinStatus();
+      removeItem(STORAGE_KEYS.APP_LOCK_PIN_SETUP_PROMPT_AT);
+      setSetupPinFirstEntry("");
+      setPin("");
+      if (paymentVerificationRequest) {
+        paymentVerificationRequest.onVerified();
+      }
+      clearPaymentVerification();
+    } catch {
+      setErrorMessage("Failed to save PIN. Please try again.");
+      setPin("");
+      setSetupPinFirstEntry("");
+    } finally {
+      setIsSavingSetupPin(false);
+    }
+  };
+
+  const handleSetupPinEntry = async (enteredPin: string) => {
+    if (!setupPinFirstEntry) {
+      setSetupPinFirstEntry(enteredPin);
+      setPin("");
+      setErrorMessage("");
+      return;
+    }
+
+    if (enteredPin !== setupPinFirstEntry) {
+      setErrorMessage("PINs do not match. Try again.");
+      setPin("");
+      setSetupPinFirstEntry("");
+      return;
+    }
+
+    await completePinSetup(enteredPin);
+  };
+
 
   // Handle backspace
   const handlePinBackspace = () => {
@@ -131,8 +191,9 @@ const AppLockScreen: React.FC = () => {
 
   // When overlay is visible and biometric enabled, show native biometric on top; success → unlock or payment callback, fail → after N show PIN
   const shouldRunBiometric =
-    (shouldShowLock && isLocked && !showPinScreen && isBiometricEnabled) ||
-    (paymentMode && isBiometricEnabled && !paymentShowPin);
+    !requiresPinSetup &&
+    ((shouldShowLock && isLocked && !showPinScreen && isBiometricEnabled) ||
+      (paymentMode && isBiometricEnabled && !paymentShowPin));
 
   // Re-show native biometric modal when app returns to foreground (e.g. after phone lock dismissed the dialog)
   useEffect(() => {
@@ -141,11 +202,12 @@ const AppLockScreen: React.FC = () => {
       (nextAppState: AppStateStatus) => {
         if (nextAppState !== "active") return;
         const shouldRun =
-          (shouldShowLock &&
+          !requiresPinSetup &&
+          ((shouldShowLock &&
             isLocked &&
             !showPinScreen &&
             isBiometricEnabled) ||
-          (paymentMode && isBiometricEnabled && !paymentShowPin);
+            (paymentMode && isBiometricEnabled && !paymentShowPin));
         if (shouldRun) setBiometricRetriggerKey((k) => k + 1);
       }
     );
@@ -157,6 +219,7 @@ const AppLockScreen: React.FC = () => {
     isBiometricEnabled,
     paymentMode,
     paymentShowPin,
+    requiresPinSetup,
   ]);
 
   useEffect(() => {
@@ -233,6 +296,7 @@ const AppLockScreen: React.FC = () => {
       setPaymentShowPin(false);
       setPin("");
       setErrorMessage("");
+      setSetupPinFirstEntry("");
     }
   }, [paymentMode]);
 
@@ -298,7 +362,11 @@ const AppLockScreen: React.FC = () => {
             <View style={styles.pinEntryContainer}>
               <View style={styles.pinEntryLabelRow}>
                 <CustomText variant='caption' fontWeight='light' size={14} style={{ marginRight: 10 }}>
-                  Confirm your M-PIN
+                  {requiresPinSetup
+                    ? setupPinFirstEntry
+                      ? "Confirm your new M-PIN"
+                      : "Create your new M-PIN"
+                    : "Confirm your M-PIN"}
                 </CustomText>
                 {showPin ? (
                   <SvgIcons.EyeOnGreenbg onPress={handleShowAndHidePin} width={22} height={22} />
@@ -342,7 +410,7 @@ const AppLockScreen: React.FC = () => {
                 </View>
               )}
 
-              {isVerifyingPin ? (
+              {isVerifyingPin || isSavingSetupPin ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator
                     size="small"
@@ -351,7 +419,7 @@ const AppLockScreen: React.FC = () => {
                 </View>
               ) : null}
 
-              {!paymentMode && (
+              {!paymentMode && !requiresPinSetup && (
                 <TouchableOpacity
                   style={styles.forgotPinContainer}
                   onPress={() => {
@@ -379,7 +447,7 @@ const AppLockScreen: React.FC = () => {
                       key={num}
                       style={styles.keypadButton}
                       onPress={() => handlePinDigit(num)}
-                      disabled={isVerifyingPin}
+                      disabled={isVerifyingPin || isSavingSetupPin}
                     >
                       <Text style={styles.keypadNumber}>{num}</Text>
                     </TouchableOpacity>
@@ -391,14 +459,14 @@ const AppLockScreen: React.FC = () => {
                 <TouchableOpacity
                   style={[styles.keypadButton, { marginLeft: 125 }]}
                   onPress={() => handlePinDigit("0")}
-                  disabled={isVerifyingPin}
+                  disabled={isVerifyingPin || isSavingSetupPin}
                 >
                   <Text style={styles.keypadNumber}>0</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.keypadButton, { marginRight: 5 }]}
                   onPress={handlePinBackspace}
-                  disabled={isVerifyingPin}
+                  disabled={isVerifyingPin || isSavingSetupPin}
                 >
                   <SvgIcons.KeyboardBack width={30} height={30} />
                 </TouchableOpacity>
@@ -417,11 +485,13 @@ const AppLockScreen: React.FC = () => {
                   )}
                 </TouchableOpacity> */}
                 <Button
-                onPress={() => handleVerifyPin()}
-                disabled={pin.length !== 4 || isVerifyingPin}
-                loading={isVerifyingPin}
+                onPress={() =>
+                  requiresPinSetup ? handleSetupPinEntry(pin) : handleVerifyPin()
+                }
+                disabled={pin.length !== 4 || isVerifyingPin || isSavingSetupPin}
+                loading={isVerifyingPin || isSavingSetupPin}
                 >
-                  Confirm
+                  {requiresPinSetup ? "Save PIN" : "Confirm"}
                 </Button>
               </View>
             </View>

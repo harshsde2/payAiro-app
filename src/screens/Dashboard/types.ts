@@ -71,7 +71,8 @@ export interface IStatementDetailsRouteParams {
 // Send Screen Types
 export interface ISendScreenRouteParams {
   requested?: boolean;
-  type?: "requested" | "send";
+  /** `request` is used when opening send from Receive (payment request flow). */
+  type?: "requested" | "send" | "request";
   sender?: string;
 }
 

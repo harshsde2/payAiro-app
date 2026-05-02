@@ -66,18 +66,37 @@ export const enterAmountStyles = (theme: ITheme) =>
     amountInput: {
       padding: 0,
       margin: 0,
-      minWidth: 80,
+      minWidth: 10,
     },
     inputWrapper: {
       marginTop: theme.spacing['3xl'],
       width: '100%',
     },
     bottomArea: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
+      // flexDirection: 'row',
+      // flex:1,
+      width: '100%',
+      justifyContent: 'flex-start',
       alignItems: 'center',
       marginTop: theme.spacing.xl,
       paddingHorizontal: theme.spacing.base,
+    },
+    /** Trade: full-width payment row, then pay control — avoids cramped side-by-side layout. */
+    bottomAreaTrade: {
+      marginTop: theme.spacing.xl,
+      paddingHorizontal: theme.spacing.base,
+      width: '100%',
+      gap: theme.spacing.md,
+    },
+    bottomTradePayRow: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+      width: '100%',
+    },
+    bottomPaymentSlotFiat: {
+      width: '100%',
+      marginRight: theme.spacing.sm,
     },
     buttonRow: {
       flexDirection: 'row',
@@ -89,12 +108,9 @@ export const enterAmountStyles = (theme: ITheme) =>
       backgroundColor: theme.colors.black,
     },
     payButton: {
-      width:60,
-      height: 70,
-      backgroundColor: theme.colors.primary,
-      borderRadius: 10,
-      justifyContent: 'center',
-      alignItems: 'center',
+      width: '100%',
+      minHeight: 52,
+      alignSelf: 'stretch',
     },
 
     fundingCard: {

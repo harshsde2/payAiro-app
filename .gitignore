@@ -98,3 +98,7 @@ android/app/.cxx/tools/release/x86_64/compile_commands.json
 
 # react-native-config codegen
 ios/tmp.xcconfig
+
+# Coinme Risk SDK entitlement token - DO NOT COMMIT
+coinme.properties
+

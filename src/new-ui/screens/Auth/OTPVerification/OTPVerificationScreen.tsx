@@ -18,7 +18,7 @@ import {
   OTPVerificationScreenRouteProp,
 } from "@new-ui/screens/Auth/types";
 import { useAppLock } from "hooks/useAppLock";
-import { useWalletDetails, useUserPin } from "query/hooks";
+import { useWalletDetails, useUserSecurityPinSettings } from "query/hooks";
 import { useUserOtpRequest, useUserOtpVerify, useUserMe } from "query/hooks/useAPIAuth";
 import { getItem, setItem, setPin, STORAGE_KEYS } from "storage/mmkv";
 import {
@@ -29,12 +29,13 @@ import {
   setShowLoader,
 } from "redux/slices/newBackendAuthSlice";
 import { setBiometric, setToken, setWalletDataAuth } from "services/Auth";
+import { onUserLoggedIn as onCoinmeUserLoggedIn } from "services/coinmeRiskLifecycle";
 import { showError, showSuccess } from "utils/toast";
 import { appContent } from "utils/appContent";
 import useDispatchAction from "hooks/useDispatchAction";
 import { isProduction } from "config/env.config";
 import { getSmsHash } from "utils/smsHash";
-import { ILoginPayload, ISignupPayload } from "screens/Authentications/types";
+import { ILoginPayload } from "screens/Authentications/types";
 
 const OTP_COOLDOWN_SECONDS = 60;
 
@@ -62,7 +63,7 @@ const OTPVerificationScreen: React.FC = () => {
   const contactValue = isPhoneLogin ? phone : email;
 
   const { refetch: refetchWalletDetails } = useWalletDetails(false);
-  const { refetch: refetchUserPin } = useUserPin(false);
+  const { refetch: refetchSecurityPinSettings } = useUserSecurityPinSettings(false);
   const { mutate: verifyOtp } = useUserOtpVerify();
   const { mutate: otpRequest } = useUserOtpRequest();
   const { mutateAsync: fetchUserMe } = useUserMe();
@@ -139,18 +140,20 @@ const OTPVerificationScreen: React.FC = () => {
   const getWalletD = useCallback(async () => {
     try {
       const result = await refetchWalletDetails();
-      const pinResp = await refetchUserPin();
-      const pin = pinResp.data?.data?.tpin;
+      const pinResp = await refetchSecurityPinSettings();
+      const pin = pinResp.data?.data?.pin;
+      const biometricEnabled = pinResp.data?.data?.biometric === true;
 
       if (result.isSuccess && result.data?.data) {
         const walletData = result.data.data;
         dispatch(setWalletData(walletData));
         setWalletDataAuth(walletData);
         setItem(STORAGE_KEYS.WALLET_DATA, JSON.stringify(walletData));
-        setPin(pin);
+        if (typeof pin === "string" && pin.length > 0 && !pin.includes("*")) {
+          setPin(pin);
+        }
         refreshPinStatus();
-        const isLocked = walletData?.is_locked === true;
-        await setBiometric(isLocked);
+        await setBiometric(biometricEnabled);
         await refreshBiometricStatus();
         dispatch(setLogin(true));
         showSuccess("Logged in Successfully");
@@ -162,7 +165,7 @@ const OTPVerificationScreen: React.FC = () => {
     }
   }, [
     refetchWalletDetails,
-    refetchUserPin,
+    refetchSecurityPinSettings,
     dispatch,
     refreshPinStatus,
     refreshBiometricStatus,
@@ -175,42 +178,6 @@ const OTPVerificationScreen: React.FC = () => {
 
     const location = isProductionEnv ? "United States" : "india";
 
-    // Signup flow: use signUp endpoint
-      if (type === "signup") {
-      const payload: ISignupPayload = {
-        location,
-      };
-
-      if (isPhoneLogin && phone) {
-        payload.phone = phone;
-        if (smsHash) {
-          payload.hash = smsHash;
-        }
-      } else if (email) {
-        payload.email = email.trim().toLowerCase();
-      }
-
-        otpRequest(payload as any, {
-        onSuccess: (data) => {
-          if (data?.status && data) {
-            showSuccess(successMessage);
-          } else {
-            showError("Something went wrong");
-          }
-        },
-        onError: (error: any) => {
-          const errorMessage =
-            error?.response?.data?.message ||
-            error?.message ||
-            "Something went wrong";
-          showError(errorMessage);
-        },
-      });
-
-      return;
-    }
-
-    // Login / forgot flows: use login endpoint
     const payload: ILoginPayload = { location };
 
     if (isPhoneLogin && phone) {
@@ -238,15 +205,7 @@ const OTPVerificationScreen: React.FC = () => {
         showError(errorMessage);
       },
     });
-  }, [
-    type,
-    isPhoneLogin,
-    phone,
-    email,
-    otpRequest,
-    smsHash,
-    isProductionEnv,
-  ]);
+  }, [isPhoneLogin, phone, email, otpRequest, smsHash, isProductionEnv]);
 
   const handleResend = useCallback(() => {
     if (resendEnabled && !isVerifying) {
@@ -303,6 +262,11 @@ const OTPVerificationScreen: React.FC = () => {
               (navigation as any).navigate(NAVIGATION_SCREENS.NEW_KYC, {
                 email: isPhoneLogin ? undefined : email,
                 phone: isPhoneLogin ? phone : undefined,
+                username:
+                  data?.data?.username ??
+                  (!isPhoneLogin && email
+                    ? String(email).trim().toLowerCase()
+                    : undefined),
                 inputType,
                 data: data?.data,
                 isEmail: isEmail,
@@ -322,6 +286,11 @@ const OTPVerificationScreen: React.FC = () => {
                     JSON.stringify(meResp.data?.user || {})
                   );
                   dispatch(setAuthBootstrapFromUserMe(meResp.data));
+                  const coinmeAccountId =
+                    meResp.data?.caas_onboarding?.caas_customer_id;
+                  if (coinmeAccountId != null) {
+                    onCoinmeUserLoggedIn(String(coinmeAccountId)).catch(() => {});
+                  }
                 } else {
                   showError("Failed to load profile", "Please try again");
                 }
@@ -345,6 +314,11 @@ const OTPVerificationScreen: React.FC = () => {
                     JSON.stringify(meResp.data?.user || {})
                   );
                   dispatch(setAuthBootstrapFromUserMe(meResp.data));
+                  const coinmeAccountId =
+                    meResp.data?.caas_onboarding?.caas_customer_id;
+                  if (coinmeAccountId != null) {
+                    onCoinmeUserLoggedIn(String(coinmeAccountId)).catch(() => {});
+                  }
                 } else {
                   showError("Failed to load profile", "Please try again");
                 }

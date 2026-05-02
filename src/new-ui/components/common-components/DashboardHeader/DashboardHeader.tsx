@@ -41,26 +41,25 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
   const styles = dashboardHeaderStyles(theme) as any;
   const [isMenuVisible, setIsMenuVisible] = useState(false);
 
-  const { walletData, userData } = useSelector(
-    (state: any) => state.authenticationSlice
-  );
+  const { userData } = useSelector((state: any) => state.authenticationSlice);
 
-  const profilePhotoUri = walletData?.profile_photo
-    ? walletData.profile_photo.replace(/^http:\/\//i, "https://")
+  const rawProfilePhoto = userData?.profile_photo || userData?.profile?.photo;
+  const profilePhotoUri = rawProfilePhoto
+    ? String(rawProfilePhoto).replace(/^http:\/\//i, 'https://')
     : null;
 
   const userName =
-    walletData?.name ||
+    userData?.name ||
     [
-      userData?.first_name ? String(userData.first_name) : "",
-      userData?.last_name ? String(userData.last_name) : "",
+      userData?.first_name ? String(userData.first_name) : '',
+      userData?.last_name ? String(userData.last_name) : '',
     ]
       .filter(Boolean)
-      .join(" ")
+      .join(' ')
       .trim() ||
-    "";
+    '';
 
-  const username = walletData?.username || userData?.username || "";
+  const username = userData?.username || '';
 
   const handleProfilePress = useCallback(() => {
     navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL as never);

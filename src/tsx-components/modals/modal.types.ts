@@ -27,5 +27,6 @@ export interface TermAndConditionModalRef {
   showPatriotAct?: () => void;
   showESignDisclosure?: () => void;
   showTermsAndCondition?: () => void;
+  showWebDocument?: (title: string, url: string) => void;
   hide?: () => void;
 }

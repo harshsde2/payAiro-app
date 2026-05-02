@@ -78,6 +78,7 @@ import theme from "styles/theme";
 import { useTheme as useNewTheme } from "@new-ui/styles/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
 import SettingsScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/SettingsScreen";
+import CoinmeAgreementScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/CoinmeAgreementScreen";
 import NotificationScreen from "new-ui/screens/KebabMenuScreens/NotificationScreen/NotificationScreen";
 import ContactsScreen from "@new-ui/screens/Contacts/ContactsScreen";
 import AddContactScreen from "@new-ui/screens/Contacts/AddContactScreen";
@@ -85,10 +86,11 @@ import BankStatementScreen from "@new-ui/screens/KebabMenuScreens/BankStatementS
 import ViewStatementScreen from "@new-ui/screens/KebabMenuScreens/BankStatementScreen/ViewStatementScreen";
 import RewardsAndReferralsScreen from "@new-ui/screens/KebabMenuScreens/RewardsScreen/RewardsAndReferralsScreen";
 import ScratchCardScreen from "@new-ui/screens/KebabMenuScreens/RewardsScreen/ScratchCardScreen";
+import ActivityScreen from "new-ui/screens/Activity/ActivityScreen";
 
 const Stack = createNativeStackNavigator();
 
-function AppStackHeader(props: NativeStackHeaderProps) {
+export function AppStackHeader(props: NativeStackHeaderProps) {
   const navigation = useNavigation<any>();
   const { theme: newTheme } = useNewTheme();
   const title =
@@ -97,9 +99,15 @@ function AppStackHeader(props: NativeStackHeaderProps) {
       : undefined;
 
   const isNewSendScreen = props.route?.name === NAVIGATION_SCREENS.NEW_SEND;
+  const isActivityScreen = props.route?.name === NAVIGATION_SCREENS.NEW_ACTIVITY_SCREEN;
   const rightButton = isNewSendScreen
     ? { icon: <AppIcon.QrCode width={24} height={24} color={newTheme.colors.primary} onPress={() => { navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL) }}/> }
-    : undefined;
+    : isActivityScreen
+      ? {
+          icon: <AppIcon.Download width={24} height={24} color={newTheme.colors.primary} />,
+          onPress: () => {},
+        }
+      : undefined;
 
   return <CustomHeader {...props} title={title} rightButton={rightButton} />;
 }
@@ -354,8 +362,9 @@ export default function AppStack() {
       />
       <Stack.Screen
         options={{
-          headerShown: false,
-          presentation: "modal",
+          headerShown: true,
+          header: AppStackHeader,
+          headerTitle: "Transaction Details",
           animationTypeForReplace: "push",
           animation: "slide_from_bottom",
           gestureEnabled: true,
@@ -514,6 +523,11 @@ export default function AppStack() {
         component={SettingsScreen as any}
       />
       <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Coinme Legal' }}
+        name={NAVIGATION_SCREENS.NEW_COINME_AGREEMENT_SCREEN}
+        component={CoinmeAgreementScreen as any}
+      />
+      <Stack.Screen
         options={{ headerShown: true, header: AppStackHeader,headerTitle: 'Notifications' }}
         name={NAVIGATION_SCREENS.NEW_NOTIFICATION_SCREEN}
         component={NotificationScreen as any}
@@ -559,10 +573,15 @@ export default function AppStack() {
         component={RewardsAndReferralsScreen}
       />
       <Stack.Screen
-        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Scratch Card' }}
-        name={NAVIGATION_SCREENS.NEW_SCRATCH_CARD_SCREEN}
-        component={ScratchCardScreen}
-      />
+          options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Scratch Card' }}
+          name={NAVIGATION_SCREENS.NEW_SCRATCH_CARD_SCREEN}
+          component={ScratchCardScreen}
+        />
+        <Stack.Screen
+          options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Activity' }}
+          name={NAVIGATION_SCREENS.NEW_ACTIVITY_SCREEN}
+          component={ActivityScreen}
+        />
     </Stack.Navigator>
   );
 }

@@ -1,66 +1,50 @@
-export interface UserProfileDetails {
-  user_uuid: string;
+export interface IUserProfileDetails {
+  id: number;
+  username: string;
+  email: string;
   first_name: string;
   last_name: string;
-  email: string;
-  username: string;
-  profile_photo: string | null;
+  is_active: boolean;
 }
 
-export interface TransactionFee {
-  amount: string;
-  percentage: string;
-  currency: string;
+export interface IUserProfileEnvelope {
+  user: IUserProfileDetails;
+  legal_identity?: {
+    phone_country_code?: number | null;
+    phone_national_number?: string | null;
+  } | null;
+  profile?: {
+    avatar_url: string | null;
+  } | null;
 }
 
-export interface TransactionParty {
-  user_id: string;
+export interface IUserProfileTransactionParty {
+  userId: number;
   username: string;
-  email: string;
-  profile_photo: string | null;
-  wallet_address: string | null;
-  bank_name: string | null;
-  account_number_masked: string | null;
-}
-
-export interface DisplayParty {
-  username: string;
-  profile_photo: string | null;
-  identifier: string;
+  firstName: string;
+  lastName: string;
 }
 
 export interface UserTransaction {
-  transaction_id: string;
+  id: number;
   status: string;
+  direction: "sent" | "received";
   amount: string;
-  final_amount: string;
   currency: string;
-  currency_symbol: string;
-  created_at: string;
-  updated_at: string;
-  fee: TransactionFee;
-  sender: TransactionParty;
-  recipient: TransactionParty;
-  direction: "incoming" | "outgoing";
-  display_party: DisplayParty;
-  note: string | null;
-  category: string;
-  tags: string[];
+  createdAt: string;
+  sentBy?: IUserProfileTransactionParty | null;
+  sentTo?: IUserProfileTransactionParty | null;
 }
 
-export interface UserDetailsData {
-  user: UserProfileDetails;
-  latest_transactions: UserTransaction[];
-}
-
-export interface InnerResponse {
-  status: boolean;
+export interface UserProfileTransactionsResponse {
+  ok: boolean;
   message: string;
-  data: UserDetailsData;
-}
-
-export interface UserDetailsResponse {
-  status: boolean;
-  message: string;
-  data: InnerResponse;
+  data: {
+    user: IUserProfileEnvelope;
+    transactions: {
+      items: UserTransaction[];
+      sent: UserTransaction[];
+      received: UserTransaction[];
+    };
+  };
 }

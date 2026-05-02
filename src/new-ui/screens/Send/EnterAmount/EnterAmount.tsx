@@ -11,16 +11,20 @@ import {
   UIManager,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
 import ScreenWrapper from '@new-ui/components/common-components/ScreenWrapper';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 import { enterAmountStyles } from '@new-ui/styles/screens/send/enterAmountStyles';
 import { IEnterAmountProps } from '../Send/types';
-import useSelectorAction from 'hooks/useSelectorAction';
 import { useAppLock } from 'hooks/useAppLock';
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 import {
   cryptoKeys,
+  type CoinmeTradeExecutePayload,
+  useAllBankAccounts,
   useCreatePaymentRequest,
+  useCoinmeTradeExecute,
+  useCryptoAssetsListData,
   useCryptoTransfer,
   usePayPaymentRequest,
   useUserToUserTransfer,
@@ -40,6 +44,20 @@ import { AppIcon } from 'new-ui/assets/svgs';
 import CustomText from 'new-ui/components/common-components/CustomText';
 import CryptoReceiptModal from './CryptoReceiptModal';
 import type { CryptoReceiptDraft } from './cryptoReceiptTypes';
+import { fetchWebSessionId } from 'services/coinmeRiskLifecycle';
+import { useCoinmeAccountId } from 'hooks/useCoinmeAccountId';
+import {
+  DebitCardPaymentRow,
+  AddNewCardPlaceholderModal,
+  AddDebitCardModal,
+} from '@new-ui/components/common-components/AddBalance';
+import type { AddedCardResult } from '@new-ui/components/common-components/AddBalance/AddDebitCardModal';
+import { usePaymentMethodsList, type PaymentMethodItem } from 'query/hooks/usePaymentMethods';
+
+const COINME_DEFAULTS = {
+  paymentMethodId: 'uhygtfr5e354rtyu76g6b7i8',
+  sourceWalletAddress: ',mu9n7777777545e5vr',
+};
 
 const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   const { theme } = useTheme();
@@ -63,7 +81,14 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     },
   }
 
-  const { recipient_identifier, type, selectedContact, request_data } =
+  const {
+    recipient_identifier,
+    type,
+    selectedContact,
+    request_data,
+    tradeMode,
+    cryptoAsset,
+  } =
     route.params || ({} as any);
   console.log("route.params =>", JSON.stringify(route.params, null, 2));
 
@@ -98,21 +123,61 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     ? String(requestAmount ?? '')
     : undefined;
 
-  const selectorData = useSelectorAction() as any;
-  const { bankLists, walletData, allCryptoBalances } = selectorData;
-  // console.log("walletData =>", JSON.stringify(walletData, null, 2));
-  // console.log("bankLists =>", JSON.stringify(bankLists, null, 2));
+  const walletData = useSelector(
+    (state: { authenticationSlice?: { walletData?: Record<string, unknown> } }) =>
+      state.authenticationSlice?.walletData ?? null
+  );
+  const bankListsFromRedux = useSelector(
+    (state: { authenticationSlice?: { bankLists?: unknown[] } }) =>
+      state.authenticationSlice?.bankLists
+  );
+  const allCryptoFromRedux = useSelector(
+    (state: { authenticationSlice?: { allCryptoBalances?: unknown[] } }) =>
+      state.authenticationSlice?.allCryptoBalances
+  );
+
+  const { data: apiBankAccounts = [] } = useAllBankAccounts();
+  const { data: cryptoAssetsList = [] } = useCryptoAssetsListData('USD');
+
+  const bankLists = useMemo(() => {
+    if (Array.isArray(bankListsFromRedux) && bankListsFromRedux.length > 0) {
+      return bankListsFromRedux;
+    }
+    return apiBankAccounts;
+  }, [apiBankAccounts, bankListsFromRedux]);
+
+  const allCryptoBalances = useMemo(() => {
+    if (Array.isArray(allCryptoFromRedux) && allCryptoFromRedux.length > 0) {
+      return allCryptoFromRedux;
+    }
+    return cryptoAssetsList;
+  }, [allCryptoFromRedux, cryptoAssetsList]);
 
   const { requestPaymentVerification } = useAppLock();
+  const coinmeAccountId = useCoinmeAccountId();
   const { mutate: handleUserToUserTransfer } = useUserToUserTransfer() as any;
   const { mutate: handleCryptoTransfer } = useCryptoTransfer() as any;
   const { mutate: createPaymentRequest } = useCreatePaymentRequest();
   const { mutate: payPaymentRequest } = usePayPaymentRequest();
+  const tradeExecute = useCoinmeTradeExecute();
+  const isTradeMode =
+    (tradeMode === 'buy' || tradeMode === 'sell') &&
+    !!cryptoAsset &&
+    typeof cryptoAsset === 'object';
+  const tradeAssetSymbol = String(cryptoAsset?.asset || '').toUpperCase();
+  const tradePriceUSD = Number(cryptoAsset?.currentPrice ?? 0);
+
 
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   const [showCryptoReceiptModal, setShowCryptoReceiptModal] = useState(false);
   const cryptoPaymentRef = useRef<CryptoReceiptDraft | null>(null);
+  const [debitInfoVisible, setDebitInfoVisible] = useState(false);
+  const [addCardVisible, setAddCardVisible] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodItem | null>(
+    null
+  );
+  const paymentMethodsQuery = usePaymentMethodsList(20);
 
   useEffect(() => {
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -125,6 +190,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
 
     const idRaw =
       bankLike.id ??
+      bankLike.account_id ??
       bankLike.guid ??
       bankLike.account_guid ??
       bankLike.account_number ??
@@ -133,12 +199,17 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     const id = String(idRaw ?? '').trim();
     if (!id) return null;
 
-    const name =
+    const isMain = String(bankLike.account_type ?? '').toLowerCase() === 'main';
+    const rawName =
       bankLike.name ??
       bankLike.bank_name ??
       bankLike.bankName ??
       bankLike.account_holder ??
       'Bank';
+    const bankNameLower = String(bankLike.bank_name ?? '').toLowerCase();
+    const isLikelyPayairo =
+      isMain || bankNameLower.includes('payairo') || bankNameLower.includes('pay airo');
+    const name = isLikelyPayairo ? 'PayAiro Account' : String(rawName);
 
     const balanceRaw =
       bankLike.balances?.available ??
@@ -148,16 +219,28 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     const balance = typeof balanceRaw === 'number' ? balanceRaw : Number(balanceRaw ?? 0);
     const safeBalance = Number.isFinite(balance) ? balance : 0;
 
-    const accountNumber = bankLike.account_number ?? bankLike.accountId ?? id;
+    const acctNum = String(
+      bankLike.account_number ?? bankLike.masked_account_number ?? ''
+    ).trim();
+    const digits = acctNum.replace(/\D/g, '');
+    let accountMaskHint =
+      digits.length >= 4
+        ? digits.slice(-4)
+        : acctNum.length >= 4
+          ? acctNum.replace(/\D/g, '').slice(-4) || acctNum.slice(-4)
+          : '';
+    if (!accountMaskHint) {
+      const idDigits = String(id).replace(/\D/g, '');
+      if (idDigits.length >= 4) accountMaskHint = idDigits.slice(-4);
+    }
+
     return {
       id,
-      name: String(name),
+      name,
       balance: safeBalance,
       type: 'bank',
-      // bank_type: bankLike.bank_type,
-      // account_type: bankLike.account_type,
-      // account_number: String(accountNumber ?? id),
-      // raw: bankLike,
+      accountMaskHint: accountMaskHint || undefined,
+      isPayairoFunding: isLikelyPayairo,
     };
   }, []);
 
@@ -176,13 +259,14 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
 
 
   // Only consider Payairo \"main\" bank accounts as funding sources.
-  const mainBanks = useMemo(
-    () =>
-      Array.isArray(bankLists)
-        ? bankLists.filter((bank: any) => bank?.account_type === 'main')
-        : [],
-    [bankLists]
-  );
+  const mainBanks = useMemo(() => {
+    if (!Array.isArray(bankLists)) return [];
+    const mains = bankLists.filter(
+      (bank: any) => String(bank?.account_type ?? '').toLowerCase() === 'main'
+    );
+    if (mains.length > 0) return mains;
+    return bankLists.length > 0 ? [bankLists[0]] : [];
+  }, [bankLists]);
 
   const sources = useMemo(() => {
     return mainBanks
@@ -192,8 +276,8 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
 
   const cryptoSources = useMemo<CryptoFundingItem[]>(() => {
     if (!Array.isArray(allCryptoBalances)) return [];
-    // allCryptoBalances also contains a synthetic "Bank Balance" row; crypto selection should only show real assets.
-    return allCryptoBalances.filter((item: CryptoFundingItem) => item?.asset !== 'Bank Balance');
+    const list = allCryptoBalances as CryptoFundingItem[];
+    return list.filter((item) => item?.asset !== 'Bank Balance');
   }, [allCryptoBalances]);
 
   // For request/requested flows, show only fiat/bank funding sources in the selector.
@@ -203,18 +287,37 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   }, [cryptoSources, type]);
 
   const transactionFeePercent = useMemo(() => {
+    if (isTradeMode) return 0;
     const raw = walletData?.TransactionFees_persentage;
     const n = typeof raw === 'string' ? parseFloat(raw) : Number(raw);
     return Number.isFinite(n) ? n : 0;
-  }, [walletData?.TransactionFees_persentage]);
+  }, [isTradeMode, walletData?.TransactionFees_persentage]);
+
+  const tradeFundingSource = useMemo<FundingSource | null>(() => {
+    if (!isTradeMode || !tradeAssetSymbol) return null;
+    const safePrice = Number.isFinite(tradePriceUSD) ? tradePriceUSD : 0;
+    return {
+      id: `trade-${tradeMode}-${tradeAssetSymbol}`,
+      name: tradeAssetSymbol,
+      balance: tradeMode === 'sell' ? Number(cryptoAsset?.currentPrice ?? 0) : 0,
+      type: 'crypto',
+      cryptoMeta: {
+        symbol: tradeAssetSymbol,
+        network: String(cryptoAsset?.chain || 'ETH').toUpperCase(),
+        priceUSD: safePrice,
+        logo: cryptoAsset?.logo,
+      },
+    };
+  }, [cryptoAsset, isTradeMode, tradeAssetSymbol, tradeMode, tradePriceUSD]);
 
   const initialSelectedSource = useMemo(() => {
+    if (tradeFundingSource) return tradeFundingSource;
     // For now we always default to the first main Payairo bank, if available.
     if (mainBanks.length > 0) {
       return convertToFundingSource(mainBanks[0]);
     }
     return null;
-  }, [convertToFundingSource, mainBanks]);
+  }, [convertToFundingSource, mainBanks, tradeFundingSource]);
 
   const {
     amount,
@@ -238,6 +341,8 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     initialSelectedSource,
     transactionFeePercent,
     initialInputValue: requestedInitialInputValue,
+    initialInputMode: isTradeMode ? (tradeMode === 'sell' ? 'asset' : 'fiat') : 'fiat',
+    preferFiatCryptoEntry: isTradeMode && tradeMode === 'buy',
   });
 
   useEffect(() => {
@@ -262,6 +367,46 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   const isCryptoMode = viewMode === 'crypto';
   const leftPrefix = isCryptoMode && inputMode === 'asset' ? '' : '$';
   const rightSuffix = isCryptoMode && inputMode === 'asset' ? assetSymbol : '';
+  const pricePreviewText = useMemo(() => {
+    if (!isTradeMode || !tradeAssetSymbol) return '';
+    if (!Number.isFinite(tradePriceUSD) || tradePriceUSD <= 0) return '';
+    return `1 ${tradeAssetSymbol} ≈ $${tradePriceUSD.toFixed(2)}`;
+  }, [isTradeMode, tradeAssetSymbol, tradePriceUSD]);
+
+  const paymentSubtitle = useMemo(() => {
+    if (!selectedPaymentMethod) return 'Select a card';
+    const provider = (selectedPaymentMethod.card_provider || 'Card').toUpperCase();
+    const last4 = selectedPaymentMethod.card_last4 || '••••';
+    return `${provider}  •••• ${last4}`;
+  }, [selectedPaymentMethod]);
+
+  const handleAddedCard = useCallback(
+    async (result: AddedCardResult) => {
+      setAddCardVisible(false);
+
+      const res = await paymentMethodsQuery.refetch();
+      const items = res.data?.data?.items ?? [];
+      const wanted = result.payment_method_id;
+
+      let selected: PaymentMethodItem | null = null;
+      if (wanted.startsWith('last4:')) {
+        const last4 = wanted.replace('last4:', '');
+        selected =
+          items.find((i) => String(i.card_last4 ?? '') === String(last4)) ?? null;
+      } else {
+        selected = items.find((i) => i.payment_method_id === wanted) ?? null;
+      }
+
+      setSelectedPaymentMethod(selected);
+      setTimeout(() => setDebitInfoVisible(true), 350);
+    },
+    [paymentMethodsQuery]
+  );
+
+  const openDebitPaymentPicker = useCallback(() => {
+    Keyboard.dismiss();
+    setDebitInfoVisible(true);
+  }, []);
 
   const handleSendPayment = useCallback(() => {
     const pending = pendingPaymentRef.current;
@@ -529,6 +674,89 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     );
   }, [handleCryptoTransfer, navigation, queryClient, showError]);
 
+  const handleTradeExecute = useCallback(async () => {
+    if (!isTradeMode || !cryptoAsset) return;
+    if (!coinmeAccountId) {
+      showError(
+        'Your Coinme account is not ready yet. Please complete onboarding and try again.'
+      );
+      return;
+    }
+
+    navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+      isLoading: true,
+      transactionData: null,
+      isSuccess: false,
+      isError: false,
+      customTitle: 'Processing',
+      customDescription: 'Submitting your trade...',
+    } as never);
+
+    try {
+      const webSessionId = await fetchWebSessionId({
+        accountId: coinmeAccountId,
+      });
+
+      const isFiatEntry = inputMode === 'fiat';
+      const payload: CoinmeTradeExecutePayload = {
+        tradeType: tradeMode,
+        chain: String(cryptoAsset.chain || 'ETH').toUpperCase(),
+        cryptoCurrencyCode: String(cryptoAsset.asset || '').toUpperCase(),
+        fiatCurrencyCode: String(cryptoAsset.fiatCurrency || 'USD').toUpperCase(),
+        amountValue: String(isFiatEntry ? amount : assetAmount),
+        amountCurrencyCode: isFiatEntry
+          ? String(cryptoAsset.fiatCurrency || 'USD').toUpperCase()
+          : String(cryptoAsset.asset || '').toUpperCase(),
+        paymentMethodId:
+          selectedPaymentMethod?.payment_method_id ?? COINME_DEFAULTS.paymentMethodId,
+        sourceWalletAddress:
+          cryptoAsset.sourceWalletAddress || COINME_DEFAULTS.sourceWalletAddress,
+        webSessionId,
+      };
+
+      const res = await tradeExecute.mutateAsync(payload);
+      const ok = res?.ok ?? res?.status ?? true;
+
+      queryClient.invalidateQueries({ queryKey: cryptoKeys.allCryptoBalances() });
+      queryClient.invalidateQueries({ queryKey: bankKeys.balance() });
+
+      navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+        isLoading: false,
+        transactionData: res,
+        isSuccess: !!ok,
+        isError: !ok,
+        customTitle: tradeMode === 'buy' ? 'Buy submitted' : 'Sell submitted',
+      } as never);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } }; message?: string };
+      const errorMessage =
+        e?.response?.data?.message ||
+        e?.message ||
+        'Something went wrong while executing the trade';
+      navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+        isLoading: false,
+        transactionData: null,
+        isSuccess: false,
+        isError: true,
+        errorMessage,
+      } as never);
+      showError(errorMessage);
+    }
+  }, [
+    amount,
+    assetAmount,
+    coinmeAccountId,
+    cryptoAsset,
+    inputMode,
+    isTradeMode,
+    navigation,
+    queryClient,
+    showError,
+    tradeExecute,
+    tradeMode,
+    selectedPaymentMethod?.payment_method_id,
+  ]);
+
   const handleActionsAfterOTPVerified = useCallback(() => {
     if (!isCryptoMode) {
       // if (type === 'send') {
@@ -548,11 +776,22 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   ]);
 
   const handleActionsAfterPinVerified = useCallback(() => {
+    if (isTradeMode) {
+      handleTradeExecute();
+      return;
+    }
     navigation.navigate(NAVIGATION_SCREENS.OTP_SCREEN, {
       onOTPVerified: handleActionsAfterOTPVerified,
       transactionType: isCryptoMode ? 'crypto_send' : type,
     });
-  }, [handleActionsAfterOTPVerified, isCryptoMode, navigation, type]);
+  }, [
+    handleActionsAfterOTPVerified,
+    handleTradeExecute,
+    isCryptoMode,
+    isTradeMode,
+    navigation,
+    type,
+  ]);
 
 
   const handlePayPress = useCallback(() => {
@@ -566,8 +805,8 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
         return;
       }
 
-      if (!selectedSource) {
-        showError('Please select a bank account');
+      if (!selectedPaymentMethod) {
+        showError('Please select a payment method');
         return;
       }
       if (!recipient_identifier) {
@@ -587,10 +826,25 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
       return;
     }
 
-    const errors = validateCrypto();
-    if (errors.length > 0) {
-      showError(errors[0]);
-      return;
+    if (isTradeMode) {
+      if (inputMode === 'fiat' && amount <= 0) {
+        showError('Please enter a valid amount');
+        return;
+      }
+      if (inputMode === 'asset' && assetAmount <= 0) {
+        showError('Please enter a valid amount');
+        return;
+      }
+      if (tradeMode === 'buy' && !selectedPaymentMethod) {
+        showError('Please select a payment method');
+        return;
+      }
+    } else {
+      const errors = validateCrypto();
+      if (errors.length > 0) {
+        showError(errors[0]);
+        return;
+      }
     }
 
     if (!selectedSource?.cryptoMeta) {
@@ -614,17 +868,20 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     amount,
     assetAmount,
     isCryptoMode,
+    isTradeMode,
+    inputMode,
     requestId,
     type,
     selectedSource,
     recipient_identifier,
     requestPaymentVerification,
     selectedSource?.cryptoMeta,
+    selectedPaymentMethod,
     showError,
+    tradeMode,
     validateCrypto,
     handleActionsAfterPinVerified,
   ]);
-
 
   return (
     <ScreenWrapper
@@ -674,6 +931,10 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
             }
             type={isRequestedFlow ? ('send' as any) : type}
             selectedContact={isRequestedFlow ? requestedSelectedContact : selectedContact}
+            mode={isTradeMode ? 'trade' : 'send'}
+            tradeMode={isTradeMode ? tradeMode : undefined}
+            assetSymbol={isTradeMode ? tradeAssetSymbol : undefined}
+            pricePreview={isTradeMode ? pricePreviewText : undefined}
           />
 
           <AmountInput
@@ -693,12 +954,14 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
                 Fee: {feePercent}%
               </CustomText>
 
-              <TouchableOpacity style={styles.cryptoMaxContainer} activeOpacity={0.9} onPress={fillMax}>
-                <CustomText variant="caption" style={styles.cryptoMaxText}>
-                  Max: {maxAsset.toFixed(maxAsset >= 1 ? 4 : 8)} {assetSymbol} ~$
-                  {maxUsd.toFixed(2)}
-                </CustomText>
-              </TouchableOpacity>
+              {!isTradeMode ? (
+                <TouchableOpacity style={styles.cryptoMaxContainer} activeOpacity={0.9} onPress={fillMax}>
+                  <CustomText variant="caption" style={styles.cryptoMaxText}>
+                    Max: {maxAsset.toFixed(maxAsset >= 1 ? 4 : 8)} {assetSymbol} ~$
+                    {maxUsd.toFixed(2)}
+                  </CustomText>
+                </TouchableOpacity>
+              ) : null}
 
               <CustomText variant="caption" style={styles.cryptoEquivalentText}>
                 {inputMode === 'asset'
@@ -710,17 +973,38 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
 
         </View>
 
-        <View style={[styles.bottomArea,]}>
-          <View style={{ width: '80%' }}>
-            <FundingSourceCard
-              source={selectedSource}
-              onPress={handlePressFundingSource}
-            />
+        <View
+          style={
+            isCryptoMode && isTradeMode && tradeMode === 'buy'
+              ? [styles.bottomArea, styles.bottomAreaTrade]
+              : styles.bottomArea
+          }
+        >
+          <View style={{ width: '100%', gap: theme.spacing.md }}>
+            {isCryptoMode ? (
+              <FundingSourceCard
+                source={selectedSource}
+                onPress={isTradeMode ? () => {} : handlePressFundingSource}
+              />
+            ) : (
+              <DebitCardPaymentRow
+                title="Debit Card"
+                maskedDetail={paymentSubtitle}
+                onPress={openDebitPaymentPicker}
+              />
+            )}
+            {isTradeMode && tradeMode === 'buy' ? (
+              <DebitCardPaymentRow
+                title="Debit Card"
+                maskedDetail={paymentSubtitle}
+                onPress={openDebitPaymentPicker}
+              />
+            ) : null}
+            <PayButton disabled={isPaying} onPress={handlePayPress} />
           </View>
-          <PayButton disabled={isPaying} onPress={handlePayPress} />
         </View>
 
-        {isSelectorOpen ? (
+        {isSelectorOpen && isCryptoMode && !isTradeMode ? (
           <FundingSourceSelectorModal
             sources={sources}
             cryptoSources={cryptoSourcesForModal}
@@ -729,6 +1013,23 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
             onClose={() => setIsSelectorOpen(false)}
           />
         ) : null}
+
+        <AddNewCardPlaceholderModal
+          visible={debitInfoVisible}
+          onClose={() => setDebitInfoVisible(false)}
+          title="Select Payment Method"
+          selectedPaymentMethodId={selectedPaymentMethod?.payment_method_id ?? null}
+          onConfirmSelection={(item) => {
+            setSelectedPaymentMethod(item);
+          }}
+          onRequestAddCard={() => setAddCardVisible(true)}
+        />
+
+        <AddDebitCardModal
+          visible={addCardVisible}
+          onClose={() => setAddCardVisible(false)}
+          onAdded={handleAddedCard}
+        />
 
         <CryptoReceiptModal
           visible={showCryptoReceiptModal}
@@ -739,7 +1040,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
           }}
           tokenSymbol={assetSymbol}
           tokenAmount={assetAmount}
-          priceUSD={selectedSource?.cryptoMeta?.priceUSD ?? 0}
+          priceUSD={selectedSource?.cryptoMeta?.priceUSD ?? tradePriceUSD ?? 0}
           usdAmount={amount}
           feePercent={feePercent}
         />

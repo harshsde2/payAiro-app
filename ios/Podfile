@@ -19,8 +19,44 @@ end
 # Use it to require both react-native's and this package's scripts:
 node_require('react-native/scripts/react_native_pods.rb')
 node_require('react-native-permissions/scripts/setup.rb')
-platform :ios, min_ios_version_supported
+# NOTE: bumped from `min_ios_version_supported` (15.1 for RN 0.81) to 16.0
+# because the Coinme Risk SDK (`CoinmeRiskSDK`) requires iOS 16.0 across all
+# published versions (1.0.0, 1.1.0, 1.1.1).
+platform :ios, '16.0'
 prepare_react_native_project!
+
+# --- Coinme Risk SDK source (private CocoaPods git spec repo) --------------
+# Coinme distributes the iOS Risk SDK behind packages.coinme.com (a proxy
+# over Cloudsmith). The distribution token is embedded in the URL path.
+#
+# Token resolution order:
+#   1. `COINME_TOKEN` in `<repo-root>/coinme.properties` (git-ignored)
+#   2. `COINME_TOKEN` environment variable (for CI)
+#
+# If no token is found, the Coinme private source line is skipped so the rest
+# of `pod install` can still run (the Coinme pod itself will then fail to
+# resolve, which surfaces a clear error).
+def read_coinme_token
+  properties_file = File.join(File.dirname(__FILE__), '..', 'coinme.properties')
+  if File.exist?(properties_file)
+    File.foreach(properties_file) do |line|
+      key, value = line.split('=', 2)
+      return value.strip if key && value && key.strip == 'COINME_TOKEN'
+    end
+  end
+  ENV['COINME_TOKEN'] || ''
+end
+
+coinme_token = read_coinme_token
+if coinme_token.empty?
+  Pod::UI.warn 'COINME_TOKEN not found; CoinmeRiskSDK will fail to resolve. Set it in coinme.properties or export it as an env var.'
+else
+  # Order matters: when ANY explicit `source` is declared, CocoaPods stops
+  # auto-adding the trunk CDN, so we must list it explicitly alongside.
+  source "https://packages.coinme.com/#{coinme_token}/coinme-sdk-mobile/cocoapods/index.git"
+  source 'https://cdn.cocoapods.org/'
+end
+# ---------------------------------------------------------------------------
 
 # Firebase requires static frameworks (incompatible with Flipper)
 use_frameworks! :linkage => :static
@@ -60,6 +96,10 @@ target 'payAiro' do
  # Add Plaid SDK
  pod 'Plaid', '~> 6.4.0'
 
+ # Add Coinme Risk SDK (fetched from packages.coinme.com via the `source`
+ # line declared at the top of this Podfile). Requires iOS 16.0+.
+ pod 'CoinmeRiskSDK', '~> 1.1.1'
+
  use_react_native!(
    :path => config[:reactNativePath],
    # An absolute path to your application root.
@@ -95,9 +135,12 @@ target 'payAiro' do
     )
     
     # Fix "non-modular-include-in-framework-module" build errors (React-Core and other pods)
+    # Also enforce iOS 16.0 deployment target on every pod so no transitive
+    # dependency silently downgrades below CoinmeRiskSDK's minimum.
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
         config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
       end
     end
     

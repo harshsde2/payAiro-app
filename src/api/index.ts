@@ -266,9 +266,9 @@ api.interceptors.response.use(
       const { status } = error.response;
 
       console.log("requestUrl=>", requestUrl);
-      // Only show this if NOT a public route
-      if (status === 401 && !isPublicRoute) {
-        // console.log("Token expired or unauthorized");
+      // Legacy JWT often 401s here while FastAPI still works; suppress toast until hook is migrated.
+      const suppressUnauthorizedToast = requestUrl.includes("all-bank-accounts");
+      if (status === 401 && !isPublicRoute && !suppressUnauthorizedToast) {
         showError("Token expired or unauthorized");
       }
 

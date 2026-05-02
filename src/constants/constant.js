@@ -104,17 +104,26 @@ export const SETTINGS_LISTS = [
   //   route: "AlertScreen",
   // },
   {
-    name: "Terms and Conditions",
+    name: "Terms of Service",
     icon: <SvgIcons.UserTerms width={55} height={55} />,
     isDisvled: false,
     route: "",
+    webUrl: "https://help.coinme.com/en/articles/9039676-terms-of-service",
   },
-  // {
-  //   name: "Cybrid User Agreement",
-  //   icon: <SvgIcons.UserPolicy width={55} height={55} />,
-  //   isDisvled: false,
-  //   route: "",
-  // },
+  {
+    name: "Privacy Policy",
+    icon: <SvgIcons.UserPolicy width={55} height={55} />,
+    isDisvled: false,
+    route: "",
+    webUrl: "https://help.coinme.com/en/articles/9039704-privacy-policy",
+  },
+  {
+    name: "Disclosure",
+    icon: <SvgIcons.UserPolicy width={55} height={55} />,
+    isDisvled: false,
+    route: "",
+    webUrl: "https://help.coinme.com/en/articles/10535881-disclosures",
+  },
   {
     name: "Support",
     icon: <SvgIcons.ChatSupport />,

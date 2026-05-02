@@ -60,6 +60,7 @@ export const STORAGE_KEYS = {
   APP_BACKGROUND_FLAG: "app_background_flag",
   APP_LOCK_LAST_ACTIVE_TIME: "app.lock.last_active_time",
   APP_LOCK_TIMEOUT: "app.lock.timeout",
+  APP_LOCK_PIN_SETUP_PROMPT_AT: "app.lock.pin_setup_prompt_at",
   KYC_CONGRATULATIONS_SHOWN: "kyc_congratulations_shown",
   SMS_HASH: "sms_hash",
   /** Debug: last time a push notification was received (ISO string). For TestFlight debugging. */

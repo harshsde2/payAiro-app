@@ -154,11 +154,17 @@ export const USER_AUTH = {
   PROFILE_UPDATE: "api/v1/users/profile/update/",
   ADDRESS_UPDATE: "api/v1/users/address/update/",
   USERS_ME: "api/v1/users/me/",
+  USERS_SEARCH: "api/v1/users/search/",
   CRYPTO_MARKET: "api/v1/integrations/crypto/market/",
   CRYPTO_BALANCE: "api/v1/integrations/crypto/balance/",
   CRYPTO_CHART: "api/v1/integrations/crypto/chart/",
   PAYMENT_TRANSACTIONS_SEND: "api/v1/payment-transactions/send/",
+  PAYMENT_TRANSACTIONS_SEND_HISTORY: "api/v1/payment-transactions/send/history/",
   PAYMENT_METHODS: "api/v1/integrations/payment-methods/",
   WALLET_ADDRESSES: "api/v1/wallets/addresses/",
+  COINME_TRADE_EXECUTE: "api/v1/integrations/coinme/trade/execute/",
+  SECURITY_PIN_SETTINGS: "api/v1/users/security/pin/",
+  USER_PROFILE_TRANSACTIONS: (targetUserId: number | string, limit: number = 50) =>
+    `api/v1/users/${targetUserId}/profile-transactions/?limit=${limit}`,
 };
  

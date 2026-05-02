@@ -19,6 +19,13 @@ import FCMService from "services/FCMService";
 import { IStoreFCMTokenOptions } from "types/fcm.types";
 
 /**
+ * Kill-switch for the FCM token storage flow. When `false`, the hook is a
+ * no-op: no `/auth/store-token/` calls, no retries, no AppState handlers.
+ * Flip to `true` once the backend stops rejecting valid access tokens.
+ */
+const FCM_STORE_TOKEN_ENABLED = false;
+
+/**
  * Hook that automatically stores FCM token to backend when user is logged in
  * Best Practice: Use this hook once in App.js, it handles all scenarios
  * 
@@ -65,6 +72,9 @@ export const useStoreFCMTokenOnLogin = (options: IStoreFCMTokenOptions = {}) => 
    */
   const storeTokenToBackend = useCallback(
     async (token: string, isRetry = false) => {
+      if (!FCM_STORE_TOKEN_ENABLED) {
+        return;
+      }
       // Prevent duplicate/concurrent calls
       if (isStoringRef.current) {
         // console.log("[useStoreFCMTokenOnLogin] Already storing, skipping...");
@@ -163,6 +173,7 @@ export const useStoreFCMTokenOnLogin = (options: IStoreFCMTokenOptions = {}) => 
    * - User logs in or registers
    */
   useEffect(() => {
+    if (!FCM_STORE_TOKEN_ENABLED) return;
     if (isLogin && fcmToken && tokens?.access) {
       // Only store if token changed or not stored yet
       if (!hasStoredTokenRef.current || lastStoredTokenRef.current !== fcmToken) {
@@ -198,6 +209,7 @@ export const useStoreFCMTokenOnLogin = (options: IStoreFCMTokenOptions = {}) => 
    * SCENARIO 6: App foreground - refresh and store token (iOS + Android)
    */
   useEffect(() => {
+    if (!FCM_STORE_TOKEN_ENABLED) return;
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
       if (nextAppState === "active" && isLogin && tokens?.access) {
         // console.log("[useStoreFCMTokenOnLogin] App came to foreground...");
@@ -228,6 +240,7 @@ export const useStoreFCMTokenOnLogin = (options: IStoreFCMTokenOptions = {}) => 
    * Use this in OTP.tsx and Name.tsx after login/registration
    */
   const triggerStore = useCallback(async () => {
+    if (!FCM_STORE_TOKEN_ENABLED) return;
     const fcmService = FCMService.getInstance();
     const token = fcmService.getCachedToken() || (await fcmService.getToken());
 

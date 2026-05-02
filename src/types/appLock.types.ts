@@ -30,7 +30,10 @@ export interface AppLockContextType {
   /** Clear any active payment verification request (e.g. user cancelled). */
   clearPaymentVerification: () => void;
   /** Non-null when payment verification modal is active; onVerified is the callback to run on success. */
-  paymentVerificationRequest: { onVerified: () => void } | null;
+  paymentVerificationRequest: {
+    onVerified: () => void;
+    requirePinSetup?: boolean;
+  } | null;
   /** True once we've determined whether to show lock on cold start; used to avoid flashing dashboard before AppLock. */
   isLockCheckComplete: boolean;
 }

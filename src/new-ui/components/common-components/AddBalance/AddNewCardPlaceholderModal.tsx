@@ -161,6 +161,52 @@ const AddNewCardPlaceholderModal: React.FC<AddNewCardPlaceholderModalProps> = ({
     onClose();
   }, [currentSelectedId, debitCards, onClose, onConfirmSelection]);
 
+  const renderStaticMethodRow = (
+    label: string,
+    badgeText: string,
+    icon?: React.ReactNode
+  ) => (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: theme.spacing.md,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+        borderRadius: theme.radius.lg,
+        marginTop: theme.spacing.md,
+        backgroundColor: theme.colors.white,
+      }}
+    >
+      {icon ? (
+        <View style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
+          {icon}
+        </View>
+      ) : (
+        <View
+          style={{
+            width: 24,
+            height: 24,
+            borderRadius: 12,
+            backgroundColor: theme.colors.greyLight2,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <CustomText variant="caption" fontWeight="semiBold">
+            {badgeText}
+          </CustomText>
+        </View>
+      )}
+      <View style={{ marginLeft: theme.spacing.md, flex: 1 }}>
+        <CustomText variant="h4" size={16} fontWeight="semiBold" fontFamily="poppins">
+          {label}
+        </CustomText>
+      </View>
+      <AppIcon.ChevronRight width={24} height={24} color={theme.colors.primary} />
+    </View>
+  );
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.modalBackdrop} onPress={onClose}>
@@ -245,10 +291,17 @@ const AddNewCardPlaceholderModal: React.FC<AddNewCardPlaceholderModalProps> = ({
                 ) : null}
               </View>
             ) : null}
+
+            {renderStaticMethodRow('Google Pay', 'G')}
+            {renderStaticMethodRow(
+              'Apple Pay',
+              'A',
+              <AppIcon.ApplePay width={24} height={24} />
+            )}
           </View>
 
           <View style={{ marginTop: theme.spacing.xl }}>
-            <Button onPress={handleConfirm}>Pay</Button>
+            <Button onPress={handleConfirm}>Select</Button>
           </View>
         </Pressable>
       </Pressable>

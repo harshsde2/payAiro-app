@@ -20,6 +20,7 @@ import {
   setPin,
   setWalletDataAuth,
 } from "services/Auth";
+import { onUserLoggedOut as onCoinmeUserLoggedOut } from "services/coinmeRiskLifecycle";
 import { clearAll } from "storage/mmkv";
 import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
 import { toKycMode } from "types/kyc";
@@ -101,6 +102,10 @@ export default function SettingScreen() {
   const termsAndConditionRef = useRef<any>(null);
 
   const handleLogout = async () => {
+    // Release Coinme Risk engine state before clearing storage so the SDK
+    // doesn't keep pointing at the now-logged-out user.
+    await onCoinmeUserLoggedOut();
+
     resetAppState();
     dispatch(resetOnboardingState());
     dispatch(resetAnimationState());
@@ -197,19 +202,11 @@ export default function SettingScreen() {
                 if (item.name === "Logout") {
                   setIsVisible(true);
                   return;
-                } else if (item.name === "Terms and Conditions") {
-                  navigation.navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
-                    url: require("../../assets/pdf/Terms_and_Conditions.pdf"),
-                    isFileFromLocal: true,
-                    fileName: "Terms_and_Conditions.pdf",
-                  });
-                  return;
-                } else if (item.name === "Cybrid User Agreement") {
-                  navigation.navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
-                    url: require("../../assets/pdf/Cybrid_User_Agreement.pdf"),
-                    isFileFromLocal: true,
-                    fileName: "Cybrid_User_Agreement.pdf",
-                  });
+                } else if (item.webUrl) {
+                  termsAndConditionRef.current?.showWebDocument?.(
+                    item.name,
+                    item.webUrl
+                  );
                   return;
                 }
                 navigation.navigate(item.route);

@@ -83,7 +83,7 @@ const BlockchainNameServiceTermsModal: React.FC<IBlockchainNameServiceTermsModal
               fontWeight="bold"
               style={styles(theme).title}
             >
-              Terms and Conditions
+              Terms of Service
             </CustomText>
             {/* <Pressable onPress={handleClose} style={styles(theme).closeButton}>
               <SvgIcons.CrossIcon width={44} height={44} />
@@ -140,7 +140,7 @@ const BlockchainNameServiceTermsModal: React.FC<IBlockchainNameServiceTermsModal
                 variant="body2"
                 style={styles(theme).checkboxLabel}
               >
-                I have read and agree to the terms and conditions
+                I have read and agree to the terms of service
               </CustomText>
             </TouchableOpacity>
           </View> */}

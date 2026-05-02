@@ -4,4 +4,6 @@ export const userContactKeys = {
   contacts: () => [...userContactKeys.all, "contacts"] as const,
   recentContacts: () => [...userContactKeys.contacts(), "recent"] as const,
   userSearch: (query: string) => [...userContactKeys.all, "search", query] as const,
+  fastApiUsersSearch: (query: string, limit: number) =>
+    [...userContactKeys.all, "fastApiSearch", query, limit] as const,
 } as any;

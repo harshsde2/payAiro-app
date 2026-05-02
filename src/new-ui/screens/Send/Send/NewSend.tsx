@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, Platform, KeyboardAvoidingView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import ScreenWrapper from '@new-ui/components/common-components/ScreenWrapper';
@@ -12,7 +12,8 @@ import { useVerifyUserByIdentifier } from 'query/hooks/useUser';
 import { detectBlockchainNameService } from 'utils/blockchainNameService';
 import { showError } from 'utils/toast';
 import { IBankBalance, IBankItem } from 'screens/Dashboard/types';
-import useSelectorAction from 'hooks/useSelectorAction';
+import { useSelector } from 'react-redux';
+import { useAllBankAccounts } from 'query/hooks';
 import { SendContactsList, ISendContactItem } from '@new-ui/components/common-components/SendContactsList';
 import { INewSendProps } from './types';
 
@@ -26,14 +27,31 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
   const { theme } = useTheme();
   const styles = newSendStyles(theme);
 
-  const selectorData = useSelectorAction() as unknown as {
-    bankLists: IBankItem[];
-    bankBalance: IBankBalance | null;
-  };
-  const { bankLists, bankBalance } = selectorData;
+  const bankListsFromRedux = useSelector(
+    (state: { authenticationSlice?: { bankLists?: IBankItem[] } }) =>
+      state.authenticationSlice?.bankLists
+  );
+  const bankBalance = useSelector(
+    (state: { authenticationSlice?: { bankBalance?: IBankBalance | null } }) =>
+      state.authenticationSlice?.bankBalance ?? null
+  );
+  const { data: apiBankAccounts = [] } = useAllBankAccounts();
 
-  const mainBanks =
-    bankLists?.filter((bank) => bank.account_type === 'main') ?? [];
+  const bankLists = useMemo(() => {
+    if (Array.isArray(bankListsFromRedux) && bankListsFromRedux.length > 0) {
+      return bankListsFromRedux;
+    }
+    return apiBankAccounts as IBankItem[];
+  }, [apiBankAccounts, bankListsFromRedux]);
+
+  const mainBanks = useMemo(() => {
+    const mains =
+      bankLists?.filter(
+        (bank) => String(bank.account_type ?? '').toLowerCase() === 'main'
+      ) ?? [];
+    if (mains.length > 0) return mains;
+    return bankLists?.length ? [bankLists[0]] : [];
+  }, [bankLists]);
   const selectedBank = mainBanks?.[0] ?? null;
 
   const {
@@ -84,11 +102,15 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
       });
 
       if (data && data.status) {
+        const verifiedUser = (data as { data?: { username?: string } })?.data;
+        const recipientUserId =
+          verifiedUser?.username?.trim() || trimmedSender;
         navigation.navigate(
           NAVIGATION_SCREENS.ENTER_AMOUNT as never,
           {
             type: 'send',
             recipient_identifier: trimmedSender,
+            recipientUserId,
             selectedContact: selectedContact,
           }
         );
@@ -172,16 +194,42 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
 
       const trimmedSender = identifier.trim();
 
+      // Route `type` on NewSend is often undefined (plain Send tab) or `request` when opened
+      // from Receive — it must not be forwarded blindly or EnterAmount never sees `send`.
+      const typeStr = String(type ?? '');
+      const isRequestFlow =
+        !!requested ||
+        typeStr === 'requested' ||
+        typeStr === 'request';
+      const enterAmountType = isRequestFlow ? 'request' : 'send';
+
       navigation.navigate(
         NAVIGATION_SCREENS.ENTER_AMOUNT as never,
         {
-          type: type,
+          type: enterAmountType,
           recipient_identifier: trimmedSender,
+          recipientUserId:
+            contact.username?.trim() || trimmedSender,
           selectedContact: contact,
         } as never
       );
     },
     [navigation, requested, type, selectedBank]
+  );
+
+  const handleContactProfilePress = useCallback(
+    (contact: ISendContactItem) => {
+      const numericId = Number(contact.uuid);
+      navigation.navigate(NAVIGATION_SCREENS.USER_PROFILE as never, {
+        userDetails: {
+          id: Number.isFinite(numericId) ? numericId : undefined,
+          username: contact.username?.trim() || '',
+          identifier: contact.username?.trim() || '',
+          profile_photo: contact.profile_photo,
+        },
+      } as never);
+    },
+    [navigation]
   );
 
   return (
@@ -251,6 +299,7 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
             selectedId={selectedContactUuid}
             limit={4}
             onSelect={handleContactSelect}
+            onProfilePress={handleContactProfilePress}
           />
         </View>
 

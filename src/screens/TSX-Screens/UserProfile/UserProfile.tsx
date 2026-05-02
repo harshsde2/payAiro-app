@@ -6,12 +6,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  FlatList,
 } from "react-native";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useUserDetails } from "query/hooks/useUserDetails";
+import { useUserProfileTransactions } from "query/hooks/useUserDetails";
 import { useTheme } from "styles/ThemeContext";
 import moment from "moment";
 import { UserTransaction } from "./types";
@@ -23,42 +22,74 @@ const UserProfile = () => {
   const { theme } = useTheme();
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
-  // Expecting userDetails to have at least username or identifier
+
   const params = route.params as {
-    userDetails: { username?: string; identifier?: string };
+    userDetails?: {
+      id?: number | string;
+      userId?: number | string;
+      uuid?: string;
+      username?: string;
+      identifier?: string;
+      profile_photo?: string | null;
+    };
   };
-  const username =
-    params?.userDetails?.username || params?.userDetails?.identifier || "";
 
-  const { data: response, isLoading, error } = useUserDetails(username);
+  const targetUserIdRaw =
+    params?.userDetails?.id ??
+    params?.userDetails?.userId ??
+    params?.userDetails?.uuid;
+  const targetUserId = targetUserIdRaw ? Number(targetUserIdRaw) : NaN;
+  const hasTargetUserId = Number.isFinite(targetUserId);
 
-  // The API returns nested data: response.data.data.user / response.data.data.latest_transactions
-  const user = response?.data?.data?.user;
-  const transactions = response?.data?.data?.latest_transactions || [];
+  const {
+    data: response,
+    isLoading,
+    error,
+  } = useUserProfileTransactions(
+    hasTargetUserId ? targetUserId : undefined,
+    50
+  );
+
+  const userEnvelope = response?.data?.user;
+  const user = userEnvelope?.user;
+  const legalIdentity = userEnvelope?.legal_identity;
+  const transactions = response?.data?.transactions?.items || [];
+  const avatarUrl =
+    userEnvelope?.profile?.avatar_url || params?.userDetails?.profile_photo || null;
 
   const formatDate = (dateString: string) => {
     return moment(dateString).format("MMM DD");
   };
 
+  const formatAmount = (amount: string) => {
+    const parsed = Number(amount);
+    if (!Number.isFinite(parsed)) return "0.00";
+    return parsed.toFixed(2);
+  };
+
+  const getPhoneNumberDisplay = () => {
+    const nationalNumber = legalIdentity?.phone_national_number?.trim();
+    const countryCode = legalIdentity?.phone_country_code;
+
+    if (!nationalNumber) return "-";
+    if (countryCode) return `+${countryCode} ${nationalNumber}`;
+    return nationalNumber;
+  };
+
   const renderTransactionItem = ({ item }: { item: UserTransaction }) => {
-    const isIncoming = item.direction === "incoming";
-    const isSuccess = item.status === "success";
-    const isFailed = item.status === "failed";
+    const isIncoming = item.direction === "received";
+    const statusUpper = String(item.status || "").toUpperCase();
+    const isFailed = statusUpper === "FAILED";
 
-    // Determine display name
     const displayName = isIncoming
-      ? item.sender?.username || item.display_party?.username || "Unknown"
-      : item.recipient?.username || item.display_party?.username || "Unknown";
+      ? item.sentBy?.username || "Unknown"
+      : item.sentTo?.username || "Unknown";
 
-    // Amount color
     let amountColor = theme.colors.text.primary;
-    if (isFailed) amountColor = theme.colors.kycStatusLight.Rejected; // Redish
-    else if (isIncoming) amountColor = theme.colors.kycStatusDark.Verified; // Greenish
+    if (isFailed) amountColor = theme.colors.kycStatusLight.Rejected;
+    else if (isIncoming) amountColor = theme.colors.kycStatusDark.Verified;
 
-    // Icon (Simple placeholder circle with initial or arrow)
-    const iconColor = isIncoming
-      ? theme.colors.button.primary.background
-      : theme.colors.button.primary.background;
+    const iconColor = theme.colors.button.primary.background;
 
     return (
       <View
@@ -68,7 +99,6 @@ const UserProfile = () => {
         ]}
       >
         <View style={styles.transactionLeft}>
-          {/* Icon Placeholder */}
           <View
             style={[
               styles.iconCircle,
@@ -79,9 +109,7 @@ const UserProfile = () => {
               },
             ]}
           >
-              {isFailed ? "X" : isIncoming ? <SvgIcons.ArrowDown width={15} height={15} /> : <SvgIcons.ArrowUp width={15} height={15} />}
-            {/* <Text style={{ color: "#fff", fontWeight: "bold" }}> */}
-            {/* </Text> */}
+            {isFailed ? "X" : isIncoming ? <SvgIcons.ArrowDown width={15} height={15} /> : <SvgIcons.ArrowUp width={15} height={15} />}
           </View>
           <View style={{ marginLeft: 12 }}>
             <Text style={[styles.txName, { color: theme.colors.text.primary }]}>
@@ -93,14 +121,14 @@ const UserProfile = () => {
                 { color: theme.colors.text.secondary },
               ]}
             >
-              {isIncoming ? "Received" : "Paid"} • {formatDate(item.created_at)}
+              {isIncoming ? "Received" : "Paid"} • {formatDate(item.createdAt)}
             </Text>
           </View>
         </View>
         <View style={styles.transactionRight}>
           <Text style={[styles.txAmount, { color: amountColor }]}>
-            {item.currency_symbol}
-            {item.amount}
+            {isIncoming ? "+" : "-"}
+            {formatAmount(item.amount)} {item.currency}
           </Text>
           <Text
             style={[
@@ -112,7 +140,7 @@ const UserProfile = () => {
               },
             ]}
           >
-            {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+            {statusUpper.charAt(0) + statusUpper.slice(1).toLowerCase()}
           </Text>
         </View>
       </View>
@@ -133,7 +161,20 @@ const UserProfile = () => {
     );
   }
 
-  if (error || !user) {
+  if (!hasTargetUserId) {
+    return (
+      <ScreenContainer scrollable padding={0}>
+        <HeaderTitle title="User Profile" leftIcon="true" />
+        <View style={styles.centerContainer}>
+          <Text style={{ color: theme.colors.text.primary }}>
+            Unable to load profile: user id missing.
+          </Text>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  if (error || !response?.ok || !user) {
     return (
       <ScreenContainer scrollable padding={0}>
         <HeaderTitle title="User Profile" leftIcon="true" />
@@ -151,7 +192,6 @@ const UserProfile = () => {
       <HeaderTitle title="User Profile" leftIcon="true" />
 
       <View style={styles.contentContainer}>
-        {/* Profile Card */}
         <View
           style={[
             styles.card,
@@ -162,9 +202,9 @@ const UserProfile = () => {
           ]}
         >
           <View style={styles.profileHeader}>
-            {user.profile_photo ? (
+            {avatarUrl ? (
               <Image
-                source={{ uri: user.profile_photo }}
+                source={{ uri: avatarUrl }}
                 style={styles.avatar}
               />
             ) : (
@@ -182,7 +222,7 @@ const UserProfile = () => {
                   }}
                 >
                   {user.first_name?.charAt(0)?.toUpperCase()}
-                  {user.last_name?.charAt(0)?.toUpperCase()}
+                  {user.last_name?.charAt(0)?.toUpperCase() || ""}
                 </CustomText>
               </View>
             )}
@@ -192,12 +232,9 @@ const UserProfile = () => {
               >
                 {user.first_name} {user.last_name}
               </CustomText>
-              {/* <CustomText style={[styles.username, { color: theme.colors.text.secondary }]}>@{user.username}</CustomText>
-                        <CustomText style={[styles.email, { color: theme.colors.text.secondary }]}>{user.email}</CustomText> */}
             </View>
           </View>
 
-          {/* Action Buttons */}
           <View style={styles.actionButtons}>
             <TouchableOpacity
               onPress={() =>
@@ -212,41 +249,19 @@ const UserProfile = () => {
                 { backgroundColor: theme.colors.button.primary.background },
               ]}
             >
-              <SvgIcons.ArrowUp  width={15} height={15} style={{ marginRight: 10 }} />
+              <SvgIcons.ArrowUp width={15} height={15} style={{ marginRight: 10 }} />
               <Text
                 style={[
                   styles.btnText,
                   { color: theme.colors.button.primary.text },
                 ]}
               >
-               Pay
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate(NAVIGATION_SCREENS.SEND, {
-                  requested: true,
-                  type: "requested",
-                  sender: user?.username,
-                })
-              }
-              style={[
-                styles.btn,
-                styles.btnSecondary,
-                { backgroundColor: theme.colors.background.tertiary },
-              ]}
-            >
-              <SvgIcons.ArrowDownBlack width={15} height={15} style={{ marginRight: 10 }} />
-              <Text
-                style={[styles.btnText, { color: theme.colors.text.primary }]}
-              >
-                Request
+                Pay
               </Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Account Details */}
         <View
           style={[
             styles.card,
@@ -312,21 +327,36 @@ const UserProfile = () => {
             <Text
               style={[styles.detailLabel, { color: theme.colors.text.primary }]}
             >
+              Phone Number
+            </Text>
+            <Text
+              style={[
+                styles.detailValue,
+                { color: theme.colors.text.secondary },
+              ]}
+            >
+              {getPhoneNumberDisplay()}
+            </Text>
+          </View>
+          <View
+            style={[
+              styles.detailRow,
+              { borderBottomColor: theme.colors.border.light },
+            ]}
+          >
+            <Text
+              style={[styles.detailLabel, { color: theme.colors.text.primary }]}
+            >
               Account Status
             </Text>
             <Text
               style={[styles.detailValue, { color: theme.colors.text.primary }]}
             >
-              Active
+              {user.is_active ? "Active" : "Inactive"}
             </Text>
           </View>
-          {/* <View style={[styles.detailRow, { borderBottomColor: 'transparent' }]}>
-                    <Text style={[styles.detailLabel, { color: theme.colors.text.primary }]}>KYC Status</Text>
-                    <Text style={[styles.detailValue, { color: theme.colors.kycStatusLight.Verified }]}>Verified</Text>
-                </View> */}
         </View>
 
-        {/* Recent Transactions */}
         <View
           style={[
             styles.card,
@@ -347,8 +377,8 @@ const UserProfile = () => {
             Recent Transactions
           </Text>
 
-          {transactions.map((item) => (
-            <View key={item.transaction_id}>
+          {transactions.slice(0, 5).map((item) => (
+            <View key={String(item.id)}>
               {renderTransactionItem({ item })}
             </View>
           ))}
@@ -375,7 +405,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   profileHeader: {
-    // flexDirection: 'row',
     alignItems: "center",
     marginBottom: 20,
   },
@@ -395,18 +424,6 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: "bold",
-  },
-  username: {
-    fontSize: 14,
-    marginTop: 2,
-  },
-  email: {
-    fontSize: 14,
-    marginTop: 2,
-  },
-  memberSince: {
-    fontSize: 12,
-    marginTop: 4,
   },
   actionButtons: {
     flexDirection: "row",
@@ -437,15 +454,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 12,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  viewAll: {
-    fontSize: 14,
   },
   detailRow: {
     flexDirection: "row",

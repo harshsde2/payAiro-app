@@ -1,0 +1,19 @@
+# Coinme Risk SDK — Cloudsmith distribution token
+#
+# Coinme distributes the iOS Risk SDK through a private CocoaPods git spec
+# repo at https://packages.coinme.com (which proxies Cloudsmith under the
+# hood). The token is embedded in the URL path — no username/password.
+#
+# How to use:
+#   1. Copy this file to `coinme.properties` in the same directory
+#      (payAiro-app/).
+#   2. Replace the placeholder below with the "Mobile SDK distribution key"
+#      provided by the Coinme business development team.
+#   3. Run `bundle exec pod install` from `ios/` to pull the private pod.
+#
+# IMPORTANT:
+#   - `coinme.properties` is git-ignored and must NEVER be committed.
+#   - If you cannot use a properties file (e.g. on CI), export the token as an
+#     environment variable instead:  export COINME_TOKEN=<token>
+#   - The Podfile reads `coinme.properties` first, then falls back to ENV.
+COINME_TOKEN=YOUR_COINME_DISTRIBUTION_TOKEN_HERE
