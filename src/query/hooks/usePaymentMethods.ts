@@ -73,10 +73,14 @@ export function useAddPaymentMethod() {
 
   return useMutation({
     mutationFn: async (payload: AddPaymentMethodRequest) => {
-      console.log("payload =>", JSON.stringify(payload, null, 2));
+      // console.log("payload =>", JSON.stringify(payload, null, 2));
       return await userApiClient.post<AddPaymentMethodResponse>(
         USER_AUTH.PAYMENT_METHODS,
-        payload
+        payload,
+        false,
+        {
+          "x-device-fingerprint": "F785F8D4-82DB-4D8A-9283-30CF2037469D",
+        }
       );
     },
     onSuccess: async () => {

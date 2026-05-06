@@ -624,7 +624,11 @@ export const useCoinmeTradeExecute = () => {
     mutationFn: async (payload) => {
       return await userApiClient.post<CoinmeTradeExecuteResponse>(
         USER_AUTH.COINME_TRADE_EXECUTE,
-        payload
+        payload,
+        false,
+        {
+          "x-device-fingerprint": "F785F8D4-82DB-4D8A-9283-30CF2037469D",
+        }
       );
     },
   });

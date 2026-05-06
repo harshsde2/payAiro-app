@@ -37,7 +37,7 @@ react {
     //   The list of variants to that are debuggable. For those we're going to
     //   skip the bundling of the JS bundle and the assets. By default is just 'debug'.
     //   If you add flavors like lite, prod, etc. you'll have to list your debuggableVariants.
-    // debuggableVariants = ["liteDebug", "prodDebug"]
+    debuggableVariants = ["stagingDebug", "productionDebug"]
 
     /* Bundling */
     //   A list containing the node command and its flags. Default is just 'node'.
@@ -219,6 +219,13 @@ dependencies {
     
     // Coroutines for background processing
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
+
+    // Coinme Risk SDK (fraud / behavioral risk engine).
+    // Distributed privately via Cloudsmith; repo is declared in root build.gradle
+    // using COINME_TOKEN from coinme.properties (shared with iOS Podfile).
+    // 1.1.0 adds getPartnerSessionTag() which talks to Coinme's public partner
+    // endpoint directly (no backend proxy required, mirrors iOS behavior).
+    implementation 'com.coinme:risk-sdk-android:1.1.0'
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

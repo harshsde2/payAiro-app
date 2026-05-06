@@ -138,7 +138,7 @@ const TransactionResult: FC = () => {
 
   const params = route.params as RouteParams;
 
-  console.log("params =>", JSON.stringify(params, null, 2));
+  // console.log("params =>", JSON.stringify(params, null, 2));
   const {
     isLoading = true,
     transactionData,

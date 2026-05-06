@@ -169,6 +169,7 @@ const NewAddBalanceScreen: React.FC = () => {
 
       const webSessionId = await fetchWebSessionId({
         accountId: coinmeAccountId,
+        riskFlow: 'cardtransaction',
       });
 
       const payload: CoinmeTradeExecutePayload = {

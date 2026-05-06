@@ -90,7 +90,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     cryptoAsset,
   } =
     route.params || ({} as any);
-  console.log("route.params =>", JSON.stringify(route.params, null, 2));
+  // console.log("route.params =>", JSON.stringify(route.params, null, 2));
 
   const isRequestedFlow = type === 'requested';
   const requestDetails = (request_data as any)?.request_details;
@@ -296,10 +296,12 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   const tradeFundingSource = useMemo<FundingSource | null>(() => {
     if (!isTradeMode || !tradeAssetSymbol) return null;
     const safePrice = Number.isFinite(tradePriceUSD) ? tradePriceUSD : 0;
+    const sellBalanceRaw = Number(cryptoAsset?.platformAvailable ?? 0);
+    const sellBalance = Number.isFinite(sellBalanceRaw) ? Math.max(0, sellBalanceRaw) : 0;
     return {
       id: `trade-${tradeMode}-${tradeAssetSymbol}`,
       name: tradeAssetSymbol,
-      balance: tradeMode === 'sell' ? Number(cryptoAsset?.currentPrice ?? 0) : 0,
+      balance: tradeMode === 'sell' ? sellBalance : 0,
       type: 'crypto',
       cryptoMeta: {
         symbol: tradeAssetSymbol,
@@ -693,9 +695,15 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     } as never);
 
     try {
+      console.log('step one =>');
       const webSessionId = await fetchWebSessionId({
         accountId: coinmeAccountId,
+        riskFlow: 'cardtransaction',
       });
+
+
+
+      console.log('step two =>', webSessionId);
 
       const isFiatEntry = inputMode === 'fiat';
       const payload: CoinmeTradeExecutePayload = {
@@ -714,11 +722,14 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
         webSessionId,
       };
 
+      console.log('step three =>');
       const res = await tradeExecute.mutateAsync(payload);
       const ok = res?.ok ?? res?.status ?? true;
 
       queryClient.invalidateQueries({ queryKey: cryptoKeys.allCryptoBalances() });
       queryClient.invalidateQueries({ queryKey: bankKeys.balance() });
+
+      console.log('step four =>');
 
       navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
         isLoading: false,
@@ -728,6 +739,8 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
         customTitle: tradeMode === 'buy' ? 'Buy submitted' : 'Sell submitted',
       } as never);
     } catch (err: unknown) {
+
+      console.log('step five =>', JSON.stringify(err, null, 2));
       const e = err as { response?: { data?: { message?: string } }; message?: string };
       const errorMessage =
         e?.response?.data?.message ||
@@ -835,7 +848,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
         showError('Please enter a valid amount');
         return;
       }
-      if (tradeMode === 'buy' && !selectedPaymentMethod) {
+      if (!selectedPaymentMethod) {
         showError('Please select a payment method');
         return;
       }
@@ -975,7 +988,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
 
         <View
           style={
-            isCryptoMode && isTradeMode && tradeMode === 'buy'
+            isCryptoMode && isTradeMode
               ? [styles.bottomArea, styles.bottomAreaTrade]
               : styles.bottomArea
           }
@@ -993,7 +1006,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
                 onPress={openDebitPaymentPicker}
               />
             )}
-            {isTradeMode && tradeMode === 'buy' ? (
+            {isTradeMode ? (
               <DebitCardPaymentRow
                 title="Debit Card"
                 maskedDetail={paymentSubtitle}

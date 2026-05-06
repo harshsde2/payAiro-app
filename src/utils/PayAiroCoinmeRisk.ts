@@ -3,8 +3,9 @@ import { NativeModules, Platform } from "react-native";
 const { PayAiroCoinmeRisk: NativeModule } = NativeModules;
 
 // ---------------------------------------------------------------------------
-// Types (mirror the Swift SDK surface; values are lowercase for JS ergonomics
-// — the native bridge normalizes case before mapping to Swift enum cases).
+// Types (mirror the SDK surface on both iOS and Android; values are lowercase
+// for JS ergonomics — each native bridge normalizes case before mapping to
+// the platform-specific enum cases).
 // ---------------------------------------------------------------------------
 
 /** Points the SDK at a Coinme risk engine environment. */
@@ -38,10 +39,10 @@ export interface CoinmeRiskSetupOptions {
   enableClipboardTracking?: boolean;
   enableFieldTracking?: boolean;
   /**
-   * Requires CloudKit capability and a configured iCloud container on the
-   * app target. Leave `false` unless the project entitlements include
-   * `com.apple.developer.icloud-container-identifiers`, otherwise the SDK
-   * will crash at runtime.
+   * iOS-only. Requires CloudKit capability and a configured iCloud container
+   * on the app target. Leave `false` unless entitlements include
+   * `com.apple.developer.icloud-container-identifiers`, otherwise the iOS SDK
+   * will crash at runtime. Ignored on Android.
    */
   setCloudEntitlements?: boolean;
 }
@@ -53,7 +54,12 @@ export interface CoinmeRiskUpdateOptions {
   flow?: CoinmeFlowType;
 }
 
-/** Options for `getPartnerSessionTag()`. */
+/**
+ * Options for `getPartnerSessionTag()`. The SDK (iOS native, Android 1.1.0+)
+ * talks to Coinme's public partner endpoint directly using partnerId /
+ * accountId / fingerprint; no bearer token is needed — the base URL is
+ * resolved from the SDK's `mode` (test → staging, prod → production).
+ */
 export interface GetPartnerSessionTagOptions {
   partnerId: string;
   accountId: string;
@@ -64,7 +70,22 @@ export interface GetPartnerSessionTagOptions {
   additionalHeaders?: Record<string, string>;
 }
 
-/** Return value from `getPartnerSessionTag()`. */
+/**
+ * Android-only legacy options for `getSessionTag()`. The pre-1.1.0 Android SDK
+ * did not know the Coinme backend URL on its own — the caller had to provide
+ * the full API base URL + bearer auth token. Prefer `getPartnerSessionTag`
+ * on 1.1.0+.
+ */
+export interface GetSessionTagOptions {
+  apiBaseUrl: string;
+  authToken: string;
+  fingerprint: string;
+  /** Request timeout in ms (default 10000). */
+  timeout?: number;
+  additionalHeaders?: Record<string, string>;
+}
+
+/** Return value from `getPartnerSessionTag()` / `getSessionTag()`. */
 export interface SessionTagData {
   webSessionID: string;
   orgID?: string | null;
@@ -90,6 +111,7 @@ export enum CoinmeRiskErrorCode {
   UNKNOWN_ERROR          = "UNKNOWN_ERROR",
   MODULE_NOT_AVAILABLE   = "MODULE_NOT_AVAILABLE",
   UNSUPPORTED_PLATFORM   = "UNSUPPORTED_PLATFORM",
+  UNSUPPORTED_OPERATION  = "UNSUPPORTED_OPERATION",
 }
 
 export class CoinmeRiskError extends Error {
@@ -99,6 +121,25 @@ export class CoinmeRiskError extends Error {
     super(message);
     this.code = code;
     this.name = "CoinmeRiskError";
+    // `Error.message` / `Error.name` are non-enumerable by default, so
+    // `JSON.stringify(err)` strips them. Re-declare them as enumerable so
+    // callers that log via `JSON.stringify` still see the real reason.
+    Object.defineProperty(this, "message", {
+      value: message,
+      enumerable: true,
+      configurable: true,
+      writable: true,
+    });
+    Object.defineProperty(this, "name", {
+      value: "CoinmeRiskError",
+      enumerable: true,
+      configurable: true,
+      writable: true,
+    });
+  }
+
+  toJSON(): { name: string; code: CoinmeRiskErrorCode; message: string } {
+    return { name: this.name, code: this.code, message: this.message };
   }
 }
 
@@ -107,11 +148,15 @@ export class CoinmeRiskError extends Error {
 // ---------------------------------------------------------------------------
 
 /**
- * PayAiro × Coinme Risk SDK (iOS)
+ * PayAiro × Coinme Risk SDK (iOS + Android).
  *
  * Thin, typed wrapper over the native `PayAiroCoinmeRisk` module. All methods
- * are Promise-based. Android is not supported — all calls reject with
+ * are Promise-based. Web / unsupported platforms reject with
  * `UNSUPPORTED_PLATFORM`.
+ *
+ * Session-tag retrieval differs per platform (see `getPartnerSessionTag` vs
+ * `getSessionTag`); prefer the `fetchWebSessionId` helper in
+ * `services/coinmeRiskLifecycle` which picks the right one automatically.
  *
  * Typical lifecycle:
  * ```ts
@@ -129,23 +174,35 @@ export class CoinmeRiskError extends Error {
  */
 class PayAiroCoinmeRiskClass {
   private readonly isIOS: boolean;
+  private readonly isAndroid: boolean;
   private readonly hasNativeModule: boolean;
 
   constructor() {
     this.isIOS = Platform.OS === "ios";
+    this.isAndroid = Platform.OS === "android";
     this.hasNativeModule = NativeModule != null;
 
-    if (this.isIOS && !this.hasNativeModule) {
-      console.warn(
-        "[PayAiroCoinmeRisk] Native module not available. " +
-        "Ensure `pod install` ran cleanly and the app was rebuilt."
-      );
+    if ((this.isIOS || this.isAndroid) && !this.hasNativeModule) {
+      const hint = this.isAndroid
+        ? "Ensure the Coinme maven repo resolved and the app was rebuilt (Metro cache cleared if necessary)."
+        : "Ensure `pod install` ran cleanly and the app was rebuilt.";
+      console.warn(`[PayAiroCoinmeRisk] Native module not available. ${hint}`);
     }
   }
 
-  /** True only on iOS where the native module resolved. */
+  /** True on iOS/Android when the native module resolved. */
   isModuleAvailable(): boolean {
+    return (this.isIOS || this.isAndroid) && this.hasNativeModule;
+  }
+
+  /** True only on iOS with the module loaded. */
+  isIOSSupported(): boolean {
     return this.isIOS && this.hasNativeModule;
+  }
+
+  /** True only on Android with the module loaded. */
+  isAndroidSupported(): boolean {
+    return this.isAndroid && this.hasNativeModule;
   }
 
   // ---------------- Lifecycle ----------------
@@ -202,8 +259,10 @@ class PayAiroCoinmeRiskClass {
   }
 
   /**
-   * Fetches the partner session tag. The returned `webSessionID` automatically
-   * becomes the active session key for subsequent `submit()` calls.
+   * Fetches the partner session tag via the Coinme SDK (iOS native, Android
+   * 1.1.0+). Talks to Coinme's public partner endpoint directly — no backend
+   * proxy required. The returned `webSessionID` automatically becomes the
+   * active session key for subsequent `submit()` calls.
    */
   async getPartnerSessionTag(
     options: GetPartnerSessionTagOptions
@@ -216,6 +275,30 @@ class PayAiroCoinmeRiskClass {
       );
     }
     return this.invoke<SessionTagData>("getPartnerSessionTag", options);
+  }
+
+  /**
+   * Android-only legacy path. Fetches a session tag via a backend proxy at
+   * `${apiBaseUrl}/caas/v2/get-session-tag` with a bearer token. Prefer
+   * [getPartnerSessionTag] on Android 1.1.0+.
+   */
+  async getSessionTag(
+    options: GetSessionTagOptions
+  ): Promise<SessionTagData> {
+    if (!this.isAndroid) {
+      throw new CoinmeRiskError(
+        CoinmeRiskErrorCode.UNSUPPORTED_OPERATION,
+        "getSessionTag is Android-only. Use getPartnerSessionTag on iOS."
+      );
+    }
+    this.assertAvailable();
+    if (!options.apiBaseUrl || !options.authToken || !options.fingerprint) {
+      throw new CoinmeRiskError(
+        CoinmeRiskErrorCode.INVALID_OPTIONS,
+        "getSessionTag requires apiBaseUrl, authToken, and fingerprint."
+      );
+    }
+    return this.invoke<SessionTagData>("getSessionTag", options);
   }
 
   // ---------------- Manual field tracking ----------------
@@ -236,10 +319,10 @@ class PayAiroCoinmeRiskClass {
   // ---------------- Internals ----------------
 
   private assertAvailable(): void {
-    if (!this.isIOS) {
+    if (!this.isIOS && !this.isAndroid) {
       throw new CoinmeRiskError(
         CoinmeRiskErrorCode.UNSUPPORTED_PLATFORM,
-        "PayAiroCoinmeRisk is only available on iOS."
+        "PayAiroCoinmeRisk is only available on iOS and Android."
       );
     }
     if (!this.hasNativeModule) {

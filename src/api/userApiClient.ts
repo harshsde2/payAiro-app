@@ -199,9 +199,12 @@ export const userApiClient = {
   post: async <T>(
     url: string,
     data: any,
-    isFormData: boolean = false
+    isFormData: boolean = false,
+    extraHeaders: Record<string, string> = {}
   ): Promise<T> => {
-    const headers = isFormData ? { "Content-Type": "multipart/form-data" } : {};
+    const headers = isFormData
+      ? { ...extraHeaders, "Content-Type": "multipart/form-data" }
+      : extraHeaders;
     const response = await userApi.post<T>(url, data, { headers });
     return response.data;
   },

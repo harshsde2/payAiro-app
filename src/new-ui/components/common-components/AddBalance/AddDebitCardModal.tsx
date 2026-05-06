@@ -7,7 +7,10 @@ import { AppIcon } from '@new-ui/assets/svgs';
 import Button from '@new-ui/components/common-components/layout/Button';
 import TextInput from '@new-ui/components/common-components/layout/TextInput';
 import { useAddPaymentMethod } from 'query/hooks/usePaymentMethods';
-import { fetchWebSessionId, onUserLoggedIn as onCoinmeUserLoggedIn } from 'services/coinmeRiskLifecycle';
+import {
+  debugLogCoinmeRiskEngine,
+  fetchWebSessionId,
+} from 'services/coinmeRiskLifecycle';
 import { useCoinmeAccountId } from 'hooks/useCoinmeAccountId';
 
 export type AddedCardResult = {
@@ -42,11 +45,11 @@ const AddDebitCardModal: React.FC<AddDebitCardModalProps> = ({
   const addMutation = useAddPaymentMethod();
   const coinmeAccountId = useCoinmeAccountId();
 
-  const [cardholderName, setCardholderName] = useState('');
-  const [cardNumber, setCardNumber] = useState('');
-  const [month, setMonth] = useState('');
-  const [year, setYear] = useState('');
-  const [cvv, setCvv] = useState('');
+  const [cardholderName, setCardholderName] = useState('jack');
+  const [cardNumber, setCardNumber] = useState('4007589999999920');
+  const [month, setMonth] = useState('05');
+  const [year, setYear] = useState('2031');
+  const [cvv, setCvv] = useState('123');
   const [error, setError] = useState<string | null>(null);
 
   const cleanedCardNumber = useMemo(() => digitsOnly(cardNumber).slice(0, 19), [cardNumber]);
@@ -75,6 +78,7 @@ const AddDebitCardModal: React.FC<AddDebitCardModalProps> = ({
       setError(validation.msg);
       return;
     }
+    let webSessionId: string | undefined;
     try {
       if (!coinmeAccountId) {
         setError(
@@ -83,11 +87,18 @@ const AddDebitCardModal: React.FC<AddDebitCardModalProps> = ({
         return;
       }
 
-      await onCoinmeUserLoggedIn(coinmeAccountId);
-
-      const webSessionId = await fetchWebSessionId({
+      webSessionId = await fetchWebSessionId({
         accountId: coinmeAccountId,
+        riskFlow: 'cardlinking',
       });
+
+      console.log('webSessionId =>', webSessionId);
+      if (__DEV__) {
+        await debugLogCoinmeRiskEngine('AddDebitCard:beforePaymentMethodsPOST', {
+          expectedWebSessionId: webSessionId,
+          accountId: coinmeAccountId,
+        });
+      }
 
       const res = await addMutation.mutateAsync({
         providerId: PROVIDER_ID,
@@ -115,6 +126,12 @@ const AddDebitCardModal: React.FC<AddDebitCardModalProps> = ({
         onAdded({ payment_method_id: `last4:${cleanedCardNumber.slice(-4)}` });
       }
     } catch (e: any) {
+      if (__DEV__) {
+        await debugLogCoinmeRiskEngine('AddDebitCard:afterPaymentMethodsFailure', {
+          expectedWebSessionId: webSessionId,
+          accountId: coinmeAccountId ?? undefined,
+        });
+      }
       const msg =
         e?.response?.data?.message ||
         e?.response?.data?.detail ||

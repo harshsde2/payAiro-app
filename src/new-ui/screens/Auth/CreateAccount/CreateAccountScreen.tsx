@@ -17,7 +17,6 @@ import { isProduction } from "config/env.config";
 import PoliticalModal from "components/PolitaclModal";
 import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
 import type { TermAndConditionModalRef } from "tsx-components/modals/modal.types";
-import { LINKS } from "api/endpoints";
 
 const COINME_TERMS_URL =
   "https://help.coinme.com/en/articles/9039676-terms-of-service";
@@ -25,6 +24,8 @@ const COINME_PRIVACY_URL =
   "https://help.coinme.com/en/articles/9039704-privacy-policy";
 const COINME_DISCLOSURES_URL =
   "https://help.coinme.com/en/articles/10535881-disclosures";
+const PAYAIRO_TERMS_URL = "https://payairo.com/terms-of-service.html";
+const PAYAIRO_PRIVACY_URL = "https://www.payairo.com/privacy-policy.html";
 
 const CreateAccountScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -168,18 +169,11 @@ const CreateAccountScreen: React.FC = () => {
   };
 
   const openPayAiroTermsPdf = () => {
-    navigation.navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
-      url: require("../../../../assets/pdf/Terms_and_Conditions.pdf"),
-      isFileFromLocal: true,
-      fileName: "Terms_and_Conditions.pdf",
-    });
+    webDocRef.current?.showWebDocument?.("Terms of Service", PAYAIRO_TERMS_URL);
   };
 
   const openPayAiroPrivacyPolicy = () => {
-    webDocRef.current?.showWebDocument?.(
-      "Privacy Policy",
-      LINKS.privacyPolicy
-    );
+    webDocRef.current?.showWebDocument?.("Privacy Policy", PAYAIRO_PRIVACY_URL);
   };
 
   const openCoinmeTerms = () => {

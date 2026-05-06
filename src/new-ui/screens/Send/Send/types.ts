@@ -28,6 +28,8 @@ export interface ICryptoAssetTradeContext {
   fiatCurrency: string;
   /** Latest spot price used for the buy/sell preview. */
   currentPrice?: number;
+  /** Spendable asset balance for sells (e.g. from `platform_available`). */
+  platformAvailable?: number;
   /** Source wallet address for sells (optional for buys). */
   sourceWalletAddress?: string;
 }

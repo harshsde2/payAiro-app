@@ -251,6 +251,7 @@ const CryptoWithdraw: React.FC = () => {
 
       const webSessionId = await fetchWebSessionId({
         accountId: coinmeAccountId,
+        riskFlow: 'cardtransaction',
       });
 
       const isFiatEntry = inputMode === "fiat";

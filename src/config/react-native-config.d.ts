@@ -18,6 +18,8 @@ declare module 'react-native-config' {
 
     // API Configuration
     API_BASE_URL?: string;
+    /** FastAPI base (users, Coinme trade, etc.) — no trailing slash. */
+    USER_API_BASE_URL?: string;
     API_TIMEOUT?: string;
     
     // Environment Info
@@ -45,7 +47,7 @@ declare module 'react-native-config' {
     SHOW_ENV_BANNER?: string;
     ALLOW_DEV_TOOLS?: string;
 
-    // Coinme Risk SDK (iOS native bridge)
+    // Coinme Risk SDK (iOS + Android native bridge)
     COINME_CLIENT_ID?: string;
     COINME_PARTNER_ID?: string;
     /** "test" | "prod"; falls back to `__DEV__ ? "test" : "prod"`. */

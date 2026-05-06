@@ -6,7 +6,10 @@ buildscript {
         targetSdkVersion = 36
         // NDK r28+ is recommended for 16KB page-size compliance (ELF alignment defaults to 16KB).
         ndkVersion = "28.0.12433566"
-        kotlinVersion = "2.1.20"
+        // Bumped from 2.1.20 → 2.3.21 because Coinme Risk SDK ships Kotlin 2.3.0 metadata.
+        // Keeping our compiler below 2.3 fails with "Module was compiled with an incompatible
+        // version of Kotlin. The binary version of its metadata is 2.3.0, expected 2.1.0."
+        kotlinVersion = "2.3.21"
         // AndroidX Browser version for react-native-inappbrowser-reborn (compatible with compileSdk 36)
         androidXBrowser = "1.9.0"
     }
@@ -17,14 +20,50 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        // Pin Kotlin gradle plugin explicitly (overrides RN plugin's 2.1.20 default).
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
         classpath 'com.google.gms:google-services:4.4.4'
     }
+}
+
+// Coinme Risk SDK distribution token.
+// Priority:
+//   1. COINME_TOKEN in <repo-root>/coinme.properties  (shared with iOS Podfile)
+//   2. COINME_TOKEN in android/local.properties
+//   3. COINME_TOKEN environment variable (CI)
+// The file coinme.properties is git-ignored; the token never enters the built artifact.
+def resolveCoinmeToken = {
+    def sharedFile = file("../coinme.properties")
+    if (sharedFile.exists()) {
+        def props = new Properties()
+        sharedFile.withInputStream { props.load(it) }
+        def t = props.getProperty("COINME_TOKEN")
+        if (t && t.trim()) return t.trim()
+    }
+    def localFile = file("local.properties")
+    if (localFile.exists()) {
+        def lp = new Properties()
+        localFile.withInputStream { lp.load(it) }
+        def t = lp.getProperty("COINME_TOKEN")
+        if (t && t.trim()) return t.trim()
+    }
+    return (System.getenv("COINME_TOKEN") ?: "").trim()
+}
+ext.coinmeToken = resolveCoinmeToken()
+if (ext.coinmeToken.isEmpty()) {
+    logger.warn("[Coinme] COINME_TOKEN not found \u2014 CoinmeRiskSDK will fail to resolve. " +
+                "Set it in coinme.properties, android/local.properties, or export it as an env var.")
 }
 
 allprojects {
     repositories {
         maven { url "https://jitpack.io" }
+        if (rootProject.ext.coinmeToken) {
+            maven {
+                name = "CoinmeSDK"
+                url = uri("https://dl.cloudsmith.io/${rootProject.ext.coinmeToken}/coinme/coinme-sdk-mobile/maven/")
+            }
+        }
     }
 }
 

@@ -1,15 +1,20 @@
 import { View, TouchableOpacity } from 'react-native'
-import React from 'react'
+import React, { useRef } from 'react'
 import ScreenWrapper from 'new-ui/components/common-components/ScreenWrapper'
 import { useTheme as useNewUITheme } from '@new-ui/styles/ThemeContext'
 import { AppIcon } from 'new-ui/assets/svgs'
 import CustomText from 'new-ui/components/common-components/CustomText'
 import { useNavigation } from '@react-navigation/native'
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants'
+import TermAndConditionModal from 'tsx-components/modals/TermAndConditionModal'
+import type { TermAndConditionModalRef } from 'tsx-components/modals/modal.types'
 
 const SettingsScreen = () => {
     const { theme: newUITheme } = useNewUITheme();
     const navigation = useNavigation<any>();
+    const webDocRef = useRef<TermAndConditionModalRef>(null);
+    const PAYAIRO_TERMS_URL = 'https://payairo.com/terms-of-service.html';
+    const PAYAIRO_PRIVACY_URL = 'https://www.payairo.com/privacy-policy.html';
 
     const LIST_ITEMS = [
         {
@@ -38,17 +43,12 @@ const SettingsScreen = () => {
         {
             title: 'Terms of Service',
             icon: <AppIcon.TermsAndConditions />,
-            onPress: () =>
-                navigation.navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
-                    url: require('../../../../assets/pdf/Terms_and_Conditions.pdf'),
-                    isFileFromLocal: true,
-                    fileName: 'Terms_and_Conditions.pdf',
-                }),
+            onPress: () => webDocRef.current?.showWebDocument?.('Terms of Service', PAYAIRO_TERMS_URL),
         },
         {
             title: 'Privacy Policy',
             icon: <AppIcon.PrivacyPolicy />,
-            onPress: () => {},
+            onPress: () => webDocRef.current?.showWebDocument?.('Privacy Policy', PAYAIRO_PRIVACY_URL),
         },
     ]
 
@@ -83,6 +83,7 @@ const SettingsScreen = () => {
             All Rights Reserved. </CustomText>
           </View>
       </View>
+      <TermAndConditionModal isAgree={false} ref={webDocRef} />
     </ScreenWrapper>
   )
 }

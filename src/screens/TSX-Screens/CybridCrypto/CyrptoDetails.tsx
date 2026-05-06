@@ -200,6 +200,7 @@ const CyrptoDetails: React.FC = () => {
     logo: cryptoItem?.logo,
     fiatCurrency: "USD",
     currentPrice: Number(currentPrice || 0),
+    platformAvailable: Number(cryptoItem?.platform_available ?? 0),
     sourceWalletAddress: (cryptoItem as any)?.sourceWalletAddress,
   };
 

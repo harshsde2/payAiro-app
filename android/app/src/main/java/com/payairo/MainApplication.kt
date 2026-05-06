@@ -9,6 +9,7 @@ import com.facebook.react.ReactNativeHost
 import com.facebook.react.ReactPackage
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
+import com.payairo.coinmerisk.PayAiroCoinmeRiskPackage
 import com.payairo.qrscanner.PayAiroQRScannerPackage
 
 class MainApplication : Application(), ReactApplication {
@@ -19,6 +20,8 @@ class MainApplication : Application(), ReactApplication {
             PackageList(this).packages.apply {
               // PayAiro QR Scanner Native Module
               add(PayAiroQRScannerPackage())
+              // PayAiro x Coinme Risk SDK Native Module
+              add(PayAiroCoinmeRiskPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"

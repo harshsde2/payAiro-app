@@ -15,3 +15,12 @@
 
 # Keep react-native-config resources
 -keepresources string/build_config_package
+
+# Coinme Risk SDK (+ transitive Sardine fingerprinting + Google Play Services)
+-keep class com.google.android.gms.** { *; }
+-keep class com.google.android.gms.tasks.** { *; }
+-keep class com.google.android.gms.ads.identifier.AdvertisingIdClient { *; }
+-keep class ai.sardine.** { *; }
+-keepclassmembers class ai.sardine.** { *; }
+-keep class com.coinme.** { *; }
+-keepclassmembers class com.coinme.** { *; }
