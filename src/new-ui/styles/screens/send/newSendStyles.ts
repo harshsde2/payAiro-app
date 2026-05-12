@@ -17,7 +17,7 @@ export const newSendStyles = (theme: ITheme) =>
       marginTop: theme.spacing.xs,
     },
     noteInputContainer: {
-      marginTop: theme.spacing.sm,
+      marginTop: theme.spacing.xs,
     },
     contactsSection: {
       marginTop: theme.spacing.xs,

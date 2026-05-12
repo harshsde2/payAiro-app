@@ -161,8 +161,11 @@ export const USER_AUTH = {
   PAYMENT_TRANSACTIONS_SEND: "api/v1/payment-transactions/send/",
   PAYMENT_TRANSACTIONS_SEND_HISTORY: "api/v1/payment-transactions/send/history/",
   PAYMENT_METHODS: "api/v1/integrations/payment-methods/",
+  LOCATIONS_NEARBY: "api/v1/integrations/locations/nearby/",
   WALLET_ADDRESSES: "api/v1/wallets/addresses/",
   COINME_TRADE_EXECUTE: "api/v1/integrations/coinme/trade/execute/",
+  COINME_ORDER_TEMPLATE: "api/v1/integrations/coinme/order-template/",
+  COINME_CASH_OFFRAMP_EXECUTE: "api/v1/integrations/coinme/cash-offramp/execute/",
   SECURITY_PIN_SETTINGS: "api/v1/users/security/pin/",
   USER_PROFILE_TRANSACTIONS: (targetUserId: number | string, limit: number = 50) =>
     `api/v1/users/${targetUserId}/profile-transactions/?limit=${limit}`,

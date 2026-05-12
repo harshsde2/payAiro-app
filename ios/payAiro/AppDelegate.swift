@@ -6,6 +6,7 @@ import RNBootSplash
 import Firebase
 import FirebaseMessaging
 import UserNotifications
+import GoogleMaps
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUserNotificationCenterDelegate {
@@ -13,6 +14,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
 
   var reactNativeDelegate: ReactNativeDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
+
+  /// Reads keys baked in by react-native-config (`GeneratedDotEnv.m` from `payAiro-app/.env` at compile time).
+  private static func resolveGoogleMapsApiKeyFromRNC() -> String {
+    let dict = RNCConfig.env() as? [String: Any] ?? [:]
+    let ios = (dict["GOOGLE_MAPS_API_KEY_IOS"] as? String ?? "")
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    if !ios.isEmpty { return ios }
+    return (dict["GOOGLE_MAPS_API_KEY"] as? String ?? "")
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+  }
 
   func application(
     _ application: UIApplication,
@@ -23,6 +34,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, UNUser
       Messaging.messaging().delegate = self
       UNUserNotificationCenter.current().delegate = self
       application.registerForRemoteNotifications()
+    }
+
+    let mapsKey = Self.resolveGoogleMapsApiKeyFromRNC()
+    #if DEBUG
+    if mapsKey.isEmpty {
+      NSLog(
+        "[AppDelegate] Google Maps iOS key missing in RNCConfig. " +
+          "Add GOOGLE_MAPS_API_KEY_IOS (or GOOGLE_MAPS_API_KEY) to payAiro-app/.env, " +
+          "run your Xcode scheme pre-action so .env is updated, then Product → Clean Build Folder and rebuild."
+      )
+    }
+    #endif
+    if !mapsKey.isEmpty {
+      GMSServices.provideAPIKey(mapsKey)
     }
 
     let delegate = ReactNativeDelegate()

@@ -8,9 +8,10 @@ import { SvgIcons } from 'constants/svgs';
 type PayButtonProps = {
   disabled?: boolean;
   onPress?: (event?: GestureResponderEvent) => void;
+  label?: string;
 };
 
-const PayButton: React.FC<PayButtonProps> = ({ disabled, onPress }) => {
+const PayButton: React.FC<PayButtonProps> = ({ disabled, onPress, label = 'Proceed' }) => {
   const { theme } = useTheme();
   const styles = enterAmountStyles(theme);
 
@@ -26,8 +27,8 @@ const PayButton: React.FC<PayButtonProps> = ({ disabled, onPress }) => {
      onPress={onPress} 
      style={styles.payButton}
      >
-      Proceed
-     </Button>
+      {label}
+    </Button>
     </TouchableOpacity>
   );
 };

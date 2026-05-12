@@ -7,14 +7,21 @@ import { AppIcon } from 'new-ui/assets/svgs';
 import { Button } from '../layout';
 import { usePaymentMethodsList, type PaymentMethodItem } from 'query/hooks/usePaymentMethods';
 
+export const RETAIL_CASH_PAYMENT_METHOD_ID = '__retail_cash__';
+
 type AddNewCardPlaceholderModalProps = {
   visible: boolean;
   onClose: () => void;
   title?: string;
   message?: string;
   selectedPaymentMethodId?: string | null;
-  onConfirmSelection?: (item: PaymentMethodItem | null) => void;
+  onConfirmSelection?: (
+    item: PaymentMethodItem | null,
+    context?: { retailCash?: boolean }
+  ) => void;
   onRequestAddCard?: () => void;
+  /** When true, shows a selectable “cash at retail” row (e.g. EnterAmount trade flow). */
+  includeRetailCashOption?: boolean;
 };
 
 const NEW_CARD_ID = 'new-card';
@@ -27,6 +34,7 @@ const AddNewCardPlaceholderModal: React.FC<AddNewCardPlaceholderModalProps> = ({
   selectedPaymentMethodId,
   onConfirmSelection,
   onRequestAddCard,
+  includeRetailCashOption = false,
 }) => {
   const { theme } = useTheme();
   const styles = addBalanceStyles(theme);
@@ -153,18 +161,73 @@ const AddNewCardPlaceholderModal: React.FC<AddNewCardPlaceholderModalProps> = ({
       onClose();
       return;
     }
+    if (includeRetailCashOption && currentSelectedId === RETAIL_CASH_PAYMENT_METHOD_ID) {
+      onConfirmSelection(null, { retailCash: true });
+      onClose();
+      return;
+    }
     const selectedItem =
-      currentSelectedId && currentSelectedId !== NEW_CARD_ID
+      currentSelectedId &&
+      currentSelectedId !== NEW_CARD_ID &&
+      currentSelectedId !== RETAIL_CASH_PAYMENT_METHOD_ID
         ? debitCards.find((c) => c.payment_method_id === currentSelectedId) ?? null
         : null;
     onConfirmSelection(selectedItem);
     onClose();
-  }, [currentSelectedId, debitCards, onClose, onConfirmSelection]);
+  }, [currentSelectedId, debitCards, includeRetailCashOption, onClose, onConfirmSelection]);
+
+  const renderRetailCashRow = useCallback(() => {
+    const selected = currentSelectedId === RETAIL_CASH_PAYMENT_METHOD_ID;
+    return (
+      <Pressable
+        onPress={() => setLocalSelectedId(RETAIL_CASH_PAYMENT_METHOD_ID)}
+        style={({ pressed }) => [
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: theme.spacing.md,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+            borderRadius: theme.radius.lg,
+            marginTop: theme.spacing.md,
+            backgroundColor: theme.colors.white,
+            opacity: pressed ? 0.9 : 1,
+          },
+        ]}
+      >
+        {renderRadio(selected)}
+        <View
+          style={{
+            width: 24,
+            height: 24,
+            borderRadius: 12,
+            marginLeft: theme.spacing.md,
+            backgroundColor: theme.colors.greyLight2,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <CustomText variant="caption" fontWeight="semiBold">
+            $
+          </CustomText>
+        </View>
+        <View style={{ marginLeft: theme.spacing.md, flex: 1 }}>
+          <CustomText variant="h4" size={16} fontWeight="semiBold" fontFamily="poppins">
+            Cash
+          </CustomText>
+          <CustomText variant="caption" color={theme.colors.textSecondary} style={{ marginTop: 2 }}>
+            Pay with cash at a retail location
+          </CustomText>
+        </View>
+      </Pressable>
+    );
+  }, [currentSelectedId, theme]);
 
   const renderStaticMethodRow = (
     label: string,
     badgeText: string,
-    icon?: React.ReactNode
+    icon?: React.ReactNode,
+    comingSoon?: boolean
   ) => (
     <View
       style={{
@@ -202,8 +265,15 @@ const AddNewCardPlaceholderModal: React.FC<AddNewCardPlaceholderModalProps> = ({
         <CustomText variant="h4" size={16} fontWeight="semiBold" fontFamily="poppins">
           {label}
         </CustomText>
+        {comingSoon ? (
+          <CustomText variant="caption" color={theme.colors.textSecondary} style={{ marginTop: 2 }}>
+            Coming soon
+          </CustomText>
+        ) : null}
       </View>
-      <AppIcon.ChevronRight width={24} height={24} color={theme.colors.primary} />
+      {comingSoon ? null : (
+        <AppIcon.ChevronRight width={24} height={24} color={theme.colors.primary} />
+      )}
     </View>
   );
 
@@ -292,12 +362,14 @@ const AddNewCardPlaceholderModal: React.FC<AddNewCardPlaceholderModalProps> = ({
               </View>
             ) : null}
 
-            {renderStaticMethodRow('Google Pay', 'G')}
+            {renderStaticMethodRow('Google Pay', 'G', undefined, true)}
             {renderStaticMethodRow(
               'Apple Pay',
               'A',
-              <AppIcon.ApplePay width={24} height={24} />
+              <AppIcon.ApplePay width={24} height={24} />,
+              true
             )}
+            {includeRetailCashOption ? renderRetailCashRow() : null}
           </View>
 
           <View style={{ marginTop: theme.spacing.xl }}>

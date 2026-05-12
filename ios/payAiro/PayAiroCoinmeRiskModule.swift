@@ -42,7 +42,8 @@ final class PayAiroCoinmeRiskModule: NSObject {
 
   @objc
   static func requiresMainQueueSetup() -> Bool {
-    return false
+    // Initialize on the main queue so the first SDK touch aligns with UIKit lifecycle.
+    return true
   }
 
   // MARK: - setup
@@ -54,13 +55,17 @@ final class PayAiroCoinmeRiskModule: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard let setupOptions = parseSetupOptions(options) else {
-      reject(ErrorCode.invalidOptions.rawValue,
-             "Invalid setup options. `mode` and `clientId` are required.", nil)
+      Self.rejectOnMain(
+        reject,
+        code: ErrorCode.invalidOptions.rawValue,
+        message: "Invalid setup options. `mode` and `clientId` are required.",
+        error: nil
+      )
       return
     }
 
     _ = CoinmeRiskEngine.setupCoinmeRiskEngine(options: setupOptions)
-    resolve(nil)
+    Self.resolveOnMain { resolve(nil) }
   }
 
   // MARK: - update
@@ -72,14 +77,18 @@ final class PayAiroCoinmeRiskModule: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard CoinmeRiskEngine.isInitialized() else {
-      reject(ErrorCode.notInitialized.rawValue,
-             "CoinmeRiskEngine is not initialized. Call setup() first.", nil)
+      Self.rejectOnMain(
+        reject,
+        code: ErrorCode.notInitialized.rawValue,
+        message: "CoinmeRiskEngine is not initialized. Call setup() first.",
+        error: nil
+      )
       return
     }
 
     let updateOptions = parseUpdateOptions(options)
     CoinmeRiskEngine.updateCoinmeRiskEngine(updateOptions)
-    resolve(nil)
+    Self.resolveOnMain { resolve(nil) }
   }
 
   // MARK: - getPartnerSessionTag
@@ -91,15 +100,22 @@ final class PayAiroCoinmeRiskModule: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard CoinmeRiskEngine.isInitialized() else {
-      reject(ErrorCode.notInitialized.rawValue,
-             "CoinmeRiskEngine is not initialized. Call setup() first.", nil)
+      Self.rejectOnMain(
+        reject,
+        code: ErrorCode.notInitialized.rawValue,
+        message: "CoinmeRiskEngine is not initialized. Call setup() first.",
+        error: nil
+      )
       return
     }
 
     guard let tagOptions = parsePartnerSessionTagOptions(options) else {
-      reject(ErrorCode.invalidOptions.rawValue,
-             "Invalid options. `partnerId`, `accountId`, and `fingerprint` are required.",
-             nil)
+      Self.rejectOnMain(
+        reject,
+        code: ErrorCode.invalidOptions.rawValue,
+        message: "Invalid options. `partnerId`, `accountId`, and `fingerprint` are required.",
+        error: nil
+      )
       return
     }
 
@@ -111,12 +127,15 @@ final class PayAiroCoinmeRiskModule: NSObject {
           "webSessionID": data.webSessionID,
           "orgID": data.orgID as Any
         ]
-        guardBox.settle { resolve(result) }
+        guardBox.settle { Self.resolveOnMain { resolve(result) } }
       } catch {
         guardBox.settle {
-          reject(ErrorCode.partnerSessionFailed.rawValue,
-                 error.localizedDescription,
-                 error)
+          Self.rejectOnMain(
+            reject,
+            code: ErrorCode.partnerSessionFailed.rawValue,
+            message: error.localizedDescription,
+            error: error
+          )
         }
       }
     }
@@ -130,21 +149,28 @@ final class PayAiroCoinmeRiskModule: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard CoinmeRiskEngine.isInitialized() else {
-      reject(ErrorCode.notInitialized.rawValue,
-             "CoinmeRiskEngine is not initialized. Call setup() first.", nil)
+      Self.rejectOnMain(
+        reject,
+        code: ErrorCode.notInitialized.rawValue,
+        message: "CoinmeRiskEngine is not initialized. Call setup() first.",
+        error: nil
+      )
       return
     }
 
     let guardBox = PromiseGuard()
     CoinmeRiskEngine.submit(
       onSuccess: {
-        guardBox.settle { resolve(nil) }
+        guardBox.settle { Self.resolveOnMain { resolve(nil) } }
       },
       onError: { error in
         guardBox.settle {
-          reject(ErrorCode.submitFailed.rawValue,
-                 error.localizedDescription,
-                 error)
+          Self.rejectOnMain(
+            reject,
+            code: ErrorCode.submitFailed.rawValue,
+            message: error.localizedDescription,
+            error: error
+          )
         }
       }
     )
@@ -160,12 +186,16 @@ final class PayAiroCoinmeRiskModule: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard CoinmeRiskEngine.isInitialized() else {
-      reject(ErrorCode.notInitialized.rawValue,
-             "CoinmeRiskEngine is not initialized. Call setup() first.", nil)
+      Self.rejectOnMain(
+        reject,
+        code: ErrorCode.notInitialized.rawValue,
+        message: "CoinmeRiskEngine is not initialized. Call setup() first.",
+        error: nil
+      )
       return
     }
     CoinmeRiskEngine.trackTextChange(viewId: viewId as String, text: text as String)
-    resolve(nil)
+    Self.resolveOnMain { resolve(nil) }
   }
 
   @objc
@@ -176,12 +206,16 @@ final class PayAiroCoinmeRiskModule: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     guard CoinmeRiskEngine.isInitialized() else {
-      reject(ErrorCode.notInitialized.rawValue,
-             "CoinmeRiskEngine is not initialized. Call setup() first.", nil)
+      Self.rejectOnMain(
+        reject,
+        code: ErrorCode.notInitialized.rawValue,
+        message: "CoinmeRiskEngine is not initialized. Call setup() first.",
+        error: nil
+      )
       return
     }
     CoinmeRiskEngine.trackFocusChange(viewId: viewId as String, isFocus: isFocus)
-    resolve(nil)
+    Self.resolveOnMain { resolve(nil) }
   }
 
   // MARK: - Config / lifecycle
@@ -192,7 +226,7 @@ final class PayAiroCoinmeRiskModule: NSObject {
     rejecter _: @escaping RCTPromiseRejectBlock
   ) {
     guard let config = CoinmeRiskEngine.getCoinmeRiskEngineConfig() else {
-      resolve(nil)
+      Self.resolveOnMain { resolve(nil) }
       return
     }
     let result: [String: Any] = [
@@ -200,7 +234,7 @@ final class PayAiroCoinmeRiskModule: NSObject {
       "sessionKey": config.sessionKey as Any,
       "flow": config.flow?.rawValue as Any
     ]
-    resolve(result)
+    Self.resolveOnMain { resolve(result) }
   }
 
   @objc
@@ -209,7 +243,7 @@ final class PayAiroCoinmeRiskModule: NSObject {
     rejecter _: @escaping RCTPromiseRejectBlock
   ) {
     CoinmeRiskEngine.resetStoredSessionKey()
-    resolve(nil)
+    Self.resolveOnMain { resolve(nil) }
   }
 
   @objc
@@ -218,7 +252,7 @@ final class PayAiroCoinmeRiskModule: NSObject {
     rejecter _: @escaping RCTPromiseRejectBlock
   ) {
     CoinmeRiskEngine.reset()
-    resolve(nil)
+    Self.resolveOnMain { resolve(nil) }
   }
 
   @objc
@@ -226,7 +260,28 @@ final class PayAiroCoinmeRiskModule: NSObject {
     _ resolve: @escaping RCTPromiseResolveBlock,
     rejecter _: @escaping RCTPromiseRejectBlock
   ) {
-    resolve(CoinmeRiskEngine.isInitialized())
+    let initialized = CoinmeRiskEngine.isInitialized()
+    Self.resolveOnMain { resolve(initialized) }
+  }
+
+  /// React Native promise blocks must run on the main thread; SDK/Task callbacks may not.
+  private static func resolveOnMain(_ work: @escaping () -> Void) {
+    if Thread.isMainThread {
+      work()
+    } else {
+      DispatchQueue.main.async(execute: work)
+    }
+  }
+
+  private static func rejectOnMain(
+    _ reject: @escaping RCTPromiseRejectBlock,
+    code: String,
+    message: String,
+    error: Error?
+  ) {
+    resolveOnMain {
+      reject(code, message, error)
+    }
   }
 
   // MARK: - Private parsing helpers

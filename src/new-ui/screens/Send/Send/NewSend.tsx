@@ -259,6 +259,7 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
                 } as never);
               }}
             />
+            <CustomText variant="body" size={12} color={theme.colors.greyDark} style={styles.inputHint}>Valid USDC Polygon network addresses only</CustomText>
           </View>
           {/* inline suggestions removed for new UI; contacts now shown in list below */}
         </View>

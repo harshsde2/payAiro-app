@@ -45,6 +45,8 @@ import {
   type PaymentMethodItem,
 } from "query/hooks/usePaymentMethods";
 
+type WithdrawPaymentMode = "debit" | "cash";
+
 const COINME_DEFAULTS = {
   paymentMethodId: "uhygtfr5e354rtyu76g6b7i8",
   sourceWalletAddress: ",mu9n7777777545e5vr",
@@ -73,6 +75,7 @@ const CryptoWithdraw: React.FC = () => {
 
   const [debitInfoVisible, setDebitInfoVisible] = useState(false);
   const [addCardVisible, setAddCardVisible] = useState(false);
+  const [selectedPaymentMode, setSelectedPaymentMode] = useState<WithdrawPaymentMode>("debit");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodItem | null>(null);
   const paymentMethodsQuery = usePaymentMethodsList(20);
 
@@ -328,8 +331,30 @@ const CryptoWithdraw: React.FC = () => {
       return;
     }
 
+    if (selectedPaymentMode === "cash") {
+      if (!coinmeCryptoAsset) {
+        showError("Unable to open cash locations. Please try again.");
+        return;
+      }
+      navigation.navigate(NAVIGATION_SCREENS.NEW_CASH_RAMP_LOCATION_FINDER as never, {
+        amount,
+        fiatCurrencyCode: coinmeCryptoAsset.fiatCurrency || "USD",
+        cryptoCurrencyCode: coinmeCryptoAsset.asset,
+        chain: coinmeCryptoAsset.chain,
+      } as never);
+      return;
+    }
+
     requestPaymentVerification(handleActionsAfterPinVerified);
-  }, [amount, handleActionsAfterPinVerified, inputValue, requestPaymentVerification]);
+  }, [
+    amount,
+    coinmeCryptoAsset,
+    handleActionsAfterPinVerified,
+    inputValue,
+    navigation,
+    requestPaymentVerification,
+    selectedPaymentMode,
+  ]);
 
   return (
     <ScreenWrapper
@@ -378,19 +403,67 @@ const CryptoWithdraw: React.FC = () => {
             style={{ marginVertical: 0, width: "100%" }}
             contentContainerStyle={{ width: "100%" }}
           >
-            <DebitCardPaymentRow
-              title="Debit Card"
-              maskedDetail={paymentSubtitle}
-              onPress={() => {
-                Keyboard.dismiss();
-                setDebitInfoVisible(true);
-              }}
-            />
+            <View style={{ gap: theme.spacing.sm, width: "100%" }}>
+              <View style={{ borderRadius: theme.radius.lg, overflow: "hidden" }}>
+                <DebitCardPaymentRow
+                  title="Cash"
+                  maskedDetail="Pay with cash at nearby stores"
+                  onPress={() => setSelectedPaymentMode("cash")}
+                />
+                {selectedPaymentMode === "cash" && (
+                  <View
+                    style={{
+                      position: "absolute",
+                      top: 8,
+                      right: 8,
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      borderRadius: 999,
+                      backgroundColor: theme.colors.primary,
+                    }}
+                  >
+                    <CustomText variant="caption" color={theme.colors.white}>
+                      Selected
+                    </CustomText>
+                  </View>
+                )}
+              </View>
+
+              <View style={{ borderRadius: theme.radius.lg, overflow: "hidden" }}>
+                <DebitCardPaymentRow
+                  title="Debit Card"
+                  maskedDetail={paymentSubtitle}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setSelectedPaymentMode("debit");
+                    setDebitInfoVisible(true);
+                  }}
+                />
+                {selectedPaymentMode === "debit" && (
+                  <View
+                    style={{
+                      position: "absolute",
+                      top: 8,
+                      right: 8,
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      borderRadius: 999,
+                      backgroundColor: theme.colors.primary,
+                    }}
+                  >
+                    <CustomText variant="caption" color={theme.colors.white}>
+                      Selected
+                    </CustomText>
+                  </View>
+                )}
+              </View>
+            </View>
           </DashboardSection>
           <View style={styles.bottomTradePayRow}>
             <PayButton
-              disabled={tradeExecute.isPending}
+              disabled={selectedPaymentMode === "debit" && tradeExecute.isPending}
               onPress={handlePayPress}
+              label={selectedPaymentMode === "cash" ? "Find a Location" : "Proceed"}
             />
           </View>
         </View>
@@ -405,7 +478,7 @@ const CryptoWithdraw: React.FC = () => {
           }}
           onRequestAddCard={() => setAddCardVisible(true)}
         />
-
+ 
         <AddDebitCardModal
           visible={addCardVisible}
           onClose={() => setAddCardVisible(false)}

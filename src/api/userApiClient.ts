@@ -39,24 +39,51 @@ const getStoredTokens = (): Partial<Tokens> | null => {
   }
 };
 
-const persistTokens = (tokens: Tokens) => {
+/** Merge access/refresh into MMKV without dropping extra fields (e.g. step, username). */
+const persistTokensMerged = (tokens: Tokens) => {
   try {
-    setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(tokens));
+    const existing = getStoredTokens() ?? {};
+    setItem(
+      STORAGE_KEYS.AUTH_TOKENS,
+      JSON.stringify({ ...existing, ...tokens })
+    );
   } catch {
     // ignore storage write failures; requests will likely fail and user will re-auth
   }
 };
 
-const extractTokensFromRefreshResponse = (body: RefreshBody): Tokens | null => {
-  const tokens =
+const extractTokensFromRefreshResponse = (
+  body: RefreshBody,
+  fallbackRefresh?: string | null
+): Tokens | null => {
+  if (body?.ok === false) return null;
+
+  const raw =
     body?.data?.tokens ??
     body?.data?.token ??
     body?.data?.data?.tokens ??
-    body?.data ??
-    {};
+    body?.data;
 
-  const access = tokens?.access ?? tokens?.access_token;
-  const refresh = tokens?.refresh ?? tokens?.refresh_token;
+  let access: string | undefined;
+  let refreshFromBody: string | undefined;
+
+  if (typeof raw === "string") {
+    access = raw;
+  } else if (raw && typeof raw === "object") {
+    const t = raw as Record<string, unknown>;
+    const a = t.access ?? t.access_token;
+    const r = t.refresh ?? t.refresh_token;
+    if (typeof a === "string") access = a;
+    if (typeof r === "string") refreshFromBody = r;
+  }
+
+  const refresh =
+    typeof refreshFromBody === "string"
+      ? refreshFromBody
+      : typeof fallbackRefresh === "string"
+        ? fallbackRefresh
+        : undefined;
+
   if (typeof access === "string" && typeof refresh === "string") {
     return { access, refresh };
   }
@@ -68,7 +95,6 @@ const refreshAccessToken = async (): Promise<Tokens | null> => {
   const refreshToken = stored?.refresh;
   if (!refreshToken) return null;
 
-  // console.log("refreshToken =>", refreshToken);
   // Reuse the same Axios instance but do NOT attach bearer token for this route
   // (it is included in `publicAuthRoutes` below).
   const resp = await userApi.post<RefreshBody>(USER_AUTH.TOKEN_REFRESH, {
@@ -77,9 +103,31 @@ const refreshAccessToken = async (): Promise<Tokens | null> => {
     refresh_token: refreshToken,
   });
 
-  const newTokens = extractTokensFromRefreshResponse(resp.data);
+  if (__DEV__ && EnvConfig.ENABLE_LOGGING) {
+    const d = resp.data?.data;
+    const t = d?.tokens ?? d?.token ?? d;
+    const tokenObj = t && typeof t === "object" ? t : null;
+    console.log("[UserAPI][TokenRefresh]", {
+      ok: resp.data?.ok,
+      accessInBody: !!(
+        (tokenObj && ("access" in tokenObj || "access_token" in tokenObj)) ||
+        typeof t === "string"
+      ),
+      refreshInBody: !!(
+        tokenObj &&
+        ("refresh" in tokenObj || "refresh_token" in tokenObj)
+      ),
+    });
+  }
+
+  if (resp.data?.ok === false) return null;
+
+  const newTokens = extractTokensFromRefreshResponse(
+    resp.data,
+    refreshToken
+  );
   if (!newTokens?.access || !newTokens?.refresh) return null;
-  persistTokens(newTokens);
+  persistTokensMerged(newTokens);
   return newTokens;
 };
 
@@ -106,7 +154,6 @@ userApi.interceptors.request.use(
         if (tokens.access) {
           config.headers = config.headers || {};
           (config.headers as any).Authorization = `Bearer ${tokens.access}`;
-          console.log("tokens.access =>", tokens.access);
         }
       }
     } catch (e) {
@@ -150,9 +197,9 @@ userApi.interceptors.response.use(
       | (InternalAxiosRequestConfig & { _retry?: boolean })
       | undefined;
 
-    // If unauthorized, attempt a silent refresh + retry once.
+    // If unauthorized / forbidden (expired token), attempt refresh + retry once.
     if (
-      status === 401 &&
+      (status === 401 || status === 403) &&
       originalRequest &&
       !originalRequest._retry &&
       typeof originalRequest.url === "string"

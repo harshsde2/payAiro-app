@@ -31,6 +31,40 @@ export type NewUIAuthStackParamList = {
 export type NewUIDashboardStackParamList = {
   [NAVIGATION_SCREENS.NEW_DASHBOARD]: undefined;
   [NAVIGATION_SCREENS.NEW_ADD_BALANCE]: undefined;
+  [NAVIGATION_SCREENS.NEW_CASH_RAMP_LOCATION_FINDER]: {
+    amount: number;
+    fiatCurrencyCode: string;
+    cryptoCurrencyCode: string;
+    chain: string;
+    sourceWalletAddress?: string;
+  };
+  [NAVIGATION_SCREENS.NEW_CASH_RAMP_SELL_LOCATION_FINDER]: {
+    amount: number;
+    fiatCurrencyCode: string;
+    cryptoCurrencyCode: string;
+    chain: string;
+    sourceWalletAddress?: string;
+  };
+  [NAVIGATION_SCREENS.NEW_CASH_RAMP_BARCODE]: {
+    amount: number;
+    fiatCurrencyCode: string;
+    cryptoCurrencyCode: string;
+    cashRampFlow?: "buy" | "sell";
+    chain?: string;
+    sourceWalletAddress?: string;
+    location: {
+      id: string;
+      provider?: string | null;
+      description?: string | null;
+      address?: string | null;
+      city?: string | null;
+      state?: string | null;
+      zipCode?: string | null;
+      lineOfSightDistance?: number | null;
+      lineOfSightMetric?: string | null;
+      locationReference?: string | null;
+    };
+  };
   [NAVIGATION_SCREENS.CRYPTO_WITHDRAW]: undefined;
   [NAVIGATION_SCREENS.NEW_CONTACTS_SCREEN]: undefined;
   [NAVIGATION_SCREENS.NEW_ADD_CONTACT_SCREEN]: undefined;

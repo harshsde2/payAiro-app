@@ -5,6 +5,7 @@ export * from "./useUnifiedTransactions";
 export * from "./useFormattedTradesHistory";
 export * from "./useUser";
 export * from "./useCrypto";
+export * from "./useCoinmeCashRamp";
 export * from "./useBank";
 // export * from './useDeviceContacts';
 export * from "./useContact";

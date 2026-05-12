@@ -91,6 +91,10 @@ if linkage != nil
 end
 
 target 'payAiro' do
+ # Google Maps on iOS: declare before use_native_modules! so autolinking skips the default Maps-only pod
+ # but codegen still registers Fabric views (RNMapsGoogleMapView, etc.) in RCTThirdPartyComponentsProvider.
+ pod 'react-native-maps/Google', :path => '../node_modules/react-native-maps'
+
  config = use_native_modules!
 
  # Add Plaid SDK
@@ -100,11 +104,11 @@ target 'payAiro' do
  # line declared at the top of this Podfile). Requires iOS 16.0+.
  pod 'CoinmeRiskSDK', '~> 1.1.1'
 
- use_react_native!(
-   :path => config[:reactNativePath],
-   # An absolute path to your application root.
-   :app_path => "#{Pod::Config.instance.installation_root}/.."
- )
+  use_react_native!(
+    :path => config[:reactNativePath],
+    # Absolute app root so codegen embeds stable relative paths (see ReactCodegen script phase).
+    :app_path => File.expand_path('..', __dir__)
+  )
 
  target 'payAiroTests' do
    inherit! :complete

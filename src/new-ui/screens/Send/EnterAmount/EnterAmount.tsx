@@ -50,7 +50,9 @@ import {
   DebitCardPaymentRow,
   AddNewCardPlaceholderModal,
   AddDebitCardModal,
+  RETAIL_CASH_PAYMENT_METHOD_ID,
 } from '@new-ui/components/common-components/AddBalance';
+import Button from '@new-ui/components/common-components/layout/Button';
 import type { AddedCardResult } from '@new-ui/components/common-components/AddBalance/AddDebitCardModal';
 import { usePaymentMethodsList, type PaymentMethodItem } from 'query/hooks/usePaymentMethods';
 
@@ -90,7 +92,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     cryptoAsset,
   } =
     route.params || ({} as any);
-  // console.log("route.params =>", JSON.stringify(route.params, null, 2));
+  console.log("route.params on enter amount =>", JSON.stringify(route.params, null, 2));
 
   const isRequestedFlow = type === 'requested';
   const requestDetails = (request_data as any)?.request_details;
@@ -167,7 +169,6 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   const tradeAssetSymbol = String(cryptoAsset?.asset || '').toUpperCase();
   const tradePriceUSD = Number(cryptoAsset?.currentPrice ?? 0);
 
-
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   const [showCryptoReceiptModal, setShowCryptoReceiptModal] = useState(false);
@@ -177,6 +178,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodItem | null>(
     null
   );
+  const [tradePaymentRail, setTradePaymentRail] = useState<'debit' | 'retail_cash'>('debit');
   const paymentMethodsQuery = usePaymentMethodsList(20);
 
   useEffect(() => {
@@ -184,6 +186,12 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
       UIManager.setLayoutAnimationEnabledExperimental(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (!isTradeMode) {
+      setTradePaymentRail('debit');
+    }
+  }, [isTradeMode]);
 
   const convertToFundingSource = useCallback((bankLike: any): FundingSource | null => {
     if (!bankLike || typeof bankLike !== 'object') return null;
@@ -376,11 +384,14 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   }, [isTradeMode, tradeAssetSymbol, tradePriceUSD]);
 
   const paymentSubtitle = useMemo(() => {
+    if (isTradeMode && tradePaymentRail === 'retail_cash') {
+      return 'Pay with cash at a retail location';
+    }
     if (!selectedPaymentMethod) return 'Select a card';
     const provider = (selectedPaymentMethod.card_provider || 'Card').toUpperCase();
     const last4 = selectedPaymentMethod.card_last4 || '••••';
     return `${provider}  •••• ${last4}`;
-  }, [selectedPaymentMethod]);
+  }, [isTradeMode, tradePaymentRail, selectedPaymentMethod]);
 
   const handleAddedCard = useCallback(
     async (result: AddedCardResult) => {
@@ -400,10 +411,36 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
       }
 
       setSelectedPaymentMethod(selected);
+      if (isTradeMode) {
+        setTradePaymentRail('debit');
+      }
       setTimeout(() => setDebitInfoVisible(true), 350);
     },
-    [paymentMethodsQuery]
+    [isTradeMode, paymentMethodsQuery]
   );
+
+  const handleFindCashLocation = useCallback(() => {
+    if (!cryptoAsset) {
+      showError('Missing crypto details; please try again.');
+      return;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      showError('Please enter a valid amount');
+      return;
+    }
+    const finderParams = {
+      amount,
+      fiatCurrencyCode: String(cryptoAsset.fiatCurrency || 'USD').toUpperCase(),
+      cryptoCurrencyCode: String(cryptoAsset.asset || '').toUpperCase(),
+      chain: String(cryptoAsset.chain || 'ETH').toUpperCase(),
+      sourceWalletAddress: String(cryptoAsset?.sourceWalletAddress ?? '').trim(),
+    };
+    if (tradeMode === 'sell') {
+      navigation.navigate(NAVIGATION_SCREENS.NEW_CASH_RAMP_SELL_LOCATION_FINDER as never, finderParams as never);
+    } else {
+      navigation.navigate(NAVIGATION_SCREENS.NEW_CASH_RAMP_LOCATION_FINDER as never, finderParams as never);
+    }
+  }, [amount, cryptoAsset, navigation, tradeMode]);
 
   const openDebitPaymentPicker = useCallback(() => {
     Keyboard.dismiss();
@@ -848,6 +885,9 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
         showError('Please enter a valid amount');
         return;
       }
+      if (tradePaymentRail === 'retail_cash') {
+        return;
+      }
       if (!selectedPaymentMethod) {
         showError('Please select a payment method');
         return;
@@ -892,6 +932,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     selectedPaymentMethod,
     showError,
     tradeMode,
+    tradePaymentRail,
     validateCrypto,
     handleActionsAfterPinVerified,
   ]);
@@ -994,10 +1035,16 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
           }
         >
           <View style={{ width: '100%', gap: theme.spacing.md }}>
-            {isCryptoMode ? (
+            {isCryptoMode && isTradeMode ? (
+              <DebitCardPaymentRow
+                title={tradePaymentRail === 'retail_cash' ? 'Cash' : 'Debit Card'}
+                maskedDetail={paymentSubtitle}
+                onPress={openDebitPaymentPicker}
+              />
+            ) : isCryptoMode && !isTradeMode ? (
               <FundingSourceCard
                 source={selectedSource}
-                onPress={isTradeMode ? () => {} : handlePressFundingSource}
+                onPress={handlePressFundingSource}
               />
             ) : (
               <DebitCardPaymentRow
@@ -1006,14 +1053,14 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
                 onPress={openDebitPaymentPicker}
               />
             )}
-            {isTradeMode ? (
-              <DebitCardPaymentRow
-                title="Debit Card"
-                maskedDetail={paymentSubtitle}
-                onPress={openDebitPaymentPicker}
-              />
+            {!isTradeMode || tradePaymentRail === 'debit' ? (
+              <PayButton disabled={isPaying} onPress={handlePayPress} />
             ) : null}
-            <PayButton disabled={isPaying} onPress={handlePayPress} />
+            {isTradeMode && tradePaymentRail === 'retail_cash' ? (
+              <Button onPress={handleFindCashLocation} style={styles.payButton}>
+                Find a Location
+              </Button>
+            ) : null}
           </View>
         </View>
 
@@ -1031,9 +1078,22 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
           visible={debitInfoVisible}
           onClose={() => setDebitInfoVisible(false)}
           title="Select Payment Method"
-          selectedPaymentMethodId={selectedPaymentMethod?.payment_method_id ?? null}
-          onConfirmSelection={(item) => {
+          includeRetailCashOption={isTradeMode}
+          selectedPaymentMethodId={
+            isTradeMode && tradePaymentRail === 'retail_cash'
+              ? RETAIL_CASH_PAYMENT_METHOD_ID
+              : selectedPaymentMethod?.payment_method_id ?? null
+          }
+          onConfirmSelection={(item, ctx) => {
+            if (ctx?.retailCash) {
+              setTradePaymentRail('retail_cash');
+              setSelectedPaymentMethod(null);
+              return;
+            }
             setSelectedPaymentMethod(item);
+            if (isTradeMode) {
+              setTradePaymentRail('debit');
+            }
           }}
           onRequestAddCard={() => setAddCardVisible(true)}
         />

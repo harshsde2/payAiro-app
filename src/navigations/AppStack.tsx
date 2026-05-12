@@ -87,6 +87,11 @@ import ViewStatementScreen from "@new-ui/screens/KebabMenuScreens/BankStatementS
 import RewardsAndReferralsScreen from "@new-ui/screens/KebabMenuScreens/RewardsScreen/RewardsAndReferralsScreen";
 import ScratchCardScreen from "@new-ui/screens/KebabMenuScreens/RewardsScreen/ScratchCardScreen";
 import ActivityScreen from "new-ui/screens/Activity/ActivityScreen";
+import {
+  CashRampBarcodeScreen,
+  LocationFinderScreen,
+  SellCashRampLocationScreen,
+} from "@new-ui/screens/CashRamp";
 
 const Stack = createNativeStackNavigator();
 
@@ -109,7 +114,7 @@ export function AppStackHeader(props: NativeStackHeaderProps) {
         }
       : undefined;
 
-  return <CustomHeader {...props} title={title} rightButton={rightButton} />;
+  return <CustomHeader {...props}  title={title} rightButton={rightButton} />;
 }
 
 export default function AppStack() {
@@ -516,6 +521,27 @@ export default function AppStack() {
         options={{ headerShown: true, header: AppStackHeader }}
         name={NAVIGATION_SCREENS.NEW_ADD_BALANCE}
         component={NewAddBalance as any}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.NEW_CASH_RAMP_LOCATION_FINDER}
+        component={LocationFinderScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.NEW_CASH_RAMP_SELL_LOCATION_FINDER}
+        component={SellCashRampLocationScreen}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          header: AppStackHeader,
+          headerTitle: "Barcode",
+          headerTransparent: true,
+          headerStyle: { backgroundColor: "transparent" },
+        }}
+        name={NAVIGATION_SCREENS.NEW_CASH_RAMP_BARCODE}
+        component={CashRampBarcodeScreen}
       />
       <Stack.Screen
         options={{ headerShown: true, header: AppStackHeader,headerTitle: 'Settings' }}

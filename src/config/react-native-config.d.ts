@@ -52,6 +52,13 @@ declare module 'react-native-config' {
     COINME_PARTNER_ID?: string;
     /** "test" | "prod"; falls back to `__DEV__ ? "test" : "prod"`. */
     COINME_MODE?: string;
+
+    /** Google Maps iOS SDK — used in AppDelegate; falls back to GOOGLE_MAPS_API_KEY if unset. */
+    GOOGLE_MAPS_API_KEY_IOS?: string;
+    /** Google Maps Android SDK — used in AndroidManifest placeholder; falls back to GOOGLE_MAPS_API_KEY if unset. */
+    GOOGLE_MAPS_API_KEY_ANDROID?: string;
+    /** Optional single key for both platforms when not using split keys. */
+    GOOGLE_MAPS_API_KEY?: string;
   }
 
   /**

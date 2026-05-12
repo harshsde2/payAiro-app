@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from "react";
+import React, { useLayoutEffect, useMemo, useState } from "react";
 import {
   View,
   TouchableOpacity,
@@ -18,8 +18,10 @@ import { CryptoRouteParams } from "services/coingecko/types";
 import {
   CHART_PERIOD_ORDER,
   useUserCryptoChart,
+  useWalletAddresses,
   type ChartPeriodTab,
 } from "query/hooks/useCrypto";
+import { findWalletRowForSymbol } from "utils/findWalletRowForSymbol";
 import { SvgUri } from "react-native-svg";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { getCryptoDisplayTitle } from "utils/cryptoDisplayName";
@@ -53,6 +55,16 @@ const CyrptoDetails: React.FC = () => {
     error,
     refetch,
   } = useUserCryptoChart(currency, "USD", chartPeriod);
+
+  const { data: walletResponse } = useWalletAddresses();
+  const matchedWallet = useMemo(
+    () =>
+      findWalletRowForSymbol(
+        walletResponse?.walletAddresses,
+        cryptoItem?.asset
+      ),
+    [walletResponse?.walletAddresses, cryptoItem?.asset]
+  );
 
   const chartData = chartResponse?.chartData ?? [];
   const currentPrice = chartResponse?.latestPrice ?? Number(cryptoItem?.usd_price ?? 0);
@@ -194,14 +206,22 @@ const CyrptoDetails: React.FC = () => {
 
   // Buy / Sell flow through `EnterAmount` (Confirm → PIN → Result). Trade uses
   // Coinme execute after PIN only (no OTP). Send / Receive use legacy screens.
+  const fromWalletList = String(matchedWallet?.walletAddress ?? "").trim();
+  const fromRouteItem = String(
+    (cryptoItem as any)?.sourceWalletAddress ?? ""
+  ).trim();
+  const resolvedSourceWallet =
+    (fromWalletList || fromRouteItem) || undefined;
   const cryptoAsset = {
     asset: String(cryptoItem?.asset || "").toUpperCase(),
-    chain: String((cryptoItem as any)?.chain || "ETH").toUpperCase(),
+    chain: String(
+      (cryptoItem as any)?.chain || matchedWallet?.chain || "ETH"
+    ).toUpperCase(),
     logo: cryptoItem?.logo,
     fiatCurrency: "USD",
     currentPrice: Number(currentPrice || 0),
     platformAvailable: Number(cryptoItem?.platform_available ?? 0),
-    sourceWalletAddress: (cryptoItem as any)?.sourceWalletAddress,
+    sourceWalletAddress: resolvedSourceWallet,
   };
 
   const actionButtons = [

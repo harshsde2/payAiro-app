@@ -34,6 +34,7 @@ import { fetchWebSessionId } from 'services/coinmeRiskLifecycle';
 import { useCoinmeAccountId } from 'hooks/useCoinmeAccountId';
 import { showError } from 'utils/toast';
 import CryptoReceiptModal from '@new-ui/screens/Send/EnterAmount/CryptoReceiptModal';
+import CustomText from '@new-ui/components/common-components/CustomText';
 
 const QUICK_AMOUNTS = [50, 100, 200, 500, 1000];
 
@@ -52,6 +53,8 @@ type HiddenTradeCryptoAsset = {
   currentPrice: number;
   sourceWalletAddress?: string;
 };
+
+type AddBalancePaymentMode = 'debit' | 'cash';
 
 const NewAddBalanceScreen: React.FC = () => {
   const { theme } = useTheme();
@@ -123,6 +126,7 @@ const NewAddBalanceScreen: React.FC = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodItem | null>(
     null
   );
+  const [selectedPaymentMode, setSelectedPaymentMode] = useState<AddBalancePaymentMode>('debit');
 
   const paymentMethodsQuery = usePaymentMethodsList(20);
 
@@ -139,7 +143,7 @@ const NewAddBalanceScreen: React.FC = () => {
 
   const parsedAmount = parseMoneyAmount(amountText);
   const isTradeContextLoading = isMarketPending || isWalletPending;
-  const canProceed =
+  const canProceedDebit =
     amountText.length > 0 &&
     Number.isFinite(parsedAmount) &&
     parsedAmount > 0 &&
@@ -147,6 +151,13 @@ const NewAddBalanceScreen: React.FC = () => {
     tradePriceUSD > 0 &&
     cryptoAsset !== null &&
     !isTradeContextLoading;
+
+  const canProceedCash =
+    amountText.length > 0 &&
+    Number.isFinite(parsedAmount) &&
+    parsedAmount > 0 &&
+    !isTradeContextLoading;
+  const canProceed = selectedPaymentMode === 'debit' ? canProceedDebit : canProceedCash;
 
   const handleTradeExecute = useCallback(async () => {
     if (!cryptoAsset) return;
@@ -226,6 +237,23 @@ const NewAddBalanceScreen: React.FC = () => {
   }, [handleTradeExecute]);
 
   const handleProceed = useCallback(() => {
+    if (selectedPaymentMode === 'cash') {
+      if (!(amountText.length > 0 && Number.isFinite(parsedAmount) && parsedAmount > 0)) {
+        return;
+      }
+      if (!cryptoAsset) {
+        showError('Missing crypto details; please try again.');
+        return;
+      }
+      navigation.navigate(NAVIGATION_SCREENS.NEW_CASH_RAMP_LOCATION_FINDER as never, {
+        amount: parsedAmount,
+        fiatCurrencyCode: cryptoAsset.fiatCurrency || 'USD',
+        cryptoCurrencyCode: cryptoAsset.asset,
+        chain: cryptoAsset.chain,
+      } as never);
+      return;
+    }
+
     if (!selectedPaymentMethod) {
       showError('Please select a payment method');
       return;
@@ -238,7 +266,15 @@ const NewAddBalanceScreen: React.FC = () => {
       return;
     }
     setShowReceiptModal(true);
-  }, [amountText.length, cryptoAsset, parsedAmount, selectedPaymentMethod, tradePriceUSD]);
+  }, [
+    amountText.length,
+    cryptoAsset,
+    navigation,
+    parsedAmount,
+    selectedPaymentMethod,
+    selectedPaymentMode,
+    tradePriceUSD,
+  ]);
 
   const paymentSubtitle = useMemo(() => {
     if (!selectedPaymentMethod) return 'Select a card';
@@ -290,17 +326,66 @@ const NewAddBalanceScreen: React.FC = () => {
         </View>
 
         <DashboardSection title="Payment Method" titleStyle={{ fontSize: 16 }}>
-          <DebitCardPaymentRow
-            title="Debit Card"
-            maskedDetail={paymentSubtitle}
-            onPress={() => setDebitInfoVisible(true)}
-          />
+          <View style={{ gap: theme.spacing.sm }}>
+            <View style={{ borderRadius: theme.radius.lg, overflow: 'hidden' }}>
+              <DebitCardPaymentRow
+                title="Cash"
+                maskedDetail="Pay with cash at nearby stores"
+                onPress={() => setSelectedPaymentMode('cash')}
+              />
+              {selectedPaymentMode === 'cash' && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                    borderRadius: 999,
+                    backgroundColor: theme.colors.primary,
+                  }}
+                >
+                  <CustomText variant="caption" color={theme.colors.white}>
+                    Selected
+                  </CustomText>
+                </View>
+              )}
+            </View>
+
+            <View style={{ borderRadius: theme.radius.lg, overflow: 'hidden' }}>
+              <DebitCardPaymentRow
+                title="Debit Card"
+                maskedDetail={paymentSubtitle}
+                onPress={() => {
+                  setSelectedPaymentMode('debit');
+                  setDebitInfoVisible(true);
+                }}
+              />
+              {selectedPaymentMode === 'debit' && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                    borderRadius: 999,
+                    backgroundColor: theme.colors.primary,
+                  }}
+                >
+                  <CustomText variant="caption" color={theme.colors.white}>
+                    Selected
+                  </CustomText>
+                </View>
+              )}
+            </View>
+          </View>
         </DashboardSection>
 
         <View style={styles.proceedSpacer} />
 
         <Button disabled={!canProceed} onPress={handleProceed}>
-          Proceed
+          {selectedPaymentMode === 'cash' ? 'Find a Location' : 'Proceed'}
         </Button>
       </View>
 

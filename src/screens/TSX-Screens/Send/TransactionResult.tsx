@@ -80,20 +80,18 @@ const keyLabels = {
   Transaction_fee_persentage: "Transaction Fee",
 } as const;
 
-// Label map used when rendering a Coinme buy/sell trade response (detected
-// via `transactionData.meta.tradeType`). Keys are read from `meta` plus a
-// few opportunistic fields from `data.transaction` / `data.quote`.
-const coinmeTradeKeyLabels = {
-  tradeType: "Trade Type",
-  cryptoCurrencyCode: "Crypto Currency",
-  fiatCurrencyCode: "Fiat Currency",
-  chain: "Network",
-  quoteId: "Quote ID",
-  providerId: "Provider ID",
-  customerId: "Customer ID",
-  paymentMethodId: "Payment Method ID",
-  webSessionId: "Session ID",
-} as const;
+type CoinmeTransactionData = {
+  debitCurrencyAmount?: string;
+  debitCurrencyCode?: string;
+  creditCurrencyAmount?: string;
+  creditCurrencyCode?: string;
+  debitCurrencyUnitPrice?: string;
+  debitCurrencyUnitPriceCode?: string;
+  totalFees?: string;
+  feeCurrencyCode?: string;
+  transactionStatus?: string;
+  partnerTransactionId?: string;
+};
 
 type CoinmeTradeResponse = {
   ok?: boolean;
@@ -120,13 +118,61 @@ const isCoinmeTradeResponse = (tx: any): tx is CoinmeTradeResponse => {
   return !!(tx && tx.meta && typeof tx.meta.tradeType === "string");
 };
 
-const formatTradeLabel = (key: string, value: any): string => {
-  if (value === null || value === undefined || value === "") return "";
-  if (key === "tradeType") {
-    const v = String(value).toLowerCase();
-    return v === "buy" ? "Buy" : v === "sell" ? "Sell" : String(value);
-  }
-  return String(value);
+const getCoinmeTransactionPayload = (
+  tx: CoinmeTradeResponse
+): CoinmeTransactionData | null => {
+  const raw = tx.data?.transaction;
+  if (!raw || typeof raw !== "object") return null;
+  const td = (raw as { data?: CoinmeTransactionData }).data ?? (raw as CoinmeTransactionData);
+  return td && typeof td === "object" ? td : null;
+};
+
+const formatCoinmeAmountPair = (amount?: string, code?: string): string => {
+  const a = amount?.trim();
+  const c = code?.trim();
+  if (!a && !c) return "";
+  if (!a) return c || "";
+  if (!c) return a;
+  return `${a} ${c}`;
+};
+
+const formatCoinmeStatus = (status?: string): string => {
+  if (!status?.trim()) return "";
+  return status
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (ch) => ch.toUpperCase());
+};
+
+const buildCoinmeDetailRows = (td: CoinmeTransactionData | null) => {
+  const rows: { label: string; value: string }[] = [];
+  if (!td) return rows;
+
+  const pushIf = (label: string, value: string) => {
+    if (!value) return;
+    rows.push({ label, value });
+  };
+
+  pushIf("Paid", formatCoinmeAmountPair(td.debitCurrencyAmount, td.debitCurrencyCode));
+  pushIf(
+    "Received",
+    formatCoinmeAmountPair(td.creditCurrencyAmount, td.creditCurrencyCode)
+  );
+
+  const rate = formatCoinmeAmountPair(
+    td.debitCurrencyUnitPrice,
+    td.debitCurrencyUnitPriceCode
+  );
+  if (rate) pushIf("Rate", rate);
+
+  pushIf("Total fees", formatCoinmeAmountPair(td.totalFees, td.feeCurrencyCode));
+
+  const statusLabel = formatCoinmeStatus(td.transactionStatus);
+  pushIf("Status", statusLabel);
+
+  pushIf("Reference", td.partnerTransactionId?.trim() || "");
+
+  return rows;
 };
 
 const TransactionResult: FC = () => {
@@ -305,10 +351,17 @@ const TransactionResult: FC = () => {
         );
       case 'success':
         if (isCoinmeTrade) {
-          const tradeMeta = (transactionData as any)?.meta || {};
+          const tx = transactionData as CoinmeTradeResponse;
+          const tradeMeta = tx.meta || {};
           const verb = tradeMeta.tradeType === 'sell' ? 'Sell' : 'Buy';
-          const crypto = tradeMeta.cryptoCurrencyCode || 'crypto';
-          const fiat = tradeMeta.fiatCurrencyCode || 'USD';
+          const td = getCoinmeTransactionPayload(tx);
+          const isSell = tradeMeta.tradeType === 'sell';
+          const crypto = isSell
+            ? td?.debitCurrencyCode || tradeMeta.cryptoCurrencyCode || 'crypto'
+            : td?.creditCurrencyCode || tradeMeta.cryptoCurrencyCode || 'crypto';
+          const fiat = isSell
+            ? td?.creditCurrencyCode || tradeMeta.fiatCurrencyCode || 'USD'
+            : td?.debitCurrencyCode || tradeMeta.fiatCurrencyCode || 'USD';
           return (
             <CustomText variant="caption" size={16} fontFamily="inter" style={styles.description}>
               Your{' '}
@@ -346,58 +399,11 @@ const TransactionResult: FC = () => {
   const renderTransactionDetails = () => {
     if (showLoader || !transactionData) return null;
 
-    // Coinme buy/sell: render a dedicated list built from `meta` (plus a few
-    // opportunistic fields from `data.transaction` / `data.quote`). This
-    // renders even when `customTitle` is provided because the Coinme flow
-    // passes "Purchase Submitted" / "Sale Submitted" as the title.
+    // Coinme buy/sell: major fields from `data.transaction.data` (FastAPI).
+    // Renders even when `customTitle` is set (e.g. "Buy submitted").
     if (isCoinmeTrade) {
-      const tx = transactionData as any as CoinmeTradeResponse;
-      const meta = tx.meta || {};
-      const transaction = tx.data?.transaction || {};
-      const quote = tx.data?.quote || {};
-
-      const metaRows = Object.entries(coinmeTradeKeyLabels)
-        .map(([key, label]) => {
-          const raw = (meta as any)[key];
-          const value = formatTradeLabel(key, raw);
-          return value ? { label, value } : null;
-        })
-        .filter(Boolean) as { label: string; value: string }[];
-
-      // Try a handful of common fields from the transaction/quote sub-objects.
-      const extraRows: { label: string; value: string }[] = [];
-      const pushIf = (label: string, value: any) => {
-        if (value === null || value === undefined || value === "") return;
-        extraRows.push({ label, value: String(value) });
-      };
-      pushIf(
-        "Transaction ID",
-        (transaction as any).id || (transaction as any).transactionId
-      );
-      pushIf("Status", (transaction as any).status);
-      pushIf(
-        "Fiat Amount",
-        (transaction as any).fiatAmount ?? (quote as any).fiatAmount
-      );
-      pushIf(
-        "Crypto Amount",
-        (transaction as any).cryptoAmount ?? (quote as any).cryptoAmount
-      );
-      pushIf(
-        "Rate",
-        (quote as any).rate ?? (quote as any).price ?? (quote as any).exchangeRate
-      );
-      pushIf("Fee", (transaction as any).fee ?? (quote as any).fee);
-      const ts =
-        (transaction as any).completedAt ||
-        (transaction as any).createdAt ||
-        (quote as any).createdAt;
-      if (ts) {
-        const m = moment(ts);
-        pushIf("Timestamp", m.isValid() ? m.format("DD MMM YYYY  h:mm A") : ts);
-      }
-
-      const displayArray = [...extraRows, ...metaRows];
+      const tx = transactionData as CoinmeTradeResponse;
+      const displayArray = buildCoinmeDetailRows(getCoinmeTransactionPayload(tx));
       if (displayArray.length === 0) return null;
 
       return (

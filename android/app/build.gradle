@@ -88,6 +88,14 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+// Google Maps SDK (Android) — prefer GOOGLE_MAPS_API_KEY_ANDROID, else legacy GOOGLE_MAPS_API_KEY
+def googleMapsApiKey = ""
+if (project.hasProperty("env")) {
+    def androidKey = (project.env["GOOGLE_MAPS_API_KEY_ANDROID"] ?: "").toString().trim()
+    def legacyKey = (project.env["GOOGLE_MAPS_API_KEY"] ?: "").toString().trim()
+    googleMapsApiKey = androidKey ? androidKey : legacyKey
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -110,6 +118,8 @@ android {
         
         // Required for react-native-config when using different package names
         resValue "string", "build_config_package", "com.payairo"
+
+        manifestPlaceholders = [googleMapsApiKey: googleMapsApiKey]
     }
     
     /**
@@ -127,7 +137,8 @@ android {
             
             // Manifest placeholders can be used for environment-specific values
             manifestPlaceholders = [
-                appName: "PayAiro Staging"
+                appName: "PayAiro Staging",
+                googleMapsApiKey: googleMapsApiKey
             ]
         }
         
@@ -138,7 +149,8 @@ android {
             
             // Manifest placeholders
             manifestPlaceholders = [
-                appName: "PayAiro"
+                appName: "PayAiro",
+                googleMapsApiKey: googleMapsApiKey
             ]
         }
     }

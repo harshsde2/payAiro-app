@@ -66,6 +66,16 @@ export const mapRecentActivityToUnified = (
       ? "crypto_sell"
       : "crypto_buy";
     const currency = item.amountCurrencyCode || item.fiatCurrencyCode || "USD";
+    const spendUpper = String(item.amountCurrencyCode ?? "").toUpperCase();
+    const fiatUpper = String(item.fiatCurrencyCode ?? "USD").toUpperCase();
+    const cryptoUpper = String(item.cryptoCurrencyCode ?? "").toUpperCase();
+    const buyUsdValue =
+      !isSell &&
+      (spendUpper === "USD" ||
+        spendUpper === fiatUpper ||
+        (cryptoUpper.length > 0 && spendUpper === cryptoUpper && fiatUpper === "USD"))
+        ? String(item.amountValue ?? "0")
+        : null;
 
     return {
       transaction_id: item.providerTransactionId || String(item.id),
@@ -101,10 +111,7 @@ export const mapRecentActivityToUnified = (
         token: item.cryptoCurrencyCode,
         icon_url: null,
         exchange_rate: null,
-        usd_value:
-          String(item.amountCurrencyCode).toUpperCase() === "USD"
-            ? String(item.amountValue ?? "0")
-            : null,
+        usd_value: buyUsdValue,
       },
       bank_details: null,
       merchant_details: null,

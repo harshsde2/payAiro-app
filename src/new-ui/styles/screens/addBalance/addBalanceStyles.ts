@@ -103,7 +103,7 @@ export const addBalanceStyles = (theme: ITheme) =>
       borderRadius: theme.radius.xl,
       paddingHorizontal: theme.spacing.lg,
       padding: theme.spacing.xl,
-      height: 600,
+      height: 620,
     },
     modalCloseRow: {
       alignItems: 'center',

@@ -36,9 +36,21 @@ const formatScreenTitle = (routeName: string): string => {
   return title;
 };
 
+const isTransparentHeaderOption = (options: ICustomHeaderProps['options']) => {
+  if (options?.headerTransparent === true) {
+    return true;
+  }
+  const hs = options?.headerStyle;
+  if (hs && typeof hs === 'object' && !Array.isArray(hs) && 'backgroundColor' in hs) {
+    return (hs as { backgroundColor?: string }).backgroundColor === 'transparent';
+  }
+  return false;
+};
+
 const CustomHeader: React.FC<ICustomHeaderProps> = ({
   route,
   navigation,
+  options,
   title,
   showBackButton,
   rightButton,
@@ -46,6 +58,7 @@ const CustomHeader: React.FC<ICustomHeaderProps> = ({
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = customHeaderStyles(theme);
+  const headerBgTransparent = isTransparentHeaderOption(options);
   const canGoBack = navigation.canGoBack();
   const shouldShowBackButton = showBackButton !== undefined ? showBackButton : canGoBack;
   const displayTitle = title || (route?.name ? formatScreenTitle(route.name) : '');
@@ -63,7 +76,15 @@ const CustomHeader: React.FC<ICustomHeaderProps> = ({
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          paddingTop: insets.top,
+          backgroundColor: headerBgTransparent ? 'transparent' : theme.colors.background,
+        },
+      ]}
+    >
       <View style={[styles.contentWrapper, { paddingVertical: theme.spacing.xs }]}>
         {shouldShowBackButton ? (
           <TouchableOpacity

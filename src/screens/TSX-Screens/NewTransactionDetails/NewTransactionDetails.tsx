@@ -246,20 +246,60 @@ const NewTransactionDetails: FC = () => {
     return 2;
   };
 
+  const getCryptoBuyReceivedDisplay = (): string => {
+    const raw = parseFloat(
+      transactionData.final_amount || transactionData.amount || "0"
+    );
+    const usdParsed =
+      usdValue != null && String(usdValue).trim() !== ""
+        ? parseFloat(String(usdValue))
+        : NaN;
+    const token = toCurrency || cryptoAsset || "Crypto";
+    if (
+      Number.isFinite(raw) &&
+      Number.isFinite(usdParsed) &&
+      Math.abs(raw - usdParsed) < 0.0005
+    ) {
+      return `${usdParsed.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })} USD`;
+    }
+    const decimals = getCryptoDecimalPlaces(token);
+    return `${raw.toLocaleString("en-US", {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    })} ${token}`;
+  };
+
   // Get amount display for crypto transactions
   const getCryptoAmount = (): { amount: string; currency: string } => {
     if (isCryptoBuy) {
-      // Show final_amount (crypto received)
-      const token = toCurrency || cryptoAsset || "Crypto";
-      const decimals = getCryptoDecimalPlaces(token);
+      const rawUsd =
+        usdValue != null && String(usdValue).trim() !== ""
+          ? parseFloat(String(usdValue))
+          : NaN;
+      const fromFiat = (fromCurrency ?? "").toUpperCase();
+      const txCur = (transactionData.currency ?? "").toUpperCase();
+      const amt = parseFloat(
+        transactionData.final_amount || transactionData.amount || "0"
+      );
+      let usdNum = Number.isFinite(rawUsd) ? rawUsd : NaN;
+      if (!Number.isFinite(usdNum)) {
+        if (fromFiat === "USD" && (txCur === "USD" || txCur === fromFiat)) {
+          usdNum = amt;
+        } else if (fromFiat === "USD" && Number.isFinite(amt)) {
+          usdNum = amt;
+        } else {
+          usdNum = Number.isFinite(amt) ? amt : 0;
+        }
+      }
       return {
-        amount: parseFloat(
-          transactionData.final_amount || transactionData.amount || "0"
-        ).toLocaleString("en-US", {
-          minimumFractionDigits: decimals,
-          maximumFractionDigits: decimals,
+        amount: usdNum.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
         }),
-        currency: token,
+        currency: "USD",
       };
     }
     if (isCryptoSell) {
@@ -920,15 +960,7 @@ const NewTransactionDetails: FC = () => {
                           color={theme.colors.text.primary}
                           style={slipStyles.slipValueText}
                         >
-                          {parseFloat(
-                            transactionData.final_amount ||
-                              transactionData.amount ||
-                              "0"
-                          ).toLocaleString("en-US", {
-                            minimumFractionDigits: getCryptoDecimalPlaces(toCurrency),
-                            maximumFractionDigits: getCryptoDecimalPlaces(toCurrency),
-                          })}{" "}
-                          {toCurrency}
+                          {getCryptoBuyReceivedDisplay()}
                         </CustomText>
                       </View>
                     )}

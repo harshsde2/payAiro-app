@@ -59,16 +59,27 @@ const RecentActivityCard: React.FC<IRecentActivityCardProps> = ({
 
     const amt = Number.parseFloat(item.amountValue);
     const code = (item.amountCurrencyCode ?? "").toUpperCase();
+    const fiatCode = (item.fiatCurrencyCode ?? "USD").toUpperCase();
+    const cryptoCode = (item.cryptoCurrencyCode ?? "").toUpperCase();
 
     if (item.tradeType === "buy" || item.activity === "TRADE_BUY") {
       amountStyle = styles.amountNegative;
-      if (code === "USD" || code === item.fiatCurrencyCode?.toUpperCase()) {
-        amountStr = `-$${Number.isFinite(amt) ? amt.toFixed(2) : item.amountValue}`;
-      } else if (usdPrice != null && Number.isFinite(usdPrice) && Number.isFinite(amt)) {
-        amountStr = `-$${(amt * usdPrice).toFixed(2)}`;
-      } else {
-        amountStr = `-${item.amountValue} ${item.amountCurrencyCode}`;
+      const spendIsFiat = code === "USD" || code === fiatCode;
+      const spendIsCrypto = cryptoCode.length > 0 && code === cryptoCode;
+      let usdOut: number | null = null;
+      if (spendIsFiat && Number.isFinite(amt)) {
+        usdOut = amt;
+      } else if (spendIsCrypto && usdPrice != null && Number.isFinite(usdPrice) && Number.isFinite(amt)) {
+        usdOut = amt * usdPrice;
+      } else if (spendIsCrypto && fiatCode === "USD" && Number.isFinite(amt)) {
+        usdOut = amt;
+      } else if (Number.isFinite(amt)) {
+        usdOut = amt;
       }
+      amountStr =
+        usdOut != null
+          ? `-$${usdOut.toFixed(2)}`
+          : `-$${item.amountValue}`;
     } else {
       amountStyle = styles.amountPositive;
       // For sell, show the API's actual amount/currency instead of converting.
