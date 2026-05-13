@@ -11,6 +11,7 @@ import { setAllCryptoBalances, setTotalDisbursable, setCryptoData, setAggregated
 import { setItem, getItem, STORAGE_KEYS } from "../../storage/mmkv";
 import { useSelector } from "react-redux";
 import { userApiClient } from "api/userApiClient";
+import { getDeviceFingerprint } from "utils/getDeviceFingerprint";
 import { ICryptoAssetItem } from "new-ui/components/common-components/CryptoAssetsList/types";
 import type { SendHistoryResponse } from "new-ui/components/common-components/RecentActivityCard/types";
 import {
@@ -622,12 +623,13 @@ export interface CoinmeTradeExecuteResponse {
 export const useCoinmeTradeExecute = () => {
   return useMutation<CoinmeTradeExecuteResponse, Error, CoinmeTradeExecutePayload>({
     mutationFn: async (payload) => {
+      const fingerprint = await getDeviceFingerprint();
       return await userApiClient.post<CoinmeTradeExecuteResponse>(
         USER_AUTH.COINME_TRADE_EXECUTE,
         payload,
         false,
         {
-          "x-device-fingerprint": "F785F8D4-82DB-4D8A-9283-30CF2037469D",
+          "x-device-fingerprint": fingerprint,
         }
       );
     },

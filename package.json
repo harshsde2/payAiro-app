@@ -38,6 +38,7 @@
     "generate:sphere-splash": "node scripts/generate-sphere-splash.js && npx react-native-bootsplash generate assets/images/GreenSphereSplash.png --background=#FFFFFF --logo-width=192"
   },
   "dependencies": {
+    "@adrianso/react-native-barcode-builder": "^1.0.13",
     "@gorhom/bottom-sheet": "^5.2.8",
     "@legendapp/list": "^1.0.14",
     "@mxenabled/react-native-widget-sdk": "^1.1.4",
@@ -45,6 +46,7 @@
     "@react-native-clipboard/clipboard": "^1.16.3",
     "@react-native-community/blur": "^4.4.1",
     "@react-native-community/datetimepicker": "^8.6.0",
+    "@react-native-community/geolocation": "^3.4.0",
     "@react-native-community/netinfo": "^11.4.1",
     "@react-native-community/slider": "^5.1.1",
     "@react-native-firebase/app": "^23.8.4",
@@ -102,6 +104,7 @@
     "react-native-reanimated": "^4.2.1",
     "react-native-responsive-screen": "^1.4.2",
     "react-native-safe-area-context": "^5.6.2",
+    "react-native-screenguard": "^2.0.2",
     "react-native-screens": "^4.20.0",
     "react-native-share": "^12.0.3",
     "react-native-signature-canvas": "^4.7.2",

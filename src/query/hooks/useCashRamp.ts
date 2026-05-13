@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { USER_AUTH } from "api/endpoints";
 import { userApiClient } from "api/userApiClient";
 
@@ -79,5 +79,6 @@ export const useNearbyCashLocations = ({
     queryKey: cashRampKeys.nearby(latitude, longitude, radius, limit, providersKey),
     queryFn: () => userApiClient.get<CashRampNearbyResponse>(url),
     enabled: enabled && Number.isFinite(latitude) && Number.isFinite(longitude),
+    placeholderData: keepPreviousData,
   });
 };

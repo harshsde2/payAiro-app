@@ -99,7 +99,6 @@ const AddDebitCardModal: React.FC<AddDebitCardModalProps> = ({
           accountId: coinmeAccountId,
         });
       }
-
       const res = await addMutation.mutateAsync({
         providerId: PROVIDER_ID,
         card: {

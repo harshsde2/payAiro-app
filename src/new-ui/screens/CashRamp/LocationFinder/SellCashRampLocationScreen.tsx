@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
@@ -9,9 +9,10 @@ import { useTheme } from "@new-ui/styles/ThemeContext";
 import { useNearbyCashLocations } from "query/hooks/useCashRamp";
 import { locationFinderStyles } from "@new-ui/styles/screens/cashRamp/locationFinderStyles";
 import { CashRampLocationFinderParams, LocationCardItem } from "./locationFinder.types";
-import { getInitialCoordinates, mapMarkerLabel } from "./locationFinder.utils";
+import { mapMarkerLabel } from "./locationFinder.utils";
 import { LocationSearchHeader } from "./components/LocationSearchHeader";
 import { LocationCarousel } from "./components/LocationCarousel";
+import { useCashRampLocationMapSearch } from "./useCashRampLocationMapSearch";
 
 const SELL_RADIUS = 10;
 const SELL_LIMIT = 5;
@@ -25,34 +26,45 @@ const SellCashRampLocationScreen: React.FC = () => {
   const route =
     useRoute<RouteProp<Record<string, CashRampLocationFinderParams>, string>>();
 
-  console.log("route.params =>", JSON.stringify(route.params, null, 2));
-  const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const center = getInitialCoordinates();
 
-  const { data, isPending, isError } = useNearbyCashLocations({
-    latitude: center.latitude,
-    longitude: center.longitude,
+  const {
+    queryCenter,
+    mapRef,
+    searchInput,
+    setSearchInput,
+    predictions,
+    isPredictionsLoading,
+    placesClientError,
+    selectPrediction,
+    goToMyLocation,
+    dismissSuggestions,
+    placesSearchEnabled,
+    suggestionsOpen,
+  } = useCashRampLocationMapSearch();
+
+  const { data, isPending, isError, isFetching } = useNearbyCashLocations({
+    latitude: queryCenter.latitude,
+    longitude: queryCenter.longitude,
     radius: SELL_RADIUS,
     limit: SELL_LIMIT,
     providers: SELL_PROVIDERS,
   });
 
-  const mappedLocations = useMemo<LocationCardItem[]>(() => {
-    const rows = data?.data?.locations ?? [];
-    const normalizedSearch = search.trim().toLowerCase();
-    const filtered = !normalizedSearch
-      ? rows
-      : rows.filter((item) =>
-          `${item.description || ""} ${item.address || ""} ${item.city || ""}`
-            .toLowerCase()
-            .includes(normalizedSearch)
-        );
-    return filtered.map((item, index) => ({
-      ...item,
-      markerLabel: mapMarkerLabel(index),
-    }));
-  }, [data?.data?.locations, search]);
+  useEffect(() => {
+    setSelectedId(null);
+  }, [queryCenter.latitude, queryCenter.longitude]);
+
+  const rawRows = data?.data?.locations ?? [];
+
+  const mappedLocations = useMemo<LocationCardItem[]>(
+    () =>
+      rawRows.map((item, index) => ({
+        ...item,
+        markerLabel: mapMarkerLabel(index),
+      })),
+    [rawRows]
+  );
 
   const selectedLocation = useMemo(() => {
     if (!mappedLocations.length) return null;
@@ -97,6 +109,15 @@ const SellCashRampLocationScreen: React.FC = () => {
     ]
   );
 
+  const initialRegionRef = useRef({
+    latitude: queryCenter.latitude,
+    longitude: queryCenter.longitude,
+    latitudeDelta: 0.12,
+    longitudeDelta: 0.08,
+  });
+
+  const showEmptyList = !isPending && !isError && mappedLocations.length === 0;
+
   return (
     <ScreenWrapper
       safeArea
@@ -106,14 +127,10 @@ const SellCashRampLocationScreen: React.FC = () => {
       statusBarStyle="light-content"
     >
       <MapView
+        ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={styles.map}
-        initialRegion={{
-          latitude: selectedLocation?.coordinates?.latitude ?? center.latitude,
-          longitude: selectedLocation?.coordinates?.longitude ?? center.longitude,
-          latitudeDelta: 0.15,
-          longitudeDelta: 0.08,
-        }}
+        initialRegion={initialRegionRef.current}
       >
         {mappedLocations.map((item) => (
           <Marker
@@ -129,7 +146,7 @@ const SellCashRampLocationScreen: React.FC = () => {
           >
             <View style={styles.markerWrap}>
               <View style={styles.markerDot}>
-                <CustomText variant="body2" color={theme.colors.white}>
+                <CustomText variant="bodySmall" color={theme.colors.white}>
                   {item.markerLabel}
                 </CustomText>
               </View>
@@ -138,7 +155,40 @@ const SellCashRampLocationScreen: React.FC = () => {
         ))}
       </MapView>
 
-      <LocationSearchHeader search={search} onChangeSearch={setSearch} onBack={() => navigation.goBack()} />
+      <Pressable
+        onPress={dismissSuggestions}
+        style={[
+          StyleSheet.absoluteFillObject,
+          {
+            zIndex: 50,
+            backgroundColor: suggestionsOpen ? "rgba(0,0,0,0.28)" : "transparent",
+          },
+        ]}
+        pointerEvents={suggestionsOpen ? "auto" : "none"}
+      />
+
+      <View
+        style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 100, elevation: 12 }}
+        pointerEvents="box-none"
+      >
+        <LocationSearchHeader
+          search={searchInput}
+          onChangeSearch={setSearchInput}
+          onBack={() => navigation.goBack()}
+          onPressMyLocation={goToMyLocation}
+          predictions={predictions}
+          onSelectPrediction={selectPrediction}
+          isPlacesLoading={isPredictionsLoading}
+          placesError={placesClientError}
+          placesSearchEnabled={placesSearchEnabled}
+        />
+      </View>
+
+      {isFetching && !isPending ? (
+        <View style={styles.fetchingOverlay} pointerEvents="none">
+          <ActivityIndicator color={theme.colors.primary} size="small" />
+        </View>
+      ) : null}
 
       {isPending ? (
         <View style={styles.stateWrap}>
@@ -148,6 +198,12 @@ const SellCashRampLocationScreen: React.FC = () => {
         <View style={styles.stateWrap}>
           <CustomText variant="body" color={theme.colors.white}>
             Unable to load nearby ATMs.
+          </CustomText>
+        </View>
+      ) : showEmptyList ? (
+        <View style={styles.emptyNearbyWrap}>
+          <CustomText variant="body" color={theme.colors.white} style={{ textAlign: "center" }}>
+            No ATMs near this area.
           </CustomText>
         </View>
       ) : (

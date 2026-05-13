@@ -254,7 +254,7 @@ const OTPVerificationScreen: React.FC = () => {
             setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(data?.data));
             showSuccess("OTP Verified Successfully");
 
-            console.log("data =>", JSON.stringify(data, null, 2));
+            // console.log("data =>", JSON.stringify(data, null, 2));
 
             const { step } = data?.data ?? {};
 

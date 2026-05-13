@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
-import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, AppState, type AppStateStatus, useWindowDimensions, View } from "react-native";
+import { RouteProp, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
+import ScreenGuard from "react-native-screenguard";
 import { useHeaderHeight } from "@react-navigation/elements";
-import QRCode from "react-native-qrcode-svg";
+import Barcode from "@adrianso/react-native-barcode-builder";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
 import CustomText from "@new-ui/components/common-components/CustomText";
 import Button from "@new-ui/components/common-components/layout/Button";
@@ -17,16 +18,38 @@ import {
 } from "query/hooks/useCoinmeCashRamp";
 import GlassyWrapper from "@new-ui/components/common-components/GlassyWrapper";
 import { CashRampBarcodeParams } from "./LocationFinder/locationFinder.types";
+import {
+  ATM_REFERENCE_CAPTION,
+  cashRampDetailRowLabelBuy,
+  cashRampDetailRowLabelSell,
+  cashRampDisclaimerBuy,
+  cashRampDisclaimerSell,
+  cashRampFeeLabel,
+  cashRampLoadErrorLine,
+  cashRampQuoteNote,
+  cashRampSubtitleBuy,
+  cashRampSubtitleSell,
+  cashRampTitle,
+  ERR_CASH_OFF_RAMP,
+  ERR_MISSING_CHAIN,
+  ERR_MISSING_LOCATION,
+  ERR_MISSING_WALLET,
+  ERR_ORDER_TEMPLATE,
+  FOOTER_DONE,
+  NO_CHECKOUT_CODE_MESSAGE,
+} from "./cashRampBarcodeCopy";
 import { showError } from "utils/toast";
 
 const ILLUSTRATIVE_PROCESSING_FEE_USD = 3.95;
-const QR_SIZE = 168;
+/** CODE128 strip height; width scales with window. */
+const BARCODE_HEIGHT = 120;
 
 type SessionStatus = "loading" | "success" | "error";
 
 const CashRampBarcodeScreen: React.FC = () => {
   const { theme } = useTheme();
   const styles = cashRampBarcodeStyles(theme);
+  const { width: windowWidth } = useWindowDimensions();
   const headerHeight = useHeaderHeight();
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<Record<string, CashRampBarcodeParams>, string>>();
@@ -68,6 +91,49 @@ const CashRampBarcodeScreen: React.FC = () => {
 
   const locationRef = (location?.locationReference ?? "").trim();
 
+  const isScreenFocusedRef = useRef(false);
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+
+  useFocusEffect(
+    useCallback(() => {
+      isScreenFocusedRef.current = true;
+      let cancelled = false;
+      (async () => {
+        try {
+          await ScreenGuard.initSettings({
+            enableCapture: false,
+            enableRecord: false,
+          });
+          if (cancelled) return;
+          await ScreenGuard.register({ backgroundColor: theme.colors.white });
+        } catch {
+          // Native module unavailable or init failed; screen still usable.
+        }
+      })();
+      return () => {
+        cancelled = true;
+        isScreenFocusedRef.current = false;
+        void ScreenGuard.unregister().catch(() => {});
+      };
+    }, [theme.colors.white])
+  );
+
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (next: AppStateStatus) => {
+      const prev = appStateRef.current;
+      if (
+        prev === "active" &&
+        next === "background" &&
+        isScreenFocusedRef.current &&
+        navigation.canGoBack?.()
+      ) {
+        navigation.goBack();
+      }
+      appStateRef.current = next;
+    });
+    return () => sub.remove();
+  }, [navigation]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -77,7 +143,7 @@ const CashRampBarcodeScreen: React.FC = () => {
       setSellResponse(null);
 
       if (!locationRef) {
-        showError("Missing location reference. Pick a store and try again.");
+        showError(ERR_MISSING_LOCATION);
         if (!cancelled) setSessionStatus("error");
         return;
       }
@@ -85,23 +151,15 @@ const CashRampBarcodeScreen: React.FC = () => {
       try {
         if (isSell) {
           if (!sourceWalletAddress) {
-            showError("Missing wallet address for this sell. Go back and try again.");
+            showError(ERR_MISSING_WALLET);
             if (!cancelled) setSessionStatus("error");
             return;
           }
           if (!chainParam) {
-            showError("Missing chain for this sell. Go back and try again.");
+            showError(ERR_MISSING_CHAIN);
             if (!cancelled) setSessionStatus("error");
             return;
           }
-          console.log("Payload for sell cash offramp =>", JSON.stringify({
-            amountValue: String(amount),
-            amountCurrencyCode: fiat.toUpperCase(),
-            locationReference: locationRef,
-            sourceWalletAddress,
-            debitCurrencyCode: cryptoCode,
-            chain: chainParam,
-          }, null, 2));
           const res = await postCashOfframp({
             amountValue: String(amount),
             amountCurrencyCode: fiat.toUpperCase(),
@@ -112,7 +170,7 @@ const CashRampBarcodeScreen: React.FC = () => {
           });
           if (cancelled) return;
           if (res?.ok === false) {
-            showError(res?.message || "Cash off-ramp request failed.");
+            showError(res?.message || ERR_CASH_OFF_RAMP);
             setSessionStatus("error");
             return;
           }
@@ -130,7 +188,7 @@ const CashRampBarcodeScreen: React.FC = () => {
         });
         if (cancelled) return;
         if (res?.ok === false) {
-          showError(res?.message || "Order template request failed.");
+          showError(res?.message || ERR_ORDER_TEMPLATE);
           setSessionStatus("error");
           return;
         }
@@ -165,7 +223,7 @@ const CashRampBarcodeScreen: React.FC = () => {
   ]);
 
   const tpl = buyResponse?.data?.transactionTemplate;
-  const buySystemRef = (tpl?.transactionSystemRef ?? "").trim();
+  const buySystemRef = (tpl?.transactionProviderRef ?? "").trim();
   const buyCreditAmt = tpl?.creditCurrencyAmount?.trim();
 
   const buyFeeFromApi = useMemo(() => {
@@ -203,10 +261,59 @@ const CashRampBarcodeScreen: React.FC = () => {
     sessionStatus,
   ]);
 
-  const feeLabel = useMemo(() => {
-    if (sessionStatus !== "success") return "Processing fee (illustrative)";
-    return isSell ? "Total fees" : "Processing fee";
-  }, [isSell, sessionStatus]);
+  const feeLabel = useMemo(
+    () => cashRampFeeLabel(sessionStatus, isSell),
+    [isSell, sessionStatus]
+  );
+
+  const quoteNoteText = useMemo(() => {
+    let expiry: Date | null = null;
+    if (!isSell && tpl?.expiryTimestamp) {
+      try {
+        const d = new Date(tpl.expiryTimestamp);
+        if (!Number.isNaN(d.getTime())) expiry = d;
+      } catch {
+        /* ignore */
+      }
+    } else if (isSell && sellQuote?.expirationTime) {
+      try {
+        const d = new Date(sellQuote.expirationTime);
+        if (!Number.isNaN(d.getTime())) expiry = d;
+      } catch {
+        /* ignore */
+      }
+    }
+    return cashRampQuoteNote(isSell, expiry);
+  }, [isSell, sellQuote?.expirationTime, tpl?.expiryTimestamp]);
+
+  const locationDescription = (location?.description ?? "").trim();
+
+  const title = useMemo(() => cashRampTitle(isSell), [isSell]);
+
+  const subtitleText = useMemo(
+    () =>
+      isSell
+        ? cashRampSubtitleSell({
+            marketCryptoAmountLabel,
+            locationDescription,
+            fiat,
+            amount,
+          })
+        : cashRampSubtitleBuy({
+            amount,
+            fiat,
+            locationDescription,
+          }),
+    [amount, fiat, isSell, locationDescription, marketCryptoAmountLabel]
+  );
+
+  const disclaimerText = useMemo(
+    () =>
+      isSell
+        ? cashRampDisclaimerSell({ amount, fiat })
+        : cashRampDisclaimerBuy({ amount, fiat }),
+    [amount, fiat, isSell]
+  );
 
   const feeValueLabel = useMemo(() => {
     if (sessionStatus !== "success") return `$${ILLUSTRATIVE_PROCESSING_FEE_USD.toFixed(2)}`;
@@ -220,40 +327,6 @@ const CashRampBarcodeScreen: React.FC = () => {
     return `$${ILLUSTRATIVE_PROCESSING_FEE_USD.toFixed(2)}`;
   }, [buyFeeFromApi, isSell, sellQuote?.feeCurrency, sellQuote?.totalFees, sellTxn?.feeCurrencyCode, sellTxn?.totalFees, sessionStatus]);
 
-  const quoteNoteText = useMemo(() => {
-    if (!isSell && tpl?.expiryTimestamp) {
-      try {
-        const d = new Date(tpl.expiryTimestamp);
-        if (!Number.isNaN(d.getTime())) {
-          return `Template expires: ${d.toLocaleString()}`;
-        }
-      } catch {
-        /* ignore */
-      }
-    }
-    if (isSell && sellQuote?.expirationTime) {
-      try {
-        const d = new Date(sellQuote.expirationTime);
-        if (!Number.isNaN(d.getTime())) {
-          return `Quote expires: ${d.toLocaleString()}`;
-        }
-      } catch {
-        /* ignore */
-      }
-    }
-    return "Quote is valid for 2 minutes*";
-  }, [isSell, sellQuote?.expirationTime, tpl?.expiryTimestamp]);
-
-  const title = isSell ? "ATM cash-out" : "Ask cashier to scan barcode";
-
-  const subtitleText = isSell
-    ? `Take approximately ${marketCryptoAmountLabel} to ${location?.description || "the selected ATM"}. Use the partner transaction ID below at the ATM. Amount shown is based on ${fiat} ${amount.toFixed(2)} at current market pricing.`
-    : `Please hand the cashier $${amount.toFixed(2)} at ${location?.description || "selected store"} to load ${fiat} into your wallet.`;
-
-  const disclaimerText = isSell
-    ? `The following summary is based on selling crypto for approximately ${fiat} ${amount.toFixed(2)} equivalent. Final amounts may vary with market price and provider fees.`
-    : `The following summary is based on a cash purchase of ${fiat} ${amount.toFixed(2)}. After your funds are applied, crypto is expected to be acquired at approximately the terms below. Final amounts may vary with market price and provider fees.`;
-
   const renderGlassContent = () => {
     if (sessionStatus === "loading") {
       return (
@@ -266,9 +339,9 @@ const CashRampBarcodeScreen: React.FC = () => {
       return (
         <View style={styles.qrWrap}>
           <CustomText variant="body" color={theme.colors.text} style={styles.sessionError}>
-            Unable to load {isSell ? "cash-out" : "order template"}. Check connection and try again.
+            {cashRampLoadErrorLine(isSell)}
           </CustomText>
-          <Button onPress={() => setRetryKey((k) => k + 1)}>Retry</Button>
+          <Button style={{width: 200}} onPress={() => setRetryKey((k) => k + 1)}>Retry</Button>
         </View>
       );
     }
@@ -276,7 +349,7 @@ const CashRampBarcodeScreen: React.FC = () => {
       return (
         <View style={styles.barcodeGlassyInner}>
           <CustomText variant="caption" color={theme.colors.text} style={styles.sellCodeCaption}>
-            Partner transaction ID
+            {ATM_REFERENCE_CAPTION}
           </CustomText>
           <CustomText
             variant="body"
@@ -294,15 +367,24 @@ const CashRampBarcodeScreen: React.FC = () => {
       return (
         <View style={styles.qrWrap}>
           <CustomText variant="body" color={theme.colors.text} style={styles.sessionError}>
-            No barcode reference returned.
+            {NO_CHECKOUT_CODE_MESSAGE}
           </CustomText>
         </View>
       );
     }
+    const barcodeWidth = Math.max(
+      200,
+      Math.min(windowWidth - theme.spacing.xl * 2, 360)
+    );
     return (
       <View style={styles.qrWrap}>
-        <View style={styles.qrInner}>
-          <QRCode value={buySystemRef} size={QR_SIZE} color="#111111" backgroundColor="#FFFFFF" />
+        <View style={[styles.qrInner, { width: barcodeWidth, height: BARCODE_HEIGHT }]}>
+          <Barcode
+            value={buySystemRef}
+            format="CODE128"
+            lineColor="#111111"
+            style={{ flex: 1, backgroundColor: "#FFFFFF" }}
+          />
         </View>
       </View>
     );
@@ -362,7 +444,7 @@ const CashRampBarcodeScreen: React.FC = () => {
         <View style={styles.detailBlock}>
           <View style={styles.detailRow}>
             <CustomText variant="body" color={theme.colors.text} style={styles.detailLabel}>
-              {isSell ? `Est. crypto to sell (${cryptoCode})` : `Est. amount in ${cryptoCode}`}
+              {isSell ? cashRampDetailRowLabelSell(cryptoCode) : cashRampDetailRowLabelBuy(cryptoCode)}
             </CustomText>
             <CustomText variant="body" fontWeight="semiBold" color={theme.colors.text} style={styles.detailValue}>
               {primaryAmountLabel}
@@ -392,7 +474,7 @@ const CashRampBarcodeScreen: React.FC = () => {
         ) : null}
 
         <View style={styles.footer}>
-          <Button onPress={() => navigation.goBack()}>Close</Button>
+          <Button onPress={() => navigation.goBack()}>{FOOTER_DONE}</Button>
         </View>
       </View>
     </ScreenWrapper>

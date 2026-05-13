@@ -122,7 +122,7 @@ const NewPersonal: React.FC = () => {
   return (
     <ScreenWrapper
       safeArea
-      safeAreaEdges={["bottom",]}
+      safeAreaEdges={["bottom",'top']}
       scrollable
       padding={0}
       contentStyle={customTheme.scrollContent}

@@ -35,7 +35,6 @@ import Scans from "../screens/Scans/Scans";
 import ChangePinScreen from "../screens/SettingScreen/ChangePinScreen";
 import ForgotPinScreen from "../screens/SettingScreen/ForgotPinScreen/ForgotPinScreen";
 import Notification from "../screens/SettingScreen/Notification";
-import SettingScreen from "../screens/SettingScreen/SettingScreen";
 import { NAVIGATION_SCREENS } from "./navigationConstants";
 import Result from "screens/TSX-Screens/Send/Result";
 import TransactionResult from "screens/TSX-Screens/Send/TransactionResult";

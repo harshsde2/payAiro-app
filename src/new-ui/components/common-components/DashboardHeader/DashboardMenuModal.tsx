@@ -6,6 +6,7 @@ import CustomText from '@new-ui/components/common-components/CustomText';
 import { AppIcon } from '@new-ui/assets/svgs';
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 import { dashboardHeaderStyles } from '@new-ui/styles/components/dashboardHeaderStyles';
+import { performAppLogout } from 'utils/performAppLogout';
 
 type ScreenKey = keyof typeof NAVIGATION_SCREENS;
 
@@ -79,9 +80,12 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
     setShowLogoutConfirm(true);
   };
 
-  const handleLogoutConfirm = () => {
-    setShowLogoutConfirm(false);
-    onNavigate('LOGIN');
+  const handleLogoutConfirm = async () => {
+    try {
+      await performAppLogout();
+    } finally {
+      setShowLogoutConfirm(false);
+    }
   };
 
   const handleLogoutCancel = () => {

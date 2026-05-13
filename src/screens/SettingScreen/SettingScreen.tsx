@@ -2,29 +2,18 @@ import { useNavigation } from "@react-navigation/native";
 import React, { useMemo, useRef, useState } from "react";
 import { TouchableOpacity, Text, View } from "react-native";
 import { SvgXml } from "react-native-svg";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 import LogoutModal from "components/LogoutModal";
 import { ProfileHeader } from "components/common-components/ProfileHeader";
 import Fonts from "constants/Fonts";
 import { SETTINGS_LISTS } from "constants/constant";
 import { SVGRightIcon } from "constants/images";
-import useDispatchAction from "hooks/useDispatchAction";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { useUploadProfilePhoto } from "query/hooks";
-import { resetAnimationState } from "redux/slices/animationSlice";
-import { setLogin } from "redux/slices/newBackendAuthSlice";
-import { resetOnboardingState } from "redux/slices/newOnboardingSlice";
-import {
-  setKYCAcceopted,
-  setPin,
-  setWalletDataAuth,
-} from "services/Auth";
-import { onUserLoggedOut as onCoinmeUserLoggedOut } from "services/coinmeRiskLifecycle";
-import { clearAll } from "storage/mmkv";
 import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
 import { toKycMode } from "types/kyc";
-import { resetAppState } from "utils/configs";
+import { performAppLogout } from "utils/performAppLogout";
 import { showError, showSuccess } from "utils/toast";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
 import type { IProfileImagePayload } from "components/common-components/ProfileHeader/types";
@@ -42,7 +31,6 @@ type RootState = {
 
 export default function SettingScreen() {
   const navigation = useNavigation<any>();
-  const dispatch = useDispatch();
   const [isVisible, setIsVisible] = useState(false);
   const { userData, usersMe, walletData, kycStatus } = useSelector(
     (s: RootState) => s.authenticationSlice
@@ -102,21 +90,7 @@ export default function SettingScreen() {
   const termsAndConditionRef = useRef<any>(null);
 
   const handleLogout = async () => {
-    // Release Coinme Risk engine state before clearing storage so the SDK
-    // doesn't keep pointing at the now-logged-out user.
-    await onCoinmeUserLoggedOut();
-
-    resetAppState();
-    dispatch(resetOnboardingState());
-    dispatch(resetAnimationState());
-    setWalletDataAuth(null);
-    setPin(null);
-    setKYCAcceopted(null);
-    clearAll();
-
-    setTimeout(() => {
-      useDispatchAction(setLogin(false));
-    }, 100);
+    await performAppLogout();
   };
 
   const handleProfileImageSelected = (payload: IProfileImagePayload) => {

@@ -12,7 +12,7 @@ const NAV = NAVIGATION_SCREENS as Record<string, string>;
 import NewDashboard from "screens/Dashboard/NewDashboard";
 import Scans from "screens/Scans/Scans";
 import UnifiedTransactionScreen from "screens/TSX-Screens/UnifiedTransactions/UnifiedTransactionScreen";
-import SettingScreen from "screens/SettingScreen/SettingScreen";
+import NewPersonal from "screens/SettingScreen/NewPersonal";
 import useDispatchAction from "hooks/useDispatchAction";
 import { setisCrypto } from "redux/slices/authenticationSlice";
 import { setTheme } from "redux/slices/animationSlice";
@@ -325,7 +325,7 @@ const BottomTabNavigator = () => {
       />
       <Tab.Screen
         name={NAV.SETTING_SCREEN}
-        component={SettingScreen}
+        component={NewPersonal}
         options={profileOptions}
       />
     </Tab.Navigator>

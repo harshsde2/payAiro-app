@@ -3,12 +3,17 @@ import { ITheme } from "@new-ui/styles/themes/themeTypes";
 
 export const locationFinderStyles = (theme: ITheme) =>
   StyleSheet.create({
+    searchHeaderOuter: {
+      zIndex: 100,
+      elevation: 12,
+    },
     container: {
       flex: 1,
       backgroundColor: theme.colors.black,
     },
     map: {
       ...StyleSheet.absoluteFillObject,
+      zIndex: 0,
     },
     searchHeader: {
       flexDirection: "row",
@@ -37,11 +42,61 @@ export const locationFinderStyles = (theme: ITheme) =>
       minHeight: 40,
       justifyContent: "center",
     },
-    hasearchInput: {
+    searchInput: {
       color: theme.colors.text,
       fontFamily: theme.typography.fontFamily.poppinsRegular,
       fontSize: 14,
       paddingVertical: 0,
+    },
+    suggestionsWrap: {
+      marginTop: theme.spacing.xs,
+      marginHorizontal: theme.spacing.base,
+      maxHeight: 240,
+      borderRadius: theme.radius.lg,
+      backgroundColor: theme.colors.white,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      overflow: "hidden",
+    },
+    suggestionRow: {
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.border,
+    },
+    suggestionMain: {
+      fontFamily: theme.typography.fontFamily.poppinsRegular,
+      fontSize: 14,
+      color: theme.colors.text,
+    },
+    suggestionSub: {
+      marginTop: 2,
+      fontFamily: theme.typography.fontFamily.poppinsRegular,
+      fontSize: 12,
+      color: theme.colors.greyDark,
+    },
+    placesErrorText: {
+      marginTop: theme.spacing.xs,
+      marginHorizontal: theme.spacing.base,
+    },
+    fetchingOverlay: {
+      position: "absolute",
+      top: 120,
+      alignSelf: "center",
+      padding: theme.spacing.sm,
+      borderRadius: theme.radius.md,
+      backgroundColor: "rgba(0,0,0,0.45)",
+    },
+    emptyNearbyWrap: {
+      position: "absolute",
+      left: theme.spacing.lg,
+      right: theme.spacing.lg,
+      bottom: 170,
+      padding: theme.spacing.md,
+      borderRadius: theme.radius.lg,
+      backgroundColor: "rgba(10, 11, 56, 0.92)",
+      borderWidth: 1,
+      borderColor: "rgba(255,255,255,0.08)",
     },
     filterButton: {
       width: 36,

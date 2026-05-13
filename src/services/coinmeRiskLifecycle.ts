@@ -1,6 +1,5 @@
 import { Platform } from "react-native";
 import Config from "react-native-config";
-import DeviceInfo from "react-native-device-info";
 import {
   CoinmeRiskError,
   CoinmeRiskErrorCode,
@@ -8,6 +7,7 @@ import {
   type CoinmeFlowType,
   type SessionTagData,
 } from "utils/PayAiroCoinmeRisk";
+import { getDeviceFingerprint } from "utils/getDeviceFingerprint";
 
 /**
  * PayAiro × Coinme Risk SDK lifecycle service (iOS + Android).
@@ -380,21 +380,6 @@ export async function fetchWebSessionId(
   }
 
   return data.webSessionID;
-}
-
-/**
- * Stable device fingerprint used as the `fingerprint` argument to the
- * session-tag call. Uses `react-native-device-info.getUniqueId()` which is
- * per-install on iOS and survives logout/login.
- */
-async function getDeviceFingerprint(): Promise<string> {
-  try {
-    const id = await DeviceInfo.getUniqueId();
-    if (id && typeof id === "string") return id;
-  } catch {
-    // fall through to the cheap fallback
-  }
-  return `dev-${Platform.OS}-${Date.now().toString(36)}`;
 }
 
 function sleep(ms: number): Promise<void> {

@@ -10,6 +10,14 @@ const COINME_POST_HEADERS = {
   "x-device-fingerprint": "F785F8D4-82DB-4D8A-9283-30CF2037469D",
 };
 
+function unwrapCoinmeBody<T>(raw: unknown): T {
+  if (raw && typeof raw === "object" && "Object" in raw) {
+    const inner = (raw as { Object?: T }).Object;
+    if (inner && typeof inner === "object") return inner;
+  }
+  return raw as T;
+}
+
 export type CoinmeOrderTemplateRequest = {
   debitCurrencyCode: string;
   creditCurrencyCode: string;
@@ -20,6 +28,7 @@ export type CoinmeOrderTemplateRequest = {
 
 export type CoinmeOrderTemplateTransaction = {
   transactionSystemRef?: string;
+  transactionProviderRef?: string;
   debitCurrencyCode?: string;
   creditCurrencyCode?: string;
   creditCurrencyAmount?: string;
@@ -85,24 +94,28 @@ export type CoinmeCashOfframpExecuteResponse = {
 
 export const useCoinmeOrderTemplateMutation = () => {
   return useMutation({
-    mutationFn: (body: CoinmeOrderTemplateRequest) =>
-      userApiClient.post<CoinmeOrderTemplateResponse>(
+    mutationFn: async (body: CoinmeOrderTemplateRequest) => {
+      const raw = await userApiClient.post<CoinmeOrderTemplateResponse>(
         USER_AUTH.COINME_ORDER_TEMPLATE,
         body,
         false,
         COINME_POST_HEADERS
-      ),
+      );
+      return unwrapCoinmeBody<CoinmeOrderTemplateResponse>(raw);
+    },
   });
 };
 
 export const useCoinmeCashOfframpExecuteMutation = () => {
   return useMutation({
-    mutationFn: (body: CoinmeCashOfframpExecuteRequest) =>
-      userApiClient.post<CoinmeCashOfframpExecuteResponse>(
+    mutationFn: async (body: CoinmeCashOfframpExecuteRequest) => {
+      const raw = await userApiClient.post<CoinmeCashOfframpExecuteResponse>(
         USER_AUTH.COINME_CASH_OFFRAMP_EXECUTE,
         body,
         false,
         COINME_POST_HEADERS
-      ),
+      );
+      return unwrapCoinmeBody<CoinmeCashOfframpExecuteResponse>(raw);
+    },
   });
 };
