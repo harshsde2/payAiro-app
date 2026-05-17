@@ -1,4 +1,5 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import { USER_AUTH } from "api/endpoints";
 import { userApiClient } from "api/userApiClient";
 
@@ -91,6 +92,95 @@ export type CoinmeCashOfframpExecuteResponse = {
     transaction?: CoinmeCashOfframpTransaction;
   };
 };
+
+export type CoinmeOrderTemplateStatusData = {
+  provider_transaction_ref?: string;
+  order_template_id?: string;
+  order_template_status?: string;
+  provider_transaction_status?: string;
+  latest_webhook_order_template_status?: string;
+  coinme_last_webhook_at?: string;
+  template_updated_at?: string;
+};
+
+export type CoinmeOrderTemplateStatusResponse = {
+  ok?: boolean;
+  message?: string;
+  error?: { code?: string; message?: string };
+  data?: CoinmeOrderTemplateStatusData;
+};
+
+export type CoinmeOrderTemplateStatusResult =
+  | { kind: "pending" }
+  | { kind: "scanned"; data: CoinmeOrderTemplateStatusData };
+
+const ORDER_TEMPLATE_SCANNED_STATUS = "CONSUMED";
+const ORDER_TEMPLATE_STATUS_POLL_MS = 5000;
+
+export const coinmeKeys = {
+  orderTemplateStatus: (providerTransactionRef: string) =>
+    ["coinme", "orderTemplateStatus", providerTransactionRef] as const,
+};
+
+function normalizeOrderTemplateStatus(
+  body: CoinmeOrderTemplateStatusResponse
+): CoinmeOrderTemplateStatusResult {
+  const status = (body.data?.order_template_status ?? "").trim().toUpperCase();
+  if (body.ok === true && status === ORDER_TEMPLATE_SCANNED_STATUS && body.data) {
+    return { kind: "scanned", data: body.data };
+  }
+  return { kind: "pending" };
+}
+
+function isExpectedNotScannedBody(body: unknown): boolean {
+  if (!body || typeof body !== "object") return false;
+  const b = body as CoinmeOrderTemplateStatusResponse;
+  if (b.ok === false && b.error?.code === "NOT_FOUND") return true;
+  if (b.ok === false) return true;
+  return false;
+}
+
+export async function fetchCoinmeOrderTemplateStatus(
+  providerTransactionRef: string
+): Promise<CoinmeOrderTemplateStatusResult> {
+  const ref = providerTransactionRef.trim();
+  if (!ref) return { kind: "pending" };
+
+  const url = `${USER_AUTH.COINME_ORDER_TEMPLATE_STATUS}?provider_transaction_ref=${encodeURIComponent(ref)}`;
+
+  try {
+    const raw = await userApiClient.get<CoinmeOrderTemplateStatusResponse>(url);
+    const body = unwrapCoinmeBody<CoinmeOrderTemplateStatusResponse>(raw);
+    return normalizeOrderTemplateStatus(body);
+  } catch (e) {
+    if (axios.isAxiosError(e) && e.response?.data != null) {
+      const body = unwrapCoinmeBody<CoinmeOrderTemplateStatusResponse>(e.response.data);
+      if (isExpectedNotScannedBody(body)) return { kind: "pending" };
+      return normalizeOrderTemplateStatus(body);
+    }
+    return { kind: "pending" };
+  }
+}
+
+export function useCoinmeOrderTemplateStatusPoll(
+  providerTransactionRef: string,
+  enabled: boolean
+) {
+  const ref = providerTransactionRef.trim();
+  return useQuery({
+    queryKey: coinmeKeys.orderTemplateStatus(ref),
+    queryFn: () => fetchCoinmeOrderTemplateStatus(ref),
+    enabled: enabled && ref.length > 0,
+    refetchInterval: (query) =>
+      query.state.data?.kind === "scanned" ? false : ORDER_TEMPLATE_STATUS_POLL_MS,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    staleTime: 4_000,
+    gcTime: 5 * 60_000,
+    placeholderData: (previousData) => previousData,
+  });
+}
 
 export const useCoinmeOrderTemplateMutation = () => {
   return useMutation({

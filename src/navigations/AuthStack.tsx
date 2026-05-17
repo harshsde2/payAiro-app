@@ -16,6 +16,8 @@ import NewOnboardingScreen from "../new-ui/screens/Auth/Onboarding";
 import NewLoginScreen from "../new-ui/screens/Auth/Login";
 import NewCreateAccountScreen from "../new-ui/screens/Auth/CreateAccount";
 import NewOTPVerificationScreen from "../new-ui/screens/Auth/OTPVerification";
+import NewCoinmeMobileAuthScreen from "../new-ui/screens/Auth/CoinmeMobileAuth";
+import NewCommonErrorScreen from "../new-ui/screens/Auth/CommonError";
 import NewKYCScreen from "../new-ui/screens/Auth/KYC";
 import NewAddressScreen from "../new-ui/screens/Auth/Address";
 import NewForgotPasswordScreen from "../new-ui/screens/Auth/ForgotPassword";
@@ -137,6 +139,22 @@ export default function AuthStack() {
         }}
         name={NAVIGATION_SCREENS.NEW_OTP_VERIFICATION}
         component={NewOTPVerificationScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.NEW_COINME_MOBILE_AUTH}
+        component={NewCoinmeMobileAuthScreen}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: false,
+          presentation: "modal",
+          gestureEnabled: true,
+          animationTypeForReplace: "push",
+          animation: "slide_from_bottom",
+        }}
+        name={NAVIGATION_SCREENS.NEW_COMMON_ERROR}
+        component={NewCommonErrorScreen}
       />
       <Stack.Screen
         options={{

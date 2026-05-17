@@ -55,6 +55,7 @@ import {
 import Button from '@new-ui/components/common-components/layout/Button';
 import type { AddedCardResult } from '@new-ui/components/common-components/AddBalance/AddDebitCardModal';
 import { usePaymentMethodsList, type PaymentMethodItem } from 'query/hooks/usePaymentMethods';
+import CashBuyWalletAndSummary from './CashBuyWalletAndSummary';
 
 const COINME_DEFAULTS = {
   paymentMethodId: 'uhygtfr5e354rtyu76g6b7i8',
@@ -375,6 +376,15 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   );
 
   const isCryptoMode = viewMode === 'crypto';
+  const cashBuyWalletAddress = useMemo(
+    () => String(cryptoAsset?.sourceWalletAddress ?? '').trim(),
+    [cryptoAsset?.sourceWalletAddress]
+  );
+  const showCashBuyExtras =
+    isTradeMode &&
+    tradeMode === 'buy' &&
+    tradePaymentRail === 'retail_cash' &&
+    isCryptoMode;
   const leftPrefix = isCryptoMode && inputMode === 'asset' ? '' : '$';
   const rightSuffix = isCryptoMode && inputMode === 'asset' ? assetSymbol : '';
   const pricePreviewText = useMemo(() => {
@@ -422,6 +432,11 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   const handleFindCashLocation = useCallback(() => {
     if (!cryptoAsset) {
       showError('Missing crypto details; please try again.');
+      return;
+    }
+    const wallet = String(cryptoAsset?.sourceWalletAddress ?? '').trim();
+    if (!wallet) {
+      showError('Wallet address is required. Go back to the asset screen and try again.');
       return;
     }
     if (!Number.isFinite(amount) || amount <= 0) {
@@ -1025,6 +1040,18 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
             </View>
           ) : null}
 
+          {showCashBuyExtras ? (
+            <CashBuyWalletAndSummary
+              walletAddress={cashBuyWalletAddress}
+              assetSymbol={assetSymbol}
+              fiatCode="USD"
+              fiatAmount={amount}
+              estimatedCryptoAmount={assetAmount}
+              oneLineRateLabel={pricePreviewText}
+              feePercent={feePercent}
+            />
+          ) : null}
+
         </View>
 
         <View
@@ -1057,7 +1084,11 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
               <PayButton disabled={isPaying} onPress={handlePayPress} />
             ) : null}
             {isTradeMode && tradePaymentRail === 'retail_cash' ? (
-              <Button onPress={handleFindCashLocation} style={styles.payButton}>
+              <Button
+                onPress={handleFindCashLocation}
+                style={styles.payButton}
+                disabled={!cashBuyWalletAddress || !Number.isFinite(amount) || amount <= 0}
+              >
                 Find a Location
               </Button>
             ) : null}

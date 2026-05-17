@@ -21,8 +21,7 @@ import {
   usePaymentTransactionHistory,
   useUserCryptoMarketList,
 } from "query/hooks/useCrypto";
-import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import { mapRecentActivityToUnified } from "query/utils/mapRecentActivityToUnified";
+import { navigateFromRecentActivity } from "query/utils/navigateFromRecentActivity";
 
 const FILTER_CHIPS = ["All", "Send", "Received", "Pending", "Completed"] as const;
 
@@ -154,11 +153,7 @@ const ActivityScreen = () => {
                   item={item}
                   usdPrice={usdPriceForRow(item, priceByCurrency)}
                   onPress={(selected) => {
-                    const mapped = mapRecentActivityToUnified(selected);
-                    navigation.navigate(
-                      NAVIGATION_SCREENS.NEW_TRANSACTION_DETAILS as never,
-                      { transactionData: mapped } as never
-                    );
+                    navigateFromRecentActivity(selected, navigation);
                   }}
                 />
               ))}

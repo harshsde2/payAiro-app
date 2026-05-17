@@ -17,6 +17,18 @@ import { LocationSearchHeader } from "./components/LocationSearchHeader";
 import { LocationCarousel } from "./components/LocationCarousel";
 import { useCashRampLocationMapSearch } from "./useCashRampLocationMapSearch";
 
+import { useSelector } from "react-redux";
+import CashBuyPurchaseInstructionsModal from "../CashBuyPurchaseInstructionsModal";
+import {
+  getProfileResidentialStateCode,
+  isCashRampStoreStateAllowed,
+} from "./cashRampProfileState";
+import { hasCashBuyLoadInstructionsAck } from "../cashBuyLoadInstructionsAck";
+import {
+  CASH_RAMP_LOCATION_UNAVAILABLE_BODY,
+  CASH_RAMP_LOCATION_UNAVAILABLE_TITLE,
+} from "../cashRampLocationMessages";
+
 const DEFAULT_RADIUS = 10;
 const DEFAULT_LIMIT = 20;
 
@@ -27,6 +39,21 @@ const LocationFinderScreen: React.FC = () => {
   const route =
     useRoute<RouteProp<Record<string, CashRampLocationFinderParams>, string>>();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [instructionsModalOpen, setInstructionsModalOpen] = useState(false);
+  const pendingStoreRef = useRef<LocationCardItem | null>(null);
+
+  const userData = useSelector(
+    (s: { authenticationSlice?: { userData?: Record<string, unknown> | null } }) =>
+      s.authenticationSlice?.userData ?? null
+  );
+  const usersMe = useSelector(
+    (s: { authenticationSlice?: { usersMe?: Record<string, unknown> | null } }) =>
+      s.authenticationSlice?.usersMe ?? null
+  );
+  const cashBuyUserId =
+    (userData?.id as string | number | undefined) ??
+    (userData?.user_id as string | number | undefined) ??
+    null;
 
   const {
     queryCenter,
@@ -75,7 +102,7 @@ const LocationFinderScreen: React.FC = () => {
     setSelectedId(item.id);
   }, []);
 
-  const handleGenerateBarcode = useCallback(
+  const navigateToCashBuyBarcode = useCallback(
     (item: LocationCardItem) => {
       navigation.navigate(NAVIGATION_SCREENS.NEW_CASH_RAMP_BARCODE as never, {
         amount: route.params?.amount ?? 0,
@@ -95,6 +122,7 @@ const LocationFinderScreen: React.FC = () => {
           lineOfSightDistance: item.lineOfSightDistance,
           lineOfSightMetric: item.lineOfSightMetric,
           locationReference: item.locationReference,
+          imageUrl: item.imageUrl,
         },
       } as never);
     },
@@ -107,6 +135,65 @@ const LocationFinderScreen: React.FC = () => {
       route.params?.sourceWalletAddress,
     ]
   );
+
+  const openLocationUnavailableError = useCallback(() => {
+    navigation.navigate(NAVIGATION_SCREENS.NEW_COMMON_ERROR, {
+      title: CASH_RAMP_LOCATION_UNAVAILABLE_TITLE,
+      description: CASH_RAMP_LOCATION_UNAVAILABLE_BODY,
+      primaryButtonLabel: "I Understand",
+      dismissAction: "goBack",
+    });
+  }, [navigation]);
+
+  const openConsentFailureError = useCallback(
+    (title: string, description: string) => {
+      navigation.navigate(NAVIGATION_SCREENS.NEW_COMMON_ERROR, {
+        title,
+        description,
+        primaryButtonLabel: "Close",
+        dismissAction: "goBack",
+      });
+    },
+    [navigation]
+  );
+
+  const handleGenerateBarcode = useCallback(
+    (item: LocationCardItem) => {
+      const profileState = getProfileResidentialStateCode(userData, usersMe);
+      const { allowed } = isCashRampStoreStateAllowed(item.state, profileState);
+      if (!allowed) {
+        openLocationUnavailableError();
+        return;
+      }
+      if (hasCashBuyLoadInstructionsAck(cashBuyUserId)) {
+        navigateToCashBuyBarcode(item);
+        return;
+      }
+      pendingStoreRef.current = item;
+      setInstructionsModalOpen(true);
+    },
+    [
+      cashBuyUserId,
+      navigateToCashBuyBarcode,
+      openLocationUnavailableError,
+      userData,
+      usersMe,
+    ]
+  );
+
+  const closeInstructionsModal = useCallback(() => {
+    setInstructionsModalOpen(false);
+    pendingStoreRef.current = null;
+  }, []);
+
+  const onPurchaseInstructionsConsented = useCallback(() => {
+    setInstructionsModalOpen(false);
+    const item = pendingStoreRef.current;
+    pendingStoreRef.current = null;
+    if (item) {
+      navigateToCashBuyBarcode(item);
+    }
+  }, [navigateToCashBuyBarcode]);
 
   const initialRegionRef = useRef({
     latitude: queryCenter.latitude,
@@ -215,6 +302,13 @@ const LocationFinderScreen: React.FC = () => {
           />
         </View>
       )}
+      <CashBuyPurchaseInstructionsModal
+        visible={instructionsModalOpen}
+        userId={cashBuyUserId}
+        onClose={closeInstructionsModal}
+        onConsented={onPurchaseInstructionsConsented}
+        onConsentApiFailure={openConsentFailureError}
+      />
     </ScreenWrapper>
   );
 };

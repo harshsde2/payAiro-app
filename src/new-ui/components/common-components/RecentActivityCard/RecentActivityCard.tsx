@@ -4,7 +4,18 @@ import moment from "moment";
 import { useTheme } from "@new-ui/styles/ThemeContext";
 import { recentActivityCardStyles } from "@new-ui/styles/components/recentActivityCardStyles";
 import CustomText from "@new-ui/components/common-components/CustomText";
-import { isTradeActivity, type IRecentActivityCardProps, type SendHistoryParty } from "./types";
+import {
+  formatCashOnRampCryptoAmount,
+  formatCashOnRampFiatAmount,
+  getCashOnRampCardTitle,
+  resolveCashOnRampDisplayStatus,
+} from "./cashOnRampActivity";
+import {
+  isCashOnRampActivity,
+  isTradeActivity,
+  type IRecentActivityCardProps,
+  type SendHistoryParty,
+} from "./types";
 
 const truncateAddress = (addr: string | null | undefined): string => {
   if (!addr) return "";
@@ -42,6 +53,55 @@ const RecentActivityCard: React.FC<IRecentActivityCardProps> = ({
 }) => {
   const { theme } = useTheme();
   const styles = recentActivityCardStyles(theme);
+
+  if (isCashOnRampActivity(item)) {
+    const display = resolveCashOnRampDisplayStatus(item);
+    const statusColor =
+      display.colorKey === "success"
+        ? theme.colors.success
+        : display.colorKey === "error"
+          ? theme.colors.error
+          : theme.colors.warning;
+    const pressable = display.kind !== "expired" && onPress != null;
+
+    const body = (
+      <>
+        <View style={styles.iconCircle}>
+          <View style={styles.iconCircleInner}>
+            <CustomText style={styles.cashIconText}>$</CustomText>
+          </View>
+        </View>
+        <View style={styles.textContainer}>
+          <CustomText style={styles.title} numberOfLines={1}>
+            {getCashOnRampCardTitle()}
+          </CustomText>
+          <CustomText style={[styles.statusSubtitle, { color: statusColor }]} numberOfLines={1}>
+            {display.label}
+          </CustomText>
+        </View>
+        <View style={styles.amountsColumn}>
+          <CustomText style={styles.fiatAmount}>{formatCashOnRampFiatAmount(item)}</CustomText>
+          <CustomText style={styles.cryptoAmount} numberOfLines={1}>
+            {formatCashOnRampCryptoAmount(item)}
+          </CustomText>
+        </View>
+      </>
+    );
+
+    if (pressable) {
+      return (
+        <TouchableOpacity
+          style={styles.container}
+          onPress={() => onPress(item)}
+          activeOpacity={0.7}
+        >
+          {body}
+        </TouchableOpacity>
+      );
+    }
+
+    return <View style={styles.container}>{body}</View>;
+  }
 
   let title: string;
   let displayNameForInitial: string;
@@ -82,7 +142,6 @@ const RecentActivityCard: React.FC<IRecentActivityCardProps> = ({
           : `-$${item.amountValue}`;
     } else {
       amountStyle = styles.amountPositive;
-      // For sell, show the API's actual amount/currency instead of converting.
       const amountCode = item.amountCurrencyCode || item.cryptoCurrencyCode;
       amountStr = `+${item.amountValue} ${amountCode}`;
     }

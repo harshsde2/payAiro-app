@@ -46,3 +46,15 @@ export type AddressScreenNavigationProp = AuthScreenNavigationProp<
 export type AddressScreenRouteProp = AuthScreenRouteProp<
   typeof NAVIGATION_SCREENS.NEW_ADDRESS
 >;
+export type CoinmeMobileAuthScreenNavigationProp = AuthScreenNavigationProp<
+  typeof NAVIGATION_SCREENS.NEW_COINME_MOBILE_AUTH
+>;
+export type CoinmeMobileAuthScreenRouteProp = AuthScreenRouteProp<
+  typeof NAVIGATION_SCREENS.NEW_COINME_MOBILE_AUTH
+>;
+export type CommonErrorScreenNavigationProp = AuthScreenNavigationProp<
+  typeof NAVIGATION_SCREENS.NEW_COMMON_ERROR
+>;
+export type CommonErrorScreenRouteProp = AuthScreenRouteProp<
+  typeof NAVIGATION_SCREENS.NEW_COMMON_ERROR
+>;

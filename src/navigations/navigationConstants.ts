@@ -5,6 +5,8 @@ export const NAVIGATION_SCREENS = {
   NEW_LOGIN: "NewLogin",
   NEW_CREATE_ACCOUNT: "NewCreateAccount",
   NEW_OTP_VERIFICATION: "NewOTPVerification",
+  NEW_COINME_MOBILE_AUTH: "NewCoinmeMobileAuth",
+  NEW_COMMON_ERROR: "NewCommonError",
   NEW_KYC: "NewKYC",
   NEW_ADDRESS: "NewAddress",
   NEW_FORGOT_PASSWORD: "NewForgotPassword",

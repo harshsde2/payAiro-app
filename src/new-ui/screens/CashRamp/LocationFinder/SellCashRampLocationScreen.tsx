@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
+import { useSelector } from "react-redux";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
 import CustomText from "@new-ui/components/common-components/CustomText";
@@ -13,6 +14,16 @@ import { mapMarkerLabel } from "./locationFinder.utils";
 import { LocationSearchHeader } from "./components/LocationSearchHeader";
 import { LocationCarousel } from "./components/LocationCarousel";
 import { useCashRampLocationMapSearch } from "./useCashRampLocationMapSearch";
+import CashBuyPurchaseInstructionsModal from "../CashBuyPurchaseInstructionsModal";
+import {
+  getProfileResidentialStateCode,
+  isCashRampStoreStateAllowed,
+} from "./cashRampProfileState";
+import {
+  CASH_RAMP_LOCATION_UNAVAILABLE_BODY,
+  CASH_RAMP_LOCATION_UNAVAILABLE_TITLE,
+} from "../cashRampLocationMessages";
+import { hasCashBuyLoadInstructionsAck } from "../cashBuyLoadInstructionsAck";
 
 const SELL_RADIUS = 10;
 const SELL_LIMIT = 5;
@@ -27,6 +38,21 @@ const SellCashRampLocationScreen: React.FC = () => {
     useRoute<RouteProp<Record<string, CashRampLocationFinderParams>, string>>();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [instructionsModalOpen, setInstructionsModalOpen] = useState(false);
+  const pendingStoreRef = useRef<LocationCardItem | null>(null);
+
+  const userData = useSelector(
+    (s: { authenticationSlice?: { userData?: Record<string, unknown> | null } }) =>
+      s.authenticationSlice?.userData ?? null
+  );
+  const usersMe = useSelector(
+    (s: { authenticationSlice?: { usersMe?: Record<string, unknown> | null } }) =>
+      s.authenticationSlice?.usersMe ?? null
+  );
+  const cashBuyUserId =
+    (userData?.id as string | number | undefined) ??
+    (userData?.user_id as string | number | undefined) ??
+    null;
 
   const {
     queryCenter,
@@ -76,7 +102,7 @@ const SellCashRampLocationScreen: React.FC = () => {
     setSelectedId(item.id);
   }, []);
 
-  const handleViewMoreDetails = useCallback(
+  const navigateToSellBarcode = useCallback(
     (item: LocationCardItem) => {
       navigation.navigate(NAVIGATION_SCREENS.NEW_CASH_RAMP_BARCODE as never, {
         amount: route.params?.amount ?? 0,
@@ -96,6 +122,7 @@ const SellCashRampLocationScreen: React.FC = () => {
           lineOfSightDistance: item.lineOfSightDistance,
           lineOfSightMetric: item.lineOfSightMetric,
           locationReference: item.locationReference,
+          imageUrl: item.imageUrl,
         },
       } as never);
     },
@@ -108,6 +135,65 @@ const SellCashRampLocationScreen: React.FC = () => {
       route.params?.sourceWalletAddress,
     ]
   );
+
+  const openLocationUnavailableError = useCallback(() => {
+    navigation.navigate(NAVIGATION_SCREENS.NEW_COMMON_ERROR, {
+      title: CASH_RAMP_LOCATION_UNAVAILABLE_TITLE,
+      description: CASH_RAMP_LOCATION_UNAVAILABLE_BODY,
+      primaryButtonLabel: "I Understand",
+      dismissAction: "goBack",
+    });
+  }, [navigation]);
+
+  const openConsentFailureError = useCallback(
+    (title: string, description: string) => {
+      navigation.navigate(NAVIGATION_SCREENS.NEW_COMMON_ERROR, {
+        title,
+        description,
+        primaryButtonLabel: "Close",
+        dismissAction: "goBack",
+      });
+    },
+    [navigation]
+  );
+
+  const handleViewMoreDetails = useCallback(
+    (item: LocationCardItem) => {
+      const profileState = getProfileResidentialStateCode(userData, usersMe);
+      const { allowed } = isCashRampStoreStateAllowed(item.state, profileState);
+      if (!allowed) {
+        openLocationUnavailableError();
+        return;
+      }
+      if (hasCashBuyLoadInstructionsAck(cashBuyUserId)) {
+        navigateToSellBarcode(item);
+        return;
+      }
+      pendingStoreRef.current = item;
+      setInstructionsModalOpen(true);
+    },
+    [
+      cashBuyUserId,
+      navigateToSellBarcode,
+      openLocationUnavailableError,
+      userData,
+      usersMe,
+    ]
+  );
+
+  const closeInstructionsModal = useCallback(() => {
+    setInstructionsModalOpen(false);
+    pendingStoreRef.current = null;
+  }, []);
+
+  const onPurchaseInstructionsConsented = useCallback(() => {
+    setInstructionsModalOpen(false);
+    const item = pendingStoreRef.current;
+    pendingStoreRef.current = null;
+    if (item) {
+      navigateToSellBarcode(item);
+    }
+  }, [navigateToSellBarcode]);
 
   const initialRegionRef = useRef({
     latitude: queryCenter.latitude,
@@ -217,6 +303,13 @@ const SellCashRampLocationScreen: React.FC = () => {
           />
         </View>
       )}
+      <CashBuyPurchaseInstructionsModal
+        visible={instructionsModalOpen}
+        userId={cashBuyUserId}
+        onClose={closeInstructionsModal}
+        onConsented={onPurchaseInstructionsConsented}
+        onConsentApiFailure={openConsentFailureError}
+      />
     </ScreenWrapper>
   );
 };

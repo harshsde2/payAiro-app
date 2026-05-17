@@ -51,6 +51,7 @@ import FilterIcon from './FilterIcon.svg';
 import Download from './Download.svg';
 import ApplePay from './ApplePay.svg';
 import SocialMediaIcons from './SocialMediaIcons.svg';
+import Stars from './Stars.svg';
 
 export const AppIcon = {
   Home,
@@ -106,4 +107,5 @@ export const AppIcon = {
   Download,
   ApplePay,
   SocialMediaIcons,
+  Stars,
 };

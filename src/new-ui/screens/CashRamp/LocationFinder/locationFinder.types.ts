@@ -1,4 +1,5 @@
 import { CashRampNearbyLocation } from "query/hooks/useCashRamp";
+import type { CoinmeOrderTemplateResponse } from "query/hooks/useCoinmeCashRamp";
 
 export type CashRampLocationFinderParams = {
   amount: number;
@@ -30,6 +31,12 @@ export type CashRampBarcodeParams = {
     lineOfSightDistance?: number | null;
     lineOfSightMetric?: string | null;
     locationReference?: string | null;
+    imageUrl?: string | null;
+  };
+  /** Resume an in-progress cash buy from payment history (CREATED). */
+  resumeFromHistory?: {
+    orderTemplateResponse: CoinmeOrderTemplateResponse;
+    initialPhase?: "barcodeVisible" | "barcodeScanned";
   };
 };
 

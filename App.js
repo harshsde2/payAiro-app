@@ -109,7 +109,7 @@ export default function App() {
     const allCryptoBalances = getItem(STORAGE_KEYS.ALL_CRYPTO_BALANCES) || null;
     // setItem(STORAGE_KEYS.GUIDE, JSON.stringify(true));
 
-    // console.log("token =>", token);
+    console.log("token =>", JSON.stringify(token, null, 2));
     // const redeem = getItem(STORAGE_KEYS.REDEEM_REWARD);
     const wallet = await getWalletDataAuth();
 

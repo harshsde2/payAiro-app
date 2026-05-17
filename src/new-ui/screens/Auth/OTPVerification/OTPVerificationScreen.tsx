@@ -1,15 +1,3 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { View, TouchableOpacity, Platform } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import { useDispatch } from "react-redux";
-import {
-  startOtpListener,
-  removeListener,
-} from "react-native-otp-verify";
-import { OtpInput, OtpInputRef } from "react-native-otp-entry";
-import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import { useTheme } from "@new-ui/styles/ThemeContext";
-import { otpVerificationStyles } from "@new-ui/styles/screens/auth/otpVerificationStyles";
 import CustomText from "@new-ui/components/common-components/CustomText";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
 import { Button } from "@new-ui/components/common-components/layout";
@@ -17,25 +5,35 @@ import {
   OTPVerificationScreenNavigationProp,
   OTPVerificationScreenRouteProp,
 } from "@new-ui/screens/Auth/types";
-import { useAppLock } from "hooks/useAppLock";
-import { useWalletDetails, useUserSecurityPinSettings } from "query/hooks";
-import { useUserOtpRequest, useUserOtpVerify, useUserMe } from "query/hooks/useAPIAuth";
-import { getItem, setItem, setPin, STORAGE_KEYS } from "storage/mmkv";
-import {
-  setLogin,
-  setTokens,
-  setAuthBootstrapFromUserMe,
-  setWalletData,
-  setShowLoader,
-} from "redux/slices/newBackendAuthSlice";
-import { setBiometric, setToken, setWalletDataAuth } from "services/Auth";
-import { onUserLoggedIn as onCoinmeUserLoggedIn } from "services/coinmeRiskLifecycle";
-import { showError, showSuccess } from "utils/toast";
-import { appContent } from "utils/appContent";
-import useDispatchAction from "hooks/useDispatchAction";
+import { useTheme } from "@new-ui/styles/ThemeContext";
+import { otpVerificationStyles } from "@new-ui/styles/screens/auth/otpVerificationStyles";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { isProduction } from "config/env.config";
-import { getSmsHash } from "utils/smsHash";
+import { useAppLock } from "hooks/useAppLock";
+import useDispatchAction from "hooks/useDispatchAction";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { useUserSecurityPinSettings, useWalletDetails } from "query/hooks";
+import { useUserMe, useUserOtpRequest, useUserOtpVerify } from "query/hooks/useAPIAuth";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Platform, TouchableOpacity, View } from "react-native";
+import { OtpInput, OtpInputRef } from "react-native-otp-entry";
+import {
+  removeListener,
+  startOtpListener,
+} from "react-native-otp-verify";
+import { useDispatch } from "react-redux";
+import {
+  setAuthBootstrapFromUserMe,
+  setShowLoader,
+  setTokens
+} from "redux/slices/newBackendAuthSlice";
 import { ILoginPayload } from "screens/Authentications/types";
+import { setToken } from "services/Auth";
+import { onUserLoggedIn as onCoinmeUserLoggedIn } from "services/coinmeRiskLifecycle";
+import { getItem, setItem, STORAGE_KEYS } from "storage/mmkv";
+import { appContent } from "utils/appContent";
+import { getSmsHash } from "utils/smsHash";
+import { showError, showSuccess } from "utils/toast";
 
 const OTP_COOLDOWN_SECONDS = 60;
 
@@ -47,7 +45,6 @@ const OTPVerificationScreen: React.FC = () => {
   const dispatch = useDispatch();
   const { theme } = useTheme();
   const styles = otpVerificationStyles(theme);
-  const { refreshPinStatus, refreshBiometricStatus } = useAppLock();
 
   const params = (route.params || {}) as {
     email?: string;
@@ -62,8 +59,6 @@ const OTPVerificationScreen: React.FC = () => {
   const isPhoneLogin = inputType === "phone" || !!phone;
   const contactValue = isPhoneLogin ? phone : email;
 
-  const { refetch: refetchWalletDetails } = useWalletDetails(false);
-  const { refetch: refetchSecurityPinSettings } = useUserSecurityPinSettings(false);
   const { mutate: verifyOtp } = useUserOtpVerify();
   const { mutate: otpRequest } = useUserOtpRequest();
   const { mutateAsync: fetchUserMe } = useUserMe();
@@ -137,40 +132,7 @@ const OTPVerificationScreen: React.FC = () => {
     return () => clearInterval(intervalId);
   }, [updateCountdownFromTimestamp]);
 
-  const getWalletD = useCallback(async () => {
-    try {
-      const result = await refetchWalletDetails();
-      const pinResp = await refetchSecurityPinSettings();
-      const pin = pinResp.data?.data?.pin;
-      const biometricEnabled = pinResp.data?.data?.biometric === true;
-
-      if (result.isSuccess && result.data?.data) {
-        const walletData = result.data.data;
-        dispatch(setWalletData(walletData));
-        setWalletDataAuth(walletData);
-        setItem(STORAGE_KEYS.WALLET_DATA, JSON.stringify(walletData));
-        if (typeof pin === "string" && pin.length > 0 && !pin.includes("*")) {
-          setPin(pin);
-        }
-        refreshPinStatus();
-        await setBiometric(biometricEnabled);
-        await refreshBiometricStatus();
-        dispatch(setLogin(true));
-        showSuccess("Logged in Successfully");
-      } else {
-        throw new Error("Wallet fetch failed");
-      }
-    } catch (error: any) {
-      showError("Something went wrong!");
-    }
-  }, [
-    refetchWalletDetails,
-    refetchSecurityPinSettings,
-    dispatch,
-    refreshPinStatus,
-    refreshBiometricStatus,
-  ]);
-
+ 
   const handleResendOTP = useCallback(() => {
     const successMessage = isPhoneLogin
       ? "OTP has been sent to your phone"
@@ -254,23 +216,41 @@ const OTPVerificationScreen: React.FC = () => {
             setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(data?.data));
             showSuccess("OTP Verified Successfully");
 
-            // console.log("data =>", JSON.stringify(data, null, 2));
+            console.log("data =>", JSON.stringify(data, null, 2));
 
             const { step } = data?.data ?? {};
 
             if (step === 0) {
-              (navigation as any).navigate(NAVIGATION_SCREENS.NEW_KYC, {
-                email: isPhoneLogin ? undefined : email,
-                phone: isPhoneLogin ? phone : undefined,
-                username:
-                  data?.data?.username ??
-                  (!isPhoneLogin && email
-                    ? String(email).trim().toLowerCase()
-                    : undefined),
-                inputType,
-                data: data?.data,
-                isEmail: isEmail,
-              });
+              if (isPhoneLogin && phone) {
+                (navigation as any).navigate(
+                  NAVIGATION_SCREENS.NEW_COINME_MOBILE_AUTH,
+                  {
+                    email: isPhoneLogin ? undefined : email,
+                    phone: isPhoneLogin ? phone : undefined,
+                    username:
+                      data?.data?.username ??
+                      (!isPhoneLogin && email
+                        ? String(email).trim().toLowerCase()
+                        : undefined),
+                    inputType,
+                    data: data?.data,
+                    isEmail: isEmail,
+                  }
+                );
+              } else {
+                (navigation as any).navigate(NAVIGATION_SCREENS.NEW_KYC, {
+                  email: isPhoneLogin ? undefined : email,
+                  phone: isPhoneLogin ? phone : undefined,
+                  username:
+                    data?.data?.username ??
+                    (!isPhoneLogin && email
+                      ? String(email).trim().toLowerCase()
+                      : undefined),
+                  inputType,
+                  data: data?.data,
+                  isEmail: isEmail,
+                });
+              }
             } else if (step === 1) {
               const existingWalletData = getItem(STORAGE_KEYS.WALLET_DATA);
               const isOldUser = !!existingWalletData;
@@ -366,7 +346,6 @@ const OTPVerificationScreen: React.FC = () => {
       isEmail,
       verifyOtp,
       navigation,
-      getWalletD,
     ]
   );
 

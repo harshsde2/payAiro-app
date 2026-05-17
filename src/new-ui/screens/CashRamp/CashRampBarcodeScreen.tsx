@@ -1,55 +1,67 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, AppState, type AppStateStatus, useWindowDimensions, View } from "react-native";
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
+import { Alert, AppState, type AppStateStatus } from "react-native";
+import { CommonActions, RouteProp, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import ScreenGuard from "react-native-screenguard";
 import { useHeaderHeight } from "@react-navigation/elements";
-import Barcode from "@adrianso/react-native-barcode-builder";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
-import CustomText from "@new-ui/components/common-components/CustomText";
-import Button from "@new-ui/components/common-components/layout/Button";
 import { useTheme } from "@new-ui/styles/ThemeContext";
-import { cashRampBarcodeStyles } from "@new-ui/styles/screens/cashRamp/cashRampBarcodeStyles";
 import { useUserCryptoMarketList } from "query/hooks/useCrypto";
 import {
   useCoinmeCashOfframpExecuteMutation,
   useCoinmeOrderTemplateMutation,
+  useCoinmeOrderTemplateStatusPoll,
   type CoinmeCashOfframpExecuteResponse,
   type CoinmeOrderTemplateResponse,
 } from "query/hooks/useCoinmeCashRamp";
-import GlassyWrapper from "@new-ui/components/common-components/GlassyWrapper";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { CashRampBarcodeParams } from "./LocationFinder/locationFinder.types";
 import {
-  ATM_REFERENCE_CAPTION,
-  cashRampDetailRowLabelBuy,
-  cashRampDetailRowLabelSell,
-  cashRampDisclaimerBuy,
-  cashRampDisclaimerSell,
-  cashRampFeeLabel,
-  cashRampLoadErrorLine,
-  cashRampQuoteNote,
-  cashRampSubtitleBuy,
-  cashRampSubtitleSell,
-  cashRampTitle,
   ERR_CASH_OFF_RAMP,
   ERR_MISSING_CHAIN,
   ERR_MISSING_LOCATION,
   ERR_MISSING_WALLET,
   ERR_ORDER_TEMPLATE,
-  FOOTER_DONE,
-  NO_CHECKOUT_CODE_MESSAGE,
+  cashRampDisclaimerSell,
+  cashRampFeeLabel,
+  cashRampQuoteNote,
+  cashRampSubtitleSell,
 } from "./cashRampBarcodeCopy";
+import {
+  CASH_BUY_BARCODE_LOAD_SLOW_MS,
+  CASH_BUY_DEFAULT_MAX_RETAIL_FEE,
+  CASH_BUY_INSTRUCTION_EXPIRY_SECONDS,
+  CASH_BUY_LOAD_ERROR_DEFAULT,
+  CASH_BUY_LOAD_ERROR_TITLE,
+} from "./cashBuyBarcodeInstructionCopy";
+import CashBuyBarcodeInstructionView from "./CashBuyBarcodeInstructionView";
+import CashBuyBarcodeLoadingView from "./CashBuyBarcodeLoadingView";
+import CashBuyBarcodeDisplayView from "./CashBuyBarcodeDisplayView";
+import CashBuyBarcodeScannedView from "./CashBuyBarcodeScannedView";
+import CashBuyPurchaseSuccessView from "./CashBuyPurchaseSuccessView";
+import CashBuyTransactionFailedView from "./CashBuyTransactionFailedView";
+import CashRampBarcodeSellView from "./CashRampBarcodeSellView";
+import {
+  buildReceiptFromTemplate,
+  finalizeCashRampTransaction,
+  type CashRampPurchaseReceipt,
+} from "./useCashRampBarcodeStatus";
 import { showError } from "utils/toast";
+import { resolveBarcodeExpiryAt } from "./useCountdownTo";
 
 const ILLUSTRATIVE_PROCESSING_FEE_USD = 3.95;
-/** CODE128 strip height; width scales with window. */
-const BARCODE_HEIGHT = 120;
 
-type SessionStatus = "loading" | "success" | "error";
+type SellSessionStatus = "loading" | "success" | "error";
+
+type BuyPhase =
+  | "instruction"
+  | "loadingBarcode"
+  | "barcodeVisible"
+  | "barcodeScanned"
+  | "purchaseSuccess"
+  | "transactionFailed";
 
 const CashRampBarcodeScreen: React.FC = () => {
   const { theme } = useTheme();
-  const styles = cashRampBarcodeStyles(theme);
-  const { width: windowWidth } = useWindowDimensions();
   const headerHeight = useHeaderHeight();
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<Record<string, CashRampBarcodeParams>, string>>();
@@ -61,16 +73,41 @@ const CashRampBarcodeScreen: React.FC = () => {
   const sourceWalletAddress = (route.params?.sourceWalletAddress ?? "").trim();
   const cashRampFlow = route.params?.cashRampFlow ?? "buy";
   const isSell = cashRampFlow === "sell";
+  const resumeFromHistory = route.params?.resumeFromHistory;
 
-  const [sessionStatus, setSessionStatus] = useState<SessionStatus>("loading");
-  const [buyResponse, setBuyResponse] = useState<CoinmeOrderTemplateResponse | null>(null);
+  const [buyPhase, setBuyPhase] = useState<BuyPhase>(() => {
+    if (isSell || !resumeFromHistory) return "instruction";
+    return resumeFromHistory.initialPhase ?? "barcodeVisible";
+  });
+  const [buyResponse, setBuyResponse] = useState<CoinmeOrderTemplateResponse | null>(
+    () => resumeFromHistory?.orderTemplateResponse ?? null
+  );
+  const [quoteRestartKey, setQuoteRestartKey] = useState(0);
+  const [finalizing, setFinalizing] = useState(false);
+  const [receipt, setReceipt] = useState<CashRampPurchaseReceipt | null>(null);
+
+  const [sellSessionStatus, setSellSessionStatus] = useState<SellSessionStatus>("loading");
   const [sellResponse, setSellResponse] = useState<CoinmeCashOfframpExecuteResponse | null>(null);
-  const [retryKey, setRetryKey] = useState(0);
+  const [sellRetryKey, setSellRetryKey] = useState(0);
 
   const { mutateAsync: postOrderTemplate } = useCoinmeOrderTemplateMutation();
   const { mutateAsync: postCashOfframp } = useCoinmeCashOfframpExecuteMutation();
-
   const { data: marketRows = [] } = useUserCryptoMarketList(fiat);
+
+  const locationRef = (location?.locationReference ?? "").trim();
+  const tpl = buyResponse?.data?.transactionTemplate;
+  const buySystemRef = (tpl?.transactionProviderRef ?? "").trim();
+  const buyTxnRef = (tpl?.transactionSystemRef ?? buySystemRef).trim();
+
+  const [isScreenFocused, setIsScreenFocused] = useState(true);
+
+  const statusPollEnabled =
+    !isSell && buyPhase === "barcodeVisible" && buySystemRef.length > 0 && isScreenFocused;
+
+  const { data: templateStatus } = useCoinmeOrderTemplateStatusPoll(
+    buySystemRef,
+    statusPollEnabled
+  );
 
   const unitUsdPrice = useMemo(() => {
     const row = marketRows.find((r) => (r.asset ?? "").toUpperCase() === cryptoCode);
@@ -78,44 +115,86 @@ const CashRampBarcodeScreen: React.FC = () => {
     return typeof p === "number" && Number.isFinite(p) && p > 0 ? p : null;
   }, [marketRows, cryptoCode]);
 
-  const estimatedCrypto = useMemo(() => {
-    if (unitUsdPrice == null || amount <= 0) return null;
-    return amount / unitUsdPrice;
-  }, [unitUsdPrice, amount]);
+  const retailerName = useMemo(() => {
+    const d = (location?.description ?? "").trim();
+    if (d) return d;
+    const p = (location?.provider ?? "").trim();
+    return p || "this store";
+  }, [location?.description, location?.provider]);
 
-  const marketCryptoAmountLabel = useMemo(() => {
-    if (estimatedCrypto == null) return "—";
-    const trimmed = estimatedCrypto.toFixed(6).replace(/\.?0+$/, "");
-    return `${trimmed} ${cryptoCode}`;
-  }, [estimatedCrypto, cryptoCode]);
+  const addressLine = useMemo(() => {
+    const parts = [
+      location?.address,
+      location?.city,
+      location?.state,
+      location?.zipCode,
+    ].filter(Boolean);
+    return parts.join(", ");
+  }, [location?.address, location?.city, location?.state, location?.zipCode]);
 
-  const locationRef = (location?.locationReference ?? "").trim();
+  const isWalmart = useMemo(() => {
+    const hay = `${location?.provider ?? ""} ${location?.description ?? ""}`.toLowerCase();
+    return hay.includes("walmart");
+  }, [location?.description, location?.provider]);
+
+  const maxRetailFee = useMemo(() => {
+    const r = tpl?.providerExclusiveFees?.retailerCustomerFee?.amount;
+    if (r) return `$${r}`;
+    return CASH_BUY_DEFAULT_MAX_RETAIL_FEE;
+  }, [tpl?.providerExclusiveFees?.retailerCustomerFee?.amount]);
+
+  const feeLines = useMemo(() => {
+    const lines: string[] = [];
+    const fm = tpl?.feesMap;
+    if (fm?.exchangeFee) lines.push(`Exchange fee: $${fm.exchangeFee}`);
+    const r = tpl?.providerExclusiveFees?.retailerCustomerFee?.amount;
+    if (r) lines.push(`Retail service fee: $${r}`);
+    return lines;
+  }, [tpl?.feesMap, tpl?.providerExclusiveFees?.retailerCustomerFee?.amount]);
+
+  const sessionExpiryAtRef = useRef(
+    new Date(Date.now() + CASH_BUY_INSTRUCTION_EXPIRY_SECONDS * 1000)
+  );
+
+  const barcodeExpiryAt = useMemo(
+    () => resolveBarcodeExpiryAt(tpl?.expiryTimestamp, sessionExpiryAtRef.current),
+    [tpl?.expiryTimestamp]
+  );
 
   const isScreenFocusedRef = useRef(false);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+  const loadCancelledRef = useRef(false);
+
+  const screenGuardActive =
+    isSell || buyPhase === "barcodeVisible" || buyPhase === "barcodeScanned";
 
   useFocusEffect(
     useCallback(() => {
       isScreenFocusedRef.current = true;
+      setIsScreenFocused(true);
       let cancelled = false;
+      if (!screenGuardActive) {
+        return () => {
+          isScreenFocusedRef.current = false;
+          setIsScreenFocused(false);
+        };
+      }
       (async () => {
         try {
-          await ScreenGuard.initSettings({
-            enableCapture: false,
-            enableRecord: false,
-          });
+          await ScreenGuard.initSettings({ enableCapture: false, enableRecord: false });
           if (cancelled) return;
           await ScreenGuard.register({ backgroundColor: theme.colors.white });
         } catch {
-          // Native module unavailable or init failed; screen still usable.
+          /* native module optional */
         }
       })();
       return () => {
         cancelled = true;
         isScreenFocusedRef.current = false;
+        setIsScreenFocused(false);
         void ScreenGuard.unregister().catch(() => {});
       };
-    }, [theme.colors.white])
+    }, [screenGuardActive, theme.colors.white])
   );
 
   useEffect(() => {
@@ -135,65 +214,52 @@ const CashRampBarcodeScreen: React.FC = () => {
   }, [navigation]);
 
   useEffect(() => {
+    if (buyPhase !== "barcodeVisible") return;
+    if (templateStatus?.kind !== "scanned") return;
+    setBuyPhase("barcodeScanned");
+  }, [buyPhase, templateStatus?.kind]);
+
+  useEffect(() => {
+    if (!isSell) return;
     let cancelled = false;
 
     const run = async () => {
-      setSessionStatus("loading");
-      setBuyResponse(null);
+      setSellSessionStatus("loading");
       setSellResponse(null);
 
       if (!locationRef) {
         showError(ERR_MISSING_LOCATION);
-        if (!cancelled) setSessionStatus("error");
+        if (!cancelled) setSellSessionStatus("error");
+        return;
+      }
+      if (!sourceWalletAddress) {
+        showError(ERR_MISSING_WALLET);
+        if (!cancelled) setSellSessionStatus("error");
+        return;
+      }
+      if (!chainParam) {
+        showError(ERR_MISSING_CHAIN);
+        if (!cancelled) setSellSessionStatus("error");
         return;
       }
 
       try {
-        if (isSell) {
-          if (!sourceWalletAddress) {
-            showError(ERR_MISSING_WALLET);
-            if (!cancelled) setSessionStatus("error");
-            return;
-          }
-          if (!chainParam) {
-            showError(ERR_MISSING_CHAIN);
-            if (!cancelled) setSessionStatus("error");
-            return;
-          }
-          const res = await postCashOfframp({
-            amountValue: String(amount),
-            amountCurrencyCode: fiat.toUpperCase(),
-            locationReference: locationRef,
-            sourceWalletAddress,
-            debitCurrencyCode: cryptoCode,
-            chain: chainParam,
-          });
-          if (cancelled) return;
-          if (res?.ok === false) {
-            showError(res?.message || ERR_CASH_OFF_RAMP);
-            setSessionStatus("error");
-            return;
-          }
-          setSellResponse(res);
-          setSessionStatus("success");
-          return;
-        }
-
-        const res = await postOrderTemplate({
-          debitCurrencyCode: fiat.toUpperCase(),
-          creditCurrencyCode: cryptoCode,
+        const res = await postCashOfframp({
           amountValue: String(amount),
           amountCurrencyCode: fiat.toUpperCase(),
           locationReference: locationRef,
+          sourceWalletAddress,
+          debitCurrencyCode: cryptoCode,
+          chain: chainParam,
         });
         if (cancelled) return;
         if (res?.ok === false) {
-          showError(res?.message || ERR_ORDER_TEMPLATE);
-          setSessionStatus("error");
+          showError(res?.message || ERR_CASH_OFF_RAMP);
+          setSellSessionStatus("error");
           return;
         }
-        setBuyResponse(res);
-        setSessionStatus("success");
+        setSellResponse(res);
+        setSellSessionStatus("success");
       } catch (e: unknown) {
         if (cancelled) return;
         const msg =
@@ -201,7 +267,7 @@ const CashRampBarcodeScreen: React.FC = () => {
             ? String((e as { message?: string }).message)
             : "Network error";
         showError(msg);
-        setSessionStatus("error");
+        setSellSessionStatus("error");
       }
     };
 
@@ -210,7 +276,7 @@ const CashRampBarcodeScreen: React.FC = () => {
       cancelled = true;
     };
   }, [
-    retryKey,
+    sellRetryKey,
     isSell,
     amount,
     fiat,
@@ -219,63 +285,189 @@ const CashRampBarcodeScreen: React.FC = () => {
     sourceWalletAddress,
     chainParam,
     postCashOfframp,
+  ]);
+
+  const navigateLoadError = useCallback(
+    (message: string) => {
+      navigation.navigate(NAVIGATION_SCREENS.NEW_COMMON_ERROR as never, {
+        title: CASH_BUY_LOAD_ERROR_TITLE,
+        description: message || CASH_BUY_LOAD_ERROR_DEFAULT,
+        primaryButtonLabel: "Close",
+        dismissAction: "goBack",
+      } as never);
+    },
+    [navigation]
+  );
+
+  const loadBuyBarcode = useCallback(async () => {
+    loadCancelledRef.current = false;
+    if (!locationRef) {
+      navigateLoadError(ERR_MISSING_LOCATION);
+      return;
+    }
+
+    const slowTimer = setTimeout(() => {
+      if (!loadCancelledRef.current) setBuyPhase("loadingBarcode");
+    }, CASH_BUY_BARCODE_LOAD_SLOW_MS);
+
+    try {
+      const res = await postOrderTemplate({
+        debitCurrencyCode: fiat.toUpperCase(),
+        creditCurrencyCode: cryptoCode,
+        amountValue: String(amount),
+        amountCurrencyCode: fiat.toUpperCase(),
+        locationReference: locationRef,
+      });
+      clearTimeout(slowTimer);
+      if (loadCancelledRef.current) return;
+
+      if (res?.ok === false) {
+        navigateLoadError(res?.message || ERR_ORDER_TEMPLATE);
+        setBuyPhase("instruction");
+        return;
+      }
+
+      const ref = (res?.data?.transactionTemplate?.transactionProviderRef ?? "").trim();
+      if (!ref) {
+        navigateLoadError("No scannable code came back from the server.");
+        setBuyPhase("instruction");
+        return;
+      }
+
+      setBuyResponse(res);
+      setQuoteRestartKey((k) => k + 1);
+      setBuyPhase("barcodeVisible");
+    } catch (e: unknown) {
+      clearTimeout(slowTimer);
+      if (loadCancelledRef.current) return;
+      const msg =
+        typeof e === "object" && e !== null && "message" in e
+          ? String((e as { message?: string }).message)
+          : "Network error";
+      navigateLoadError(msg);
+      setBuyPhase("instruction");
+    }
+  }, [
+    amount,
+    cryptoCode,
+    fiat,
+    locationRef,
+    navigateLoadError,
     postOrderTemplate,
   ]);
 
-  const tpl = buyResponse?.data?.transactionTemplate;
-  const buySystemRef = (tpl?.transactionProviderRef ?? "").trim();
-  const buyCreditAmt = tpl?.creditCurrencyAmount?.trim();
+  const onTapReveal = useCallback(() => {
+    void loadBuyBarcode();
+  }, [loadBuyBarcode]);
 
-  const buyFeeFromApi = useMemo(() => {
-    const fm = tpl?.feesMap;
-    const ex = fm?.exchangeFee;
-    if (ex) return `$${ex}`;
-    const r = tpl?.providerExclusiveFees?.retailerCustomerFee?.amount;
-    if (r) return `$${r}`;
-    return null;
-  }, [tpl]);
+  const onCancelTransaction = useCallback(() => {
+    Alert.alert("Cancel transaction?", "You'll return to the previous screen.", [
+      { text: "Keep going", style: "cancel" },
+      {
+        text: "Cancel transaction",
+        style: "destructive",
+        onPress: () => {
+          loadCancelledRef.current = true;
+          navigation.goBack();
+        },
+      },
+    ]);
+  }, [navigation]);
+
+  const onFinalize = useCallback(async () => {
+    if (!buyTxnRef) return;
+    setFinalizing(true);
+    try {
+      const result = await finalizeCashRampTransaction({ transactionRef: buyTxnRef });
+      if (result === "success") {
+        setReceipt(
+          buildReceiptFromTemplate({
+            fiat,
+            amount,
+            transactionRef: buyTxnRef,
+          })
+        );
+        setBuyPhase("purchaseSuccess");
+      } else {
+        setBuyPhase("transactionFailed");
+      }
+    } finally {
+      setFinalizing(false);
+    }
+  }, [amount, buyTxnRef, fiat]);
+
+  const onStartNewTransaction = useCallback(() => {
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [
+          {
+            name: NAVIGATION_SCREENS.NEW_CASH_RAMP_LOCATION_FINDER,
+            params: {
+              amount,
+              fiatCurrencyCode: fiat,
+              cryptoCurrencyCode: cryptoCode,
+              chain: chainParam || "ETH",
+              sourceWalletAddress: sourceWalletAddress || undefined,
+            },
+          },
+        ],
+      })
+    );
+  }, [amount, chainParam, cryptoCode, fiat, navigation, sourceWalletAddress]);
+
+  const onBuyDone = useCallback(() => {
+    navigation.goBack();
+  }, [navigation]);
 
   const sellTxn = sellResponse?.data?.transaction;
   const sellQuote = sellResponse?.data?.quote;
   const partnerTransactionId = (sellTxn?.partnerTransactionId ?? "").trim();
 
-  const primaryAmountLabel = useMemo(() => {
-    if (sessionStatus !== "success") return marketCryptoAmountLabel;
-    if (isSell) {
-      const amt = sellTxn?.debitCurrencyAmount ?? sellQuote?.debitCurrencyAmount;
-      const code = sellTxn?.debitCurrencyCode ?? sellQuote?.debitCurrencyCode ?? cryptoCode;
-      if (amt) return `${amt} ${code}`;
-      return marketCryptoAmountLabel;
-    }
-    if (buyCreditAmt) return `${buyCreditAmt} ${cryptoCode}`;
-    return marketCryptoAmountLabel;
+  const marketCryptoAmountLabel = useMemo(() => {
+    if (unitUsdPrice == null || amount <= 0) return "—";
+    const est = amount / unitUsdPrice;
+    const trimmed = est.toFixed(6).replace(/\.?0+$/, "");
+    return `${trimmed} ${cryptoCode}`;
+  }, [unitUsdPrice, amount, cryptoCode]);
+
+  const sellSubtitle = useMemo(
+    () =>
+      cashRampSubtitleSell({
+        marketCryptoAmountLabel,
+        locationDescription: (location?.description ?? "").trim(),
+        fiat,
+        amount,
+      }),
+    [amount, fiat, location?.description, marketCryptoAmountLabel]
+  );
+
+  const sellPrimaryAmount = useMemo(() => {
+    if (sellSessionStatus !== "success") return marketCryptoAmountLabel;
+    const amt = sellTxn?.debitCurrencyAmount ?? sellQuote?.debitCurrencyAmount;
+    const code = sellTxn?.debitCurrencyCode ?? sellQuote?.debitCurrencyCode ?? cryptoCode;
+    return amt ? `${amt} ${code}` : marketCryptoAmountLabel;
   }, [
-    buyCreditAmt,
     cryptoCode,
-    isSell,
     marketCryptoAmountLabel,
     sellQuote?.debitCurrencyAmount,
     sellQuote?.debitCurrencyCode,
+    sellSessionStatus,
     sellTxn?.debitCurrencyAmount,
     sellTxn?.debitCurrencyCode,
-    sessionStatus,
   ]);
 
-  const feeLabel = useMemo(
-    () => cashRampFeeLabel(sessionStatus, isSell),
-    [isSell, sessionStatus]
-  );
+  const sellFeeValue = useMemo(() => {
+    if (sellSessionStatus !== "success") return `$${ILLUSTRATIVE_PROCESSING_FEE_USD.toFixed(2)}`;
+    const tf = sellTxn?.totalFees ?? sellQuote?.totalFees;
+    const fc = sellTxn?.feeCurrencyCode ?? sellQuote?.feeCurrency ?? "USD";
+    if (tf) return `${tf} ${fc}`;
+    return `$${ILLUSTRATIVE_PROCESSING_FEE_USD.toFixed(2)}`;
+  }, [sellQuote?.feeCurrency, sellQuote?.totalFees, sellSessionStatus, sellTxn?.feeCurrencyCode, sellTxn?.totalFees]);
 
-  const quoteNoteText = useMemo(() => {
+  const sellQuoteNote = useMemo(() => {
     let expiry: Date | null = null;
-    if (!isSell && tpl?.expiryTimestamp) {
-      try {
-        const d = new Date(tpl.expiryTimestamp);
-        if (!Number.isNaN(d.getTime())) expiry = d;
-      } catch {
-        /* ignore */
-      }
-    } else if (isSell && sellQuote?.expirationTime) {
+    if (sellQuote?.expirationTime) {
       try {
         const d = new Date(sellQuote.expirationTime);
         if (!Number.isNaN(d.getTime())) expiry = d;
@@ -283,200 +475,118 @@ const CashRampBarcodeScreen: React.FC = () => {
         /* ignore */
       }
     }
-    return cashRampQuoteNote(isSell, expiry);
-  }, [isSell, sellQuote?.expirationTime, tpl?.expiryTimestamp]);
+    return cashRampQuoteNote(true, expiry);
+  }, [sellQuote?.expirationTime]);
 
-  const locationDescription = (location?.description ?? "").trim();
+  const addressMeta = location?.address
+    ? `${location.address}${location.city ? `, ${location.city}` : ""}${location.state ? `, ${location.state}` : ""}${location.zipCode ? ` ${location.zipCode}` : ""}`
+    : null;
 
-  const title = useMemo(() => cashRampTitle(isSell), [isSell]);
+  const buyGradientColors = [
+    theme.colors.greenLight2,
+    theme.colors.tertiary,
+    theme.colors.greenLight1,
+    theme.colors.greenLight2,
+  ] as const;
 
-  const subtitleText = useMemo(
-    () =>
-      isSell
-        ? cashRampSubtitleSell({
-            marketCryptoAmountLabel,
-            locationDescription,
-            fiat,
-            amount,
-          })
-        : cashRampSubtitleBuy({
-            amount,
-            fiat,
-            locationDescription,
-          }),
-    [amount, fiat, isSell, locationDescription, marketCryptoAmountLabel]
-  );
-
-  const disclaimerText = useMemo(
-    () =>
-      isSell
-        ? cashRampDisclaimerSell({ amount, fiat })
-        : cashRampDisclaimerBuy({ amount, fiat }),
-    [amount, fiat, isSell]
-  );
-
-  const feeValueLabel = useMemo(() => {
-    if (sessionStatus !== "success") return `$${ILLUSTRATIVE_PROCESSING_FEE_USD.toFixed(2)}`;
-    if (isSell) {
-      const tf = sellTxn?.totalFees ?? sellQuote?.totalFees;
-      const fc = sellTxn?.feeCurrencyCode ?? sellQuote?.feeCurrency ?? "USD";
-      if (tf) return `${tf} ${fc}`;
-      return `$${ILLUSTRATIVE_PROCESSING_FEE_USD.toFixed(2)}`;
-    }
-    if (buyFeeFromApi) return buyFeeFromApi;
-    return `$${ILLUSTRATIVE_PROCESSING_FEE_USD.toFixed(2)}`;
-  }, [buyFeeFromApi, isSell, sellQuote?.feeCurrency, sellQuote?.totalFees, sellTxn?.feeCurrencyCode, sellTxn?.totalFees, sessionStatus]);
-
-  const renderGlassContent = () => {
-    if (sessionStatus === "loading") {
-      return (
-        <View style={styles.qrWrap}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
-      );
-    }
-    if (sessionStatus === "error") {
-      return (
-        <View style={styles.qrWrap}>
-          <CustomText variant="body" color={theme.colors.text} style={styles.sessionError}>
-            {cashRampLoadErrorLine(isSell)}
-          </CustomText>
-          <Button style={{width: 200}} onPress={() => setRetryKey((k) => k + 1)}>Retry</Button>
-        </View>
-      );
-    }
-    if (isSell) {
-      return (
-        <View style={styles.barcodeGlassyInner}>
-          <CustomText variant="caption" color={theme.colors.text} style={styles.sellCodeCaption}>
-            {ATM_REFERENCE_CAPTION}
-          </CustomText>
-          <CustomText
-            variant="body"
-            fontWeight="medium"
-            color={theme.colors.text}
-            style={styles.sellCodeText}
-            selectable
-          >
-            {partnerTransactionId || "—"}
-          </CustomText>
-        </View>
-      );
-    }
-    if (!buySystemRef) {
-      return (
-        <View style={styles.qrWrap}>
-          <CustomText variant="body" color={theme.colors.text} style={styles.sessionError}>
-            {NO_CHECKOUT_CODE_MESSAGE}
-          </CustomText>
-        </View>
-      );
-    }
-    const barcodeWidth = Math.max(
-      200,
-      Math.min(windowWidth - theme.spacing.xl * 2, 360)
-    );
-    return (
-      <View style={styles.qrWrap}>
-        <View style={[styles.qrInner, { width: barcodeWidth, height: BARCODE_HEIGHT }]}>
-          <Barcode
-            value={buySystemRef}
-            format="CODE128"
-            lineColor="#111111"
-            style={{ flex: 1, backgroundColor: "#FFFFFF" }}
+  const renderBuyContent = () => {
+    switch (buyPhase) {
+      case "instruction":
+        return (
+          <CashBuyBarcodeInstructionView
+            retailerName={retailerName}
+            addressLine={addressLine}
+            isWalmart={isWalmart}
+            maxRetailFee={maxRetailFee}
+            cryptoCode={cryptoCode}
+            unitUsdPrice={unitUsdPrice}
+            feeLines={feeLines}
+            imageUrl={location?.imageUrl}
+            quoteRestartKey={quoteRestartKey}
+            expiryAt={barcodeExpiryAt}
+            onTapReveal={onTapReveal}
+            onCancel={onCancelTransaction}
           />
-        </View>
-      </View>
-    );
+        );
+      case "loadingBarcode":
+        return <CashBuyBarcodeLoadingView />;
+      case "barcodeVisible":
+        return (
+          <CashBuyBarcodeDisplayView
+            fiat={fiat}
+            amount={amount}
+            barcodeValue={buySystemRef}
+            expiryAt={barcodeExpiryAt}
+            maxRetailFee={maxRetailFee}
+            quoteRestartKey={quoteRestartKey}
+            cryptoCode={cryptoCode}
+            unitUsdPrice={unitUsdPrice}
+            feeLines={feeLines}
+            onClose={() => navigation.goBack()}
+          />
+        );
+      case "barcodeScanned":
+        return <CashBuyBarcodeScannedView finalizing={finalizing} onFinalize={() => void onFinalize()} />;
+      case "purchaseSuccess":
+        return receipt ? (
+          <CashBuyPurchaseSuccessView receipt={receipt} onDone={onBuyDone} />
+        ) : null;
+      case "transactionFailed":
+        return <CashBuyTransactionFailedView onStartNew={onStartNewTransaction} />;
+      default:
+        return null;
+    }
   };
 
   return (
     <ScreenWrapper
       safeArea
       safeAreaEdges={["bottom", "left", "right"]}
-      scrollable
+      scrollable={!isSell && buyPhase === "instruction"}
       contentStyle={{
         flexGrow: 1,
         paddingTop: headerHeight,
         paddingBottom: theme.spacing["2xl"],
       }}
       gradient="linear"
-      gradientColors={[
-        theme.colors.greenLight2,
-        theme.colors.greenLight2,
-        theme.colors.white,
-        theme.colors.greenLight2,
-        theme.colors.greenLight1,
-        theme.colors.tertiary,
-        theme.colors.greenLight1,
-        theme.colors.greenLight2,
-        theme.colors.white,
-      ]}
-      gradientStart={{ x: 1, y: 1 }}
-      gradientEnd={{ x: 0, y: 0 }}
+      gradientColors={
+        isSell
+          ? [
+              theme.colors.greenLight2,
+              theme.colors.greenLight2,
+              theme.colors.white,
+              theme.colors.greenLight2,
+              theme.colors.greenLight1,
+              theme.colors.tertiary,
+              theme.colors.greenLight1,
+              theme.colors.greenLight2,
+              theme.colors.white,
+            ]
+          : [...buyGradientColors]
+      }
+      gradientStart={{ x: 0.5, y: 0 }}
+      gradientEnd={{ x: 0.5, y: 1 }}
       statusBarStyle="dark-content"
     >
-      <View style={styles.container}>
-        <CustomText variant="h3" fontWeight="semiBold" color={theme.colors.text} style={styles.title}>
-          {title}
-        </CustomText>
-        <CustomText variant="body" color={theme.colors.text} style={styles.subtitle}>
-          {subtitleText}
-        </CustomText>
-
-        <GlassyWrapper
-          style={[styles.glassyBarcode, isSell && { minHeight: 120 }]}
-          borderRadius={theme.radius.xl}
-          blurAmount={25}
-          blurType="regular"
-          overlayOpacity={0.12}
-          borderWidth={1}
-          borderColor={theme.colors.white}
-          padding={theme.spacing.lg}
-        >
-          {renderGlassContent()}
-        </GlassyWrapper>
-
-        <CustomText variant="body" size={10} color={theme.colors.text} style={styles.disclaimer}>
-          {disclaimerText}
-        </CustomText>
-
-        <View style={styles.detailBlock}>
-          <View style={styles.detailRow}>
-            <CustomText variant="body" color={theme.colors.text} style={styles.detailLabel}>
-              {isSell ? cashRampDetailRowLabelSell(cryptoCode) : cashRampDetailRowLabelBuy(cryptoCode)}
-            </CustomText>
-            <CustomText variant="body" fontWeight="semiBold" color={theme.colors.text} style={styles.detailValue}>
-              {primaryAmountLabel}
-            </CustomText>
-          </View>
-          <View style={styles.detailRow}>
-            <CustomText variant="body" color={theme.colors.text} style={styles.detailLabel}>
-              {feeLabel}
-            </CustomText>
-            <CustomText variant="body" fontWeight="semiBold" color={theme.colors.text} style={styles.detailValue}>
-              {feeValueLabel}
-            </CustomText>
-          </View>
-        </View>
-
-        <CustomText variant="body" size={10} color={theme.colors.text} style={styles.quoteNote}>
-          {quoteNoteText}
-        </CustomText>
-
-        {location?.address ? (
-          <CustomText variant="body" color={theme.colors.textSecondary} style={styles.metaText}>
-            {location.address}
-            {location.city ? `, ${location.city}` : ""}
-            {location.state ? `, ${location.state}` : ""}
-            {location.zipCode ? ` ${location.zipCode}` : ""}
-          </CustomText>
-        ) : null}
-
-        <View style={styles.footer}>
-          <Button onPress={() => navigation.goBack()}>{FOOTER_DONE}</Button>
-        </View>
-      </View>
+      {isSell ? (
+        <CashRampBarcodeSellView
+          sessionStatus={sellSessionStatus}
+          title=""
+          subtitleText={sellSubtitle}
+          disclaimerText={cashRampDisclaimerSell({ amount, fiat })}
+          primaryAmountLabel={sellPrimaryAmount}
+          feeLabel={cashRampFeeLabel(sellSessionStatus, true)}
+          feeValueLabel={sellFeeValue}
+          quoteNoteText={sellQuoteNote}
+          partnerTransactionId={partnerTransactionId}
+          cryptoCode={cryptoCode}
+          addressMeta={addressMeta}
+          onRetry={() => setSellRetryKey((k) => k + 1)}
+          onDone={() => navigation.goBack()}
+        />
+      ) : (
+        renderBuyContent()
+      )}
     </ScreenWrapper>
   );
 };

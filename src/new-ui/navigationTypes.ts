@@ -1,6 +1,18 @@
 import { NavigatorScreenParams } from "@react-navigation/native";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 
+export type CommonErrorScreenParams = {
+  title: string;
+  description: string;
+  /** Defaults to "Close". Use "I Understand" for geofence / soft errors. */
+  primaryButtonLabel?: string;
+  /**
+   * Defaults to reset to create-account (auth flows).
+   * Use "goBack" from dashboard / cash-ramp flows.
+   */
+  dismissAction?: "resetToCreateAccount" | "goBack";
+};
+
 export type NewUIAuthStackParamList = {
   [NAVIGATION_SCREENS.NEW_ONBOARDING]: undefined;
   [NAVIGATION_SCREENS.NEW_LOGIN]: undefined;
@@ -13,6 +25,15 @@ export type NewUIAuthStackParamList = {
     inputType?: "email" | "phone" | "invalid";
     isEmail?: boolean;
   };
+  [NAVIGATION_SCREENS.NEW_COINME_MOBILE_AUTH]: {
+    email?: string;
+    phone?: string;
+    username?: string;
+    inputType?: "email" | "phone" | "invalid";
+    isEmail?: boolean;
+    data?: any;
+  };
+  [NAVIGATION_SCREENS.NEW_COMMON_ERROR]: CommonErrorScreenParams;
   [NAVIGATION_SCREENS.NEW_KYC]: {
     firstName?: string;
     lastName?: string;
@@ -45,6 +66,7 @@ export type NewUIDashboardStackParamList = {
     chain: string;
     sourceWalletAddress?: string;
   };
+  [NAVIGATION_SCREENS.NEW_COMMON_ERROR]: CommonErrorScreenParams;
   [NAVIGATION_SCREENS.NEW_CASH_RAMP_BARCODE]: {
     amount: number;
     fiatCurrencyCode: string;
@@ -63,6 +85,7 @@ export type NewUIDashboardStackParamList = {
       lineOfSightDistance?: number | null;
       lineOfSightMetric?: string | null;
       locationReference?: string | null;
+      imageUrl?: string | null;
     };
   };
   [NAVIGATION_SCREENS.CRYPTO_WITHDRAW]: undefined;

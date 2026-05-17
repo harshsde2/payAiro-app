@@ -13,6 +13,8 @@ const formatScreenTitle = (routeName: string): string => {
   if (routeName === NAVIGATION_SCREENS.NEW_LOGIN) return 'Login Account';
   if (routeName === NAVIGATION_SCREENS.NEW_CREATE_ACCOUNT) return 'Create Account';
   if (routeName === NAVIGATION_SCREENS.NEW_OTP_VERIFICATION) return 'OTP Verification';
+  if (routeName === NAVIGATION_SCREENS.NEW_COINME_MOBILE_AUTH) return 'Phone verification';
+  if (routeName === NAVIGATION_SCREENS.NEW_COMMON_ERROR) return 'Error';
   if (routeName === NAVIGATION_SCREENS.NEW_KYC) return 'KYC';
   if (routeName === NAVIGATION_SCREENS.NEW_FORGOT_PASSWORD) return 'Forgot Password';
   if (routeName === NAVIGATION_SCREENS.NEW_FORGOT_PASSWORD_VERIFICATION) return 'Verification';

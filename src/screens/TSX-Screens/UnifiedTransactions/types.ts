@@ -18,7 +18,8 @@ export type UnifiedTransactionType =
   | "crypto_receive"
   | "crypto_withdrawal"
   | "crypto_deposit"
-  | "crypto_swap";
+  | "crypto_swap"
+  | "cash_onramp";
 
 // Transaction category enum
 export type TransactionCategory = "fiat" | "crypto";
@@ -145,6 +146,7 @@ export interface IUnifiedTransaction {
   category: TransactionCategoryType | null;
   tags: string[];
   refund_details: IRefundDetails | null;
+  cash_onramp_details?: ICashOnRampDetails | null;
 }
 
 // Category percentages interface

@@ -364,5 +364,45 @@ export const enterAmountStyles = (theme: ITheme) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
+
+    cashBuyBlock: {
+      width: '100%',
+      paddingHorizontal: theme.spacing.base,
+      marginTop: theme.spacing.md,
+      gap: theme.spacing.md,
+    },
+    cashBuySummaryCard: {
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: theme.radius.lg,
+      backgroundColor: theme.colors.white,
+      paddingHorizontal: theme.spacing.base,
+      paddingVertical: theme.spacing.md,
+    },
+    cashBuySummaryHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+    },
+    cashBuySummarySub: {
+      marginTop: 4,
+    },
+    cashBuySummaryDetail: {
+      marginTop: theme.spacing.md,
+      paddingTop: theme.spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.border,
+      gap: theme.spacing.sm,
+    },
+    cashBuySummaryRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      gap: theme.spacing.sm,
+    },
+    cashBuyRetailNote: {
+      marginTop: theme.spacing.sm,
+      lineHeight: 18,
+    },
   });
 

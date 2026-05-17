@@ -91,6 +91,7 @@ import {
   LocationFinderScreen,
   SellCashRampLocationScreen,
 } from "@new-ui/screens/CashRamp";
+import CommonErrorScreen from "@new-ui/screens/Auth/CommonError/CommonErrorScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -530,6 +531,11 @@ export default function AppStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.NEW_CASH_RAMP_SELL_LOCATION_FINDER}
         component={SellCashRampLocationScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.NEW_COMMON_ERROR}
+        component={CommonErrorScreen}
       />
       <Stack.Screen
         options={{

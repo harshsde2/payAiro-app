@@ -1,5 +1,9 @@
 import type { RecentActivityItem, SendHistoryParty } from "new-ui/components/common-components/RecentActivityCard/types";
-import { isTradeActivity } from "new-ui/components/common-components/RecentActivityCard/types";
+import {
+  isCashOnRampActivity,
+  isTradeActivity,
+} from "new-ui/components/common-components/RecentActivityCard/types";
+import { mapCashOnRampToUnified } from "new-ui/components/common-components/RecentActivityCard/cashOnRampActivity";
 import type {
   IDisplayParty,
   ITransactionParty,
@@ -60,6 +64,10 @@ const getCurrencySymbol = (currency?: string | null): string => {
 export const mapRecentActivityToUnified = (
   item: RecentActivityItem
 ): IUnifiedTransaction => {
+  if (isCashOnRampActivity(item)) {
+    return mapCashOnRampToUnified(item);
+  }
+
   if (isTradeActivity(item)) {
     const isSell = item.activity === "TRADE_SELL" || item.tradeType === "sell";
     const transactionType: UnifiedTransactionType = isSell

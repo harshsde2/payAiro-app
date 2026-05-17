@@ -19,4 +19,9 @@ export interface IGlassyWrapperProps {
   padding?: number;
   /** Show glossy highlight (white crescent on top-left). Default true. */
   showGlossyHighlight?: boolean;
+  /**
+   * When true, children size the container (for text blocks).
+   * Default false keeps centered overlay layout (e.g. barcode strip).
+   */
+  flowLayout?: boolean;
 }

@@ -32,7 +32,8 @@ import CustomText from "new-ui/components/common-components/CustomText";
 import { AppIcon } from "new-ui/assets/svgs";
 import IconWithNameContainer from "@new-ui/components/common-components/IconWithNameContainer";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import { mapRecentActivityToUnified } from "query/utils/mapRecentActivityToUnified";
+import { navigateFromRecentActivity } from "query/utils/navigateFromRecentActivity";
+import { isCashOnRampActivity } from "new-ui/components/common-components/RecentActivityCard/types";
 
 const DASHBOARD_AUTO_REFRESH_MIN_MS = 45_000;
 
@@ -299,7 +300,7 @@ const NewDashboard = () => {
                         usdForRow = priceByCurrency.get(spendCode);
                       }
                     }
-                  } else {
+                  } else if (!isCashOnRampActivity(item)) {
                     const isSendActivity = activityType === "SEND";
                     if (!isSendActivity) {
                       const assetKey = (item.currency ?? item.chain ?? "")
@@ -314,11 +315,7 @@ const NewDashboard = () => {
                       item={item}
                       usdPrice={usdForRow}
                       onPress={(selected) => {
-                        const mapped = mapRecentActivityToUnified(selected);
-                        navigation.navigate(
-                          NAVIGATION_SCREENS.NEW_TRANSACTION_DETAILS as never,
-                          { transactionData: mapped } as never
-                        );
+                        navigateFromRecentActivity(selected, navigation);
                       }}
                     />
                   );

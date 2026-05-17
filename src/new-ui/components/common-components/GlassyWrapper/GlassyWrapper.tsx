@@ -15,6 +15,7 @@ const GlassyWrapper: React.FC<IGlassyWrapperProps> = ({
   borderColor = 'rgba(255, 255, 255, 0.6)',
   padding = 0,
   showGlossyHighlight = true,
+  flowLayout = false,
 }) => {
   const containerStyle = [
     styles.container,
@@ -28,7 +29,12 @@ const GlassyWrapper: React.FC<IGlassyWrapperProps> = ({
     { backgroundColor: `rgba(255, 255, 255, ${overlayOpacity})` },
   ];
 
-  const contentWrapperStyle = [
+  const flowContentStyle = [
+    styles.flowContent,
+    padding > 0 ? { padding } : undefined,
+  ];
+
+  const overlayContentStyle = [
     styles.contentWrapper,
     padding > 0 ? { padding } : undefined,
   ];
@@ -72,7 +78,7 @@ const GlassyWrapper: React.FC<IGlassyWrapperProps> = ({
       )}
 
       {/* 4. Children content */}
-      <View style={[styles.contentWrapper, contentWrapperStyle]}>{children}</View>
+      <View style={flowLayout ? flowContentStyle : overlayContentStyle}>{children}</View>
     </View>
   );
 };
@@ -92,6 +98,10 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  flowContent: {
+    width: '100%',
+    zIndex: 1,
   },
 });
 

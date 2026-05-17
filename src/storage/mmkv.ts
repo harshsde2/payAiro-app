@@ -65,4 +65,6 @@ export const STORAGE_KEYS = {
   SMS_HASH: "sms_hash",
   /** Debug: last time a push notification was received (ISO string). For TestFlight debugging. */
   DEBUG_LAST_NOTIFICATION_AT: "debug_last_notification_at",
+  /** Cash buy: user acknowledged wallet load instructions + consent API (suffix with user id when set). */
+  CASH_BUY_LOAD_INSTRUCTIONS_ACK: "cash_buy_load_instructions_ack",
 };

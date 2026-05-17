@@ -22,6 +22,7 @@ import { SvgIcons } from "constants/svgs";
 import Button from "@new-ui/components/common-components/layout/Button";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
 import { INewTransactionDetailsProps } from "./types";
+import CashOnRampTransactionDetailsBody from "./CashOnRampTransactionDetailsBody";
 import useSelectorAction from "hooks/useSelectorAction";
 import { useAppLock } from "hooks/useAppLock";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
@@ -66,6 +67,15 @@ const NewTransactionDetails: FC = () => {
 
   const { transactionData } =
     route.params as INewTransactionDetailsProps["route"]["params"];
+
+  if (transactionData?.transaction_type === "cash_onramp") {
+    return (
+      <CashOnRampTransactionDetailsBody
+        transactionData={transactionData}
+        onClose={() => navigation.goBack()}
+      />
+    );
+  }
 
   // console.log("transactionData =>", JSON.stringify(transactionData, null, 2));
 

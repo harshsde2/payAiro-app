@@ -16,6 +16,7 @@ const ScreenWrapper: React.FC<IScreenWrapperProps> = ({
   gradientEnd = { x: 0, y: 1 },
   gradientCenter,
   gradientRadius,
+  gradientPositions,
   padding,
   paddingHorizontal,
   paddingVertical,
@@ -108,6 +109,12 @@ const ScreenWrapper: React.FC<IScreenWrapperProps> = ({
               c={vec(centerX, centerY)}
               r={radius}
               colors={validColors}
+              positions={
+                gradientPositions &&
+                gradientPositions.length === validColors.length
+                  ? gradientPositions
+                  : undefined
+              }
             />
           </Rect>
         </Canvas>

@@ -72,4 +72,28 @@ export const recentActivityCardStyles = (theme: ITheme) =>
       fontFamily: theme.typography.fontFamily.semiBold,
       color: theme.colors.text,
     },
+    cashIconText: {
+      fontSize: 22,
+      fontFamily: theme.typography.fontFamily.semiBold,
+      color: theme.colors.text,
+    },
+    statusSubtitle: {
+      fontSize: 12,
+      fontFamily: theme.typography.fontFamily.medium,
+      marginTop: 3,
+    },
+    amountsColumn: {
+      alignItems: "flex-end",
+    },
+    fiatAmount: {
+      fontSize: 15,
+      fontFamily: theme.typography.fontFamily.semiBold,
+      color: theme.colors.text,
+    },
+    cryptoAmount: {
+      fontSize: 12,
+      fontFamily: theme.typography.fontFamily.regular,
+      color: theme.colors.textSecondary,
+      marginTop: 2,
+    },
   });

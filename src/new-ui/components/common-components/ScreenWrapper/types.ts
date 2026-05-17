@@ -29,7 +29,9 @@ export interface IScreenWrapperProps {
   gradientEnd?: IGradientPoint;
   gradientCenter?: IGradientPoint;
   gradientRadius?: number;
-  
+  /** Normalized stops (0–1) for Skia radial gradients; length must match `gradientColors` when set. */
+  gradientPositions?: number[];
+
   padding?: number | IPaddingObject;
   paddingHorizontal?: number;
   paddingVertical?: number;
