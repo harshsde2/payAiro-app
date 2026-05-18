@@ -1,9 +1,11 @@
 import type { RecentActivityItem, SendHistoryParty } from "new-ui/components/common-components/RecentActivityCard/types";
 import {
+  isCashOffRampActivity,
   isCashOnRampActivity,
   isTradeActivity,
 } from "new-ui/components/common-components/RecentActivityCard/types";
 import { mapCashOnRampToUnified } from "new-ui/components/common-components/RecentActivityCard/cashOnRampActivity";
+import { mapCashOffRampToUnified } from "new-ui/components/common-components/RecentActivityCard/cashOffRampActivity";
 import type {
   IDisplayParty,
   ITransactionParty,
@@ -66,6 +68,10 @@ export const mapRecentActivityToUnified = (
 ): IUnifiedTransaction => {
   if (isCashOnRampActivity(item)) {
     return mapCashOnRampToUnified(item);
+  }
+
+  if (isCashOffRampActivity(item)) {
+    return mapCashOffRampToUnified(item);
   }
 
   if (isTradeActivity(item)) {

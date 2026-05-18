@@ -60,7 +60,7 @@ const LocationDetailCardComponent: React.FC<Props> = ({
         </Pressable>
         {onViewMoreDetails ? (
           <View style={styles.sellMoreDetailsWrap}>
-            <Button onPress={() => onViewMoreDetails(item)}>More details</Button>
+            <Button onPress={() => onViewMoreDetails(item)}>Sell for Cash</Button>
           </View>
         ) : null}
       </View>

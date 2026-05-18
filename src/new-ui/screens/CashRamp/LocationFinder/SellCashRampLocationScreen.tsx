@@ -9,12 +9,11 @@ import CustomText from "@new-ui/components/common-components/CustomText";
 import { useTheme } from "@new-ui/styles/ThemeContext";
 import { useNearbyCashLocations } from "query/hooks/useCashRamp";
 import { locationFinderStyles } from "@new-ui/styles/screens/cashRamp/locationFinderStyles";
-import { CashRampLocationFinderParams, LocationCardItem } from "./locationFinder.types";
+import { LocationCardItem } from "./locationFinder.types";
 import { mapMarkerLabel } from "./locationFinder.utils";
 import { LocationSearchHeader } from "./components/LocationSearchHeader";
 import { LocationCarousel } from "./components/LocationCarousel";
 import { useCashRampLocationMapSearch } from "./useCashRampLocationMapSearch";
-import CashBuyPurchaseInstructionsModal from "../CashBuyPurchaseInstructionsModal";
 import {
   getProfileResidentialStateCode,
   isCashRampStoreStateAllowed,
@@ -23,23 +22,23 @@ import {
   CASH_RAMP_LOCATION_UNAVAILABLE_BODY,
   CASH_RAMP_LOCATION_UNAVAILABLE_TITLE,
 } from "../cashRampLocationMessages";
-import { hasCashBuyLoadInstructionsAck } from "../cashBuyLoadInstructionsAck";
+import type { SellCashRampEntryParams } from "../Sell/sellFlow.types";
+import { locationItemToSnapshot } from "../Sell/sellFlow.types";
 
 const SELL_RADIUS = 10;
 const SELL_LIMIT = 5;
 const SELL_PROVIDERS = "ALLPOINT";
 
-/** Sell (crypto → cash at ATM): same map/carousel as buy flow, ALLPOINT nearby API, code label instead of barcode. */
+/** Sell (crypto → cash at ATM): map first, then enter amount. */
 const SellCashRampLocationScreen: React.FC = () => {
   const { theme } = useTheme();
   const styles = locationFinderStyles(theme);
   const navigation = useNavigation<any>();
   const route =
-    useRoute<RouteProp<Record<string, CashRampLocationFinderParams>, string>>();
+    useRoute<RouteProp<Record<string, SellCashRampEntryParams>, string>>();
+  const entry = route.params;
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [instructionsModalOpen, setInstructionsModalOpen] = useState(false);
-  const pendingStoreRef = useRef<LocationCardItem | null>(null);
 
   const userData = useSelector(
     (s: { authenticationSlice?: { userData?: Record<string, unknown> | null } }) =>
@@ -49,10 +48,6 @@ const SellCashRampLocationScreen: React.FC = () => {
     (s: { authenticationSlice?: { usersMe?: Record<string, unknown> | null } }) =>
       s.authenticationSlice?.usersMe ?? null
   );
-  const cashBuyUserId =
-    (userData?.id as string | number | undefined) ??
-    (userData?.user_id as string | number | undefined) ??
-    null;
 
   const {
     queryCenter,
@@ -102,38 +97,15 @@ const SellCashRampLocationScreen: React.FC = () => {
     setSelectedId(item.id);
   }, []);
 
-  const navigateToSellBarcode = useCallback(
+  const navigateToSellEnterAmount = useCallback(
     (item: LocationCardItem) => {
-      navigation.navigate(NAVIGATION_SCREENS.NEW_CASH_RAMP_BARCODE as never, {
-        amount: route.params?.amount ?? 0,
-        fiatCurrencyCode: route.params?.fiatCurrencyCode ?? "USD",
-        cryptoCurrencyCode: route.params?.cryptoCurrencyCode ?? "SOL",
-        cashRampFlow: "sell" as const,
-        chain: route.params?.chain ?? "ETH",
-        sourceWalletAddress: route.params?.sourceWalletAddress ?? "",
-        location: {
-          id: item.id,
-          provider: item.provider,
-          description: item.description,
-          address: item.address,
-          city: item.city,
-          state: item.state,
-          zipCode: item.zipCode,
-          lineOfSightDistance: item.lineOfSightDistance,
-          lineOfSightMetric: item.lineOfSightMetric,
-          locationReference: item.locationReference,
-          imageUrl: item.imageUrl,
-        },
+      if (!entry) return;
+      navigation.navigate(NAVIGATION_SCREENS.NEW_CASH_SELL_ENTER_AMOUNT as never, {
+        ...entry,
+        location: locationItemToSnapshot(item),
       } as never);
     },
-    [
-      navigation,
-      route.params?.amount,
-      route.params?.chain,
-      route.params?.cryptoCurrencyCode,
-      route.params?.fiatCurrencyCode,
-      route.params?.sourceWalletAddress,
-    ]
+    [entry, navigation]
   );
 
   const openLocationUnavailableError = useCallback(() => {
@@ -145,19 +117,7 @@ const SellCashRampLocationScreen: React.FC = () => {
     });
   }, [navigation]);
 
-  const openConsentFailureError = useCallback(
-    (title: string, description: string) => {
-      navigation.navigate(NAVIGATION_SCREENS.NEW_COMMON_ERROR, {
-        title,
-        description,
-        primaryButtonLabel: "Close",
-        dismissAction: "goBack",
-      });
-    },
-    [navigation]
-  );
-
-  const handleViewMoreDetails = useCallback(
+  const handleSellForCash = useCallback(
     (item: LocationCardItem) => {
       const profileState = getProfileResidentialStateCode(userData, usersMe);
       const { allowed } = isCashRampStoreStateAllowed(item.state, profileState);
@@ -165,35 +125,10 @@ const SellCashRampLocationScreen: React.FC = () => {
         openLocationUnavailableError();
         return;
       }
-      if (hasCashBuyLoadInstructionsAck(cashBuyUserId)) {
-        navigateToSellBarcode(item);
-        return;
-      }
-      pendingStoreRef.current = item;
-      setInstructionsModalOpen(true);
+      navigateToSellEnterAmount(item);
     },
-    [
-      cashBuyUserId,
-      navigateToSellBarcode,
-      openLocationUnavailableError,
-      userData,
-      usersMe,
-    ]
+    [navigateToSellEnterAmount, openLocationUnavailableError, userData, usersMe]
   );
-
-  const closeInstructionsModal = useCallback(() => {
-    setInstructionsModalOpen(false);
-    pendingStoreRef.current = null;
-  }, []);
-
-  const onPurchaseInstructionsConsented = useCallback(() => {
-    setInstructionsModalOpen(false);
-    const item = pendingStoreRef.current;
-    pendingStoreRef.current = null;
-    if (item) {
-      navigateToSellBarcode(item);
-    }
-  }, [navigateToSellBarcode]);
 
   const initialRegionRef = useRef({
     latitude: queryCenter.latitude,
@@ -203,6 +138,18 @@ const SellCashRampLocationScreen: React.FC = () => {
   });
 
   const showEmptyList = !isPending && !isError && mappedLocations.length === 0;
+
+  if (!entry) {
+    return (
+      <ScreenWrapper safeArea backgroundColor={theme.colors.black}>
+        <View style={styles.stateWrap}>
+          <CustomText variant="body" color={theme.colors.white}>
+            Missing sell details. Go back and try again.
+          </CustomText>
+        </View>
+      </ScreenWrapper>
+    );
+  }
 
   return (
     <ScreenWrapper
@@ -298,18 +245,11 @@ const SellCashRampLocationScreen: React.FC = () => {
             locations={mappedLocations}
             selectedId={selectedLocation?.id}
             onSelect={handleSelect}
-            onViewMoreDetails={handleViewMoreDetails}
+            onViewMoreDetails={handleSellForCash}
             footerMode="sell_code"
           />
         </View>
       )}
-      <CashBuyPurchaseInstructionsModal
-        visible={instructionsModalOpen}
-        userId={cashBuyUserId}
-        onClose={closeInstructionsModal}
-        onConsented={onPurchaseInstructionsConsented}
-        onConsentApiFailure={openConsentFailureError}
-      />
     </ScreenWrapper>
   );
 };

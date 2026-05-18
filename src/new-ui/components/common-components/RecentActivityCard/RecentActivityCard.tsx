@@ -11,6 +11,13 @@ import {
   resolveCashOnRampDisplayStatus,
 } from "./cashOnRampActivity";
 import {
+  formatCashOffRampCryptoAmount,
+  formatCashOffRampFiatAmount,
+  getCashOffRampCardTitle,
+  resolveCashOffRampDisplayStatus,
+} from "./cashOffRampActivity";
+import {
+  isCashOffRampActivity,
   isCashOnRampActivity,
   isTradeActivity,
   type IRecentActivityCardProps,
@@ -83,6 +90,55 @@ const RecentActivityCard: React.FC<IRecentActivityCardProps> = ({
           <CustomText style={styles.fiatAmount}>{formatCashOnRampFiatAmount(item)}</CustomText>
           <CustomText style={styles.cryptoAmount} numberOfLines={1}>
             {formatCashOnRampCryptoAmount(item)}
+          </CustomText>
+        </View>
+      </>
+    );
+
+    if (pressable) {
+      return (
+        <TouchableOpacity
+          style={styles.container}
+          onPress={() => onPress(item)}
+          activeOpacity={0.7}
+        >
+          {body}
+        </TouchableOpacity>
+      );
+    }
+
+    return <View style={styles.container}>{body}</View>;
+  }
+
+  if (isCashOffRampActivity(item)) {
+    const display = resolveCashOffRampDisplayStatus(item);
+    const statusColor =
+      display.colorKey === "success"
+        ? theme.colors.success
+        : display.colorKey === "error"
+          ? theme.colors.error
+          : theme.colors.warning;
+    const pressable = display.kind !== "expired" && onPress != null;
+
+    const body = (
+      <>
+        <View style={styles.iconCircle}>
+          <View style={styles.iconCircleInner}>
+            <CustomText style={styles.cashIconText}>RC</CustomText>
+          </View>
+        </View>
+        <View style={styles.textContainer}>
+          <CustomText style={styles.title} numberOfLines={1}>
+            {getCashOffRampCardTitle()}
+          </CustomText>
+          <CustomText style={[styles.statusSubtitle, { color: statusColor }]} numberOfLines={1}>
+            {display.label}
+          </CustomText>
+        </View>
+        <View style={styles.amountsColumn}>
+          <CustomText style={styles.fiatAmount}>{formatCashOffRampFiatAmount(item)}</CustomText>
+          <CustomText style={styles.cryptoAmount} numberOfLines={1}>
+            {formatCashOffRampCryptoAmount(item)}
           </CustomText>
         </View>
       </>

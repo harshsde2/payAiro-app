@@ -71,6 +71,54 @@ export interface ActivityCashOnRampQuoteDetails {
   transactionSystemRef?: string;
 }
 
+export interface ActivityCashOffRampQuoteDetails {
+  chain?: string | null;
+  feesMap?: Record<string, string>;
+  debitCurrencyCode?: string;
+  creditCurrencyCode?: string;
+  debitCurrencyAmount?: string;
+  creditCurrencyAmount?: string;
+  debitCurrencyUnitPrice?: string;
+  creditCurrencyUnitPrice?: string;
+  totalFees?: string;
+}
+
+export interface ActivityCashOffRampItem {
+  activity: "CASH_OFFRAMP";
+  id: number;
+  chain: string;
+  createdAt: string;
+  updatedAt?: string;
+  source?: string;
+  status?: string | null;
+  orderStatus?: string | null;
+  purpose?: string;
+  tradeType?: "buy" | "sell";
+  customerId?: string | null;
+  quoteId?: string | null;
+  paymentMethodId?: string | null;
+  providerTransactionId?: string | null;
+  providerTransactionRef?: string | null;
+  cryptoCurrencyCode?: string;
+  fiatCurrencyCode?: string;
+  amountValue: string;
+  amountCurrencyCode: string;
+  cashTrackingStatus?: string | null;
+  refundStatus?: string | null;
+  locationReference?: string | null;
+  locationDescription?: string | null;
+  locationAddress?: string | null;
+  locationHours?: string | null;
+  feesMap?: Record<string, string>;
+  quote?: {
+    details?: ActivityCashOffRampQuoteDetails;
+    request?: {
+      locationReference?: string | null;
+      chain?: string | null;
+    };
+  };
+}
+
 export interface ActivityCashOnRampItem {
   activity: "CASH_ONRAMP";
   id: number;
@@ -110,7 +158,8 @@ export interface ActivityCashOnRampItem {
 export type RecentActivityItem =
   | ActivityTradeItem
   | ActivitySendItem
-  | ActivityCashOnRampItem;
+  | ActivityCashOnRampItem
+  | ActivityCashOffRampItem;
 
 /** @deprecated Use RecentActivityItem */
 export type SendHistoryItem = RecentActivityItem;
@@ -145,6 +194,12 @@ export function isCashOnRampActivity(
   return String(item.activity ?? "").toUpperCase() === "CASH_ONRAMP";
 }
 
+export function isCashOffRampActivity(
+  item: RecentActivityItem
+): item is ActivityCashOffRampItem {
+  return String(item.activity ?? "").toUpperCase() === "CASH_OFFRAMP";
+}
+
 export function isSendActivity(item: RecentActivityItem): item is ActivitySendItem {
-  return !isTradeActivity(item) && !isCashOnRampActivity(item);
+  return !isTradeActivity(item) && !isCashOnRampActivity(item) && !isCashOffRampActivity(item);
 }

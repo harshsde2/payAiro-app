@@ -209,3 +209,51 @@ export const useCoinmeCashOfframpExecuteMutation = () => {
     },
   });
 };
+
+export type CoinmeCashOfframpPickupCodeResponse = {
+  ok?: boolean;
+  message?: string;
+  data?: {
+    transactionRecordId?: number;
+    partnerTransactionId?: string;
+    providerTransactionId?: string;
+    providerTransactionRef?: string;
+    ready?: boolean;
+    savedToDatabase?: boolean;
+  };
+};
+
+const PICKUP_CODE_POLL_MS = 5000;
+
+export const coinmePickupCodeKeys = {
+  pickupCode: (partnerTransactionId: string) =>
+    ["coinme", "cashOfframpPickupCode", partnerTransactionId] as const,
+};
+
+export async function fetchCashOfframpPickupCode(
+  partnerTransactionId: string
+): Promise<CoinmeCashOfframpPickupCodeResponse> {
+  const id = partnerTransactionId.trim();
+  if (!id) {
+    return { ok: false, message: "Missing transaction id" };
+  }
+  const url = `${USER_AUTH.COINME_CASH_OFFRAMP_PICKUP_CODE}?partnerTransactionId=${encodeURIComponent(id)}`;
+  const raw = await userApiClient.get<CoinmeCashOfframpPickupCodeResponse>(url);
+  return unwrapCoinmeBody<CoinmeCashOfframpPickupCodeResponse>(raw);
+}
+
+export function useCashOfframpPickupCodePoll(partnerTransactionId: string, enabled: boolean) {
+  const id = partnerTransactionId.trim();
+  return useQuery({
+    queryKey: coinmePickupCodeKeys.pickupCode(id),
+    queryFn: () => fetchCashOfframpPickupCode(id),
+    enabled: enabled && id.length > 0,
+    refetchInterval: (query) => {
+      const ready = query.state.data?.data?.ready === true;
+      return ready ? false : PICKUP_CODE_POLL_MS;
+    },
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    staleTime: 2_000,
+  });
+}

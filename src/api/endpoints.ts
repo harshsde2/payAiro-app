@@ -154,6 +154,8 @@ export const USER_AUTH = {
   PROFILE_UPDATE: "api/v1/users/profile/update/",
   ADDRESS_UPDATE: "api/v1/users/address/update/",
   USERS_ME: "api/v1/users/me/",
+  PHONE_OTP_REQUEST: "api/v1/users/me/phone-otp/request/",
+  PHONE_OTP_VERIFY: "api/v1/users/me/phone-otp/verify/",
   USERS_SEARCH: "api/v1/users/search/",
   CRYPTO_MARKET: "api/v1/integrations/crypto/market/",
   CRYPTO_BALANCE: "api/v1/integrations/crypto/balance/",
@@ -169,6 +171,7 @@ export const USER_AUTH = {
   COINME_ORDER_TEMPLATE: "api/v1/integrations/coinme/order-template/",
   COINME_ORDER_TEMPLATE_STATUS: "api/v1/integrations/coinme/order-template/status/",
   COINME_CASH_OFFRAMP_EXECUTE: "api/v1/integrations/coinme/cash-offramp/execute/",
+  COINME_CASH_OFFRAMP_PICKUP_CODE: "api/v1/integrations/coinme/cash-offramp/pickup-code/",
   SECURITY_PIN_SETTINGS: "api/v1/users/security/pin/",
   COINME_2FA_MOBILE_AUTH: "api/v1/users/me/coinme-2fa/mobile-auth/",
   USER_PROFILE_TRANSACTIONS: (targetUserId: number | string, limit: number = 50) =>

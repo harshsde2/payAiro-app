@@ -10,6 +10,7 @@ import { useAddPaymentMethod } from 'query/hooks/usePaymentMethods';
 import {
   debugLogCoinmeRiskEngine,
   fetchWebSessionId,
+  logCoinmeRiskBeforeAddCardApiCall,
 } from 'services/coinmeRiskLifecycle';
 import { useCoinmeAccountId } from 'hooks/useCoinmeAccountId';
 
@@ -87,18 +88,23 @@ const AddDebitCardModal: React.FC<AddDebitCardModalProps> = ({
         return;
       }
 
+      console.log('[AddDebitCard] starting Risk SDK cardlinking flow', {
+        accountId: coinmeAccountId,
+      });
+
       webSessionId = await fetchWebSessionId({
         accountId: coinmeAccountId,
         riskFlow: 'cardlinking',
       });
 
-      console.log('webSessionId =>', webSessionId);
-      if (__DEV__) {
-        await debugLogCoinmeRiskEngine('AddDebitCard:beforePaymentMethodsPOST', {
-          expectedWebSessionId: webSessionId,
-          accountId: coinmeAccountId,
-        });
-      }
+      await logCoinmeRiskBeforeAddCardApiCall({
+        accountId: coinmeAccountId,
+        webSessionId,
+        providerId: PROVIDER_ID,
+        paymentProcessAssociation: 'BUY',
+        riskFlow: 'cardlinking',
+      });
+
       const res = await addMutation.mutateAsync({
         providerId: PROVIDER_ID,
         card: {
@@ -125,12 +131,10 @@ const AddDebitCardModal: React.FC<AddDebitCardModalProps> = ({
         onAdded({ payment_method_id: `last4:${cleanedCardNumber.slice(-4)}` });
       }
     } catch (e: any) {
-      if (__DEV__) {
-        await debugLogCoinmeRiskEngine('AddDebitCard:afterPaymentMethodsFailure', {
-          expectedWebSessionId: webSessionId,
-          accountId: coinmeAccountId ?? undefined,
-        });
-      }
+      await debugLogCoinmeRiskEngine('AddDebitCard:afterPaymentMethodsFailure', {
+        expectedWebSessionId: webSessionId,
+        accountId: coinmeAccountId ?? undefined,
+      });
       const msg =
         e?.response?.data?.message ||
         e?.response?.data?.detail ||

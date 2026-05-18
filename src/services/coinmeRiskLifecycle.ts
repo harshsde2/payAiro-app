@@ -371,7 +371,7 @@ export async function fetchWebSessionId(
 
   await PayAiroCoinmeRisk.submit();
 
-  if (__DEV__) {
+  if (isCoinmeRiskDebugLoggingEnabled()) {
     await debugLogCoinmeRiskEngine("fetchWebSessionId:afterSubmit", {
       expectedWebSessionId: data.webSessionID,
       accountId,
@@ -392,6 +392,11 @@ function prefix(value: string | null | undefined): string {
   return value.length <= 8 ? value : `${value.slice(0, 8)}…`;
 }
 
+function isCoinmeRiskDebugLoggingEnabled(): boolean {
+  if (__DEV__) return true;
+  return (Config.ALLOW_DEV_TOOLS || "").trim().toLowerCase() === "true";
+}
+
 export type CoinmeRiskDebugLogOptions = {
   /** Full string from `getPartnerSessionTag` — logs strict equality vs engine `sessionKey`. */
   expectedWebSessionId?: string;
@@ -410,7 +415,7 @@ export async function debugLogCoinmeRiskEngine(
   context: string,
   options?: CoinmeRiskDebugLogOptions
 ): Promise<void> {
-  if (!__DEV__) return;
+  if (!isCoinmeRiskDebugLoggingEnabled()) return;
   if (!PayAiroCoinmeRisk.isModuleAvailable()) {
     console.log(`${TAG} [debug] ${context}: native module unavailable`);
     return;
@@ -433,7 +438,55 @@ export async function debugLogCoinmeRiskEngine(
           ? `  sessionKey===expectedWebSessionId: ${String(keysMatch)}`
           : "  sessionKey===expectedWebSessionId: (pass expectedWebSessionId to compare)")
     );
+    console.log(
+      `${TAG} [debug] ${context} (full ids for BE correlation)\n` +
+        `  webSessionId=${exp || "<empty>"}\n` +
+        `  customerId(engine)=${(cfg?.customerId ?? "").trim() || "<empty>"}\n` +
+        `  sessionKey(engine)=${sk || "<empty>"}`
+    );
   } catch (e) {
     console.warn(`${TAG} [debug] ${context} getConfig failed`, e);
   }
+}
+
+export type LogBeforeAddCardApiOptions = {
+  accountId: string;
+  webSessionId: string;
+  providerId: string;
+  paymentProcessAssociation: string;
+  riskFlow?: CoinmeFlowType;
+};
+
+/**
+ * Logs Risk SDK engine config + add-card API metadata immediately before
+ * POST payment-methods. Does not log PAN/CVV. Safe to call without completing add card.
+ */
+export async function logCoinmeRiskBeforeAddCardApiCall(
+  options: LogBeforeAddCardApiOptions
+): Promise<void> {
+  if (!isCoinmeRiskDebugLoggingEnabled()) return;
+
+  const partnerId = (Config.COINME_PARTNER_ID || "").trim();
+  const riskFlow = options.riskFlow ?? "cardlinking";
+  const fingerprint = await getDeviceFingerprint();
+  const initialized = PayAiroCoinmeRisk.isModuleAvailable()
+    ? await PayAiroCoinmeRisk.isInitialized()
+    : false;
+
+  console.log(
+    `${TAG} [AddCard] ── before payment-methods POST ──\n` +
+      `  platform=${Platform.OS} coinmeMode=${resolveCoinmeMode()}\n` +
+      `  riskFlow=${riskFlow} engineInitialized=${String(initialized)}\n` +
+      `  partnerId=${partnerId || "<empty>"}\n` +
+      `  accountId(caas)=${options.accountId}\n` +
+      `  webSessionId(body)=${options.webSessionId}\n` +
+      `  x-device-fingerprint(header)=${fingerprint}\n` +
+      `  providerId=${options.providerId} paymentProcessAssociation=${options.paymentProcessAssociation}`
+  );
+
+  await debugLogCoinmeRiskEngine("AddCard:beforePaymentMethodsPOST", {
+    expectedWebSessionId: options.webSessionId,
+    accountId: options.accountId,
+    partnerId,
+  });
 }

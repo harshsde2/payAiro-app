@@ -25,6 +25,10 @@ import { findWalletRowForSymbol } from "utils/findWalletRowForSymbol";
 import { SvgUri } from "react-native-svg";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { getCryptoDisplayTitle } from "utils/cryptoDisplayName";
+import {
+  navigateToSellCashRampFlow,
+  type SellCashRampEntryParams,
+} from "@new-ui/screens/CashRamp/Sell";
 
 const CyrptoDetails: React.FC = () => {
   const { theme } = useTheme();
@@ -73,6 +77,27 @@ const CyrptoDetails: React.FC = () => {
       ? ((chartData[chartData.length - 1].y - chartData[0].y) / chartData[0].y) *
         100
       : 0;
+
+  const fromWalletList = String(matchedWallet?.walletAddress ?? "").trim();
+  const fromRouteItem = String((cryptoItem as any)?.sourceWalletAddress ?? "").trim();
+  const resolvedSourceWallet = (fromWalletList || fromRouteItem) || undefined;
+
+  const sellEntryParams = useMemo<SellCashRampEntryParams>(
+    () => ({
+      cryptoCurrencyCode: String(cryptoItem?.asset || "").toUpperCase(),
+      chain: String((cryptoItem as any)?.chain || matchedWallet?.chain || "ETH").toUpperCase(),
+      fiatCurrencyCode: "USD",
+      sourceWalletAddress: resolvedSourceWallet,
+      platformAvailableCrypto: Number(cryptoItem?.platform_available ?? 0),
+      usdUnitPrice: Number(currentPrice || 0),
+      cryptoDisplayName: getCryptoDisplayTitle(
+        cryptoItem?.asset,
+        cryptoItem?.name ?? cryptoItem?.currency_name
+      ),
+      logo: cryptoItem?.logo ?? null,
+    }),
+    [cryptoItem, matchedWallet?.chain, currentPrice, resolvedSourceWallet]
+  );
 
   const styles = createStyles(theme);
 
@@ -206,12 +231,6 @@ const CyrptoDetails: React.FC = () => {
 
   // Buy / Sell flow through `EnterAmount` (Confirm → PIN → Result). Trade uses
   // Coinme execute after PIN only (no OTP). Send / Receive use legacy screens.
-  const fromWalletList = String(matchedWallet?.walletAddress ?? "").trim();
-  const fromRouteItem = String(
-    (cryptoItem as any)?.sourceWalletAddress ?? ""
-  ).trim();
-  const resolvedSourceWallet =
-    (fromWalletList || fromRouteItem) || undefined;
   const cryptoAsset = {
     asset: String(cryptoItem?.asset || "").toUpperCase(),
     chain: String(
@@ -260,13 +279,12 @@ const CyrptoDetails: React.FC = () => {
     {
       label: "Sell",
       icon: SvgIcons.NewSellIcon,
-      route: NAVIGATION_SCREENS.ENTER_AMOUNT,
-      params: { tradeMode: "sell" as const, cryptoAsset },
+      route: "",
+      params: {},
     },
   ];
 
-
-    const balanceData = [
+  const balanceData = [
         {
           id: "1",
           name: getCryptoDisplayTitle(
@@ -343,9 +361,17 @@ const CyrptoDetails: React.FC = () => {
           {actionButtons.map((button, index) => {
             const Icon = button?.icon;
             return (
-              <TouchableOpacity onPress={() => {
-                navigation.navigate(button?.route, button?.params as any);
-              }} key={index} style={styles.actionButton}>
+              <TouchableOpacity
+                onPress={() => {
+                  if (button.label === "Sell") {
+                    void navigateToSellCashRampFlow(navigation, sellEntryParams);
+                    return;
+                  }
+                  navigation.navigate(button?.route, button?.params as any);
+                }}
+                key={index}
+                style={styles.actionButton}
+              >
                 {button?.label != "Sell" ? (
                   <Icon />
                 ) : (

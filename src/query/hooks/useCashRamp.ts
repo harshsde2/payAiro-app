@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { USER_AUTH } from "api/endpoints";
 import { userApiClient } from "api/userApiClient";
 
@@ -80,5 +80,35 @@ export const useNearbyCashLocations = ({
     queryFn: () => userApiClient.get<CashRampNearbyResponse>(url),
     enabled: enabled && Number.isFinite(latitude) && Number.isFinite(longitude),
     placeholderData: keepPreviousData,
+  });
+};
+
+type FastApiOkBody = {
+  ok?: boolean;
+  message?: string;
+  data?: unknown;
+};
+
+export type PhoneOtpVerifyPayload = {
+  otp: string;
+};
+
+/** POST /api/v1/users/me/phone-otp/request/ — sends OTP to the user's registered phone. */
+export const useUserMePhoneOtpRequest = () => {
+  return useMutation<FastApiOkBody, Error, void>({
+    mutationFn: async () => {
+      return userApiClient.post<FastApiOkBody>(USER_AUTH.PHONE_OTP_REQUEST, {});
+    },
+  });
+};
+
+/** POST /api/v1/users/me/phone-otp/verify/ — verifies phone OTP for authenticated user. */
+export const useUserMePhoneOtpVerify = () => {
+  return useMutation<FastApiOkBody, Error, PhoneOtpVerifyPayload>({
+    mutationFn: async (payload) => {
+      return userApiClient.post<FastApiOkBody>(USER_AUTH.PHONE_OTP_VERIFY, {
+        otp: payload.otp,
+      });
+    },
   });
 };

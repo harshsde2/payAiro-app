@@ -69,6 +69,8 @@ const NewDashboard = () => {
   } = usePaymentTransactionHistory("all", 20);
   const { data: marketRows = [] } = useUserCryptoMarketList("USD");
 
+  // console.log("historyResponse =>", JSON.stringify(historyResponse, null, 2));
+
   const refreshAll = useCallback(() => {
     return Promise.allSettled([
       refetchMarket(),
@@ -303,7 +305,7 @@ const NewDashboard = () => {
                   } else if (!isCashOnRampActivity(item)) {
                     const isSendActivity = activityType === "SEND";
                     if (!isSendActivity) {
-                      const assetKey = (item.currency ?? item.chain ?? "")
+                      const assetKey = ((item as any).currency ?? item.chain ?? "")
                         .toString()
                         .toUpperCase();
                       usdForRow = assetKey ? priceByCurrency.get(assetKey) : undefined;

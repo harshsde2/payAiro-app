@@ -19,7 +19,58 @@ export type UnifiedTransactionType =
   | "crypto_withdrawal"
   | "crypto_deposit"
   | "crypto_swap"
-  | "cash_onramp";
+  | "cash_onramp"
+  | "cash_offramp";
+
+export type CashOffRampDisplayKind =
+  | "processing"
+  | "ready"
+  | "completed"
+  | "error"
+  | "failed"
+  | "expired";
+
+export interface ICashOnRampDetails {
+  order_status?: string | null;
+  payment_method?: string | null;
+  location_reference?: string | null;
+  retailer_label?: string | null;
+  transaction_provider_ref?: string | null;
+  transaction_system_ref?: string | null;
+  credit_currency_amount?: string | null;
+  credit_currency_code?: string | null;
+  debit_currency_unit_price?: string | null;
+  fees_map?: Record<string, string>;
+  processing_fee?: string | null;
+  network_fee?: string | null;
+  exchange_fee?: string | null;
+  processing_message?: string | null;
+}
+
+export interface ICashOffRampDetails {
+  display_kind: CashOffRampDisplayKind;
+  cash_tracking_status?: string | null;
+  provider_transaction_ref?: string | null;
+  provider_transaction_id?: string | null;
+  location_description?: string | null;
+  location_address?: string | null;
+  location_hours?: string | null;
+  sell_method: string;
+  ready_code_formatted?: string | null;
+  chain_label?: string | null;
+  crypto_code?: string | null;
+  crypto_amount?: string | null;
+  fiat_code?: string | null;
+  unit_price_usd?: string | null;
+  exchange_fee?: string | null;
+  atm_fee?: string | null;
+  total_sale_usd?: string | null;
+  total_cash_pickup_usd?: string | null;
+  fees_map?: Record<string, string>;
+  processing_message?: string | null;
+  error_title?: string | null;
+  error_body?: string | null;
+}
 
 // Transaction category enum
 export type TransactionCategory = "fiat" | "crypto";
@@ -147,6 +198,7 @@ export interface IUnifiedTransaction {
   tags: string[];
   refund_details: IRefundDetails | null;
   cash_onramp_details?: ICashOnRampDetails | null;
+  cash_offramp_details?: ICashOffRampDetails | null;
 }
 
 // Category percentages interface

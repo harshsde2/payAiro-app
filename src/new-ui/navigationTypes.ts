@@ -1,5 +1,11 @@
 import { NavigatorScreenParams } from "@react-navigation/native";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import type {
+  SellCashRampEntryParams,
+  SellCashRampLocationSnapshot,
+  SellCashRampSession,
+  SellCashRampWaitingParams,
+} from "@new-ui/screens/CashRamp/Sell/sellFlow.types";
 
 export type CommonErrorScreenParams = {
   title: string;
@@ -59,13 +65,15 @@ export type NewUIDashboardStackParamList = {
     chain: string;
     sourceWalletAddress?: string;
   };
-  [NAVIGATION_SCREENS.NEW_CASH_RAMP_SELL_LOCATION_FINDER]: {
-    amount: number;
-    fiatCurrencyCode: string;
-    cryptoCurrencyCode: string;
-    chain: string;
-    sourceWalletAddress?: string;
+  [NAVIGATION_SCREENS.NEW_CASH_RAMP_SELL_LOCATION_FINDER]: SellCashRampEntryParams;
+  [NAVIGATION_SCREENS.NEW_CASH_SELL_ENTER_AMOUNT]: SellCashRampEntryParams & {
+    location: SellCashRampLocationSnapshot;
   };
+  [NAVIGATION_SCREENS.NEW_CASH_SELL_SUMMARY]: { session: SellCashRampSession };
+  [NAVIGATION_SCREENS.NEW_CASH_SELL_OTP]: { session: SellCashRampSession };
+  [NAVIGATION_SCREENS.NEW_CASH_SELL_READY_CODE_WAITING]: SellCashRampWaitingParams;
+  [NAVIGATION_SCREENS.NEW_CASH_SELL_DAILY_LIMIT]: undefined;
+  [NAVIGATION_SCREENS.NEW_CASH_SELL_MONTHLY_LIMIT]: undefined;
   [NAVIGATION_SCREENS.NEW_COMMON_ERROR]: CommonErrorScreenParams;
   [NAVIGATION_SCREENS.NEW_CASH_RAMP_BARCODE]: {
     amount: number;

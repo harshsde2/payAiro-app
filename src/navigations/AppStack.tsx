@@ -91,6 +91,14 @@ import {
   LocationFinderScreen,
   SellCashRampLocationScreen,
 } from "@new-ui/screens/CashRamp";
+import {
+  SellDailyLimitScreen,
+  SellEnterAmountScreen,
+  SellMonthlyLimitScreen,
+  SellOtpPlaceholderScreen,
+  SellReadyCodeWaitingScreen,
+  SellSummaryScreen,
+} from "@new-ui/screens/CashRamp/Sell";
 import CommonErrorScreen from "@new-ui/screens/Auth/CommonError/CommonErrorScreen";
 
 const Stack = createNativeStackNavigator();
@@ -531,6 +539,36 @@ export default function AppStack() {
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.NEW_CASH_RAMP_SELL_LOCATION_FINDER}
         component={SellCashRampLocationScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.NEW_CASH_SELL_ENTER_AMOUNT}
+        component={SellEnterAmountScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: "Review sale" }}
+        name={NAVIGATION_SCREENS.NEW_CASH_SELL_SUMMARY}
+        component={SellSummaryScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.NEW_CASH_SELL_OTP}
+        component={SellOtpPlaceholderScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.NEW_CASH_SELL_READY_CODE_WAITING}
+        component={SellReadyCodeWaitingScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: "" }}
+        name={NAVIGATION_SCREENS.NEW_CASH_SELL_DAILY_LIMIT}
+        component={SellDailyLimitScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: "" }}
+        name={NAVIGATION_SCREENS.NEW_CASH_SELL_MONTHLY_LIMIT}
+        component={SellMonthlyLimitScreen}
       />
       <Stack.Screen
         options={{ headerShown: false }}

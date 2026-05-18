@@ -67,4 +67,9 @@ export const STORAGE_KEYS = {
   DEBUG_LAST_NOTIFICATION_AT: "debug_last_notification_at",
   /** Cash buy: user acknowledged wallet load instructions + consent API (suffix with user id when set). */
   CASH_BUY_LOAD_INSTRUCTIONS_ACK: "cash_buy_load_instructions_ack",
+  SELL_READY_CODE_WAIT_ACK: "sell_ready_code_wait_ack",
+  /** First-time "Find your ReadyCode in transaction history" on waiting screen. */
+  SELL_READY_CODE_HISTORY_ACK: "sell_ready_code_history_ack",
+  /** @deprecated Use SELL_READY_CODE_HISTORY_ACK */
+  SELL_READY_CODE_CLOSE_ACK: "sell_ready_code_close_ack",
 };

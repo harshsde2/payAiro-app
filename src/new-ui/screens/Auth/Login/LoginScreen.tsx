@@ -74,6 +74,7 @@ const LoginScreen: React.FC = () => {
         setButtonDisabled(false);
         if (data?.status && data) {
           showSuccess(successMessage);
+          console.log("data =>", JSON.stringify(data, null, 2));
           navigation.navigate(NAVIGATION_SCREENS.NEW_OTP_VERIFICATION, {
             email: isEmailInput ? validationResult.formattedValue : undefined,
             phone: !isEmailInput ? validationResult.formattedValue : undefined,
