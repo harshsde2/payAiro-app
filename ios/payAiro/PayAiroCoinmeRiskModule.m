@@ -38,6 +38,10 @@ RCT_EXTERN_METHOD(trackFocusChange:(NSString *)viewId
 RCT_EXTERN_METHOD(getConfig:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(executeSessionPipeline:(NSDictionary *)options
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
 RCT_EXTERN_METHOD(resetStoredSessionKey:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
@@ -49,7 +53,7 @@ RCT_EXTERN_METHOD(isInitialized:(RCTPromiseResolveBlock)resolve
 
 + (BOOL)requiresMainQueueSetup
 {
-    return NO;
+    return YES;
 }
 
 @end

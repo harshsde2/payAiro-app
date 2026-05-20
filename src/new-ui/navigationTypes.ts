@@ -7,6 +7,21 @@ import type {
   SellCashRampWaitingParams,
 } from "@new-ui/screens/CashRamp/Sell/sellFlow.types";
 
+export type Coinme2faAuthMethod = "mobile_auth" | "instant_link";
+
+export type CoinmeMobileAuthScreenParams = {
+  email?: string;
+  phone?: string;
+  username?: string;
+  inputType?: "email" | "phone" | "invalid";
+  isEmail?: boolean;
+  data?: any;
+  /** Default mobile_auth; instant_link after mobile-auth finish failure. */
+  authMethod?: Coinme2faAuthMethod;
+  /** Bumps initiate when switching 2FA method from Common Error. */
+  restartKey?: number;
+};
+
 export type CommonErrorScreenParams = {
   title: string;
   description: string;
@@ -17,6 +32,10 @@ export type CommonErrorScreenParams = {
    * Use "goBack" from dashboard / cash-ramp flows.
    */
   dismissAction?: "resetToCreateAccount" | "goBack";
+  /** Coinme mobile-auth finish failure: offer instant-link retry. */
+  showAlternateMethod?: boolean;
+  alternateMethodLabel?: string;
+  coinmeResumeParams?: CoinmeMobileAuthScreenParams;
 };
 
 export type NewUIAuthStackParamList = {
@@ -31,14 +50,7 @@ export type NewUIAuthStackParamList = {
     inputType?: "email" | "phone" | "invalid";
     isEmail?: boolean;
   };
-  [NAVIGATION_SCREENS.NEW_COINME_MOBILE_AUTH]: {
-    email?: string;
-    phone?: string;
-    username?: string;
-    inputType?: "email" | "phone" | "invalid";
-    isEmail?: boolean;
-    data?: any;
-  };
+  [NAVIGATION_SCREENS.NEW_COINME_MOBILE_AUTH]: CoinmeMobileAuthScreenParams;
   [NAVIGATION_SCREENS.NEW_COMMON_ERROR]: CommonErrorScreenParams;
   [NAVIGATION_SCREENS.NEW_KYC]: {
     firstName?: string;

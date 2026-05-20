@@ -236,6 +236,18 @@ export const useCoinmeMobileAuthRequest = () => {
   });
 };
 
+export const useCoinmeInstantLinkRequest = () => {
+  return useMutation<any, Error, CoinmeMobileAuthApiBody>({
+    mutationFn: async (body) => {
+      return userApiClient.post<any>(
+        USER_AUTH.COINME_2FA_INSTANT_LINK,
+        body,
+        false
+      );
+    },
+  });
+};
+
 export const useStepCount = () => {
   return useMutation<ApiResponse<any>, Error>({
     mutationFn: async (payload) => {

@@ -117,4 +117,31 @@ export const addBalanceStyles = (theme: ITheme) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
+    successModalBackdrop: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: theme.spacing.xl,
+    },
+    successModalCard: {
+      backgroundColor: theme.colors.background,
+      borderRadius: theme.radius.xl,
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.xl,
+      alignItems: 'center',
+      width: '100%',
+      maxWidth: 340,
+    },
+    successLottie: {
+      width: 250,
+      height: 150,
+    },
+    successTitle: {
+      marginTop: theme.spacing.md,
+      textAlign: 'center',
+    },
+    successMessage: {
+      marginTop: theme.spacing.sm,
+      textAlign: 'center',
+    },
   });

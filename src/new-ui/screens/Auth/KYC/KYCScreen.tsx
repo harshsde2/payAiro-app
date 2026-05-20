@@ -1,5 +1,7 @@
-import React, { useState, useCallback, useRef } from "react";
-import { View, TouchableOpacity } from "react-native";
+import React, { useState, useRef } from "react";
+import { View, TouchableOpacity, Pressable } from "react-native";
+import moment from "moment";
+import DatePicker from "components/common-components/DatePicker";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { useDispatch } from "react-redux";
@@ -20,7 +22,11 @@ import { AppIcon } from "@new-ui/assets/svgs";
 import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
 import { useUserProfileUpdate } from "query/hooks/useAPIAuth";
 import { validateEmail } from "utils/validation";
+import { setOnboardingStep } from "auth/authSession";
 import { showError, showSuccess } from "utils/toast";
+
+const DEFAULT_DOB = "1999-01-01";
+const DEFAULT_DOB_DATE = new Date(1999, 0, 1);
 
 const KYCScreen: React.FC = () => {
   const navigation = useNavigation<KYCScreenNavigationProp>();
@@ -41,7 +47,8 @@ const KYCScreen: React.FC = () => {
   const [lastName, setLastName] = useState(params.lastName || "");
   const [username, setUsername] = useState("");
   const [userEmail, setUserEmail] = useState((params.email || "").toLowerCase());
-  const [dob, setDob] = useState("");
+  const [dob, setDob] = useState(DEFAULT_DOB);
+  const [dobPickerOpen, setDobPickerOpen] = useState(false);
   const [ssn, setSsn] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -148,6 +155,7 @@ const KYCScreen: React.FC = () => {
         if (datas && datas?.status) {
           showSuccess("Profile updated successfully");
           dispatch(setProfileCompleted(true));
+          setOnboardingStep(1);
           navigation.navigate(NAVIGATION_SCREENS.NEW_ADDRESS);
         } else {
           showError("Failed to update profile");
@@ -229,14 +237,37 @@ const KYCScreen: React.FC = () => {
       </View>
 
       <View style={styles.inputContainer}>
-        <TextInput
-          label="Date of Birth"
-          placeholder="YYYY-MM-DD"
-          value={dob}
-          onChangeText={setDob}
-          autoCapitalize="none"
-        />
+        <Pressable onPress={() => setDobPickerOpen(true)}>
+          <TextInput
+            label="Date of Birth"
+            placeholder="YYYY-MM-DD"
+            value={dob}
+            editable={false}
+            pointerEvents="none"
+            autoCapitalize="none"
+          />
+        </Pressable>
       </View>
+
+      {dobPickerOpen && (
+        <DatePicker
+          modal
+          mode="date"
+          open={dobPickerOpen}
+          date={
+            moment(dob, "YYYY-MM-DD", true).isValid()
+              ? moment(dob, "YYYY-MM-DD").toDate()
+              : DEFAULT_DOB_DATE
+          }
+          maximumDate={new Date()}
+          title="Date of Birth"
+          onConfirm={(selectedDate) => {
+            setDobPickerOpen(false);
+            setDob(moment(selectedDate).format("YYYY-MM-DD"));
+          }}
+          onCancel={() => setDobPickerOpen(false)}
+        />
+      )}
 
       <View style={styles.inputContainer}>
         <TextInput

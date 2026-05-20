@@ -22,7 +22,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /**
  * PayAiro × Coinme Risk SDK native bridge for Android.
@@ -41,7 +46,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
 
-    private val moduleScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val moduleScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+    private val sdkMutex = Mutex()
 
     override fun getName(): String = MODULE_NAME
 
@@ -84,20 +90,24 @@ class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext)
 
     @ReactMethod
     fun update(options: ReadableMap, promise: Promise) {
-        if (!CoinmeRiskEngine.isInitialized()) {
-            promise.reject(
-                ErrorCodes.NOT_INITIALIZED,
-                "CoinmeRiskEngine is not initialized. Call setup() first."
-            )
-            return
-        }
-        try {
-            val updateOpts = parseUpdateOptions(options)
-            CoinmeRiskEngine.updateCoinmeRiskEngine(updateOpts)
-            promise.resolve(null)
-        } catch (e: Exception) {
-            Log.e(TAG, "update failed", e)
-            promise.reject(ErrorCodes.UNKNOWN_ERROR, e.localizedMessage ?: "update failed", e)
+        moduleScope.launch {
+            sdkMutex.withLock {
+                if (!CoinmeRiskEngine.isInitialized()) {
+                    promise.reject(
+                        ErrorCodes.NOT_INITIALIZED,
+                        "CoinmeRiskEngine is not initialized. Call setup() first."
+                    )
+                    return@withLock
+                }
+                try {
+                    val updateOpts = parseUpdateOptions(options)
+                    CoinmeRiskEngine.updateCoinmeRiskEngine(updateOpts)
+                    promise.resolve(null)
+                } catch (e: Exception) {
+                    Log.e(TAG, "update failed", e)
+                    promise.reject(ErrorCodes.UNKNOWN_ERROR, e.localizedMessage ?: "update failed", e)
+                }
+            }
         }
     }
 
@@ -156,32 +166,116 @@ class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext)
 
     @ReactMethod
     fun submit(promise: Promise) {
-        if (!CoinmeRiskEngine.isInitialized()) {
-            promise.reject(
-                ErrorCodes.NOT_INITIALIZED,
-                "CoinmeRiskEngine is not initialized. Call setup() first."
-            )
-            return
-        }
-        val settled = AtomicBoolean(false)
-        try {
-            CoinmeRiskEngine.submit(
-                onSuccess = {
-                    if (settled.compareAndSet(false, true)) promise.resolve(null)
-                },
-                onError = { e ->
-                    if (settled.compareAndSet(false, true)) {
-                        promise.reject(
-                            ErrorCodes.SUBMIT_FAILED,
-                            e.localizedMessage ?: "submit failed",
-                            e
-                        )
-                    }
+        moduleScope.launch {
+            sdkMutex.withLock {
+                if (!CoinmeRiskEngine.isInitialized()) {
+                    promise.reject(
+                        ErrorCodes.NOT_INITIALIZED,
+                        "CoinmeRiskEngine is not initialized. Call setup() first."
+                    )
+                    return@withLock
                 }
-            )
-        } catch (e: Exception) {
-            if (settled.compareAndSet(false, true)) {
-                promise.reject(ErrorCodes.SUBMIT_FAILED, e.localizedMessage ?: "submit failed", e)
+                try {
+                    submitAndWait()
+                    promise.resolve(null)
+                } catch (e: Exception) {
+                    promise.reject(
+                        ErrorCodes.SUBMIT_FAILED,
+                        e.localizedMessage ?: "submit failed",
+                        e
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Atomic session pipeline: resetSessionKey? → update(flow) → getPartnerSessionTag
+     * → update(sessionKey) → submit. Serialized on main thread to avoid Sardine races.
+     */
+    @ReactMethod
+    fun executeSessionPipeline(options: ReadableMap, promise: Promise) {
+        moduleScope.launch {
+            sdkMutex.withLock {
+                if (!CoinmeRiskEngine.isInitialized()) {
+                    promise.reject(
+                        ErrorCodes.NOT_INITIALIZED,
+                        "CoinmeRiskEngine is not initialized. Call setup() first."
+                    )
+                    return@withLock
+                }
+
+                try {
+                    if (optBool(options, "resetStoredSessionKey", false)) {
+                        CoinmeRiskEngine.resetStoredSessionKey()
+                    }
+
+                    val tagOpts = parsePartnerSessionTagOptions(options)
+                    val flow = optString(options, "riskFlow")?.let { parseFlowType(it) }
+                    val accountId = tagOpts.accountId
+
+                    CoinmeRiskEngine.updateCoinmeRiskEngine(
+                        RiskEngineUpdateOptions(
+                            customerId = accountId,
+                            sessionKey = null,
+                            flow = flow,
+                        )
+                    )
+
+                    val data = CoinmeRiskEngine.getPartnerSessionTag(tagOpts)
+
+                    CoinmeRiskEngine.updateCoinmeRiskEngine(
+                        RiskEngineUpdateOptions(
+                            customerId = accountId,
+                            sessionKey = data.webSessionID,
+                            flow = flow,
+                        )
+                    )
+
+                    submitAndWait()
+
+                    val result = Arguments.createMap().apply {
+                        putString("webSessionID", data.webSessionID)
+                        putString("orgID", data.orgID)
+                    }
+                    promise.resolve(result)
+                } catch (e: IllegalArgumentException) {
+                    promise.reject(ErrorCodes.INVALID_OPTIONS, e.message ?: "Invalid pipeline options")
+                } catch (e: SessionTagException) {
+                    promise.reject(
+                        ErrorCodes.PARTNER_SESSION_FAILED,
+                        e.localizedMessage ?: "executeSessionPipeline failed",
+                        e
+                    )
+                } catch (e: Exception) {
+                    promise.reject(
+                        ErrorCodes.PARTNER_SESSION_FAILED,
+                        e.localizedMessage ?: "executeSessionPipeline failed",
+                        e
+                    )
+                }
+            }
+        }
+    }
+
+    private suspend fun submitAndWait() {
+        suspendCancellableCoroutine { cont ->
+            val settled = AtomicBoolean(false)
+            try {
+                CoinmeRiskEngine.submit(
+                    onSuccess = {
+                        if (settled.compareAndSet(false, true)) cont.resume(Unit)
+                    },
+                    onError = { e ->
+                        if (settled.compareAndSet(false, true)) {
+                            cont.resumeWithException(e)
+                        }
+                    }
+                )
+            } catch (e: Exception) {
+                if (settled.compareAndSet(false, true)) {
+                    cont.resumeWithException(e)
+                }
             }
         }
     }
@@ -208,27 +302,22 @@ class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext)
             return
         }
 
-        val settled = AtomicBoolean(false)
         moduleScope.launch {
-            try {
-                val data = CoinmeRiskEngine.getPartnerSessionTag(tagOpts)
-                if (settled.compareAndSet(false, true)) {
+            sdkMutex.withLock {
+                try {
+                    val data = CoinmeRiskEngine.getPartnerSessionTag(tagOpts)
                     val result = Arguments.createMap().apply {
                         putString("webSessionID", data.webSessionID)
                         putString("orgID", data.orgID)
                     }
                     promise.resolve(result)
-                }
-            } catch (e: SessionTagException) {
-                if (settled.compareAndSet(false, true)) {
+                } catch (e: SessionTagException) {
                     promise.reject(
                         ErrorCodes.PARTNER_SESSION_FAILED,
                         e.localizedMessage ?: "getPartnerSessionTag failed",
                         e
                     )
-                }
-            } catch (e: Exception) {
-                if (settled.compareAndSet(false, true)) {
+                } catch (e: Exception) {
                     promise.reject(
                         ErrorCodes.PARTNER_SESSION_FAILED,
                         e.localizedMessage ?: "getPartnerSessionTag failed",

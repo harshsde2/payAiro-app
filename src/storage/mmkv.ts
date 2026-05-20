@@ -42,6 +42,9 @@ export const clearAll = (): void => {
 // Key constants for the app
 export const STORAGE_KEYS = {
   AUTH_TOKENS: "auth_tokens",
+  ONBOARDING_COMPLETE: "onboarding_complete",
+  AUTH_ONBOARDING_STEP: "auth_onboarding_step",
+  AUTH_RESUME_PARAMS: "auth_resume_params",
   USER_DATA: "user_data",
   WALLET_DATA: "wallet_data",
   BIOMETRIC_AVAILABLE: "biometric_available",

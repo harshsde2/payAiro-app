@@ -1,7 +1,12 @@
-/** PayArio redirect after Prove completes (must match backend / Coinme expectation). */
+/** PayAiro redirect after Prove mobile-auth completes. */
 export const PAYAIRO_COINME_COMPLETE_PATH_MARKER = "prove-2fa/complete";
 
-/** @deprecated Prefer PAYAIRO_COINME_COMPLETE_PATH_MARKER — old path slug; do not use for gate checks */
+/** PayAiro redirect after instant-link SMS flow completes. */
+export const PAYAIRO_INSTANT_LINK_COMPLETE_PATH_MARKER = "instant-link/complete";
+
+export type Coinme2faAuthMethod = "mobile_auth" | "instant_link";
+
+/** @deprecated Prefer PAYAIRO_COINME_COMPLETE_PATH_MARKER */
 export const COMPLETE_PATH = "/coinme/prove/2fa/complete";
 
 const MIN_VFP_LENGTH = 32;
@@ -11,15 +16,55 @@ export type CoinmeWebViewMessage = {
   vfp: string;
 };
 
-/** True only when navigation is PayArio’s final complete URL — not Prove’s first redirect. */
-export function isPayAiroCoinmeCompleteUrl(url: string): boolean {
+export type BuildCoinmeVfpInjectedJsOptions = {
+  pathMarkers: string[];
+  /** Instant-link only: extract vfp from complete HTML when path does not match. */
+  allowContentOnlyComplete?: boolean;
+};
+
+function normalizePathMarkers(
+  pathMarkers: string | string[]
+): string[] {
+  return Array.isArray(pathMarkers) ? pathMarkers : [pathMarkers];
+}
+
+export function getCompletePathMarkers(
+  authMethod: Coinme2faAuthMethod
+): string[] {
+  if (authMethod === "instant_link") {
+    return [
+      PAYAIRO_INSTANT_LINK_COMPLETE_PATH_MARKER,
+      PAYAIRO_COINME_COMPLETE_PATH_MARKER,
+    ];
+  }
+  return [PAYAIRO_COINME_COMPLETE_PATH_MARKER];
+}
+
+/** @deprecated Use getCompletePathMarkers */
+export function getCompletePathMarker(
+  authMethod: Coinme2faAuthMethod
+): string {
+  return getCompletePathMarkers(authMethod)[0];
+}
+
+export function isPayAiroCompleteUrl(
+  url: string,
+  pathMarkers: string | string[]
+): boolean {
   if (!url) return false;
+  const markers = normalizePathMarkers(pathMarkers);
+  if (!markers.length) return false;
   try {
     const u = new URL(url);
-    return u.pathname.includes(PAYAIRO_COINME_COMPLETE_PATH_MARKER);
+    return markers.some((m) => u.pathname.includes(m));
   } catch {
-    return url.includes(PAYAIRO_COINME_COMPLETE_PATH_MARKER);
+    return markers.some((m) => url.includes(m));
   }
+}
+
+/** @deprecated Use isPayAiroCompleteUrl(url, PAYAIRO_COINME_COMPLETE_PATH_MARKER) */
+export function isPayAiroCoinmeCompleteUrl(url: string): boolean {
+  return isPayAiroCompleteUrl(url, PAYAIRO_COINME_COMPLETE_PATH_MARKER);
 }
 
 /** @deprecated Use isPayAiroCoinmeCompleteUrl */
@@ -38,9 +83,11 @@ export function extractVfpFromUrl(url: string): string | null {
   }
 }
 
-/** Only returns vfp when URL is PayArio …/prove-2fa/complete?… — ignores Prove step-down URLs. */
-export function tryFinishVfpFromUrl(url: string): string | null {
-  if (!url || !isPayAiroCoinmeCompleteUrl(url)) return null;
+export function tryFinishVfpFromUrl(
+  url: string,
+  pathMarkers: string | string[]
+): string | null {
+  if (!url || !isPayAiroCompleteUrl(url, pathMarkers)) return null;
   return extractVfpFromUrl(url);
 }
 
@@ -62,19 +109,30 @@ export function parseCoinmeWebViewMessage(
   return null;
 }
 
-/** Marker string injected into WebView bundle (pathname check). */
-const PATH_MARKER_JS = PAYAIRO_COINME_COMPLETE_PATH_MARKER;
+export function buildCoinmeVfpInjectedJs(
+  pathMarkerOrOptions: string | BuildCoinmeVfpInjectedJsOptions
+): string {
+  const options: BuildCoinmeVfpInjectedJsOptions =
+    typeof pathMarkerOrOptions === "string"
+      ? { pathMarkers: [pathMarkerOrOptions] }
+      : pathMarkerOrOptions;
 
-/** Injected into WebView: only sends vfp from PayArio complete URL, not Prove?s first-screen vfp. */
-export const COINME_WEBVIEW_VFP_INJECTED_JS = `
+  const pathMarkers = options.pathMarkers;
+  const allowContentOnly = options.allowContentOnlyComplete === true;
+
+  return `
 (function() {
   var MIN_LEN = ${MIN_VFP_LENGTH};
-  var PATH_MARKER = ${JSON.stringify(PATH_MARKER_JS)};
+  var PATH_MARKERS = ${JSON.stringify(pathMarkers)};
+  var ALLOW_CONTENT_ONLY = ${allowContentOnly ? "true" : "false"};
   var sent = false;
 
-  function onPayairoCompleteUrl() {
+  function pathnameMatchesMarker() {
     var p = (window.location.pathname || "");
-    return p.indexOf(PATH_MARKER) !== -1;
+    for (var i = 0; i < PATH_MARKERS.length; i++) {
+      if (p.indexOf(PATH_MARKERS[i]) !== -1) return true;
+    }
+    return false;
   }
 
   function pageText() {
@@ -91,6 +149,12 @@ export const COINME_WEBVIEW_VFP_INJECTED_JS = `
     var combined = (parts.text + " " + parts.title).toLowerCase();
     return combined.indexOf("verification complete") !== -1 ||
       parts.text.indexOf("Verification fingerprint received") !== -1;
+  }
+
+  function onPayairoCompleteUrl() {
+    if (pathnameMatchesMarker()) return true;
+    if (ALLOW_CONTENT_ONLY && isCompletePage()) return true;
+    return false;
   }
 
   function extractVfpFromUrl() {
@@ -146,3 +210,9 @@ export const COINME_WEBVIEW_VFP_INJECTED_JS = `
   true;
 })();
 `;
+}
+
+/** Default injected script for mobile-auth complete path. */
+export const COINME_WEBVIEW_VFP_INJECTED_JS = buildCoinmeVfpInjectedJs({
+  pathMarkers: [PAYAIRO_COINME_COMPLETE_PATH_MARKER],
+});

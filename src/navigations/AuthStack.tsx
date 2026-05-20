@@ -35,10 +35,16 @@ function AuthStackHeader(props: React.ComponentProps<typeof CustomHeader>) {
   return <CustomHeader {...props} title={title} />;
 }
 
-export default function AuthStack() {
+type AuthStackProps = {
+  initialRouteName?: string;
+};
+
+export default function AuthStack({
+  initialRouteName = NAVIGATION_SCREENS.NEW_ONBOARDING,
+}: AuthStackProps) {
   return (
     <Stack.Navigator
-      initialRouteName={NAVIGATION_SCREENS.NEW_ONBOARDING}
+      initialRouteName={initialRouteName}
       screenOptions={{
         headerShown: false,
       }}

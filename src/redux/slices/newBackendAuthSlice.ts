@@ -73,6 +73,21 @@ const newBackendAuthSlice = createSlice({
     setSuccessMsg: (state, action: PayloadAction<string | null>) => {
       state.successMsg = action.payload;
     },
+    hydrateUserFromMe: (
+      state,
+      action: PayloadAction<UsersMePayload | null>
+    ) => {
+      state.usersMe = action.payload;
+      state.userData = action.payload?.user || null;
+      if (action.payload?.kyc) {
+        state.kycStatus = action.payload.kyc;
+      }
+    },
+    setAppAccessGranted: (state, action: PayloadAction<boolean>) => {
+      state.isLogin = action.payload;
+      state.isAuthenticated = action.payload;
+    },
+    /** @deprecated Use hydrateUserFromMe + setAppAccessGranted separately */
     setAuthBootstrapFromUserMe: (
       state,
       action: PayloadAction<UsersMePayload | null>
@@ -95,6 +110,8 @@ export const {
   setKycStatus,
   setErrorMsg,
   setSuccessMsg,
+  hydrateUserFromMe,
+  setAppAccessGranted,
   setAuthBootstrapFromUserMe,
   resetState,
 } = newBackendAuthSlice.actions;

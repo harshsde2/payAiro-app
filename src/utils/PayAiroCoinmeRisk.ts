@@ -91,6 +91,18 @@ export interface SessionTagData {
   orgID?: string | null;
 }
 
+/** Options for `executeSessionPipeline()` — one native call for the full session flow. */
+export interface ExecuteSessionPipelineOptions {
+  partnerId: string;
+  accountId: string;
+  fingerprint: string;
+  riskFlow?: CoinmeFlowType;
+  rampId?: string;
+  timeout?: number;
+  resetStoredSessionKey?: boolean;
+  additionalHeaders?: Record<string, string>;
+}
+
 /** Snapshot of the current mutable config (from `getConfig()`). */
 export interface CoinmeRiskConfig {
   customerId?: string | null;
@@ -275,6 +287,23 @@ class PayAiroCoinmeRiskClass {
       );
     }
     return this.invoke<SessionTagData>("getPartnerSessionTag", options);
+  }
+
+  /**
+   * Runs reset → update → getPartnerSessionTag → update(sessionKey) → submit
+   * in one serialized native call (avoids Sardine races between JS awaits).
+   */
+  async executeSessionPipeline(
+    options: ExecuteSessionPipelineOptions
+  ): Promise<SessionTagData> {
+    this.assertAvailable();
+    if (!options.partnerId || !options.accountId || !options.fingerprint) {
+      throw new CoinmeRiskError(
+        CoinmeRiskErrorCode.INVALID_OPTIONS,
+        "executeSessionPipeline requires partnerId, accountId, and fingerprint."
+      );
+    }
+    return this.invoke<SessionTagData>("executeSessionPipeline", options);
   }
 
   /**

@@ -1,4 +1,4 @@
-import { Platform } from "react-native";
+import { InteractionManager, Platform } from "react-native";
 import Config from "react-native-config";
 import {
   CoinmeRiskError,
@@ -37,6 +37,17 @@ let bootstrapPromise: Promise<void> | null = null;
 let lastKnownCustomerId: string | null = null;
 /** Last `riskFlow` applied via `update`; used to reset session when flow changes. */
 let lastSessionRiskFlow: CoinmeFlowType | null = null;
+
+/** Serializes all Coinme SDK bridge calls from JS (login + fetchWebSessionId). */
+let sdkOperationChain: Promise<void> = Promise.resolve();
+
+const LOGIN_DEFER_MS = 500;
+/** iOS: Sardine can SIGABRT if update() runs during post-login navigation. */
+const LOGIN_DEFER_MS_IOS = 2500;
+/** Pause between separate iOS bridge calls (avoids MobileIntelligence races). */
+const IOS_SDK_STEP_MS = 500;
+/** Let Sardine background work finish after submit() before resolving to JS. */
+const IOS_POST_SUBMIT_SETTLE_MS = 1200;
 
 const isIOS = Platform.OS === "ios";
 const isAndroid = Platform.OS === "android";
@@ -92,8 +103,9 @@ export async function bootstrapCoinmeRisk(): Promise<void> {
           partnerId: partnerId || undefined,
           flow: "onboarding",
           region: "default",
-          enableBehaviourBiometrics: true,
-          enableFieldTracking: true,
+          // Behaviour biometrics + field tracking both use Sardine MobileIntelligence.
+          enableBehaviourBiometrics: !isIOS,
+          enableFieldTracking: !isIOS,
           enableClipboardTracking: false,
           // iOS-only; Android bridge ignores this field. Leave false unless
           // the iOS entitlements include iCloud containers — the iOS SDK
@@ -152,6 +164,40 @@ async function ensureCoinmeRiskReady(): Promise<void> {
  *   "provided WebSessionId does not match with the saved one (code: 203-404-…)"
  * from the partner endpoints.
  */
+function enqueueSdkOperation<T>(operation: () => Promise<T>): Promise<T> {
+  const run = sdkOperationChain.then(operation, operation);
+  sdkOperationChain = run.then(
+    () => undefined,
+    () => undefined
+  );
+  return run;
+}
+
+/**
+ * Defer `onUserLoggedIn` until navigation/OTP UI has settled — reduces races
+ * with Sardine background work right after login.
+ */
+export function scheduleOnUserLoggedIn(
+  coinmeAccountId: string | undefined | null
+): void {
+  if (!isSupportedPlatform) return;
+  if (!PayAiroCoinmeRisk.isModuleAvailable()) return;
+
+  const id = typeof coinmeAccountId === "string" ? coinmeAccountId.trim() : "";
+  if (!id) return;
+
+  const deferMs = isIOS ? LOGIN_DEFER_MS_IOS : LOGIN_DEFER_MS;
+
+  InteractionManager.runAfterInteractions(() => {
+    setTimeout(() => {
+      // Single enqueue only — do not nest enqueueSdkOperation inside onUserLoggedIn.
+      enqueueSdkOperation(async () => {
+        await onUserLoggedIn(id);
+      }).catch(() => {});
+    }, deferMs);
+  });
+}
+
 export async function onUserLoggedIn(coinmeAccountId: string | undefined | null): Promise<void> {
   if (!isSupportedPlatform) return;
   if (!PayAiroCoinmeRisk.isModuleAvailable()) return;
@@ -162,9 +208,20 @@ export async function onUserLoggedIn(coinmeAccountId: string | undefined | null)
     return;
   }
 
-  await ensureCoinmeRiskReady();
-
   if (lastKnownCustomerId === id) return;
+
+  // iOS + CoinmeRiskSDK 1.1.1: customerId-only update() after login triggers
+  // MobileIntelligence double-free (SIGABRT) on a background queue. Track the id in
+  // JS; native customerId is set inside executeSessionPipeline (add card / trade).
+  if (isIOS) {
+    lastKnownCustomerId = id;
+    console.log(
+      `${TAG} login: customerId tracked (iOS); native update deferred to session pipeline`
+    );
+    return;
+  }
+
+  await ensureCoinmeRiskReady();
 
   try {
     await PayAiroCoinmeRisk.update({ customerId: id });
@@ -206,6 +263,7 @@ export async function onUserLoggedOut(): Promise<void> {
     bootstrapPromise = null;
     lastKnownCustomerId = null;
     lastSessionRiskFlow = null;
+    sdkOperationChain = Promise.resolve();
   }
 }
 
@@ -232,6 +290,92 @@ export interface FetchWebSessionIdOptions {
    * defaults to `onboarding`, which does not match partner payment-method APIs.
    */
   riskFlow?: CoinmeFlowType;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+type FetchWebSessionIdResolved = {
+  accountId: string;
+  partnerId: string;
+  fingerprint: string;
+  riskFlow?: CoinmeFlowType;
+  rampId?: string;
+  timeoutMs?: number;
+};
+
+/**
+ * iOS-only: stepped SDK calls with pauses instead of executeSessionPipeline.
+ * CoinmeRiskSDK 1.1.1 / Sardine can SIGABRT when update+tag+submit run back-to-back.
+ */
+async function fetchWebSessionIdIOSSteps(
+  options: FetchWebSessionIdResolved
+): Promise<string> {
+  const { accountId, partnerId, fingerprint, riskFlow, rampId, timeoutMs } = options;
+  const customerChanged = lastKnownCustomerId !== accountId;
+  const flowChanged = riskFlow != null && lastSessionRiskFlow !== riskFlow;
+  const shouldReset = customerChanged;
+
+  console.log(
+    `${TAG} fetchWebSessionId[iOS-stepped] reset=${String(shouldReset)} ` +
+      `flowChanged=${String(flowChanged)} riskFlow=${riskFlow ?? "<default>"}`
+  );
+
+  if (shouldReset) {
+    try {
+      await PayAiroCoinmeRisk.resetStoredSessionKey();
+    } catch {
+      /* ignore */
+    }
+    await sleep(IOS_SDK_STEP_MS);
+  }
+
+  await PayAiroCoinmeRisk.update({
+    customerId: accountId,
+    ...(riskFlow ? { flow: riskFlow } : {}),
+  });
+  await sleep(IOS_SDK_STEP_MS);
+
+  const data = await PayAiroCoinmeRisk.getPartnerSessionTag({
+    partnerId,
+    accountId,
+    fingerprint,
+    rampId,
+    timeout: timeoutMs ?? 10000,
+  });
+  await sleep(IOS_SDK_STEP_MS);
+
+  await PayAiroCoinmeRisk.update({
+    customerId: accountId,
+    ...(riskFlow ? { flow: riskFlow } : {}),
+    sessionKey: data.webSessionID,
+  });
+  await sleep(IOS_SDK_STEP_MS);
+
+  await PayAiroCoinmeRisk.submit();
+  await sleep(IOS_POST_SUBMIT_SETTLE_MS);
+
+  lastKnownCustomerId = accountId;
+  if (riskFlow) {
+    lastSessionRiskFlow = riskFlow;
+  } else if (customerChanged) {
+    lastSessionRiskFlow = null;
+  }
+
+  console.log(
+    `${TAG} fetchWebSessionId[iOS-stepped] ok webSessionID=${prefix(data.webSessionID)}`
+  );
+
+  if (isCoinmeRiskDebugLoggingEnabled()) {
+    await debugLogCoinmeRiskEngine("fetchWebSessionId:afterIOSteps", {
+      expectedWebSessionId: data.webSessionID,
+      accountId,
+      partnerId,
+    });
+  }
+
+  return data.webSessionID;
 }
 
 /**
@@ -262,128 +406,94 @@ export async function fetchWebSessionId(
     );
   }
 
-  await ensureCoinmeRiskReady();
-  const accountId = options.accountId?.trim();
-  if (!accountId) {
-    throw new CoinmeRiskError(
-      CoinmeRiskErrorCode.INVALID_OPTIONS,
-      "fetchWebSessionId requires a non-empty accountId."
-    );
-  }
-
-  const fingerprint =
-    options.fingerprint?.trim() || (await getDeviceFingerprint());
-
-  const partnerId = (options.partnerId || Config.COINME_PARTNER_ID || "").trim();
-  if (!partnerId) {
-    throw new CoinmeRiskError(
-      CoinmeRiskErrorCode.INVALID_OPTIONS,
-      "Missing Coinme partnerId (set COINME_PARTNER_ID in .env)."
-    );
-  }
-
-  const riskFlow = options.riskFlow;
-  const customerChanged = lastKnownCustomerId !== accountId;
-  const flowChanged =
-    riskFlow != null && lastSessionRiskFlow !== riskFlow;
-
-  if (customerChanged || flowChanged) {
-    try {
-      await PayAiroCoinmeRisk.resetStoredSessionKey();
-    } catch {
-      /* ignore */
+  return enqueueSdkOperation(async () => {
+    await ensureCoinmeRiskReady();
+    const accountId = options.accountId?.trim();
+    if (!accountId) {
+      throw new CoinmeRiskError(
+        CoinmeRiskErrorCode.INVALID_OPTIONS,
+        "fetchWebSessionId requires a non-empty accountId."
+      );
     }
-  }
 
-  try {
-    await PayAiroCoinmeRisk.update({
-      customerId: accountId,
-      ...(riskFlow ? { flow: riskFlow } : {}),
-    });
+    const fingerprint =
+      options.fingerprint?.trim() || (await getDeviceFingerprint());
+
+    const partnerId = (options.partnerId || Config.COINME_PARTNER_ID || "").trim();
+    if (!partnerId) {
+      throw new CoinmeRiskError(
+        CoinmeRiskErrorCode.INVALID_OPTIONS,
+        "Missing Coinme partnerId (set COINME_PARTNER_ID in .env)."
+      );
+    }
+
+    const riskFlow = options.riskFlow;
+
+    console.log(
+      `${TAG} fetchWebSessionId[${Platform.OS}] mode=${resolveCoinmeMode()} ` +
+        `partnerId=${partnerId} accountId=${accountId} ` +
+        `fingerprint=${fingerprint} riskFlow=${riskFlow ?? "<default>"}`
+    );
+
+    const resolved: FetchWebSessionIdResolved = {
+      accountId,
+      partnerId,
+      fingerprint,
+      riskFlow,
+      rampId: options.rampId,
+      timeoutMs: options.timeoutMs,
+    };
+
+    if (isIOS) {
+      return fetchWebSessionIdIOSSteps(resolved);
+    }
+
+    const customerChanged = lastKnownCustomerId !== accountId;
+    const flowChanged =
+      riskFlow != null && lastSessionRiskFlow !== riskFlow;
+
+    let data: SessionTagData;
+    try {
+      data = await PayAiroCoinmeRisk.executeSessionPipeline({
+        partnerId,
+        accountId,
+        fingerprint,
+        riskFlow,
+        rampId: options.rampId,
+        timeout: options.timeoutMs ?? 10000,
+        resetStoredSessionKey: customerChanged || flowChanged,
+      });
+    } catch (e) {
+      const err = e as Error & { code?: string; message?: string };
+      console.warn(
+        `${TAG} executeSessionPipeline FAILED code=${err?.code ?? "?"} ` +
+          `message=${err?.message ?? "<no message>"}`
+      );
+      throw e;
+    }
+
     lastKnownCustomerId = accountId;
     if (riskFlow) {
       lastSessionRiskFlow = riskFlow;
     } else if (customerChanged) {
       lastSessionRiskFlow = null;
     }
-  } catch (e) {
-    const err = e as Error & { code?: string; message?: string };
-    console.warn(
-      `${TAG} update(customerId/flow) FAILED code=${err?.code ?? "?"} ` +
-        `message=${err?.message ?? "<no message>"}`
+
+    console.log(
+      `${TAG} executeSessionPipeline ok webSessionID=${prefix(data.webSessionID)} ` +
+        `orgID=${prefix(data.orgID ?? "")}`
     );
-    throw e;
-  }
 
-  console.log(
-    `${TAG} fetchWebSessionId[${Platform.OS}] mode=${resolveCoinmeMode()} ` +
-      `partnerId=${partnerId} accountId=${accountId} ` +
-      `fingerprint=${fingerprint} riskFlow=${riskFlow ?? "<default>"}`
-  );
-  console.log("Partner ID: ", partnerId);
-  console.log("Account ID: ", accountId);
-  console.log("Fingerprint: ", fingerprint);
-  console.log("Risk Flow: ", riskFlow);
-  console.log("Ramp ID: ", options.rampId);
-  console.log("Timeout: ", options.timeoutMs);
-  
-  let data: SessionTagData;
-  try {
-    data = await PayAiroCoinmeRisk.getPartnerSessionTag({
-      partnerId,
-      accountId,
-      fingerprint,
-      rampId: options.rampId,
-      timeout: options.timeoutMs ?? 10000,
-    });
-  } catch (e) {
-    const err = e as Error & { code?: string; message?: string };
-    console.warn(
-      `${TAG} getPartnerSessionTag FAILED code=${err?.code ?? "?"} ` +
-        `message=${err?.message ?? "<no message>"}`
-    );
-    throw e;
-  }
+    if (isCoinmeRiskDebugLoggingEnabled()) {
+      await debugLogCoinmeRiskEngine("fetchWebSessionId:afterPipeline", {
+        expectedWebSessionId: data.webSessionID,
+        accountId,
+        partnerId,
+      });
+    }
 
-  console.log(
-    `${TAG} getPartnerSessionTag ok webSessionID=${prefix(data.webSessionID)} ` +
-      `orgID=${prefix(data.orgID ?? "")}`
-  );
-
-  // Bind the freshly minted webSessionID into the engine as `sessionKey`.
-  // Coinme's guidance: mint tag → update(sessionKey) → submit() → partner API.
-  // Re-assert customerId + flow in the same update so native RiskEngineUpdateOptions
-  // stays consistent (some stacks ignore sessionKey if customer/flow were stale).
-  try {
-    await PayAiroCoinmeRisk.update({
-      customerId: accountId,
-      ...(riskFlow ? { flow: riskFlow } : {}),
-      sessionKey: data.webSessionID,
-    });
-  } catch (e) {
-    const err = e as Error & { code?: string; message?: string };
-    console.warn(
-      `${TAG} update(sessionKey+customerId/flow) FAILED code=${err?.code ?? "?"} ` +
-        `message=${err?.message ?? "<no message>"}`
-    );
-    throw e;
-  }
-
-  await PayAiroCoinmeRisk.submit();
-
-  if (isCoinmeRiskDebugLoggingEnabled()) {
-    await debugLogCoinmeRiskEngine("fetchWebSessionId:afterSubmit", {
-      expectedWebSessionId: data.webSessionID,
-      accountId,
-      partnerId,
-    });
-  }
-
-  return data.webSessionID;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+    return data.webSessionID;
+  });
 }
 
 /** Truncate a value for safe logging (first 8 chars + ellipsis). */

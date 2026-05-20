@@ -8,3 +8,4 @@ export {
   RETAIL_CASH_PAYMENT_METHOD_ID,
 } from './AddNewCardPlaceholderModal';
 export { default as AddDebitCardModal } from './AddDebitCardModal';
+export { default as CardAddedSuccessModal } from './CardAddedSuccessModal';

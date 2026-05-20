@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import { CommonActions, useNavigation, useRoute } from "@react-navigation/native";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
 import CustomText from "@new-ui/components/common-components/CustomText";
@@ -19,6 +19,9 @@ const CommonErrorScreen: React.FC = () => {
     description,
     primaryButtonLabel = "Close",
     dismissAction = "resetToCreateAccount",
+    showAlternateMethod = false,
+    alternateMethodLabel = "Try with Another method",
+    coinmeResumeParams,
   } = route.params as CommonErrorScreenParams;
 
   const onClose = useCallback(() => {
@@ -36,6 +39,15 @@ const CommonErrorScreen: React.FC = () => {
     );
   }, [dismissAction, navigation]);
 
+  const onTryAlternateMethod = useCallback(() => {
+    if (!coinmeResumeParams) return;
+    navigation.replace(NAVIGATION_SCREENS.NEW_COINME_MOBILE_AUTH, {
+      ...coinmeResumeParams,
+      authMethod: "instant_link",
+      restartKey: Date.now(),
+    });
+  }, [coinmeResumeParams, navigation]);
+
   return (
     <ScreenWrapper
       gradient="none"
@@ -49,7 +61,20 @@ const CommonErrorScreen: React.FC = () => {
         <CustomText variant="body" style={styles.description}>
           {description}
         </CustomText>
-        <Button onPress={onClose}>{primaryButtonLabel}</Button>
+        {showAlternateMethod && coinmeResumeParams ? (
+          <TouchableOpacity
+            style={styles.alternateButton}
+            onPress={onTryAlternateMethod}
+            activeOpacity={0.85}
+          >
+            <CustomText variant="body" style={styles.alternateButtonText}>
+              {alternateMethodLabel}
+            </CustomText>
+          </TouchableOpacity>
+        ) : null}
+        <Button onPress={onClose} style={styles.primaryButton}>
+          {primaryButtonLabel}
+        </Button>
       </View>
     </ScreenWrapper>
   );

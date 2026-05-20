@@ -16,7 +16,6 @@ import {
   setCryptoData,
   setCurrentRoute,
   setFcmToken,
-  setLogin,
   setPendingRequest,
   setSelectedCurrency,
   setShowGuide,
@@ -30,10 +29,18 @@ import { getMechentPay } from "./src/services/Services";
 import { getItem, setItem, STORAGE_KEYS } from "./src/storage/mmkv";
 import { userApiClient } from "./src/api/userApiClient";
 import { USER_AUTH } from "./src/api/endpoints";
-import { setAuthBootstrapFromUserMe } from "./src/redux/slices/newBackendAuthSlice";
+import {
+  hydrateUserFromMe,
+  setAppAccessGranted,
+} from "./src/redux/slices/newBackendAuthSlice";
+import {
+  clearAuthSession,
+  readAuthSession,
+  getAuthStackInitialRoute,
+} from "./src/auth/authSession";
 import {
   bootstrapCoinmeRisk,
-  onUserLoggedIn as onCoinmeUserLoggedIn,
+  scheduleOnUserLoggedIn,
 } from "./src/services/coinmeRiskLifecycle";
 import { ThemeProvider } from "./src/styles";
 import { ThemeProvider as NewUIThemeProvider } from "./src/new-ui/styles/ThemeContext";
@@ -101,67 +108,69 @@ export default function App() {
 
   // Get all necessary data from storage and set in Redux
   const getInitialData = async () => {
-    const token = getItem(STORAGE_KEYS.AUTH_TOKENS) || null;
+    const session = readAuthSession();
     const guide = getItem(STORAGE_KEYS.GUIDE) || null;
     const selectedCurrency = getItem(STORAGE_KEYS.SELECTED_CURRENCY) || null;
     const totalDisbursable = getItem(STORAGE_KEYS.TOTAL_DISBURSABLE) || null;
     const cryptoData = getItem(STORAGE_KEYS.CRYPTO_DATA) || null;
     const allCryptoBalances = getItem(STORAGE_KEYS.ALL_CRYPTO_BALANCES) || null;
-    // setItem(STORAGE_KEYS.GUIDE, JSON.stringify(true));
 
-    console.log("token =>", JSON.stringify(token, null, 2));
-    // const redeem = getItem(STORAGE_KEYS.REDEEM_REWARD);
     const wallet = await getWalletDataAuth();
 
-    // Boot the Coinme Risk SDK exactly once per JS runtime, regardless of
-    // whether the user is currently logged in — setup is a prerequisite for
-    // every later SDK call and is cheap when the service is missing.
     bootstrapCoinmeRisk().catch(() => {});
 
-    if (token) {
-      // Store token in MMKV for React Query
-      // setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(token));]
-      // console.log("Token:", token?.token);
-      useDispatchAction(setTokens(JSON.parse(token)));
-      useDispatchAction(setShowGuide(JSON.parse(guide)));
+    if (session.tokens) {
+      useDispatchAction(setTokens(session.tokens));
+      if (guide) {
+        try {
+          useDispatchAction(setShowGuide(JSON.parse(guide)));
+        } catch {
+          // ignore invalid guide cache
+        }
+      }
 
-      // FastAPI profile bootstrap (new backend): `/api/v1/users/me/`
       try {
         const me = await userApiClient.get(USER_AUTH.USERS_ME);
         if (me?.ok && me?.data) {
           setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(me?.data?.user || {}));
-          useDispatchAction(setAuthBootstrapFromUserMe(me.data));
-          // Coinme keys risk data on the CAAS customer id (set during partner
-          // onboarding), not the Django user PK. Using the wrong one breaks
-          // every downstream partner call ("WebSessionId does not match").
+          useDispatchAction(hydrateUserFromMe(me.data));
           const coinmeAccountId = me.data?.caas_onboarding?.caas_customer_id;
           if (coinmeAccountId != null) {
-            onCoinmeUserLoggedIn(String(coinmeAccountId)).catch(() => {});
+            scheduleOnUserLoggedIn(String(coinmeAccountId));
           }
         }
       } catch (e) {
-        // Keep legacy behavior as fallback if profile bootstrap fails.
-        console.log("[App] Failed to fetch /users/me:", e?.message || e);
+        if (e?.response?.status === 401) {
+          clearAuthSession();
+          useDispatchAction(setTokens(null));
+          useDispatchAction(setAppAccessGranted(false));
+        } else {
+          console.log("[App] Failed to fetch /users/me:", e?.message || e);
+        }
       }
 
-      if (wallet) {
-        useDispatchAction(setWalletData(wallet));
-      }
-      getMerchentRequest(token);
-      useDispatchAction(setLogin(true));
+      const refreshed = readAuthSession();
+      if (refreshed.tokens && refreshed.onboardingComplete) {
+        if (wallet) {
+          useDispatchAction(setWalletData(wallet));
+        }
+        getMerchentRequest(refreshed.tokens);
+        useDispatchAction(setAppAccessGranted(true));
 
-      // Restore selectedCurrency, totalDisbursable, cryptoData, and allCryptoBalances from MMKV storage
-      if (selectedCurrency) {
-        useDispatchAction(setSelectedCurrency(JSON.parse(selectedCurrency)));
-      }
-      if (totalDisbursable) {
-        useDispatchAction(setTotalDisbursable(JSON.parse(totalDisbursable)));
-      }
-      if (cryptoData) {
-        useDispatchAction(setCryptoData(JSON.parse(cryptoData)));
-      }
-      if (allCryptoBalances) {
-        useDispatchAction(setAllCryptoBalances(JSON.parse(allCryptoBalances)));
+        if (selectedCurrency) {
+          useDispatchAction(setSelectedCurrency(JSON.parse(selectedCurrency)));
+        }
+        if (totalDisbursable) {
+          useDispatchAction(setTotalDisbursable(JSON.parse(totalDisbursable)));
+        }
+        if (cryptoData) {
+          useDispatchAction(setCryptoData(JSON.parse(cryptoData)));
+        }
+        if (allCryptoBalances) {
+          useDispatchAction(
+            setAllCryptoBalances(JSON.parse(allCryptoBalances))
+          );
+        }
       }
     }
 
@@ -539,7 +548,14 @@ export default function App() {
                         {isLogin && <KycBanner />}
                         {!splashVisible && <AppLockScreen />}
 
-                        {!isLogin ? <AuthStack /> : <AppStack />}
+                        {!isLogin ? (
+                          <AuthStack
+                            key={getAuthStackInitialRoute()}
+                            initialRouteName={getAuthStackInitialRoute()}
+                          />
+                        ) : (
+                          <AppStack />
+                        )}
                       </NavigationContainer>
                       {/* Toast moved outside NavigationContainer for proper z-index on iOS */}
                       <Toast />

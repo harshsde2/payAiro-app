@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { View } from "react-native";
 import { CommonActions, useNavigation, useRoute } from "@react-navigation/native";
 import WebView from "react-native-webview";
 import type { WebViewNavigation } from "react-native-webview";
+import type { WebView as WebViewType } from "react-native-webview";
 import { Canvas, RadialGradient, Rect, vec } from "@shopify/react-native-skia";
 import { AppIcon } from "@new-ui/assets/svgs";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
@@ -10,14 +11,23 @@ import CustomText from "@new-ui/components/common-components/CustomText";
 import { useTheme } from "@new-ui/styles/ThemeContext";
 import { coinmeMobileAuthStyles } from "@new-ui/styles/screens/auth/coinmeMobileAuthStyles";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import { useCoinmeMobileAuthRequest } from "query/hooks/useAPIAuth";
+import {
+  useCoinmeInstantLinkRequest,
+  useCoinmeMobileAuthRequest,
+} from "query/hooks/useAPIAuth";
+import { getAuthResumeParams } from "auth/authSession";
 import { getPublicDeviceIp } from "utils/getPublicDeviceIp";
+import type {
+  Coinme2faAuthMethod,
+  CoinmeMobileAuthScreenParams,
+} from "@new-ui/navigationTypes";
 import type {
   CoinmeMobileAuthScreenNavigationProp,
   CoinmeMobileAuthScreenRouteProp,
 } from "@new-ui/screens/Auth/types";
 import {
-  COINME_WEBVIEW_VFP_INJECTED_JS,
+  buildCoinmeVfpInjectedJs,
+  getCompletePathMarkers,
   parseCoinmeWebViewMessage,
   tryFinishVfpFromUrl,
 } from "@new-ui/screens/Auth/CoinmeMobileAuth/coinmeWebViewVfpScript";
@@ -55,14 +65,58 @@ const CoinmeMobileAuthScreen: React.FC = () => {
   const { theme } = useTheme();
   const styles = coinmeMobileAuthStyles(theme);
   const { mutateAsync: postCoinmeMobileAuth } = useCoinmeMobileAuthRequest();
+  const { mutateAsync: postCoinmeInstantLink } = useCoinmeInstantLinkRequest();
+
+  const authMethod: Coinme2faAuthMethod =
+    route.params?.authMethod ?? "mobile_auth";
+  const restartKey = route.params?.restartKey;
+
+  const completePathMarkers = useMemo(
+    () => getCompletePathMarkers(authMethod),
+    [authMethod]
+  );
+  const injectedJavaScript = useMemo(
+    () =>
+      buildCoinmeVfpInjectedJs({
+        pathMarkers: completePathMarkers,
+        allowContentOnlyComplete: authMethod === "instant_link",
+      }),
+    [authMethod, completePathMarkers]
+  );
 
   const [phase, setPhase] = useState<Phase>("loading_initiate");
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
-  const initStarted = useRef(false);
+  const webViewRef = useRef<WebViewType>(null);
+  const lastWebViewUrlRef = useRef("");
   const finishStarted = useRef(false);
   const webErrorShown = useRef(false);
   const initiateRequestIdRef = useRef<string | null>(null);
+
+  const coinmeResumeParams = useCallback((): CoinmeMobileAuthScreenParams => {
+    const p = route.params;
+    const resume = getAuthResumeParams();
+    return {
+      email: p?.email ?? resume?.email,
+      phone: p?.phone ?? resume?.phone,
+      username: p?.username ?? resume?.username,
+      inputType: p?.inputType ?? resume?.inputType,
+      isEmail: p?.isEmail ?? resume?.isEmail,
+      data: p?.data,
+    };
+  }, [route.params]);
+
+  const kycParams = useCallback(() => {
+    const resume = coinmeResumeParams();
+    return {
+      email: resume.email,
+      phone: resume.phone,
+      username: resume.username,
+      inputType: resume.inputType,
+      isEmail: resume.isEmail,
+      data: resume.data,
+    };
+  }, [coinmeResumeParams]);
 
   const openError = useCallback(
     (title: string, description: string) => {
@@ -74,26 +128,34 @@ const CoinmeMobileAuthScreen: React.FC = () => {
     [navigation]
   );
 
-  const kycParams = useCallback(() => {
-    const p = route.params;
-    return {
-      email: p.email,
-      phone: p.phone,
-      username: p.username,
-      inputType: p.inputType,
-      isEmail: p.isEmail,
-      data: p.data,
-    };
-  }, [route.params]);
+  const openFinishError = useCallback(
+    (title: string, description: string) => {
+      if (authMethod === "mobile_auth") {
+        navigation.navigate(NAVIGATION_SCREENS.NEW_COMMON_ERROR, {
+          title,
+          description,
+          showAlternateMethod: true,
+          alternateMethodLabel: "Try with Another method",
+          coinmeResumeParams: coinmeResumeParams(),
+        });
+        return;
+      }
+      openError(title, description);
+    },
+    [authMethod, coinmeResumeParams, navigation, openError]
+  );
 
   useEffect(() => {
-    if (initStarted.current) return;
-    initStarted.current = true;
-
     let cancelled = false;
+    finishStarted.current = false;
+    webErrorShown.current = false;
+    initiateRequestIdRef.current = null;
+    setPhase("loading_initiate");
+    setRedirectUrl(null);
 
     (async () => {
-      const phoneRaw = route.params?.phone;
+      const phoneRaw =
+        route.params?.phone ?? getAuthResumeParams()?.phone;
       if (!phoneRaw || normalizeUsNationalDigits(phoneRaw).length < 10) {
         openError(
           "Phone required",
@@ -118,16 +180,56 @@ const CoinmeMobileAuthScreen: React.FC = () => {
         return;
       }
 
-      const initiateBody = {
-        step: "initiate" as const,
-        phone_country_code: 1,
-        phone_national_number: national,
-        deviceIp,
-        consentTransactionId: "EXCM0005",
-        consentDescription: "Test descriptionAaa",
-        consentCollectedTimestamp: "2024-01-09",
-      };
       try {
+        if (authMethod === "instant_link") {
+          const resp = await postCoinmeInstantLink({
+            step: "initiate",
+            phone_country_code: 1,
+            phone_national_number: national,
+            deviceIp,
+          });
+          if (cancelled) return;
+
+          if (!resp?.ok) {
+            openError("Verification failed", messageFromCoinmeBody(resp));
+            return;
+          }
+
+          const coinmeData = resp?.data?.coinme?.data ?? {};
+          const authUrl =
+            coinmeData.authUrl ??
+            coinmeData.auth_url ??
+            resp?.data?.instant_link?.auth_url;
+          if (typeof authUrl !== "string" || !authUrl.trim()) {
+            openError(
+              "Verification failed",
+              "Missing verification link from the server. Please try again."
+            );
+            return;
+          }
+
+          const requestIdRaw =
+            coinmeData.requestId ?? coinmeData.request_id;
+          const requestId =
+            typeof requestIdRaw === "string" ? requestIdRaw.trim() : "";
+          if (requestId) {
+            initiateRequestIdRef.current = requestId;
+          }
+
+          setRedirectUrl(authUrl.trim());
+          setPhase("webview");
+          return;
+        }
+
+        const initiateBody = {
+          step: "initiate" as const,
+          phone_country_code: 1,
+          phone_national_number: national,
+          deviceIp,
+          consentTransactionId: "100001",
+          consentDescription: "Test descriptionAaa",
+          consentCollectedTimestamp: "2024-01-09",
+        };
         const resp = await postCoinmeMobileAuth(initiateBody);
         if (cancelled) return;
 
@@ -176,42 +278,79 @@ const CoinmeMobileAuthScreen: React.FC = () => {
     return () => {
       cancelled = true;
     };
-    // Intentionally run once on mount; route params are read at execution time.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [
+    authMethod,
+    restartKey,
+    openError,
+    postCoinmeInstantLink,
+    postCoinmeMobileAuth,
+    route.params?.phone,
+  ]);
 
   const runFinish = useCallback(
     async (vfp: string) => {
-      const phoneRaw = route.params?.phone;
+      const phoneRaw =
+        route.params?.phone ?? getAuthResumeParams()?.phone;
       if (!phoneRaw) {
         finishStarted.current = false;
-        openError("Verification failed", "Missing phone number.");
+        openFinishError("Verification failed", "Missing phone number.");
         return;
       }
       const national = normalizeUsNationalDigits(phoneRaw);
 
-      const requestId = initiateRequestIdRef.current;
-      if (!requestId?.trim()) {
-        openError(
-          "Verification failed",
-          "Session expired. Go back and start verification again."
-        );
-        finishStarted.current = false;
-        return;
-      }
-
       setPhase("loading_finish");
 
-      console.log("vfp", vfp);
-
-      const finishBody = {
-        step: "finish" as const,
-        requestId,
-        phone_country_code: 1,
-        phone_national_number: national,
-        verificationFingerprint: vfp,
-      };
       try {
+        if (authMethod === "instant_link") {
+          const finishBody: Record<string, unknown> = {
+            step: "finish",
+            phone_country_code: 1,
+            phone_national_number: national,
+            verificationFingerprint: vfp,
+          };
+          const requestId = initiateRequestIdRef.current;
+          if (requestId?.trim()) {
+            finishBody.requestId = requestId;
+          }
+
+          const resp = await postCoinmeInstantLink(finishBody);
+
+          if (resp?.ok === true && resp?.data?.phone_verified === true) {
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [
+                  {
+                    name: NAVIGATION_SCREENS.NEW_KYC,
+                    params: kycParams(),
+                  },
+                ],
+              })
+            );
+            return;
+          }
+
+          openFinishError("Verification failed", messageFromCoinmeBody(resp));
+          return;
+        }
+
+        const requestId = initiateRequestIdRef.current;
+        if (!requestId?.trim()) {
+          openFinishError(
+            "Verification failed",
+            "Session expired. Go back and start verification again."
+          );
+          finishStarted.current = false;
+          return;
+        }
+
+        const finishBody = {
+          step: "finish" as const,
+          requestId,
+          phone_country_code: 1,
+          phone_national_number: national,
+          verificationFingerprint: vfp,
+        };
         const resp = await postCoinmeMobileAuth(finishBody);
 
         if (resp?.ok === true && resp?.data?.phone_verified === true) {
@@ -229,16 +368,24 @@ const CoinmeMobileAuthScreen: React.FC = () => {
           return;
         }
 
-        openError("Verification failed", messageFromCoinmeBody(resp));
+        openFinishError("Verification failed", messageFromCoinmeBody(resp));
       } catch (e: any) {
         const msg =
           e?.response?.data?.message ||
           e?.message ||
           "Something went wrong. Please try again.";
-        openError("Request failed", String(msg));
+        openFinishError("Request failed", String(msg));
       }
     },
-    [kycParams, navigation, openError, postCoinmeMobileAuth, route.params?.phone]
+    [
+      authMethod,
+      kycParams,
+      navigation,
+      openFinishError,
+      postCoinmeInstantLink,
+      postCoinmeMobileAuth,
+      route.params?.phone,
+    ]
   );
 
   const tryStartFinish = useCallback(
@@ -250,14 +397,33 @@ const CoinmeMobileAuthScreen: React.FC = () => {
     [runFinish]
   );
 
+  const attemptFinishFromWebViewUrl = useCallback(
+    (url: string) => {
+      if (__DEV__ && authMethod === "instant_link" && url) {
+        // eslint-disable-next-line no-console
+        console.log("[Coinme2FA instant_link] WebView URL:", url);
+      }
+      const vfp = tryFinishVfpFromUrl(url, completePathMarkers);
+      if (vfp) tryStartFinish(vfp);
+    },
+    [authMethod, completePathMarkers, tryStartFinish]
+  );
+
   const onWebViewNavChange = useCallback(
     (navState: WebViewNavigation) => {
       const url = navState.url || "";
-      const vfp = tryFinishVfpFromUrl(url);
-      if (vfp) tryStartFinish(vfp);
+      lastWebViewUrlRef.current = url;
+      attemptFinishFromWebViewUrl(url);
     },
-    [tryStartFinish]
+    [attemptFinishFromWebViewUrl]
   );
+
+  const onWebViewLoadEnd = useCallback(() => {
+    webViewRef.current?.injectJavaScript(injectedJavaScript);
+    attemptFinishFromWebViewUrl(
+      lastWebViewUrlRef.current || redirectUrl || ""
+    );
+  }, [attemptFinishFromWebViewUrl, injectedJavaScript, redirectUrl]);
 
   const handleWebViewMessage = useCallback(
     (event: { nativeEvent: { data: string } }) => {
@@ -315,11 +481,13 @@ const CoinmeMobileAuthScreen: React.FC = () => {
         contentStyle={{ flex: 1 }}
       >
         <WebView
+          ref={webViewRef}
           style={styles.webview}
           source={{ uri: redirectUrl }}
-          injectedJavaScript={COINME_WEBVIEW_VFP_INJECTED_JS}
+          injectedJavaScript={injectedJavaScript}
           onMessage={handleWebViewMessage}
           onNavigationStateChange={onWebViewNavChange}
+          onLoadEnd={onWebViewLoadEnd}
           originWhitelist={["*"]}
           onError={() => {
             if (finishStarted.current || webErrorShown.current) return;

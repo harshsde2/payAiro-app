@@ -6,19 +6,24 @@ import CustomText from "@new-ui/components/common-components/CustomText";
 import { TextInput, Button } from "@new-ui/components/common-components/layout";
 import { useTheme } from "@new-ui/styles/ThemeContext";
 import { kycStyles } from "@new-ui/styles/screens/auth/kycStyles";
-import { useUserAddressUpdate, useUserMe } from "query/hooks/useAPIAuth";
+import { useUserAddressUpdate } from "query/hooks/useAPIAuth";
 import { showError, showSuccess } from "utils/toast";
-import { setItem, STORAGE_KEYS } from "storage/mmkv";
+import { abandonIncompleteSignup } from "auth/authSession";
+import { bootstrapMainAppSession } from "auth/bootstrapMainAppSession";
+import { resetState, setShowLoader } from "redux/slices/newBackendAuthSlice";
 import {
-  setAuthBootstrapFromUserMe,
-  setShowLoader,
-} from "redux/slices/newBackendAuthSlice";
-import { setStepCount, setAddressCompleted } from "redux/slices/newOnboardingSlice";
+  resetOnboardingState,
+  setAddressCompleted,
+  setStepCount,
+} from "redux/slices/newOnboardingSlice";
+import { useNavigation } from "@react-navigation/native";
+import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 
 const AddressScreen: React.FC = () => {
   const { theme } = useTheme();
   const styles = kycStyles(theme);
   const dispatch = useDispatch();
+  const navigation = useNavigation();
 
   const [addressLine1, setAddressLine1] = useState("");
   const [addressLine2, setAddressLine2] = useState("");
@@ -29,9 +34,7 @@ const AddressScreen: React.FC = () => {
 
   const { mutate: updateAddress, isPending: isAddressPending } =
     useUserAddressUpdate();
-  const { mutateAsync: fetchUserMe, isPending: isUserMePending } = useUserMe();
-
-  const isPending = isAddressPending || isUserMePending;
+  const isPending = isAddressPending;
 
   const handleSubmit = () => {
     const payload = {
@@ -66,19 +69,13 @@ const AddressScreen: React.FC = () => {
 
         dispatch(setShowLoader(true));
         try {
-          const meResp = await fetchUserMe();
-          if (meResp?.status && meResp?.data) {
-            dispatch(setAuthBootstrapFromUserMe(meResp.data));
-            dispatch(setStepCount(meResp?.data?.onboarding_step_count ?? 2));
-            setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(meResp.data?.user || {}));
+          const result = await bootstrapMainAppSession(dispatch);
+          if (result.ok) {
+            dispatch(setStepCount(2));
             showSuccess("Welcome to dashboard");
           } else {
-            showError("Failed to load user details");
+            showError(result.message || "Failed to load user details");
           }
-        } catch (e: any) {
-          showError(
-            e?.response?.data?.message || e?.message || "Failed to load user details"
-          );
         } finally {
           dispatch(setShowLoader(false));
         }
@@ -90,6 +87,16 @@ const AddressScreen: React.FC = () => {
             "Failed to update address"
         );
       },
+    });
+  };
+
+  const handleCancel = async () => {
+    await abandonIncompleteSignup();
+    dispatch(resetState());
+    dispatch(resetOnboardingState());
+    (navigation as any).reset({
+      index: 0,
+      routes: [{ name: NAVIGATION_SCREENS.NEW_ONBOARDING }],
     });
   };
 
@@ -177,6 +184,15 @@ const AddressScreen: React.FC = () => {
           disabled={isPending}
         >
           Continue
+        </Button>
+        <Button
+          onPress={handleCancel}
+          
+          style={styles.proceedButton}
+          // loading={isPending}
+          // disabled={isPending}
+        >
+          Cancel
         </Button>
       </View>
     </ScreenWrapper>

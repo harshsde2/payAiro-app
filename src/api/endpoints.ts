@@ -174,6 +174,7 @@ export const USER_AUTH = {
   COINME_CASH_OFFRAMP_PICKUP_CODE: "api/v1/integrations/coinme/cash-offramp/pickup-code/",
   SECURITY_PIN_SETTINGS: "api/v1/users/security/pin/",
   COINME_2FA_MOBILE_AUTH: "api/v1/users/me/coinme-2fa/mobile-auth/",
+  COINME_2FA_INSTANT_LINK: "api/v1/users/me/coinme-2fa/instant-link/",
   USER_PROFILE_TRANSACTIONS: (targetUserId: number | string, limit: number = 50) =>
     `api/v1/users/${targetUserId}/profile-transactions/?limit=${limit}`,
 };

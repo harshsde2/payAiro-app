@@ -164,7 +164,7 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
           </CustomText>
 
           <View style={logoutModalStyles.warningBox}>
-            <CustomText variant="body" style={logoutModalStyles.warningIcon}>⚠️</CustomText>
+            <AppIcon.AlertTriangle width={20} height={20} />
             <CustomText
               variant="body"
               size={14}
@@ -179,8 +179,8 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
           <View style={logoutModalStyles.buttonRow}>
             <Button
               color={theme.colors.primary}
-              borderRadius={999}
-              height={52}
+              // borderRadius={999}
+              // height={52}
               style={{ flex: 1 }}
               onPress={handleLogoutCancel}
             >
@@ -189,8 +189,8 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
 
             <Button
               color={theme.colors.error}
-              borderRadius={999}
-              height={52}
+              // borderRadius={999}
+              // height={52}
               style={{ flex: 1 }}
               onPress={handleLogoutConfirm}
             >

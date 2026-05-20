@@ -1,5 +1,5 @@
 import { queryClient } from "query/queryClient";
-import { resetState } from "redux/slices/authenticationSlice";
+import { resetState } from "redux/slices/newBackendAuthSlice";
 import { store } from "redux/store";
 import { clearAll } from "storage/mmkv";
 import { clearBiometric } from "services/Auth";

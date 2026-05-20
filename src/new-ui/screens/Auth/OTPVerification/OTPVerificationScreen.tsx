@@ -9,11 +9,15 @@ import { useTheme } from "@new-ui/styles/ThemeContext";
 import { otpVerificationStyles } from "@new-ui/styles/screens/auth/otpVerificationStyles";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { isProduction } from "config/env.config";
-import { useAppLock } from "hooks/useAppLock";
 import useDispatchAction from "hooks/useDispatchAction";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import { useUserSecurityPinSettings, useWalletDetails } from "query/hooks";
-import { useUserMe, useUserOtpRequest, useUserOtpVerify } from "query/hooks/useAPIAuth";
+import { useUserOtpRequest, useUserOtpVerify } from "query/hooks/useAPIAuth";
+import { bootstrapMainAppSession } from "auth/bootstrapMainAppSession";
+import {
+  persistTokens,
+  saveAuthResumeParams,
+  setOnboardingStep,
+} from "auth/authSession";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, TouchableOpacity, View } from "react-native";
 import { OtpInput, OtpInputRef } from "react-native-otp-entry";
@@ -22,14 +26,9 @@ import {
   startOtpListener,
 } from "react-native-otp-verify";
 import { useDispatch } from "react-redux";
-import {
-  setAuthBootstrapFromUserMe,
-  setShowLoader,
-  setTokens
-} from "redux/slices/newBackendAuthSlice";
+import { setShowLoader, setTokens } from "redux/slices/newBackendAuthSlice";
 import { ILoginPayload } from "screens/Authentications/types";
 import { setToken } from "services/Auth";
-import { onUserLoggedIn as onCoinmeUserLoggedIn } from "services/coinmeRiskLifecycle";
 import { getItem, setItem, STORAGE_KEYS } from "storage/mmkv";
 import { appContent } from "utils/appContent";
 import { getSmsHash } from "utils/smsHash";
@@ -61,7 +60,6 @@ const OTPVerificationScreen: React.FC = () => {
 
   const { mutate: verifyOtp } = useUserOtpVerify();
   const { mutate: otpRequest } = useUserOtpRequest();
-  const { mutateAsync: fetchUserMe } = useUserMe();
 
   const [otp, setOtp] = useState("");
   const otpInputRef = useRef<OtpInputRef>(null);
@@ -132,7 +130,7 @@ const OTPVerificationScreen: React.FC = () => {
     return () => clearInterval(intervalId);
   }, [updateCountdownFromTimestamp]);
 
- 
+
   const handleResendOTP = useCallback(() => {
     const successMessage = isPhoneLogin
       ? "OTP has been sent to your phone"
@@ -211,108 +209,55 @@ const OTPVerificationScreen: React.FC = () => {
       verifyOtp(verifyPayload, {
         onSuccess: async (data) => {
           if (data?.status) {
-            useDispatchAction(setTokens(data?.data));
-            await setToken(data?.data);
-            setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(data?.data));
+            const tokenPayload = data?.data ?? {};
+            useDispatchAction(setTokens(tokenPayload));
+            await setToken(tokenPayload);
+            persistTokens(tokenPayload);
+
+            const step =
+              typeof tokenPayload.step === "number"
+                ? tokenPayload.step
+                : Number(tokenPayload.step) || 0;
+            setOnboardingStep(step);
+
+            const resumeParams = {
+              email: isPhoneLogin ? undefined : email,
+              phone: isPhoneLogin ? phone : undefined,
+              username:
+                tokenPayload?.username ??
+                (!isPhoneLogin && email
+                  ? String(email).trim().toLowerCase()
+                  : undefined),
+              inputType,
+              isEmail,
+            };
+            saveAuthResumeParams(resumeParams);
+
             showSuccess("OTP Verified Successfully");
 
-            console.log("data =>", JSON.stringify(data, null, 2));
-
-            const { step } = data?.data ?? {};
-
             if (step === 0) {
-              if (isPhoneLogin && phone) {
-                (navigation as any).navigate(
-                  NAVIGATION_SCREENS.NEW_COINME_MOBILE_AUTH,
-                  {
-                    email: isPhoneLogin ? undefined : email,
-                    phone: isPhoneLogin ? phone : undefined,
-                    username:
-                      data?.data?.username ??
-                      (!isPhoneLogin && email
-                        ? String(email).trim().toLowerCase()
-                        : undefined),
-                    inputType,
-                    data: data?.data,
-                    isEmail: isEmail,
-                  }
-                );
-              } else {
-                (navigation as any).navigate(NAVIGATION_SCREENS.NEW_KYC, {
-                  email: isPhoneLogin ? undefined : email,
-                  phone: isPhoneLogin ? phone : undefined,
-                  username:
-                    data?.data?.username ??
-                    (!isPhoneLogin && email
-                      ? String(email).trim().toLowerCase()
-                      : undefined),
-                  inputType,
-                  data: data?.data,
-                  isEmail: isEmail,
-                });
-              }
+              (navigation as any).navigate(
+                NAVIGATION_SCREENS.NEW_COINME_MOBILE_AUTH,
+                {
+                  ...resumeParams,
+                  data: tokenPayload,
+                }
+              );
             } else if (step === 1) {
-              const existingWalletData = getItem(STORAGE_KEYS.WALLET_DATA);
-              const isOldUser = !!existingWalletData;
-              if (isOldUser) {
-                setItem(STORAGE_KEYS.KYC_CONGRATULATIONS_SHOWN, "true");
-              }
-              try {
-                dispatch(setShowLoader(true));
-                const meResp = await fetchUserMe();
-                if (meResp?.status && meResp?.data) {
-                  setItem(
-                    STORAGE_KEYS.USER_DATA,
-                    JSON.stringify(meResp.data?.user || {})
-                  );
-                  dispatch(setAuthBootstrapFromUserMe(meResp.data));
-                  const coinmeAccountId =
-                    meResp.data?.caas_onboarding?.caas_customer_id;
-                  if (coinmeAccountId != null) {
-                    onCoinmeUserLoggedIn(String(coinmeAccountId)).catch(() => {});
-                  }
-                } else {
-                  showError("Failed to load profile", "Please try again");
-                }
-              } catch (e: any) {
-                showError(
-                  e?.response?.data?.message ||
-                    e?.message ||
-                    "Failed to load profile",
-                  "Please try again"
-                );
-              } finally {
-                dispatch(setShowLoader(false));
-              }
+              (navigation as any).navigate(NAVIGATION_SCREENS.NEW_ADDRESS);
             } else if (step === 2) {
-              try {
-                dispatch(setShowLoader(true));
-                const meResp = await fetchUserMe();
-                if (meResp?.status && meResp?.data) {
-                  setItem(
-                    STORAGE_KEYS.USER_DATA,
-                    JSON.stringify(meResp.data?.user || {})
-                  );
-                  dispatch(setAuthBootstrapFromUserMe(meResp.data));
-                  const coinmeAccountId =
-                    meResp.data?.caas_onboarding?.caas_customer_id;
-                  if (coinmeAccountId != null) {
-                    onCoinmeUserLoggedIn(String(coinmeAccountId)).catch(() => {});
-                  }
-                } else {
-                  showError("Failed to load profile", "Please try again");
-                }
-              } catch (e: any) {
-                showError(
-                  e?.response?.data?.message ||
-                    e?.message ||
-                    "Failed to load profile",
-                  "Please try again"
-                );
-              } finally {
-                dispatch(setShowLoader(false));
+              dispatch(setShowLoader(true));
+              const result = await bootstrapMainAppSession(dispatch);
+              dispatch(setShowLoader(false));
+              if (!result.ok) {
+                showError(result.message || "Failed to load profile", "Please try again");
+              } else {
+                showSuccess("Logged in Successfully");
               }
             }
+
+            isVerifyingRef.current = false;
+            setIsVerifying(false);
           } else {
             showError("Invalid OTP. Please Try Again.");
             isVerifyingRef.current = false;
@@ -346,6 +291,7 @@ const OTPVerificationScreen: React.FC = () => {
       isEmail,
       verifyOtp,
       navigation,
+      dispatch,
     ]
   );
 
@@ -441,7 +387,7 @@ const OTPVerificationScreen: React.FC = () => {
         onPress={() => handleVerifyOTP()}
         disabled={!isOtpComplete || isVerifying}
         loading={isVerifying}
-        // style={styles.submitButton}
+      // style={styles.submitButton}
       >
         {isVerifying ? "Verifying..." : "Verify"}
       </Button>

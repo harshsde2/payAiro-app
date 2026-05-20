@@ -25,6 +25,11 @@ type RefreshBody = {
   data?: any;
   message?: string;
   toast_message?: string;
+  /** DRF SimpleJWT / flat refresh response */
+  access?: string;
+  refresh?: string;
+  access_token?: string;
+  refresh_token?: string;
 };
 
 let refreshPromise: Promise<Tokens | null> | null = null;
@@ -52,6 +57,18 @@ const persistTokensMerged = (tokens: Tokens) => {
   }
 };
 
+const readAccessRefresh = (
+  source: Record<string, unknown> | null | undefined
+): { access?: string; refresh?: string } => {
+  if (!source) return {};
+  const access = source.access ?? source.access_token;
+  const refresh = source.refresh ?? source.refresh_token;
+  return {
+    access: typeof access === "string" ? access : undefined,
+    refresh: typeof refresh === "string" ? refresh : undefined,
+  };
+};
+
 const extractTokensFromRefreshResponse = (
   body: RefreshBody,
   fallbackRefresh?: string | null
@@ -70,19 +87,21 @@ const extractTokensFromRefreshResponse = (
   if (typeof raw === "string") {
     access = raw;
   } else if (raw && typeof raw === "object") {
-    const t = raw as Record<string, unknown>;
-    const a = t.access ?? t.access_token;
-    const r = t.refresh ?? t.refresh_token;
-    if (typeof a === "string") access = a;
-    if (typeof r === "string") refreshFromBody = r;
+    const parsed = readAccessRefresh(raw as Record<string, unknown>);
+    access = parsed.access;
+    refreshFromBody = parsed.refresh;
+  }
+
+  // Flat DRF SimpleJWT: { access } or wrapped OTP-style at top level
+  if (!access) {
+    const top = readAccessRefresh(body as Record<string, unknown>);
+    access = top.access;
+    refreshFromBody = refreshFromBody ?? top.refresh;
   }
 
   const refresh =
-    typeof refreshFromBody === "string"
-      ? refreshFromBody
-      : typeof fallbackRefresh === "string"
-        ? fallbackRefresh
-        : undefined;
+    refreshFromBody ??
+    (typeof fallbackRefresh === "string" ? fallbackRefresh : undefined);
 
   if (typeof access === "string" && typeof refresh === "string") {
     return { access, refresh };
@@ -107,15 +126,18 @@ const refreshAccessToken = async (): Promise<Tokens | null> => {
     const d = resp.data?.data;
     const t = d?.tokens ?? d?.token ?? d;
     const tokenObj = t && typeof t === "object" ? t : null;
+    const flat = readAccessRefresh(resp.data as Record<string, unknown>);
     console.log("[UserAPI][TokenRefresh]", {
       ok: resp.data?.ok,
       accessInBody: !!(
+        flat.access ||
         (tokenObj && ("access" in tokenObj || "access_token" in tokenObj)) ||
         typeof t === "string"
       ),
       refreshInBody: !!(
-        tokenObj &&
-        ("refresh" in tokenObj || "refresh_token" in tokenObj)
+        flat.refresh ||
+        (tokenObj &&
+          ("refresh" in tokenObj || "refresh_token" in tokenObj))
       ),
     });
   }
