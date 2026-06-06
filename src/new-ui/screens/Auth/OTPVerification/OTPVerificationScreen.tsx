@@ -244,7 +244,14 @@ const OTPVerificationScreen: React.FC = () => {
                 }
               );
             } else if (step === 1) {
-              (navigation as any).navigate(NAVIGATION_SCREENS.NEW_ADDRESS);
+              dispatch(setShowLoader(true));
+              const result = await bootstrapMainAppSession(dispatch);
+              dispatch(setShowLoader(false));
+              if (!result.ok) {
+                showError(result.message || "Failed to load profile", "Please try again");
+              } else {
+                showSuccess("Logged in Successfully");
+              }
             } else if (step === 2) {
               dispatch(setShowLoader(true));
               const result = await bootstrapMainAppSession(dispatch);

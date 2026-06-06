@@ -93,6 +93,33 @@ type CoinmeTransactionData = {
   partnerTransactionId?: string;
 };
 
+// ── FastAPI payment-transaction send response ────────────────────────────────
+type PaymentTransactionSendData = {
+  message?: string;
+  data?: {
+    transaction?: { partnerTransactionId?: string; transactionStatus?: string };
+    paymentTransaction?: {
+      id?: number;
+      type?: string;           // "internal" | "external"
+      status?: string;
+      currency?: string;
+      chain?: string;
+      amount?: string;
+      destinationWalletAddress?: string;
+      recipientUserId?: string;
+      providerTransactionId?: string;
+      providerStatus?: string;
+      createdAt?: string;
+      updatedAt?: string;
+    };
+  };
+  errorResponse?: unknown;
+};
+
+const isPaymentTransactionSendResponse = (tx: any): tx is PaymentTransactionSendData =>
+  !!(tx && tx.data && tx.data.paymentTransaction);
+// ────────────────────────────────────────────────────────────────────────────
+
 type CoinmeTradeResponse = {
   ok?: boolean;
   message?: string;
@@ -376,6 +403,31 @@ const TransactionResult: FC = () => {
             </CustomText>
           );
         }
+        if (isPaymentTransactionSendResponse(transactionData)) {
+          const pt = transactionData.data?.paymentTransaction;
+          const amt = pt?.amount ?? '0';
+          const currency = pt?.currency ?? '';
+          const isExternal = pt?.type === 'external';
+          const dest = isExternal
+            ? pt?.destinationWalletAddress ?? 'wallet'
+            : pt?.recipientUserId ?? 'user';
+          const displayDest = isExternal && dest.length > 16
+            ? `${dest.slice(0, 8)}...${dest.slice(-6)}`
+            : dest;
+          return (
+            <CustomText variant="caption" size={16} fontFamily="inter" style={styles.description}>
+              Your crypto send of{' '}
+              <CustomText size={16} variant="caption" fontWeight="semiBold" color={newTheme.colors.primary} fontFamily="inter">
+                {`${amt} ${currency}`}
+              </CustomText>
+              {' '}to{' '}
+              <CustomText size={16} variant="caption" fontWeight="semiBold" color={newTheme.colors.primary} fontFamily="inter">
+                {displayDest}
+              </CustomText>
+              {' '}has been initiated.
+            </CustomText>
+          );
+        }
         return (
           <CustomText variant="caption" size={16} fontFamily="inter" style={styles.description}>
             Your payment of <CustomText size={16} variant="caption" fontWeight="semiBold" color={newTheme.colors.primary} fontFamily="inter" >{`$${(transactionData as any)?.data?.amount || 0}`}</CustomText> has successfully sent to <CustomText size={16} variant="caption" fontWeight="semiBold" color={newTheme.colors.primary} fontFamily="inter" >{(transactionData as any)?.data?.recipient_username || 'N/A'}</CustomText>.
@@ -424,6 +476,49 @@ const TransactionResult: FC = () => {
                   size={14}
                   fontWeight="semiBold"
                 >
+                  {item.value}
+                </CustomText>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      );
+    }
+
+    // FastAPI payment-transaction send response
+    if (isPaymentTransactionSendResponse(transactionData)) {
+      const pt = transactionData.data?.paymentTransaction;
+      const txn = transactionData.data?.transaction;
+      if (!pt) return null;
+
+      const isExternal = pt.type === 'external';
+      const destFull = isExternal
+        ? pt.destinationWalletAddress ?? ''
+        : pt.recipientUserId ?? '';
+      const displayDest = isExternal && destFull.length > 20
+        ? `${destFull.slice(0, 10)}...${destFull.slice(-8)}`
+        : destFull;
+
+      const rows: { label: string; value: string }[] = [
+        { label: 'Amount', value: `${pt.amount ?? ''} ${pt.currency ?? ''}`.trim() },
+        { label: 'Chain', value: pt.chain ?? '' },
+        { label: 'Type', value: pt.type === 'external' ? 'External (Wallet)' : 'Internal (PayAiro)' },
+        { label: 'To', value: displayDest },
+        { label: 'Status', value: pt.status ?? '' },
+        { label: 'Provider Status', value: pt.providerStatus ?? '' },
+        { label: 'Transaction ID', value: txn?.partnerTransactionId ?? pt.providerTransactionId ?? '' },
+        { label: 'Date', value: pt.createdAt ? moment(pt.createdAt).format('DD MMM YYYY  h:mm A') : '' },
+      ].filter(r => !!r.value);
+
+      return (
+        <ScrollView showsVerticalScrollIndicator={false} style={styles.detailsContainer}>
+          <View style={{ borderColor: newTheme.colors.greyLight2, borderWidth: 1, borderRadius: newTheme.spacing.base, paddingHorizontal: newTheme.spacing.md, paddingVertical: newTheme.spacing.xsm }}>
+            {rows.map((item, index) => (
+              <View key={index} style={styles.detailRow}>
+                <CustomText size={14} variant="caption" style={styles.detailLabel}>
+                  {item.label}
+                </CustomText>
+                <CustomText ellipsizeMode="tail" style={styles.detailValue} numberOfLines={1} size={14} fontWeight="semiBold">
                   {item.value}
                 </CustomText>
               </View>

@@ -12,6 +12,7 @@ export interface IWalletData {
   name?: string;
   last_name?: string;
   username?: string;
+  mobile_number?: string | null;
   created_at?: string;
   profile_photo?: string | null;
 }
@@ -54,4 +55,6 @@ export interface IProfileHeaderProps {
   isUploadingImage?: boolean;
   /** When false, hides camera button. Default: true */
   showCameraButton?: boolean;
+  /** When false, hides KYC badge under avatar. Default: true */
+  showKycBadge?: boolean;
 }

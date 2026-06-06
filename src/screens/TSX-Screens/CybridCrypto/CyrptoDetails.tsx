@@ -29,11 +29,13 @@ import {
   navigateToSellCashRampFlow,
   type SellCashRampEntryParams,
 } from "@new-ui/screens/CashRamp/Sell";
+import { SellTradeMethodPickerModal } from "@new-ui/components/common-components/AddBalance";
 
 const CyrptoDetails: React.FC = () => {
   const { theme } = useTheme();
   const route = useRoute();
   const navigation = useNavigation<any>();
+  const [sellMethodPickerVisible, setSellMethodPickerVisible] = useState(false);
 
   const routeParams = route.params as { item: CryptoRouteParams } | undefined;
   const cryptoItem = routeParams?.item as any;
@@ -364,7 +366,7 @@ const CyrptoDetails: React.FC = () => {
               <TouchableOpacity
                 onPress={() => {
                   if (button.label === "Sell") {
-                    void navigateToSellCashRampFlow(navigation, sellEntryParams);
+                    setSellMethodPickerVisible(true);
                     return;
                   }
                   navigation.navigate(button?.route, button?.params as any);
@@ -400,6 +402,20 @@ const CyrptoDetails: React.FC = () => {
             scrollEnabled={false}
           />
         </DashboardSection>
+
+        <SellTradeMethodPickerModal
+          visible={sellMethodPickerVisible}
+          onClose={() => setSellMethodPickerVisible(false)}
+          onSelectCash={() => {
+            void navigateToSellCashRampFlow(navigation, sellEntryParams);
+          }}
+          onSelectDebit={() => {
+            navigation.navigate(NAVIGATION_SCREENS.ENTER_AMOUNT, {
+              tradeMode: "sell",
+              cryptoAsset,
+            });
+          }}
+        />
     </ScreenWrapper>
   );
 };

@@ -6,6 +6,10 @@ import {
 } from "new-ui/components/common-components/RecentActivityCard/types";
 import { mapCashOnRampToUnified } from "new-ui/components/common-components/RecentActivityCard/cashOnRampActivity";
 import { mapCashOffRampToUnified } from "new-ui/components/common-components/RecentActivityCard/cashOffRampActivity";
+import {
+  resolveTradeDisplayStatus,
+  tradeDisplayStatusToUnified,
+} from "new-ui/components/common-components/RecentActivityCard/tradeActivity";
 import type {
   IDisplayParty,
   ITransactionParty,
@@ -91,11 +95,13 @@ export const mapRecentActivityToUnified = (
         ? String(item.amountValue ?? "0")
         : null;
 
+    const tradeStatus = tradeDisplayStatusToUnified(resolveTradeDisplayStatus(item));
+
     return {
       transaction_id: item.providerTransactionId || String(item.id),
       transaction_type: transactionType,
       transaction_category: "crypto",
-      status: "complete",
+      status: tradeStatus,
       amount: String(item.amountValue ?? "0"),
       final_amount: String(item.amountValue ?? "0"),
       currency,

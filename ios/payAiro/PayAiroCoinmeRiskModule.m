@@ -25,6 +25,9 @@ RCT_EXTERN_METHOD(getPartnerSessionTag:(NSDictionary *)options
 RCT_EXTERN_METHOD(submit:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(submitWithoutCallbacks:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
 RCT_EXTERN_METHOD(trackTextChange:(NSString *)viewId
                   text:(NSString *)text
                   resolver:(RCTPromiseResolveBlock)resolve

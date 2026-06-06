@@ -26,6 +26,7 @@ import {
   useCoinmeTradeExecute,
   useCryptoAssetsListData,
   useCryptoTransfer,
+  usePaymentTransactionSend,
   usePayPaymentRequest,
   useUserToUserTransfer,
 } from 'query/hooks';
@@ -91,6 +92,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     request_data,
     tradeMode,
     cryptoAsset,
+    recipientUserId,
   } =
     route.params || ({} as any);
   console.log("route.params on enter amount =>", JSON.stringify(route.params, null, 2));
@@ -163,10 +165,12 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   const { mutate: createPaymentRequest } = useCreatePaymentRequest();
   const { mutate: payPaymentRequest } = usePayPaymentRequest();
   const tradeExecute = useCoinmeTradeExecute();
+  const { mutate: sendPaymentTransaction, isPending: isSendingPaymentTx } = usePaymentTransactionSend();
   const isTradeMode =
     (tradeMode === 'buy' || tradeMode === 'sell') &&
     !!cryptoAsset &&
     typeof cryptoAsset === 'object';
+  const isCryptoSendMode = type === 'send' && !tradeMode;
   const tradeAssetSymbol = String(cryptoAsset?.asset || '').toUpperCase();
   const tradePriceUSD = Number(cryptoAsset?.currentPrice ?? 0);
 
@@ -321,14 +325,45 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     };
   }, [cryptoAsset, isTradeMode, tradeAssetSymbol, tradeMode, tradePriceUSD]);
 
+  const cryptoSendInitialSource = useMemo<FundingSource | null>(() => {
+    if (!isCryptoSendMode) return null;
+    if (!Array.isArray(cryptoSources) || cryptoSources.length === 0) return null;
+
+    const btc = cryptoSources.find((c) => String(c.asset ?? '').toUpperCase() === 'BTC');
+    const item = btc ?? cryptoSources[0];
+    if (!item) return null;
+
+    const symbol = String(item.asset || 'CRYPTO').toUpperCase();
+    const maxAssetBalance = Number(item.platform_available ?? item.rounded_balance ?? 0);
+    const maxUsdBalance = Number(item.usd_value_available ?? item.usd_value_total ?? 0);
+    const rawPrice = Number(item.usd_price ?? 0);
+    const derivedPrice = maxAssetBalance > 0 && maxUsdBalance > 0 ? maxUsdBalance / maxAssetBalance : 0;
+    const priceUSD = rawPrice > 0 ? rawPrice : derivedPrice;
+
+    return {
+      id: `crypto-${symbol}`,
+      name: symbol,
+      balance: maxAssetBalance,
+      type: 'crypto',
+      cryptoMeta: {
+        symbol,
+        network: symbol,
+        priceUSD,
+        maxAssetBalance,
+        logo: item.logo,
+      },
+    };
+  }, [cryptoSources, isCryptoSendMode]);
+
   const initialSelectedSource = useMemo(() => {
     if (tradeFundingSource) return tradeFundingSource;
+    if (cryptoSendInitialSource) return cryptoSendInitialSource;
     // For now we always default to the first main Payairo bank, if available.
     if (mainBanks.length > 0) {
       return convertToFundingSource(mainBanks[0]);
     }
     return null;
-  }, [convertToFundingSource, mainBanks, tradeFundingSource]);
+  }, [convertToFundingSource, cryptoSendInitialSource, mainBanks, tradeFundingSource]);
 
   const {
     amount,
@@ -352,7 +387,11 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     initialSelectedSource,
     transactionFeePercent,
     initialInputValue: requestedInitialInputValue,
-    initialInputMode: isTradeMode ? (tradeMode === 'sell' ? 'asset' : 'fiat') : 'fiat',
+    initialInputMode: isTradeMode
+      ? (tradeMode === 'sell' ? 'asset' : 'fiat')
+      : isCryptoSendMode
+        ? 'asset'
+        : 'fiat',
     preferFiatCryptoEntry: isTradeMode && tradeMode === 'buy',
   });
 
@@ -728,6 +767,53 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     );
   }, [handleCryptoTransfer, navigation, queryClient, showError]);
 
+  const handleCryptoSendViaPaymentTransaction = useCallback(() => {
+    if (!selectedSource?.cryptoMeta) {
+      showError('Please select a crypto asset');
+      return;
+    }
+
+    const symbol = selectedSource.cryptoMeta.symbol;
+    const chain = selectedSource.cryptoMeta.network || symbol;
+    const amountStr = String(assetAmount.toFixed(8)).replace(/\.?0+$/, '') || '0';
+
+    const payload = recipientUserId
+      ? ({ type: 'internal', amount: amountStr, currency: symbol, chain, recipientUserId } as const)
+      : ({ type: 'external', amount: amountStr, currency: symbol, chain, destinationWalletAddress: recipient_identifier || '' } as const);
+
+    navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+      isLoading: true, transactionData: null, isSuccess: false, isError: false,
+    } as never);
+
+    sendPaymentTransaction(payload, {
+      onSuccess: (data) => {
+        queryClient.invalidateQueries({ queryKey: cryptoKeys.allCryptoBalances() });
+        const ok = data?.ok ?? data?.status ?? true;
+        navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+          isLoading: false, transactionData: data, isSuccess: !!ok, isError: !ok,
+        } as never);
+        if (!ok) showError((data as any)?.message || 'Transaction failed. Please try again.');
+      },
+      onError: (error: unknown) => {
+        const e = error as { response?: { data?: { message?: string } }; message?: string };
+        const msg = e?.response?.data?.message || e?.message || 'Something went wrong. Please try again.';
+        navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+          isLoading: false, transactionData: null, isSuccess: false, isError: true,
+        } as never);
+        showError(msg);
+      },
+    });
+  }, [
+    assetAmount,
+    navigation,
+    queryClient,
+    recipient_identifier,
+    recipientUserId,
+    selectedSource,
+    sendPaymentTransaction,
+    showError,
+  ]);
+
   const handleTradeExecute = useCallback(async () => {
     if (!isTradeMode || !cryptoAsset) return;
     if (!coinmeAccountId) {
@@ -845,14 +931,20 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
       handleTradeExecute();
       return;
     }
+    if (isCryptoSendMode) {
+      handleCryptoSendViaPaymentTransaction();
+      return;
+    }
     navigation.navigate(NAVIGATION_SCREENS.OTP_SCREEN, {
       onOTPVerified: handleActionsAfterOTPVerified,
       transactionType: isCryptoMode ? 'crypto_send' : type,
     });
   }, [
     handleActionsAfterOTPVerified,
+    handleCryptoSendViaPaymentTransaction,
     handleTradeExecute,
     isCryptoMode,
+    isCryptoSendMode,
     isTradeMode,
     navigation,
     type,
@@ -1081,7 +1173,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
               />
             )}
             {!isTradeMode || tradePaymentRail === 'debit' ? (
-              <PayButton disabled={isPaying} onPress={handlePayPress} />
+              <PayButton disabled={isPaying || isSendingPaymentTx} onPress={handlePayPress} />
             ) : null}
             {isTradeMode && tradePaymentRail === 'retail_cash' ? (
               <Button
@@ -1097,7 +1189,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
 
         {isSelectorOpen && isCryptoMode && !isTradeMode ? (
           <FundingSourceSelectorModal
-            sources={sources}
+            sources={isCryptoSendMode ? [] : sources}
             cryptoSources={cryptoSourcesForModal}
             selectedSource={selectedSource}
             onSelect={(source) => setSelectedSource(source)}
@@ -1127,6 +1219,11 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
             }
           }}
           onRequestAddCard={() => setAddCardVisible(true)}
+          onPaymentMethodDeleted={(id) => {
+            if (selectedPaymentMethod?.payment_method_id === id) {
+              setSelectedPaymentMethod(null);
+            }
+          }}
         />
 
         <AddDebitCardModal

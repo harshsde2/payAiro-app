@@ -53,6 +53,7 @@ import ApplePay from './ApplePay.svg';
 import SocialMediaIcons from './SocialMediaIcons.svg';
 import Stars from './Stars.svg';
 import AlertTriangle from './AlertTriangle.svg';
+import TransactionLimit from './TransactionLimit.svg';
 
 export const AppIcon = {
   Home,
@@ -110,4 +111,5 @@ export const AppIcon = {
   SocialMediaIcons,
   Stars,
   AlertTriangle,
+  TransactionLimit,
 };

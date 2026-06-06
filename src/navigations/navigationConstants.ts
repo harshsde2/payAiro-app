@@ -58,6 +58,8 @@ export const NAVIGATION_SCREENS = {
   NEW_SETTINGS_SCREEN: "NewSettingsScreen",
   NEW_COINME_AGREEMENT_SCREEN: "NewCoinmeAgreementScreen",
   NEW_NOTIFICATION_SCREEN: "NewNotificationScreen",
+  TRANSACTION_LIMIT_SCREEN: "TransactionLimitsScreen",
+  PAYMENT_METHODS_SCREEN: "PaymentMethodsScreen",
   RECEIVE: "Receive",
   REWARDS: "Rewards",
   SETTING_SCREEN: "SettingScreen",

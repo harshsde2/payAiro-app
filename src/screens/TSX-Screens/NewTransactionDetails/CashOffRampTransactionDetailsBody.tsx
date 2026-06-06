@@ -242,13 +242,19 @@ const CashOffRampTransactionDetailsBody: React.FC<Props> = ({
     if (displayKind === "ready") {
       return (
         <View style={styles.statusCard}>
-          <CustomText variant="caption" style={styles.statusCardBody}>
+          <CustomText variant="caption" align="center" style={styles.statusCardBody}>
             {CASH_OFFRAMP_READY_CODE_LABEL}
           </CustomText>
-          <CustomText variant="h1" fontWeight="bold" style={styles.readyCodeValue} selectable>
+          <CustomText
+            variant="h1"
+            fontWeight="bold"
+            align="center"
+            style={styles.readyCodeValue}
+            selectable
+          >
             {readyCodeFormatted ?? "—"}
           </CustomText>
-          <CustomText variant="body" style={styles.phoneLine}>
+          <CustomText variant="body" align="center" style={styles.phoneLine}>
             {phoneDisplay}
           </CustomText>
           <CustomText variant="caption" style={styles.pickupDisclaimer}>

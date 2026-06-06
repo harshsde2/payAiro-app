@@ -38,4 +38,8 @@ export const contactsScreenStyles = (theme: ITheme) =>
     allContactsGap: {
       gap: theme.spacing.sm,
     },
+    sectionLoader: {
+      paddingVertical: theme.spacing.md,
+      alignItems: 'center',
+    },
   });

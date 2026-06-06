@@ -34,8 +34,24 @@ import IconWithNameContainer from "@new-ui/components/common-components/IconWith
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { navigateFromRecentActivity } from "query/utils/navigateFromRecentActivity";
 import { isCashOnRampActivity } from "new-ui/components/common-components/RecentActivityCard/types";
+import {
+  getUserContactAvatar,
+  getUserContactDisplayName,
+  getUserContactSendIdentifier,
+  IUserContact,
+  useUserContacts,
+} from "query/hooks/useContact";
 
 const DASHBOARD_AUTO_REFRESH_MIN_MS = 45_000;
+const DASHBOARD_RECENT_CONTACTS_LIMIT = 4;
+
+const getContactInitials = (name: string): string => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+};
 
 const NewDashboard = () => {
   const { theme } = useTheme();
@@ -68,16 +84,21 @@ const NewDashboard = () => {
     refetch: refetchHistory,
   } = usePaymentTransactionHistory("all", 20);
   const { data: marketRows = [] } = useUserCryptoMarketList("USD");
-
-  // console.log("historyResponse =>", JSON.stringify(historyResponse, null, 2));
+  const {
+    data: userContactsData,
+    isLoading: isContactsLoading,
+    isRefetching: isContactsRefetching,
+    refetch: refetchUserContacts,
+  } = useUserContacts();
 
   const refreshAll = useCallback(() => {
     return Promise.allSettled([
       refetchMarket(),
       refetchBalance(),
       refetchHistory(),
+      refetchUserContacts(),
     ]);
-  }, [refetchMarket, refetchBalance, refetchHistory]);
+  }, [refetchMarket, refetchBalance, refetchHistory, refetchUserContacts]);
 
   const throttledAutoRefresh = useCallback(() => {
     const now = Date.now();
@@ -107,7 +128,8 @@ const NewDashboard = () => {
     return () => sub.remove();
   }, [throttledAutoRefresh]);
 
-  const listRefreshing = isRefetchingCrypto || isHistoryRefetching;
+  const listRefreshing =
+    isRefetchingCrypto || isHistoryRefetching || isContactsRefetching;
 
   const priceByCurrency = useMemo(() => {
     const map = new Map<string, number>();
@@ -122,14 +144,44 @@ const NewDashboard = () => {
   }, [marketRows]);
 
   const recentActivityItems = historyResponse?.data?.items ?? [];
+  const savedContacts = userContactsData?.contacts?.slice(0, DASHBOARD_RECENT_CONTACTS_LIMIT) ?? [];
 
-  const CONTACTS_DATA = [
-    { id: 'add', name: 'Add Contact', avatar: null },
-    { id: '1', name: 'Kevin', avatar: 'https://randomuser.me/api/portraits/men/32.jpg' },
-    { id: '2', name: 'Lyda', avatar: 'https://randomuser.me/api/portraits/women/44.jpg' },
-    { id: '3', name: 'Marry', avatar: 'https://randomuser.me/api/portraits/women/22.jpg' },
-    { id: '4', name: 'Evelyn', avatar: 'https://randomuser.me/api/portraits/women/68.jpg' },
-  ];
+  const handleRecentContactPress = useCallback(
+    (contact: IUserContact) => {
+      const sender = getUserContactSendIdentifier(contact);
+      if (!sender) return;
+      navigation.navigate(NAVIGATION_SCREENS.SEND as never, {
+        requested: false,
+        sender,
+      });
+    },
+    [navigation]
+  );
+
+  const renderSavedContactIcon = useCallback(
+    (contact: IUserContact) => {
+      const avatar = getUserContactAvatar(contact);
+      if (avatar) {
+        return (
+          <Image
+            source={{ uri: avatar }}
+            style={{ width: "100%", height: "100%", borderRadius: 100 }}
+          />
+        );
+      }
+      const displayName = getUserContactDisplayName(contact);
+      return (
+        <CustomText
+          variant="body"
+          fontWeight="semiBold"
+          color={newUITheme.colors.white}
+        >
+          {getContactInitials(displayName)}
+        </CustomText>
+      );
+    },
+    [newUITheme.colors.white]
+  );
 
   const CARD_DATA = [
     {
@@ -259,19 +311,33 @@ const NewDashboard = () => {
             onActionPress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_CONTACTS_SCREEN as never)}
           >
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 4, gap: 16, paddingVertical: 4 }}>
-              {CONTACTS_DATA.map((contact) => (
-                <IconWithNameContainer
-                  key={contact.id}
-                  name={contact.name}
-                  iconSize={56}
-                  icon={
-                    contact.avatar === null
-                      ? <AppIcon.Add width={56} height={56} />
-                      : <Image source={{ uri: contact.avatar }} style={{ width: '100%', height: '100%', borderRadius: 100 }} />
-                  }
-                  onPress={() => { }}
-                />
-              ))}
+              <IconWithNameContainer
+                name="Add Contact"
+                iconSize={56}
+                icon={<AppIcon.Add width={56} height={56} />}
+                onPress={() =>
+                  navigation.navigate(NAVIGATION_SCREENS.NEW_ADD_CONTACT_SCREEN as never)
+                }
+              />
+              {isContactsLoading ? (
+                <View style={{ justifyContent: "center", paddingHorizontal: 12 }}>
+                  <ActivityIndicator color={newUITheme.colors.tertiary} />
+                </View>
+              ) : (
+                savedContacts.map((contact, index) => {
+                  const contactKey = String(contact.id ?? contact.username ?? index);
+                  const displayName = getUserContactDisplayName(contact);
+                  return (
+                    <IconWithNameContainer
+                      key={contactKey}
+                      name={displayName}
+                      iconSize={56}
+                      icon={renderSavedContactIcon(contact)}
+                      onPress={() => handleRecentContactPress(contact)}
+                    />
+                  );
+                })
+              )}
             </ScrollView>
           </DashboardSection>
           { recentActivityItems.length > 0 && (

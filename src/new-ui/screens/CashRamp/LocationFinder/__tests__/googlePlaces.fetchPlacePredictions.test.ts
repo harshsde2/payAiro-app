@@ -5,6 +5,11 @@ jest.mock("react-native", () => ({
   Platform: { OS: "ios" },
 }));
 
+jest.mock("react-native-config", () => ({
+  __esModule: true,
+  default: {},
+}));
+
 jest.mock("react-native-device-info", () => ({
   __esModule: true,
   default: {

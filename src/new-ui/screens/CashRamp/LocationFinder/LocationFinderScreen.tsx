@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import Config from "react-native-config";
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
 import CustomText from "@new-ui/components/common-components/CustomText";
@@ -32,6 +33,8 @@ import {
 const DEFAULT_RADIUS = 10;
 const DEFAULT_LIMIT = 20;
 
+const MAP_FIT_EDGE_PADDING = { top: 120, right: 40, bottom: 200, left: 40 };
+
 const LocationFinderScreen: React.FC = () => {
   const { theme } = useTheme();
   const styles = locationFinderStyles(theme);
@@ -40,6 +43,9 @@ const LocationFinderScreen: React.FC = () => {
     useRoute<RouteProp<Record<string, CashRampLocationFinderParams>, string>>();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [instructionsModalOpen, setInstructionsModalOpen] = useState(false);
+  const [androidMarkersTrackChanges, setAndroidMarkersTrackChanges] = useState(
+    Platform.OS === "android"
+  );
   const pendingStoreRef = useRef<LocationCardItem | null>(null);
 
   const userData = useSelector(
@@ -67,19 +73,36 @@ const LocationFinderScreen: React.FC = () => {
     goToMyLocation,
     dismissSuggestions,
     placesSearchEnabled,
+    isResolvingInitialCenter,
     suggestionsOpen,
-  } = useCashRampLocationMapSearch();
+  } = useCashRampLocationMapSearch({ usersMe });
 
   const { data, isPending, isError, isFetching } = useNearbyCashLocations({
     latitude: queryCenter.latitude,
     longitude: queryCenter.longitude,
     radius: DEFAULT_RADIUS,
     limit: DEFAULT_LIMIT,
+    enabled: !isResolvingInitialCenter,
   });
 
   useEffect(() => {
     setSelectedId(null);
   }, [queryCenter.latitude, queryCenter.longitude]);
+
+  useEffect(() => {
+    if (!__DEV__ || Platform.OS !== "android") return;
+    const androidKey = (
+      Config.GOOGLE_MAPS_API_KEY_ANDROID ||
+      Config.GOOGLE_MAPS_API_KEY ||
+      ""
+    ).trim();
+    if (!androidKey) {
+      console.warn(
+        "[LocationFinder] GOOGLE_MAPS_API_KEY_ANDROID is missing in .env / .env.staging. " +
+          "Map tiles will not load on Android until you set the key and rebuild (npm run android:staging:debug)."
+      );
+    }
+  }, []);
 
   const rawRows = data?.data?.locations ?? [];
 
@@ -202,7 +225,30 @@ const LocationFinderScreen: React.FC = () => {
     longitudeDelta: 0.08,
   });
 
-  const showEmptyList = !isPending && !isError && mappedLocations.length === 0;
+  useEffect(() => {
+    if (mappedLocations.length === 0) return;
+    const coordinates = mappedLocations.map((item) => ({
+      latitude: item.coordinates.latitude,
+      longitude: item.coordinates.longitude,
+    }));
+    mapRef.current?.fitToCoordinates(coordinates, {
+      edgePadding: MAP_FIT_EDGE_PADDING,
+      animated: true,
+    });
+  }, [mappedLocations, mapRef]);
+
+  useEffect(() => {
+    if (Platform.OS !== "android" || mappedLocations.length === 0) return;
+    setAndroidMarkersTrackChanges(true);
+    const timer = setTimeout(() => setAndroidMarkersTrackChanges(false), 600);
+    return () => clearTimeout(timer);
+  }, [mappedLocations, queryCenter.latitude, queryCenter.longitude]);
+
+  const markerTracksViewChanges =
+    Platform.OS === "android" ? androidMarkersTrackChanges : false;
+
+  const showEmptyList =
+    !isPending && !isResolvingInitialCenter && !isError && mappedLocations.length === 0;
 
   return (
     <ScreenWrapper
@@ -228,7 +274,7 @@ const LocationFinderScreen: React.FC = () => {
             title={item.description || "Store"}
             description={item.address || ""}
             onPress={() => handleSelect(item)}
-            tracksViewChanges={false}
+            tracksViewChanges={markerTracksViewChanges}
           >
             <View style={styles.markerWrap}>
               <View style={styles.markerDot}>
@@ -270,13 +316,13 @@ const LocationFinderScreen: React.FC = () => {
         />
       </View>
 
-      {isFetching && !isPending ? (
+      {isFetching && !isPending && !isResolvingInitialCenter ? (
         <View style={styles.fetchingOverlay} pointerEvents="none">
           <ActivityIndicator color={theme.colors.primary} size="small" />
         </View>
       ) : null}
 
-      {isPending ? (
+      {isPending || isResolvingInitialCenter ? (
         <View style={styles.stateWrap}>
           <ActivityIndicator color={theme.colors.primary} />
         </View>

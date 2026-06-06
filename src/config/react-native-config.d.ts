@@ -57,6 +57,8 @@ declare module 'react-native-config' {
     GOOGLE_MAPS_API_KEY_IOS?: string;
     /** Google Maps Android SDK — used in AndroidManifest placeholder; falls back to GOOGLE_MAPS_API_KEY if unset. */
     GOOGLE_MAPS_API_KEY_ANDROID?: string;
+    /** Debug/release signing SHA-1 (no colons) for Places REST X-Android-Cert on Android. */
+    GOOGLE_MAPS_ANDROID_CERT_SHA1?: string;
     /** Optional single key for both platforms when not using split keys. */
     GOOGLE_MAPS_API_KEY?: string;
   }

@@ -1,14 +1,10 @@
 import React, { useState, useRef } from "react";
-import { View, TouchableOpacity, Pressable } from "react-native";
-import moment from "moment";
-import DatePicker from "components/common-components/DatePicker";
+import { View, TouchableOpacity } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { useDispatch } from "react-redux";
-import {
-  setUserData,
-} from "redux/slices/newBackendAuthSlice";
-import { setProfileCompleted } from "redux/slices/newOnboardingSlice";
+import { setShowLoader } from "redux/slices/newBackendAuthSlice";
+import { setProfileCompleted, setStepCount } from "redux/slices/newOnboardingSlice";
 import { useTheme } from "@new-ui/styles/ThemeContext";
 import { kycStyles } from "@new-ui/styles/screens/auth/kycStyles";
 import CustomText from "@new-ui/components/common-components/CustomText";
@@ -20,13 +16,10 @@ import {
 } from "@new-ui/screens/Auth/types";
 import { AppIcon } from "@new-ui/assets/svgs";
 import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
-import { useUserProfileUpdate } from "query/hooks/useAPIAuth";
+import { useUserKycComplete } from "query/hooks/useAPIAuth";
 import { validateEmail } from "utils/validation";
-import { setOnboardingStep } from "auth/authSession";
+import { bootstrapMainAppSession } from "auth/bootstrapMainAppSession";
 import { showError, showSuccess } from "utils/toast";
-
-const DEFAULT_DOB = "1999-01-01";
-const DEFAULT_DOB_DATE = new Date(1999, 0, 1);
 
 const KYCScreen: React.FC = () => {
   const navigation = useNavigation<KYCScreenNavigationProp>();
@@ -40,39 +33,22 @@ const KYCScreen: React.FC = () => {
     firstName?: string;
     lastName?: string;
     email?: string;
+    username?: string;
     data?: any;
   };
 
   const [firstName, setFirstName] = useState(params.firstName || "");
   const [lastName, setLastName] = useState(params.lastName || "");
-  const [username, setUsername] = useState("");
+  const [payairoName, setPayairoName] = useState(params.username || "");
   const [userEmail, setUserEmail] = useState((params.email || "").toLowerCase());
-  const [dob, setDob] = useState(DEFAULT_DOB);
-  const [dobPickerOpen, setDobPickerOpen] = useState(false);
-  const [ssn, setSsn] = useState("");
+  const [ssnLastFour, setSsnLastFour] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [checked, setChecked] = useState(false);
   const [checkedCybridUserAgreement, setCheckedCybridUserAgreement] =
     useState(false);
 
-  const { mutate: patchUser } = useUserProfileUpdate();
+  const { mutate: submitKycComplete } = useUserKycComplete();
 
-  const handleProceed = () => {
-    handleForm();
-  };
-
-  const handleSkipKYC = () => {
-    // dispatch(setLogin(true));
-    return;
-  };
-
-  const handlePDFViewCybridUserAgreement = () => {
-    (navigation as any).navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
-      url: require("../../../../assets/pdf/Cybrid_User_Agreement.pdf"),
-      isFileFromLocal: true,
-      fileName: "Cybrid_User_Agreement.pdf",
-    });
-  };
   const handlePDFViewAMLPolicy = () => {
     (navigation as any).navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
       url: require("../../../../assets/pdf/AML_Policy_PayAiro.pdf"),
@@ -84,18 +60,16 @@ const KYCScreen: React.FC = () => {
   const handleForm = () => {
     const trimmedFirstName = firstName.trim();
     const trimmedLastName = lastName.trim();
-    const trimmedUsername = username.trim();
+    const trimmedPayairoName = payairoName.trim();
     const trimmedEmail = userEmail.trim().toLowerCase();
-    const trimmedDob = dob.trim();
-    const trimmedSsn = ssn.trim();
+    const trimmedSsnLastFour = ssnLastFour.trim();
 
     if (
       !trimmedFirstName ||
       !trimmedLastName ||
-      !trimmedUsername ||
+      !trimmedPayairoName ||
       !trimmedEmail ||
-      !trimmedDob ||
-      !trimmedSsn
+      !trimmedSsnLastFour
     ) {
       showError("Fields cannot be empty", "Please fill all required fields");
       return;
@@ -110,15 +84,10 @@ const KYCScreen: React.FC = () => {
       return;
     }
 
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmedDob)) {
-      showError("Invalid DOB format", "Please use YYYY-MM-DD format");
+    if (!/^\d{4}$/.test(trimmedSsnLastFour)) {
+      showError("Invalid SSN", "Please enter the last 4 digits of your SSN");
       return;
     }
-
-    // if (!/^\d{3}-\d{2}-\d{4}$/.test(trimmedSsn)) {
-    //   showError("Invalid SSN format", "Please use XXX-XX-XXXX format");
-    //   return;
-    // }
 
     if (!checked) {
       showError(
@@ -136,29 +105,39 @@ const KYCScreen: React.FC = () => {
       return;
     }
 
-    const payload: any = {
+    const payload = {
       first_name: trimmedFirstName,
       last_name: trimmedLastName,
-      username: trimmedUsername,
+      payairo_name: trimmedPayairoName,
       email: trimmedEmail,
-      dob: trimmedDob,
-      ssn: trimmedSsn,
+      ssn_last_four: trimmedSsnLastFour,
     };
 
     setIsPending(true);
 
-    patchUser(payload as any, {
-      onSuccess: async (datas: any) => {
-        setIsPending(false);
-        dispatch(setUserData(datas?.data));
+    submitKycComplete(payload, {
+      onSuccess: async (resp: any) => {
+        if (!resp?.status) {
+          setIsPending(false);
+          showError(resp?.message || "Failed to submit details");
+          return;
+        }
 
-        if (datas && datas?.status) {
-          showSuccess("Profile updated successfully");
-          dispatch(setProfileCompleted(true));
-          setOnboardingStep(1);
-          navigation.navigate(NAVIGATION_SCREENS.NEW_ADDRESS);
-        } else {
-          showError("Failed to update profile");
+        showSuccess(resp?.message || "Profile updated successfully");
+        dispatch(setProfileCompleted(true));
+
+        dispatch(setShowLoader(true));
+        try {
+          const result = await bootstrapMainAppSession(dispatch);
+          if (result.ok) {
+            dispatch(setStepCount(2));
+            showSuccess("Welcome to dashboard");
+          } else {
+            showError(result.message || "Failed to load user details");
+          }
+        } finally {
+          dispatch(setShowLoader(false));
+          setIsPending(false);
         }
       },
       onError: (error: any) => {
@@ -218,9 +197,9 @@ const KYCScreen: React.FC = () => {
       <View style={styles.inputContainer}>
         <TextInput
           label="PayAiro Tag"
-          placeholder="e.g. you@example.com"
-          value={username}
-          onChangeText={setUsername}
+          placeholder="e.g. rahuldev"
+          value={payairoName}
+          onChangeText={setPayairoName}
           autoCapitalize="none"
         />
       </View>
@@ -237,46 +216,14 @@ const KYCScreen: React.FC = () => {
       </View>
 
       <View style={styles.inputContainer}>
-        <Pressable onPress={() => setDobPickerOpen(true)}>
-          <TextInput
-            label="Date of Birth"
-            placeholder="YYYY-MM-DD"
-            value={dob}
-            editable={false}
-            pointerEvents="none"
-            autoCapitalize="none"
-          />
-        </Pressable>
-      </View>
-
-      {dobPickerOpen && (
-        <DatePicker
-          modal
-          mode="date"
-          open={dobPickerOpen}
-          date={
-            moment(dob, "YYYY-MM-DD", true).isValid()
-              ? moment(dob, "YYYY-MM-DD").toDate()
-              : DEFAULT_DOB_DATE
-          }
-          maximumDate={new Date()}
-          title="Date of Birth"
-          onConfirm={(selectedDate) => {
-            setDobPickerOpen(false);
-            setDob(moment(selectedDate).format("YYYY-MM-DD"));
-          }}
-          onCancel={() => setDobPickerOpen(false)}
-        />
-      )}
-
-      <View style={styles.inputContainer}>
         <TextInput
-          label="SSN"
-          placeholder="123-45-6789"
-          value={ssn}
-          onChangeText={setSsn}
+          label="Last 4 digits of SSN"
+          placeholder="1234"
+          value={ssnLastFour}
+          onChangeText={(text) => setSsnLastFour(text.replace(/\D/g, "").slice(0, 4))}
           autoCapitalize="none"
           keyboardType="number-pad"
+          maxLength={4}
         />
       </View>
 
@@ -355,26 +302,8 @@ const KYCScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
       <View style={styles.buttonContainer}>
-
-        {/* <TouchableOpacity
-          style={styles.skipKYCContainer}
-          onPress={handleSkipKYC}
-          activeOpacity={0.7}
-        >
-          <CustomText
-            variant="body"
-            fontFamily="inter"
-            fontWeight="medium"
-            color={theme.colors.text}
-            style={styles.skipKYCText}
-          >
-            Skip KYC
-          </CustomText>
-          <AppIcon.ArrowRight width={16} height={16} />
-        </TouchableOpacity> */}
-
         <Button
-          onPress={handleProceed}
+          onPress={handleForm}
           style={styles.proceedButton}
           loading={isPending}
           disabled={isPending}
@@ -399,4 +328,3 @@ const KYCScreen: React.FC = () => {
 };
 
 export default KYCScreen;
-

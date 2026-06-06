@@ -1,27 +1,19 @@
 /**
  * FCMTokenManager Component
- * Wrapper that uses useStoreFCMTokenOnLogin to store FCM token to backend (iOS + Android)
- * Must be placed inside PersistQueryProvider to have access to QueryClient
+ * Registers the device's FCM token with the backend notifications service
+ * (iOS + Android) via useRegisterFcmDeviceOnLogin.
+ * Must be placed inside PersistQueryProvider to have access to QueryClient.
  */
 
 import React from "react";
-import { useStoreFCMTokenOnLogin } from "hooks/useStoreFCMTokenOnLogin";
+import { useRegisterFcmDeviceOnLogin } from "hooks/useRegisterFcmDeviceOnLogin";
 
 /**
- * Component that manages FCM token storage to backend
- * This component renders nothing but handles the side effect
- * Must be inside PersistQueryProvider for React Query context
+ * Renders nothing — runs the FCM device registration side effect.
+ * Must be inside PersistQueryProvider for React Query context.
  */
 export const FCMTokenManager: React.FC = () => {
-  // This hook requires QueryClient context, so it must be inside PersistQueryProvider
-  useStoreFCMTokenOnLogin({
-    retryOnFailure: true,
-    maxRetries: 3,
-    retryDelay: 5000,
-    showErrorToast: true,
-  });
-
-  // This component doesn't render anything
+  useRegisterFcmDeviceOnLogin();
   return null;
 };
 

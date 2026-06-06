@@ -1,5 +1,11 @@
 import { Platform } from "react-native";
+import Config from "react-native-config";
 import DeviceInfo from "react-native-device-info";
+import type { LegalIdentityGeocodeInput } from "./locationFinder.utils";
+import {
+  buildProfileGeocodeAttempts,
+  getUsStateCenterCoordinates,
+} from "./locationFinder.utils";
 
 export type PlacePrediction = {
   placeId: string;
@@ -25,6 +31,12 @@ const PLACES_AUTOCOMPLETE_INCLUDED_REGION_CODES = ["US"] as const;
 /** Places API (New) `locationBias.circle.radius` must be in (0, 50_000] meters. */
 export const PLACES_NEW_LOCATION_BIAS_RADIUS_MAX_M = 50_000;
 
+/** SHA-1 for X-Android-Cert: lowercase hex, no colons (Google Places REST requirement). */
+function normalizeAndroidCertSha1(raw: string): string | undefined {
+  const s = raw.trim().replace(/:/g, "").toLowerCase();
+  return /^[0-9a-f]{40}$/.test(s) ? s : undefined;
+}
+
 /**
  * iOS API keys restricted by bundle ID require this header on REST calls.
  * Without it, Google responds with "Requests from this iOS client application <empty> are blocked."
@@ -38,6 +50,33 @@ function googlePlacesIosHeaders(): Record<string, string> {
   } catch {
     return {};
   }
+}
+
+/**
+ * Android-restricted API keys require package + signing cert on Places REST calls.
+ * Without them: "Requests from this Android client application <empty> are blocked."
+ * Set GOOGLE_MAPS_ANDROID_CERT_SHA1 in .env (debug SHA-1 from ./gradlew signingReport, no colons).
+ */
+function googlePlacesAndroidHeaders(): Record<string, string> {
+  if (Platform.OS !== "android") return {};
+  try {
+    const pkg = DeviceInfo.getBundleId();
+    const cert = normalizeAndroidCertSha1(Config.GOOGLE_MAPS_ANDROID_CERT_SHA1 || "");
+    if (!pkg || !cert) return {};
+    return {
+      "X-Android-Package": pkg,
+      "X-Android-Cert": cert,
+    };
+  } catch {
+    return {};
+  }
+}
+
+function googlePlacesClientHeaders(): Record<string, string> {
+  return {
+    ...googlePlacesIosHeaders(),
+    ...googlePlacesAndroidHeaders(),
+  };
 }
 
 /** Read body once; avoid `res.json()` throwing when Google/proxy returns HTML. */
@@ -192,7 +231,7 @@ async function fetchNewPlacePredictions(params: {
         "X-Goog-Api-Key": apiKey,
         "X-Goog-FieldMask":
           "suggestions.placePrediction.placeId,suggestions.placePrediction.text,suggestions.placePrediction.structuredFormat",
-        ...googlePlacesIosHeaders(),
+        ...googlePlacesClientHeaders(),
       },
       body: JSON.stringify(body),
       signal,
@@ -253,7 +292,7 @@ async function fetchLegacyPlacePredictions(params: {
     res = await fetch(url.toString(), {
       signal,
       headers: {
-        ...googlePlacesIosHeaders(),
+        ...googlePlacesClientHeaders(),
       },
     });
   } catch {
@@ -340,7 +379,7 @@ async function fetchNewPlaceDetailsLatLng(params: {
     headers: {
       "X-Goog-Api-Key": apiKey,
       "X-Goog-FieldMask": "location",
-      ...googlePlacesIosHeaders(),
+      ...googlePlacesClientHeaders(),
     },
     signal,
   });
@@ -373,7 +412,7 @@ async function fetchLegacyPlaceDetailsLatLng(params: {
     res = await fetch(url.toString(), {
       signal,
       headers: {
-        ...googlePlacesIosHeaders(),
+        ...googlePlacesClientHeaders(),
       },
     });
   } catch {
@@ -403,4 +442,143 @@ export async function fetchPlaceDetailsLatLng(params: {
   const neu = await fetchNewPlaceDetailsLatLng(params);
   if (neu) return neu;
   return fetchLegacyPlaceDetailsLatLng(params);
+}
+
+type GeocodeResultRow = {
+  geometry?: { location?: { lat?: number; lng?: number } };
+  address_components?: Array<{
+    short_name?: string;
+    long_name?: string;
+    types?: string[];
+  }>;
+};
+
+function geocodeResultMatchesUsState(
+  result: GeocodeResultRow,
+  expectedState: string | null
+): boolean {
+  if (!expectedState) return true;
+  const norm = expectedState.trim().toUpperCase();
+  const components = result.address_components;
+  if (!Array.isArray(components)) return true;
+  return components.some((c) => {
+    const types = c.types ?? [];
+    if (!types.includes("administrative_area_level_1")) return false;
+    const short = (c.short_name ?? "").toUpperCase();
+    const long = (c.long_name ?? "").toUpperCase();
+    return short === norm || long === norm;
+  });
+}
+
+function buildGeocodeComponentsFilter(params: {
+  stateCode?: string | null;
+  postalCode?: string | null;
+  includePostalInComponents?: boolean;
+}): string | null {
+  const parts = ["country:US"];
+  const state = params.stateCode?.trim().toUpperCase();
+  if (state && state.length === 2) {
+    parts.push(`administrative_area:${state}`);
+  }
+  if (params.includePostalInComponents) {
+    const postal = params.postalCode?.trim();
+    if (postal) {
+      parts.push(`postal_code:${postal}`);
+    }
+  }
+  return parts.join("|");
+}
+
+/** Geocoding API — residential address from profile to map center. */
+export async function geocodeAddressToLatLng(params: {
+  address: string;
+  apiKey: string;
+  signal?: AbortSignal;
+  stateCode?: string | null;
+  postalCode?: string | null;
+  includePostalInComponents?: boolean;
+}): Promise<{ lat: number; lng: number } | null> {
+  const { address, apiKey, signal, stateCode, postalCode, includePostalInComponents } =
+    params;
+  const q = address.trim();
+  if (!q || !apiKey.trim()) return null;
+
+  const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
+  url.searchParams.set("address", q);
+  url.searchParams.set("key", apiKey);
+  url.searchParams.set("region", "us");
+  const components = buildGeocodeComponentsFilter({
+    stateCode,
+    postalCode,
+    includePostalInComponents,
+  });
+  if (components) {
+    url.searchParams.set("components", components);
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(url.toString(), {
+      signal,
+      headers: {
+        ...googlePlacesClientHeaders(),
+      },
+    });
+  } catch {
+    return null;
+  }
+
+  const { json, parseFailed } = await readResponseJson(res);
+  if (parseFailed || !json || typeof json !== "object") return null;
+
+  const body = json as {
+    status?: string;
+    results?: GeocodeResultRow[];
+  };
+
+  if (body.status !== "OK" || !Array.isArray(body.results) || body.results.length === 0) {
+    if (__DEV__ && body.status && body.status !== "ZERO_RESULTS") {
+      console.warn("[geocodeAddressToLatLng]", body.status, q);
+    }
+    return null;
+  }
+
+  const expectedState = stateCode?.trim().toUpperCase() ?? null;
+  const match =
+    body.results.find((row) => geocodeResultMatchesUsState(row, expectedState)) ??
+    body.results[0];
+
+  const lat = match?.geometry?.location?.lat;
+  const lng = match?.geometry?.location?.lng;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  return { lat: lat as number, lng: lng as number };
+}
+
+/** Tries multiple address strings; falls back to approximate US state center. */
+export async function geocodeProfileLegalIdentity(params: {
+  profile: LegalIdentityGeocodeInput;
+  apiKey: string;
+  signal?: AbortSignal;
+}): Promise<{ lat: number; lng: number } | null> {
+  const { profile, apiKey, signal } = params;
+  const attempts = buildProfileGeocodeAttempts(profile);
+
+  for (const attempt of attempts) {
+    const geo = await geocodeAddressToLatLng({
+      address: attempt.address,
+      apiKey,
+      stateCode: attempt.stateCode,
+      postalCode: profile.postalCode,
+      includePostalInComponents: attempt.includePostalInComponents,
+      signal,
+    });
+    if (geo) return geo;
+  }
+
+  const stateCenter = getUsStateCenterCoordinates(profile.stateCode);
+  if (stateCenter) {
+    return { lat: stateCenter.latitude, lng: stateCenter.longitude };
+  }
+
+  return null;
 }

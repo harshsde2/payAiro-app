@@ -9,9 +9,13 @@ import TextInput from '@new-ui/components/common-components/layout/TextInput';
 import CardAddedSuccessModal from '@new-ui/components/common-components/AddBalance/CardAddedSuccessModal';
 import { useAddPaymentMethod } from 'query/hooks/usePaymentMethods';
 import {
+  awaitCardlinkingPostSubmitDelay,
   debugLogCoinmeRiskEngine,
-  fetchWebSessionId,
   logCoinmeRiskBeforeAddCardApiCall,
+  prepareCardlinkingRiskSession,
+  resetCardlinkingPhase3Prepare,
+  resolveCardlinkingPhase,
+  runAddCardCoinmeRiskFlow,
 } from 'services/coinmeRiskLifecycle';
 import { useCoinmeAccountId } from 'hooks/useCoinmeAccountId';
 
@@ -72,8 +76,50 @@ const AddDebitCardModal: React.FC<AddDebitCardModalProps> = ({
   useEffect(() => {
     if (!visible) {
       resetForm();
+      resetCardlinkingPhase3Prepare();
+      return;
     }
-  }, [visible, resetForm]);
+
+    const cardlinkingPhase = resolveCardlinkingPhase();
+    console.log('[AddDebitCard] modal opened', {
+      cardlinkingPhase,
+      coinmeAccountId: coinmeAccountId ?? null,
+    });
+
+    if (cardlinkingPhase !== 3) return;
+
+    if (!coinmeAccountId) {
+      console.log(
+        '[AddDebitCard] Phase 3 early prepare waiting for coinmeAccountId (caas_customer_id)'
+      );
+      return;
+    }
+
+    let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const runEarlyPrepare = () => {
+      if (cancelled) return;
+      console.log(
+        '[AddDebitCard] Phase 3 triggering early update() + submit() (after modal settle)'
+      );
+      prepareCardlinkingRiskSession(coinmeAccountId).catch((e) => {
+        console.warn('[AddDebitCard] Phase 3 early prepare failed', e);
+      });
+    };
+
+    // iOS: defer until modal animation finishes — immediate update()+submit() on open caused SIGABRT.
+    InteractionManager.runAfterInteractions(() => {
+      if (cancelled) return;
+      const deferMs = Platform.OS === 'ios' ? 900 : 350;
+      timeoutId = setTimeout(runEarlyPrepare, deferMs);
+    });
+
+    return () => {
+      cancelled = true;
+      if (timeoutId != null) clearTimeout(timeoutId);
+    };
+  }, [visible, resetForm, coinmeAccountId]);
 
   const cleanedCardNumber = useMemo(() => digitsOnly(cardNumber).slice(0, 19), [cardNumber]);
   const cleanedMonth = useMemo(() => normalizeMonth(month), [month]);
@@ -120,6 +166,7 @@ const AddDebitCardModal: React.FC<AddDebitCardModalProps> = ({
 
       console.log('[AddDebitCard] starting Risk SDK cardlinking flow', {
         accountId: coinmeAccountId,
+        cardlinkingPhase: resolveCardlinkingPhase(),
       });
 
       if (Platform.OS === 'ios') {
@@ -128,14 +175,13 @@ const AddDebitCardModal: React.FC<AddDebitCardModalProps> = ({
         });
       }
 
-      webSessionId = await fetchWebSessionId({
-        accountId: coinmeAccountId,
-        riskFlow: 'cardlinking',
-      });
+      webSessionId = await runAddCardCoinmeRiskFlow(coinmeAccountId);
 
       console.log('[AddDebitCard] webSessionId ready', {
         webSessionIdPrefix: webSessionId.slice(0, 8),
       });
+
+      await awaitCardlinkingPostSubmitDelay();
 
       await logCoinmeRiskBeforeAddCardApiCall({
         accountId: coinmeAccountId,
@@ -228,14 +274,14 @@ const AddDebitCardModal: React.FC<AddDebitCardModalProps> = ({
               </CustomText>
 
               <View style={{ marginTop: theme.spacing.xl }}>
-                <TextInput
+                {/* <TextInput
                   label="Cardholder Name"
                   placeholder="e.g. John Carter"
                   value={cardholderName}
                   onChangeText={setCardholderName}
                   autoCapitalize="words"
                   borderColor={theme.colors.border}
-                />
+                /> */}
                 <View style={{ height: theme.spacing.md }} />
                 <TextInput
                   label="Debit card number"

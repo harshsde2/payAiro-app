@@ -11,6 +11,15 @@ export interface SendHistoryParty {
   destinationWalletAddress?: string | null;
 }
 
+export interface ActivityTradeQuoteDetails {
+  debitCurrencyAmount?: string;
+  debitCurrencyCode?: string;
+  creditCurrencyAmount?: string;
+  creditCurrencyCode?: string;
+  debitCurrencyUnitPrice?: string;
+  totalFees?: string;
+}
+
 /** CaaS trade row from unified activity history. */
 export interface ActivityTradeItem {
   activity: "TRADE_BUY" | "TRADE_SELL";
@@ -24,9 +33,17 @@ export interface ActivityTradeItem {
   cryptoCurrencyCode: string;
   fiatCurrencyCode: string;
   tradeType: "buy" | "sell";
+  status?: string | null;
+  orderStatus?: string | null;
+  purpose?: string;
+  lastWebhookAt?: string | null;
   customerId?: string | null;
   paymentMethodId?: string | null;
   quoteId?: string | null;
+  quote?: {
+    tradeType?: "buy" | "sell";
+    details?: ActivityTradeQuoteDetails;
+  };
 }
 
 /** Crypto send / receive row from unified activity history. */
@@ -120,7 +137,7 @@ export interface ActivityCashOffRampItem {
 }
 
 export interface ActivityCashOnRampItem {
-  activity: "CASH_ONRAMP";
+  activity?: "CASH_ONRAMP" | string;
   id: number;
   chain: string;
   createdAt: string;
@@ -128,8 +145,11 @@ export interface ActivityCashOnRampItem {
   source?: string;
   status?: string | null;
   active?: boolean;
+  sealed?: boolean;
   purpose?: string;
   tradeType?: "buy" | "sell";
+  latestWebhookOrderTemplateStatus?: string | null;
+  latest_webhook_order_template_status?: string | null;
   amountValue: string;
   amountCurrencyCode: string;
   debitCurrencyCode: string;
@@ -191,7 +211,13 @@ export function isTradeActivity(item: RecentActivityItem): item is ActivityTrade
 export function isCashOnRampActivity(
   item: RecentActivityItem
 ): item is ActivityCashOnRampItem {
-  return String(item.activity ?? "").toUpperCase() === "CASH_ONRAMP";
+  const activity = String(item.activity ?? "").toUpperCase();
+  if (activity === "CASH_ONRAMP") return true;
+  const row = item as ActivityCashOnRampItem;
+  const purpose = String(row.purpose ?? "").toLowerCase();
+  if (purpose === "cash_onramp") return true;
+  const source = String(row.source ?? "").toLowerCase();
+  return source === "coinme_order_template" && row.tradeType === "buy";
 }
 
 export function isCashOffRampActivity(

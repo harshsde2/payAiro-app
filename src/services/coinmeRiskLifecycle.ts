@@ -8,6 +8,10 @@ import {
   type SessionTagData,
 } from "utils/PayAiroCoinmeRisk";
 import { getDeviceFingerprint } from "utils/getDeviceFingerprint";
+import {
+  ensureCoinmeRiskLocationPermission,
+  type CoinmeRiskLocationPermissionStatus,
+} from "utils/ensureCoinmeRiskLocationPermission";
 
 /**
  * PayAiro × Coinme Risk SDK lifecycle service (iOS + Android).
@@ -37,6 +41,8 @@ let bootstrapPromise: Promise<void> | null = null;
 let lastKnownCustomerId: string | null = null;
 /** Last `riskFlow` applied via `update`; used to reset session when flow changes. */
 let lastSessionRiskFlow: CoinmeFlowType | null = null;
+/** Last location permission result for a `cardlinking` session (debug / BE correlation). */
+let lastCardlinkingLocationStatus: CoinmeRiskLocationPermissionStatus | null = null;
 
 /** Serializes all Coinme SDK bridge calls from JS (login + fetchWebSessionId). */
 let sdkOperationChain: Promise<void> = Promise.resolve();
@@ -48,6 +54,11 @@ const LOGIN_DEFER_MS_IOS = 2500;
 const IOS_SDK_STEP_MS = 500;
 /** Let Sardine background work finish after submit() before resolving to JS. */
 const IOS_POST_SUBMIT_SETTLE_MS = 1200;
+/** Extra pause after submit() returns, before partner APIs (payment-methods POST). Coinme/Sardine race mitigation. */
+const CARDLINKING_POST_SUBMIT_TO_API_DELAY_MS = 1000;
+/** Phase 3: wait for add-card modal animation before early SDK calls (iOS SIGABRT mitigation). */
+const PHASE3_MODAL_DEFER_MS_IOS = 900;
+const PHASE3_MODAL_DEFER_MS_ANDROID = 350;
 
 const isIOS = Platform.OS === "ios";
 const isAndroid = Platform.OS === "android";
@@ -263,6 +274,9 @@ export async function onUserLoggedOut(): Promise<void> {
     bootstrapPromise = null;
     lastKnownCustomerId = null;
     lastSessionRiskFlow = null;
+    lastCardlinkingLocationStatus = null;
+    cardlinkingPhase3PreparedForAccount = null;
+    cardlinkingPhase3PrepareInFlight = null;
     sdkOperationChain = Promise.resolve();
   }
 }
@@ -296,6 +310,309 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+export type CardlinkingPhase = 1 | 2 | 3 | "legacy";
+
+/** Reads `COINME_CARDLINKING_PHASE` from env (1, 2, 3, or legacy fallback). */
+export function resolveCardlinkingPhase(): CardlinkingPhase {
+  const raw = (Config.COINME_CARDLINKING_PHASE || "").trim();
+  if (raw === "1") return 1;
+  if (raw === "2") return 2;
+  if (raw === "3") return 3;
+  return "legacy";
+}
+
+function shouldUseCardlinkingLegacyDelays(): boolean {
+  if (resolveCardlinkingPhase() !== "legacy") return false;
+  const flag = (Config.COINME_CARDLINKING_USE_LEGACY_DELAY || "").trim().toLowerCase();
+  if (flag === "false" || flag === "0") return false;
+  return true;
+}
+
+/**
+ * Wait after Risk SDK `submit()` completes (end of `fetchWebSessionId`) and before
+ * calling payment-methods or other partner APIs for `cardlinking`.
+ * Skipped when `COINME_CARDLINKING_PHASE` is 1, 2, or 3.
+ */
+export async function awaitCardlinkingPostSubmitDelay(): Promise<void> {
+  if (!shouldUseCardlinkingLegacyDelays()) return;
+  console.log(
+    `${TAG} cardlinking: waiting ${CARDLINKING_POST_SUBMIT_TO_API_DELAY_MS}ms after submit before partner API`
+  );
+  await sleep(CARDLINKING_POST_SUBMIT_TO_API_DELAY_MS);
+}
+
+type CardlinkingSubmitMode = "noCallbacks" | "callbacks";
+
+let cardlinkingPhase3PreparedForAccount: string | null = null;
+let cardlinkingPhase3PrepareInFlight: string | null = null;
+
+async function iosSdkPause(): Promise<void> {
+  if (isIOS) await sleep(IOS_SDK_STEP_MS);
+}
+
+async function cardlinkingEnsureLocation(): Promise<void> {
+  const { status } = await ensureCoinmeRiskLocationPermission();
+  lastCardlinkingLocationStatus = status;
+  console.log(`${TAG} cardlinking locationPermission=${status}`);
+}
+
+async function cardlinkingResetIfNeeded(accountId: string): Promise<void> {
+  const customerChanged = lastKnownCustomerId !== accountId;
+  const flowChanged = lastSessionRiskFlow !== "cardlinking";
+  if (!customerChanged && !flowChanged) return;
+  try {
+    await PayAiroCoinmeRisk.resetStoredSessionKey();
+  } catch {
+    /* ignore */
+  }
+}
+
+async function cardlinkingUpdate(
+  accountId: string,
+  sessionKey?: string
+): Promise<void> {
+  await PayAiroCoinmeRisk.update({
+    customerId: accountId,
+    flow: "cardlinking",
+    ...(sessionKey ? { sessionKey } : {}),
+  });
+}
+
+async function cardlinkingSubmit(mode: CardlinkingSubmitMode): Promise<void> {
+  if (mode === "noCallbacks") {
+    await PayAiroCoinmeRisk.submitWithoutCallbacks();
+  } else {
+    await PayAiroCoinmeRisk.submit();
+  }
+}
+
+async function cardlinkingMintWebSessionId(
+  accountId: string,
+  options?: { iosStepped?: boolean }
+): Promise<string> {
+  const fingerprint = await getDeviceFingerprint();
+  const partnerId = (Config.COINME_PARTNER_ID || "").trim();
+  if (!partnerId) {
+    throw new CoinmeRiskError(
+      CoinmeRiskErrorCode.INVALID_OPTIONS,
+      "Missing Coinme partnerId (set COINME_PARTNER_ID in .env)."
+    );
+  }
+
+  const stepped = options?.iosStepped === true && isIOS;
+
+  await cardlinkingResetIfNeeded(accountId);
+  if (stepped) await iosSdkPause();
+
+  await cardlinkingUpdate(accountId);
+  if (stepped) await iosSdkPause();
+
+  const data = await PayAiroCoinmeRisk.getPartnerSessionTag({
+    partnerId,
+    accountId,
+    fingerprint,
+    timeout: 10000,
+  });
+  if (stepped) await iosSdkPause();
+
+  await cardlinkingUpdate(accountId, data.webSessionID);
+  lastKnownCustomerId = accountId;
+  lastSessionRiskFlow = "cardlinking";
+
+  return data.webSessionID;
+}
+
+function logCardlinkingPhase(
+  phase: CardlinkingPhase,
+  submitMode: string,
+  webSessionId?: string
+): void {
+  console.log(
+    `${TAG} cardlinkingPhase=${String(phase)} submitMode=${submitMode}` +
+      (webSessionId ? ` webSessionId=${webSessionId}` : "")
+  );
+}
+
+/**
+ * Phase 1 / 2: full Risk flow on Proceed (update → tag → update sessionKey → submit → return id).
+ */
+export async function runCardlinkingRiskFlow(accountId: string): Promise<string> {
+  const phase = resolveCardlinkingPhase();
+  if (phase === "legacy" || phase === 3) {
+    throw new CoinmeRiskError(
+      CoinmeRiskErrorCode.INVALID_OPTIONS,
+      "runCardlinkingRiskFlow is for COINME_CARDLINKING_PHASE 1 or 2 only."
+    );
+  }
+
+  return enqueueSdkOperation(async () => {
+    await ensureCoinmeRiskReady();
+    const id = accountId.trim();
+    if (!id) {
+      throw new CoinmeRiskError(
+        CoinmeRiskErrorCode.INVALID_OPTIONS,
+        "runCardlinkingRiskFlow requires a non-empty accountId."
+      );
+    }
+
+    await cardlinkingEnsureLocation();
+    const submitMode: CardlinkingSubmitMode =
+      phase === 1 ? "noCallbacks" : "callbacks";
+    logCardlinkingPhase(phase, submitMode);
+
+    const webSessionId = await cardlinkingMintWebSessionId(id);
+    await cardlinkingSubmit(submitMode);
+
+    logCardlinkingPhase(phase, submitMode, webSessionId);
+
+    if (isCoinmeRiskDebugLoggingEnabled()) {
+      await debugLogCoinmeRiskEngine(`cardlinking:phase${phase}:afterSubmit`, {
+        expectedWebSessionId: webSessionId,
+        accountId: id,
+      });
+    }
+
+    return webSessionId;
+  });
+}
+
+/**
+ * Phase 3: early `update` + `submit` when add-card modal opens (not on Proceed).
+ */
+export async function prepareCardlinkingRiskSession(
+  accountId: string
+): Promise<void> {
+  const phase = resolveCardlinkingPhase();
+  if (phase !== 3) {
+    console.log(
+      `${TAG} prepareCardlinkingRiskSession skipped (COINME_CARDLINKING_PHASE=${String(phase)}, expected 3 — rebuild app if .env changed)`
+    );
+    return;
+  }
+
+  const id = accountId.trim();
+  if (!id) {
+    console.log(`${TAG} prepareCardlinkingRiskSession skipped (empty accountId)`);
+    return;
+  }
+  if (
+    cardlinkingPhase3PreparedForAccount === id ||
+    cardlinkingPhase3PrepareInFlight === id
+  ) {
+    console.log(`${TAG} prepareCardlinkingRiskSession skipped (already prepared for account)`);
+    return;
+  }
+
+  cardlinkingPhase3PrepareInFlight = id;
+  console.log(`${TAG} Phase3 modal-open: starting early prepare accountId=${prefix(id)}`);
+
+  try {
+    await enqueueSdkOperation(async () => {
+      await ensureCoinmeRiskReady();
+      if (cardlinkingPhase3PreparedForAccount === id) return;
+
+      await cardlinkingEnsureLocation();
+      logCardlinkingPhase(3, "early+noCallbacks");
+
+      await cardlinkingResetIfNeeded(id);
+      if (isIOS) await iosSdkPause();
+
+      console.log(
+        `${TAG} Phase3 modal-open: update(customerId=${prefix(id)}, flow=cardlinking)`
+      );
+      await cardlinkingUpdate(id);
+      console.log(`${TAG} Phase3 modal-open: update() done`);
+      if (isIOS) await iosSdkPause();
+
+      // iOS: callback submit avoids MobileIntelligence SIGABRT; Android uses no-callback per Coinme Phase 1.
+      const earlySubmitMode: CardlinkingSubmitMode = isIOS
+        ? "callbacks"
+        : "noCallbacks";
+      console.log(
+        `${TAG} Phase3 modal-open: submit() mode=${earlySubmitMode}`
+      );
+      await cardlinkingSubmit(earlySubmitMode);
+      console.log(`${TAG} Phase3 modal-open: submit() done`);
+
+      cardlinkingPhase3PreparedForAccount = id;
+      lastKnownCustomerId = id;
+      lastSessionRiskFlow = "cardlinking";
+
+      console.log(
+        `${TAG} Phase3 modal-open: early prepare complete accountId=${prefix(id)}`
+      );
+    });
+  } finally {
+    if (cardlinkingPhase3PrepareInFlight === id) {
+      cardlinkingPhase3PrepareInFlight = null;
+    }
+  }
+}
+
+/** Clears Phase 3 prepare guard when add-card modal closes. */
+export function resetCardlinkingPhase3Prepare(): void {
+  cardlinkingPhase3PreparedForAccount = null;
+  cardlinkingPhase3PrepareInFlight = null;
+}
+
+/**
+ * Phase 3 on Proceed: mint fresh `webSessionId` only (no submit — early submit on open).
+ */
+export async function completeCardlinkingRiskFlow(accountId: string): Promise<string> {
+  if (resolveCardlinkingPhase() !== 3) {
+    throw new CoinmeRiskError(
+      CoinmeRiskErrorCode.INVALID_OPTIONS,
+      "completeCardlinkingRiskFlow requires COINME_CARDLINKING_PHASE=3."
+    );
+  }
+
+  return enqueueSdkOperation(async () => {
+    await ensureCoinmeRiskReady();
+    const id = accountId.trim();
+    if (!id) {
+      throw new CoinmeRiskError(
+        CoinmeRiskErrorCode.INVALID_OPTIONS,
+        "completeCardlinkingRiskFlow requires a non-empty accountId."
+      );
+    }
+
+    logCardlinkingPhase(3, "lateMintOnly");
+
+    try {
+      await PayAiroCoinmeRisk.resetStoredSessionKey();
+    } catch {
+      /* ignore */
+    }
+    if (isIOS) await iosSdkPause();
+
+    const webSessionId = await cardlinkingMintWebSessionId(id, { iosStepped: true });
+    logCardlinkingPhase(3, "lateMintOnly", webSessionId);
+
+    if (isCoinmeRiskDebugLoggingEnabled()) {
+      await debugLogCoinmeRiskEngine("cardlinking:phase3:beforePost", {
+        expectedWebSessionId: webSessionId,
+        accountId: id,
+      });
+    }
+
+    return webSessionId;
+  });
+}
+
+/**
+ * Add-card Proceed: dispatches by `COINME_CARDLINKING_PHASE`.
+ */
+export async function runAddCardCoinmeRiskFlow(accountId: string): Promise<string> {
+  const phase = resolveCardlinkingPhase();
+  if (phase === 3) return completeCardlinkingRiskFlow(accountId);
+  if (phase === 1 || phase === 2) return runCardlinkingRiskFlow(accountId);
+
+  return fetchWebSessionId({
+    accountId,
+    riskFlow: "cardlinking",
+  });
+}
+
 type FetchWebSessionIdResolved = {
   accountId: string;
   partnerId: string;
@@ -315,7 +632,7 @@ async function fetchWebSessionIdIOSSteps(
   const { accountId, partnerId, fingerprint, riskFlow, rampId, timeoutMs } = options;
   const customerChanged = lastKnownCustomerId !== accountId;
   const flowChanged = riskFlow != null && lastSessionRiskFlow !== riskFlow;
-  const shouldReset = customerChanged;
+  const shouldReset = customerChanged || flowChanged;
 
   console.log(
     `${TAG} fetchWebSessionId[iOS-stepped] reset=${String(shouldReset)} ` +
@@ -354,7 +671,9 @@ async function fetchWebSessionIdIOSSteps(
   await sleep(IOS_SDK_STEP_MS);
 
   await PayAiroCoinmeRisk.submit();
-  await sleep(IOS_POST_SUBMIT_SETTLE_MS);
+  if (shouldUseCardlinkingLegacyDelays()) {
+    await sleep(IOS_POST_SUBMIT_SETTLE_MS);
+  }
 
   lastKnownCustomerId = accountId;
   if (riskFlow) {
@@ -429,10 +748,23 @@ export async function fetchWebSessionId(
 
     const riskFlow = options.riskFlow;
 
+    if (riskFlow === "cardlinking") {
+      const { status } = await ensureCoinmeRiskLocationPermission();
+      lastCardlinkingLocationStatus = status;
+      console.log(
+        `${TAG} fetchWebSessionId[${Platform.OS}] cardlinking locationPermission=${status}`
+      );
+    } else {
+      lastCardlinkingLocationStatus = null;
+    }
+
     console.log(
       `${TAG} fetchWebSessionId[${Platform.OS}] mode=${resolveCoinmeMode()} ` +
         `partnerId=${partnerId} accountId=${accountId} ` +
-        `fingerprint=${fingerprint} riskFlow=${riskFlow ?? "<default>"}`
+        `fingerprint=${fingerprint} riskFlow=${riskFlow ?? "<default>"}` +
+        (riskFlow === "cardlinking" && lastCardlinkingLocationStatus
+          ? ` locationPermission=${lastCardlinkingLocationStatus}`
+          : "")
     );
 
     const resolved: FetchWebSessionIdResolved = {
@@ -583,10 +915,20 @@ export async function logCoinmeRiskBeforeAddCardApiCall(
     ? await PayAiroCoinmeRisk.isInitialized()
     : false;
 
+  const locationPermission =
+    riskFlow === "cardlinking" && lastCardlinkingLocationStatus
+      ? lastCardlinkingLocationStatus
+      : "<n/a>";
+
+  const cardlinkingPhase =
+    riskFlow === "cardlinking" ? resolveCardlinkingPhase() : "n/a";
+
   console.log(
     `${TAG} [AddCard] ── before payment-methods POST ──\n` +
       `  platform=${Platform.OS} coinmeMode=${resolveCoinmeMode()}\n` +
+      `  cardlinkingPhase=${String(cardlinkingPhase)}\n` +
       `  riskFlow=${riskFlow} engineInitialized=${String(initialized)}\n` +
+      `  locationPermission=${locationPermission}\n` +
       `  partnerId=${partnerId || "<empty>"}\n` +
       `  accountId(caas)=${options.accountId}\n` +
       `  webSessionId(body)=${options.webSessionId}\n` +

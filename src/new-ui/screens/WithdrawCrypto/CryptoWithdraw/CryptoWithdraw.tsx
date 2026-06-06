@@ -477,6 +477,11 @@ const CryptoWithdraw: React.FC = () => {
             setSelectedPaymentMethod(item);
           }}
           onRequestAddCard={() => setAddCardVisible(true)}
+          onPaymentMethodDeleted={(id) => {
+            if (selectedPaymentMethod?.payment_method_id === id) {
+              setSelectedPaymentMethod(null);
+            }
+          }}
         />
  
         <AddDebitCardModal

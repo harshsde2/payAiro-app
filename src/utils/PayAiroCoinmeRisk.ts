@@ -271,6 +271,15 @@ class PayAiroCoinmeRiskClass {
   }
 
   /**
+   * Submits device/behavioral data without waiting for Sardine callbacks.
+   * Used for Coinme cardlinking Phase 1 and Phase 3 early prepare.
+   */
+  async submitWithoutCallbacks(): Promise<void> {
+    this.assertAvailable();
+    return this.invoke("submitWithoutCallbacks");
+  }
+
+  /**
    * Fetches the partner session tag via the Coinme SDK (iOS native, Android
    * 1.1.0+). Talks to Coinme's public partner endpoint directly — no backend
    * proxy required. The returned `webSessionID` automatically becomes the

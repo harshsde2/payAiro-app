@@ -53,6 +53,11 @@ type AddPaymentMethodResponse = {
   data?: unknown;
 };
 
+type DeletePaymentMethodResponse = {
+  ok?: boolean;
+  message?: string;
+};
+
 export const paymentMethodKeys = {
   all: ['paymentMethods'] as const,
   list: (limit: number) => [...paymentMethodKeys.all, 'list', limit] as const,
@@ -84,6 +89,20 @@ export function useAddPaymentMethod() {
           "x-device-fingerprint": fingerprint,
         }
       );
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: paymentMethodKeys.all });
+    },
+  });
+}
+
+export function useDeletePaymentMethod() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (paymentMethodId: string) => {
+      const url = `${USER_AUTH.PAYMENT_METHODS}${encodeURIComponent(paymentMethodId)}/`;
+      return await userApiClient.delete<DeletePaymentMethodResponse>(url);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: paymentMethodKeys.all });

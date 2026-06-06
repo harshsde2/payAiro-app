@@ -79,6 +79,8 @@ import { useNavigation } from "@react-navigation/native";
 import SettingsScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/SettingsScreen";
 import CoinmeAgreementScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/CoinmeAgreementScreen";
 import NotificationScreen from "new-ui/screens/KebabMenuScreens/NotificationScreen/NotificationScreen";
+import TransactionLimitsScreen from "@new-ui/screens/TransactionLimits";
+import PaymentMethodsScreen from "@new-ui/screens/PaymentMethods";
 import ContactsScreen from "@new-ui/screens/Contacts/ContactsScreen";
 import AddContactScreen from "@new-ui/screens/Contacts/AddContactScreen";
 import BankStatementScreen from "@new-ui/screens/KebabMenuScreens/BankStatementScreen/BankStatementScreen";
@@ -600,6 +602,24 @@ export default function AppStack() {
         options={{ headerShown: true, header: AppStackHeader,headerTitle: 'Notifications' }}
         name={NAVIGATION_SCREENS.NEW_NOTIFICATION_SCREEN}
         component={NotificationScreen as any}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          header: AppStackHeader,
+          headerTitle: 'Transaction Limits',
+        }}
+        name={NAVIGATION_SCREENS.TRANSACTION_LIMIT_SCREEN}
+        component={TransactionLimitsScreen as any}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          header: AppStackHeader,
+          headerTitle: 'Payment Methods',
+        }}
+        name={NAVIGATION_SCREENS.PAYMENT_METHODS_SCREEN}
+        component={PaymentMethodsScreen as any}
       />
       <Stack.Screen
         options={{ headerShown: true, header: AppStackHeader }}

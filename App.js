@@ -38,6 +38,7 @@ import {
   readAuthSession,
   getAuthStackInitialRoute,
 } from "./src/auth/authSession";
+import { bootstrapMainAppSession } from "./src/auth/bootstrapMainAppSession";
 import {
   bootstrapCoinmeRisk,
   scheduleOnUserLoggedIn,
@@ -150,11 +151,12 @@ export default function App() {
       }
 
       const refreshed = readAuthSession();
-      if (refreshed.tokens && refreshed.onboardingComplete) {
+
+      const applyLoggedInBootstrap = (tokensForMerchant) => {
         if (wallet) {
           useDispatchAction(setWalletData(wallet));
         }
-        getMerchentRequest(refreshed.tokens);
+        getMerchentRequest(tokensForMerchant);
         useDispatchAction(setAppAccessGranted(true));
 
         if (selectedCurrency) {
@@ -170,6 +172,22 @@ export default function App() {
           useDispatchAction(
             setAllCryptoBalances(JSON.parse(allCryptoBalances))
           );
+        }
+      };
+
+      if (refreshed.tokens && refreshed.onboardingComplete) {
+        applyLoggedInBootstrap(refreshed.tokens);
+      } else if (
+        refreshed.tokens &&
+        !refreshed.onboardingComplete &&
+        refreshed.onboardingStep === 1
+      ) {
+        const result = await bootstrapMainAppSession(dispatch);
+        if (result.ok) {
+          const afterBootstrap = readAuthSession();
+          if (afterBootstrap.tokens) {
+            applyLoggedInBootstrap(afterBootstrap.tokens);
+          }
         }
       }
     }

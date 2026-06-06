@@ -41,6 +41,9 @@ export const sellReadyCodeStyles = (theme: ITheme) =>
       borderRadius: theme.radius.lg,
       padding: theme.spacing.lg,
       marginBottom: theme.spacing.lg,
+      width: '100%',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     statusCardTitle: {
       color: theme.colors.white,

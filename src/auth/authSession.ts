@@ -117,7 +117,7 @@ export const resolveAuthInitialRoute = (
     return NAVIGATION_SCREENS.NEW_COINME_MOBILE_AUTH;
   }
   if (step === 1) {
-    return NAVIGATION_SCREENS.NEW_ADDRESS;
+    return NAVIGATION_SCREENS.NEW_ONBOARDING;
   }
   return NAVIGATION_SCREENS.NEW_ONBOARDING;
 };

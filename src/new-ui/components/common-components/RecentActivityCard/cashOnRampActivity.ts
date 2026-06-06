@@ -24,11 +24,53 @@ const CASH_ONRAMP_TITLE = "Cash Purchase";
 export const CASH_ONRAMP_PROCESSING_MESSAGE =
   "We are processing your purchase. This usually take a few minutes, however in some cases it can take up to an hour.";
 
+const CASH_ONRAMP_STATUS_PRIORITY: Record<string, number> = {
+  CONSUMED: 100,
+  COMPLETED: 100,
+  COMPLETE: 100,
+  SUCCESS: 100,
+  CONFIRMED: 90,
+  EXPIRED: 50,
+  PROCESSING: 30,
+  PENDING: 30,
+  GENERATING: 30,
+  CREATED: 10,
+};
+
+const CASH_ONRAMP_COMPLETED_STATUSES = new Set([
+  "CONSUMED",
+  "COMPLETED",
+  "COMPLETE",
+  "SUCCESS",
+  "CONFIRMED",
+]);
+
+function collectCashOnRampStatusCandidates(item: ActivityCashOnRampItem): string[] {
+  const tpl = item.quote?.partnerResponse?.data?.transactionTemplate as
+    | { status?: string }
+    | undefined;
+  const raw = [
+    item.status,
+    item.quote?.details?.status,
+    item.providerTransactionStatus,
+    item.latestWebhookOrderTemplateStatus,
+    item.latest_webhook_order_template_status,
+    tpl?.status,
+  ];
+  return raw
+    .map((s) => String(s ?? "").trim().toUpperCase())
+    .filter(Boolean);
+}
+
 function normalizeStatus(item: ActivityCashOnRampItem): string {
-  const top = String(item.status ?? "").trim().toUpperCase();
-  if (top) return top;
-  const nested = String(item.quote?.details?.status ?? "").trim().toUpperCase();
-  return nested;
+  const statuses = collectCashOnRampStatusCandidates(item);
+  if (statuses.length === 0) return "";
+
+  return statuses.reduce((best, current) => {
+    const bestP = CASH_ONRAMP_STATUS_PRIORITY[best] ?? 20;
+    const currentP = CASH_ONRAMP_STATUS_PRIORITY[current] ?? 20;
+    return currentP > bestP ? current : best;
+  });
 }
 
 export function resolveCashOnRampDisplayStatus(
@@ -36,6 +78,13 @@ export function resolveCashOnRampDisplayStatus(
 ): CashOnRampDisplayStatus {
   const status = normalizeStatus(item);
 
+  if (CASH_ONRAMP_COMPLETED_STATUSES.has(status)) {
+    return {
+      kind: "consumed",
+      label: "Completed",
+      colorKey: "success",
+    };
+  }
   if (status === "CREATED") {
     return {
       kind: "created",
@@ -50,14 +99,7 @@ export function resolveCashOnRampDisplayStatus(
       colorKey: "error",
     };
   }
-  if (status === "CONSUMED") {
-    return {
-      kind: "consumed",
-      label: "Completed",
-      colorKey: "success",
-    };
-  }
-  if (status === "PROCESSING") {
+  if (status === "PROCESSING" || status === "PENDING" || status === "GENERATING") {
     return {
       kind: "processing",
       label: "Processing",

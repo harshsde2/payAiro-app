@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useMemo, useRef } from "react";
+import React, { useMemo, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -6,7 +6,10 @@ import {
   Alert,
   Clipboard,
   ToastAndroid,
+  TouchableOpacity,
 } from "react-native";
+import CustomText from "@new-ui/components/common-components/CustomText";
+import { useTheme as useNewTheme } from "@new-ui/styles/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
 import { useSelector } from "react-redux";
 import { useTheme } from "styles/ThemeContext";
@@ -19,9 +22,44 @@ import ProfileHeader from "components/common-components/ProfileHeader/ProfileHea
 import { ReceiveQRCard } from "components/common-components/ReceiveQRCard";
 import type { IReceiveQRCardRef } from "components/common-components/ReceiveQRCard";
 import { SvgIcons } from "constants/svgs";
+import DashboardSection from "tsx-components/DashboardSection";
+import { usePaymentMethodsList } from "query/hooks/usePaymentMethods";
+import {
+  filterDebitCards,
+  formatCardLabel,
+  formatExpiry,
+  PAYMENT_METHODS_EMPTY_MESSAGE,
+} from "@new-ui/screens/PaymentMethods/paymentMethods.utils";
+
+function formatProfilePhone(
+  sources: Record<string, unknown> | null | undefined,
+  wallet: Record<string, unknown> | null | undefined
+): string | null {
+  const national = String(
+    sources?.phone_national_number ??
+      sources?.phone ??
+      sources?.mobile ??
+      wallet?.mobile_number ??
+      wallet?.phone_national_number ??
+      ""
+  ).replace(/\D/g, "");
+  if (!national) return null;
+
+  const countryCode =
+    String(sources?.phone_country_code ?? "1").replace(/\D/g, "") || "1";
+
+  if (national.length === 10) {
+    return `+${countryCode} (${national.slice(0, 3)}) ${national.slice(3, 6)}-${national.slice(6)}`;
+  }
+  if (national.length === 11 && national.startsWith("1")) {
+    return `+1 (${national.slice(1, 4)}) ${national.slice(4, 7)}-${national.slice(7)}`;
+  }
+  return `+${countryCode} ${national}`;
+}
 
 const NewPersonal: React.FC = () => {
   const { theme } = useTheme();
+  const { theme: newTheme } = useNewTheme();
   const customTheme = styles(theme);
   const { userData, usersMe, walletData, kycStatus } = useSelector(
     (s: any) => s.authenticationSlice
@@ -32,22 +70,45 @@ const NewPersonal: React.FC = () => {
 
   /** Same mapping as SettingScreen: FastAPI `/me` user + profile → ProfileHeader shape. */
   const profileWalletData = useMemo(() => {
-    const u = userData || {};
+    const u = { ...(usersMe?.user || {}), ...(userData || {}) };
+    const legal = usersMe?.legal_identity || {};
     const profile = usersMe?.profile || {};
     const w = walletData || {};
+    const me = (usersMe || {}) as Record<string, unknown>;
     const name = u.first_name ?? u.name ?? w.name ?? "";
     const lastName = u.last_name ?? w.last_name ?? "";
+    const phoneSources = {
+      phone_national_number:
+        legal.phone_national_number ??
+        u.phone_national_number ??
+        me.phone_national_number,
+      phone_country_code:
+        legal.phone_country_code ?? u.phone_country_code ?? me.phone_country_code,
+      phone: u.phone ?? legal.phone,
+      mobile: u.mobile ?? legal.mobile,
+    };
     return {
       name,
       last_name: lastName,
       username: u.username ?? w.username ?? "",
       account_email: u.email ?? w.account_email ?? "",
       account_number: w.account_number,
+      mobile_number: formatProfilePhone(phoneSources, w),
       created_at: u.date_joined ?? w.created_at,
       profile_photo:
         profile.avatar_url ?? u.profile_photo ?? w.profile_photo ?? null,
     };
   }, [userData, usersMe, walletData]);
+
+  const mobileNumber = profileWalletData.mobile_number;
+
+  const { data: paymentMethodsData, isPending: isPaymentMethodsLoading } =
+    usePaymentMethodsList(20);
+
+  const debitCards = useMemo(
+    () => filterDebitCards(paymentMethodsData?.data?.items),
+    [paymentMethodsData]
+  );
 
   const kycForMode = useMemo(() => {
     const st = usersMe?.kyc?.status;
@@ -133,6 +194,7 @@ const NewPersonal: React.FC = () => {
         kycBadgeStatus={getKycBadgeStatus(mode)}
         kycMode={mode}
         showKycButton={false}
+        showKycBadge={false}
         onProfilePress={() =>
           navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL)
         }
@@ -141,10 +203,81 @@ const NewPersonal: React.FC = () => {
         showCameraButton={false}
       />
       <View style={customTheme.whiteSheetContainer}>
+        {mobileNumber ? (
+          <View style={customTheme.profileInfoRow}>
+            <View style={customTheme.profileInfoText}>
+              <CustomText variant="caption" color={newTheme.colors.textSecondary}>
+                Mobile number
+              </CustomText>
+              <CustomText variant="body" fontWeight="semiBold">
+                {mobileNumber}
+              </CustomText>
+            </View>
+            <TouchableOpacity
+              onPress={() => copyToClipboard(mobileNumber, "Mobile number")}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <SvgIcons.CopyOutlineBlack width={20} height={20} />
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
+        <DashboardSection
+          title="Payment Methods"
+          titleStyle={{ fontSize: 16 }}
+          style={customTheme.paymentMethodsSection}
+        >
+          {isPaymentMethodsLoading ? (
+            <View style={customTheme.profileInfoRow}>
+              <View style={customTheme.profileInfoText}>
+                <CustomText variant="body" color={newTheme.colors.textSecondary}>
+                  Loading…
+                </CustomText>
+              </View>
+            </View>
+          ) : debitCards.length === 0 ? (
+            <View style={customTheme.profileInfoRow}>
+              <View style={customTheme.profileInfoText}>
+                <CustomText variant="body" color={newTheme.colors.textSecondary}>
+                  {PAYMENT_METHODS_EMPTY_MESSAGE}
+                </CustomText>
+              </View>
+            </View>
+          ) : (
+            debitCards.map((card) => {
+              const cardLabel = formatCardLabel(card);
+              const expiry = formatExpiry(card);
+              return (
+                <View key={card.payment_method_id} style={customTheme.profileInfoRow}>
+                  <View style={customTheme.profileInfoText}>
+                    <CustomText variant="caption" color={newTheme.colors.textSecondary}>
+                      Debit card
+                    </CustomText>
+                    <CustomText variant="body" fontWeight="semiBold">
+                      {cardLabel}
+                    </CustomText>
+                    {expiry ? (
+                      <CustomText variant="caption" color={newTheme.colors.textSecondary}>
+                        Expires {expiry}
+                      </CustomText>
+                    ) : null}
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => copyToClipboard(cardLabel, "Debit card")}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <SvgIcons.CopyOutlineBlack width={20} height={20} />
+                  </TouchableOpacity>
+                </View>
+              );
+            })
+          )}
+        </DashboardSection>
+
         <ReceiveQRCard
           ref={qrCardRef}
           title="PayAiro"
-          subtitle="Primary account for receiving funds"
+          subtitle="Scan this QR code to receive funds"
           qrValue={{
             type: "receive",
             username: profileWalletData.username,
@@ -189,6 +322,24 @@ const styles = (theme: any) =>
       borderTopEndRadius: theme.spacing.spacing[8],
       borderTopStartRadius: theme.spacing.spacing[8],
       padding: theme.spacing.spacing[5],
+    },
+    profileInfoRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: theme.spacing.spacing[4],
+      paddingVertical: theme.spacing.spacing[3],
+      paddingHorizontal: theme.spacing.spacing[3],
+      borderRadius: theme.spacing.spacing[3],
+      backgroundColor: theme.colors.palette.grey50 ?? "#F5F5F5",
+    },
+    profileInfoText: {
+      flex: 1,
+      marginRight: theme.spacing.spacing[3],
+      gap: 4,
+    },
+    paymentMethodsSection: {
+      marginTop: theme.spacing.spacing[2],
     },
   });
 

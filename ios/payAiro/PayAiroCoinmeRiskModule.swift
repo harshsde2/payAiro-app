@@ -257,6 +257,29 @@ final class PayAiroCoinmeRiskModule: NSObject {
     }
   }
 
+  /// Fire-and-forget Sardine upload (Coinme cardlinking Phase 1 / early Phase 3).
+  @objc
+  func submitWithoutCallbacks(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    Self.sdkQueue.async {
+      DispatchQueue.main.async {
+        guard CoinmeRiskEngine.isInitialized() else {
+          Self.rejectOnMain(
+            reject,
+            code: ErrorCode.notInitialized.rawValue,
+            message: "CoinmeRiskEngine is not initialized. Call setup() first.",
+            error: nil
+          )
+          return
+        }
+        CoinmeRiskEngine.submit()
+        Self.resolveOnMain { resolve(nil) }
+      }
+    }
+  }
+
   // MARK: - Field tracking
 
   @objc

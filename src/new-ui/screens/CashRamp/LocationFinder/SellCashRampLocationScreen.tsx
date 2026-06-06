@@ -61,8 +61,9 @@ const SellCashRampLocationScreen: React.FC = () => {
     goToMyLocation,
     dismissSuggestions,
     placesSearchEnabled,
+    isResolvingInitialCenter,
     suggestionsOpen,
-  } = useCashRampLocationMapSearch();
+  } = useCashRampLocationMapSearch({ usersMe });
 
   const { data, isPending, isError, isFetching } = useNearbyCashLocations({
     latitude: queryCenter.latitude,
@@ -70,6 +71,7 @@ const SellCashRampLocationScreen: React.FC = () => {
     radius: SELL_RADIUS,
     limit: SELL_LIMIT,
     providers: SELL_PROVIDERS,
+    enabled: !isResolvingInitialCenter,
   });
 
   useEffect(() => {
@@ -137,7 +139,8 @@ const SellCashRampLocationScreen: React.FC = () => {
     longitudeDelta: 0.08,
   });
 
-  const showEmptyList = !isPending && !isError && mappedLocations.length === 0;
+  const showEmptyList =
+    !isPending && !isResolvingInitialCenter && !isError && mappedLocations.length === 0;
 
   if (!entry) {
     return (
@@ -217,13 +220,13 @@ const SellCashRampLocationScreen: React.FC = () => {
         />
       </View>
 
-      {isFetching && !isPending ? (
+      {isFetching && !isPending && !isResolvingInitialCenter ? (
         <View style={styles.fetchingOverlay} pointerEvents="none">
           <ActivityIndicator color={theme.colors.primary} size="small" />
         </View>
       ) : null}
 
-      {isPending ? (
+      {isPending || isResolvingInitialCenter ? (
         <View style={styles.stateWrap}>
           <ActivityIndicator color={theme.colors.primary} />
         </View>

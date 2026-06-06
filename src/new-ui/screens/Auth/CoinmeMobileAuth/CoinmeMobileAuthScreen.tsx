@@ -128,7 +128,8 @@ const CoinmeMobileAuthScreen: React.FC = () => {
     [navigation]
   );
 
-  const openFinishError = useCallback(
+  /** mobile_auth errors that can retry via instant_link (initiate or finish). */
+  const openMobileAuthErrorWithFallback = useCallback(
     (title: string, description: string) => {
       if (authMethod === "mobile_auth") {
         navigation.navigate(NAVIGATION_SCREENS.NEW_COMMON_ERROR, {
@@ -172,7 +173,7 @@ const CoinmeMobileAuthScreen: React.FC = () => {
         // deviceIp = "172.58.83.64";
       } catch {
         if (!cancelled) {
-          openError(
+          openMobileAuthErrorWithFallback(
             "Connection issue",
             "We could not determine your network address. Check your connection and try again."
           );
@@ -234,7 +235,10 @@ const CoinmeMobileAuthScreen: React.FC = () => {
         if (cancelled) return;
 
         if (!resp?.ok) {
-          openError("Verification failed", messageFromCoinmeBody(resp));
+          openMobileAuthErrorWithFallback(
+            "Verification failed",
+            messageFromCoinmeBody(resp)
+          );
           return;
         }
 
@@ -242,7 +246,7 @@ const CoinmeMobileAuthScreen: React.FC = () => {
           resp?.data?.coinme?.data?.redirectTargetUrl ??
           resp?.data?.coinme?.data?.redirect_target_url;
         if (typeof url !== "string" || !url.trim()) {
-          openError(
+          openMobileAuthErrorWithFallback(
             "Verification failed",
             "Missing redirect URL from the server. Please try again."
           );
@@ -255,7 +259,7 @@ const CoinmeMobileAuthScreen: React.FC = () => {
         const requestId =
           typeof requestIdRaw === "string" ? requestIdRaw.trim() : "";
         if (!requestId) {
-          openError(
+          openMobileAuthErrorWithFallback(
             "Verification failed",
             "Missing session from the server. Please try again."
           );
@@ -271,7 +275,7 @@ const CoinmeMobileAuthScreen: React.FC = () => {
           e?.response?.data?.message ||
           e?.message ||
           "Something went wrong. Please try again.";
-        openError("Request failed", String(msg));
+        openMobileAuthErrorWithFallback("Request failed", String(msg));
       }
     })();
 
@@ -282,6 +286,7 @@ const CoinmeMobileAuthScreen: React.FC = () => {
     authMethod,
     restartKey,
     openError,
+    openMobileAuthErrorWithFallback,
     postCoinmeInstantLink,
     postCoinmeMobileAuth,
     route.params?.phone,
@@ -293,7 +298,7 @@ const CoinmeMobileAuthScreen: React.FC = () => {
         route.params?.phone ?? getAuthResumeParams()?.phone;
       if (!phoneRaw) {
         finishStarted.current = false;
-        openFinishError("Verification failed", "Missing phone number.");
+        openMobileAuthErrorWithFallback("Verification failed", "Missing phone number.");
         return;
       }
       const national = normalizeUsNationalDigits(phoneRaw);
@@ -330,13 +335,13 @@ const CoinmeMobileAuthScreen: React.FC = () => {
             return;
           }
 
-          openFinishError("Verification failed", messageFromCoinmeBody(resp));
+          openMobileAuthErrorWithFallback("Verification failed", messageFromCoinmeBody(resp));
           return;
         }
 
         const requestId = initiateRequestIdRef.current;
         if (!requestId?.trim()) {
-          openFinishError(
+          openMobileAuthErrorWithFallback(
             "Verification failed",
             "Session expired. Go back and start verification again."
           );
@@ -368,20 +373,20 @@ const CoinmeMobileAuthScreen: React.FC = () => {
           return;
         }
 
-        openFinishError("Verification failed", messageFromCoinmeBody(resp));
+        openMobileAuthErrorWithFallback("Verification failed", messageFromCoinmeBody(resp));
       } catch (e: any) {
         const msg =
           e?.response?.data?.message ||
           e?.message ||
           "Something went wrong. Please try again.";
-        openFinishError("Request failed", String(msg));
+        openMobileAuthErrorWithFallback("Request failed", String(msg));
       }
     },
     [
       authMethod,
       kycParams,
       navigation,
-      openFinishError,
+      openMobileAuthErrorWithFallback,
       postCoinmeInstantLink,
       postCoinmeMobileAuth,
       route.params?.phone,

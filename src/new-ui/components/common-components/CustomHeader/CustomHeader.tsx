@@ -18,6 +18,8 @@ const formatScreenTitle = (routeName: string): string => {
   if (routeName === NAVIGATION_SCREENS.NEW_KYC) return 'KYC';
   if (routeName === NAVIGATION_SCREENS.NEW_FORGOT_PASSWORD) return 'Forgot Password';
   if (routeName === NAVIGATION_SCREENS.NEW_FORGOT_PASSWORD_VERIFICATION) return 'Verification';
+  if (routeName === NAVIGATION_SCREENS.TRANSACTION_LIMIT_SCREEN) return 'Transaction Limits';
+  if (routeName === NAVIGATION_SCREENS.PAYMENT_METHODS_SCREEN) return 'Payment Methods';
   // Legacy / other
   if (routeName === NAVIGATION_SCREENS.OTP) return 'OTP Verification';
   if (routeName === NAVIGATION_SCREENS.LOGIN) return 'Login';

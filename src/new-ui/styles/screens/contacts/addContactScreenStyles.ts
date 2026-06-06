@@ -30,6 +30,9 @@ export const addContactScreenStyles = (theme: ITheme) =>
       marginTop: 'auto' as any,
       paddingTop: theme.spacing.xl,
     },
+    fieldError: {
+      marginTop: theme.spacing.xs,
+    },
     saveButton: {
       borderRadius: 30,
       height: 54,

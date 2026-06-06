@@ -1,13 +1,5 @@
-import React, { useCallback, useMemo, useRef, useState } from "react";
-import {
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  TextInput as RNTextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import React, { useCallback, useMemo, useState } from "react";
+import { Keyboard, KeyboardAvoidingView, Platform, View } from "react-native";
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
 import CustomText from "@new-ui/components/common-components/CustomText";
@@ -18,13 +10,16 @@ import { AppIcon } from "@new-ui/assets/svgs";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { showError } from "utils/toast";
 import RecipientHeader from "@new-ui/screens/Send/EnterAmount/RecipientHeader";
-import AmountInput from "@new-ui/screens/Send/EnterAmount/AmountInput";
 import PayButton from "@new-ui/screens/Send/EnterAmount/PayButton";
-import { useEnterAmountState } from "@new-ui/screens/Send/EnterAmount/useEnterAmountState";
-import type { FundingSource } from "@new-ui/screens/Send/EnterAmount/enterAmount.types";
 import { buildAddressLine } from "../LocationFinder/locationFinder.utils";
 import SellTransactionLimitModal from "./SellTransactionLimitModal";
-import { SELL_CONTINUE, SELL_METHOD_VALUE } from "./sellFlowCopy";
+import { SellAmountSlider } from "./SellAmountRulerDial";
+import {
+  SELL_AVAILABLE_BALANCE_PREFIX,
+  SELL_CONTINUE,
+  SELL_METHOD_VALUE,
+  SELL_MIN_AMOUNT_ERROR,
+} from "./sellFlowCopy";
 import { checkDuplicateSellAmount } from "./sellLimitChecks";
 import {
   buildSellSession,
@@ -34,8 +29,11 @@ import {
 import {
   clampSellAmountUsd,
   computeAvailableBalanceUsd,
+  cryptoAmountFromUsd,
+  formatUsd,
   SELL_AMOUNT_STEP_USD,
   SELL_MAX_TRANSACTION_USD,
+  SELL_MIN_AMOUNT_USD,
 } from "./sellFlow.utils";
 
 type RouteParams = SellCashRampEntryParams & {
@@ -45,8 +43,6 @@ type RouteParams = SellCashRampEntryParams & {
 const SellEnterAmountScreen: React.FC = () => {
   const { theme } = useTheme();
   const styles = enterAmountStyles(theme);
-  const inputRef = useRef<RNTextInput | null>(null);
-  const { width } = useWindowDimensions();
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<Record<string, RouteParams>, string>>();
   const params = route.params as RouteParams | undefined;
@@ -71,63 +67,27 @@ const SellEnterAmountScreen: React.FC = () => {
   const tradeAssetSymbol = String(entry?.cryptoCurrencyCode ?? "").toUpperCase();
   const tradePriceUSD = Number(entry?.usdUnitPrice ?? 0);
 
-  const tradeFundingSource = useMemo<FundingSource | null>(() => {
-    if (!entry || !tradeAssetSymbol) return null;
-    const sellBalanceRaw = Number(entry.platformAvailableCrypto ?? 0);
-    const sellBalance = Number.isFinite(sellBalanceRaw) ? Math.max(0, sellBalanceRaw) : 0;
-    const safePrice = Number.isFinite(tradePriceUSD) ? tradePriceUSD : 0;
-    return {
-      id: `cash-sell-${tradeAssetSymbol}`,
-      name: tradeAssetSymbol,
-      balance: sellBalance,
-      type: "crypto",
-      cryptoMeta: {
-        symbol: tradeAssetSymbol,
-        network: String(entry.chain || "ETH").toUpperCase(),
-        priceUSD: safePrice,
-        logo: entry.logo ?? undefined,
-      },
-    };
-  }, [entry, tradeAssetSymbol, tradePriceUSD]);
-
-  const {
-    amount,
-    inputValue,
-    displayAmount,
-    displayFiatEquivalent,
-    displayAssetEquivalent,
-    inputMode,
-    maxAsset,
-    maxUsd,
-    feePercent,
-    assetAmount,
-    fillMax,
-    onChangeAmountText,
-    toggleInputMode,
-  } = useEnterAmountState({
-    initialSelectedSource: tradeFundingSource,
-    transactionFeePercent: 0,
-    initialInputMode: "asset",
-  });
-
   const sellMaxUsd = useMemo(() => {
     if (!entry) return 0;
     return Math.min(computeAvailableBalanceUsd(entry), SELL_MAX_TRANSACTION_USD);
   }, [entry]);
 
-  const dynamicFontSize = useMemo(() => {
-    const totalChars = (displayAmount || "0.00").length + 1;
-    const availableWidth = width - 80;
-    const charWidthRatio = 0.6;
-    const ideal = availableWidth / (totalChars * charWidthRatio);
-    const max = 40;
-    const min = 24;
-    return Math.min(max, Math.max(min, ideal));
-  }, [displayAmount, width]);
+  const sliderDisabled = sellMaxUsd < SELL_MIN_AMOUNT_USD;
 
-  const assetSymbol = tradeAssetSymbol || "CRYPTO";
-  const leftPrefix = inputMode === "asset" ? "" : "$";
-  const rightSuffix = inputMode === "asset" ? assetSymbol : "";
+  const [selectedUsd, setSelectedUsd] = useState(() =>
+    sellMaxUsd >= SELL_MIN_AMOUNT_USD ? SELL_MIN_AMOUNT_USD : 0
+  );
+
+  React.useEffect(() => {
+    if (sellMaxUsd >= SELL_MIN_AMOUNT_USD) {
+      setSelectedUsd((prev) => {
+        const clamped = clampSellAmountUsd(prev, sellMaxUsd);
+        return clamped > 0 ? clamped : SELL_MIN_AMOUNT_USD;
+      });
+    } else {
+      setSelectedUsd(0);
+    }
+  }, [sellMaxUsd]);
 
   const pricePreviewText = useMemo(() => {
     if (!tradeAssetSymbol) return "";
@@ -135,14 +95,21 @@ const SellEnterAmountScreen: React.FC = () => {
     return `1 ${tradeAssetSymbol} ≈ $${tradePriceUSD.toFixed(2)}`;
   }, [tradeAssetSymbol, tradePriceUSD]);
 
+  const cryptoEquivalentText = useMemo(() => {
+    if (!tradeAssetSymbol || selectedUsd <= 0) return "";
+    const cryptoAmt = cryptoAmountFromUsd(selectedUsd, tradePriceUSD);
+    const decimals = cryptoAmt >= 1 ? 4 : 8;
+    return `~${cryptoAmt.toFixed(decimals)} ${tradeAssetSymbol}`;
+  }, [selectedUsd, tradeAssetSymbol, tradePriceUSD]);
+
   const cashPickupSubtitle = useMemo(() => {
     if (!params?.location) return SELL_METHOD_VALUE;
     const store = String(params.location.description ?? "ATM").trim();
     const address = buildAddressLine({
-      address: params.location.address,
-      city: params.location.city,
-      state: params.location.state,
-      zipCode: params.location.zipCode,
+      address: String(params.location.address ?? ""),
+      city: String(params.location.city ?? ""),
+      state: String(params.location.state ?? ""),
+      zipCode: String(params.location.zipCode ?? ""),
     });
     if (!address) return store;
     const short =
@@ -150,42 +117,41 @@ const SellEnterAmountScreen: React.FC = () => {
     return `${store} · ${short}`;
   }, [params?.location]);
 
-  const handlePressAmountFocus = useCallback(() => {
-    inputRef.current?.focus();
-  }, []);
-
   const onContinue = useCallback(async () => {
     if (!entry || !params?.location) {
       showError("Missing sell details. Go back and try again.");
       return;
     }
 
-    if (inputMode === "fiat" && amount <= 0) {
-      showError("Please enter a valid amount");
-      return;
-    }
-    if (inputMode === "asset" && assetAmount <= 0) {
-      showError("Please enter a valid amount");
+    if (sellMaxUsd < SELL_MIN_AMOUNT_USD) {
+      showError("Insufficient balance to sell");
       return;
     }
 
-    const usdAmount = amount;
-    if (usdAmount > sellMaxUsd + 0.001) {
+    if (selectedUsd < SELL_MIN_AMOUNT_USD) {
+      showError(SELL_MIN_AMOUNT_ERROR);
+      return;
+    }
+
+    if (selectedUsd > sellMaxUsd + 0.001) {
       showError(
-        sellMaxUsd <= 0
-          ? "Insufficient balance to sell"
-          : `Maximum available to sell is $${sellMaxUsd.toFixed(2)}`
+        `Maximum available to sell is $${sellMaxUsd.toFixed(2)}`
       );
       return;
     }
 
-    if (usdAmount > SELL_MAX_TRANSACTION_USD + 0.001) {
+    if (selectedUsd > SELL_MAX_TRANSACTION_USD + 0.001) {
       showError(`Maximum sale per transaction is $${SELL_MAX_TRANSACTION_USD.toFixed(2)}`);
       return;
     }
 
-    const clamped = clampSellAmountUsd(usdAmount, sellMaxUsd);
-    if (Math.abs(usdAmount - clamped) > 0.01) {
+    const clamped = clampSellAmountUsd(selectedUsd, sellMaxUsd);
+    if (clamped < SELL_MIN_AMOUNT_USD) {
+      showError(SELL_MIN_AMOUNT_ERROR);
+      return;
+    }
+
+    if (Math.abs(selectedUsd - clamped) > 0.01) {
       showError(`Select an amount in increments of $${SELL_AMOUNT_STEP_USD}`);
       return;
     }
@@ -202,19 +168,13 @@ const SellEnterAmountScreen: React.FC = () => {
     } finally {
       setChecking(false);
     }
-  }, [
-    amount,
-    assetAmount,
-    entry,
-    inputMode,
-    navigation,
-    params?.location,
-    sellMaxUsd,
-  ]);
+  }, [entry, navigation, params?.location, selectedUsd, sellMaxUsd]);
 
   const canContinue =
     !checking &&
-    ((inputMode === "fiat" && amount > 0) || (inputMode === "asset" && assetAmount > 0));
+    !sliderDisabled &&
+    selectedUsd >= SELL_MIN_AMOUNT_USD &&
+    selectedUsd <= sellMaxUsd + 0.001;
 
   if (!entry || !params?.location) {
     return (
@@ -252,18 +212,7 @@ const SellEnterAmountScreen: React.FC = () => {
                 Sell for Cash
               </CustomText>
             </View>
-            <TouchableOpacity
-              style={styles.cryptoToggleButton}
-              activeOpacity={0.85}
-              onPress={toggleInputMode}
-            >
-              <CustomText style={styles.cryptoToggleIcon} fontWeight="semiBold">
-                ↻
-              </CustomText>
-              <CustomText style={styles.cryptoToggleText} fontWeight="semiBold">
-                {inputMode === "asset" ? "USD" : assetSymbol}
-              </CustomText>
-            </TouchableOpacity>
+            <View style={{ width: 72 }} />
           </View>
 
           <RecipientHeader
@@ -274,32 +223,38 @@ const SellEnterAmountScreen: React.FC = () => {
             pricePreview={pricePreviewText}
           />
 
-          <AmountInput
-            inputValue={inputValue}
-            onChangeAmountText={onChangeAmountText}
-            inputRef={inputRef}
-            dynamicFontSize={dynamicFontSize}
-            onPressFocus={handlePressAmountFocus}
-            leftPrefix={leftPrefix}
-            rightSuffix={rightSuffix}
+          <CustomText variant="body" style={{ textAlign: "center", marginTop: theme.spacing.md }}>
+            {SELL_AVAILABLE_BALANCE_PREFIX}{" "}
+            <CustomText variant="body" fontWeight="semiBold">
+              {formatUsd(sellMaxUsd)}
+            </CustomText>
+          </CustomText>
+
+          <SellAmountSlider
+            maxUsd={sellMaxUsd}
+            valueUsd={selectedUsd}
+            onChange={setSelectedUsd}
+            disabled={sliderDisabled}
           />
 
-          <View style={styles.cryptoModeContainer}>
-            <CustomText style={styles.cryptoFeeText} variant="caption">
-              Fee: {feePercent}%
+          {cryptoEquivalentText ? (
+            <CustomText
+              variant="caption"
+              style={[styles.cryptoEquivalentText, { textAlign: "center" }]}
+            >
+              {cryptoEquivalentText}
             </CustomText>
-            <TouchableOpacity style={styles.cryptoMaxContainer} activeOpacity={0.9} onPress={fillMax}>
-              <CustomText variant="caption" style={styles.cryptoMaxText}>
-                Max: {maxAsset.toFixed(maxAsset >= 1 ? 4 : 8)} {assetSymbol} ~$
-                {maxUsd.toFixed(2)}
-              </CustomText>
-            </TouchableOpacity>
-            <CustomText variant="caption" style={styles.cryptoEquivalentText}>
-              {inputMode === "asset"
-                ? `~$${Number(displayFiatEquivalent || 0).toFixed(2)}`
-                : `~${Number(displayAssetEquivalent || 0).toFixed(6)} ${assetSymbol}`}
+          ) : null}
+
+          {sliderDisabled ? (
+            <CustomText
+              variant="caption"
+              color={theme.colors.error}
+              style={{ textAlign: "center", marginTop: theme.spacing.sm }}
+            >
+              {SELL_MIN_AMOUNT_ERROR}
             </CustomText>
-          </View>
+          ) : null}
         </View>
 
         <View style={[styles.bottomArea, styles.bottomAreaTrade]}>

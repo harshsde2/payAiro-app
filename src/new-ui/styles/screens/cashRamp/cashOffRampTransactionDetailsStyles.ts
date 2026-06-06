@@ -29,6 +29,7 @@ export const cashOffRampTransactionDetailsStyles = (theme: ITheme) =>
       borderRadius: theme.radius.lg,
       padding: theme.spacing.lg,
       marginBottom: theme.spacing.lg,
+      alignItems: "center",
     },
     statusCardTitle: {
       color: theme.colors.white,
@@ -38,16 +39,22 @@ export const cashOffRampTransactionDetailsStyles = (theme: ITheme) =>
       color: theme.colors.white,
       opacity: 0.92,
       lineHeight: 22,
+      textAlign: "center",
+      width: "100%",
     },
     readyCodeValue: {
       color: theme.colors.white,
       marginVertical: theme.spacing.sm,
       letterSpacing: 2,
+      textAlign: "center",
+      width: "100%",
     },
     phoneLine: {
       color: theme.colors.white,
       opacity: 0.9,
       marginTop: theme.spacing.xs,
+      textAlign: "center",
+      width: "100%",
     },
     pickupDisclaimer: {
       color: theme.colors.white,

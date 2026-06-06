@@ -122,6 +122,7 @@ const ProfileHeader: FC<IProfileHeaderProps> = ({
   onImagePickerError,
   isUploadingImage = false,
   showCameraButton: showCameraButtonProp = true,
+  showKycBadge: showKycBadgeProp = true,
 }) => {
   const { theme } = useTheme();
   const styles = getStyles();
@@ -157,6 +158,8 @@ const ProfileHeader: FC<IProfileHeaderProps> = ({
   const memberSince = walletData?.created_at
     ? moment(walletData.created_at).format("MMM YYYY")
     : moment().format("MMM YYYY");
+
+  const mobileDisplay = walletData?.mobile_number?.trim() || null;
 
   /**
    * Processes the picked image and prepares it for API upload
@@ -374,9 +377,11 @@ const ProfileHeader: FC<IProfileHeaderProps> = ({
               )}
             </TouchableOpacity>
           )}
-          <View style={styles.kycBadgeContainer}>
-            <KYCBadge status={kycBadgeStatus} />
-          </View>
+          {showKycBadgeProp ? (
+            <View style={styles.kycBadgeContainer}>
+              <KYCBadge status={kycBadgeStatus} />
+            </View>
+          ) : null}
         </View>
 
         {/* User Information Section */}
@@ -387,6 +392,11 @@ const ProfileHeader: FC<IProfileHeaderProps> = ({
           <CustomText variant="caption" fontWeight="medium">
             {walletData?.username || "N/A"}
           </CustomText>
+          {mobileDisplay ? (
+            <CustomText variant="caption" fontWeight="medium">
+              {mobileDisplay}
+            </CustomText>
+          ) : null}
           <CustomText variant="caption" fontWeight="medium">
             {walletData?.account_email || walletData?.account_number || "N/A"}
           </CustomText>

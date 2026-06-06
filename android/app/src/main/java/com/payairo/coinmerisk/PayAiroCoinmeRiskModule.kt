@@ -189,6 +189,32 @@ class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext)
         }
     }
 
+    /** Fire-and-forget Sardine upload (Coinme cardlinking Phase 1 / early Phase 3). */
+    @ReactMethod
+    fun submitWithoutCallbacks(promise: Promise) {
+        moduleScope.launch {
+            sdkMutex.withLock {
+                if (!CoinmeRiskEngine.isInitialized()) {
+                    promise.reject(
+                        ErrorCodes.NOT_INITIALIZED,
+                        "CoinmeRiskEngine is not initialized. Call setup() first."
+                    )
+                    return@withLock
+                }
+                try {
+                    CoinmeRiskEngine.submit()
+                    promise.resolve(null)
+                } catch (e: Exception) {
+                    promise.reject(
+                        ErrorCodes.SUBMIT_FAILED,
+                        e.localizedMessage ?: "submitWithoutCallbacks failed",
+                        e
+                    )
+                }
+            }
+        }
+    }
+
     /**
      * Atomic session pipeline: resetSessionKey? → update(flow) → getPartnerSessionTag
      * → update(sessionKey) → submit. Serialized on main thread to avoid Sardine races.

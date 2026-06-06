@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { View, TouchableOpacity, Image, Text } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { useNavigation } from '@react-navigation/native';
+import { CommonActions, useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 import { dashboardHeaderStyles } from '@new-ui/styles/components/dashboardHeaderStyles';
@@ -75,9 +75,16 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
   }, []);
 
   const handleNavigate = useCallback(
-    (screen: keyof typeof NAVIGATION_SCREENS) => {
+    (routeName: (typeof NAVIGATION_SCREENS)[keyof typeof NAVIGATION_SCREENS]) => {
       closeMenu();
-      navigation.navigate(NAVIGATION_SCREENS[screen] as never);
+      if (!routeName) return;
+
+      const stackNavigation = navigation.getParent() ?? navigation;
+      stackNavigation.dispatch(
+        CommonActions.navigate({
+          name: routeName,
+        })
+      );
     },
     [closeMenu, navigation]
   );

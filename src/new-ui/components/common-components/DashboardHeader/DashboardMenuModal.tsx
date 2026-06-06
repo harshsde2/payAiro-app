@@ -8,12 +8,12 @@ import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 import { dashboardHeaderStyles } from '@new-ui/styles/components/dashboardHeaderStyles';
 import { performAppLogout } from 'utils/performAppLogout';
 
-type ScreenKey = keyof typeof NAVIGATION_SCREENS;
+type AppRouteName = (typeof NAVIGATION_SCREENS)[keyof typeof NAVIGATION_SCREENS];
 
 interface IDashboardMenuModalProps {
   visible: boolean;
   onClose: () => void;
-  onNavigate: (screen: ScreenKey) => void;
+  onNavigate: (routeName: AppRouteName) => void;
   unreadCount?: number;
 }
 
@@ -40,26 +40,38 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
         key: 'notification' as const,
         label: 'Notification',
         icon: <AppIcon.Notification width={18} height={18} />,
-        screen: 'NEW_NOTIFICATION_SCREEN' as ScreenKey,
+        routeName: NAVIGATION_SCREENS.NEW_NOTIFICATION_SCREEN,
         badgeLabel: unreadLabel,
       },
       {
         key: 'profile' as const,
         label: 'Profile Details',
         icon: <AppIcon.User width={18} height={18} />,
-        screen: 'NEW_PERSONAL' as ScreenKey,
+        routeName: NAVIGATION_SCREENS.NEW_PERSONAL,
+      },
+      {
+        key: 'transactionLimit' as const,
+        label: 'Transaction Limit',
+        icon: <AppIcon.TransactionLimit width={18} height={18} />,
+        routeName: NAVIGATION_SCREENS.TRANSACTION_LIMIT_SCREEN,
+      },
+      {
+        key: 'paymentMethods' as const,
+        label: 'Payment Methods',
+        icon: <AppIcon.DebitCard width={18} height={18} />,
+        routeName: NAVIGATION_SCREENS.PAYMENT_METHODS_SCREEN,
       },
       {
         key: 'settings' as const,
         label: 'Settings',
         icon: <AppIcon.Settings width={18} height={18} />,
-        screen: 'NEW_SETTINGS_SCREEN' as ScreenKey,
+        routeName: NAVIGATION_SCREENS.NEW_SETTINGS_SCREEN,
       },
       {
         key: 'support' as const,
         label: 'Support',
         icon: <AppIcon.Headphones width={18} height={18} />,
-        screen: 'SUPPORT_SCREEN' as ScreenKey,
+        routeName: NAVIGATION_SCREENS.SUPPORT_SCREEN,
       },
       // {
       //   key: 'about' as const,
@@ -71,8 +83,8 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
     [unreadLabel]
   );
 
-  const handlePress = (screen: ScreenKey) => {
-    onNavigate(screen);
+  const handlePress = (routeName: AppRouteName) => {
+    onNavigate(routeName);
   };
 
   const handleLogoutPress = () => {
@@ -108,7 +120,7 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
                 key={item.key}
                 style={styles.menuItem}
                 activeOpacity={0.7}
-                onPress={() => handlePress(item.screen)}
+                onPress={() => handlePress(item.routeName)}
               >
                 <View style={styles.menuItemLeft}>
                   {item.icon}

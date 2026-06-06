@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Contacts from "react-native-contacts";
 import { ApiResponse, RecentContact, User } from "../../api/types";
 import { userContactKeys } from "query/queryKeys";
@@ -9,56 +9,213 @@ import { Platform } from "react-native";
 import { queryStaleTime } from "query/queryConfigs";
 import { useAppLock } from "hooks/useAppLock";
 
+export interface IAddUserContactPayload {
+  username: string;
+  payairo_id: string;
+  email: string;
+  phone: string;
+  first_name: string;
+  last_name: string;
+  contact_phone: string;
+}
+
+export interface IUserContact {
+  id?: number | string;
+  username?: string;
+  payairo_id?: string;
+  email?: string;
+  phone?: string;
+  contact_phone?: string;
+  first_name?: string;
+  last_name?: string;
+  avatar_url?: string | null;
+  profile_photo?: string | null;
+}
+
+export interface IUserContactsResponse {
+  ok: boolean;
+  message: string;
+  contacts: IUserContact[];
+}
+
+export interface IAddUserContactResponse {
+  ok?: boolean;
+  message?: string;
+  data?: unknown;
+}
+
+const requestContactsPermission = async (
+  setNativeModalVisible: (visible: boolean) => void
+): Promise<void> => {
+  let permission = await Contacts.checkPermission();
+
+  if (permission === "denied") {
+    setNativeModalVisible(true);
+    try {
+      permission = await Contacts.requestPermission();
+    } finally {
+      setTimeout(() => {
+        setNativeModalVisible(false);
+      }, 1000);
+    }
+  }
+
+  if (permission !== "authorized") {
+    throw new Error("Permission to access contacts was denied.");
+  }
+};
+
+const normalizeUserContacts = (data: unknown): IUserContact[] => {
+  if (Array.isArray(data)) {
+    return data as IUserContact[];
+  }
+  if (data && typeof data === "object") {
+    const record = data as Record<string, unknown>;
+    if (Array.isArray(record.contacts)) {
+      return record.contacts as IUserContact[];
+    }
+    if (Array.isArray(record.items)) {
+      return record.items as IUserContact[];
+    }
+  }
+  return [];
+};
+
+export const getUserContactDisplayName = (contact: IUserContact): string => {
+  const fullName = `${contact.first_name ?? ""} ${contact.last_name ?? ""}`.trim();
+  if (fullName) return fullName;
+  return contact.username?.trim() || "Unknown";
+};
+
+export const getUserContactAvatar = (contact: IUserContact): string | null => {
+  const uri = contact.avatar_url ?? contact.profile_photo ?? null;
+  if (!uri) return null;
+  return uri.replace(/^http:\/\//i, "https://");
+};
+
+export const getUserContactSubtitle = (contact: IUserContact): string => {
+  return (
+    contact.username?.trim() ||
+    contact.contact_phone?.trim() ||
+    contact.phone?.trim() ||
+    contact.email?.trim() ||
+    ""
+  );
+};
+
+export const getUserContactSendIdentifier = (contact: IUserContact): string => {
+  return (
+    contact.username?.trim() ||
+    contact.contact_phone?.trim() ||
+    contact.phone?.trim() ||
+    contact.email?.trim() ||
+    ""
+  );
+};
+
+export const splitFullName = (
+  fullName: string
+): { first_name: string; last_name: string } => {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) {
+    return { first_name: "", last_name: "" };
+  }
+  if (parts.length === 1) {
+    return { first_name: parts[0], last_name: "" };
+  }
+  return {
+    first_name: parts[0],
+    last_name: parts.slice(1).join(" "),
+  };
+};
+
+export const normalizePayAiroTag = (tag: string): string => {
+  return tag
+    .trim()
+    .replace(/^@+/, "")
+    .replace(/@payairo$/i, "")
+    .trim();
+};
+
+export const buildContactPhone = (dialCode: string, mobile: string): string => {
+  const digits = mobile.replace(/\D/g, "");
+  const code = dialCode.startsWith("+") ? dialCode : `+${dialCode}`;
+  return `${code}${digits}`;
+};
+
 export const useDeviceContacts = () => {
   const { setNativeModalVisible } = useAppLock();
-  
+
   return useQuery<ApiResponse<User[]>>({
     queryKey: userContactKeys.contacts(),
     queryFn: async () => {
-      // Step 1: Request permission
-      if (Platform.OS === "android") {
-        let permission = await Contacts.checkPermission();
+      await requestContactsPermission(setNativeModalVisible);
 
-        if (permission === "denied") {
-          // Set flag before showing native permission dialog
-          setNativeModalVisible(true);
-          try {
-            permission = await Contacts.requestPermission();
-          } finally {
-            // Reset flag after permission dialog closes (with delay)
-            setTimeout(() => {
-              setNativeModalVisible(false);
-            }, 1000);
-          }
-        }
-
-        if (permission !== "authorized") {
-          throw new Error("Permission to access contacts was denied.");
-        }
-      }
-
-      // Step 2: Get and format contacts
       const deviceContacts = await Contacts.getAll();
-      //   console.log("deviceContacts =>", JSON.stringify(deviceContacts, null, 2));
-      const mappedContacts: User[] = deviceContacts.map((contact) => ({
-        id: contact.recordID,
-        name: `${contact.givenName} ${contact.familyName}`.trim(),
-        phoneNumber: contact.phoneNumbers[0]?.number ?? "",
-        email: contact.emailAddresses[0]?.email ?? "",
-      }));
+      const mappedContacts: User[] = deviceContacts
+        .map((contact) => ({
+          id: contact.recordID,
+          name: `${contact.givenName} ${contact.familyName}`.trim(),
+          phoneNumber: contact.phoneNumbers[0]?.number ?? "",
+          email: contact.emailAddresses[0]?.email ?? "",
+        }))
+        .filter(
+          (contact) =>
+            !!contact.name &&
+            (!!contact.phoneNumber?.trim() || !!contact.email?.trim())
+        )
+        .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
 
       return {
         status: true,
         data: mappedContacts,
-      } as any;
+      } as ApiResponse<User[]>;
     },
 
-    staleTime: queryStaleTime.VERY_VERY_SLOW_STALE_TIME, // 1 minute
+    staleTime: queryStaleTime.VERY_VERY_SLOW_STALE_TIME,
     retry: 1,
     retryDelay: 1000,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
+  });
+};
+
+export const useUserContacts = () => {
+  return useQuery<IUserContactsResponse>({
+    queryKey: userContactKeys.userContacts(),
+    queryFn: async () => {
+      const response = await userApiClient.get<IAddUserContactResponse & { data?: unknown }>(
+        USER_AUTH.USER_CONTACTS
+      );
+      const contacts = normalizeUserContacts(response?.data);
+
+      return {
+        ok: !!response?.ok,
+        message: response?.message ?? "",
+        contacts,
+      };
+    },
+    staleTime: 30_000,
+    refetchOnMount: true,
+  });
+};
+
+export const useAddUserContact = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<IAddUserContactResponse, Error, IAddUserContactPayload>({
+    mutationFn: async (payload) => {
+      return userApiClient.post<IAddUserContactResponse>(
+        USER_AUTH.USER_CONTACTS,
+        payload
+      );
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: userContactKeys.userContacts(),
+      });
+    },
   });
 };
 
@@ -163,7 +320,7 @@ export const useUserSearch = (
       return response;
     },
     enabled: !!query && query.length >= minCharacters,
-    staleTime: 30000, // 30 seconds
+    staleTime: 30000,
   });
 };
 

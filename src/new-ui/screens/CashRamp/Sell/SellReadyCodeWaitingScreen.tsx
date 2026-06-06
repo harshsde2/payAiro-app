@@ -309,14 +309,14 @@ const SellReadyCodeWaitingScreen: React.FC = () => {
           {pickupReady ? SELL_READY_CARD_TITLE : SELL_WAIT_CARD_TITLE}
         </CustomText>
         {pickupReady ? (
-          <>
+          <View style={{ gap: theme.spacing.sm ,width: '100%',justifyContent: 'center',alignItems: 'center'}}>
             <CustomText variant="h2" fontWeight="bold" style={styles.readyCodeValue} selectable>
               {displayCode}
             </CustomText>
             <CustomText variant="body" style={styles.statusCardBody}>
               {SELL_READY_CARD_BODY}
             </CustomText>
-          </>
+          </View>
         ) : (
           <CustomText variant="body" style={styles.statusCardBody}>
             {SELL_WAIT_CARD_BODY}

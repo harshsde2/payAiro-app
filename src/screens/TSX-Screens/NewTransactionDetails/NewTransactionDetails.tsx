@@ -237,7 +237,7 @@ const NewTransactionDetails: FC = () => {
 
   // Get transaction title based on scenario (for crypto)
   const getCryptoTitle = (): string => {
-    if (isCryptoBuy) return `Bought ${cryptoAsset || "Crypto"}`;
+    if (isCryptoBuy) return `Purchase ${cryptoAsset || "Crypto"}`;
     if (isCryptoSell) return `Sold ${cryptoAsset || "Crypto"}`;
     if (isCryptoSend) return `Sent ${cryptoAsset || "Crypto"}`;
     if (isCryptoReceive) return `Received ${cryptoAsset || "Crypto"}`;

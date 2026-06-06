@@ -129,12 +129,25 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
     }
   };
 
+  const isWalletAddress = (input: string): boolean => {
+    const s = input.trim();
+    // Ethereum/EVM: 0x followed by 40 hex chars
+    if (/^0x[0-9a-fA-F]{40}$/.test(s)) return true;
+    // Solana: 32–44 base58 chars (no 0, O, I, l)
+    if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(s)) return true;
+    // Bitcoin bech32: bc1...
+    if (/^bc1[a-zA-HJ-NP-Z0-9]{25,87}$/.test(s)) return true;
+    // Bitcoin legacy: starts with 1 or 3, 25–34 base58 chars
+    if (/^[13][a-km-zA-HJ-NP-Z1-9]{24,33}$/.test(s)) return true;
+    return false;
+  };
+
   const handleNextPress = async (): Promise<void> => {
     const trimmedSender = sender.trim();
 
     if (!trimmedSender) {
       showValidationError(
-        'Please enter a PayAiroTag, Phone, or Email'
+        'Please enter a PayAiro Tag, Email, or Wallet Address'
       );
       return;
     }
@@ -167,6 +180,16 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
           },
         } as never
       );
+      return;
+    }
+
+    // Wallet address — skip PayAiro user lookup, go straight to EnterAmount as external send
+    if (isWalletAddress(trimmedSender)) {
+      navigation.navigate(NAVIGATION_SCREENS.ENTER_AMOUNT as never, {
+        type: 'send',
+        recipient_identifier: trimmedSender,
+        // recipientUserId intentionally absent → EnterAmount uses external payload
+      } as never);
       return;
     }
 
@@ -304,7 +327,7 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
           />
         </View>
 
-        {/* <View style={styles.proceedButtonContainer}>
+        <View style={styles.proceedButtonContainer}>
           <Button
             onPress={handleNextPress}
             loading={isLoading}
@@ -312,7 +335,7 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
           >
             Proceed
           </Button>
-        </View> */}
+        </View>
       </KeyboardAvoidingView>
     </ScreenWrapper>
   );

@@ -17,6 +17,12 @@ import {
   resolveCashOffRampDisplayStatus,
 } from "./cashOffRampActivity";
 import {
+  formatTradeCryptoAmount,
+  formatTradeFiatAmount,
+  getTradeCardTitle,
+  resolveTradeDisplayStatus,
+} from "./tradeActivity";
+import {
   isCashOffRampActivity,
   isCashOnRampActivity,
   isTradeActivity,
@@ -159,72 +165,84 @@ const RecentActivityCard: React.FC<IRecentActivityCardProps> = ({
     return <View style={styles.container}>{body}</View>;
   }
 
+  if (isTradeActivity(item)) {
+    const display = resolveTradeDisplayStatus(item);
+    const statusColor =
+      display.colorKey === "success"
+        ? theme.colors.success
+        : display.colorKey === "error"
+          ? theme.colors.error
+          : theme.colors.warning;
+    const datetime = moment(item.createdAt).format("DD MMM[.] YY | hh:mma");
+
+    const body = (
+      <>
+        <View style={styles.iconCircle}>
+          <View style={styles.iconCircleInner}>
+            <CustomText style={styles.cashIconText}>$</CustomText>
+          </View>
+        </View>
+        <View style={styles.textContainer}>
+          <CustomText style={styles.title} numberOfLines={1}>
+            {getTradeCardTitle(item)}
+          </CustomText>
+          <CustomText style={[styles.statusSubtitle, { color: statusColor }]} numberOfLines={1}>
+            {display.label}
+          </CustomText>
+          <CustomText style={styles.datetime}>{datetime}</CustomText>
+        </View>
+        <View style={styles.amountsColumn}>
+          <CustomText style={styles.fiatAmount}>{formatTradeFiatAmount(item)}</CustomText>
+          <CustomText style={styles.cryptoAmount} numberOfLines={1}>
+            {formatTradeCryptoAmount(item, usdPrice)}
+          </CustomText>
+        </View>
+      </>
+    );
+
+    if (onPress) {
+      return (
+        <TouchableOpacity
+          style={styles.container}
+          onPress={() => onPress(item)}
+          activeOpacity={0.7}
+        >
+          {body}
+        </TouchableOpacity>
+      );
+    }
+
+    return <View style={styles.container}>{body}</View>;
+  }
+
   let title: string;
   let displayNameForInitial: string;
   let amountStr: string;
   let amountStyle = styles.amountNegative;
   let isPending = false;
 
-  if (isTradeActivity(item)) {
-    const crypto = item.cryptoCurrencyCode?.trim() || "?";
-    displayNameForInitial = crypto;
-    title =
-      item.activity === "TRADE_BUY" || item.tradeType === "buy"
-        ? `Bought ${crypto}`
-        : `Sold ${crypto}`;
+  const isIncoming = item.direction === "received";
+  const counterparty = isIncoming ? item.sentBy : item.sentTo;
+  displayNameForInitial = getDisplayName(counterparty, item.destinationWalletAddress);
+  title = `${isIncoming ? "Received from" : "Transfer to"} ${displayNameForInitial}`;
 
-    const amt = Number.parseFloat(item.amountValue);
-    const code = (item.amountCurrencyCode ?? "").toUpperCase();
-    const fiatCode = (item.fiatCurrencyCode ?? "USD").toUpperCase();
-    const cryptoCode = (item.cryptoCurrencyCode ?? "").toUpperCase();
+  const sign = isIncoming ? "+" : "-";
+  const hasUsd = usdPrice != null && Number.isFinite(usdPrice);
+  const amountNum = Number.parseFloat(item.amount ?? "0");
+  const formattedAmount = Number.isFinite(amountNum)
+    ? amountNum.toFixed(2)
+    : (item.amount ?? "0");
+  const currencyLabel = (item.currency ?? item.chain ?? "").toString().trim();
+  amountStr = hasUsd
+    ? `${sign}$${(amountNum * (usdPrice as number)).toFixed(2)}`
+    : currencyLabel
+      ? `${sign}${formattedAmount} ${currencyLabel}`
+      : `${sign}${formattedAmount}`;
 
-    if (item.tradeType === "buy" || item.activity === "TRADE_BUY") {
-      amountStyle = styles.amountNegative;
-      const spendIsFiat = code === "USD" || code === fiatCode;
-      const spendIsCrypto = cryptoCode.length > 0 && code === cryptoCode;
-      let usdOut: number | null = null;
-      if (spendIsFiat && Number.isFinite(amt)) {
-        usdOut = amt;
-      } else if (spendIsCrypto && usdPrice != null && Number.isFinite(usdPrice) && Number.isFinite(amt)) {
-        usdOut = amt * usdPrice;
-      } else if (spendIsCrypto && fiatCode === "USD" && Number.isFinite(amt)) {
-        usdOut = amt;
-      } else if (Number.isFinite(amt)) {
-        usdOut = amt;
-      }
-      amountStr =
-        usdOut != null
-          ? `-$${usdOut.toFixed(2)}`
-          : `-$${item.amountValue}`;
-    } else {
-      amountStyle = styles.amountPositive;
-      const amountCode = item.amountCurrencyCode || item.cryptoCurrencyCode;
-      amountStr = `+${item.amountValue} ${amountCode}`;
-    }
-  } else {
-    const isIncoming = item.direction === "received";
-    const counterparty = isIncoming ? item.sentBy : item.sentTo;
-    displayNameForInitial = getDisplayName(counterparty, item.destinationWalletAddress);
-    title = `${isIncoming ? "Received from" : "Transfer to"} ${displayNameForInitial}`;
+  amountStyle = isIncoming ? styles.amountPositive : styles.amountNegative;
 
-    const sign = isIncoming ? "+" : "-";
-    const hasUsd = usdPrice != null && Number.isFinite(usdPrice);
-    const amountNum = Number.parseFloat(item.amount ?? "0");
-    const formattedAmount = Number.isFinite(amountNum)
-      ? amountNum.toFixed(2)
-      : (item.amount ?? "0");
-    const currencyLabel = (item.currency ?? item.chain ?? "").toString().trim();
-    amountStr = hasUsd
-      ? `${sign}$${(amountNum * (usdPrice as number)).toFixed(2)}`
-      : currencyLabel
-        ? `${sign}${formattedAmount} ${currencyLabel}`
-        : `${sign}${formattedAmount}`;
-
-    amountStyle = isIncoming ? styles.amountPositive : styles.amountNegative;
-
-    const statusLower = String(item.status ?? "").toLowerCase();
-    isPending = statusLower === "pending" || statusLower === "processing";
-  }
+  const statusLower = String(item.status ?? "").toLowerCase();
+  isPending = statusLower === "pending" || statusLower === "processing";
 
   const datetime = moment(item.createdAt).format("DD MMM[.] YY | hh:mma");
   const pendingDotColor = theme.colors.warning;

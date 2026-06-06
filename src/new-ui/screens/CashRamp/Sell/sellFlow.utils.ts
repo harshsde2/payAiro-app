@@ -1,6 +1,7 @@
 import type { SellCashRampEntryParams } from "./sellFlow.types";
 
 export const SELL_AMOUNT_STEP_USD = 20;
+export const SELL_MIN_AMOUNT_USD = 20;
 export const SELL_MAX_TRANSACTION_USD = 400;
 
 export function computeAvailableBalanceUsd(entry: SellCashRampEntryParams): number {
@@ -10,10 +11,39 @@ export function computeAvailableBalanceUsd(entry: SellCashRampEntryParams): numb
   return Math.max(0, crypto * price);
 }
 
+/** Number of selectable $20 steps when max is at least $20 (index 0 → $20). */
+export function getSellStepCount(maxUsd: number): number {
+  const cap = Math.min(Math.max(0, maxUsd), SELL_MAX_TRANSACTION_USD);
+  if (cap < SELL_MIN_AMOUNT_USD) return 0;
+  return Math.floor(cap / SELL_AMOUNT_STEP_USD);
+}
+
+/** Highest amount selectable on the $20-step slider (e.g. $20 when balance is $34.96). */
+export function getSellMaxSelectableUsd(maxUsd: number): number {
+  const cap = Math.min(Math.max(0, maxUsd), SELL_MAX_TRANSACTION_USD);
+  if (cap < SELL_MIN_AMOUNT_USD) return 0;
+  return Math.floor(cap / SELL_AMOUNT_STEP_USD) * SELL_AMOUNT_STEP_USD;
+}
+
+/** Step index 0 = $20, index 1 = $40, … */
+export function usdFromSellStepIndex(index: number): number {
+  return (index + 1) * SELL_AMOUNT_STEP_USD;
+}
+
+export function sellStepIndexFromUsd(usd: number, maxUsd: number): number {
+  const count = getSellStepCount(maxUsd);
+  if (count <= 0) return 0;
+  const raw = Math.round(usd / SELL_AMOUNT_STEP_USD) - 1;
+  return Math.max(0, Math.min(count - 1, raw));
+}
+
 export function clampSellAmountUsd(amount: number, maxUsd: number): number {
   const cap = Math.min(maxUsd, SELL_MAX_TRANSACTION_USD);
+  if (cap < SELL_MIN_AMOUNT_USD) return 0;
   const stepped = Math.round(amount / SELL_AMOUNT_STEP_USD) * SELL_AMOUNT_STEP_USD;
-  return Math.max(0, Math.min(stepped, cap));
+  const clamped = Math.max(SELL_MIN_AMOUNT_USD, Math.min(stepped, cap));
+  if (clamped < SELL_MIN_AMOUNT_USD) return 0;
+  return clamped;
 }
 
 export function cryptoAmountFromUsd(amountUsd: number, unitPrice: number): number {

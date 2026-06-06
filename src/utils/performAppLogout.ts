@@ -9,9 +9,15 @@ import {
 import { onUserLoggedOut as onCoinmeUserLoggedOut } from "services/coinmeRiskLifecycle";
 import { clearAuthSession } from "auth/authSession";
 import { resetAppState } from "utils/configs";
+import { unregisterFcmDevice } from "query/hooks/useNotificationDevices";
 
 export async function performAppLogout(): Promise<void> {
   await onCoinmeUserLoggedOut();
+
+  // Unregister this device's FCM token from the backend BEFORE clearing the
+  // session — userApiClient still has the valid Bearer token to authorize it.
+  // Best-effort: never throws, so it can't block logout.
+  await unregisterFcmDevice();
 
   clearAuthSession();
   resetAppState();

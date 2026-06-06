@@ -152,11 +152,13 @@ export const USER_AUTH = {
   OTP_VERIFY: "api/v1/users/auth/otp/verify/",
   TOKEN_REFRESH: "api/v1/users/auth/token/refresh/",
   PROFILE_UPDATE: "api/v1/users/profile/update/",
+  KYC_COMPLETE: "api/v1/users/profile/kyc-complete/",
   ADDRESS_UPDATE: "api/v1/users/address/update/",
   USERS_ME: "api/v1/users/me/",
   PHONE_OTP_REQUEST: "api/v1/users/me/phone-otp/request/",
   PHONE_OTP_VERIFY: "api/v1/users/me/phone-otp/verify/",
   USERS_SEARCH: "api/v1/users/search/",
+  USER_CONTACTS: "api/v1/users/contacts/",
   CRYPTO_MARKET: "api/v1/integrations/crypto/market/",
   CRYPTO_BALANCE: "api/v1/integrations/crypto/balance/",
   CRYPTO_CHART: "api/v1/integrations/crypto/chart/",
@@ -172,9 +174,15 @@ export const USER_AUTH = {
   COINME_ORDER_TEMPLATE_STATUS: "api/v1/integrations/coinme/order-template/status/",
   COINME_CASH_OFFRAMP_EXECUTE: "api/v1/integrations/coinme/cash-offramp/execute/",
   COINME_CASH_OFFRAMP_PICKUP_CODE: "api/v1/integrations/coinme/cash-offramp/pickup-code/",
+  COINME_TRANSACTION_LIMITS: "api/v1/integrations/coinme/transaction-limits/",
   SECURITY_PIN_SETTINGS: "api/v1/users/security/pin/",
   COINME_2FA_MOBILE_AUTH: "api/v1/users/me/coinme-2fa/mobile-auth/",
   COINME_2FA_INSTANT_LINK: "api/v1/users/me/coinme-2fa/instant-link/",
+  /** Register/refresh this device's FCM token for push notifications. */
+  NOTIFICATIONS_DEVICES: "api/v1/notifications/devices/",
+  /** Unregister a device (on logout) by its device_fingerprint. */
+  NOTIFICATIONS_DEVICE: (fingerprint: string) =>
+    `api/v1/notifications/devices/${encodeURIComponent(fingerprint)}/`,
   USER_PROFILE_TRANSACTIONS: (targetUserId: number | string, limit: number = 50) =>
     `api/v1/users/${targetUserId}/profile-transactions/?limit=${limit}`,
 };

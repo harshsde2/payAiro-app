@@ -144,4 +144,28 @@ export const addBalanceStyles = (theme: ITheme) =>
       marginTop: theme.spacing.sm,
       textAlign: 'center',
     },
+    cardRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: theme.spacing.md,
+      paddingHorizontal: theme.spacing.md,
+      backgroundColor: theme.colors.white,
+    },
+    cardRowSelect: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      minWidth: 0,
+    },
+    cardRowDelete: {
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
+      marginLeft: theme.spacing.sm,
+      justifyContent: 'center',
+      alignItems: 'center',
+      minWidth: 56,
+    },
+    cardRowDeleteText: {
+      color: theme.colors.error,
+    },
   });

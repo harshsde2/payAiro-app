@@ -13,6 +13,11 @@ export const SELL_TX_LIMIT_BODY =
 export const SELL_TX_LIMIT_BUTTON = "Try Again Later";
 
 export const SELL_METHOD_VALUE = "Cash for pick-up";
+export const SELL_AVAILABLE_BALANCE_PREFIX = "Available balance to sell:";
+export const SELL_AMOUNT_INCREMENT_HINT = "Select an amount in increments of $20";
+export const SELL_SINGLE_STEP_HINT =
+  "Only $20 is available to sell at your current balance.";
+export const SELL_MIN_AMOUNT_ERROR = "Minimum sale amount is $20";
 export const SELL_CONTINUE = "Continue";
 export const SELL_CONFIRM = "Confirm";
 export const SELL_ACK_CHECKBOX =
