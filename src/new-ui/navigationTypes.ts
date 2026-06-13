@@ -1,5 +1,6 @@
 import { NavigatorScreenParams } from "@react-navigation/native";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import type { StateCode } from './constants/compliance';
 import type {
   SellCashRampEntryParams,
   SellCashRampLocationSnapshot,
@@ -115,4 +116,21 @@ export type NewUIDashboardStackParamList = {
   [NAVIGATION_SCREENS.NEW_VIEW_STATEMENT_SCREEN]: undefined;
   [NAVIGATION_SCREENS.NEW_REWARDS_AND_REFERRALS_SCREEN]: undefined;
   [NAVIGATION_SCREENS.NEW_SCRATCH_CARD_SCREEN]: { points: number; voucherId: string };
+  [NAVIGATION_SCREENS.STATE_COMPLIANCE_ACKNOWLEDGMENT]: {
+    stateCode: StateCode;
+    /** When set (launch gate), the screen cannot be dismissed until acknowledged. */
+    blocking?: boolean;
+    onComplete?: () => void;
+  };
+  [NAVIGATION_SCREENS.STATE_COMPLIANCE_PRE_TRANSACTION]: {
+    stateCode: StateCode;
+    tradeType: 'buy' | 'sell';
+    usdAmount: number;
+    /** Coinme trade-quote inputs — disclosure fetches live fee breakdown. */
+    chain?: string;
+    cryptoCurrencyCode?: string;
+    fiatCurrencyCode?: string;
+    amountValue?: string;
+    amountCurrencyCode?: string;
+  };
 };

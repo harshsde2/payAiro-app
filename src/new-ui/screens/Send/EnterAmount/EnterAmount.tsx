@@ -9,8 +9,9 @@ import {
   TouchableOpacity,
   LayoutAnimation,
   UIManager,
+  InteractionManager,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import ScreenWrapper from '@new-ui/components/common-components/ScreenWrapper';
 import { useTheme } from '@new-ui/styles/ThemeContext';
@@ -47,6 +48,16 @@ import CryptoReceiptModal from './CryptoReceiptModal';
 import type { CryptoReceiptDraft } from './cryptoReceiptTypes';
 import { fetchWebSessionId } from 'services/coinmeRiskLifecycle';
 import { useCoinmeAccountId } from 'hooks/useCoinmeAccountId';
+import { useComplianceStatus } from 'query/hooks/useComplianceDisclosure';
+import type { StateCode } from '@new-ui/constants/compliance';
+import {
+  registerPreTxPinContinuation,
+  consumePreTxDisclosureAccepted,
+} from '@new-ui/screens/Compliance/preTxDisclosureFlow';
+
+// Dev-test switch: set to 'CT' to force the pre-transaction disclosure for any user on
+// every debit buy/sell confirm. MUST stay `null` in committed/shipped code.
+const TEST_FORCE_PRE_TX_STATE: StateCode | null = null;
 import {
   DebitCardPaymentRow,
   AddNewCardPlaceholderModal,
@@ -160,6 +171,9 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
 
   const { requestPaymentVerification } = useAppLock();
   const coinmeAccountId = useCoinmeAccountId();
+  // Backend-driven (GET state-compliance/status/): which state the user is in and
+  // whether a pre-transaction disclosure is required (e.g. CT debit buy/sell).
+  const { data: complianceStatus } = useComplianceStatus();
   const { mutate: handleUserToUserTransfer } = useUserToUserTransfer() as any;
   const { mutate: handleCryptoTransfer } = useCryptoTransfer() as any;
   const { mutate: createPaymentRequest } = useCreatePaymentRequest();
@@ -388,11 +402,12 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     transactionFeePercent,
     initialInputValue: requestedInitialInputValue,
     initialInputMode: isTradeMode
-      ? (tradeMode === 'sell' ? 'asset' : 'fiat')
+      ? 'fiat'
       : isCryptoSendMode
         ? 'asset'
         : 'fiat',
     preferFiatCryptoEntry: isTradeMode && tradeMode === 'buy',
+    defaultFiatOnCryptoSource: isTradeMode && tradeMode === 'sell',
   });
 
   useEffect(() => {
@@ -950,6 +965,16 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     type,
   ]);
 
+  // Pre-transaction disclosure dismisses via goBack; the bridge signals acceptance
+  // so we continue to PIN once EnterAmount regains focus.
+  useFocusEffect(
+    useCallback(() => {
+      const continueToPin = consumePreTxDisclosureAccepted();
+      if (!continueToPin) return;
+      const task = InteractionManager.runAfterInteractions(continueToPin);
+      return () => task.cancel();
+    }, [handleActionsAfterPinVerified, requestPaymentVerification]),
+  );
 
   const handlePayPress = useCallback(() => {
     if (!isCryptoMode) {
@@ -999,6 +1024,32 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
         showError('Please select a payment method');
         return;
       }
+      // State compliance (e.g. CT): show pre-transaction disclosure before PIN.
+      // Required EVERY transaction — disclosure GET runs on that screen; PIN follows
+      // via goBack + bridge when the user finalizes.
+      const complianceStateCode =
+        TEST_FORCE_PRE_TX_STATE ?? (complianceStatus?.stateCode as StateCode | undefined);
+      const requiresPreTxDisclosure =
+        !!TEST_FORCE_PRE_TX_STATE || complianceStatus?.requiresPreTransactionDisclosure;
+      if (requiresPreTxDisclosure && complianceStateCode) {
+        const isFiatEntry = inputMode === 'fiat';
+        registerPreTxPinContinuation(() =>
+          requestPaymentVerification(handleActionsAfterPinVerified),
+        );
+        navigation.navigate(NAVIGATION_SCREENS.STATE_COMPLIANCE_PRE_TRANSACTION, {
+          stateCode: complianceStateCode,
+          tradeType: tradeMode as 'buy' | 'sell',
+          usdAmount: amount,
+          chain: String(cryptoAsset?.chain || 'ETH').toUpperCase(),
+          cryptoCurrencyCode: String(cryptoAsset?.asset || '').toUpperCase(),
+          fiatCurrencyCode: String(cryptoAsset?.fiatCurrency || 'USD').toUpperCase(),
+          amountValue: String(isFiatEntry ? amount : assetAmount),
+          amountCurrencyCode: isFiatEntry
+            ? String(cryptoAsset?.fiatCurrency || 'USD').toUpperCase()
+            : String(cryptoAsset?.asset || '').toUpperCase(),
+        });
+        return;
+      }
     } else {
       const errors = validateCrypto();
       if (errors.length > 0) {
@@ -1042,6 +1093,8 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     tradePaymentRail,
     validateCrypto,
     handleActionsAfterPinVerified,
+    navigation,
+    complianceStatus,
   ]);
 
   return (

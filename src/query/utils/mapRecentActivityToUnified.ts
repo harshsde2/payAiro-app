@@ -140,6 +140,7 @@ export const mapRecentActivityToUnified = (
       category: null,
       tags: [],
       refund_details: null,
+      regulatory_receipt: item.regulatoryReceipt ?? null,
     };
   }
 
@@ -189,6 +190,7 @@ export const mapRecentActivityToUnified = (
     category: null,
     tags: [],
     refund_details: null,
+    regulatory_receipt: null,
   };
 };
 

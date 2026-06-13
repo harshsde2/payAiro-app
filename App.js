@@ -26,7 +26,9 @@ import {
 import AnimatedBootSplashV3 from "./src/screens/TSX-Screens/AnimatedBootSplash/AnimatedBootSplashV3";
 import { getWalletDataAuth } from "./src/services/Auth";
 import { getMechentPay } from "./src/services/Services";
-import { getItem, setItem, STORAGE_KEYS } from "./src/storage/mmkv";
+import { getItem, setItem, STORAGE_KEYS, getComplianceAckedVersion } from "./src/storage/mmkv";
+import { COMPLIANCE_CONFIG } from "./src/new-ui/constants/compliance";
+import { getProfileResidentialStateCode } from "./src/new-ui/screens/CashRamp/LocationFinder/cashRampProfileState";
 import { userApiClient } from "./src/api/userApiClient";
 import { USER_AUTH } from "./src/api/endpoints";
 import {
@@ -52,8 +54,6 @@ import {
   setNavigationRef,
 } from "./src/utils/deepLinkHandler";
 import UseNet from "./src/utils/UseNet";
-import KycWatchdog from "./src/components/common-components/KycWatchdog";
-import KycBanner from "./src/components/common-components/KycBanner";
 import AppLockScreen from "./src/components/common-components/AppLockScreen";
 import AppGateOverlay from "./src/components/common-components/AppGateOverlay";
 import Toast from "./src/components/common-components/Toast";
@@ -71,7 +71,7 @@ import { GorhomBottomSheetProvider } from "@new-ui/components/common-components/
 export default function App() {
   
   // -------------------- Redux State --------------------
-  const { isLogin, tokens, showLoader, isCrypto } =
+  const { isLogin, tokens, showLoader, isCrypto, usersMe, userData } =
     useSelector((state) => state.authenticationSlice);
 
   const dispatch = useDispatch();
@@ -196,6 +196,33 @@ export default function App() {
   };
 
 
+
+  // -------------------- State Compliance Gate --------------------
+  // Show one-time disclosure for states that require it (CT first, MN/CA via same logic).
+  // Fires after login + usersMe is hydrated. Uses MMKV for fast local version check.
+  useEffect(() => {
+    if (!isLogin || !usersMe) return;
+
+    const stateCode = getProfileResidentialStateCode(userData, usersMe);
+    if (!stateCode) return;
+
+    const config = COMPLIANCE_CONFIG[stateCode];
+    if (!config?.hasOneTimeDisclosure) return;
+
+    const ackedVersion = getComplianceAckedVersion(stateCode);
+    if (ackedVersion === config.disclosureVersion) return;
+
+    const timer = setTimeout(() => {
+      if (navigationRef.current?.isReady()) {
+        navigationRef.current.navigate(
+          NAVIGATION_SCREENS.STATE_COMPLIANCE_ACKNOWLEDGMENT,
+          { stateCode }
+        );
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [isLogin, usersMe]);
 
   // -------------------- Push Notifications (iOS + Android) --------------------
   // Request notification permissions (iOS: AUTHORIZED or PROVISIONAL)
@@ -562,8 +589,6 @@ export default function App() {
                       >
                         <UseNet />
                         {showLoader && <GlobalLoader />}
-                        {isLogin && <KycWatchdog />}
-                        {isLogin && <KycBanner />}
                         {!splashVisible && <AppLockScreen />}
 
                         {!isLogin ? (

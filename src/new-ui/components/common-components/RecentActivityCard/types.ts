@@ -20,6 +20,27 @@ export interface ActivityTradeQuoteDetails {
   totalFees?: string;
 }
 
+/** A single label/value line on a state regulatory receipt. */
+export interface RegulatoryReceiptField {
+  key: string;
+  label: string;
+  value: string;
+}
+
+/**
+ * State-aware regulatory receipt served per trade on the unified history API.
+ * The backend builds the correct field set + footer per state (CT/MN/CA), so the
+ * app renders it verbatim.
+ */
+export interface RegulatoryReceipt {
+  headerMessage: string | null;
+  receiptFields: RegulatoryReceiptField[];
+  receiptFooter: string;
+  stateCode: string;
+  transactionStatus: string;
+  transactionType: string;
+}
+
 /** CaaS trade row from unified activity history. */
 export interface ActivityTradeItem {
   activity: "TRADE_BUY" | "TRADE_SELL";
@@ -44,6 +65,7 @@ export interface ActivityTradeItem {
     tradeType?: "buy" | "sell";
     details?: ActivityTradeQuoteDetails;
   };
+  regulatoryReceipt?: RegulatoryReceipt | null;
 }
 
 /** Crypto send / receive row from unified activity history. */

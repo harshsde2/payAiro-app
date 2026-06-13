@@ -33,7 +33,7 @@ const ContactsList: React.FC<IContactsListProps> = ({ data = [] }) => {
 
   const handleContactPress = useCallback(
     (item: IContactItem) => {
-      navigation.navigate(NAVIGATION_SCREENS.SEND as never, {
+      navigation.navigate(NAVIGATION_SCREENS.NEW_SEND as never, {
         requested: false,
         sender: item?.username?.trim() ?? null,
       });

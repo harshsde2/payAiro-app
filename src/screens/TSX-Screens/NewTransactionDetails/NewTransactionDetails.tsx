@@ -24,6 +24,7 @@ import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
 import { INewTransactionDetailsProps } from "./types";
 import CashOnRampTransactionDetailsBody from "./CashOnRampTransactionDetailsBody";
 import CashOffRampTransactionDetailsBody from "./CashOffRampTransactionDetailsBody";
+import StateComplianceReceiptBody from "./StateComplianceReceiptBody";
 import useSelectorAction from "hooks/useSelectorAction";
 import { useAppLock } from "hooks/useAppLock";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
@@ -82,6 +83,22 @@ const NewTransactionDetails: FC = () => {
     return (
       <CashOffRampTransactionDetailsBody
         transactionData={transactionData}
+        onClose={() => navigation.goBack()}
+      />
+    );
+  }
+
+  // State compliance receipt (CT/MN/CA): the backend attaches a state-aware
+  // regulatoryReceipt to debit buy/sell trades — render it verbatim when present.
+  if (
+    transactionData?.regulatory_receipt?.receiptFields?.length &&
+    (transactionData?.transaction_type === "crypto_buy" ||
+      transactionData?.transaction_type === "crypto_sell")
+  ) {
+    return (
+      <StateComplianceReceiptBody
+        transactionData={transactionData}
+        receipt={transactionData.regulatory_receipt}
         onClose={() => navigation.goBack()}
       />
     );

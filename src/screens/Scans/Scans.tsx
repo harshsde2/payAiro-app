@@ -274,7 +274,7 @@ export default function Scans(): React.ReactElement {
     }
 
     if (type === "receiveMerchant") {
-      navigation.navigate(NAVIGATION_SCREENS.SEND, {
+      navigation.navigate(NAVIGATION_SCREENS.NEW_SEND, {
         requested: false,
         sender,
       });
@@ -385,7 +385,7 @@ export default function Scans(): React.ReactElement {
         const { type, sender } = processQRCodeData(parsedValue);
 
         if (type === "receiveMerchant") {
-          navigation.navigate(NAVIGATION_SCREENS.SEND, {
+          navigation.navigate(NAVIGATION_SCREENS.NEW_SEND, {
             requested: false,
             sender,
           });

@@ -8,6 +8,8 @@ type UseEnterAmountStateArgs = {
   initialInputMode?: 'fiat' | 'asset';
   /** When true, selecting a crypto source does not force asset input mode (fiat-first crypto screens). */
   preferFiatCryptoEntry?: boolean;
+  /** When true (sell trade), selecting a crypto source keeps fiat input as default. */
+  defaultFiatOnCryptoSource?: boolean;
   /** When true, validateCrypto() returns messages with no asset tickers or crypto jargon. */
   fiatNeutralCryptoValidation?: boolean;
 };
@@ -56,6 +58,7 @@ export const useEnterAmountState = ({
   transactionFeePercent = 0,
   initialInputMode = 'fiat',
   preferFiatCryptoEntry = false,
+  defaultFiatOnCryptoSource = false,
   fiatNeutralCryptoValidation = false,
 }: UseEnterAmountStateArgs) => {
   const [inputValue, setInputValue] = useState<string>(initialInputValue);
@@ -86,12 +89,12 @@ export const useEnterAmountState = ({
     if (viewMode !== 'crypto') {
       return { maxIntDigits: 5, maxDecimals: 2 };
     }
-    if (preferFiatCryptoEntry && inputMode === 'fiat') {
+    if ((preferFiatCryptoEntry || defaultFiatOnCryptoSource) && inputMode === 'fiat') {
       return { maxIntDigits: 5, maxDecimals: 2 };
     }
     // Crypto rule: max 5 digits before decimal, max 5 decimals.
     return { maxIntDigits: 5, maxDecimals: 5 };
-  }, [inputMode, preferFiatCryptoEntry, viewMode]);
+  }, [defaultFiatOnCryptoSource, inputMode, preferFiatCryptoEntry, viewMode]);
 
   const parsedInput = useMemo(() => safeParseAmount(inputValue), [inputValue]);
 
@@ -175,7 +178,7 @@ export const useEnterAmountState = ({
   const handleSetSelectedSource = useCallback(
     (source: FundingSource | null) => {
       setSelectedSource(source);
-      if (preferFiatCryptoEntry) {
+      if (preferFiatCryptoEntry || defaultFiatOnCryptoSource) {
         return;
       }
       if (source?.type === 'crypto') {
@@ -184,7 +187,7 @@ export const useEnterAmountState = ({
       }
       setInputMode('fiat');
     },
-    [preferFiatCryptoEntry]
+    [defaultFiatOnCryptoSource, preferFiatCryptoEntry]
   );
 
   const displayFiatEquivalent = useMemo(() => {

@@ -75,4 +75,43 @@ export const STORAGE_KEYS = {
   SELL_READY_CODE_HISTORY_ACK: "sell_ready_code_history_ack",
   /** @deprecated Use SELL_READY_CODE_HISTORY_ACK */
   SELL_READY_CODE_CLOSE_ACK: "sell_ready_code_close_ack",
+  /** JSON object: { CT: "1.0", MN: "1.0" } — acked disclosure version per state for fast local check. */
+  STATE_COMPLIANCE_ACKS: "state_compliance_acks",
+  /** JSON: last ComplianceStatus from GET state-compliance/status/ — lets the launch gate work offline. */
+  STATE_COMPLIANCE_STATUS: "state_compliance_status",
 };
+
+export function getComplianceAckedVersion(stateCode: string): string | null {
+  const raw = getItem(STORAGE_KEYS.STATE_COMPLIANCE_ACKS);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Record<string, string>;
+    return parsed[stateCode] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function setComplianceAckedVersion(stateCode: string, version: string): void {
+  const raw = getItem(STORAGE_KEYS.STATE_COMPLIANCE_ACKS);
+  const existing: Record<string, string> = raw ? JSON.parse(raw) : {};
+  setItem(STORAGE_KEYS.STATE_COMPLIANCE_ACKS, JSON.stringify({ ...existing, [stateCode]: version }));
+}
+
+export function getCachedComplianceStatus<T = unknown>(): T | null {
+  const raw = getItem(STORAGE_KEYS.STATE_COMPLIANCE_STATUS);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+export function setCachedComplianceStatus(status: unknown): void {
+  setItem(STORAGE_KEYS.STATE_COMPLIANCE_STATUS, JSON.stringify(status));
+}
+
+export function clearCachedComplianceStatus(): void {
+  removeItem(STORAGE_KEYS.STATE_COMPLIANCE_STATUS);
+}

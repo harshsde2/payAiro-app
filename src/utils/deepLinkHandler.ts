@@ -60,14 +60,14 @@ const handleDeepLink = ({ url }: { url: string }): void => {
         // Add small delay to ensure navigation is ready
         setTimeout(() => {
           if (navigationRef?.isReady()) {
-            console.log("User not logged in, navigating to Signup screen");
-            navigationRef.navigate(NAVIGATION_SCREENS.SIGNUP);
+            console.log("User not logged in, navigating to Create Account screen");
+            navigationRef.navigate(NAVIGATION_SCREENS.NEW_CREATE_ACCOUNT);
           } else {
             console.log("Navigation not ready yet, will retry...");
             // Retry after a bit more time
             setTimeout(() => {
               if (navigationRef?.isReady()) {
-                navigationRef.navigate(NAVIGATION_SCREENS.SIGNUP);
+                navigationRef.navigate(NAVIGATION_SCREENS.NEW_CREATE_ACCOUNT);
               }
             }, 500);
           }

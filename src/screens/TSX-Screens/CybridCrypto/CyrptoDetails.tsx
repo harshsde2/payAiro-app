@@ -268,14 +268,9 @@ const CyrptoDetails: React.FC = () => {
     {
       label: "Send",
       icon: SvgIcons.NewSendIcon,
-      route: NAVIGATION_SCREENS.CRYPTO_SEND,
+      route: NAVIGATION_SCREENS.NEW_SEND,
       params: {
-        details: {
-          symbol: cryptoItem?.asset,
-          logo: cryptoItem?.logo,
-          buy_price: currentPrice,
-          sell_price: currentPrice,
-        },
+        
       },
     },
     {

@@ -34,6 +34,17 @@ export const cryptoKeys = {
   walletAddresses: () => [...cryptoKeys.all, "walletAddresses"] as const,
   paymentTransactionHistory: (scope: string, limit: number) =>
     [...cryptoKeys.all, "paymentTransactionHistory", scope, limit] as const,
+  coinmeTradeQuote: (payload: CoinmeTradeQuotePayload) =>
+    [
+      ...cryptoKeys.all,
+      "coinmeTradeQuote",
+      payload.tradeType,
+      payload.chain,
+      payload.cryptoCurrencyCode,
+      payload.fiatCurrencyCode,
+      payload.amountValue,
+      payload.amountCurrencyCode,
+    ] as const,
 };
 
 /** FastAPI GET /api/v1/wallets/addresses/ */
@@ -633,6 +644,75 @@ export const useCoinmeTradeExecute = () => {
         }
       );
     },
+  });
+};
+
+// ---------------------------------------------------------------------------
+// Coinme trade quote (FastAPI) — fee breakdown for pre-transaction disclosure
+// ---------------------------------------------------------------------------
+
+export interface CoinmeTradeQuotePayload {
+  tradeType: CoinmeTradeType;
+  /** Wallet chain, e.g. "ETH". */
+  chain: string;
+  /** Asset symbol, e.g. "BTC". */
+  cryptoCurrencyCode: string;
+  /** Fiat code, e.g. "USD". */
+  fiatCurrencyCode: string;
+  /** Amount as string (decimal). */
+  amountValue: string;
+  /** Either fiatCurrencyCode (for buy) or cryptoCurrencyCode (for sell). */
+  amountCurrencyCode: string;
+}
+
+export interface CoinmeFeeField {
+  key: string;
+  label: string;
+  value: string;
+}
+
+export interface CoinmeFeeBreakdown {
+  tradeType: string;
+  quoteId: string;
+  youPay: string;
+  youReceive: string;
+  youReceiveCurrency: string;
+  currency: string;
+  cardProcessingFee: string;
+  transactionFees: string;
+  instantWithdrawalFee: string;
+  total: string;
+  cryptoAsset: string;
+  cryptoPrice: string;
+  spreadAmount?: string;
+  spreadCurrencyCode?: string;
+  fields: CoinmeFeeField[];
+}
+
+export interface CoinmeTradeQuoteResponse {
+  ok?: boolean;
+  message?: string;
+  feeBreakdown?: CoinmeFeeBreakdown;
+  quote?: unknown;
+  data?: unknown;
+  meta?: unknown;
+}
+
+/**
+ * Fetch a Coinme trade quote (fee breakdown) for the pre-transaction disclosure.
+ * Display/acknowledgment only — does not lock or execute the trade.
+ */
+export const useCoinmeTradeQuote = (
+  payload: CoinmeTradeQuotePayload,
+  enabled: boolean = true
+) => {
+  return useQuery<CoinmeTradeQuoteResponse>({
+    queryKey: cryptoKeys.coinmeTradeQuote(payload),
+    queryFn: () =>
+      userApiClient.post<CoinmeTradeQuoteResponse>(USER_AUTH.COINME_TRADE_QUOTE, payload),
+    enabled,
+    staleTime: 0,
+    gcTime: 0,
   });
 };
 

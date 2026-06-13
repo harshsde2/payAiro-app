@@ -12,13 +12,9 @@ import TextInputField from "components/TextInputField";
 // import UploadFile from "components/UploadFile"; // Image upload temporarily disabled for account recovery
 import useSelectorAction from "hooks/useSelectorAction";
 import GenericButton from "components/GenericButton";
-import useDispatchAction from "hooks/useDispatchAction";
-import { setShowLoader } from "redux/slices/authenticationSlice";
-import { showError, showSuccess } from "utils/toast";
+import { showError } from "utils/toast";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { validateEmailOrPhone } from "utils/validation";
-import { apiClient } from "api";
-import { AUTH } from "api/endpoints";
 
 const SupportScreen = () => {
   const { theme } = useTheme();
@@ -84,37 +80,16 @@ const SupportScreen = () => {
         return;
       }
 
-      const formattedRegisteredContact = validationResult.formattedValue;
-      const composedMessage = `Name: ${trimmedFirstName} ${trimmedLastName}\nRegistered contact: ${formattedRegisteredContact}\nReason: ${subject}\n\nDetails:\n${message}`;
-
-      useDispatchAction(setShowLoader(true));
-
-      const payload = {
-        first_name: trimmedFirstName,
-        last_name: trimmedLastName,
-        email: formattedRegisteredContact,
-        message: composedMessage,
-      };
-
-      await apiClient.post<any>(AUTH.CONTACT_FORM, payload);
-
-      showSuccess("Your account recovery request has been submitted");
-      // Reset form after successful submission
-      setFirstName("");
-      setLastName("");
-      setRegisteredContact("");
-      setMessage("");
-      setSubject("");
-      // setAttachment(null);
-      navigation.goBack();
+      // Account-recovery submission is temporarily disabled pending migration to userApiClient + a new endpoint.
+      showError(
+        "Temporarily unavailable",
+        "Account recovery requests are currently unavailable. Please try again later."
+      );
     } catch (error: any) {
-      useDispatchAction(setShowLoader(false));
       const errorMessage =
         error?.message || "An unexpected error occurred. Please try again.";
       showError(errorMessage);
       console.error("Support form submission error:", error);
-    } finally {
-      useDispatchAction(setShowLoader(false));
     }
   };
 

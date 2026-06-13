@@ -77,7 +77,7 @@ const ContactsScreen = () => {
     (contact: IUserContact) => {
       const sender = getUserContactSendIdentifier(contact);
       if (!sender) return;
-      navigation.navigate(NAVIGATION_SCREENS.SEND as never, {
+      navigation.navigate(NAVIGATION_SCREENS.NEW_SEND as never, {
         requested: false,
         sender,
       });

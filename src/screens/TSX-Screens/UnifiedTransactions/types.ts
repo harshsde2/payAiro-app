@@ -1,5 +1,9 @@
 // Unified Transaction Types
 
+import type { RegulatoryReceipt } from "new-ui/components/common-components/RecentActivityCard/types";
+
+export type { RegulatoryReceipt, RegulatoryReceiptField } from "new-ui/components/common-components/RecentActivityCard/types";
+
 // Transaction type enum
 export type UnifiedTransactionType =
   | "fiat_send"
@@ -199,6 +203,7 @@ export interface IUnifiedTransaction {
   refund_details: IRefundDetails | null;
   cash_onramp_details?: ICashOnRampDetails | null;
   cash_offramp_details?: ICashOffRampDetails | null;
+  regulatory_receipt?: RegulatoryReceipt | null;
 }
 
 // Category percentages interface

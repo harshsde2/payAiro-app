@@ -170,6 +170,7 @@ export const USER_AUTH = {
   WALLET_LOAD_INSTRUCTIONS: "api/v1/wallets/load-instructions/",
   WALLET_LOAD_INSTRUCTIONS_CONSENT: "api/v1/wallets/load-instructions/consent/",
   COINME_TRADE_EXECUTE: "api/v1/integrations/coinme/trade/execute/",
+  COINME_TRADE_QUOTE: "api/v1/integrations/coinme/trade/quote/",
   COINME_ORDER_TEMPLATE: "api/v1/integrations/coinme/order-template/",
   COINME_ORDER_TEMPLATE_STATUS: "api/v1/integrations/coinme/order-template/status/",
   COINME_CASH_OFFRAMP_EXECUTE: "api/v1/integrations/coinme/cash-offramp/execute/",
@@ -185,5 +186,29 @@ export const USER_AUTH = {
     `api/v1/notifications/devices/${encodeURIComponent(fingerprint)}/`,
   USER_PROFILE_TRANSACTIONS: (targetUserId: number | string, limit: number = 50) =>
     `api/v1/users/${targetUserId}/profile-transactions/?limit=${limit}`,
+};
+
+// State regulatory compliance (CT/MN/CA) endpoints — FastAPI, relative to `USER_API_BASE_URL`.
+// Source of truth: "PayAiro State Compliance API" Postman collection.
+export const STATE_COMPLIANCE = {
+  /** App-launch compliance status for the current user. */
+  STATUS: "api/v1/state-compliance/status/",
+  /** One-time disclosure content. `lang` only applies to MN (en|es|so|hmn|vi|zh). */
+  disclosure: (state: string, lang?: string) =>
+    `api/v1/state-compliance/${state}/disclosure/${lang ? `?lang=${lang}` : ""}`,
+  disclosureAcknowledge: (state: string) =>
+    `api/v1/state-compliance/${state}/disclosure/acknowledge/`,
+  disclosureStatus: (state: string) =>
+    `api/v1/state-compliance/${state}/disclosure/status/`,
+  /** Pre-transaction disclosure content (CT only). */
+  preTransaction: (state: string, type: "buy" | "sell") =>
+    `api/v1/state-compliance/${state}/pre-transaction/${type}/`,
+  receiptFooter: (state: string) =>
+    `api/v1/state-compliance/${state}/receipt-footer/`,
+  RECEIPTS_CREATE: "api/v1/state-compliance/receipts/create/",
+  receiptByTxn: (txnId: string) =>
+    `api/v1/state-compliance/receipts/${encodeURIComponent(txnId)}/`,
+  RECEIPTS_LIST: "api/v1/state-compliance/receipts/",
+  DISCLOSURE_HISTORY: "api/v1/state-compliance/me/disclosure-history/",
 };
  

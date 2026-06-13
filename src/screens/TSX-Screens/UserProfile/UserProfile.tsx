@@ -238,7 +238,7 @@ const UserProfile = () => {
           <View style={styles.actionButtons}>
             <TouchableOpacity
               onPress={() =>
-                navigation.navigate(NAVIGATION_SCREENS.SEND, {
+                navigation.navigate(NAVIGATION_SCREENS.NEW_SEND, {
                   requested: false,
                   sender: user?.username,
                 })

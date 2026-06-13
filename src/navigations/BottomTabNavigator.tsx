@@ -11,12 +11,12 @@ import { NAVIGATION_SCREENS } from "./navigationConstants";
 const NAV = NAVIGATION_SCREENS as Record<string, string>;
 import NewDashboard from "screens/Dashboard/NewDashboard";
 import Scans from "screens/Scans/Scans";
-import UnifiedTransactionScreen from "screens/TSX-Screens/UnifiedTransactions/UnifiedTransactionScreen";
 import NewPersonal from "screens/SettingScreen/NewPersonal";
 import useDispatchAction from "hooks/useDispatchAction";
 import { setisCrypto } from "redux/slices/authenticationSlice";
 import { setTheme } from "redux/slices/animationSlice";
 import { usePendingPaymentRequests } from "query/hooks";
+import { useComplianceGate } from "hooks/useComplianceGate";
 import { useSelector, useDispatch } from "react-redux";
 import NewCrypto from "new-ui/screens/Crypto/NewCrypto";
 import ActivityScreen from "new-ui/screens/Activity/ActivityScreen";
@@ -141,6 +141,9 @@ const BottomTabNavigator = () => {
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
   const { isCrypto } = useSelector((state: any) => state.authenticationSlice);
+
+  // State regulatory compliance: presents the blocking one-time disclosure at launch when required.
+  useComplianceGate();
 
   // Use staleTime to avoid refetching on every render
   const { data: pendingRequestsData } = usePendingPaymentRequests(false);
