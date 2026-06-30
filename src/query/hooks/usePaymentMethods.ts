@@ -110,3 +110,52 @@ export function useDeletePaymentMethod() {
   });
 }
 
+/**
+ * Persist a card that was added DIRECTLY at Coinme (via the Vault SDK) into our backend, so our
+ * payment-methods records stay in sync. Body is the snake_case shape the backend expects.
+ */
+export type SavePaymentMethodBody = {
+  payment_method_id: string;
+  provider_id: string;
+  provider_name: string;
+  card_type: string;
+  card_provider: string;
+  card_last4: string;
+  exp_month: string;
+  exp_year: string;
+  billing_first_name: string;
+  billing_last_name: string;
+  billing_country: string;
+  billing_address_line1: string;
+  billing_address_line2: string;
+  billing_zip_code: string;
+  billing_city: string;
+  billing_state: string;
+  web_session_id: string;
+  buy_supported: boolean;
+  sell_supported: boolean;
+};
+
+type SavePaymentMethodResponse = {
+  ok?: boolean;
+  message?: string;
+  data?: PaymentMethodItem & Record<string, unknown>;
+};
+
+export function useSavePaymentMethod() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (body: SavePaymentMethodBody) => {
+      return await userApiClient.post<SavePaymentMethodResponse>(
+        USER_AUTH.USER_PAYMENT_METHODS,
+        body,
+        false
+      );
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: paymentMethodKeys.all });
+    },
+  });
+}
+

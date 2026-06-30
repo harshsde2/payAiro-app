@@ -8,7 +8,10 @@ import { useTheme } from '@new-ui/styles/ThemeContext';
 import { AppIcon } from 'new-ui/assets/svgs';
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 import type { StateCode } from '@new-ui/constants/compliance';
-import { usePreTransactionDisclosure } from 'query/hooks/useComplianceDisclosure';
+import {
+  usePreTransactionDisclosure,
+  useAcknowledgePreTransaction,
+} from 'query/hooks/useComplianceDisclosure';
 import { useCoinmeTradeQuote, type CoinmeFeeBreakdown } from 'query/hooks/useCrypto';
 import { showError } from 'utils/toast';
 import {
@@ -63,36 +66,15 @@ function formatUsdAmount(value: number): string {
   return `$${value.toFixed(2)}`;
 }
 
-function formatSellFiatPrimaryValue(
-  feeBreakdown: CoinmeFeeBreakdown,
-  usdAmount?: number,
-  fiatCurrencyCode = 'USD',
-): string {
-  const fiat = fiatCurrencyCode.toUpperCase();
-
-  for (const field of feeBreakdown.fields ?? []) {
-    if (field.value?.startsWith('$')) return field.value;
-  }
-
-  const youReceive = String(feeBreakdown.youReceive ?? '').trim();
-  const receiveCurrency = String(feeBreakdown.youReceiveCurrency ?? '').toUpperCase();
-  if (youReceive && (receiveCurrency === fiat || receiveCurrency === 'USD')) {
-    return youReceive.startsWith('$') ? youReceive : formatUsdAmount(Number(youReceive));
-  }
-
-  const youPay = String(feeBreakdown.youPay ?? '').trim();
-  if (youPay.startsWith('$')) return youPay;
-
-  const total = String(feeBreakdown.total ?? '').trim();
-  if (total.startsWith('$')) return total;
-  const totalNum = Number(total);
-  if (total && Number.isFinite(totalNum)) return formatUsdAmount(totalNum);
-
-  if (usdAmount != null) {
-    return formatUsdAmount(usdAmount);
-  }
-
-  return FEE_PLACEHOLDER;
+/**
+ * USD amount being sold ("You Sell"). The quote's "You Pay" / `youPay` field reports
+ * the crypto side as 0 for sells, so the entered USD amount is the source of truth
+ * (mirrors the quote request's `amountValue`).
+ */
+function sellPrimaryUsdValue(usdAmount?: number): string {
+  return usdAmount != null && Number.isFinite(usdAmount)
+    ? formatUsdAmount(usdAmount)
+    : FEE_PLACEHOLDER;
 }
 
 function buildFeeRows(
@@ -100,7 +82,6 @@ function buildFeeRows(
   feeBreakdown: CoinmeFeeBreakdown | undefined,
   localLabels: [string, string, string],
   usdAmount?: number,
-  fiatCurrencyCode?: string,
 ): FeeRow[] {
   if (!feeBreakdown?.fields?.length) {
     return [
@@ -113,11 +94,19 @@ function buildFeeRows(
   return feeBreakdown.fields.map((f, i) => {
     const label = i < localLabels.length ? localLabels[i] : f.label;
     const value =
-      tradeType === 'sell' && i === 0
-        ? formatSellFiatPrimaryValue(feeBreakdown, usdAmount, fiatCurrencyCode)
-        : f.value;
+      tradeType === 'sell' && i === 0 ? sellPrimaryUsdValue(usdAmount) : f.value;
     return { label, value, emphasize: i === 0 };
   });
+}
+
+/** Normalize a fee/amount string (e.g. "$1,234.50") to a plain 2-decimal string ("1234.50"). */
+function toAmountString(value: string | number | undefined | null): string {
+  if (value == null) return '0.00';
+  const n =
+    typeof value === 'number'
+      ? value
+      : Number.parseFloat(String(value).replace(/[^0-9.-]/g, ''));
+  return Number.isFinite(n) ? n.toFixed(2) : '0.00';
 }
 
 function getCoinmeTradeQuoteErrorMessage(error: unknown): string {
@@ -218,6 +207,9 @@ const PreTransactionDisclosureScreen: React.FC = () => {
   const feeBreakdown = quoteData?.feeBreakdown;
   const lastQuoteErrorToast = useRef<string | null>(null);
 
+  const { mutateAsync: acknowledge, isPending: isSubmitting } =
+    useAcknowledgePreTransaction(stateCode);
+
   useEffect(() => {
     if (!isQuoteError || !quoteError) {
       lastQuoteErrorToast.current = null;
@@ -229,11 +221,37 @@ const PreTransactionDisclosureScreen: React.FC = () => {
     showError(msg);
   }, [isQuoteError, quoteError]);
 
-  const handleConfirm = useCallback(() => {
-    if (!acknowledged || !content || !feeBreakdown) return;
-    markPreTxDisclosureAccepted();
-    navigation.goBack();
-  }, [acknowledged, content, feeBreakdown, navigation]);
+  const handleConfirm = useCallback(async () => {
+    if (!acknowledged || !content || !feeBreakdown || isSubmitting) return;
+
+    // Fees actually shown to the user — recorded verbatim in the regulatory ack.
+    const feeShown =
+      tradeType === 'buy'
+        ? Number(toAmountString(feeBreakdown.cardProcessingFee)) +
+          Number(toAmountString(feeBreakdown.transactionFees))
+        : Number(toAmountString(feeBreakdown.instantWithdrawalFee)) +
+          Number(toAmountString(feeBreakdown.transactionFees));
+    // Buy: USD paid (`youPay`). Sell: `youPay` is the 0-valued crypto side, so use
+    // the entered USD sell amount (mirrors the quote request's amountValue).
+    const purchaseShown =
+      tradeType === 'sell'
+        ? toAmountString(usdAmount)
+        : toAmountString(feeBreakdown.youPay || usdAmount);
+
+    try {
+      // The ack records the regulatory timestamp — the trade must not proceed without it.
+      await acknowledge({
+        transaction_type: tradeType,
+        acknowledged: true,
+        fee_amount_shown: feeShown.toFixed(2),
+        purchase_amount_shown: purchaseShown,
+      });
+      markPreTxDisclosureAccepted();
+      navigation.goBack();
+    } catch {
+      showError('Something went wrong. Please try again.');
+    }
+  }, [acknowledged, acknowledge, content, feeBreakdown, isSubmitting, navigation, tradeType, usdAmount]);
 
   const handleCancel = useCallback(() => {
     clearPreTxDisclosureFlow();
@@ -245,22 +263,22 @@ const PreTransactionDisclosureScreen: React.FC = () => {
   const styles = makeStyles(theme);
   const [amountLabel, feeLabel, txFeeLabel] = content.feeLabels[tradeType];
 
-  // Use regulatory labels from PDF fallback; for sell, row 0 shows USD (not crypto).
+  // Use regulatory labels from PDF fallback; for sell, row 0 shows the USD sell amount.
   const feeRows = buildFeeRows(
     tradeType,
     feeBreakdown,
     [amountLabel, feeLabel, txFeeLabel],
     usdAmount,
-    fiatCurrencyCode,
   );
 
-  const canConfirm = acknowledged && !!feeBreakdown;
+  const canConfirm = acknowledged && !!feeBreakdown && !isSubmitting;
 
   return (
     <ScreenWrapper
       safeAreaEdges={['bottom', 'left', 'right']}
       backgroundColor={theme.colors.white}
       statusBarStyle="dark-content"
+      loading={isSubmitting}
       contentStyle={{ flex: 1 }}
     >
       <View style={styles.dragHandle} />

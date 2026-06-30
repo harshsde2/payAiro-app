@@ -27,6 +27,33 @@ export async function syncSecurityPinFromBackend(): Promise<void> {
   await setBiometric(biometric);
 }
 
+/**
+ * Re-fetch `/me` and re-hydrate Redux. Call after a mutation that changes profile
+ * state (e.g. email verification) so flags like `email_verified` update app-wide.
+ */
+export async function refreshUsersMe(
+  dispatch: Dispatch
+): Promise<{ ok: boolean; message?: string }> {
+  try {
+    const me = await userApiClient.get<{
+      ok?: boolean;
+      data?: Record<string, unknown>;
+    }>(USER_AUTH.USERS_ME);
+
+    if (!me?.ok || !me?.data) {
+      return { ok: false, message: "Failed to refresh profile" };
+    }
+
+    setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(me.data?.user || {}));
+    dispatch(hydrateUserFromMe(me.data as any));
+    return { ok: true };
+  } catch (e: any) {
+    const message =
+      e?.response?.data?.message || e?.message || "Failed to refresh profile";
+    return { ok: false, message: String(message) };
+  }
+}
+
 export async function bootstrapMainAppSession(
   dispatch: Dispatch
 ): Promise<{ ok: boolean; message?: string }> {

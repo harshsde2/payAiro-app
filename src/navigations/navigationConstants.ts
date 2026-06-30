@@ -161,6 +161,8 @@ export const NAVIGATION_SCREENS = {
   NEW_REWARDS_AND_REFERRALS_SCREEN: "NewRewardsAndReferralsScreen",
   NEW_SCRATCH_CARD_SCREEN: "NewScratchCardScreen",
   NEW_ACTIVITY_SCREEN: "NewActivityScreen",
+  NEW_ACKNOWLEDGMENT_HISTORY_SCREEN: "NewAcknowledgmentHistoryScreen",
+  NEW_EMAIL_VERIFICATION: "NewEmailVerification",
   STATE_COMPLIANCE_ACKNOWLEDGMENT: "StateComplianceAcknowledgment",
   STATE_COMPLIANCE_PRE_TRANSACTION: "StateCompliancePreTransaction",
 } as const;

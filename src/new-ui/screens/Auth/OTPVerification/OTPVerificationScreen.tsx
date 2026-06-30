@@ -29,7 +29,7 @@ import { useDispatch } from "react-redux";
 import { setShowLoader, setTokens } from "redux/slices/newBackendAuthSlice";
 import { ILoginPayload } from "screens/Authentications/types";
 import { setToken } from "services/Auth";
-import { getItem, setItem, STORAGE_KEYS } from "storage/mmkv";
+import { getItem, setItem, removeItem, STORAGE_KEYS } from "storage/mmkv";
 import { appContent } from "utils/appContent";
 import { getSmsHash } from "utils/smsHash";
 import { showError, showSuccess } from "utils/toast";
@@ -206,6 +206,15 @@ const OTPVerificationScreen: React.FC = () => {
         verifyPayload.email = email.trim().toLowerCase();
       }
 
+      // Referral attribution — only on new signups. The code (+ partner click id)
+      // was captured from a deep link and stashed in MMKV.
+      if (type === "signup") {
+        const referralCode = getItem(STORAGE_KEYS.REFERRAL_CODE);
+        const clickId = getItem(STORAGE_KEYS.REFERRAL_CLICK_ID);
+        if (referralCode) verifyPayload.referral_code = referralCode;
+        if (clickId) verifyPayload.click_id = clickId;
+      }
+
       verifyOtp(verifyPayload, {
         onSuccess: async (data) => {
           if (data?.status) {
@@ -234,6 +243,10 @@ const OTPVerificationScreen: React.FC = () => {
             saveAuthResumeParams(resumeParams);
 
             showSuccess("OTP Verified Successfully");
+
+            // Referral code/click id have now been consumed by attribution — clear them.
+            removeItem(STORAGE_KEYS.REFERRAL_CODE);
+            removeItem(STORAGE_KEYS.REFERRAL_CLICK_ID);
 
             if (step === 0) {
               (navigation as any).navigate(

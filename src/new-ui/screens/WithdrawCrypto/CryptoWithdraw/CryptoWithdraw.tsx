@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useEmailVerificationGuard } from "hooks/useEmailVerificationGuard";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
 import { useTheme } from "@new-ui/styles/ThemeContext";
 import { enterAmountStyles } from "@new-ui/styles/screens/send/enterAmountStyles";
@@ -35,7 +36,7 @@ import { fetchWebSessionId } from "services/coinmeRiskLifecycle";
 import { useCoinmeAccountId } from "hooks/useCoinmeAccountId";
 import {
   DebitCardPaymentRow,
-  AddNewCardPlaceholderModal,
+  PaymentMethodPickerModal,
   AddDebitCardModal,
 } from "@new-ui/components/common-components/AddBalance";
 import type { AddedCardResult } from "@new-ui/components/common-components/AddBalance/AddDebitCardModal";
@@ -63,6 +64,7 @@ const CryptoWithdraw: React.FC = () => {
   const navigation = useNavigation<any>();
   const { width } = useWindowDimensions();
   const { theme } = useTheme();
+  const { requireEmailVerified } = useEmailVerificationGuard();
   const styles = enterAmountStyles(theme);
 
   const selectorData = useSelectorAction() as any;
@@ -324,7 +326,7 @@ const CryptoWithdraw: React.FC = () => {
     handleTradeExecute();
   }, [handleTradeExecute]);
 
-  const handlePayPress = useCallback(() => {
+  const proceedWithdraw = useCallback(() => {
     const trimmed = inputValue.trim();
     if (!trimmed || trimmed === "." || amount <= 0) {
       showError("Please enter an amount");
@@ -355,6 +357,11 @@ const CryptoWithdraw: React.FC = () => {
     requestPaymentVerification,
     selectedPaymentMode,
   ]);
+
+  // Gate withdrawal behind email verification; resumes automatically once verified.
+  const handlePayPress = useCallback(() => {
+    requireEmailVerified(proceedWithdraw);
+  }, [requireEmailVerified, proceedWithdraw]);
 
   return (
     <ScreenWrapper
@@ -468,10 +475,11 @@ const CryptoWithdraw: React.FC = () => {
           </View>
         </View>
 
-        <AddNewCardPlaceholderModal
+        <PaymentMethodPickerModal
           visible={debitInfoVisible}
           onClose={() => setDebitInfoVisible(false)}
           title="Select Payment Method"
+          flow="sell"
           selectedPaymentMethodId={selectedPaymentMethod?.payment_method_id ?? null}
           onConfirmSelection={(item) => {
             setSelectedPaymentMethod(item);

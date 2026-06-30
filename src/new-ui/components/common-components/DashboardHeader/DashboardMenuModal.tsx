@@ -50,16 +50,28 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
         routeName: NAVIGATION_SCREENS.NEW_PERSONAL,
       },
       {
+        key: 'paymentMethods' as const,
+        label: 'Payment method',
+        icon: <AppIcon.DebitCard width={18} height={18} />,
+        routeName: NAVIGATION_SCREENS.PAYMENT_METHODS_SCREEN,
+      },
+      {
         key: 'transactionLimit' as const,
-        label: 'Transaction Limit',
+        label: 'Transaction limit',
         icon: <AppIcon.TransactionLimit width={18} height={18} />,
         routeName: NAVIGATION_SCREENS.TRANSACTION_LIMIT_SCREEN,
       },
       {
-        key: 'paymentMethods' as const,
-        label: 'Payment Methods',
-        icon: <AppIcon.DebitCard width={18} height={18} />,
-        routeName: NAVIGATION_SCREENS.PAYMENT_METHODS_SCREEN,
+        key: 'rewards' as const,
+        label: 'Rewards and Referrals',
+        icon: <AppIcon.RewardsIcon width={18} height={18} />,
+        routeName: NAVIGATION_SCREENS.NEW_REWARDS_AND_REFERRALS_SCREEN,
+      },
+      {
+        key: 'bankStatement' as const,
+        label: 'Bank Statement',
+        icon: <AppIcon.BankStatement width={18} height={18} />,
+        routeName: NAVIGATION_SCREENS.NEW_BANK_STATEMENT_SCREEN,
       },
       {
         key: 'settings' as const,
@@ -73,12 +85,7 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
         icon: <AppIcon.Headphones width={18} height={18} />,
         routeName: NAVIGATION_SCREENS.SUPPORT_SCREEN,
       },
-      // {
-      //   key: 'about' as const,
-      //   label: 'About',
-      //   icon: <AppIcon.HelpCircle width={18} height={18} />,
-      //   screen: 'COMING_SOON' as ScreenKey,
-      // },
+      // 'About' omitted: no route/screen yet.
     ],
     [unreadLabel]
   );

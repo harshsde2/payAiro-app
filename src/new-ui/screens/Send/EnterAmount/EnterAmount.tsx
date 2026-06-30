@@ -49,6 +49,7 @@ import type { CryptoReceiptDraft } from './cryptoReceiptTypes';
 import { fetchWebSessionId } from 'services/coinmeRiskLifecycle';
 import { useCoinmeAccountId } from 'hooks/useCoinmeAccountId';
 import { useComplianceStatus } from 'query/hooks/useComplianceDisclosure';
+import { useEmailVerificationGuard } from 'hooks/useEmailVerificationGuard';
 import type { StateCode } from '@new-ui/constants/compliance';
 import {
   registerPreTxPinContinuation,
@@ -60,7 +61,7 @@ import {
 const TEST_FORCE_PRE_TX_STATE: StateCode | null = null;
 import {
   DebitCardPaymentRow,
-  AddNewCardPlaceholderModal,
+  PaymentMethodPickerModal,
   AddDebitCardModal,
   RETAIL_CASH_PAYMENT_METHOD_ID,
 } from '@new-ui/components/common-components/AddBalance';
@@ -174,6 +175,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   // Backend-driven (GET state-compliance/status/): which state the user is in and
   // whether a pre-transaction disclosure is required (e.g. CT debit buy/sell).
   const { data: complianceStatus } = useComplianceStatus();
+  const { requireEmailVerified } = useEmailVerificationGuard();
   const { mutate: handleUserToUserTransfer } = useUserToUserTransfer() as any;
   const { mutate: handleCryptoTransfer } = useCryptoTransfer() as any;
   const { mutate: createPaymentRequest } = useCreatePaymentRequest();
@@ -976,7 +978,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     }, [handleActionsAfterPinVerified, requestPaymentVerification]),
   );
 
-  const handlePayPress = useCallback(() => {
+  const proceedPay = useCallback(() => {
     if (!isCryptoMode) {
       if (type === 'requested') {
         if (!requestId) {
@@ -1096,6 +1098,12 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     navigation,
     complianceStatus,
   ]);
+
+  // Gate every money movement behind email verification; resumes the trade/send
+  // automatically once the email is verified.
+  const handlePayPress = useCallback(() => {
+    requireEmailVerified(proceedPay);
+  }, [requireEmailVerified, proceedPay]);
 
   return (
     <ScreenWrapper
@@ -1250,10 +1258,11 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
           />
         ) : null}
 
-        <AddNewCardPlaceholderModal
+        <PaymentMethodPickerModal
           visible={debitInfoVisible}
           onClose={() => setDebitInfoVisible(false)}
           title="Select Payment Method"
+          flow={tradeMode === 'sell' ? 'sell' : 'buy'}
           includeRetailCashOption={isTradeMode}
           selectedPaymentMethodId={
             isTradeMode && tradePaymentRail === 'retail_cash'

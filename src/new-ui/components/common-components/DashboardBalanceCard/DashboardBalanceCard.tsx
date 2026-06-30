@@ -49,6 +49,7 @@ const DashboardBalanceCard: React.FC<IDashboardBalanceCardProps> = ({
     }
   }, [isBalanceVisible]);
 
+  // TODO: re-enable PayAiro fiat balance (added later).
   const payAiroBalance = useMemo(
     () =>
       Number(
@@ -65,9 +66,10 @@ const DashboardBalanceCard: React.FC<IDashboardBalanceCardProps> = ({
     [aggregatedCryptoBalances]
   );
 
+  // For now the total is crypto-only; add `+ payAiroBalance` back when PayAiro fiat balance ships.
   const totalBalance = useMemo(
-    () => payAiroBalance + cryptoBalance,
-    [payAiroBalance, cryptoBalance]
+    () => cryptoBalance,
+    [cryptoBalance]
   );
 
   const displayBalance = localBalanceVisible ? formatBalance(totalBalance) : '••••••';
@@ -109,7 +111,7 @@ const DashboardBalanceCard: React.FC<IDashboardBalanceCardProps> = ({
           <View style={styles.headerRow}>
             <View style={styles.titleWithIcon}>
               <CustomText style={[styles.headerTitle, { color: theme.colors.greyDark }]}>
-                PayAiro Balance
+                Total Balance
               </CustomText>
               <TouchableOpacity
                 onPress={handleToggleVisibility}

@@ -8,13 +8,19 @@ import { useNavigation } from '@react-navigation/native'
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants'
 import TermAndConditionModal from 'tsx-components/modals/TermAndConditionModal'
 import type { TermAndConditionModalRef } from 'tsx-components/modals/modal.types'
+import { useComplianceStatus } from 'query/hooks/useComplianceDisclosure'
 
 const SettingsScreen = () => {
     const { theme: newUITheme } = useNewUITheme();
     const navigation = useNavigation<any>();
     const webDocRef = useRef<TermAndConditionModalRef>(null);
-    const PAYAIRO_TERMS_URL = 'https://payairo.com/terms-of-service.html';
-    const PAYAIRO_PRIVACY_URL = 'https://www.payairo.com/privacy-policy.html';
+    const PAYAIRO_TERMS_URL = 'https://official.payairo.com/terms-of-service';
+    const PAYAIRO_PRIVACY_URL = 'https://official.payairo.com/privacy-policy';
+
+    // Acknowledgment History is only relevant to Connecticut users (one-time +
+    // per-transaction disclosures). Hidden entirely for everyone else.
+    const { data: complianceStatus } = useComplianceStatus();
+    const isCtUser = complianceStatus?.stateCode === 'CT';
 
     const LIST_ITEMS = [
         {
@@ -40,6 +46,16 @@ const SettingsScreen = () => {
                     NAVIGATION_SCREENS.NEW_COINME_AGREEMENT_SCREEN as never
                 ),
         },
+        // ...(isCtUser
+        //     ? [{
+        //         title: 'Acknowledgment History',
+        //         icon: <AppIcon.Agreement />,
+        //         onPress: () =>
+        //             navigation.navigate(
+        //                 NAVIGATION_SCREENS.NEW_ACKNOWLEDGMENT_HISTORY_SCREEN as never
+        //             ),
+        //     }]
+        //     : []),
         {
             title: 'Terms of Service',
             icon: <AppIcon.TermsAndConditions />,

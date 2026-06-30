@@ -66,7 +66,7 @@ const BalanceBreakdownModal: React.FC<IBalanceBreakdownModalProps> = ({
 
   const totalFormattedRaw = isBalanceVisible ? formatBalance(totalBalance) : '••••••';
   const { integer: totalInteger, decimal: totalDecimal } = splitBalanceForDisplay(totalFormattedRaw);
-  const payAiroFormatted = isBalanceVisible ? `$${formatBalance(payAiroBalance)}` : '$••••••';
+  // const payAiroFormatted = isBalanceVisible ? `$${formatBalance(payAiroBalance)}` : '$••••••'; // re-enable with PayAiro Account row
   const cryptoFormatted = isBalanceVisible ? `$${formatBalance(cryptoBalance)}` : '$••••••';
 
   return (
@@ -89,7 +89,7 @@ const BalanceBreakdownModal: React.FC<IBalanceBreakdownModalProps> = ({
                 fontWeight="regular"
                 style={[styles.title, { color: theme.colors.greyDark }]}
               >
-                PayAiro Balance
+                Total Balance
               </CustomText>
               {onToggleVisibility && (
                 <TouchableOpacity
@@ -165,8 +165,8 @@ const BalanceBreakdownModal: React.FC<IBalanceBreakdownModalProps> = ({
             )}
           </View>
 
-          {/* PayAiro Account */}
-          <View
+          {/* PayAiro Account — hidden for now; re-enable when PayAiro fiat balance ships. */}
+          {/* <View
             style={[
               styles.breakdownCard,
               { backgroundColor: theme.colors.white, borderColor: theme.colors.border },
@@ -197,7 +197,7 @@ const BalanceBreakdownModal: React.FC<IBalanceBreakdownModalProps> = ({
                 {payAiroFormatted}
               </CustomText>
             </View>
-          </View>
+          </View> */}
 
           {/* Crypto Assets */}
           <View

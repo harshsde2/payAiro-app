@@ -42,13 +42,17 @@ const handleDeepLink = ({ url }: { url: string }): void => {
 
   console.log("Deep link received:", url);
 
-  // Parse referral code from URL
+  // Parse referral code (+ optional partner click id) from URL
   const referralCode = extractReferralCode(url);
+  const clickId = extractQueryParam(url, "click_id");
 
     if (referralCode) {
       console.log("Referral code found:", referralCode);
       setItem(STORAGE_KEYS.REFERRAL_CODE, referralCode);
-      
+      if (clickId) {
+        setItem(STORAGE_KEYS.REFERRAL_CLICK_ID, clickId);
+      }
+
       // Navigate to Signup screen if user is not logged in
       // Check if user has auth tokens (logged in)
       const authTokens = getItem(STORAGE_KEYS.AUTH_TOKENS);
@@ -79,15 +83,30 @@ const handleDeepLink = ({ url }: { url: string }): void => {
 };
 
 /**
- * Extract referral code from deep link URL
- * Supports multiple formats:
- * 1. payairo://ref/ABC123
- * 2. https://payairo.com/ref/ABC123
+ * Read a query parameter value from a URL (handles custom schemes too).
+ */
+const extractQueryParam = (url: string, key: string): string | null => {
+  const regex = new RegExp(`[?&]${key}=([^&#]+)`, "i");
+  const match = url.match(regex);
+  return match ? decodeURIComponent(match[1]) : null;
+};
+
+/**
+ * Extract referral code from a deep link URL. Supports:
+ * 1. Path form:  payairo://ref/ABC123, https://payairo.com/ref/ABC123
+ * 2. Query form: https://payairo.com/signup?ref=ABC123 (also referral_code, code, invite)
+ *    — matches the backend share_url built off `signup_share_base_url`.
  */
 const extractReferralCode = (url: string): string | null => {
-  // Match /ref/ followed by alphanumeric code
-  const regex = /\/ref\/([A-Za-z0-9]+)/;
-  const match = url.match(regex);
+  // Path form: /ref/CODE
+  const pathMatch = url.match(/\/ref\/([A-Za-z0-9_]+)/);
+  if (pathMatch) return pathMatch[1];
 
-  return match ? match[1] : null;
+  // Query form: ?ref= / ?referral_code= / ?code= / ?invite=
+  for (const key of ["ref", "referral_code", "code", "invite"]) {
+    const value = extractQueryParam(url, key);
+    if (value) return value;
+  }
+
+  return null;
 };

@@ -8,8 +8,8 @@ import FilterChip from '@new-ui/components/common-components/FilterChip';
 import ReferralsTab from './ReferralsTab';
 import RewardsTab from './RewardsTab';
 import RewardsBreakdownModal from './RewardsBreakdownModal';
-
-const TOTAL_BALANCE = 10.45;
+import { usePointsWallet } from 'query/hooks/useRewardsApi';
+import { normalizePointsWallet } from '@new-ui/types/rewards';
 
 const RewardsAndReferralsScreen = () => {
   const { theme } = useTheme();
@@ -17,12 +17,23 @@ const RewardsAndReferralsScreen = () => {
   const [activeTab, setActiveTab] = useState<'referrals' | 'rewards'>('referrals');
   const [breakdownVisible, setBreakdownVisible] = useState(false);
 
+  const { data: walletResp } = usePointsWallet();
+  const wallet = normalizePointsWallet(walletResp?.data);
+  const rewardsUsd = wallet.transactionPoints * wallet.pointValueUsd;
+  const referralsUsd = wallet.referralPoints * wallet.pointValueUsd;
+  const totalBalance = wallet.valueUsd || rewardsUsd + referralsUsd;
+
+  const breakdownRows = [
+    { label: 'Rewards', amount: `$${rewardsUsd.toFixed(2)}` },
+    { label: 'Referrals', amount: `$${referralsUsd.toFixed(2)}` },
+  ];
+
   return (
     <ScreenWrapper scrollable>
       <View style={styles.content}>
         <RewardBalanceCard
           title="Total Balance"
-          balance={TOTAL_BALANCE}
+          balance={totalBalance}
           subtitle="Details"
           onSubtitlePress={() => setBreakdownVisible(true)}
         />
@@ -50,7 +61,8 @@ const RewardsAndReferralsScreen = () => {
       <RewardsBreakdownModal
         visible={breakdownVisible}
         onClose={() => setBreakdownVisible(false)}
-        totalBalance={TOTAL_BALANCE}
+        totalBalance={totalBalance}
+        rows={breakdownRows}
       />
     </ScreenWrapper>
   );

@@ -157,6 +157,8 @@ export const USER_AUTH = {
   USERS_ME: "api/v1/users/me/",
   PHONE_OTP_REQUEST: "api/v1/users/me/phone-otp/request/",
   PHONE_OTP_VERIFY: "api/v1/users/me/phone-otp/verify/",
+  EMAIL_OTP_REQUEST: "api/v1/users/me/email-otp/request/",
+  EMAIL_OTP_VERIFY: "api/v1/users/me/email-otp/verify/",
   USERS_SEARCH: "api/v1/users/search/",
   USER_CONTACTS: "api/v1/users/contacts/",
   CRYPTO_MARKET: "api/v1/integrations/crypto/market/",
@@ -165,6 +167,8 @@ export const USER_AUTH = {
   PAYMENT_TRANSACTIONS_SEND: "api/v1/payment-transactions/send/",
   PAYMENT_TRANSACTIONS_SEND_HISTORY: "api/v1/payment-transactions/send/history/",
   PAYMENT_METHODS: "api/v1/integrations/payment-methods/",
+  COINME_AUTH_TOKEN: "api/v1/integrations/coinme/auth-token/",
+  USER_PAYMENT_METHODS: "api/v1/users/payment-methods/",
   LOCATIONS_NEARBY: "api/v1/integrations/locations/nearby/",
   WALLET_ADDRESSES: "api/v1/wallets/addresses/",
   WALLET_LOAD_INSTRUCTIONS: "api/v1/wallets/load-instructions/",
@@ -184,8 +188,37 @@ export const USER_AUTH = {
   /** Unregister a device (on logout) by its device_fingerprint. */
   NOTIFICATIONS_DEVICE: (fingerprint: string) =>
     `api/v1/notifications/devices/${encodeURIComponent(fingerprint)}/`,
+  /** In-app notification feed (paginated; supports unread/category/event_type filters). */
+  NOTIFICATIONS: "api/v1/notifications/",
+  /** Unread notification count (+ per-category breakdown) for the bell badge. */
+  NOTIFICATIONS_UNREAD_COUNT: "api/v1/notifications/unread-count/",
+  /** Batch mark-read: body { ids: [...] } or { all: true }. */
+  NOTIFICATIONS_MARK_READ: "api/v1/notifications/mark-read/",
+  /** Mark a single notification read by id. */
+  NOTIFICATION_MARK_READ: (id: number | string) =>
+    `api/v1/notifications/${id}/mark-read/`,
+  /** GET/PUT per-user push notification preferences. */
+  NOTIFICATIONS_PREFERENCES: "api/v1/notifications/preferences/",
   USER_PROFILE_TRANSACTIONS: (targetUserId: number | string, limit: number = 50) =>
     `api/v1/users/${targetUserId}/profile-transactions/?limit=${limit}`,
+};
+
+// Rewards & Referrals (user-facing) endpoints — FastAPI, relative to `USER_API_BASE_URL`.
+// Source of truth: "PayAiro · Rewards & Referrals API" Postman collection (user APIs only).
+export const REWARDS = {
+  /** Validate a referral code before signup. Public — no JWT required. */
+  REFERRAL_VALIDATE: "api/v1/rewards/referral/validate/",
+  /** Current user's referral code (PAY{id}) + shareable URL. First call creates it. */
+  REFERRAL_ME: "api/v1/rewards/referral/me/",
+  /** Scratch cards list. Supports ?status=issued|scratched|expired. */
+  SCRATCH_CARDS: "api/v1/rewards/scratch-cards/",
+  /** Scratch (redeem) a single card by id — adds reward_points. */
+  SCRATCH_CARD_SCRATCH: (id: number | string) =>
+    `api/v1/rewards/scratch-cards/${id}/scratch/`,
+  /** Points wallet summary (balance + value). */
+  POINTS: "api/v1/rewards/points/",
+  /** Claim points into the wallet. Body {} (all) or { points: N }. */
+  POINTS_CLAIM: "api/v1/rewards/points/claim/",
 };
 
 // State regulatory compliance (CT/MN/CA) endpoints — FastAPI, relative to `USER_API_BASE_URL`.
@@ -203,6 +236,9 @@ export const STATE_COMPLIANCE = {
   /** Pre-transaction disclosure content (CT only). */
   preTransaction: (state: string, type: "buy" | "sell") =>
     `api/v1/state-compliance/${state}/pre-transaction/${type}/`,
+  /** Acknowledge a pre-transaction disclosure (CT only) — fired every trade. */
+  preTransactionAcknowledge: (state: string) =>
+    `api/v1/state-compliance/${state}/pre-transaction/acknowledge/`,
   receiptFooter: (state: string) =>
     `api/v1/state-compliance/${state}/receipt-footer/`,
   RECEIPTS_CREATE: "api/v1/state-compliance/receipts/create/",
@@ -210,5 +246,7 @@ export const STATE_COMPLIANCE = {
     `api/v1/state-compliance/receipts/${encodeURIComponent(txnId)}/`,
   RECEIPTS_LIST: "api/v1/state-compliance/receipts/",
   DISCLOSURE_HISTORY: "api/v1/state-compliance/me/disclosure-history/",
+  /** One-time + pre-transaction acknowledgments combined (Acknowledgment History screen). */
+  COMBINED_DISCLOSURE_HISTORY: "api/v1/state-compliance/me/combined-disclosure-history/",
 };
  

@@ -6,9 +6,16 @@ import CustomText from '@new-ui/components/common-components/CustomText';
 import { AppIcon } from '@new-ui/assets/svgs';
 import GlassyWrapper from '@new-ui/components/common-components/GlassyWrapper';
 
+interface IDetailRow {
+  label: string;
+  value: string;
+}
+
 interface IRewardsDetailModalProps {
   visible: boolean;
   onClose: () => void;
+  balance?: number;
+  rows?: IDetailRow[];
 }
 
 const formatCurrency = (amount: number, visible: boolean) => {
@@ -17,18 +24,24 @@ const formatCurrency = (amount: number, visible: boolean) => {
   return { integer: parts[0], decimal: parts[1] };
 };
 
-const BREAKDOWN_ROWS = [
-  { label: 'Total Rewards', value: '$5.00' },
-  { label: 'Redeemed Cards', value: '2' },
-  { label: 'Claimed', value: '$5.00' },
-  { label: 'Available', value: '$5.00' },
+const DEFAULT_ROWS: IDetailRow[] = [
+  { label: 'Total Rewards', value: '$0.00' },
+  { label: 'Redeemed Cards', value: '0' },
+  { label: 'Claimed', value: '$0.00' },
+  { label: 'Available', value: '$0.00' },
 ];
 
-const RewardsDetailModal: React.FC<IRewardsDetailModalProps> = ({ visible, onClose }) => {
+const RewardsDetailModal: React.FC<IRewardsDetailModalProps> = ({
+  visible,
+  onClose,
+  balance = 0,
+  rows,
+}) => {
   const { theme } = useTheme();
   const styles = rewardsAndReferralsScreenStyles(theme);
   const [balanceVisible, setBalanceVisible] = useState(false);
-  const { integer, decimal } = formatCurrency(5.0, balanceVisible);
+  const { integer, decimal } = formatCurrency(balance, balanceVisible);
+  const BREAKDOWN_ROWS = rows && rows.length > 0 ? rows : DEFAULT_ROWS;
 
   return (
     <Modal

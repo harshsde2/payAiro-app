@@ -60,6 +60,8 @@ export const STORAGE_KEYS = {
   ALL_CRYPTO_BALANCES: "all_crypto_balances",
   OTP_RESEND_TIMESTAMP: "otp_resend_timestamp",
   REFERRAL_CODE: "referral_code",
+  /** Partner click id captured from a referral deep link, sent on signup OTP verify. */
+  REFERRAL_CLICK_ID: "referral_click_id",
   APP_BACKGROUND_FLAG: "app_background_flag",
   APP_LOCK_LAST_ACTIVE_TIME: "app.lock.last_active_time",
   APP_LOCK_TIMEOUT: "app.lock.timeout",

@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useEmailVerificationGuard } from 'hooks/useEmailVerificationGuard';
 import { useSelector } from 'react-redux';
 import ScreenWrapper from '@new-ui/components/common-components/ScreenWrapper';
 import Button from '@new-ui/components/common-components/layout/Button';
@@ -9,7 +10,7 @@ import {
   AddBalanceAmountField,
   AmountQuickSelectChips,
   DebitCardPaymentRow,
-  AddNewCardPlaceholderModal,
+  PaymentMethodPickerModal,
   AddDebitCardModal,
 } from '@new-ui/components/common-components/AddBalance';
 import { useTheme } from '@new-ui/styles/ThemeContext';
@@ -61,6 +62,7 @@ const NewAddBalanceScreen: React.FC = () => {
   const styles = addBalanceStyles(theme);
   const navigation = useNavigation<any>();
   const { requestPaymentVerification } = useAppLock();
+  const { requireEmailVerified } = useEmailVerificationGuard();
   const tradeExecute = useCoinmeTradeExecute();
 
   const bankBalance = useSelector((state: { authenticationSlice?: { bankBalance?: Record<string, unknown> } }) => {
@@ -236,7 +238,7 @@ const NewAddBalanceScreen: React.FC = () => {
     handleTradeExecute();
   }, [handleTradeExecute]);
 
-  const handleProceed = useCallback(() => {
+  const proceedAddBalance = useCallback(() => {
     if (selectedPaymentMode === 'cash') {
       if (!(amountText.length > 0 && Number.isFinite(parsedAmount) && parsedAmount > 0)) {
         return;
@@ -275,6 +277,11 @@ const NewAddBalanceScreen: React.FC = () => {
     selectedPaymentMode,
     tradePriceUSD,
   ]);
+
+  // Gate buy (debit + cash) behind email verification; resumes automatically once verified.
+  const handleProceed = useCallback(() => {
+    requireEmailVerified(proceedAddBalance);
+  }, [requireEmailVerified, proceedAddBalance]);
 
   const paymentSubtitle = useMemo(() => {
     if (!selectedPaymentMethod) return 'Select a card';
@@ -401,10 +408,11 @@ const NewAddBalanceScreen: React.FC = () => {
         feePercent={0}
       />
 
-      <AddNewCardPlaceholderModal
+      <PaymentMethodPickerModal
         visible={debitInfoVisible}
         onClose={() => setDebitInfoVisible(false)}
         title="Select Payment Method"
+        flow="buy"
         selectedPaymentMethodId={selectedPaymentMethod?.payment_method_id ?? null}
         onConfirmSelection={(item) => {
           setSelectedPaymentMethod(item);

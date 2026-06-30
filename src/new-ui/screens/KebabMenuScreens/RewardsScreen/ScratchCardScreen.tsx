@@ -1,5 +1,12 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Clipboard, Text, TouchableOpacity, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import {
+  useSharedValue,
+  useDerivedValue,
+  runOnJS,
+} from 'react-native-reanimated';
 import { Canvas, Path, Skia, BlendMode, Paint, Group, Rect } from '@shopify/react-native-skia';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 import {
@@ -10,83 +17,84 @@ import ScreenWrapper from '@new-ui/components/common-components/ScreenWrapper';
 import CustomText from '@new-ui/components/common-components/CustomText';
 import { Button } from '@new-ui/components/common-components/layout';
 import { AppIcon } from '@new-ui/assets/svgs';
+import { useScratchCard, useClaimPoints } from 'query/hooks/useRewardsApi';
 
 type CardState = 'unscratched' | 'scratched' | 'claimed';
+type Point = { x: number; y: number };
 
 const SCRATCH_THRESHOLD = 0.35;
 const STROKE_WIDTH = 40;
 
-const REWARD = {
-  amount: '$5',
-  title: '$5 joining bonus unlocked!',
-  description: 'Congratulations! You have earned a joining bonus. Claim your reward to redeem.',
-  brand: {
-    discount: '$5.25 Off',
-    description: 'Ola outstation rides',
-    code: 'QWASERDF',
-  },
-};
-
 const ScratchCardScreen = () => {
   const { theme } = useTheme();
   const styles = scratchCardScreenStyles(theme);
+  const route = useRoute<any>();
+  const navigation = useNavigation<any>();
+
+  const cardId = route.params?.cardId;
+  const routePoints: number = route.params?.points ?? 0;
+
   const [cardState, setCardState] = useState<CardState>('unscratched');
 
-  const pathRef = useRef(Skia.Path.Make());
-  const [pathStr, setPathStr] = useState('');
-  const scratchedPixels = useRef(0);
-  const totalPixels = useMemo(() => SCRATCH_CARD_SIZE * SCRATCH_CARD_SIZE, []);
-  const isDrawing = useRef(false);
-  const lastPoint = useRef<{ x: number; y: number } | null>(null);
+  const scratch = useScratchCard();
+  const claim = useClaimPoints();
 
-  const handleTouchStart = useCallback(
-    (e: any) => {
-      if (cardState !== 'unscratched') return;
-      const touch = e.nativeEvent;
-      const x = touch.locationX;
-      const y = touch.locationY;
-      pathRef.current.moveTo(x, y);
-      lastPoint.current = { x, y };
-      isDrawing.current = true;
-    },
-    [cardState],
+  // Points actually earned: prefer the scratch API response, fall back to route param.
+  const earnedPoints =
+    scratch.data?.data?.reward_points ?? routePoints;
+
+  // --- Smooth scratch gesture (UI thread; no per-frame React re-render) ---
+  const points = useSharedValue<Point[]>([]);
+  const scratchedDistance = useSharedValue(0);
+  const totalPixels = useMemo(
+    () => SCRATCH_CARD_SIZE * SCRATCH_CARD_SIZE,
+    [],
   );
 
-  const handleTouchMove = useCallback(
-    (e: any) => {
-      if (!isDrawing.current || cardState !== 'unscratched') return;
-      const touch = e.nativeEvent;
-      const x = touch.locationX;
-      const y = touch.locationY;
-      pathRef.current.lineTo(x, y);
-      setPathStr(pathRef.current.toSVGString());
+  // Guard so the scratch API + state flip happen exactly once.
+  const scratchedRef = useRef(false);
 
-      if (lastPoint.current) {
-        const dx = Math.abs(x - lastPoint.current.x);
-        const dy = Math.abs(y - lastPoint.current.y);
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        scratchedPixels.current += dist * STROKE_WIDTH;
-      }
-      lastPoint.current = { x, y };
+  const onScratchedEnough = useCallback(() => {
+    if (scratchedRef.current) return;
+    scratchedRef.current = true;
+    setCardState('scratched');
+    if (cardId != null) scratch.mutate(cardId);
+  }, [cardId, scratch]);
 
-      if (scratchedPixels.current / totalPixels > SCRATCH_THRESHOLD) {
-        setCardState('scratched');
+  const path = useDerivedValue(() => {
+    const p = Skia.Path.Make();
+    const pts = points.value;
+    if (pts.length > 0) {
+      p.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) {
+        p.lineTo(pts[i].x, pts[i].y);
       }
-    },
-    [cardState, totalPixels],
+    }
+    return p;
+  }, [points]);
+
+  const panGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .enabled(cardState === 'unscratched')
+        .onStart((e) => {
+          points.value = [{ x: e.x, y: e.y }];
+        })
+        .onUpdate((e) => {
+          const prev = points.value;
+          const last = prev[prev.length - 1];
+          if (last) {
+            const dx = e.x - last.x;
+            const dy = e.y - last.y;
+            scratchedDistance.value += Math.sqrt(dx * dx + dy * dy) * STROKE_WIDTH;
+          }
+          points.value = [...prev, { x: e.x, y: e.y }];
+          if (scratchedDistance.value / totalPixels > SCRATCH_THRESHOLD) {
+            runOnJS(onScratchedEnough)();
+          }
+        }),
+    [cardState, totalPixels, onScratchedEnough, points, scratchedDistance],
   );
-
-  const handleTouchEnd = useCallback(() => {
-    isDrawing.current = false;
-    lastPoint.current = null;
-  }, []);
-
-  const handleClaim = useCallback(() => setCardState('claimed'), []);
-
-  const skiaPath = useMemo(() => {
-    if (!pathStr) return Skia.Path.Make();
-    return Skia.Path.MakeFromSVGString(pathStr) ?? Skia.Path.Make();
-  }, [pathStr]);
 
   const overlayPaint = useMemo(() => {
     const p = Skia.Paint();
@@ -97,6 +105,12 @@ const ScratchCardScreen = () => {
     p.setStrokeJoin(1); // Round
     return p;
   }, []);
+
+  const handleClaim = useCallback(() => {
+    claim.mutate(undefined, {
+      onSuccess: () => setCardState('claimed'),
+    });
+  }, [claim]);
 
   if (cardState === 'claimed') {
     return (
@@ -110,22 +124,14 @@ const ScratchCardScreen = () => {
             <View style={styles.brandLogoCircle}>
               <AppIcon.PayairoLogoBlack width={36} height={36} />
             </View>
-            <CustomText style={styles.brandDiscount}>{REWARD.brand.discount}</CustomText>
-            <CustomText style={styles.brandDescription}>{REWARD.brand.description}</CustomText>
-
-            <View style={styles.codeFieldRow}>
-              <CustomText style={styles.codeText}>{REWARD.brand.code}</CustomText>
-              <TouchableOpacity
-                onPress={() => Clipboard.setString(REWARD.brand.code)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <AppIcon.Copygreen width={20} height={20} />
-              </TouchableOpacity>
-            </View>
+            <CustomText style={styles.brandDiscount}>{earnedPoints} pts</CustomText>
+            <CustomText style={styles.brandDescription}>
+              Added to your PayAiro rewards balance.
+            </CustomText>
           </View>
 
-          <Button onPress={() => {}} style={styles.redeemButton}>
-            Copy code and Redeem
+          <Button onPress={() => navigation.goBack()} style={styles.redeemButton}>
+            Done
           </Button>
         </View>
       </ScreenWrapper>
@@ -142,50 +148,52 @@ const ScratchCardScreen = () => {
         <View style={styles.cardWrapper}>
           {/* Underlay: revealed reward content */}
           <View style={styles.underlay}>
-            <Text style={styles.revealedEmoji}>🎉</Text>
-            <CustomText style={styles.revealedTitle}>{REWARD.title}</CustomText>
-            <CustomText style={styles.revealedDescription}>{REWARD.description}</CustomText>
+            <AppIcon.RewardsGift width={24} height={24} />
+            <CustomText style={styles.revealedTitle}>
+              {earnedPoints} points unlocked!
+            </CustomText>
+            <CustomText style={styles.revealedDescription}>
+              Congratulations! Claim your reward to add these points to your balance.
+            </CustomText>
           </View>
 
           {cardState === 'unscratched' && (
             <>
               {/* Green overlay – scratched away by Skia */}
-              <View
-                style={styles.giftOverlay}
-                pointerEvents="none"
-              >
-                <Text style={styles.giftEmoji}>🎁</Text>
-                <CustomText style={styles.giftText}>Scratch to reveal{'\n'}your reward!</CustomText>
+              <View style={styles.giftOverlay} pointerEvents="none">
+                <AppIcon.RewardsGift width={24} height={24} />
+                <CustomText style={styles.giftText}>
+                  Scratch to reveal{'\n'}your reward!
+                </CustomText>
               </View>
 
-              {/* Skia canvas for erasing the overlay */}
-              <View
-                style={styles.overlayCanvas}
-                onStartShouldSetResponder={() => true}
-                onMoveShouldSetResponder={() => true}
-                onResponderStart={handleTouchStart}
-                onResponderMove={handleTouchMove}
-                onResponderRelease={handleTouchEnd}
-              >
-                <Canvas style={{ flex: 1 }}>
-                  <Group layer={<Paint />}>
-                    <Rect
-                      x={0}
-                      y={0}
-                      width={SCRATCH_CARD_SIZE}
-                      height={SCRATCH_CARD_SIZE}
-                      color={theme.colors.primary}
-                    />
-                    <Path path={skiaPath} paint={overlayPaint} />
-                  </Group>
-                </Canvas>
-              </View>
+              {/* Skia canvas for erasing the overlay, driven by the pan gesture */}
+              <GestureDetector gesture={panGesture}>
+                <View style={styles.overlayCanvas}>
+                  <Canvas style={{ flex: 1 }}>
+                    <Group layer={<Paint />}>
+                      <Rect
+                        x={0}
+                        y={0}
+                        width={SCRATCH_CARD_SIZE}
+                        height={SCRATCH_CARD_SIZE}
+                        color={theme.colors.primary}
+                      />
+                      <Path path={path} paint={overlayPaint} />
+                    </Group>
+                  </Canvas>
+                </View>
+              </GestureDetector>
             </>
           )}
         </View>
 
         {cardState === 'scratched' && (
-          <Button onPress={handleClaim} style={styles.claimButton}>
+          <Button
+            onPress={handleClaim}
+            loading={claim.isPending}
+            style={styles.claimButton}
+          >
             Claim
           </Button>
         )}

@@ -54,6 +54,14 @@ import SocialMediaIcons from './SocialMediaIcons.svg';
 import Stars from './Stars.svg';
 import AlertTriangle from './AlertTriangle.svg';
 import TransactionLimit from './TransactionLimit.svg';
+import Profile_Bankstatement from './Profile_Bankstatement.svg';
+import Profile_Rewards from './Profile_Rewards.svg';
+import Profile_Transaction from './Profile_Transaction.svg';
+import Profile_Logout from './Profile_Logout.svg';
+import Profile_Settings from './Profile_Settings.svg';
+import Profile_PaymentMethod from './Profile_PaymentMethod.svg';
+import RewardsGift from './RewardsGift.svg';
+
 
 export const AppIcon = {
   Home,
@@ -112,4 +120,11 @@ export const AppIcon = {
   Stars,
   AlertTriangle,
   TransactionLimit,
+  Profile_Bankstatement,
+  Profile_Rewards,
+  Profile_Transaction,
+  Profile_Logout,
+  Profile_Settings,
+  Profile_PaymentMethod,
+  RewardsGift,
 };

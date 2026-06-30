@@ -39,7 +39,7 @@ const ScratchVoucherCard: React.FC<IScratchVoucherCardProps> = ({
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.giftCircle}>
-        <Text style={styles.giftEmoji}>🎁</Text>
+       <AppIcon.RewardsGift width={24} height={24} />
       </View>
       <CustomText style={styles.unlockText}>Unlock a reward with</CustomText>
       <CustomText style={styles.pointsText}>{points} Points</CustomText>

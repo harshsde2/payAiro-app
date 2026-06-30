@@ -12,7 +12,7 @@ import { showError, showSuccess } from "utils/toast";
 import { validateEmailOrPhone } from "utils/validation";
 import { getSmsHash } from "utils/smsHash";
 import { useUserOtpRequest } from "query/hooks/useAPIAuth";
-import { getItem, removeItem, STORAGE_KEYS } from "storage/mmkv";
+import { getItem, STORAGE_KEYS } from "storage/mmkv";
 import { isProduction } from "config/env.config";
 import PoliticalModal from "components/PolitaclModal";
 import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
@@ -24,8 +24,8 @@ const COINME_PRIVACY_URL =
   "https://help.coinme.com/en/articles/9039704-privacy-policy";
 const COINME_DISCLOSURES_URL =
   "https://help.coinme.com/en/articles/10535881-disclosures";
-const PAYAIRO_TERMS_URL = "https://payairo.com/terms-of-service.html";
-const PAYAIRO_PRIVACY_URL = "https://www.payairo.com/privacy-policy.html";
+const PAYAIRO_TERMS_URL = "https://official.payairo.com/terms-of-service";
+const PAYAIRO_PRIVACY_URL = "https://official.payairo.com/privacy-policy";
 
 const CreateAccountScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -139,7 +139,9 @@ const CreateAccountScreen: React.FC = () => {
         if (data?.status) {
           console.log("data =>", JSON.stringify(data, null, 2));
           showSuccess(successMessage);
-          removeItem(STORAGE_KEYS.REFERRAL_CODE);
+          // NOTE: keep REFERRAL_CODE / REFERRAL_CLICK_ID in storage until OTP
+          // verify, where they're attached to the new-signup attribution and
+          // then cleared. (Previously removed here, before verify could use it.)
 
           const isEmailInput = validationResult.inputType === "email";
 

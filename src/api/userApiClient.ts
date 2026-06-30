@@ -288,6 +288,16 @@ export const userApiClient = {
     return response.data;
   },
 
+  put: async <T>(
+    url: string,
+    data: any,
+    isFormData: boolean = false
+  ): Promise<T> => {
+    const headers = isFormData ? { "Content-Type": "multipart/form-data" } : {};
+    const response = await userApi.put<T>(url, data, { headers });
+    return response.data;
+  },
+
   delete: async <T>(url: string): Promise<T> => {
     const response = await userApi.delete<T>(url);
     return response.data;

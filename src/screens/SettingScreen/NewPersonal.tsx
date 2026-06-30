@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -7,6 +7,9 @@ import {
   Clipboard,
   ToastAndroid,
   TouchableOpacity,
+  Image,
+  Modal,
+  ScrollView,
 } from "react-native";
 import CustomText from "@new-ui/components/common-components/CustomText";
 import { useTheme as useNewTheme } from "@new-ui/styles/ThemeContext";
@@ -14,22 +17,19 @@ import { useNavigation } from "@react-navigation/native";
 import { useSelector } from "react-redux";
 import { useTheme } from "styles/ThemeContext";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
-import { KycMode, toKycMode } from "types/kyc";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import Share from "react-native-share";
 import { useAppLock } from "hooks/useAppLock";
-import ProfileHeader from "components/common-components/ProfileHeader/ProfileHeader";
 import { ReceiveQRCard } from "components/common-components/ReceiveQRCard";
 import type { IReceiveQRCardRef } from "components/common-components/ReceiveQRCard";
 import { SvgIcons } from "constants/svgs";
-import DashboardSection from "tsx-components/DashboardSection";
-import { usePaymentMethodsList } from "query/hooks/usePaymentMethods";
-import {
-  filterDebitCards,
-  formatCardLabel,
-  formatExpiry,
-  PAYMENT_METHODS_EMPTY_MESSAGE,
-} from "@new-ui/screens/PaymentMethods/paymentMethods.utils";
+import { AppIcon } from "@new-ui/assets/svgs";
+import { BottomSheet } from "@new-ui/components/common-components/BottomSheet";
+import type { IBottomSheetRef } from "@new-ui/components/common-components/BottomSheet/types";
+import { Button } from "@new-ui/components/common-components/layout";
+import { performAppLogout } from "utils/performAppLogout";
+
+type AppRouteName = (typeof NAVIGATION_SCREENS)[keyof typeof NAVIGATION_SCREENS];
 
 function formatProfilePhone(
   sources: Record<string, unknown> | null | undefined,
@@ -57,18 +57,33 @@ function formatProfilePhone(
   return `+${countryCode} ${national}`;
 }
 
+const getInitials = (name: string): string => {
+  if (!name) return "?";
+  const parts = name.trim().split(" ").filter(Boolean);
+  if (parts.length === 0) return "?";
+  let initials = parts[0].charAt(0).toUpperCase();
+  if (parts.length > 1) {
+    initials += parts[parts.length - 1].charAt(0).toUpperCase();
+  }
+  return initials;
+};
+
 const NewPersonal: React.FC = () => {
   const { theme } = useTheme();
   const { theme: newTheme } = useNewTheme();
-  const customTheme = styles(theme);
-  const { userData, usersMe, walletData, kycStatus } = useSelector(
+  const customTheme = styles(theme, newTheme);
+  const { userData, usersMe, walletData } = useSelector(
     (s: any) => s.authenticationSlice
   );
   const navigation = useNavigation<any>();
   const { setNativeModalVisible } = useAppLock();
   const qrCardRef = useRef<IReceiveQRCardRef>(null);
+  const qrSheetRef = useRef<IBottomSheetRef>(null);
 
-  /** Same mapping as SettingScreen: FastAPI `/me` user + profile → ProfileHeader shape. */
+  const [showQrSheet, setShowQrSheet] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  /** Same mapping as SettingScreen: FastAPI `/me` user + profile → profile fields. */
   const profileWalletData = useMemo(() => {
     const u = { ...(usersMe?.user || {}), ...(userData || {}) };
     const legal = usersMe?.legal_identity || {};
@@ -94,31 +109,62 @@ const NewPersonal: React.FC = () => {
       account_email: u.email ?? w.account_email ?? "",
       account_number: w.account_number,
       mobile_number: formatProfilePhone(phoneSources, w),
-      created_at: u.date_joined ?? w.created_at,
       profile_photo:
         profile.avatar_url ?? u.profile_photo ?? w.profile_photo ?? null,
     };
   }, [userData, usersMe, walletData]);
 
-  const mobileNumber = profileWalletData.mobile_number;
+  const displayName =
+    `${profileWalletData.name || ""} ${profileWalletData.last_name || ""}`.trim() ||
+    "User";
 
-  const { data: paymentMethodsData, isPending: isPaymentMethodsLoading } =
-    usePaymentMethodsList(20);
+  const rawProfilePhoto = profileWalletData.profile_photo;
+  const profilePhotoUri =
+    rawProfilePhoto && typeof rawProfilePhoto === "string" && rawProfilePhoto.trim() !== ""
+      ? rawProfilePhoto.replace(/^http:\/\//i, "https://")
+      : null;
 
-  const debitCards = useMemo(
-    () => filterDebitCards(paymentMethodsData?.data?.items),
-    [paymentMethodsData]
+  const menuItems = useMemo(
+    () => [
+      {
+        key: "payment",
+        label: "Payment method",
+        icon: <AppIcon.Profile_PaymentMethod width={22} height={22} />,
+        route: NAVIGATION_SCREENS.PAYMENT_METHODS_SCREEN as AppRouteName,
+      },
+      {
+        key: "transactionLimit",
+        label: "Transaction limit",
+        icon: <AppIcon.Profile_Transaction width={22} height={22} />,
+        route: NAVIGATION_SCREENS.TRANSACTION_LIMIT_SCREEN as AppRouteName,
+      },
+      {
+        key: "rewards",
+        label: "Rewards and Referrals",
+        icon: <AppIcon.Profile_Rewards width={22} height={22} />,
+        route: NAVIGATION_SCREENS.NEW_REWARDS_AND_REFERRALS_SCREEN as AppRouteName,
+      },
+      {
+        key: "bankStatement",
+        label: "Bank Statement",
+        icon: <AppIcon.Profile_Bankstatement width={22} height={22} />,
+        route: NAVIGATION_SCREENS.NEW_BANK_STATEMENT_SCREEN as AppRouteName,
+      },
+      {
+        key: "settings",
+        label: "Settings",
+        icon: <AppIcon.Profile_Settings width={22} height={22} />,
+        route: NAVIGATION_SCREENS.NEW_SETTINGS_SCREEN as AppRouteName,
+      },
+      {
+        key: "support",
+        label: "Support",
+        icon: <AppIcon.Headphones width={22} height={22} />,
+        route: NAVIGATION_SCREENS.SUPPORT_SCREEN as AppRouteName,
+      },
+    ],
+    []
   );
-
-  const kycForMode = useMemo(() => {
-    const st = usersMe?.kyc?.status;
-    if (st != null && String(st).length > 0) {
-      return { kyc_status: String(st) };
-    }
-    return kycStatus;
-  }, [usersMe, kycStatus]);
-
-  const mode = useMemo(() => toKycMode(kycForMode), [kycForMode]);
 
   const copyToClipboard = (text: string, label: string) => {
     Clipboard.setString(text);
@@ -165,181 +211,351 @@ const NewPersonal: React.FC = () => {
     }
   };
 
-  const getKycBadgeStatus = (kycMode: KycMode) => {
-    switch (kycMode) {
-      case "approved":
-        return "Verified";
-      case "pending":
-      case "not_started":
-      case "unknown":
-        return "Pending";
-      case "expired":
-        return "Rejected";
-      default:
-        return "Pending";
+  const openQrSheet = () => setShowQrSheet(true);
+  const closeQrSheet = () => setShowQrSheet(false);
+
+  useEffect(() => {
+    if (showQrSheet) {
+      requestAnimationFrame(() => qrSheetRef.current?.open());
+    }
+  }, [showQrSheet]);
+
+  const handleMenuPress = (route: AppRouteName) => {
+    if (route) navigation.navigate(route);
+  };
+
+  const handleLogoutConfirm = async () => {
+    try {
+      await performAppLogout();
+    } finally {
+      setShowLogoutConfirm(false);
     }
   };
 
   return (
     <ScreenWrapper
       safeArea
-      safeAreaEdges={["bottom",'top']}
+      safeAreaEdges={["top", "bottom"]}
       scrollable
       padding={0}
       contentStyle={customTheme.scrollContent}
     >
-      <ProfileHeader
-        walletData={profileWalletData}
-        kycStep={null}
-        kycBadgeStatus={getKycBadgeStatus(mode)}
-        kycMode={mode}
-        showKycButton={false}
-        showKycBadge={false}
-        onProfilePress={() =>
-          navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL)
-        }
-        onQrPress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL)}
-        showQrButton={false}
-        showCameraButton={false}
-      />
-      <View style={customTheme.whiteSheetContainer}>
-        {mobileNumber ? (
-          <View style={customTheme.profileInfoRow}>
-            <View style={customTheme.profileInfoText}>
-              <CustomText variant="caption" color={newTheme.colors.textSecondary}>
-                Mobile number
-              </CustomText>
-              <CustomText variant="body" fontWeight="semiBold">
-                {mobileNumber}
-              </CustomText>
-            </View>
+      {/* Header (matches CustomHeader layout) */}
+      <View style={customTheme.headerGreen}>
+        <View style={customTheme.header}>
+          {navigation.canGoBack() ? (
             <TouchableOpacity
-              onPress={() => copyToClipboard(mobileNumber, "Mobile number")}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={customTheme.headerSide}
+              onPress={() => navigation.goBack()}
+              activeOpacity={0.7}
             >
-              <SvgIcons.CopyOutlineBlack width={20} height={20} />
+              <AppIcon.ArrowLeft width={24} height={24} />
             </TouchableOpacity>
-          </View>
-        ) : null}
-
-        <DashboardSection
-          title="Payment Methods"
-          titleStyle={{ fontSize: 16 }}
-          style={customTheme.paymentMethodsSection}
-        >
-          {isPaymentMethodsLoading ? (
-            <View style={customTheme.profileInfoRow}>
-              <View style={customTheme.profileInfoText}>
-                <CustomText variant="body" color={newTheme.colors.textSecondary}>
-                  Loading…
-                </CustomText>
-              </View>
-            </View>
-          ) : debitCards.length === 0 ? (
-            <View style={customTheme.profileInfoRow}>
-              <View style={customTheme.profileInfoText}>
-                <CustomText variant="body" color={newTheme.colors.textSecondary}>
-                  {PAYMENT_METHODS_EMPTY_MESSAGE}
-                </CustomText>
-              </View>
-            </View>
           ) : (
-            debitCards.map((card) => {
-              const cardLabel = formatCardLabel(card);
-              const expiry = formatExpiry(card);
-              return (
-                <View key={card.payment_method_id} style={customTheme.profileInfoRow}>
-                  <View style={customTheme.profileInfoText}>
-                    <CustomText variant="caption" color={newTheme.colors.textSecondary}>
-                      Debit card
-                    </CustomText>
-                    <CustomText variant="body" fontWeight="semiBold">
-                      {cardLabel}
-                    </CustomText>
-                    {expiry ? (
-                      <CustomText variant="caption" color={newTheme.colors.textSecondary}>
-                        Expires {expiry}
-                      </CustomText>
-                    ) : null}
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => copyToClipboard(cardLabel, "Debit card")}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <SvgIcons.CopyOutlineBlack width={20} height={20} />
-                  </TouchableOpacity>
-                </View>
-              );
-            })
+            <View style={customTheme.headerSide} />
           )}
-        </DashboardSection>
 
-        <ReceiveQRCard
-          ref={qrCardRef}
-          title="PayAiro"
-          subtitle="Scan this QR code to receive funds"
-          qrValue={{
-            type: "receive",
-            username: profileWalletData.username,
-            tag: profileWalletData.username,
-          }}
-          payAiroTag={profileWalletData.username || "N/A"}
-          onCopyTag={() =>
-            copyToClipboard(profileWalletData.username || "", "PayAiro Tag")
-          }
-          leftButton={{
-            text: "Download",
-            icon: (
-              <SvgIcons.DownloadBlack width={20} height={20} color="white" />
-            ),
-            onPress: () => qrCardRef.current?.capture(handleDownload),
-          }}
-          rightButton={{
-            text: "Share",
-            icon: (
-              <SvgIcons.ShareIcon width={20} height={20} color="white" />
-            ),
-            onPress: () => qrCardRef.current?.capture(handleShare),
-          }}
-          onBeforeCapture={() => setNativeModalVisible(true)}
-          onAfterCapture={() => {
-            setTimeout(() => setNativeModalVisible(false), 1000);
-          }}
-        />
+          <View style={customTheme.headerTitle}>
+            <CustomText variant="h4" fontWeight="bold" numberOfLines={1}>
+              Profile
+            </CustomText>
+          </View>
+
+          <TouchableOpacity
+            style={customTheme.headerSide}
+            onPress={openQrSheet}
+            activeOpacity={0.7}
+          >
+            <AppIcon.QrCode width={24} height={24} color={newTheme.colors.primary} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Hero */}
+        <View style={customTheme.hero}>
+          <View style={customTheme.avatar}>
+            {profilePhotoUri ? (
+              <Image source={{ uri: profilePhotoUri }} style={customTheme.avatarImage} />
+            ) : (
+              <CustomText style={customTheme.avatarText}>
+                {getInitials(displayName)}
+              </CustomText>
+            )}
+          </View>
+          <CustomText variant="h3" fontWeight="bold" style={customTheme.name}>
+            {displayName}
+          </CustomText>
+          {profileWalletData.account_email ? (
+            <CustomText variant="caption" color={newTheme.colors.textSecondary}>
+              {profileWalletData.account_email}
+            </CustomText>
+          ) : null}
+          {profileWalletData.mobile_number ? (
+            <CustomText variant="caption" color={newTheme.colors.textSecondary}>
+              {profileWalletData.mobile_number}
+            </CustomText>
+          ) : null}
+        </View>
       </View>
+
+      {/* Menu list */}
+      <View style={customTheme.sheet}>
+        {menuItems.map((item) => (
+          <TouchableOpacity
+            key={item.key}
+            style={customTheme.row}
+            activeOpacity={0.7}
+            onPress={() => handleMenuPress(item.route)}
+          >
+            <View style={customTheme.rowLeft}>
+              {item.icon}
+              <CustomText variant="body" fontWeight="semiBold" style={customTheme.rowLabel}>
+                {item.label}
+              </CustomText>
+            </View>
+            <AppIcon.ChevronRight width={18} height={18} />
+          </TouchableOpacity>
+        ))}
+
+        <TouchableOpacity
+          style={customTheme.row}
+          activeOpacity={0.7}
+          onPress={() => setShowLogoutConfirm(true)}
+        >
+          <View style={customTheme.rowLeft}>
+            <AppIcon.Profile_Logout width={22} height={22} />
+            <CustomText variant="body" fontWeight="semiBold" style={customTheme.rowLabel}>
+              Logout
+            </CustomText>
+          </View>
+          <AppIcon.ChevronRight width={18} height={18} />
+        </TouchableOpacity>
+      </View>
+
+      {/* QR bottom sheet */}
+      {showQrSheet && (
+        <Modal visible transparent animationType="fade" onRequestClose={closeQrSheet}>
+          <View style={{ flex: 1 }}>
+            <BottomSheet
+              ref={qrSheetRef}
+              snapPoints={["90%"]}
+              initialSnapIndex={0}
+              enableDrag
+              enableBackdropPress
+              onClose={closeQrSheet}
+            >
+              <ScrollView
+                contentContainerStyle={customTheme.qrSheetContent}
+                showsVerticalScrollIndicator={false}
+              >
+                <ReceiveQRCard
+                  ref={qrCardRef}
+                  title="PayAiro"
+                  subtitle="Scan this QR code to receive funds"
+                  qrValue={{
+                    type: "receive",
+                    username: profileWalletData.username,
+                    tag: profileWalletData.username,
+                  }}
+                  payAiroTag={profileWalletData.username || "N/A"}
+                  onCopyTag={() =>
+                    copyToClipboard(profileWalletData.username || "", "PayAiro Tag")
+                  }
+                  leftButton={{
+                    text: "Download",
+                    icon: <SvgIcons.DownloadBlack width={20} height={20} color="white" />,
+                    onPress: () => qrCardRef.current?.capture(handleDownload),
+                  }}
+                  rightButton={{
+                    text: "Share",
+                    icon: <SvgIcons.ShareIcon width={20} height={20} color="white" />,
+                    onPress: () => qrCardRef.current?.capture(handleShare),
+                  }}
+                  onBeforeCapture={() => setNativeModalVisible(true)}
+                  onAfterCapture={() => {
+                    setTimeout(() => setNativeModalVisible(false), 1000);
+                  }}
+                />
+              </ScrollView>
+            </BottomSheet>
+          </View>
+        </Modal>
+      )}
+
+      {/* Logout confirm */}
+      <Modal
+        visible={showLogoutConfirm}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowLogoutConfirm(false)}
+      >
+        <View style={customTheme.logoutBackdrop}>
+          <View
+            style={[customTheme.logoutSheet, { backgroundColor: newTheme.colors.white }]}
+          >
+            <CustomText variant="h4" fontWeight="bold" style={customTheme.logoutTitle}>
+              Logout
+            </CustomText>
+
+            <View style={customTheme.warningBox}>
+              <AppIcon.AlertTriangle width={20} height={20} />
+              <CustomText
+                variant="body"
+                size={14}
+                fontWeight="regular"
+                color="#8B6914"
+                style={customTheme.warningText}
+              >
+                This will remove all accounts and clear all data from the app.
+              </CustomText>
+            </View>
+
+            <View style={customTheme.logoutButtonRow}>
+              <Button
+                color={newTheme.colors.primary}
+                style={{ flex: 1 }}
+                onPress={() => setShowLogoutConfirm(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                color={newTheme.colors.error}
+                style={{ flex: 1 }}
+                onPress={handleLogoutConfirm}
+              >
+                Logout
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScreenWrapper>
   );
 };
 
-const styles = (theme: any) =>
+const styles = (theme: any, newTheme: any) =>
   StyleSheet.create({
     scrollContent: {
       flexGrow: 1,
+      backgroundColor: "#EAF6EC",
     },
-    whiteSheetContainer: {
+    headerGreen: {
+      backgroundColor: "#EAF6EC",
+      paddingBottom: theme.spacing.spacing[6],
+    },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      width: "100%",
+      minHeight: 56,
+      paddingHorizontal: theme.spacing.spacing[2],
+      backgroundColor: newTheme.colors.background,
+    },
+    headerSide: {
+      width: 40,
+      height: 40,
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 1,
+    },
+    headerTitle: {
       flex: 1,
-      backgroundColor: theme.colors.palette.white,
-      borderTopEndRadius: theme.spacing.spacing[8],
-      borderTopStartRadius: theme.spacing.spacing[8],
-      padding: theme.spacing.spacing[5],
+      alignItems: "center",
+      justifyContent: "center",
     },
-    profileInfoRow: {
+    hero: {
+      alignItems: "center",
+      marginTop: theme.spacing.spacing[4],
+      gap: 4,
+    },
+    avatar: {
+      width: 88,
+      height: 88,
+      borderRadius: 44,
+      backgroundColor: newTheme.colors.greenLight2,
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden",
+      marginBottom: theme.spacing.spacing[2],
+    },
+    avatarImage: {
+      width: "100%",
+      height: "100%",
+      resizeMode: "cover",
+    },
+    avatarText: {
+      fontSize: 32,
+      lineHeight: 38,
+      textAlign: "center",
+      textAlignVertical: "center",
+      includeFontPadding: false,
+      fontFamily: theme.typography?.fontFamily?.bold,
+      color: newTheme.colors.primary,
+    },
+    name: {
+      marginTop: theme.spacing.spacing[1],
+    },
+    sheet: {
+      flex: 1,
+      backgroundColor: newTheme.colors.white,
+      borderTopStartRadius: theme.spacing.spacing[8],
+      borderTopEndRadius: theme.spacing.spacing[8],
+      paddingHorizontal: theme.spacing.spacing[5],
+      paddingTop: theme.spacing.spacing[5],
+    },
+    row: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      marginBottom: theme.spacing.spacing[4],
-      paddingVertical: theme.spacing.spacing[3],
-      paddingHorizontal: theme.spacing.spacing[3],
-      borderRadius: theme.spacing.spacing[3],
-      backgroundColor: theme.colors.palette.grey50 ?? "#F5F5F5",
+      paddingVertical: theme.spacing.spacing[4],
     },
-    profileInfoText: {
+    rowLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: theme.spacing.spacing[4],
+    },
+    rowLabel: {
+      color: newTheme.colors.text,
+    },
+    qrSheetContent: {
+      alignItems: "center",
+      paddingTop: theme.spacing.spacing[2],
+      paddingBottom: theme.spacing.spacing[6],
+    },
+    logoutBackdrop: {
       flex: 1,
-      marginRight: theme.spacing.spacing[3],
-      gap: 4,
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      justifyContent: "flex-end",
+      paddingBottom: 40,
+      paddingHorizontal: 15,
     },
-    paymentMethodsSection: {
-      marginTop: theme.spacing.spacing[2],
+    logoutSheet: {
+      borderRadius: 24,
+      paddingHorizontal: 24,
+      paddingTop: 28,
+      paddingBottom: 40,
+      gap: 20,
+    },
+    logoutTitle: {
+      textAlign: "center",
+    },
+    warningBox: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: "#FFF8E1",
+      borderColor: "#FFD54F",
+      borderWidth: 1,
+      borderRadius: 14,
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      gap: 10,
+    },
+    warningText: {
+      flex: 1,
+      textAlign: "center",
+    },
+    logoutButtonRow: {
+      flexDirection: "row",
+      gap: 12,
     },
   });
 

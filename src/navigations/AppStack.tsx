@@ -30,6 +30,8 @@ import { useTheme as useNewTheme } from "@new-ui/styles/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
 import SettingsScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/SettingsScreen";
 import CoinmeAgreementScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/CoinmeAgreementScreen";
+import DisclosureHistoryScreen from "new-ui/screens/KebabMenuScreens/DisclosureHistoryScreen/DisclosureHistoryScreen";
+import EmailVerificationScreen from "new-ui/screens/Auth/EmailVerification/EmailVerificationScreen";
 import NotificationScreen from "new-ui/screens/KebabMenuScreens/NotificationScreen/NotificationScreen";
 import TransactionLimitsScreen from "@new-ui/screens/TransactionLimits";
 import PaymentMethodsScreen from "@new-ui/screens/PaymentMethods";
@@ -213,7 +215,7 @@ export default function AppStack() {
         component={UserProfile}
       />
       <Stack.Screen
-        options={{ headerShown: true, header: AppStackHeader }}
+        options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.NEW_PERSONAL}
         component={NewPersonal}
       />
@@ -292,6 +294,20 @@ export default function AppStack() {
         options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Coinme Legal' }}
         name={NAVIGATION_SCREENS.NEW_COINME_AGREEMENT_SCREEN}
         component={CoinmeAgreementScreen as any}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Acknowledgment History' }}
+        name={NAVIGATION_SCREENS.NEW_ACKNOWLEDGMENT_HISTORY_SCREEN}
+        component={DisclosureHistoryScreen as any}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: false,
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+        }}
+        name={NAVIGATION_SCREENS.NEW_EMAIL_VERIFICATION}
+        component={EmailVerificationScreen as any}
       />
       <Stack.Screen
         options={{ headerShown: true, header: AppStackHeader,headerTitle: 'Notifications' }}

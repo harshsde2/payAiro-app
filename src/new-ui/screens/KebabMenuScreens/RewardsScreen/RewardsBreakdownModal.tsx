@@ -6,10 +6,16 @@ import CustomText from '@new-ui/components/common-components/CustomText';
 import { AppIcon } from '@new-ui/assets/svgs';
 import GlassyWrapper from '@new-ui/components/common-components/GlassyWrapper';
 
+interface IBreakdownRow {
+  label: string;
+  amount: string;
+}
+
 interface IRewardsBreakdownModalProps {
   visible: boolean;
   onClose: () => void;
   totalBalance: number;
+  rows?: IBreakdownRow[];
 }
 
 const formatCurrency = (amount: number, visible: boolean) => {
@@ -18,20 +24,22 @@ const formatCurrency = (amount: number, visible: boolean) => {
   return { integer: parts[0], decimal: parts[1] };
 };
 
-const BREAKDOWN = [
-  { label: 'Rewards', amount: '$10.00', icon: 'reward' as const },
-  { label: 'Referrals', amount: '$0.45', icon: 'referral' as const },
+const DEFAULT_BREAKDOWN: IBreakdownRow[] = [
+  { label: 'Rewards', amount: '$0.00' },
+  { label: 'Referrals', amount: '$0.00' },
 ];
 
 const RewardsBreakdownModal: React.FC<IRewardsBreakdownModalProps> = ({
   visible,
   onClose,
   totalBalance,
+  rows,
 }) => {
   const { theme } = useTheme();
   const styles = rewardsAndReferralsScreenStyles(theme);
   const [balanceVisible, setBalanceVisible] = useState(false);
   const { integer, decimal } = formatCurrency(totalBalance, balanceVisible);
+  const BREAKDOWN = rows && rows.length > 0 ? rows : DEFAULT_BREAKDOWN;
 
   return (
     <Modal

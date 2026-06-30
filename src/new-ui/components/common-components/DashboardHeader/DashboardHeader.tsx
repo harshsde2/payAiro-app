@@ -12,7 +12,7 @@ import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 import { showSuccess } from 'utils/toast';
 import { IDashboardHeaderProps } from './types';
 import DashboardMenuModal from '@new-ui/components/common-components/DashboardHeader/DashboardMenuModal';
-import { useUnreadNotificationsCount } from 'query/hooks/useUser';
+import { useUnreadNotificationCount } from 'query/hooks/useNotificationsFeed';
 
 const getInitials = (name: string): string => {
   if (!name) return '';
@@ -98,9 +98,9 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
 
   const MenuIcon = AppIcon.MoreVertical;
 
-  const { data: unreadData } = useUnreadNotificationsCount(false);
+  const { data: unreadData } = useUnreadNotificationCount(true);
 
-  const unreadCountRaw = (unreadData as any)?.data?.unread_count as number | undefined;
+  const unreadCountRaw = unreadData?.data?.count;
   const unreadCount =
     typeof unreadCountRaw === 'number' && unreadCountRaw > 0 ? unreadCountRaw : 0;
 

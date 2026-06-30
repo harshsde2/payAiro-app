@@ -15,8 +15,10 @@ import type {
   DisclosureResponse,
   DisclosureStatus,
   MNLanguage,
+  CombinedDisclosureHistoryItem,
   OneTimeDisclosureAckPayload,
   PreTransactionDisclosureContent,
+  PreTxAckPayload,
   ReceiptFooterResponse,
   TradeType,
 } from 'new-ui/types/compliance';
@@ -32,6 +34,7 @@ export const complianceKeys = {
   receiptFooter: (state: StateCode) => ['compliance', 'receipt-footer', state] as const,
   receipt: (txnId: string) => ['compliance', 'receipt', txnId] as const,
   disclosureHistory: ['compliance', 'disclosure-history'] as const,
+  combinedHistory: ['compliance', 'combined-history'] as const,
 };
 
 /**
@@ -122,6 +125,21 @@ export function usePreTransactionDisclosure(
   });
 }
 
+/**
+ * Acknowledge a pre-transaction disclosure (CT). Must succeed before the trade
+ * executes — it records the regulatory timestamp + the fee/amount the user saw.
+ */
+export function useAcknowledgePreTransaction(stateCode: StateCode) {
+  return useMutation({
+    mutationFn: async (payload: PreTxAckPayload) => {
+      return userApiClient.post<DisclosureAckResponse>(
+        STATE_COMPLIANCE.preTransactionAcknowledge(stateCode),
+        payload
+      );
+    },
+  });
+}
+
 /** State regulatory receipt footer. Rarely changes — cache aggressively; callers fall back to COMPLIANCE_CONFIG on error. */
 export function useReceiptFooter(stateCode: StateCode | null) {
   return useQuery({
@@ -163,5 +181,18 @@ export function useDisclosureHistory() {
     queryFn: async () => {
       return userApiClient.get(STATE_COMPLIANCE.DISCLOSURE_HISTORY);
     },
+  });
+}
+
+/** Combined one-time + pre-transaction acknowledgment history (Acknowledgment History screen). */
+export function useCombinedDisclosureHistory() {
+  return useQuery({
+    queryKey: complianceKeys.combinedHistory,
+    queryFn: async () => {
+      return userApiClient.get<CombinedDisclosureHistoryItem[]>(
+        STATE_COMPLIANCE.COMBINED_DISCLOSURE_HISTORY
+      );
+    },
+    staleTime: 60_000,
   });
 }

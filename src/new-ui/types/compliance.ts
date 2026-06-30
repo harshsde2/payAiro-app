@@ -91,6 +91,17 @@ export interface PreTransactionDisclosureContent {
 }
 
 /**
+ * POST state-compliance/{state}/pre-transaction/acknowledge/
+ * Backend expects the fee + amount as strings (per the documented curl).
+ */
+export interface PreTxAckPayload {
+  transaction_type: TradeType;
+  acknowledged: boolean;
+  fee_amount_shown: string;
+  purchase_amount_shown: string;
+}
+
+/**
  * GET state-compliance/{state}/receipt-footer/ — no saved Postman example;
  * verify shape on staging and tighten.
  */
@@ -121,3 +132,55 @@ export interface CreateReceiptPayload {
   /** ISO-8601, e.g. "2026-06-09T10:36:00Z" */
   transaction_date: string;
 }
+
+// ─── GET state-compliance/me/combined-disclosure-history/ ─────────────────────
+// Array (newest first) of acknowledged disclosures — both the one-time state
+// disclosure and each per-transaction pre-transaction disclosure, with audit detail.
+
+export interface DisclosureHistoryContent {
+  title?: string;
+  body?: string;
+  displayValues?: Record<string, string>;
+}
+
+interface DisclosureHistoryBase {
+  action: string;
+  state_code: StateCode | string;
+  acknowledged_at: string;
+  disclosure_version: string;
+  disclosure_content?: DisclosureHistoryContent;
+}
+
+export interface PreTransactionHistoryItem extends DisclosureHistoryBase {
+  type: 'pre_transaction_disclosure';
+  details: {
+    id: number;
+    transaction_type: TradeType;
+    fee_amount_shown: string;
+    purchase_amount_shown: string;
+    disclosure_version: string;
+    acknowledged_at: string;
+    created_at: string;
+    ip_address?: string;
+    user_agent?: string;
+    [key: string]: unknown;
+  };
+}
+
+export interface OneTimeHistoryItem extends DisclosureHistoryBase {
+  type: 'one_time_disclosure';
+  details: {
+    id: number;
+    language?: string;
+    checkbox_1_checked?: boolean;
+    checkbox_2_checked?: boolean;
+    disclosure_version: string;
+    acknowledged_at: string;
+    created_at: string;
+    ip_address?: string;
+    user_agent?: string;
+    [key: string]: unknown;
+  };
+}
+
+export type CombinedDisclosureHistoryItem = PreTransactionHistoryItem | OneTimeHistoryItem;

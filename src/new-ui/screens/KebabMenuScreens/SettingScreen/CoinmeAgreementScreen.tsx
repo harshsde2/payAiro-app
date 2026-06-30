@@ -6,6 +6,7 @@ import { AppIcon } from 'new-ui/assets/svgs';
 import CustomText from 'new-ui/components/common-components/CustomText';
 import TermAndConditionModal from 'tsx-components/modals/TermAndConditionModal';
 import type { TermAndConditionModalRef } from 'tsx-components/modals/modal.types';
+import { useComplianceStatus } from 'query/hooks/useComplianceDisclosure';
 
 const COINME_TERMS_URL =
   'https://help.coinme.com/en/articles/9039676-terms-of-service';
@@ -13,10 +14,15 @@ const COINME_PRIVACY_URL =
   'https://help.coinme.com/en/articles/9039704-privacy-policy';
 const COINME_DISCLOSURES_URL =
   'https://help.coinme.com/en/articles/10535881-disclosures';
+const PAYAIRO_STATE_DISCLOSURES_URL = 'https://official.payairo.com/disclosures';
 
 const CoinmeAgreementScreen = () => {
   const { theme: newUITheme } = useNewUITheme();
   const termsRef = useRef<TermAndConditionModalRef>(null);
+
+  // Only users in regulated states (CT/MN/CA) see the PayAiro state disclosures link.
+  const { data: complianceStatus } = useComplianceStatus();
+  const showStateDisclosures = !!complianceStatus?.requiresCompliance;
 
   const LIST_ITEMS = [
     {
@@ -46,6 +52,19 @@ const CoinmeAgreementScreen = () => {
           COINME_DISCLOSURES_URL
         ),
     },
+    ...(showStateDisclosures
+      ? [
+          {
+            title: 'State Disclosures',
+            icon: <AppIcon.Agreement />,
+            onPress: () =>
+              termsRef.current?.showWebDocument?.(
+                'Coinme State Disclosures',
+                PAYAIRO_STATE_DISCLOSURES_URL
+              ),
+          },
+        ]
+      : []),
   ];
 
   return (

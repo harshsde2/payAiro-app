@@ -92,6 +92,9 @@ export const addBalanceStyles = (theme: ITheme) =>
       flexGrow: 1,
       minHeight: theme.spacing.xl,
     },
+    modalKav: {
+      flex: 1,
+    },
     modalBackdrop: {
       flex: 1,
       backgroundColor: 'rgba(0,0,0,0.45)',
@@ -167,5 +170,104 @@ export const addBalanceStyles = (theme: ITheme) =>
     },
     cardRowDeleteText: {
       color: theme.colors.error,
+    },
+    cardRowDisabled: {
+      opacity: 0.5,
+    },
+    cardRowReasonText: {
+      color: theme.colors.textSecondary,
+      marginTop: 2,
+    },
+    radioOuter: {
+      width: 18,
+      height: 18,
+      borderRadius: 9,
+      borderWidth: 1.5,
+      borderColor: theme.colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    radioOuterSelected: {
+      borderColor: theme.colors.primary,
+    },
+    radioInner: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: theme.colors.primary,
+    },
+    sectionHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: theme.spacing.md,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: theme.radius.lg,
+    },
+    sectionHeaderText: {
+      marginLeft: theme.spacing.md,
+      flex: 1,
+    },
+    listStateBox: {
+      padding: theme.spacing.md,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: theme.radius.lg,
+      marginTop: theme.spacing.md,
+    },
+    newCardRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: theme.spacing.md,
+      paddingHorizontal: theme.spacing.md,
+      backgroundColor: theme.colors.white,
+    },
+    methodRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: theme.spacing.md,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: theme.radius.lg,
+      marginTop: theme.spacing.md,
+      backgroundColor: theme.colors.white,
+    },
+    methodBadgeCircle: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: theme.colors.greyLight2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    methodIconWrap: {
+      width: 24,
+      height: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    methodTextBlock: {
+      marginLeft: theme.spacing.md,
+      flex: 1,
+    },
+    rowItemTextBlock: {
+      marginLeft: theme.spacing.md,
+      flex: 1,
+      minWidth: 0,
+    },
+    listLoadingBox: {
+      paddingVertical: theme.spacing.md,
+    },
+    listSpacer: {
+      height: theme.spacing.md,
+    },
+    expandBody: {
+      marginTop: theme.spacing.md,
+    },
+    methodsContainer: {
+      marginTop: theme.spacing.xl,
+    },
+    confirmContainer: {
+      marginTop: theme.spacing.xl,
     },
   });

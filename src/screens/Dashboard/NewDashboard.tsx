@@ -18,10 +18,12 @@ import DashboardHeader from "@new-ui/components/common-components/DashboardHeade
 import DashboardCardWrapper from "new-ui/components/common-components/DashboardCardWrapper";
 import CryptoAssetsList from "@new-ui/components/common-components/CryptoAssetsList";
 import DashboardBalanceCard from "new-ui/components/common-components/DashboardBalanceCard";
+import EmailVerificationBanner from "new-ui/components/common-components/EmailVerificationBanner/EmailVerificationBanner";
 import {
   useCryptoAssetsListData,
   usePaymentTransactionHistory,
   useUserCryptoMarketList,
+  useUserCryptoBalanceFastApi,
 } from "query/hooks/useCrypto";
 import RecentActivityCard, {
   isTradeActivity,
@@ -84,6 +86,22 @@ const NewDashboard = () => {
     refetch: refetchHistory,
   } = usePaymentTransactionHistory("all", 20);
   const { data: marketRows = [] } = useUserCryptoMarketList("USD");
+
+  // Crypto balance for the dashboard balance card: sum of every asset's estimatedBalanceValue.
+  const {
+    data: cryptoBalanceRows = [],
+    isFetching: isCryptoBalanceFetching,
+    refetch: refetchCryptoBalance,
+  } = useUserCryptoBalanceFastApi();
+
+  const cryptoTotalUsd = useMemo(
+    () =>
+      cryptoBalanceRows.reduce((sum, row) => {
+        const value = Number(row?.estimatedBalanceValue ?? 0);
+        return Number.isFinite(value) ? sum + value : sum;
+      }, 0),
+    [cryptoBalanceRows]
+  );
   const {
     data: userContactsData,
     isLoading: isContactsLoading,
@@ -236,9 +254,19 @@ const NewDashboard = () => {
         }}
       />
 
+      <EmailVerificationBanner />
+
       {/* Keep commented dashboard widgets for future enablement */}
       {/* <NewDashboardCard /> */}
-      <DashboardBalanceCard userId={"123"} bankBalance={{ platform_balance: 100, platform_available: 100, bank_account: { usd: 100 } }} aggregatedCryptoBalances={{ usd_value_available: 100 }} />
+      <DashboardBalanceCard
+        userId={"123"}
+        // bankBalance — PayAiro fiat balance, added later
+        aggregatedCryptoBalances={{ usd_value_available: cryptoTotalUsd }}
+        isRefreshing={isCryptoBalanceFetching}
+        onRefreshBalance={async () => {
+          await refetchCryptoBalance();
+        }}
+      />
       {/* <MemoizedDashboardSection title="Your Accounts" /> */}
 
       <View style={{ marginVertical: 15, width: screenWidth }}>

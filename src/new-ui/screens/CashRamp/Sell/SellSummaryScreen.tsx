@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, View } from "react-native";
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
+import { useEmailVerificationGuard } from "hooks/useEmailVerificationGuard";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
 import CustomText from "@new-ui/components/common-components/CustomText";
 import Button from "@new-ui/components/common-components/layout/Button";
@@ -34,6 +35,7 @@ const SellSummaryScreen: React.FC = () => {
   const { theme } = useTheme();
   const styles = sellCashRampStyles(theme);
   const navigation = useNavigation<any>();
+  const { requireEmailVerified } = useEmailVerificationGuard();
   const route = useRoute<RouteProp<Record<string, { session: SellCashRampSession }>, string>>();
   const session = route.params?.session;
 
@@ -53,7 +55,7 @@ const SellSummaryScreen: React.FC = () => {
   const cryptoAmt = cryptoAmountFromUsd(amountUsd, unitPrice);
   const fees = useMemo(() => estimateSellFees(amountUsd), [amountUsd]);
 
-  const onConfirm = useCallback(() => {
+  const proceedConfirm = useCallback(() => {
     if (!session || !acknowledged) return;
     if (!String(session.sourceWalletAddress ?? "").trim()) {
       showError(ERR_MISSING_WALLET);
@@ -69,6 +71,11 @@ const SellSummaryScreen: React.FC = () => {
     }
     navigation.navigate(NAVIGATION_SCREENS.NEW_CASH_SELL_OTP as never, { session } as never);
   }, [acknowledged, navigation, session]);
+
+  // Gate the cash sell commit behind email verification; resumes automatically once verified.
+  const onConfirm = useCallback(() => {
+    requireEmailVerified(proceedConfirm);
+  }, [requireEmailVerified, proceedConfirm]);
 
   if (!session) {
     return (
