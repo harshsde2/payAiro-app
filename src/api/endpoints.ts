@@ -166,6 +166,16 @@ export const USER_AUTH = {
   CRYPTO_CHART: "api/v1/integrations/crypto/chart/",
   PAYMENT_TRANSACTIONS_SEND: "api/v1/payment-transactions/send/",
   PAYMENT_TRANSACTIONS_SEND_HISTORY: "api/v1/payment-transactions/send/history/",
+  /** Crypto Request (P2P) — create a request for crypto from another Payairo user. */
+  CRYPTO_REQUEST_CREATE: "api/v1/payment-transactions/request/",
+  /** Crypto Request history (filter via ?scope=&status=&limit=). */
+  CRYPTO_REQUEST_HISTORY: "api/v1/payment-transactions/request/history/",
+  /** Pay (fulfill) a crypto request — empty body, just the request id. */
+  CRYPTO_REQUEST_PAY: (id: number | string) =>
+    `api/v1/payment-transactions/request/${id}/pay/`,
+  /** Cancel/decline a crypto request — empty body, just the request id. */
+  CRYPTO_REQUEST_CANCEL: (id: number | string) =>
+    `api/v1/payment-transactions/request/${id}/cancel/`,
   PAYMENT_METHODS: "api/v1/integrations/payment-methods/",
   COINME_AUTH_TOKEN: "api/v1/integrations/coinme/auth-token/",
   USER_PAYMENT_METHODS: "api/v1/users/payment-methods/",

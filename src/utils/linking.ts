@@ -87,6 +87,13 @@ export const LinkingPath: LinkingOptions<RootStackParamList> = {
       [NAVIGATION_SCREENS.RECEIVE]: "receive",
 
       // ============================================
+      // CRYPTO REQUEST (P2P) (root stack)
+      // payairo://requests -> list, payairo://requests/42 -> detail
+      // ============================================
+      [NAVIGATION_SCREENS.NEW_CRYPTO_REQUESTS]: "requests",
+      [NAVIGATION_SCREENS.NEW_CRYPTO_REQUEST_DETAIL]: "requests/:id",
+
+      // ============================================
       // SETTINGS SUB-SCREENS (root stack)
       // ============================================
       [NAVIGATION_SCREENS.NEW_PERSONAL]: "settings/personal",

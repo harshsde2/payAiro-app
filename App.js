@@ -10,6 +10,9 @@ import AppStack from "./src/navigations/AppStack";
 import AuthStack from "./src/navigations/AuthStack";
 import { NAVIGATION_SCREENS } from "./src/navigations/navigationConstants";
 import { PersistQueryProvider } from "./src/query/index";
+import { focusManager } from "@tanstack/react-query";
+import { queryClient } from "./src/query/queryClient";
+import { cryptoRequestKeys } from "./src/query/hooks/useCryptoRequest";
 import {
   setActiveTab,
   setAllCryptoBalances,
@@ -68,6 +71,31 @@ import FCMTokenManager from "./src/components/common-components/FCMTokenManager"
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { GorhomBottomSheetProvider } from "@new-ui/components/common-components/GorhomBottomSheet";
 
+/**
+ * Resolve a deep-link URL from an FCM `data` payload. The backend may send the
+ * link under `deeplink` / `deepLink` / `deep_link`; for crypto requests it also
+ * carries `request_id`, from which we build the canonical link. Returns null
+ * when nothing routable is present.
+ */
+const resolveNotificationDeepLink = (data = {}) =>
+  data?.deeplink ||
+  data?.deepLink ||
+  data?.deep_link ||
+  (data?.request_id ? `payairo://requests/${data.request_id}` : null);
+
+/**
+ * A crypto-request push (eventType `CRYPTO_REQUEST_*` or a `request_id`
+ * payload) should refresh the badge/banner/list immediately. Invalidating the
+ * singleton query client triggers a background refetch of all active observers
+ * (no UI spinner).
+ */
+const maybeInvalidateCryptoRequests = (data = {}) => {
+  const eventType = String(data?.eventType || data?.event_type || "");
+  if (eventType.startsWith("CRYPTO_REQUEST") || data?.request_id) {
+    queryClient.invalidateQueries({ queryKey: cryptoRequestKeys.all });
+  }
+};
+
 export default function App() {
   
   // -------------------- Redux State --------------------
@@ -87,6 +115,16 @@ export default function App() {
     if (navigationRef.current) {
       setNavigationRef(navigationRef.current);
     }
+  }, []);
+
+  // Wire React Query's focusManager to AppState so `refetchOnWindowFocus`
+  // actually fires on native (it's a no-op otherwise). Active queries refetch
+  // when the app returns to the foreground — smooth, no visible spinner.
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (status) => {
+      focusManager.setFocused(status === "active");
+    });
+    return () => sub.remove();
   }, []);
 
   // -------------------- Local State --------------------
@@ -310,12 +348,15 @@ export default function App() {
       fetch('http://127.0.0.1:7244/ingest/29f1b34d-8424-4516-a8dc-528eb6502b04',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.js:onMessage',message:'Foreground message received!',data:{messageId: remoteMessage?.messageId, title: remoteMessage?.notification?.title, body: remoteMessage?.notification?.body},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
       // #endregion
       onDisplayNotification(remoteMessage);
+      // Refresh crypto-request badge/banner instantly when the push lands.
+      maybeInvalidateCryptoRequests(remoteMessage?.data);
     });
 
     // When app is in foreground: open deeplink only when user TAPS the notification
     const unsubscribeNotifee = notifee.onForegroundEvent(({ type, detail }) => {
-      if (type === EventType.PRESS && detail?.notification?.data?.deeplink) {
-        Linking.openURL(detail.notification.data.deeplink);
+      if (type === EventType.PRESS) {
+        const url = resolveNotificationDeepLink(detail?.notification?.data);
+        if (url) Linking.openURL(url);
       }
     });
 
@@ -389,8 +430,9 @@ export default function App() {
     messaging()
       .getInitialNotification()
       .then((remoteMessage) => {
-        if (remoteMessage?.data?.deeplink) {
-          initialUrlRef.current = remoteMessage.data.deeplink;
+        const url = resolveNotificationDeepLink(remoteMessage?.data);
+        if (url) {
+          initialUrlRef.current = url;
         }
       });
 
@@ -404,8 +446,11 @@ export default function App() {
     // Background: navigator already ready, safe to open URL directly
     const unsubscribe = messaging().onNotificationOpenedApp((remoteMessage) => {
       console.log("remoteMessage =>", JSON.stringify(remoteMessage,null,2))
-      if (remoteMessage?.data?.deeplink) {
-        Linking.openURL(remoteMessage.data.deeplink);
+      // Refresh crypto-request queries, then route to the request.
+      maybeInvalidateCryptoRequests(remoteMessage?.data);
+      const url = resolveNotificationDeepLink(remoteMessage?.data);
+      if (url) {
+        Linking.openURL(url);
       }
     });
 

@@ -16,6 +16,7 @@ import useDispatchAction from "hooks/useDispatchAction";
 import { setisCrypto } from "redux/slices/authenticationSlice";
 import { setTheme } from "redux/slices/animationSlice";
 import { usePendingPaymentRequests } from "query/hooks";
+import { useCryptoRequestHistory } from "query/hooks/useCryptoRequest";
 import { useComplianceGate } from "hooks/useComplianceGate";
 import { useSelector, useDispatch } from "react-redux";
 import NewCrypto from "new-ui/screens/Crypto/NewCrypto";
@@ -147,10 +148,18 @@ const BottomTabNavigator = () => {
 
   // Use staleTime to avoid refetching on every render
   const { data: pendingRequestsData } = usePendingPaymentRequests(false);
+  // Pending crypto (P2P) requests in either direction — sent or received.
+  // Gentle poll keeps the badge fresh without a push (deduped with the banner).
+  const { data: cryptoRequestsData } = useCryptoRequestHistory("all", "PENDING", 50, {
+    refetchInterval: 60000,
+    refetchIntervalInBackground: false,
+  });
 
   const pendingRequestCount = useMemo(() => {
-    return pendingRequestsData?.data?.received_pending_requests?.length ?? 0;
-  }, [pendingRequestsData]);
+    const fiat = pendingRequestsData?.data?.received_pending_requests?.length ?? 0;
+    const crypto = cryptoRequestsData?.data?.items?.length ?? 0;
+    return fiat + crypto;
+  }, [pendingRequestsData, cryptoRequestsData]);
 
   // Memoized theme dispatchers - only recreate if theme colors change
   const handleHomeTabFocus = () => {

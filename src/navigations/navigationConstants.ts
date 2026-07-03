@@ -165,4 +165,6 @@ export const NAVIGATION_SCREENS = {
   NEW_EMAIL_VERIFICATION: "NewEmailVerification",
   STATE_COMPLIANCE_ACKNOWLEDGMENT: "StateComplianceAcknowledgment",
   STATE_COMPLIANCE_PRE_TRANSACTION: "StateCompliancePreTransaction",
+  NEW_CRYPTO_REQUESTS: "NewCryptoRequests",
+  NEW_CRYPTO_REQUEST_DETAIL: "NewCryptoRequestDetail",
 } as const;

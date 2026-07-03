@@ -36,6 +36,10 @@ const GLOW_PX = 150;
 const GLOW_CENTER = GLOW_PX / 2;
 const GLOW_RADIUS = GLOW_CENTER * 1.05;
 
+// Mobile-auth runs headless behind the loader; if the carrier redirect chain
+// never reaches the complete URL, give up and fall back to instant link.
+const MOBILE_AUTH_WEBVIEW_TIMEOUT_MS = 30_000;
+
 function normalizeUsNationalDigits(phone: string): string {
   const d = String(phone).replace(/\D/g, "");
   if (d.length === 11 && d.startsWith("1")) {
@@ -92,6 +96,7 @@ const CoinmeMobileAuthScreen: React.FC = () => {
   const finishStarted = useRef(false);
   const webErrorShown = useRef(false);
   const initiateRequestIdRef = useRef<string | null>(null);
+  const fallbackNavigatedRef = useRef(false);
 
   const coinmeResumeParams = useCallback((): CoinmeMobileAuthScreenParams => {
     const p = route.params;
@@ -128,22 +133,34 @@ const CoinmeMobileAuthScreen: React.FC = () => {
     [navigation]
   );
 
-  /** mobile_auth errors that can retry via instant_link (initiate or finish). */
-  const openMobileAuthErrorWithFallback = useCallback(
+  /** Silently restart this screen in instant_link mode (no user-facing error). */
+  const fallbackToInstantLink = useCallback(
+    (reason: string) => {
+      if (fallbackNavigatedRef.current) return;
+      fallbackNavigatedRef.current = true;
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.log(`[Coinme2FA] mobile_auth failed, falling back to instant_link: ${reason}`);
+      }
+      navigation.replace(NAVIGATION_SCREENS.NEW_COINME_MOBILE_AUTH, {
+        ...coinmeResumeParams(),
+        authMethod: "instant_link",
+        restartKey: Date.now(),
+      });
+    },
+    [coinmeResumeParams, navigation]
+  );
+
+  /** mobile_auth failures retry silently via instant_link; instant_link failures surface. */
+  const handleAuthFailure = useCallback(
     (title: string, description: string) => {
       if (authMethod === "mobile_auth") {
-        navigation.navigate(NAVIGATION_SCREENS.NEW_COMMON_ERROR, {
-          title,
-          description,
-          showAlternateMethod: true,
-          alternateMethodLabel: "Try with Another method",
-          coinmeResumeParams: coinmeResumeParams(),
-        });
+        fallbackToInstantLink(`${title}: ${description}`);
         return;
       }
       openError(title, description);
     },
-    [authMethod, coinmeResumeParams, navigation, openError]
+    [authMethod, fallbackToInstantLink, openError]
   );
 
   useEffect(() => {
@@ -151,6 +168,7 @@ const CoinmeMobileAuthScreen: React.FC = () => {
     finishStarted.current = false;
     webErrorShown.current = false;
     initiateRequestIdRef.current = null;
+    fallbackNavigatedRef.current = false;
     setPhase("loading_initiate");
     setRedirectUrl(null);
 
@@ -173,7 +191,7 @@ const CoinmeMobileAuthScreen: React.FC = () => {
         // deviceIp = "172.58.83.64";
       } catch {
         if (!cancelled) {
-          openMobileAuthErrorWithFallback(
+          handleAuthFailure(
             "Connection issue",
             "We could not determine your network address. Check your connection and try again."
           );
@@ -235,7 +253,7 @@ const CoinmeMobileAuthScreen: React.FC = () => {
         if (cancelled) return;
 
         if (!resp?.ok) {
-          openMobileAuthErrorWithFallback(
+          handleAuthFailure(
             "Verification failed",
             messageFromCoinmeBody(resp)
           );
@@ -246,7 +264,7 @@ const CoinmeMobileAuthScreen: React.FC = () => {
           resp?.data?.coinme?.data?.redirectTargetUrl ??
           resp?.data?.coinme?.data?.redirect_target_url;
         if (typeof url !== "string" || !url.trim()) {
-          openMobileAuthErrorWithFallback(
+          handleAuthFailure(
             "Verification failed",
             "Missing redirect URL from the server. Please try again."
           );
@@ -259,7 +277,7 @@ const CoinmeMobileAuthScreen: React.FC = () => {
         const requestId =
           typeof requestIdRaw === "string" ? requestIdRaw.trim() : "";
         if (!requestId) {
-          openMobileAuthErrorWithFallback(
+          handleAuthFailure(
             "Verification failed",
             "Missing session from the server. Please try again."
           );
@@ -275,7 +293,7 @@ const CoinmeMobileAuthScreen: React.FC = () => {
           e?.response?.data?.message ||
           e?.message ||
           "Something went wrong. Please try again.";
-        openMobileAuthErrorWithFallback("Request failed", String(msg));
+        handleAuthFailure("Request failed", String(msg));
       }
     })();
 
@@ -286,11 +304,25 @@ const CoinmeMobileAuthScreen: React.FC = () => {
     authMethod,
     restartKey,
     openError,
-    openMobileAuthErrorWithFallback,
+    handleAuthFailure,
     postCoinmeInstantLink,
     postCoinmeMobileAuth,
     route.params?.phone,
   ]);
+
+  // Watchdog: the mobile-auth WebView is hidden, so a hung redirect chain
+  // would strand the user on the loader forever. Phase moves to
+  // "loading_finish" once the VFP arrives, which clears the timer.
+  useEffect(() => {
+    if (phase !== "webview" || authMethod !== "mobile_auth") return;
+    const timer = setTimeout(() => {
+      if (finishStarted.current) return;
+      fallbackToInstantLink(
+        `webview did not complete within ${MOBILE_AUTH_WEBVIEW_TIMEOUT_MS}ms`
+      );
+    }, MOBILE_AUTH_WEBVIEW_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [authMethod, fallbackToInstantLink, phase]);
 
   const runFinish = useCallback(
     async (vfp: string) => {
@@ -298,7 +330,8 @@ const CoinmeMobileAuthScreen: React.FC = () => {
         route.params?.phone ?? getAuthResumeParams()?.phone;
       if (!phoneRaw) {
         finishStarted.current = false;
-        openMobileAuthErrorWithFallback("Verification failed", "Missing phone number.");
+        // Hard error for both methods — instant_link needs the same phone.
+        openError("Verification failed", "Missing phone number.");
         return;
       }
       const national = normalizeUsNationalDigits(phoneRaw);
@@ -335,13 +368,13 @@ const CoinmeMobileAuthScreen: React.FC = () => {
             return;
           }
 
-          openMobileAuthErrorWithFallback("Verification failed", messageFromCoinmeBody(resp));
+          handleAuthFailure("Verification failed", messageFromCoinmeBody(resp));
           return;
         }
 
         const requestId = initiateRequestIdRef.current;
         if (!requestId?.trim()) {
-          openMobileAuthErrorWithFallback(
+          handleAuthFailure(
             "Verification failed",
             "Session expired. Go back and start verification again."
           );
@@ -373,20 +406,21 @@ const CoinmeMobileAuthScreen: React.FC = () => {
           return;
         }
 
-        openMobileAuthErrorWithFallback("Verification failed", messageFromCoinmeBody(resp));
+        handleAuthFailure("Verification failed", messageFromCoinmeBody(resp));
       } catch (e: any) {
         const msg =
           e?.response?.data?.message ||
           e?.message ||
           "Something went wrong. Please try again.";
-        openMobileAuthErrorWithFallback("Request failed", String(msg));
+        handleAuthFailure("Request failed", String(msg));
       }
     },
     [
       authMethod,
       kycParams,
       navigation,
-      openMobileAuthErrorWithFallback,
+      handleAuthFailure,
+      openError,
       postCoinmeInstantLink,
       postCoinmeMobileAuth,
       route.params?.phone,
@@ -479,42 +513,55 @@ const CoinmeMobileAuthScreen: React.FC = () => {
   );
 
   if (phase === "webview" && redirectUrl) {
+    // Mobile-auth needs no user interaction — run its WebView invisibly
+    // behind the loader so a fallback to instant_link is seamless.
+    const hideWebView = authMethod === "mobile_auth";
     return (
       <ScreenWrapper
         gradient="none"
         backgroundColor={theme.colors.white}
         contentStyle={{ flex: 1 }}
       >
-        <WebView
-          ref={webViewRef}
-          style={styles.webview}
-          source={{ uri: redirectUrl }}
-          injectedJavaScript={injectedJavaScript}
-          onMessage={handleWebViewMessage}
-          onNavigationStateChange={onWebViewNavChange}
-          onLoadEnd={onWebViewLoadEnd}
-          originWhitelist={["*"]}
-          onError={() => {
-            if (finishStarted.current || webErrorShown.current) return;
-            webErrorShown.current = true;
-            openError(
-              "Web page error",
-              "We could not open the verification page. Check your mobile data connection and try again."
-            );
-          }}
-          onHttpError={() => {
-            if (finishStarted.current || webErrorShown.current) return;
-            webErrorShown.current = true;
-            openError(
-              "Web page error",
-              "The verification page could not be loaded. Please try again."
-            );
-          }}
-          startInLoadingState
-          javaScriptEnabled
-          domStorageEnabled
-          sharedCookiesEnabled
-        />
+        <View
+          style={hideWebView ? styles.hiddenWebviewContainer : styles.webview}
+          pointerEvents={hideWebView ? "none" : "auto"}
+        >
+          <WebView
+            ref={webViewRef}
+            style={styles.webview}
+            source={{ uri: redirectUrl }}
+            injectedJavaScript={injectedJavaScript}
+            onMessage={handleWebViewMessage}
+            onNavigationStateChange={onWebViewNavChange}
+            onLoadEnd={onWebViewLoadEnd}
+            originWhitelist={["*"]}
+            onError={() => {
+              if (finishStarted.current || webErrorShown.current) return;
+              webErrorShown.current = true;
+              handleAuthFailure(
+                "Web page error",
+                "We could not open the verification page. Check your mobile data connection and try again."
+              );
+            }}
+            onHttpError={() => {
+              if (finishStarted.current || webErrorShown.current) return;
+              webErrorShown.current = true;
+              handleAuthFailure(
+                "Web page error",
+                "The verification page could not be loaded. Please try again."
+              );
+            }}
+            startInLoadingState
+            javaScriptEnabled
+            domStorageEnabled
+            sharedCookiesEnabled
+          />
+        </View>
+        {hideWebView ? (
+          <View style={styles.loaderOverlay} pointerEvents="none">
+            {loadingContent}
+          </View>
+        ) : null}
       </ScreenWrapper>
     );
   }

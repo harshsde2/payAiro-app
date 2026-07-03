@@ -1,17 +1,19 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
   TouchableOpacity,
   View,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
 import { useTheme } from "@new-ui/styles/ThemeContext";
 import { activityScreenStyles } from "@new-ui/styles/screens/activity/activityScreenStyles";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
 import CustomText from "@new-ui/components/common-components/CustomText";
 import FilterChip from "@new-ui/components/common-components/FilterChip";
+import CryptoRequestBanner from "@new-ui/components/common-components/CryptoRequestBanner";
 import RecentActivityCard, {
   isTradeActivity,
   type RecentActivityItem,
@@ -22,6 +24,7 @@ import {
   useUserCryptoMarketList,
 } from "query/hooks/useCrypto";
 import { navigateFromRecentActivity } from "query/utils/navigateFromRecentActivity";
+import { cryptoRequestKeys } from "query/hooks/useCryptoRequest";
 
 const FILTER_CHIPS = ["All", "Send", "Received", "Pending", "Completed"] as const;
 
@@ -74,8 +77,18 @@ const ActivityScreen = () => {
   const { theme } = useTheme();
   const styles = activityScreenStyles(theme);
   const navigation = useNavigation<any>();
+  const queryClient = useQueryClient();
   const [selectedChip, setSelectedChip] =
     useState<(typeof FILTER_CHIPS)[number]>("All");
+
+  // Refresh the pending-request banner/badge whenever Activity gains focus —
+  // the bottom-tab badge observer never remounts, so a focus-driven
+  // invalidation keeps both fresh when navigating here.
+  useFocusEffect(
+    useCallback(() => {
+      queryClient.invalidateQueries({ queryKey: cryptoRequestKeys.all });
+    }, [queryClient])
+  );
 
   const { data: historyResponse, isLoading } = usePaymentTransactionHistory(
     "all",
@@ -106,6 +119,8 @@ const ActivityScreen = () => {
       contentStyle={styles.scrollContent}
       backgroundColor={theme.colors.background}
     >
+      <CryptoRequestBanner />
+
       <View style={styles.filterRow}>
         <TouchableOpacity
           style={styles.filterButton}

@@ -69,6 +69,10 @@ import Button from '@new-ui/components/common-components/layout/Button';
 import type { AddedCardResult } from '@new-ui/components/common-components/AddBalance/AddDebitCardModal';
 import { usePaymentMethodsList, type PaymentMethodItem } from 'query/hooks/usePaymentMethods';
 import CashBuyWalletAndSummary from './CashBuyWalletAndSummary';
+import RequestDetailsSheet from './RequestDetailsSheet';
+import { useCreateCryptoRequest } from 'query/hooks/useCryptoRequest';
+import { getCryptoRequestError } from 'query/hooks/cryptoRequest.types';
+import { showSuccess } from 'utils/toast';
 
 const COINME_DEFAULTS = {
   paymentMethodId: 'uhygtfr5e354rtyu76g6b7i8',
@@ -182,6 +186,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   const { mutate: payPaymentRequest } = usePayPaymentRequest();
   const tradeExecute = useCoinmeTradeExecute();
   const { mutate: sendPaymentTransaction, isPending: isSendingPaymentTx } = usePaymentTransactionSend();
+  const { mutate: createCryptoRequest, isPending: isCreatingRequest } = useCreateCryptoRequest();
   const isTradeMode =
     (tradeMode === 'buy' || tradeMode === 'sell') &&
     !!cryptoAsset &&
@@ -193,6 +198,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   const [showCryptoReceiptModal, setShowCryptoReceiptModal] = useState(false);
+  const [requestSheetVisible, setRequestSheetVisible] = useState(false);
   const cryptoPaymentRef = useRef<CryptoReceiptDraft | null>(null);
   const [debitInfoVisible, setDebitInfoVisible] = useState(false);
   const [addCardVisible, setAddCardVisible] = useState(false);
@@ -831,6 +837,79 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     showError,
   ]);
 
+  // --- Crypto Request (P2P) ----------------------------------------------
+  // A request can only target a verified Payairo user (not a raw wallet
+  // address), and only makes sense for a crypto asset source.
+  const canRequest =
+    isCryptoSendMode && isCryptoMode && !!recipientUserId && !!selectedSource?.cryptoMeta;
+
+  const handleRequestPress = useCallback(() => {
+    requireEmailVerified(() => {
+      if (!selectedSource?.cryptoMeta) {
+        showError('Please select a crypto asset');
+        return;
+      }
+      if (!(assetAmount > 0)) {
+        showError('Please enter an amount to request');
+        return;
+      }
+      setRequestSheetVisible(true);
+    });
+  }, [assetAmount, requireEmailVerified, selectedSource, showError]);
+
+  const handleCreateRequest = useCallback(
+    (values: { note?: string; expiresAt?: string }) => {
+      if (!selectedSource?.cryptoMeta) {
+        showError('Please select a crypto asset');
+        return;
+      }
+      const symbol = selectedSource.cryptoMeta.symbol;
+      const chain = selectedSource.cryptoMeta.network || symbol;
+      const amountStr = String(assetAmount.toFixed(8)).replace(/\.?0+$/, '') || '0';
+
+      createCryptoRequest(
+        {
+          recipient: recipient_identifier || recipientUserId || '',
+          amount: amountStr,
+          currency: symbol,
+          chain,
+          note: values.note,
+          expiresAt: values.expiresAt,
+        },
+        {
+          onSuccess: (data) => {
+            setRequestSheetVisible(false);
+            const request = data?.data?.request;
+            const targetName =
+              request?.requestedFrom?.firstName ||
+              selectedContact?.nickname ||
+              recipient_identifier ||
+              'them';
+            showSuccess(`Request sent to ${targetName}!`);
+            navigation.navigate(
+              NAVIGATION_SCREENS.NEW_CRYPTO_REQUEST_DETAIL as never,
+              { id: request?.id ?? 0, request } as never
+            );
+          },
+          onError: (error: unknown) => {
+            const { message } = getCryptoRequestError(error);
+            showError("Couldn't send request", message);
+          },
+        }
+      );
+    },
+    [
+      assetAmount,
+      createCryptoRequest,
+      navigation,
+      recipient_identifier,
+      recipientUserId,
+      selectedContact,
+      selectedSource,
+      showError,
+    ]
+  );
+
   const handleTradeExecute = useCallback(async () => {
     if (!isTradeMode || !cryptoAsset) return;
     if (!coinmeAccountId) {
@@ -1236,6 +1315,17 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
             {!isTradeMode || tradePaymentRail === 'debit' ? (
               <PayButton disabled={isPaying || isSendingPaymentTx} onPress={handlePayPress} />
             ) : null}
+            {canRequest ? (
+              <Button
+                color={theme.colors.white}
+                style={[styles.payButton, styles.requestButton]}
+                textStyle={{ color: theme.colors.primary }}
+                onPress={handleRequestPress}
+                disabled={isCreatingRequest}
+              >
+                Request
+              </Button>
+            ) : null}
             {isTradeMode && tradePaymentRail === 'retail_cash' ? (
               <Button
                 onPress={handleFindCashLocation}
@@ -1306,6 +1396,20 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
           priceUSD={selectedSource?.cryptoMeta?.priceUSD ?? tradePriceUSD ?? 0}
           usdAmount={amount}
           feePercent={feePercent}
+        />
+
+        <RequestDetailsSheet
+          visible={requestSheetVisible}
+          loading={isCreatingRequest}
+          summary={
+            selectedSource?.cryptoMeta
+              ? `Request ${String(assetAmount.toFixed(8)).replace(/\.?0+$/, '') || '0'} ${selectedSource.cryptoMeta.symbol} from ${
+                  selectedContact?.nickname || recipient_identifier || 'them'
+                }`
+              : undefined
+          }
+          onClose={() => setRequestSheetVisible(false)}
+          onConfirm={handleCreateRequest}
         />
       </KeyboardAvoidingView>
     </ScreenWrapper>

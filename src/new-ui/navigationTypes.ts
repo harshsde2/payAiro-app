@@ -1,6 +1,7 @@
 import { NavigatorScreenParams } from "@react-navigation/native";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import type { StateCode } from './constants/compliance';
+import type { ICryptoRequest } from 'query/hooks/cryptoRequest.types';
 import type {
   SellCashRampEntryParams,
   SellCashRampLocationSnapshot,
@@ -134,5 +135,11 @@ export type NewUIDashboardStackParamList = {
     fiatCurrencyCode?: string;
     amountValue?: string;
     amountCurrencyCode?: string;
+  };
+  [NAVIGATION_SCREENS.NEW_CRYPTO_REQUESTS]: undefined;
+  [NAVIGATION_SCREENS.NEW_CRYPTO_REQUEST_DETAIL]: {
+    id: number | string;
+    /** Full request object when navigating from the list (avoids a refetch). */
+    request?: ICryptoRequest;
   };
 };

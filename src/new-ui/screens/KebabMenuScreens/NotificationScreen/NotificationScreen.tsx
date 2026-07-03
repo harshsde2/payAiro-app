@@ -38,7 +38,13 @@ interface NotificationSection {
 }
 
 /** Map a backend category to the screen's icon/colour styling. */
-const categoryToIconType = (category?: string): NotificationIconType => {
+const categoryToIconType = (
+  category?: string,
+  eventType?: string
+): NotificationIconType => {
+  // Crypto Request (P2P): an incoming request is "pending"; a fulfilled one is a success.
+  if (eventType === 'CRYPTO_REQUEST_RECEIVED') return 'pending'
+  if (eventType === 'CRYPTO_REQUEST_FULFILLED') return 'success'
   switch (category) {
     case 'transaction':
     case 'payment':
@@ -112,6 +118,15 @@ const handleDeepLink = (deepLink: string | null | undefined, navigation: any) =>
 
   if (/^https?:\/\//i.test(link)) {
     Linking.openURL(link).catch(() => {})
+    return
+  }
+
+  // Crypto Request (P2P): "payairo://requests/42" → request detail with id param.
+  const requestMatch = link.match(/requests\/(\d+)/i)
+  if (requestMatch) {
+    navigation.navigate(NAVIGATION_SCREENS.NEW_CRYPTO_REQUEST_DETAIL as never, {
+      id: Number(requestMatch[1]),
+    } as never)
     return
   }
 
@@ -219,7 +234,7 @@ const NotificationScreen = () => {
 
   const renderCard = useCallback(
     ({ item }: { item: NotificationItem }) => {
-      const iconType = categoryToIconType(item.category as NotificationCategory)
+      const iconType = categoryToIconType(item.category as NotificationCategory, item.event_type)
       const read = isNotificationRead(item)
       return (
         <TouchableOpacity

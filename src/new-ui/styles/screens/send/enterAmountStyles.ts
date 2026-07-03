@@ -112,6 +112,11 @@ export const enterAmountStyles = (theme: ITheme) =>
       minHeight: 52,
       alignSelf: 'stretch',
     },
+    requestButton: {
+      marginTop: theme.spacing.md,
+      borderWidth: 1,
+      borderColor: theme.colors.primary,
+    },
 
     fundingCard: {
       // marginTop: theme.spacing.lg,

@@ -61,6 +61,7 @@ import Profile_Logout from './Profile_Logout.svg';
 import Profile_Settings from './Profile_Settings.svg';
 import Profile_PaymentMethod from './Profile_PaymentMethod.svg';
 import RewardsGift from './RewardsGift.svg';
+import Clock from './Clock.svg';
 
 
 export const AppIcon = {
@@ -127,4 +128,5 @@ export const AppIcon = {
   Profile_Settings,
   Profile_PaymentMethod,
   RewardsGift,
+  Clock,
 };

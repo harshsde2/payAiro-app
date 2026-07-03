@@ -42,6 +42,8 @@ import ViewStatementScreen from "@new-ui/screens/KebabMenuScreens/BankStatementS
 import RewardsAndReferralsScreen from "@new-ui/screens/KebabMenuScreens/RewardsScreen/RewardsAndReferralsScreen";
 import ScratchCardScreen from "@new-ui/screens/KebabMenuScreens/RewardsScreen/ScratchCardScreen";
 import ActivityScreen from "new-ui/screens/Activity/ActivityScreen";
+import CryptoRequestsListScreen from "new-ui/screens/CryptoRequest/CryptoRequestsListScreen";
+import CryptoRequestDetailScreen from "new-ui/screens/CryptoRequest/CryptoRequestDetailScreen";
 import {
   CashRampBarcodeScreen,
   LocationFinderScreen,
@@ -381,6 +383,16 @@ export default function AppStack() {
         options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Activity' }}
         name={NAVIGATION_SCREENS.NEW_ACTIVITY_SCREEN}
         component={ActivityScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Requests' }}
+        name={NAVIGATION_SCREENS.NEW_CRYPTO_REQUESTS}
+        component={CryptoRequestsListScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Request' }}
+        name={NAVIGATION_SCREENS.NEW_CRYPTO_REQUEST_DETAIL}
+        component={CryptoRequestDetailScreen}
       />
       <Stack.Screen
         options={{
