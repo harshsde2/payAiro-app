@@ -87,7 +87,8 @@ export const useBankBalances = ({ enabled = false }: { enabled?: boolean } = {})
       return response.data;
     },
     enabled,
-    staleTime: queryStaleTime.VERY_FAST_STALE_TIME, // 5 second
+    // Money-authoritative: never serve a stale balance — always revalidate.
+    staleTime: queryStaleTime.INSTANT_STALE_TIME,
   });
 
   // Sync essential values into Redux when data changes

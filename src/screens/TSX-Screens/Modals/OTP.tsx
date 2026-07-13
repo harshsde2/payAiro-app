@@ -119,11 +119,11 @@ const OTP = () => {
     sendOTP(payload as any, {
       onSuccess: (data) => {
         console.log("OTP sent successfully:", data);
-        showSuccess("OTP sent to your registered email");
+        showSuccess("OTP sent", "OTP sent to your registered email.");
       },
       onError: (error) => {
         console.log("Error sending OTP:", error);
-        showError("Failed to send OTP. Please try again.");
+        showError("Couldn't send OTP", "Please try again.");
       },
     });
   };
@@ -154,7 +154,7 @@ const OTP = () => {
     const enteredOtp = otpValue || otp;
 
     if (enteredOtp.length < 6) {
-      showError("Please enter complete OTP");
+      showError("Invalid code", "Please enter the complete OTP.");
       setErrorMessage("Please enter complete OTP");
       setIsVerifying(false);
       return;
@@ -167,7 +167,7 @@ const OTP = () => {
     verifyUserForSendOTP(payload as any, {
       onSuccess: (data) => {
         console.log("OTP verified successfully:", data);
-        showSuccess("OTP verified successfully");
+        showSuccess("Verified", "Your OTP was verified successfully.");
         setIsVerifying(false);
         setErrorMessage("");
 
@@ -180,7 +180,7 @@ const OTP = () => {
       onError: (error: any) => {
         console.log("Error verifying OTP:", error);
         const errMsg = error?.response?.data?.data?.message || error?.response?.data?.message || "Invalid OTP. Please try again.";
-        showError(errMsg);
+        showError("Verification failed", errMsg);
         setErrorMessage(errMsg);
         setIsVerifying(false);
         // Clear OTP on error

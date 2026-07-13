@@ -10,7 +10,7 @@ import { AppIcon } from "@new-ui/assets/svgs";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
 import { LoginScreenNavigationProp } from "@new-ui/screens/Auth/types";
 import { useUserOtpRequest } from "query/hooks/useAPIAuth";
-import { showError, showSuccess } from "utils/toast";
+import { showError, showSuccess, getApiErrorMessage } from "utils/toast";
 import { validateEmailOrPhone } from "utils/validation";
 import { getSmsHash } from "utils/smsHash";
 import { appContent } from "utils/appContent";
@@ -43,7 +43,7 @@ const LoginScreen: React.FC = () => {
     if (!validationResult.isValid) {
       showError(
         validationResult.errorMessage || "Invalid input",
-        validationResult.helperText || ""
+        validationResult.helperText || "Please check and try again"
       );
       return;
     }
@@ -73,7 +73,7 @@ const LoginScreen: React.FC = () => {
       onSuccess: (data) => {
         setButtonDisabled(false);
         if (data?.status && data) {
-          showSuccess(successMessage);
+          showSuccess("Verification code sent", successMessage);
           console.log("data =>", JSON.stringify(data, null, 2));
           navigation.navigate(NAVIGATION_SCREENS.NEW_OTP_VERIFICATION, {
             email: isEmailInput ? validationResult.formattedValue : undefined,
@@ -87,9 +87,7 @@ const LoginScreen: React.FC = () => {
         }
       },
       onError: (error: any) => {
-        const errorMsg =
-          error?.response?.data?.message || "Something went wrong";
-        showError(errorMsg, "Please try again");
+        showError("Login failed", getApiErrorMessage(error, "Please try again."));
         setButtonDisabled(false);
       },
     });
@@ -113,30 +111,20 @@ const LoginScreen: React.FC = () => {
           color={theme.colors.textSecondary}
           style={styles.instructionText}
         >
-          {isProductionEnv
-            ? "Enter your email to continue!"
-            : "Enter your email or phone number to continue."}
+          Enter your phone number to continue.
         </CustomText>
       </View>
       <View style={styles.fieldContainer}>
         <View style={styles.inputContainer}>
           <TextInput
-            label={
-              isProductionEnv
-                ? appContent.login.emailLabel
-                : "Enter phone number"
-            }
+            label="Enter phone number"
             leftIcon={
               <View style={{ flexDirection: "row", alignItems: "center", gap: 1 }}>
                 <CustomText>+</CustomText>
                 <CustomText>1</CustomText>
               </View>
             }
-            placeholder={
-              isProductionEnv
-                ? appContent.login.emailPlaceholder
-                : "Enter number"
-            }
+            placeholder="Enter number"
             value={emailOrPhone}
             onChangeText={setEmailOrPhone}
             keyboardType="phone-pad"

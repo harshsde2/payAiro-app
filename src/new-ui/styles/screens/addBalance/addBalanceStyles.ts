@@ -106,7 +106,9 @@ export const addBalanceStyles = (theme: ITheme) =>
       borderRadius: theme.radius.xl,
       paddingHorizontal: theme.spacing.lg,
       padding: theme.spacing.xl,
-      height: 620,
+      // Grow with content but never taller than the screen — the method list
+      // scrolls internally so the title and Select button stay visible.
+      maxHeight: '88%',
     },
     modalCloseRow: {
       alignItems: 'center',
@@ -263,6 +265,11 @@ export const addBalanceStyles = (theme: ITheme) =>
     },
     expandBody: {
       marginTop: theme.spacing.md,
+    },
+    methodsScroll: {
+      // flexShrink lets the list shrink and scroll when the card would overflow,
+      // while the fixed title/Select button keep their size.
+      flexShrink: 1,
     },
     methodsContainer: {
       marginTop: theme.spacing.xl,

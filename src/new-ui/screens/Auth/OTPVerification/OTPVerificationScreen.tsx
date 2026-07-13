@@ -32,7 +32,7 @@ import { setToken } from "services/Auth";
 import { getItem, setItem, removeItem, STORAGE_KEYS } from "storage/mmkv";
 import { appContent } from "utils/appContent";
 import { getSmsHash } from "utils/smsHash";
-import { showError, showSuccess } from "utils/toast";
+import { showError, showSuccess, getApiErrorMessage } from "utils/toast";
 
 const OTP_COOLDOWN_SECONDS = 60;
 
@@ -152,17 +152,13 @@ const OTPVerificationScreen: React.FC = () => {
     otpRequest(payload as any, {
       onSuccess: (data) => {
         if (data?.status && data) {
-          showSuccess(successMessage);
+          showSuccess("Code sent", successMessage);
         } else {
-          showError("Something went wrong");
+          showError("Couldn't resend code", "Please try again.");
         }
       },
       onError: (error: any) => {
-        const errorMessage =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Something went wrong";
-        showError(errorMessage);
+        showError("Couldn't resend code", getApiErrorMessage(error, "Please try again."));
       },
     });
   }, [isPhoneLogin, phone, email, otpRequest, smsHash, isProductionEnv]);
@@ -188,7 +184,7 @@ const OTPVerificationScreen: React.FC = () => {
 
       const enteredOtp = otpValue || otp;
       if (enteredOtp.length < 6) {
-        showError("OTP Should Be 6 Digits");
+        showError("Invalid code", "Please enter all 6 digits.");
         return;
       }
 
@@ -242,7 +238,7 @@ const OTPVerificationScreen: React.FC = () => {
             };
             saveAuthResumeParams(resumeParams);
 
-            showSuccess("OTP Verified Successfully");
+            showSuccess("Verified", "Your code was verified successfully.");
 
             // Referral code/click id have now been consumed by attribution — clear them.
             removeItem(STORAGE_KEYS.REFERRAL_CODE);
@@ -261,25 +257,25 @@ const OTPVerificationScreen: React.FC = () => {
               const result = await bootstrapMainAppSession(dispatch);
               dispatch(setShowLoader(false));
               if (!result.ok) {
-                showError(result.message || "Failed to load profile", "Please try again");
+                showError("Couldn't load your profile", result.message || "Please try again.");
               } else {
-                showSuccess("Logged in Successfully");
+                showSuccess("Welcome back", "You're logged in.");
               }
             } else if (step === 2) {
               dispatch(setShowLoader(true));
               const result = await bootstrapMainAppSession(dispatch);
               dispatch(setShowLoader(false));
               if (!result.ok) {
-                showError(result.message || "Failed to load profile", "Please try again");
+                showError("Couldn't load your profile", result.message || "Please try again.");
               } else {
-                showSuccess("Logged in Successfully");
+                showSuccess("Welcome back", "You're logged in.");
               }
             }
 
             isVerifyingRef.current = false;
             setIsVerifying(false);
           } else {
-            showError("Invalid OTP. Please Try Again.");
+            showError("Verification failed", "Invalid code. Please try again.");
             isVerifyingRef.current = false;
             setIsVerifying(false);
             otpInputRef.current?.clear();
@@ -287,11 +283,7 @@ const OTPVerificationScreen: React.FC = () => {
           }
         },
         onError: (error: any) => {
-          const errorMessage =
-            (error as any)?.response?.data?.message ||
-            error?.message ||
-            "Something went wrong";
-          showError(errorMessage);
+          showError("Verification failed", getApiErrorMessage(error, "Please try again."));
           isVerifyingRef.current = false;
           setIsVerifying(false);
           otpInputRef.current?.clear();

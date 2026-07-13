@@ -47,7 +47,7 @@ async function resolveDeviceLocation(silent: boolean): Promise<MapCoordinate | n
   const result = await request(permission);
   if (result !== RESULTS.GRANTED && result !== RESULTS.LIMITED) {
     if (!silent) {
-      showError("Location permission is required to use current location.");
+      showError("Permission needed", "Location permission is required to use your current location.");
     }
     return null;
   }
@@ -62,7 +62,7 @@ async function resolveDeviceLocation(silent: boolean): Promise<MapCoordinate | n
     return { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
   } catch {
     if (!silent) {
-      showError("Unable to read your current location.");
+      showError("Location unavailable", "Unable to read your current location.");
     }
     return null;
   }
@@ -309,7 +309,7 @@ export function useCashRampLocationMapSearch(options?: UseCashRampLocationMapSea
         });
         if (ac.signal.aborted) return;
         if (!geo) {
-          showError("Could not load that place.");
+          showError("Couldn't load place", "Please try another location.");
           return;
         }
         profileGeocodeSucceededRef.current = true;
@@ -318,7 +318,7 @@ export function useCashRampLocationMapSearch(options?: UseCashRampLocationMapSea
         bumpSession();
       } catch (e: unknown) {
         if ((e as { name?: string })?.name === "AbortError") return;
-        showError("Could not load that place.");
+        showError("Couldn't load place", "Please try another location.");
       }
     },
     [apiKey, bumpSession, clearPredictions]

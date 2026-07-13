@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import Clipboard from "@react-native-clipboard/clipboard";
-import moment from "moment";
+import { formatLongDateTime } from "utils/dateUtils";
 import CustomText from "@new-ui/components/common-components/CustomText";
 import Button from "@new-ui/components/common-components/layout/Button";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
@@ -84,7 +84,7 @@ const CashOnRampTransactionDetailsBody: React.FC<Props> = ({
     transactionData.display_party?.identifier ??
     `Cashier – ${details?.retailer_label ?? "Cash purchase"}`;
 
-  const dateLabel = moment(transactionData.created_at).format("MMMM D, YYYY [at] h:mm A");
+  const dateLabel = formatLongDateTime(transactionData.created_at);
   const txnId = transactionData.transaction_id;
   const txHash =
     details?.transaction_provider_ref ?? crypto?.tx_hash ?? null;
@@ -102,11 +102,11 @@ const CashOnRampTransactionDetailsBody: React.FC<Props> = ({
   const onCopy = useCallback((value: string, label: string) => {
     const v = value.trim();
     if (!v) {
-      showError(`No ${label} to copy.`);
+      showError("Nothing to copy", `No ${label} available.`);
       return;
     }
     Clipboard.setString(v);
-    showSuccess(`${label} copied.`);
+    showSuccess("Copied", `${label} copied to clipboard.`);
   }, []);
 
   const renderCopyValue = (value: string, label: string) => (

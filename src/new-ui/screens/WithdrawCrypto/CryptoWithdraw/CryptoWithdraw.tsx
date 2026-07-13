@@ -234,7 +234,7 @@ const CryptoWithdraw: React.FC = () => {
         customTitle: "Withdrawal unsuccessful",
         customDescription: "Unable to complete withdrawal. Please try again.",
       } as never);
-      showError("Unable to complete withdrawal. Please try again.");
+      showError("Withdrawal failed", "Unable to complete withdrawal. Please try again.");
       return;
     }
 
@@ -298,7 +298,7 @@ const CryptoWithdraw: React.FC = () => {
       } as never);
 
       if (!ok) {
-        showError("Unable to complete withdrawal. Please try again.");
+        showError("Withdrawal failed", "Unable to complete withdrawal. Please try again.");
       }
     } catch {
       navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
@@ -309,7 +309,7 @@ const CryptoWithdraw: React.FC = () => {
         customTitle: "Withdrawal unsuccessful",
         customDescription: "Unable to complete withdrawal. Please try again.",
       } as never);
-      showError("Unable to complete withdrawal. Please try again.");
+      showError("Withdrawal failed", "Unable to complete withdrawal. Please try again.");
     }
   }, [
     amount,
@@ -329,13 +329,13 @@ const CryptoWithdraw: React.FC = () => {
   const proceedWithdraw = useCallback(() => {
     const trimmed = inputValue.trim();
     if (!trimmed || trimmed === "." || amount <= 0) {
-      showError("Please enter an amount");
+      showError("Enter an amount", "Please enter an amount to withdraw.");
       return;
     }
 
     if (selectedPaymentMode === "cash") {
       if (!coinmeCryptoAsset) {
-        showError("Unable to open cash locations. Please try again.");
+        showError("Couldn't open locations", "Unable to open cash locations. Please try again.");
         return;
       }
       navigation.navigate(NAVIGATION_SCREENS.NEW_CASH_RAMP_LOCATION_FINDER as never, {

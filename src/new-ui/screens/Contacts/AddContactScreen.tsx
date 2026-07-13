@@ -119,7 +119,7 @@ const AddContactScreen = () => {
         validationErrors.payAiroTag ||
         validationErrors.general ||
         'Please fix the highlighted fields.';
-      showError(firstError);
+      showError('Please check the form', firstError);
       return;
     }
 
@@ -142,10 +142,10 @@ const AddContactScreen = () => {
       {
         onSuccess: (response) => {
           if (response?.ok === false) {
-            showError(response?.message || 'Failed to add contact.');
+            showError("Couldn't add contact", response?.message || 'Please try again.');
             return;
           }
-          showSuccess(response?.message || 'Contact added successfully.');
+          showSuccess('Contact added', response?.message || 'Your contact has been saved.');
           if (navigation.canGoBack()) {
             navigation.goBack();
           }
@@ -154,7 +154,7 @@ const AddContactScreen = () => {
           const message =
             (error as { response?: { data?: { message?: string } } })?.response
               ?.data?.message || 'Failed to add contact. Please try again.';
-          showError(message);
+          showError("Couldn't add contact", message);
         },
       }
     );

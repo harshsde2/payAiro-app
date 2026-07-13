@@ -3,10 +3,11 @@ import GenericButton from "components/GenericButton";
 import HeaderTitle from "components/HeaderTitle";
 import LottieView from "lottie-react-native";
 import { LOTTIE_APP_LOADER, TRANSACTION_FAILED_LOTTIE, TRANSACTION_SUCCESS } from "lottie/lottie";
-import moment from "moment";
+import { formatReceiptDateTime } from "utils/dateUtils";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { Button } from "new-ui/components/common-components/layout";
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useEffect, useRef, useState } from "react";
+import { invalidateTransactionDataWithSettle } from "query/invalidateTransactionData";
 import {
   SafeAreaView,
   ScrollView,
@@ -271,6 +272,18 @@ const TransactionResult: FC = () => {
     return 'unknown';
   };
 
+  // On success, silently refresh balances + history in the background so the
+  // dashboard is already up to date by the time the user taps Done. Guarded so
+  // it fires once. Shared by buy/sell/send/withdraw/add-balance (all land here).
+  const didInvalidateRef = useRef(false);
+  useEffect(() => {
+    if (didInvalidateRef.current) return;
+    if (getTransactionStatus() === 'success') {
+      didInvalidateRef.current = true;
+      invalidateTransactionDataWithSettle();
+    }
+  }, [showLoader, transactionData, isSuccess]);
+
   const renderLottieAnimation = () => {
     const status = getTransactionStatus();
 
@@ -507,7 +520,7 @@ const TransactionResult: FC = () => {
         { label: 'Status', value: pt.status ?? '' },
         { label: 'Provider Status', value: pt.providerStatus ?? '' },
         { label: 'Transaction ID', value: txn?.partnerTransactionId ?? pt.providerTransactionId ?? '' },
-        { label: 'Date', value: pt.createdAt ? moment(pt.createdAt).format('DD MMM YYYY  h:mm A') : '' },
+        { label: 'Date', value: pt.createdAt ? formatReceiptDateTime(pt.createdAt) : '' },
       ].filter(r => !!r.value);
 
       return (
@@ -543,7 +556,7 @@ const TransactionResult: FC = () => {
       let value = actualData[key as keyof TransactionData];
 
       if (key === "timestamp" && value) {
-        value = moment(value).format("DD MMM YYYY  h:mm A");
+        value = formatReceiptDateTime(value);
       }
 
       if (key === "amount" || key === "final_amount") {

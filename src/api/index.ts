@@ -107,7 +107,7 @@ api.interceptors.request.use(
         if (mode === "expired" && !isPublic) {
           const { setKycStatus } = require("../redux/slices/authenticationSlice");
           const message = "Your KYC has expired. Would you like to restart the KYC now?";
-          showError(message);
+          showError("KYC expired", message);
           // Prompt with Start KYC action similar to KycWatchdog
           showKycAlertOnce(
             "KYC Expired",
@@ -143,10 +143,10 @@ api.interceptors.request.use(
         if ((mode === "pending" || mode === "not_started") && !isPublic) {
           const mutating = method === "post" || method === "patch" || method === "delete";
           if (mutating) {
-            const msg = mode === "not_started" 
+            const msg = mode === "not_started"
               ? "Your KYC has not started. Please start KYC to continue."
               : "Your KYC is under review. You can browse in view-only mode.";
-            showError(msg);
+            showError(mode === "not_started" ? "KYC not started" : "KYC under review", msg);
             const title = mode === "not_started" ? "KYC Not Started" : "KYC Under Review";
             // For not_started → show Start KYC CTA; for pending → simple acknowledge only
             if (mode === "not_started") {
@@ -269,7 +269,7 @@ api.interceptors.response.use(
       // Legacy JWT often 401s here while FastAPI still works; suppress toast until hook is migrated.
       const suppressUnauthorizedToast = requestUrl.includes("all-bank-accounts");
       if (status === 401 && !isPublicRoute && !suppressUnauthorizedToast) {
-        showError("Token expired or unauthorized");
+        showError("Session expired", "Please log in again to continue.");
       }
 
       if (status === 403 && !isPublicRoute) {

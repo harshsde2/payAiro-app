@@ -33,7 +33,7 @@ import {
 } from 'query/hooks';
 import { bankKeys } from 'query/hooks/useBank';
 import { queryClient } from 'query/queryClient';
-import { showError } from 'utils/toast';
+import { showError, getApiErrorMessage } from 'utils/toast';
 import type { FundingSource } from './enterAmount.types';
 import { useEnterAmountState } from './useEnterAmountState';
 import RecipientHeader from './RecipientHeader';
@@ -111,6 +111,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     recipientUserId,
   } =
     route.params || ({} as any);
+    
   console.log("route.params on enter amount =>", JSON.stringify(route.params, null, 2));
 
   const isRequestedFlow = type === 'requested';
@@ -493,16 +494,16 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
 
   const handleFindCashLocation = useCallback(() => {
     if (!cryptoAsset) {
-      showError('Missing crypto details; please try again.');
+      showError('Missing details', 'Crypto details are missing. Please try again.');
       return;
     }
     const wallet = String(cryptoAsset?.sourceWalletAddress ?? '').trim();
     if (!wallet) {
-      showError('Wallet address is required. Go back to the asset screen and try again.');
+      showError('Wallet address required', 'Go back to the asset screen and try again.');
       return;
     }
     if (!Number.isFinite(amount) || amount <= 0) {
-      showError('Please enter a valid amount');
+      showError('Invalid amount', 'Please enter a valid amount.');
       return;
     }
     const finderParams = {
@@ -527,13 +528,13 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   const handleSendPayment = useCallback(() => {
     const pending = pendingPaymentRef.current;
     if (!pending) {
-      showError('Session expired. Please try again.');
+      showError('Session expired', 'Please try again.');
       return;
     }
     const { amount: sendAmount, recipient_identifier: sendRecipient } = pending;
     const numericAmount = Number(sendAmount);
     if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-      showError('Please enter a valid amount');
+      showError('Invalid amount', 'Please enter a valid amount.');
       return;
     }
 
@@ -567,8 +568,9 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
             isError: true,
           } as never);
           showError(
+            'Payment blocked',
             data?.data?.data?.error ||
-              'Operation is forbidden. Custodial account is suspended or Level 2 KYC Pending'
+              'Custodial account is suspended or Level 2 KYC is pending.'
           );
         }
       },
@@ -592,12 +594,12 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     const transactionAmount = Number(rawAmount) || 0;
 
     if (transactionAmount <= 0) {
-      showError('Please enter a valid amount');
+      showError('Invalid amount', 'Please enter a valid amount.');
       return;
     }
 
     if (transactionAmount > 100000) {
-      showError('Amount cannot exceed ₹1,00,000');
+      showError('Amount too high', 'Amount cannot exceed ₹1,00,000.');
       return;
     }
 
@@ -651,7 +653,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
           isSuccess: false,
           isError: true,
         } as never);
-        showError('Already have pending request with this account');
+        showError("Couldn't send request", 'You already have a pending request with this account.');
       },
     });
   }, [
@@ -664,7 +666,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
 
   const handleRequestedPayment = useCallback(() => {
     if (!requestId) {
-      showError('Session expired. Please try again.');
+      showError('Session expired', 'Please try again.');
       return;
     }
 
@@ -701,7 +703,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
             isSuccess: false,
             isError: true,
           } as never);
-          showError(data?.message || 'Did not have enough balance or some error occurred');
+          showError('Payment failed', data?.message || 'Insufficient balance or something went wrong.');
         }
       },
       onError: (error: unknown) => {
@@ -712,7 +714,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
           isSuccess: false,
           isError: true,
         } as never);
-        showError('Did not have enough balance or some error occurred');
+        showError('Payment failed', 'Insufficient balance or something went wrong.');
       },
     });
   }, [
@@ -730,7 +732,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   const handleCryptoSendPayment = useCallback(() => {
     const draft = cryptoPaymentRef.current;
     if (!draft) {
-      showError('Session expired. Please try again.');
+      showError('Session expired', 'Please try again.');
       return;
     }
 
@@ -781,7 +783,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
             isError: true,
           } as never);
           cryptoPaymentRef.current = null;
-          showError('Something went wrong while sending crypto');
+          showError('Transfer failed', 'Something went wrong while sending crypto.');
         },
         onSettled: () => {
           setIsPaying(false);
@@ -792,7 +794,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
 
   const handleCryptoSendViaPaymentTransaction = useCallback(() => {
     if (!selectedSource?.cryptoMeta) {
-      showError('Please select a crypto asset');
+      showError('Select an asset', 'Please choose a crypto asset to continue.');
       return;
     }
 
@@ -815,15 +817,13 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
         navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
           isLoading: false, transactionData: data, isSuccess: !!ok, isError: !ok,
         } as never);
-        if (!ok) showError((data as any)?.message || 'Transaction failed. Please try again.');
+        if (!ok) showError('Transaction failed', (data as any)?.message || 'Please try again.');
       },
       onError: (error: unknown) => {
-        const e = error as { response?: { data?: { message?: string } }; message?: string };
-        const msg = e?.response?.data?.message || e?.message || 'Something went wrong. Please try again.';
         navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
           isLoading: false, transactionData: null, isSuccess: false, isError: true,
         } as never);
-        showError(msg);
+        showError('Transaction failed', getApiErrorMessage(error, 'Please try again.'));
       },
     });
   }, [
@@ -846,11 +846,11 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   const handleRequestPress = useCallback(() => {
     requireEmailVerified(() => {
       if (!selectedSource?.cryptoMeta) {
-        showError('Please select a crypto asset');
+        showError('Select an asset', 'Please choose a crypto asset to continue.');
         return;
       }
       if (!(assetAmount > 0)) {
-        showError('Please enter an amount to request');
+        showError('Enter an amount', 'Please enter an amount to request.');
         return;
       }
       setRequestSheetVisible(true);
@@ -860,7 +860,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   const handleCreateRequest = useCallback(
     (values: { note?: string; expiresAt?: string }) => {
       if (!selectedSource?.cryptoMeta) {
-        showError('Please select a crypto asset');
+        showError('Select an asset', 'Please choose a crypto asset to continue.');
         return;
       }
       const symbol = selectedSource.cryptoMeta.symbol;
@@ -885,7 +885,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
               selectedContact?.nickname ||
               recipient_identifier ||
               'them';
-            showSuccess(`Request sent to ${targetName}!`);
+            showSuccess('Request sent', `Your request was sent to ${targetName}.`);
             navigation.navigate(
               NAVIGATION_SCREENS.NEW_CRYPTO_REQUEST_DETAIL as never,
               { id: request?.id ?? 0, request } as never
@@ -914,7 +914,8 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     if (!isTradeMode || !cryptoAsset) return;
     if (!coinmeAccountId) {
       showError(
-        'Your Coinme account is not ready yet. Please complete onboarding and try again.'
+        'Account not ready',
+        'Please complete onboarding and try again.'
       );
       return;
     }
@@ -987,7 +988,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
         isError: true,
         errorMessage,
       } as never);
-      showError(errorMessage);
+      showError('Transaction failed', errorMessage);
     }
   }, [
     amount,
@@ -1061,7 +1062,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     if (!isCryptoMode) {
       if (type === 'requested') {
         if (!requestId) {
-          showError('Session expired. Please try again.');
+          showError('Session expired', 'Please try again.');
           return;
         }
         requestPaymentVerification(handleActionsAfterPinVerified);
@@ -1069,15 +1070,15 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
       }
 
       if (!selectedPaymentMethod) {
-        showError('Please select a payment method');
+        showError('Select a payment method', 'Please choose how you want to pay.');
         return;
       }
       if (!recipient_identifier) {
-        showError('Recipient is missing');
+        showError('Recipient missing', 'Please choose who to pay.');
         return;
       }
       if (amount <= 0) {
-        showError('Please enter a valid amount');
+        showError('Invalid amount', 'Please enter a valid amount.');
         return;
       }
 
@@ -1091,18 +1092,18 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
 
     if (isTradeMode) {
       if (inputMode === 'fiat' && amount <= 0) {
-        showError('Please enter a valid amount');
+        showError('Invalid amount', 'Please enter a valid amount.');
         return;
       }
       if (inputMode === 'asset' && assetAmount <= 0) {
-        showError('Please enter a valid amount');
+        showError('Invalid amount', 'Please enter a valid amount.');
         return;
       }
       if (tradePaymentRail === 'retail_cash') {
         return;
       }
       if (!selectedPaymentMethod) {
-        showError('Please select a payment method');
+        showError('Select a payment method', 'Please choose how you want to pay.');
         return;
       }
       // State compliance (e.g. CT): show pre-transaction disclosure before PIN.
@@ -1134,13 +1135,13 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     } else {
       const errors = validateCrypto();
       if (errors.length > 0) {
-        showError(errors[0]);
+        showError('Please check the form', errors[0]);
         return;
       }
     }
 
     if (!selectedSource?.cryptoMeta) {
-      showError('Please select a crypto asset');
+      showError('Select an asset', 'Please choose a crypto asset to continue.');
       return;
     }
 
@@ -1296,7 +1297,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
           <View style={{ width: '100%', gap: theme.spacing.md }}>
             {isCryptoMode && isTradeMode ? (
               <DebitCardPaymentRow
-                title={tradePaymentRail === 'retail_cash' ? 'Cash' : 'Debit Card'}
+                title={tradePaymentRail === 'retail_cash' ? 'Cash' : 'Select Payment Method'}
                 maskedDetail={paymentSubtitle}
                 onPress={openDebitPaymentPicker}
               />
@@ -1307,7 +1308,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
               />
             ) : (
               <DebitCardPaymentRow
-                title="Debit Card"
+                title="Select Payment Method"
                 maskedDetail={paymentSubtitle}
                 onPress={openDebitPaymentPicker}
               />

@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useRef } from 'react';
 import { View, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
@@ -6,6 +6,8 @@ import IconWithNameContainer from '../IconWithNameContainer';
 import { DASHBOARD_BALANCE_CARD_CONSTANTS } from './constant';
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 import { toKycMode } from 'types/kyc';
+import { ReceiveQRSheet } from '@new-ui/components/common-components/ReceiveQRSheet';
+import type { IReceiveQRSheetRef } from '@new-ui/components/common-components/ReceiveQRSheet';
 
 interface IDashboardActionButtonsProps {
   style?: object;
@@ -14,6 +16,7 @@ interface IDashboardActionButtonsProps {
 export const DashboardActionButtons: React.FC<IDashboardActionButtonsProps> = ({ style }) => {
   const navigation = useNavigation<any>();
   const { kycStatus, bankLists } = useSelector((state: any) => state.authenticationSlice);
+  const receiveSheetRef = useRef<IReceiveQRSheetRef>(null);
 
   const kycMode = useMemo(() => toKycMode(kycStatus), [kycStatus]);
   const isKYCCompleted = !['not_started', 'pending', 'expired'].includes(kycMode);
@@ -56,6 +59,10 @@ export const DashboardActionButtons: React.FC<IDashboardActionButtonsProps> = ({
           handleExternalAccountAlert();
           return;
         }
+        if (item.opensReceiveSheet) {
+          receiveSheetRef.current?.open();
+          return;
+        }
         const screenName = NAVIGATION_SCREENS[item.screen as keyof typeof NAVIGATION_SCREENS];
         navigation.navigate(screenName as never, (item.params as never) ?? undefined);
       };
@@ -74,6 +81,7 @@ export const DashboardActionButtons: React.FC<IDashboardActionButtonsProps> = ({
           onPress={getActionHandler(item)}
         />
       ))}
+      <ReceiveQRSheet ref={receiveSheetRef} />
     </View>
   );
 };

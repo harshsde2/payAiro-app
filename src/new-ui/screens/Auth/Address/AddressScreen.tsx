@@ -7,7 +7,7 @@ import { TextInput, Button } from "@new-ui/components/common-components/layout";
 import { useTheme } from "@new-ui/styles/ThemeContext";
 import { kycStyles } from "@new-ui/styles/screens/auth/kycStyles";
 import { useUserAddressUpdate } from "query/hooks/useAPIAuth";
-import { showError, showSuccess } from "utils/toast";
+import { showError, showSuccess, getApiErrorMessage } from "utils/toast";
 import { abandonIncompleteSignup } from "auth/authSession";
 import { bootstrapMainAppSession } from "auth/bootstrapMainAppSession";
 import { resetState, setShowLoader } from "redux/slices/newBackendAuthSlice";
@@ -60,11 +60,11 @@ const AddressScreen: React.FC = () => {
     updateAddress(payload, {
       onSuccess: async (resp: any) => {
         if (!resp?.status) {
-          showError(resp?.message || "Failed to update address");
+          showError("Couldn't update address", resp?.message || "Please try again.");
           return;
         }
 
-        showSuccess(resp?.message || "Address updated successfully");
+        showSuccess("Address updated", resp?.message || "Your address has been saved.");
         dispatch(setAddressCompleted(true));
 
         dispatch(setShowLoader(true));
@@ -72,9 +72,9 @@ const AddressScreen: React.FC = () => {
           const result = await bootstrapMainAppSession(dispatch);
           if (result.ok) {
             dispatch(setStepCount(2));
-            showSuccess("Welcome to dashboard");
+            showSuccess("You're all set", "Welcome to PayAiro.");
           } else {
-            showError(result.message || "Failed to load user details");
+            showError("Couldn't load your details", result.message || "Please try again.");
           }
         } finally {
           dispatch(setShowLoader(false));
@@ -82,9 +82,8 @@ const AddressScreen: React.FC = () => {
       },
       onError: (error: any) => {
         showError(
-          error?.response?.data?.message ||
-            error?.message ||
-            "Failed to update address"
+          "Couldn't update address",
+          getApiErrorMessage(error, "Please try again.")
         );
       },
     });

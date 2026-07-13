@@ -167,4 +167,5 @@ export const NAVIGATION_SCREENS = {
   STATE_COMPLIANCE_PRE_TRANSACTION: "StateCompliancePreTransaction",
   NEW_CRYPTO_REQUESTS: "NewCryptoRequests",
   NEW_CRYPTO_REQUEST_DETAIL: "NewCryptoRequestDetail",
+  NEW_PRIVACY_SECURITY_SCREEN: "NewPrivacySecurityScreen",
 } as const;

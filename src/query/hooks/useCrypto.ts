@@ -246,7 +246,8 @@ export const useUserCryptoMarketList = (fiat: string = "USD") => {
       const items = response?.data?.items ?? [];
       return items.map(mapMarketItemToCryptoListItem);
     },
-    staleTime: queryStaleTime.INSTANT_STALE_TIME,
+    // Prices are not money-authoritative; 15s freshness with background refresh.
+    staleTime: queryStaleTime.VERY_FAST_STALE_TIME,
     gcTime: CRYPTO_LIST_GC_TIME_MS,
   });
 };
@@ -589,7 +590,8 @@ export const usePaymentTransactionHistory = (
       userApiClient.get<SendHistoryResponse>(
         `${USER_AUTH.PAYMENT_TRANSACTIONS_SEND_HISTORY}?limit=${limit}&scope=${scope}`
       ),
-    staleTime: queryStaleTime.INSTANT_STALE_TIME,
+    // History is safe to show briefly stale; 30s freshness with background refresh.
+    staleTime: queryStaleTime.FAST_STALE_TIME,
   });
 };
 

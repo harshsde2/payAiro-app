@@ -127,7 +127,7 @@ const CustomToast: React.FC<ICustomToastProps> = ({
                 fontFamily: theme.typography.fontFamily.montserratSemiBold,
               },
             ]}
-            numberOfLines={1}
+            numberOfLines={2}
           >
             {displayText1}
           </CustomText>
@@ -142,7 +142,6 @@ const CustomToast: React.FC<ICustomToastProps> = ({
                 fontFamily: theme.typography.fontFamily.montserrat,
               },
             ]}
-            numberOfLines={1}
           >
             {displayText2}
           </CustomText>
@@ -224,7 +223,9 @@ const styles = StyleSheet.create({
   },
   toastContainer: {
     flexDirection: "row",
-    alignItems: "center",
+    // Top-align so the icon/close stay on the first line when the message
+    // wraps to multiple lines (toast grows via minHeight, no max height).
+    alignItems: "flex-start",
     width: "90%",
     minHeight: 70,
     borderRadius: 8, // Standard card radius
@@ -249,6 +250,7 @@ const styles = StyleSheet.create({
     marginRight: 14,
     justifyContent: "center",
     alignItems: "center",
+    paddingTop: 2,
   },
   textContainer: {
     flex: 1,
@@ -267,6 +269,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 4,
+    paddingTop: 2,
     justifyContent: 'center',
     alignItems: 'center',
   },

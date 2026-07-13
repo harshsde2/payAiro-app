@@ -1,7 +1,7 @@
 import React, { useCallback, useRef } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View, Alert } from "react-native";
 import Clipboard from "@react-native-clipboard/clipboard";
-import moment from "moment";
+import { formatServerDate } from "utils/dateUtils";
 import ViewShot from "react-native-view-shot";
 import Share from "react-native-share";
 import CustomText from "@new-ui/components/common-components/CustomText";
@@ -96,8 +96,7 @@ const StateComplianceReceiptBody: React.FC<Props> = ({ transactionData, receipt 
 
   const formatFieldValue = useCallback((key: string, value: string): string => {
     if (key === "date_and_time") {
-      const m = moment(value);
-      return m.isValid() ? m.format("MMM D, YYYY [at] h:mm A") : value;
+      return formatServerDate(value, "MMM D, YYYY [at] h:mm A", value);
     }
     if (FIAT_AMOUNT_KEYS.has(key)) {
       return formatUsd(value) ?? value;
@@ -114,7 +113,7 @@ const StateComplianceReceiptBody: React.FC<Props> = ({ transactionData, receipt 
     const v = (value ?? "").trim();
     if (!v) return;
     Clipboard.setString(v);
-    showSuccess("Transaction ID copied.");
+    showSuccess("Copied", "Transaction ID copied to clipboard.");
   }, []);
 
   const onShare = useCallback(async () => {

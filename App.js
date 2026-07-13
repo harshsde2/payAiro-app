@@ -11,8 +11,7 @@ import AuthStack from "./src/navigations/AuthStack";
 import { NAVIGATION_SCREENS } from "./src/navigations/navigationConstants";
 import { PersistQueryProvider } from "./src/query/index";
 import { focusManager } from "@tanstack/react-query";
-import { queryClient } from "./src/query/queryClient";
-import { cryptoRequestKeys } from "./src/query/hooks/useCryptoRequest";
+import { invalidateQueriesForNotification } from "./src/query/notificationQueryInvalidation";
 import {
   setActiveTab,
   setAllCryptoBalances,
@@ -29,7 +28,7 @@ import {
 import AnimatedBootSplashV3 from "./src/screens/TSX-Screens/AnimatedBootSplash/AnimatedBootSplashV3";
 import { getWalletDataAuth } from "./src/services/Auth";
 import { getMechentPay } from "./src/services/Services";
-import { getItem, setItem, STORAGE_KEYS, getComplianceAckedVersion } from "./src/storage/mmkv";
+import { getItem, setItem, removeItem, STORAGE_KEYS, getComplianceAckedVersion } from "./src/storage/mmkv";
 import { COMPLIANCE_CONFIG } from "./src/new-ui/constants/compliance";
 import { getProfileResidentialStateCode } from "./src/new-ui/screens/CashRamp/LocationFinder/cashRampProfileState";
 import { userApiClient } from "./src/api/userApiClient";
@@ -83,19 +82,6 @@ const resolveNotificationDeepLink = (data = {}) =>
   data?.deep_link ||
   (data?.request_id ? `payairo://requests/${data.request_id}` : null);
 
-/**
- * A crypto-request push (eventType `CRYPTO_REQUEST_*` or a `request_id`
- * payload) should refresh the badge/banner/list immediately. Invalidating the
- * singleton query client triggers a background refetch of all active observers
- * (no UI spinner).
- */
-const maybeInvalidateCryptoRequests = (data = {}) => {
-  const eventType = String(data?.eventType || data?.event_type || "");
-  if (eventType.startsWith("CRYPTO_REQUEST") || data?.request_id) {
-    queryClient.invalidateQueries({ queryKey: cryptoRequestKeys.all });
-  }
-};
-
 export default function App() {
   
   // -------------------- Redux State --------------------
@@ -123,6 +109,21 @@ export default function App() {
   useEffect(() => {
     const sub = AppState.addEventListener("change", (status) => {
       focusManager.setFocused(status === "active");
+      // Consume any refresh flag left by the background push handler and
+      // invalidate the right queries immediately (bypasses screen throttles).
+      if (status === "active") {
+        try {
+          const raw = getItem(STORAGE_KEYS.PENDING_PUSH_REFRESH);
+          if (raw) {
+            removeItem(STORAGE_KEYS.PENDING_PUSH_REFRESH);
+            const parsed = JSON.parse(raw);
+            invalidateQueriesForNotification({
+              eventType: parsed?.eventType,
+              category: parsed?.category,
+            });
+          }
+        } catch (_) {}
+      }
     });
     return () => sub.remove();
   }, []);
@@ -266,25 +267,16 @@ export default function App() {
   // Request notification permissions (iOS: AUTHORIZED or PROVISIONAL)
   const requestPermission = async () => {
     try {
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/29f1b34d-8424-4516-a8dc-528eb6502b04',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.js:requestPermission',message:'Requesting FCM permission',data:{platform: Platform.OS},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
-      // #endregion
       const authorizationStatus = await messaging().requestPermission();
       const granted =
         authorizationStatus === messaging.AuthorizationStatus.AUTHORIZED ||
         authorizationStatus === messaging.AuthorizationStatus.PROVISIONAL;
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/29f1b34d-8424-4516-a8dc-528eb6502b04',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.js:requestPermission',message:'FCM permission result',data:{authorizationStatus, granted, isDevMode: __DEV__},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
-      // #endregion
       if (!granted) {
         console.log("FCM permission denied");
       }
       await notifee.requestPermission();
     } catch (error) {
       console.error("[App] Permission request error:", error);
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/29f1b34d-8424-4516-a8dc-528eb6502b04',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.js:requestPermission',message:'Permission request ERROR',data:{error: error?.message || String(error)},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
-      // #endregion
     }
   };
 
@@ -324,9 +316,6 @@ export default function App() {
 
   // Set up FCM: permission, token, foreground listener (iOS + Android)
   useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/29f1b34d-8424-4516-a8dc-528eb6502b04',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.js:useEffect:FCMSetup',message:'Setting up FCM (permission + token + listener)',data:{platform: Platform.OS, isDevMode: __DEV__},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
-    // #endregion
     requestPermission();
     // Create default channel with HIGH importance at startup so background FCM notifications show as heads-up (popup)
     if (Platform.OS === "android") {
@@ -344,12 +333,9 @@ export default function App() {
       try {
         setItem(STORAGE_KEYS.DEBUG_LAST_NOTIFICATION_AT, new Date().toISOString());
       } catch (_) {}
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/29f1b34d-8424-4516-a8dc-528eb6502b04',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.js:onMessage',message:'Foreground message received!',data:{messageId: remoteMessage?.messageId, title: remoteMessage?.notification?.title, body: remoteMessage?.notification?.body},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
-      // #endregion
       onDisplayNotification(remoteMessage);
-      // Refresh crypto-request badge/banner instantly when the push lands.
-      maybeInvalidateCryptoRequests(remoteMessage?.data);
+      // Refresh the right queries (balances/history/requests/feed) when a push lands.
+      invalidateQueriesForNotification(remoteMessage?.data);
     });
 
     // When app is in foreground: open deeplink only when user TAPS the notification
@@ -368,18 +354,12 @@ export default function App() {
 
   // Get FCM token for push notifications
   const getFCMToken = async () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/29f1b34d-8424-4516-a8dc-528eb6502b04',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.js:getFCMToken',message:'Starting FCM token retrieval',data:{platform: Platform.OS, isDevMode: __DEV__},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
-    // #endregion
     try {
       // Initialize FCM Service (handles token caching, device ID, etc.)
       const fcmService = FCMService.getInstance();
       const token = await fcmService.initialize({
         onTokenReceived: (newToken) => {
           console.log("[App] FCM Token received via service");
-          // #region agent log
-          fetch('http://127.0.0.1:7244/ingest/29f1b34d-8424-4516-a8dc-528eb6502b04',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.js:onTokenReceived',message:'FCM Token received via service callback',data:{tokenLength: newToken?.length, tokenPrefix: newToken?.substring(0,20)},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
-          // #endregion
           useDispatchAction(setFcmToken(newToken));
         },
         onTokenRefresh: (newToken) => {
@@ -388,25 +368,16 @@ export default function App() {
         },
         onError: (error) => {
           console.error("[App] FCM Service error:", error);
-          // #region agent log
-          fetch('http://127.0.0.1:7244/ingest/29f1b34d-8424-4516-a8dc-528eb6502b04',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.js:onError',message:'FCM Service error callback',data:{error: error?.message || String(error)},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
-          // #endregion
         },
       });
 
       console.log("FCM Token =>", token);
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/29f1b34d-8424-4516-a8dc-528eb6502b04',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.js:getFCMToken',message:'FCM token result from service',data:{hasToken: !!token, tokenLength: token?.length, tokenPrefix: token?.substring(0,20)},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
-      // #endregion
 
       if (token) {
         useDispatchAction(setFcmToken(token));
       }
     } catch (error) {
       console.error("[App] Error getting FCM token:", error);
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/29f1b34d-8424-4516-a8dc-528eb6502b04',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.js:getFCMToken',message:'FCM token retrieval FAILED',data:{error: error?.message || String(error)},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
-      // #endregion
       
       // Fallback to direct messaging call if service fails
       try {
@@ -417,9 +388,6 @@ export default function App() {
         }
       } catch (fallbackError) {
         console.error("[App] Fallback FCM token fetch failed:", fallbackError);
-        // #region agent log
-        fetch('http://127.0.0.1:7244/ingest/29f1b34d-8424-4516-a8dc-528eb6502b04',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.js:getFCMToken:fallback',message:'Fallback ALSO failed',data:{error: fallbackError?.message || String(fallbackError)},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
-        // #endregion
       }
     }
   };
@@ -446,8 +414,8 @@ export default function App() {
     // Background: navigator already ready, safe to open URL directly
     const unsubscribe = messaging().onNotificationOpenedApp((remoteMessage) => {
       console.log("remoteMessage =>", JSON.stringify(remoteMessage,null,2))
-      // Refresh crypto-request queries, then route to the request.
-      maybeInvalidateCryptoRequests(remoteMessage?.data);
+      // Refresh the right queries, then route to the deep link.
+      invalidateQueriesForNotification(remoteMessage?.data);
       const url = resolveNotificationDeepLink(remoteMessage?.data);
       if (url) {
         Linking.openURL(url);

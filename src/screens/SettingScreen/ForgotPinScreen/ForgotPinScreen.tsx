@@ -19,7 +19,7 @@ import GenericButton from "components/GenericButton";
 import { getPin, setPin } from "storage/mmkv";
 import { ScreenContainer } from "HOC";
 import { globalStyles, useGlobalStyles } from "styles/GlobalStyles";
-import { showError, showSuccess } from "utils/toast";
+import { showError, showSuccess, getApiErrorMessage } from "utils/toast";
 import { getSmsHash } from "utils/smsHash";
 import CommonModal from "tsx-components/modals/CommonModal";
 import { useTheme } from "styles";
@@ -184,9 +184,8 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
       onError: (err: any) => {
         console.log("Send OTP error:", JSON.stringify(err, null, 2));
         showError(
-          err?.response?.data?.data?.error ||
-          err?.response?.data?.message ||
-          "Failed to send OTP. Please try again."
+          "Couldn't send code",
+          getApiErrorMessage(err, "Failed to send OTP. Please try again.")
         );
       },
     });
@@ -195,7 +194,7 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
   const handleVerifyOtp = useCallback((otpValue?: string) => {
     const enteredOtp = otpValue || otp;
     if (enteredOtp.length < 6) {
-      showError("OTP should be 6 digits");
+      showError("Invalid code", "Please enter all 6 digits.");
       setOtpError("OTP should be 6 digits");
       return;
     }
@@ -225,7 +224,7 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
           err?.response?.data?.data?.message ||
           err?.response?.data?.message ||
           "Invalid OTP. Please try again.";
-        showError(errorMessage);
+        showError("Verification failed", errorMessage);
         setOtpError(errorMessage);
         // Clear OTP on error
         otpInputRef.current?.clear();
@@ -242,7 +241,7 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
     }
 
     if (!isUserVerified) {
-      showError("Please verify your email first");
+      showError("Verify your email", "Please verify your email first.");
       return;
     }
 
@@ -252,7 +251,7 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
     }
 
     if (newPin.join("").length !== 4) {
-      showError("Please enter a valid 4-digit PIN");
+      showError("Invalid PIN", "Please enter a valid 4-digit PIN.");
       return;
     }
 
@@ -281,9 +280,8 @@ const ForgotPinScreen: React.FC<IForgotPinScreenProps> = () => {
       onError: (err: any) => {
         setShowLoader(false);
         showError(
-          err?.response?.data?.data?.error ||
-          err?.response?.data?.message ||
-          "Failed to reset PIN. Please try again."
+          "Couldn't reset PIN",
+          getApiErrorMessage(err, "Failed to reset PIN. Please try again.")
         );
         console.log("Reset PIN error:", JSON.stringify(err, null, 2));
       },

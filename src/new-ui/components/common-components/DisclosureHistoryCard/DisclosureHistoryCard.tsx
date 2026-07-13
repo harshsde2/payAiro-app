@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import moment from 'moment';
+import { formatDotDateTime } from 'utils/dateUtils';
 import CustomText from '@new-ui/components/common-components/CustomText';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 import type { ITheme } from '@new-ui/styles/themes/themeTypes';
@@ -8,10 +8,7 @@ import type { CombinedDisclosureHistoryItem } from '@new-ui/types/compliance';
 
 type Props = { item: CombinedDisclosureHistoryItem };
 
-const formatDate = (iso: string): string => {
-  const m = moment(iso);
-  return m.isValid() ? m.format('MMM D, YYYY [·] h:mm A') : iso;
-};
+const formatDate = (iso: string): string => formatDotDateTime(iso, iso);
 
 const withDollar = (value?: string): string => {
   const v = (value ?? '').trim();

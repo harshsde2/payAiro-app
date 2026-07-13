@@ -17,6 +17,7 @@ import { useTheme } from '@new-ui/styles/ThemeContext'
 import { AppIcon } from '@new-ui/assets/svgs'
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants'
 import { showError } from 'utils/toast'
+import { formatShortDate } from 'utils/dateUtils'
 import {
   NotificationItem,
   NotificationCategory,
@@ -91,18 +92,8 @@ const isToday = (iso?: string): boolean => {
   )
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
 /** Format an ISO date to the existing card style, e.g. "03 Apr. 25". */
-const formatDate = (iso?: string): string => {
-  if (!iso) return ''
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return ''
-  const day = String(d.getDate()).padStart(2, '0')
-  const month = MONTHS[d.getMonth()]
-  const year = String(d.getFullYear()).slice(-2)
-  return `${day} ${month}. ${year}`
-}
+const formatDate = (iso?: string): string => formatShortDate(iso)
 
 /** Set of valid navigation screen names for best-effort deep-link routing. */
 const SCREEN_NAMES = new Set<string>(Object.values(NAVIGATION_SCREENS))

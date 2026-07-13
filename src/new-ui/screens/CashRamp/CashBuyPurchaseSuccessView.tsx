@@ -33,11 +33,11 @@ const CashBuyPurchaseSuccessView: React.FC<Props> = ({ receipt, onDone }) => {
   const onCopy = useCallback(() => {
     const id = receipt.transactionId.trim();
     if (!id) {
-      showError("No transaction ID to copy.");
+      showError("Nothing to copy", "No transaction ID available.");
       return;
     }
     Clipboard.setString(id);
-    showSuccess("Transaction ID copied.");
+    showSuccess("Copied", "Transaction ID copied to clipboard.");
   }, [receipt.transactionId]);
 
   const dateLabel = receipt.completedAt.toLocaleString(undefined, {

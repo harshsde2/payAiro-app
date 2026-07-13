@@ -67,7 +67,7 @@ export const useScratchCards = (enabled = true) => {
           error?.response?.data?.message ||
           error?.message ||
           "Failed to fetch scratch cards";
-        showError(errorMessage);
+        showError("Something went wrong", errorMessage);
         throw error;
       }
     },
@@ -101,7 +101,7 @@ export const useScratchCard = () => {
         data?.data?.toast_message ||
         data?.data?.message ||
         "Card scratched successfully!";
-      showSuccess(toastMessage);
+      showSuccess("Success", toastMessage);
 
       // Invalidate and refetch scratch cards to update the UI
       queryClient.invalidateQueries({ queryKey: AuthQueryKeys.scratchCards() });
@@ -113,7 +113,7 @@ export const useScratchCard = () => {
         error?.response?.data?.message ||
         error?.message ||
         "Failed to scratch card. Please try again.";
-      showError(errorMessage);
+      showError("Something went wrong", errorMessage);
     },
   });
 };
@@ -136,7 +136,7 @@ export const useClaimScratchReward = () => {
         data?.message ||
         data?.data?.message ||
         "Rewards claimed successfully!";
-      showSuccess(toastMessage);
+      showSuccess("Success", toastMessage);
 
       // Invalidate and refetch scratch cards to update the UI
       queryClient.invalidateQueries({ queryKey: AuthQueryKeys.scratchCards() });
@@ -148,7 +148,7 @@ export const useClaimScratchReward = () => {
         error?.response?.data?.message ||
         error?.message ||
         "Failed to claim rewards. Please try again.";
-      showError(errorMessage);
+      showError("Something went wrong", errorMessage);
     },
   });
 };

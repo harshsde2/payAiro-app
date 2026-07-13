@@ -9,6 +9,7 @@ import { AppIcon } from "@new-ui/assets/svgs";
 import { useTheme } from "@new-ui/styles/ThemeContext";
 import { sellReadyCodeStyles } from "@new-ui/styles/screens/cashRamp/sellReadyCodeStyles";
 import { useCashOfframpPickupCodePoll } from "query/hooks/useCoinmeCashRamp";
+import { invalidateTransactionDataWithSettle } from "query/invalidateTransactionData";
 import { buildAddressLine } from "../LocationFinder/locationFinder.utils";
 import SellCashPickupInstructionsModal from "./SellCashPickupInstructionsModal";
 import SellReadyCodeHistoryModal from "./SellReadyCodeHistoryModal";
@@ -143,6 +144,16 @@ const SellReadyCodeWaitingScreen: React.FC = () => {
       setHistoryModalOpen(true);
     }
   }, [executePhase, postExecute?.partnerTransactionId, session, userId]);
+
+  // Cash sell completes on this screen (not TransactionResult), so refresh
+  // balances + history in the background once the sell succeeds. Fires once.
+  const didInvalidateSellRef = useRef(false);
+  useEffect(() => {
+    if (executePhase === "success" && !didInvalidateSellRef.current) {
+      didInvalidateSellRef.current = true;
+      invalidateTransactionDataWithSettle();
+    }
+  }, [executePhase]);
 
   const exitSellFlow = useCallback(() => {
     exitSellCashRampFlow(navigation, session);

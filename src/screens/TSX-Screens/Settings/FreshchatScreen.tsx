@@ -243,7 +243,7 @@ const FreshchatScreen = () => {
     setNativeModalVisible(true);
     try {
       if (!isSDKReady) {
-        showError("Chat is not ready. Please try again.");
+        showError("Chat unavailable", "Chat is not ready. Please try again.");
         return;
       }
 
@@ -251,7 +251,7 @@ const FreshchatScreen = () => {
       await Freshchat.showConversations();
     } catch (error: any) {
       console.error("Error opening chat:", error);
-      showError("Failed to open chat. Please try again.");
+      showError("Couldn't open chat", "Please try again.");
     } finally {
       // Reset flag AFTER chat modal closes (with delay to ensure app state change completes first)
       // The delay is important because the app state change to 'active' may happen AFTER Freshchat.showConversations() resolves/rejects
@@ -264,7 +264,7 @@ const FreshchatScreen = () => {
   const openFAQs = async () => {
     try {
       if (!isSDKReady) {
-        showError("FAQs are not ready. Please try again.");
+        showError("FAQs unavailable", "FAQs are not ready. Please try again.");
         return;
       }
 
@@ -272,7 +272,7 @@ const FreshchatScreen = () => {
       await Freshchat.showFAQs();
     } catch (error: any) {
       console.error("Error opening FAQs:", error);
-      showError("Failed to open FAQs. Please try again.");
+      showError("Couldn't open FAQs", "Please try again.");
     }
   };
 

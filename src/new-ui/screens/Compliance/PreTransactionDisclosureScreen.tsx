@@ -218,7 +218,7 @@ const PreTransactionDisclosureScreen: React.FC = () => {
     const msg = getCoinmeTradeQuoteErrorMessage(quoteError);
     if (lastQuoteErrorToast.current === msg) return;
     lastQuoteErrorToast.current = msg;
-    showError(msg);
+    showError('Quote unavailable', msg);
   }, [isQuoteError, quoteError]);
 
   const handleConfirm = useCallback(async () => {
@@ -249,7 +249,7 @@ const PreTransactionDisclosureScreen: React.FC = () => {
       markPreTxDisclosureAccepted();
       navigation.goBack();
     } catch {
-      showError('Something went wrong. Please try again.');
+      showError('Something went wrong', 'Please try again.');
     }
   }, [acknowledged, acknowledge, content, feeBreakdown, isSubmitting, navigation, tradeType, usdAmount]);
 

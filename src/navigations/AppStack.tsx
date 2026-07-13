@@ -29,6 +29,7 @@ import { AppIcon } from "new-ui/assets/svgs";
 import { useTheme as useNewTheme } from "@new-ui/styles/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
 import SettingsScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/SettingsScreen";
+import PrivacyAndSecurityScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/PrivacyAndSecurityScreen";
 import CoinmeAgreementScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/CoinmeAgreementScreen";
 import DisclosureHistoryScreen from "new-ui/screens/KebabMenuScreens/DisclosureHistoryScreen/DisclosureHistoryScreen";
 import EmailVerificationScreen from "new-ui/screens/Auth/EmailVerification/EmailVerificationScreen";
@@ -358,6 +359,11 @@ export default function AppStack() {
         options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Contacts' }}
         name={NAVIGATION_SCREENS.NEW_ADD_CONTACT_SCREEN}
         component={AddContactScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Privacy and Security' }}
+        name={NAVIGATION_SCREENS.NEW_PRIVACY_SECURITY_SCREEN}
+        component={PrivacyAndSecurityScreen}
       />
       <Stack.Screen
         options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Bank Statement' }}

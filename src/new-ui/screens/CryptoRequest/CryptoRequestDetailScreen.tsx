@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { ActivityIndicator, Alert, StyleSheet, View } from "react-native";
 import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
 import { useSelector } from "react-redux";
-import moment from "moment";
+import { formatDotDateTime } from "utils/dateUtils";
 import { useTheme } from "@new-ui/styles/ThemeContext";
 import type { ITheme } from "@new-ui/styles/themes/themeTypes";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
@@ -113,12 +113,12 @@ const CryptoRequestDetailScreen: React.FC = () => {
   if (request.note) rows.push({ label: "Note", value: request.note });
   rows.push({
     label: "Created",
-    value: moment(request.createdAt).format("MMM D, YYYY · h:mm A"),
+    value: formatDotDateTime(request.createdAt),
   });
   if (request.expiresAt) {
     rows.push({
       label: "Expires",
-      value: moment(request.expiresAt).format("MMM D, YYYY · h:mm A"),
+      value: formatDotDateTime(request.expiresAt),
     });
   }
 
@@ -193,7 +193,10 @@ const CryptoRequestDetailScreen: React.FC = () => {
           onPress: () =>
             cancelRequest(request.id, {
               onSuccess: () => {
-                showSuccess(isSent ? "Request cancelled." : "Request declined.");
+                showSuccess(
+                  isSent ? "Request cancelled" : "Request declined",
+                  isSent ? "Your request has been cancelled." : "The request has been declined."
+                );
                 navigation.goBack();
               },
               onError: (error: unknown) => {

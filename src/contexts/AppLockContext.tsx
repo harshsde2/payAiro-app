@@ -271,7 +271,7 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
     const lastPromptAt = getNumber(STORAGE_KEYS.APP_LOCK_PIN_SETUP_PROMPT_AT);
     const now = Date.now();
     if (lastPromptAt !== undefined && now - lastPromptAt < PIN_SETUP_REMINDER_MS) {
-      showError("Please set your PIN to continue transactions.");
+      showError("PIN required", "Please set your PIN to continue transactions.");
       return;
     }
 

@@ -84,13 +84,13 @@ const SellOtpPlaceholderScreen: React.FC = () => {
     requestPhoneOtp(undefined, {
       onSuccess: (data) => {
         if (data?.ok === false) {
-          showError(data?.message || "Failed to send OTP. Please try again.");
+          showError("Couldn't send OTP", data?.message || "Please try again.");
           return;
         }
-        showSuccess(data?.message || "OTP sent to your registered phone");
+        showSuccess("OTP sent", data?.message || "OTP sent to your registered phone.");
       },
       onError: (error) => {
-        showError(fastApiErrorMessage(error, "Failed to send OTP. Please try again."));
+        showError("Couldn't send OTP", fastApiErrorMessage(error, "Failed to send OTP. Please try again."));
       },
     });
   }, [fastApiErrorMessage, requestPhoneOtp]);
@@ -143,13 +143,13 @@ const SellOtpPlaceholderScreen: React.FC = () => {
   const handleVerifyOTP = useCallback(
     (otpValue?: string) => {
       if (!session) {
-        showError("Missing sale details. Go back and try again.");
+        showError("Missing details", "Sale details are missing. Go back and try again.");
         return;
       }
 
       const enteredOtp = otpValue || otp;
       if (enteredOtp.length < 6) {
-        showError("OTP should be 6 digits");
+        showError("Invalid code", "Please enter all 6 digits.");
         return;
       }
 
@@ -161,7 +161,7 @@ const SellOtpPlaceholderScreen: React.FC = () => {
             setIsVerifying(false);
             if (!isPhoneOtpVerifySuccess(data)) {
               const body = data as { message?: string };
-              showError(body?.message || "Invalid OTP. Please try again.");
+              showError("Verification failed", body?.message || "Invalid OTP. Please try again.");
               otpInputRef.current?.clear();
               setOtp("");
               hasAutoVerifiedRef.current = false;
@@ -172,7 +172,7 @@ const SellOtpPlaceholderScreen: React.FC = () => {
             });
           },
           onError: (error) => {
-            showError(fastApiErrorMessage(error, "Invalid OTP. Please try again."));
+            showError("Verification failed", fastApiErrorMessage(error, "Invalid OTP. Please try again."));
             setIsVerifying(false);
             otpInputRef.current?.clear();
             setOtp("");

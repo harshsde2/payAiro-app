@@ -76,13 +76,13 @@ const EmailVerificationScreen: React.FC = () => {
     requestEmailOtp(undefined, {
       onSuccess: (data) => {
         if (data?.ok === false) {
-          showError(data?.message || "Failed to send code. Please try again.");
+          showError("Couldn't send code", data?.message || "Please try again.");
           return;
         }
-        showSuccess(data?.message || "Verification code sent to your email.");
+        showSuccess("Code sent", data?.message || "Verification code sent to your email.");
       },
       onError: (error) => {
-        showError(fastApiErrorMessage(error, "Failed to send code. Please try again."));
+        showError("Couldn't send code", fastApiErrorMessage(error, "Failed to send code. Please try again."));
       },
     });
   }, [fastApiErrorMessage, requestEmailOtp]);
@@ -123,7 +123,7 @@ const EmailVerificationScreen: React.FC = () => {
     (otpValue?: string) => {
       const enteredOtp = otpValue || otp;
       if (enteredOtp.length < 6) {
-        showError("Code should be 6 digits");
+        showError("Invalid code", "Please enter all 6 digits.");
         return;
       }
 
@@ -135,7 +135,7 @@ const EmailVerificationScreen: React.FC = () => {
             if (!isEmailOtpVerifySuccess(data)) {
               setIsVerifying(false);
               const body = data as { message?: string };
-              showError(body?.message || "Invalid code. Please try again.");
+              showError("Verification failed", body?.message || "Invalid code. Please try again.");
               otpInputRef.current?.clear();
               setOtp("");
               hasAutoVerifiedRef.current = false;
@@ -144,12 +144,12 @@ const EmailVerificationScreen: React.FC = () => {
             // Re-fetch /me so email_verified flips app-wide (banner clears, gate opens).
             await refreshUsersMe(dispatch);
             setIsVerifying(false);
-            showSuccess("Email verified successfully.");
+            showSuccess("Email verified", "Your email has been verified successfully.");
             onVerified?.();
             navigation.goBack();
           },
           onError: (error) => {
-            showError(fastApiErrorMessage(error, "Invalid code. Please try again."));
+            showError("Verification failed", fastApiErrorMessage(error, "Invalid code. Please try again."));
             setIsVerifying(false);
             otpInputRef.current?.clear();
             setOtp("");

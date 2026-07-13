@@ -72,7 +72,7 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
   const isLoading = userLoading || pendingVerification;
 
   const showValidationError = (message: string): void => {
-    showError(message);
+    showError('Something went wrong', message);
   };
 
   const handleSenderChange = useCallback((text: string) => {

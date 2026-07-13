@@ -58,15 +58,15 @@ const SellSummaryScreen: React.FC = () => {
   const proceedConfirm = useCallback(() => {
     if (!session || !acknowledged) return;
     if (!String(session.sourceWalletAddress ?? "").trim()) {
-      showError(ERR_MISSING_WALLET);
+      showError("Wallet missing", ERR_MISSING_WALLET);
       return;
     }
     if (!String(session.location?.locationReference ?? "").trim()) {
-      showError(ERR_MISSING_LOCATION);
+      showError("Location missing", ERR_MISSING_LOCATION);
       return;
     }
     if (!String(session.chain ?? "").trim()) {
-      showError(ERR_MISSING_CHAIN);
+      showError("Network missing", ERR_MISSING_CHAIN);
       return;
     }
     navigation.navigate(NAVIGATION_SCREENS.NEW_CASH_SELL_OTP as never, { session } as never);

@@ -1,6 +1,6 @@
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
-import moment from "moment";
+import { formatActivityTimestamp } from "utils/dateUtils";
 import { useTheme } from "@new-ui/styles/ThemeContext";
 import { recentActivityCardStyles } from "@new-ui/styles/components/recentActivityCardStyles";
 import CustomText from "@new-ui/components/common-components/CustomText";
@@ -173,7 +173,7 @@ const RecentActivityCard: React.FC<IRecentActivityCardProps> = ({
         : display.colorKey === "error"
           ? theme.colors.error
           : theme.colors.warning;
-    const datetime = moment(item.createdAt).format("DD MMM[.] YY | hh:mma");
+    const datetime = formatActivityTimestamp(item.createdAt);
 
     const body = (
       <>
@@ -244,7 +244,7 @@ const RecentActivityCard: React.FC<IRecentActivityCardProps> = ({
   const statusLower = String(item.status ?? "").toLowerCase();
   isPending = statusLower === "pending" || statusLower === "processing";
 
-  const datetime = moment(item.createdAt).format("DD MMM[.] YY | hh:mma");
+  const datetime = formatActivityTimestamp(item.createdAt);
   const pendingDotColor = theme.colors.warning;
 
   const avatar = (

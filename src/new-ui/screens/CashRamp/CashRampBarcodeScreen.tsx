@@ -6,6 +6,7 @@ import { useHeaderHeight } from "@react-navigation/elements";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
 import { useTheme } from "@new-ui/styles/ThemeContext";
 import { useUserCryptoMarketList } from "query/hooks/useCrypto";
+import { invalidateTransactionDataWithSettle } from "query/invalidateTransactionData";
 import {
   useCoinmeCashOfframpExecuteMutation,
   useCoinmeOrderTemplateMutation,
@@ -89,6 +90,16 @@ const CashRampBarcodeScreen: React.FC = () => {
   const [sellSessionStatus, setSellSessionStatus] = useState<SellSessionStatus>("loading");
   const [sellResponse, setSellResponse] = useState<CoinmeCashOfframpExecuteResponse | null>(null);
   const [sellRetryKey, setSellRetryKey] = useState(0);
+
+  // Cash buy completes on its own success view (not TransactionResult), so refresh
+  // balances + history in the background once the receipt appears. Guarded to fire once.
+  const didInvalidateReceiptRef = useRef(false);
+  useEffect(() => {
+    if (receipt && !didInvalidateReceiptRef.current) {
+      didInvalidateReceiptRef.current = true;
+      invalidateTransactionDataWithSettle();
+    }
+  }, [receipt]);
 
   const { mutateAsync: postOrderTemplate } = useCoinmeOrderTemplateMutation();
   const { mutateAsync: postCashOfframp } = useCoinmeCashOfframpExecuteMutation();
@@ -228,17 +239,17 @@ const CashRampBarcodeScreen: React.FC = () => {
       setSellResponse(null);
 
       if (!locationRef) {
-        showError(ERR_MISSING_LOCATION);
+        showError("Location missing", ERR_MISSING_LOCATION);
         if (!cancelled) setSellSessionStatus("error");
         return;
       }
       if (!sourceWalletAddress) {
-        showError(ERR_MISSING_WALLET);
+        showError("Wallet missing", ERR_MISSING_WALLET);
         if (!cancelled) setSellSessionStatus("error");
         return;
       }
       if (!chainParam) {
-        showError(ERR_MISSING_CHAIN);
+        showError("Network missing", ERR_MISSING_CHAIN);
         if (!cancelled) setSellSessionStatus("error");
         return;
       }
@@ -254,7 +265,7 @@ const CashRampBarcodeScreen: React.FC = () => {
         });
         if (cancelled) return;
         if (res?.ok === false) {
-          showError(res?.message || ERR_CASH_OFF_RAMP);
+          showError("Something went wrong", res?.message || ERR_CASH_OFF_RAMP);
           setSellSessionStatus("error");
           return;
         }
@@ -266,7 +277,7 @@ const CashRampBarcodeScreen: React.FC = () => {
           typeof e === "object" && e !== null && "message" in e
             ? String((e as { message?: string }).message)
             : "Network error";
-        showError(msg);
+        showError("Something went wrong", msg);
         setSellSessionStatus("error");
       }
     };

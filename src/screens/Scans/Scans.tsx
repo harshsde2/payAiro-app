@@ -29,6 +29,8 @@ import { useSelector } from "react-redux";
 import { useAppLock } from "hooks/useAppLock";
 import { useCameraPermission } from "hooks/useCameraPermission";
 import QRScannerOverlay from "./QRScannerOverlay";
+import { ReceiveQRSheet } from "@new-ui/components/common-components/ReceiveQRSheet";
+import type { IReceiveQRSheetRef } from "@new-ui/components/common-components/ReceiveQRSheet";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import useSelectorAction from "hooks/useSelectorAction";
 import { showError } from "utils/toast";
@@ -170,6 +172,7 @@ export default function Scans(): React.ReactElement {
   const [isCameraActive, setIsCameraActive] = useState<boolean>(true);
   const cameraRef = useRef<Camera>(null);
   const isProcessingRef = useRef<boolean>(false);
+  const receiveSheetRef = useRef<IReceiveQRSheetRef>(null);
 
   // For send QR scans, we pause scanning and resolve the scanned identifier via user-search,
   // then navigate to EnterAmount with the matched contact object.
@@ -205,7 +208,7 @@ export default function Scans(): React.ReactElement {
     }
 
     // No exact match found => resume scanning.
-    showError("Recipient not found");
+    showError("Recipient not found", "We couldn't find that recipient.");
     setPendingSendIdentifier(null);
     isProcessingRef.current = false;
     setIsScanning(true);
@@ -266,7 +269,7 @@ export default function Scans(): React.ReactElement {
     // console.log("type =>", type);
     // console.log("sender =>", sender);
     if(sender === myUsername){
-      showError("You cannot scan your own QR code");
+      showError("Invalid QR code", "You can't scan your own QR code.");
       isProcessingRef.current = false;
       setIsScanning(true);
       setIsCameraActive(true);
@@ -284,7 +287,7 @@ export default function Scans(): React.ReactElement {
         typeof sender === "string" ? sender.trim() : String(sender).trim();
 
       if (!trimmedSender) {
-        showError("Recipient not found");
+        showError("Recipient not found", "We couldn't find that recipient.");
         isProcessingRef.current = false;
         setIsScanning(true);
         setIsCameraActive(true);
@@ -446,11 +449,12 @@ export default function Scans(): React.ReactElement {
     <View style={styles.permissionContainer}>
       <SvgIcons.AddCamera width={80} height={80} />
       <CustomText variant="h3" style={styles.permissionTitle}>
-        Camera Permission Required
+        Scan QR Codes
       </CustomText>
       <CustomText style={styles.permissionText}>
-        To scan QR codes, PayAiro needs access to your camera.
-        {!canAskAgain && " Please enable camera access in your device settings."}
+        {canAskAgain
+          ? "PayAiro uses your camera to scan QR codes."
+          : "Camera access is turned off. Please enable it in your device settings to scan QR codes."}
       </CustomText>
       <TouchableOpacity
         style={styles.permissionButton}
@@ -458,7 +462,7 @@ export default function Scans(): React.ReactElement {
         activeOpacity={0.8}
       >
         <CustomText style={styles.permissionButtonText}>
-          {canAskAgain ? "Grant Permission" : "Open Settings"}
+          {canAskAgain ? "Continue" : "Open Settings"}
         </CustomText>
       </TouchableOpacity>
     </View>
@@ -510,7 +514,7 @@ export default function Scans(): React.ReactElement {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.secondaryButton}
-            onPress={() => navigation.navigate(NAVIGATION_SCREENS.RECEIVE)}
+            onPress={() => receiveSheetRef.current?.open()}
             activeOpacity={0.8}
           >
             <CustomText style={styles.secondaryButtonText}>
@@ -518,6 +522,7 @@ export default function Scans(): React.ReactElement {
             </CustomText>
           </TouchableOpacity>
         </View>
+        <ReceiveQRSheet ref={receiveSheetRef} />
       </ScreenContainer>
     );
   }
@@ -526,6 +531,9 @@ export default function Scans(): React.ReactElement {
     <ScreenContainer padding={0}>
       {/* Top action bar */}
       <View style={styles.topBar}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <SvgIcons.LeftArrowWhite width={25} height={25} />
+        </TouchableOpacity>
         <View style={styles.topBarActions}>
           <SvgIcons.ImageIconWhite
             onPress={uploadFromGallery}
@@ -535,7 +543,7 @@ export default function Scans(): React.ReactElement {
           
           {torchMode === "on" ? <SvgIcons.FlashlightOn onPress={toggleTorchMode} width={25} height={25} /> : <SvgIcons.FlashlightOff onPress={toggleTorchMode} width={25} height={25} />}
           <SvgIcons.QRCodeWhite
-            onPress={() => navigation.navigate(NAVIGATION_SCREENS.RECEIVE)}
+            onPress={() => receiveSheetRef.current?.open()}
             width={30}
             height={30}
           />
@@ -566,6 +574,8 @@ export default function Scans(): React.ReactElement {
         overlayOpacity={0.65}
         isScanning={isScanning}
       />
+
+      <ReceiveQRSheet ref={receiveSheetRef} />
     </ScreenContainer>
   );
 }

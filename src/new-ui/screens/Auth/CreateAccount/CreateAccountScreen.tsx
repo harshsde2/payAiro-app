@@ -8,7 +8,7 @@ import CustomText from "@new-ui/components/common-components/CustomText";
 import { TextInput, Button } from "@new-ui/components/common-components/layout";
 import { AppIcon } from "@new-ui/assets/svgs";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
-import { showError, showSuccess } from "utils/toast";
+import { showError, showSuccess, getApiErrorMessage } from "utils/toast";
 import { validateEmailOrPhone } from "utils/validation";
 import { getSmsHash } from "utils/smsHash";
 import { useUserOtpRequest } from "query/hooks/useAPIAuth";
@@ -84,7 +84,7 @@ const CreateAccountScreen: React.FC = () => {
     if (!validationResult.isValid) {
       showError(
         validationResult.errorMessage || "Invalid input",
-        validationResult.helperText || ""
+        validationResult.helperText || "Please check and try again"
       );
       return null;
     }
@@ -138,7 +138,7 @@ const CreateAccountScreen: React.FC = () => {
         setIsSubmitting(false);
         if (data?.status) {
           console.log("data =>", JSON.stringify(data, null, 2));
-          showSuccess(successMessage);
+          showSuccess("Verification code sent", successMessage);
           // NOTE: keep REFERRAL_CODE / REFERRAL_CLICK_ID in storage until OTP
           // verify, where they're attached to the new-signup attribution and
           // then cleared. (Previously removed here, before verify could use it.)
@@ -162,10 +162,10 @@ const CreateAccountScreen: React.FC = () => {
       },
       onError: (error: any) => {
         setIsSubmitting(false);
-        const errorMsg =
-          error?.response?.data?.message ||
-          "Failed to send OTP. Please try again";
-        showError(errorMsg, "Please try again");
+        showError(
+          "Sign up failed",
+          getApiErrorMessage(error, "Failed to send OTP. Please try again.")
+        );
       },
     });
   };
@@ -211,8 +211,7 @@ const CreateAccountScreen: React.FC = () => {
         color={theme.colors.textSecondary}
         style={styles.instructionText}
       >
-        Enter your name, email address and referral code(if any) to create
-        account.
+        Enter your phone number and referral code(if any) to create account.
       </CustomText>
 
       {/* <View style={styles.inputContainer}>
@@ -226,20 +225,12 @@ const CreateAccountScreen: React.FC = () => {
 
       <View style={styles.inputContainer}>
         <TextInput
-          label={
-            isProductionEnv
-              ? "Enter your email"
-              : "Enter phone number"
-          }
+          label="Enter phone number"
           leftIcon={<View style={{ flexDirection: "row", alignItems: "center", gap: 1 }}>
             <CustomText>+</CustomText>
             <CustomText>1</CustomText>
           </View>}
-          placeholder={
-            isProductionEnv
-              ? "joe@gmail.com"
-              : "9876543210"
-          }
+          placeholder="9876543210"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"

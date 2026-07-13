@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import moment from "moment";
+import { formatDotDateTime } from "utils/dateUtils";
 import CustomText from "@new-ui/components/common-components/CustomText";
 import { TextInput, Button } from "@new-ui/components/common-components/layout";
 import { useTheme } from "@new-ui/styles/ThemeContext";
@@ -114,9 +114,7 @@ const RequestDetailsSheet: React.FC<Props> = ({
                 variant="body"
                 color={expiry ? theme.colors.text : theme.colors.greyDark}
               >
-                {expiry
-                  ? moment(expiry).format("MMM D, YYYY · h:mm A")
-                  : "Never expires"}
+                {expiry ? formatDotDateTime(expiry) : "Never expires"}
               </CustomText>
             </TouchableOpacity>
             {expiry && (

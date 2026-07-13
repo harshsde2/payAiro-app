@@ -34,6 +34,7 @@ export const useWalletBalance = () => {
     queryFn: async () => {
       return await apiClient.get<ApiResponse<Balance>>(WALLET.BALANCE);
     },
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    // Money-authoritative: never serve a stale balance — always revalidate.
+    staleTime: queryStaleTime.INSTANT_STALE_TIME,
   });
 };

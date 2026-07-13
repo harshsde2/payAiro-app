@@ -55,14 +55,14 @@ export default function UploadFile({
         ],
       })) as any;
       if ((result[0] as any).size > maxFileSize) {
-        showError("File Size should be less than 2MB");
+        showError("File too large", "Please choose a file smaller than 2MB.");
       } else {
         selectedFile(result);
-        showSuccess("File Uploaded Successfully");
+        showSuccess("File uploaded", "Your file was uploaded successfully.");
       }
     } catch (error) {
       if (!DocumentPicker.isCancel(error)) {
-        showError("Error picking document");
+        showError("Couldn't pick file", "Something went wrong. Please try again.");
       }
     }
   };

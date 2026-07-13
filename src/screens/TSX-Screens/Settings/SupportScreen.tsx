@@ -88,7 +88,7 @@ const SupportScreen = () => {
     } catch (error: any) {
       const errorMessage =
         error?.message || "An unexpected error occurred. Please try again.";
-      showError(errorMessage);
+      showError("Something went wrong", errorMessage);
       console.error("Support form submission error:", error);
     }
   };

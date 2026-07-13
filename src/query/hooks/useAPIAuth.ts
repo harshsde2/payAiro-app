@@ -378,9 +378,9 @@ export const useKYCStatus = () => {
       // persist full object in redux
       useDispatchAction(setKycStatus(data?.data ?? data));
       if (status === false) {
-        showError(toast || "KYC status: not completed");
+        showError("KYC incomplete", toast || "Your KYC is not yet complete.");
       } else {
-        showSuccess(toast || "KYC status completed");
+        showSuccess("KYC complete", toast || "Your KYC is complete.");
       }
     },
     onError: (error: any) => {
@@ -389,7 +389,7 @@ export const useKYCStatus = () => {
       if (error?.response?.data) {
         useDispatchAction(setKycStatus(error.response.data));
       }
-      showError(toast);
+      showError("Something went wrong", toast);
     },
   });
 };

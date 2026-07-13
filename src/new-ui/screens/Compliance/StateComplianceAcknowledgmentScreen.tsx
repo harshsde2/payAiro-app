@@ -111,7 +111,7 @@ const StateComplianceAcknowledgmentScreen: React.FC = () => {
       onComplete?.();
       navigation.goBack();
     } catch {
-      showError('Something went wrong. Please try again.');
+      showError('Something went wrong', 'Please try again.');
     }
   }, [ack1, ack2, acknowledge, canContinue, isMN, language, navigation, onComplete]);
 

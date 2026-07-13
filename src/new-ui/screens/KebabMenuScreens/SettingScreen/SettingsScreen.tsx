@@ -26,7 +26,7 @@ const SettingsScreen = () => {
         {
             title: 'Privacy and Security',
             icon: <AppIcon.Privacy />,
-            onPress: () => {},
+            onPress: () => navigation.navigate(NAVIGATION_SCREENS.NEW_PRIVACY_SECURITY_SCREEN as never),
         },
         {
             title: 'Bank Statements',

@@ -94,7 +94,7 @@ export function useScratchCard() {
       ]);
     },
     onError: (error: any) => {
-      showError(rewardsErrorMessage(error, 'Could not scratch this card.'));
+      showError("Couldn't scratch card", rewardsErrorMessage(error, 'Could not scratch this card. Please try again.'));
     },
   });
 }
@@ -109,7 +109,7 @@ export function useClaimPoints() {
         typeof points === 'number' ? { points } : {}
       ),
     onSuccess: async (data) => {
-      showSuccess(data?.message || 'Points claimed successfully!');
+      showSuccess("Points claimed", data?.message || 'Your points have been claimed.');
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: rewardKeys.points() }),
         queryClient.invalidateQueries({
@@ -118,7 +118,7 @@ export function useClaimPoints() {
       ]);
     },
     onError: (error: any) => {
-      showError(rewardsErrorMessage(error, 'Could not claim points.'));
+      showError("Couldn't claim points", rewardsErrorMessage(error, 'Could not claim points. Please try again.'));
     },
   });
 }

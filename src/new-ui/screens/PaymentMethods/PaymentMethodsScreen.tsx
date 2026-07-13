@@ -44,13 +44,13 @@ const PaymentMethodsScreen: React.FC = () => {
       setDeletingId(item.payment_method_id);
       try {
         const res = await deleteMutation.mutateAsync(item.payment_method_id);
-        showSuccess(res?.message || 'Card removed');
+        showSuccess('Card removed', res?.message || 'Your card has been removed.');
       } catch (e: any) {
         const msg =
           e?.response?.data?.message ||
           e?.message ||
           'Failed to remove card. Please try again.';
-        showError(String(msg));
+        showError("Couldn't remove card", String(msg));
       } finally {
         setDeletingId(null);
       }
@@ -81,7 +81,7 @@ const PaymentMethodsScreen: React.FC = () => {
     async (_result: AddedCardResult) => {
       setAddCardVisible(false);
       await refetch();
-      showSuccess('Debit card added');
+      showSuccess('Card added', 'Your debit card is ready to use.');
     },
     [refetch]
   );

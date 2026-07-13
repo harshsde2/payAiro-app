@@ -75,6 +75,9 @@ const NewAddBalanceScreen: React.FC = () => {
   const { data: walletResponse, isPending: isWalletPending } = useWalletAddresses();
   const walletRows = walletResponse?.walletAddresses ?? [];
 
+  console.log('marketRows', marketRows);
+  console.log('walletRows', walletRows);
+
   const cryptoAsset = useMemo((): HiddenTradeCryptoAsset | null => {
     const sym = DEFAULT_TRADE_ASSET;
     const marketItem = marketRows.find((i) => String(i.asset ?? '').toUpperCase() === sym);
@@ -85,6 +88,7 @@ const NewAddBalanceScreen: React.FC = () => {
         String(r.currencySymbol ?? '').toUpperCase() === sym ||
         String(r.assetId ?? '').toUpperCase() === sym
     );
+    console.log('solRow', solRow);
     const chain = String(solRow?.chain ?? sym).toUpperCase();
     return {
       asset: sym,
@@ -95,6 +99,8 @@ const NewAddBalanceScreen: React.FC = () => {
       sourceWalletAddress: solRow?.walletAddress,
     };
   }, [marketRows, walletRows]);
+
+  console.log('cryptoAsset', cryptoAsset);
 
   const tradePriceUSD = cryptoAsset?.currentPrice ?? 0;
 
@@ -223,7 +229,7 @@ const NewAddBalanceScreen: React.FC = () => {
         isError: true,
         errorMessage,
       } as never);
-      showError(errorMessage);
+      showError('Purchase failed', errorMessage);
     }
   }, [
     cryptoAsset,
@@ -244,7 +250,7 @@ const NewAddBalanceScreen: React.FC = () => {
         return;
       }
       if (!cryptoAsset) {
-        showError('Missing crypto details; please try again.');
+        showError('Missing details', 'Crypto details are missing. Please try again.');
         return;
       }
       navigation.navigate(NAVIGATION_SCREENS.NEW_CASH_RAMP_LOCATION_FINDER as never, {
@@ -257,11 +263,11 @@ const NewAddBalanceScreen: React.FC = () => {
     }
 
     if (!selectedPaymentMethod) {
-      showError('Please select a payment method');
+      showError('Select a payment method', 'Please choose how you want to pay.');
       return;
     }
     if (!cryptoAsset || tradePriceUSD <= 0) {
-      showError('Missing current price; please try again.');
+      showError('Price unavailable', 'Please try again in a moment.');
       return;
     }
     if (!(amountText.length > 0 && Number.isFinite(parsedAmount) && parsedAmount > 0)) {

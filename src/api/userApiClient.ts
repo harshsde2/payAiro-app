@@ -252,7 +252,7 @@ userApi.interceptors.response.use(
       }
 
       // If refresh fails, surface a single user-facing message.
-      showError("Session expired. Please login again.");
+      showError("Session expired", "Please log in again to continue.");
     }
 
     return Promise.reject(error);

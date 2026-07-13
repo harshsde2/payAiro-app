@@ -7,7 +7,11 @@ import {
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
-import moment from "moment";
+import {
+  parseServerDate,
+  getDayGroupKey,
+  getDayGroupLabel,
+} from "utils/dateUtils";
 import { useTheme } from "@new-ui/styles/ThemeContext";
 import { activityScreenStyles } from "@new-ui/styles/screens/activity/activityScreenStyles";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
@@ -30,19 +34,17 @@ const FILTER_CHIPS = ["All", "Send", "Received", "Pending", "Completed"] as cons
 
 function groupActivityItemsByDay(items: RecentActivityItem[]) {
   const sorted = [...items].sort(
-    (a, b) => moment(b.createdAt).valueOf() - moment(a.createdAt).valueOf()
+    (a, b) =>
+      parseServerDate(b.createdAt).valueOf() -
+      parseServerDate(a.createdAt).valueOf()
   );
   const map = new Map<
     string,
     { sectionKey: string; label: string; items: RecentActivityItem[] }
   >();
   for (const it of sorted) {
-    const m = moment(it.createdAt);
-    const sectionKey = m.format("YYYY-MM-DD");
-    let label: string;
-    if (m.isSame(moment(), "day")) label = "Today";
-    else if (m.isSame(moment().subtract(1, "day"), "day")) label = "Yesterday";
-    else label = m.format("DD MMM YY");
+    const sectionKey = getDayGroupKey(it.createdAt);
+    const label = getDayGroupLabel(it.createdAt);
     if (!map.has(sectionKey)) map.set(sectionKey, { sectionKey, label, items: [] });
     map.get(sectionKey)!.items.push(it);
   }

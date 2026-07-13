@@ -9,7 +9,7 @@ const mmkvStorage = {
   },
   setItem,
   removeItem: (key: string) => {
-    // This is required by the persister interface but not used
+    storage.delete(key);
   }
 };
 

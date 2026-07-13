@@ -11,6 +11,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   View,
 } from 'react-native';
 import CustomText from '@new-ui/components/common-components/CustomText';
@@ -211,13 +212,13 @@ const PaymentMethodPickerModal: React.FC<PaymentMethodPickerModalProps> = ({
           setLocalSelectedId(null);
         }
         onPaymentMethodDeleted?.(item.payment_method_id);
-        showSuccess(res?.message || 'Card removed');
+        showSuccess('Card removed', res?.message || 'Your card has been removed.');
       } catch (e: any) {
         const msg =
           e?.response?.data?.message ||
           e?.message ||
           'Failed to remove card. Please try again.';
-        showError(String(msg));
+        showError("Couldn't remove card", String(msg));
       } finally {
         setDeletingId(null);
       }
@@ -490,7 +491,11 @@ const PaymentMethodPickerModal: React.FC<PaymentMethodPickerModalProps> = ({
             </CustomText>
           ) : null}
 
-          <View style={styles.methodsContainer}>
+          <ScrollView
+            style={styles.methodsScroll}
+            contentContainerStyle={styles.methodsContainer}
+            showsVerticalScrollIndicator={false}
+          >
             <Pressable
               onPress={() => setDebitExpanded((s) => !s)}
               style={({ pressed }) => [styles.sectionHeaderRow, { opacity: pressed ? 0.9 : 1 }]}
@@ -559,7 +564,7 @@ const PaymentMethodPickerModal: React.FC<PaymentMethodPickerModalProps> = ({
               <AppIcon.ApplePay width={24} height={24} />
             )}
             {includeRetailCashOption ? renderRetailCashRow() : null}
-          </View>
+          </ScrollView>
 
           <View style={styles.confirmContainer}>
             <Button onPress={handleConfirm} disabled={!canConfirm}>

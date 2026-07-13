@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import Clipboard from "@react-native-clipboard/clipboard";
-import moment from "moment";
+import { formatLongDateTime } from "utils/dateUtils";
 import { useSelector } from "react-redux";
 import CustomText from "@new-ui/components/common-components/CustomText";
 import Button from "@new-ui/components/common-components/layout/Button";
@@ -161,7 +161,7 @@ const CashOffRampTransactionDetailsBody: React.FC<Props> = ({
         : theme.colors.error;
 
   const asset = (details?.crypto_code ?? transactionData.crypto_details?.token ?? "Crypto").toUpperCase();
-  const dateLabel = moment(transactionData.created_at).format("MMMM D, YYYY [at] h:mm A");
+  const dateLabel = formatLongDateTime(transactionData.created_at);
   const txnId = transactionData.transaction_id;
 
   const addressLines = useMemo(() => {
@@ -177,11 +177,11 @@ const CashOffRampTransactionDetailsBody: React.FC<Props> = ({
   const onCopy = useCallback((value: string, label: string) => {
     const v = value.trim();
     if (!v) {
-      showError(`No ${label} to copy.`);
+      showError("Nothing to copy", `No ${label} available.`);
       return;
     }
     Clipboard.setString(v);
-    showSuccess(`${label} copied.`);
+    showSuccess("Copied", `${label} copied to clipboard.`);
   }, []);
 
   const openSupport = useCallback(() => {

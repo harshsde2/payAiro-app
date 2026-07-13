@@ -1,31 +1,22 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   View,
   StyleSheet,
-  Platform,
-  Alert,
-  Clipboard,
-  ToastAndroid,
   TouchableOpacity,
   Image,
   Modal,
-  ScrollView,
 } from "react-native";
 import CustomText from "@new-ui/components/common-components/CustomText";
 import { useTheme as useNewTheme } from "@new-ui/styles/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
+import { BottomTabBarHeightContext } from "@react-navigation/bottom-tabs";
 import { useSelector } from "react-redux";
 import { useTheme } from "styles/ThemeContext";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
-import Share from "react-native-share";
-import { useAppLock } from "hooks/useAppLock";
-import { ReceiveQRCard } from "components/common-components/ReceiveQRCard";
-import type { IReceiveQRCardRef } from "components/common-components/ReceiveQRCard";
-import { SvgIcons } from "constants/svgs";
 import { AppIcon } from "@new-ui/assets/svgs";
-import { BottomSheet } from "@new-ui/components/common-components/BottomSheet";
-import type { IBottomSheetRef } from "@new-ui/components/common-components/BottomSheet/types";
+import { ReceiveQRSheet } from "@new-ui/components/common-components/ReceiveQRSheet";
+import type { IReceiveQRSheetRef } from "@new-ui/components/common-components/ReceiveQRSheet";
 import { Button } from "@new-ui/components/common-components/layout";
 import { performAppLogout } from "utils/performAppLogout";
 
@@ -76,11 +67,14 @@ const NewPersonal: React.FC = () => {
     (s: any) => s.authenticationSlice
   );
   const navigation = useNavigation<any>();
-  const { setNativeModalVisible } = useAppLock();
-  const qrCardRef = useRef<IReceiveQRCardRef>(null);
-  const qrSheetRef = useRef<IBottomSheetRef>(null);
+  // The tab bar floats (position: absolute); reserve space so the last menu row
+  // (Logout) clears it and the list can actually scroll to it.
+  // This screen is also pushed on AppStack (from the dashboard profile icon/kebab),
+  // where there is no tab bar — read the context directly so it returns undefined
+  // instead of throwing, and fall back to 0.
+  const tabBarHeight = React.useContext(BottomTabBarHeightContext) ?? 0;
+  const receiveSheetRef = useRef<IReceiveQRSheetRef>(null);
 
-  const [showQrSheet, setShowQrSheet] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   /** Same mapping as SettingScreen: FastAPI `/me` user + profile → profile fields. */
@@ -166,59 +160,7 @@ const NewPersonal: React.FC = () => {
     []
   );
 
-  const copyToClipboard = (text: string, label: string) => {
-    Clipboard.setString(text);
-    if (Platform.OS === "android") {
-      ToastAndroid.show(`${label} copied`, ToastAndroid.SHORT);
-    } else {
-      Alert.alert(`${label} copied`);
-    }
-  };
-
-  const handleShare = async (uri: string) => {
-    try {
-      await Share.open({
-        title: "PayAiro QR Code",
-        subject: "PayAiro QR Code",
-        url: uri,
-        type: "image/png",
-        filename: `PayAiro_QR_${profileWalletData.username || "qr"}`,
-        failOnCancel: false,
-        message: `PayAiro Payment Details\n\n PayAiro Tag: ${profileWalletData.username}`,
-      });
-    } catch (err: any) {
-      if (err?.message !== "User did not share") {
-        console.log("Error sharing QR:", err);
-      }
-    }
-  };
-
-  const handleDownload = async (uri: string) => {
-    try {
-      await Share.open({
-        title: "PayAiro QR Code",
-        subject: "PayAiro QR Code",
-        url: uri,
-        type: "image/png",
-        filename: `PayAiro_QR_${profileWalletData.username || "qr"}`,
-        failOnCancel: false,
-        saveToFiles: true,
-      });
-    } catch (err: any) {
-      if (err?.message !== "User did not share") {
-        console.log("Error downloading QR:", err);
-      }
-    }
-  };
-
-  const openQrSheet = () => setShowQrSheet(true);
-  const closeQrSheet = () => setShowQrSheet(false);
-
-  useEffect(() => {
-    if (showQrSheet) {
-      requestAnimationFrame(() => qrSheetRef.current?.open());
-    }
-  }, [showQrSheet]);
+  const openQrSheet = () => receiveSheetRef.current?.open();
 
   const handleMenuPress = (route: AppRouteName) => {
     if (route) navigation.navigate(route);
@@ -298,7 +240,12 @@ const NewPersonal: React.FC = () => {
       </View>
 
       {/* Menu list */}
-      <View style={customTheme.sheet}>
+      <View
+        style={[
+          customTheme.sheet,
+          { paddingBottom: tabBarHeight + theme.spacing.spacing[4] },
+        ]}
+      >
         {menuItems.map((item) => (
           <TouchableOpacity
             key={item.key}
@@ -331,55 +278,8 @@ const NewPersonal: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {/* QR bottom sheet */}
-      {showQrSheet && (
-        <Modal visible transparent animationType="fade" onRequestClose={closeQrSheet}>
-          <View style={{ flex: 1 }}>
-            <BottomSheet
-              ref={qrSheetRef}
-              snapPoints={["90%"]}
-              initialSnapIndex={0}
-              enableDrag
-              enableBackdropPress
-              onClose={closeQrSheet}
-            >
-              <ScrollView
-                contentContainerStyle={customTheme.qrSheetContent}
-                showsVerticalScrollIndicator={false}
-              >
-                <ReceiveQRCard
-                  ref={qrCardRef}
-                  title="PayAiro"
-                  subtitle="Scan this QR code to receive funds"
-                  qrValue={{
-                    type: "receive",
-                    username: profileWalletData.username,
-                    tag: profileWalletData.username,
-                  }}
-                  payAiroTag={profileWalletData.username || "N/A"}
-                  onCopyTag={() =>
-                    copyToClipboard(profileWalletData.username || "", "PayAiro Tag")
-                  }
-                  leftButton={{
-                    text: "Download",
-                    icon: <SvgIcons.DownloadBlack width={20} height={20} color="white" />,
-                    onPress: () => qrCardRef.current?.capture(handleDownload),
-                  }}
-                  rightButton={{
-                    text: "Share",
-                    icon: <SvgIcons.ShareIcon width={20} height={20} color="white" />,
-                    onPress: () => qrCardRef.current?.capture(handleShare),
-                  }}
-                  onBeforeCapture={() => setNativeModalVisible(true)}
-                  onAfterCapture={() => {
-                    setTimeout(() => setNativeModalVisible(false), 1000);
-                  }}
-                />
-              </ScrollView>
-            </BottomSheet>
-          </View>
-        </Modal>
-      )}
+      {/* QR bottom sheet (shared with the dashboard Receive action) */}
+      <ReceiveQRSheet ref={receiveSheetRef} />
 
       {/* Logout confirm */}
       <Modal
@@ -515,11 +415,6 @@ const styles = (theme: any, newTheme: any) =>
     },
     rowLabel: {
       color: newTheme.colors.text,
-    },
-    qrSheetContent: {
-      alignItems: "center",
-      paddingTop: theme.spacing.spacing[2],
-      paddingBottom: theme.spacing.spacing[6],
     },
     logoutBackdrop: {
       flex: 1,

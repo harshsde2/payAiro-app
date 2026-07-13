@@ -15,6 +15,7 @@ import Share from "react-native-share";
 import RNFS from "react-native-fs";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import moment from "moment";
+import { formatDetailDate, formatDetailTime } from "utils/dateUtils";
 import Svg, { SvgUri, Circle, Path } from "react-native-svg";
 import { useTheme, Theme } from "styles";
 import CustomText from "tsx-components/CustomText";
@@ -742,7 +743,7 @@ const NewTransactionDetails: FC = () => {
                 color={theme.colors.text.primary}
                 style={slipStyles.slipValueText}
               >
-                {moment(transactionData.created_at).format("DD MMM YYYY")}
+                {formatDetailDate(transactionData.created_at)}
               </CustomText>
             </View>
 
@@ -761,7 +762,7 @@ const NewTransactionDetails: FC = () => {
                 color={theme.colors.text.primary}
                 style={slipStyles.slipValueText}
               >
-                {moment(transactionData.created_at).format("h:mm a")}
+                {formatDetailTime(transactionData.created_at)}
               </CustomText>
             </View>
 

@@ -18,6 +18,8 @@ export interface IDashboardActionConfig {
   screen: DashboardActionScreen;
   params?: Record<string, unknown>;
   requiresExternalAccount?: boolean;
+  /** Opens the Receive QR bottom sheet in-place instead of navigating. */
+  opensReceiveSheet?: boolean;
 }
 
 export const DASHBOARD_BALANCE_CARD_CONSTANTS: IDashboardActionConfig[] = [
@@ -27,7 +29,7 @@ export const DASHBOARD_BALANCE_CARD_CONSTANTS: IDashboardActionConfig[] = [
     screen: "NEW_SEND",
     params: { requested: false },
   },
-  { icon: AppIcon.Receive, name: "Receive", screen: 'NEW_PERSONAL' },
+  { icon: AppIcon.Receive, name: "Receive", screen: 'NEW_PERSONAL', opensReceiveSheet: true },
   { icon: AppIcon.AddBalance, name: "Add Balance", screen: "NEW_ADD_BALANCE" },
   {
     icon: AppIcon.Withdraw,

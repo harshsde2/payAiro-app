@@ -119,40 +119,41 @@ const SellEnterAmountScreen: React.FC = () => {
 
   const onContinue = useCallback(async () => {
     if (!entry || !params?.location) {
-      showError("Missing sell details. Go back and try again.");
+      showError("Missing details", "Sell details are missing. Go back and try again.");
       return;
     }
 
     if (sellMaxUsd < SELL_MIN_AMOUNT_USD) {
-      showError("Insufficient balance to sell");
+      showError("Insufficient balance", "You don't have enough balance to sell.");
       return;
     }
 
     if (selectedUsd < SELL_MIN_AMOUNT_USD) {
-      showError(SELL_MIN_AMOUNT_ERROR);
+      showError("Amount too low", SELL_MIN_AMOUNT_ERROR);
       return;
     }
 
     if (selectedUsd > sellMaxUsd + 0.001) {
       showError(
-        `Maximum available to sell is $${sellMaxUsd.toFixed(2)}`
+        "Amount too high",
+        `Maximum available to sell is $${sellMaxUsd.toFixed(2)}.`
       );
       return;
     }
 
     if (selectedUsd > SELL_MAX_TRANSACTION_USD + 0.001) {
-      showError(`Maximum sale per transaction is $${SELL_MAX_TRANSACTION_USD.toFixed(2)}`);
+      showError("Amount too high", `Maximum sale per transaction is $${SELL_MAX_TRANSACTION_USD.toFixed(2)}.`);
       return;
     }
 
     const clamped = clampSellAmountUsd(selectedUsd, sellMaxUsd);
     if (clamped < SELL_MIN_AMOUNT_USD) {
-      showError(SELL_MIN_AMOUNT_ERROR);
+      showError("Amount too low", SELL_MIN_AMOUNT_ERROR);
       return;
     }
 
     if (Math.abs(selectedUsd - clamped) > 0.01) {
-      showError(`Select an amount in increments of $${SELL_AMOUNT_STEP_USD}`);
+      showError("Invalid amount", `Select an amount in increments of $${SELL_AMOUNT_STEP_USD}.`);
       return;
     }
 

@@ -19,7 +19,7 @@ import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
 import { useUserKycComplete } from "query/hooks/useAPIAuth";
 import { validateEmail } from "utils/validation";
 import { bootstrapMainAppSession } from "auth/bootstrapMainAppSession";
-import { showError, showSuccess } from "utils/toast";
+import { showError, showSuccess, getApiErrorMessage } from "utils/toast";
 
 const KYCScreen: React.FC = () => {
   const navigation = useNavigation<KYCScreenNavigationProp>();
@@ -79,7 +79,7 @@ const KYCScreen: React.FC = () => {
     if (!emailValidation.isValid) {
       showError(
         emailValidation.errorMessage || "Invalid email",
-        emailValidation.helperText || ""
+        emailValidation.helperText || "Please check and try again"
       );
       return;
     }
@@ -119,11 +119,11 @@ const KYCScreen: React.FC = () => {
       onSuccess: async (resp: any) => {
         if (!resp?.status) {
           setIsPending(false);
-          showError(resp?.message || "Failed to submit details");
+          showError("Couldn't submit details", resp?.message || "Please try again.");
           return;
         }
 
-        showSuccess(resp?.message || "Profile updated successfully");
+        showSuccess("Details submitted", resp?.message || "Your profile has been updated.");
         dispatch(setProfileCompleted(true));
 
         dispatch(setShowLoader(true));
@@ -131,9 +131,9 @@ const KYCScreen: React.FC = () => {
           const result = await bootstrapMainAppSession(dispatch);
           if (result.ok) {
             dispatch(setStepCount(2));
-            showSuccess("Welcome to dashboard");
+            showSuccess("You're all set", "Welcome to PayAiro.");
           } else {
-            showError(result.message || "Failed to load user details");
+            showError("Couldn't load your details", result.message || "Please try again.");
           }
         } finally {
           dispatch(setShowLoader(false));
@@ -142,11 +142,10 @@ const KYCScreen: React.FC = () => {
       },
       onError: (error: any) => {
         setIsPending(false);
-        const errorMessage =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Failed to submit details";
-        showError(errorMessage);
+        showError(
+          "Couldn't submit details",
+          getApiErrorMessage(error, "Please try again.")
+        );
       },
     });
   };
