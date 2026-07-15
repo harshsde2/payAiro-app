@@ -9,13 +9,14 @@ import { NAVIGATION_SCREENS } from 'navigations/navigationConstants'
 import TermAndConditionModal from 'tsx-components/modals/TermAndConditionModal'
 import type { TermAndConditionModalRef } from 'tsx-components/modals/modal.types'
 import { useComplianceStatus } from 'query/hooks/useComplianceDisclosure'
+import { EnvConfig } from 'config/env.config'
 
 const SettingsScreen = () => {
     const { theme: newUITheme } = useNewUITheme();
     const navigation = useNavigation<any>();
     const webDocRef = useRef<TermAndConditionModalRef>(null);
-    const PAYAIRO_TERMS_URL = 'https://official.payairo.com/terms-of-service';
-    const PAYAIRO_PRIVACY_URL = 'https://official.payairo.com/privacy-policy';
+    const PAYAIRO_TERMS_URL = EnvConfig.TERMS_AND_CONDITIONS_URL;
+    const PAYAIRO_PRIVACY_URL = EnvConfig.PRIVACY_POLICY_URL;
 
     // Acknowledgment History is only relevant to Connecticut users (one-time +
     // per-transaction disclosures). Hidden entirely for everyone else.
@@ -28,11 +29,11 @@ const SettingsScreen = () => {
             icon: <AppIcon.Privacy />,
             onPress: () => navigation.navigate(NAVIGATION_SCREENS.NEW_PRIVACY_SECURITY_SCREEN as never),
         },
-        {
-            title: 'Bank Statements',
-            icon: <AppIcon.BankStatement />,
-            onPress: () => navigation.navigate(NAVIGATION_SCREENS.NEW_BANK_STATEMENT_SCREEN as never),
-        },
+        // {
+        //     title: 'Bank Statements',
+        //     icon: <AppIcon.BankStatement />,
+        //     onPress: () => navigation.navigate(NAVIGATION_SCREENS.NEW_BANK_STATEMENT_SCREEN as never),
+        // },
         {
             title: 'Rewards and Referrals',
             icon: <AppIcon.RewardsIcon />,
@@ -91,11 +92,10 @@ const SettingsScreen = () => {
             </TouchableOpacity>
         ))}
       </View>
-      <View style={{ flex:1,alignItems: 'center', justifyContent: 'space-between',  }}>
-          <AppIcon.SocialMediaIcons />
-          <CustomText variant="h3" size={16} fontWeight='semiBold'>PayAiro</CustomText>
+      <View style={{ alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <CustomText variant="h3" size={26} fontWeight='semiBold'>PayAiro</CustomText>
           <View style={{  alignItems: 'center',paddingHorizontal: 20 }}>
-            <CustomText variant="h5" size={16} style={{ textAlign: 'center' }} fontWeight='light'>© 2026 PAYAIRO Inc.
+            <CustomText variant="h5" size={16} style={{ textAlign: 'center' }} fontWeight='light'>© 2026 PayAiro Inc.
             All Rights Reserved. </CustomText>
           </View>
       </View>

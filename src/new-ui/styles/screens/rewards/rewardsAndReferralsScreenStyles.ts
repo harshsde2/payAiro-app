@@ -108,7 +108,7 @@ export const rewardsAndReferralsScreenStyles = (theme: ITheme) =>
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: 12,
-      backgroundColor: '#F0F0F0',
+      backgroundColor: theme.colors.white,
     },
     modalBreakdownInfo: {
       flex: 1,

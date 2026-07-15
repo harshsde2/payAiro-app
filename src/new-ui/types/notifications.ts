@@ -70,10 +70,17 @@ export interface NotificationPreferences {
   marketing_enabled?: boolean;
 }
 
+/**
+ * GET/PUT `notifications/preferences/` — the toggles come back NESTED under
+ * `data.preferences` (not flat on `data`), e.g.
+ * `{ ok, message, data: { preferences: { push_enabled: true, ... } } }`.
+ */
 export interface PreferencesResponse {
   ok?: boolean;
   message?: string;
-  data?: NotificationPreferences;
+  data?: {
+    preferences?: NotificationPreferences & { updated_at?: string };
+  };
 }
 
 /** Filters accepted by the notifications list endpoint. */

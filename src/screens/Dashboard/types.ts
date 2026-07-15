@@ -74,6 +74,19 @@ export interface ISendScreenRouteParams {
   /** `request` is used when opening send from Receive (payment request flow). */
   type?: "requested" | "send" | "request";
   sender?: string;
+  /**
+   * Set when Send was opened from a specific crypto's details page (e.g. tapping
+   * ETH on the dashboard, then Send). Forwarded through to EnterAmount so it
+   * defaults the funding source to this asset instead of the state stablecoin.
+   */
+  preselectedAsset?: {
+    asset: string;
+    chain: string;
+    logo?: string;
+    fiatCurrency?: string;
+    currentPrice?: number;
+    sourceWalletAddress?: string;
+  };
 }
 
 export interface IBankItem {

@@ -47,3 +47,15 @@ export const LOCK_CONFIG = {
   LOCKOUT_DURATION: 300000, // 5 minutes after max PIN attempts
 } as const;
 
+/** User-selectable auto-lock timings (Privacy & Security). `valueMs` is the grace period. */
+export const APP_LOCK_TIMEOUT_OPTIONS: ReadonlyArray<{ label: string; valueMs: number }> = [
+  { label: 'Instant', valueMs: 0 },
+  { label: '30s', valueMs: 30000 },
+  { label: '1 min', valueMs: 60000 },
+  { label: '5 min', valueMs: 300000 },
+  { label: '10 min', valueMs: 600000 },
+];
+
+/** Default auto-lock timing — matches the app's original hardcoded grace period. */
+export const DEFAULT_APP_LOCK_TIMEOUT_MS: number = LOCK_CONFIG.GRACE_PERIOD_MS;
+

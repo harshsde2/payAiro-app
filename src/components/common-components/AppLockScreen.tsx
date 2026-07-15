@@ -49,6 +49,7 @@ const AppLockScreen: React.FC = () => {
     paymentVerificationRequest,
     clearPaymentVerification,
     refreshPinStatus,
+    setNativeModalVisible,
   } = useAppLock();
   const { mutateAsync: upsertUserSecurityPinSettings } =
     useUpsertUserSecurityPinSettings();
@@ -229,6 +230,11 @@ const AppLockScreen: React.FC = () => {
 
     const runBiometric = async () => {
       setIsBiometricRunning(true);
+      // Mark the native biometric dialog as a native modal: on Android the system
+      // BiometricPrompt backgrounds the activity, and without this flag that trip
+      // would arm the app lock and re-lock right after a successful unlock
+      // (an infinite prompt loop with the "Instant" auto-lock timing).
+      setNativeModalVisible(true);
       try {
         const result: BiometricAuthResult =
           await authenticateWithBiometricDetailed(
@@ -269,6 +275,9 @@ const AppLockScreen: React.FC = () => {
         }
       } finally {
         setIsBiometricRunning(false);
+        // Delay reset: dialog dismissal can emit several AppState transitions
+        // (active -> inactive -> active); keep suppression up until they settle.
+        setTimeout(() => setNativeModalVisible(false), 800);
       }
     };
 
@@ -285,6 +294,7 @@ const AppLockScreen: React.FC = () => {
     clearPaymentVerification,
     unlockApp,
     requestShowPinScreen,
+    setNativeModalVisible,
   ]);
 
   useEffect(() => {

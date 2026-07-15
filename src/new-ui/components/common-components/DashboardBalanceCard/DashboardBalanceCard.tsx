@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import CustomText from '@new-ui/components/common-components/CustomText/CustomText';
 import { useTheme } from '@new-ui/styles/ThemeContext';
@@ -6,7 +6,6 @@ import dashboardBalanceCardStyles from '@new-ui/styles/components/dashbaordBalan
 import { IDashboardBalanceCardProps } from './types';
 import GlassyWrapper from '../GlassyWrapper';
 import { AppIcon } from 'new-ui/assets/svgs';
-import BalanceBreakdownModal from './BalanceBreakdownModal';
 import DashboardActionButtons from './DashboardActionButtons';
 
 const formatBalance = (amount: number): string =>
@@ -28,76 +27,33 @@ const splitBalanceForDisplay = (formatted: string): { integer: string; decimal: 
 };
 
 const DashboardBalanceCard: React.FC<IDashboardBalanceCardProps> = ({
-  userId,
-  bankBalance,
-  aggregatedCryptoBalances,
-  onToggleVisibility,
-  onQRCodePress,
-  onAccountDetailsPress,
-  isBalanceVisible = false,
+  title,
+  subtitle,
+  balance,
   onRefreshBalance,
   isRefreshing = false,
+  showActionButtons = true,
 }) => {
   const { theme } = useTheme();
   const styles = dashboardBalanceCardStyles(theme);
-  const [localBalanceVisible, setLocalBalanceVisible] = useState(isBalanceVisible);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [visible, setVisible] = useState(false);
 
-  useEffect(() => {
-    if (isBalanceVisible !== undefined && isBalanceVisible !== localBalanceVisible) {
-      setLocalBalanceVisible(isBalanceVisible);
-    }
-  }, [isBalanceVisible]);
-
-  // TODO: re-enable PayAiro fiat balance (added later).
-  const payAiroBalance = useMemo(
-    () =>
-      Number(
-        bankBalance?.platform_balance ??
-          bankBalance?.platform_available ??
-          bankBalance?.bank_account?.usd ??
-          0
-      ),
-    [bankBalance]
-  );
-
-  const cryptoBalance = useMemo(
-    () => Number(aggregatedCryptoBalances?.usd_value_available ?? 0),
-    [aggregatedCryptoBalances]
-  );
-
-  // For now the total is crypto-only; add `+ payAiroBalance` back when PayAiro fiat balance ships.
-  const totalBalance = useMemo(
-    () => cryptoBalance,
-    [cryptoBalance]
-  );
-
-  const displayBalance = localBalanceVisible ? formatBalance(totalBalance) : '••••••';
+  const displayBalance = visible ? formatBalance(balance) : '••••••';
   const { integer: integerPart, decimal: decimalPart } = splitBalanceForDisplay(displayBalance);
 
   const handleToggleVisibility = useCallback(async () => {
-    if (!localBalanceVisible && onRefreshBalance) {
+    if (!visible && onRefreshBalance) {
       try {
         await onRefreshBalance();
       } catch (e) {
         console.log('Error refreshing balance:', e);
       }
     }
-    const next = !localBalanceVisible;
-    setLocalBalanceVisible(next);
-    onToggleVisibility?.();
-  }, [localBalanceVisible, onRefreshBalance, onToggleVisibility]);
-
-  const handleAccountDetailsPress = useCallback(() => {
-    if (onAccountDetailsPress) {
-      onAccountDetailsPress();
-    } else if (onQRCodePress) {
-      onQRCodePress();
-    }
-  }, [onAccountDetailsPress, onQRCodePress]);
+    setVisible((v) => !v);
+  }, [visible, onRefreshBalance]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, !showActionButtons && styles.containerNoActions]}>
       <GlassyWrapper
         style={styles.glassyWrapper}
         borderRadius={theme.radius.xl}
@@ -110,15 +66,15 @@ const DashboardBalanceCard: React.FC<IDashboardBalanceCardProps> = ({
         <View style={styles.contentContainer}>
           <View style={styles.headerRow}>
             <View style={styles.titleWithIcon}>
-              <CustomText style={[styles.headerTitle, { color: theme.colors.greyDark }]}>
-                Total Balance
+              <CustomText style={[styles.headerTitle, { color: theme.colors.text }]}>
+                {title}
               </CustomText>
               <TouchableOpacity
                 onPress={handleToggleVisibility}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 style={styles.eyeIconButton}
               >
-                {localBalanceVisible ? (
+                {visible ? (
                   <AppIcon.EyeOn width={18} height={18} color={theme.colors.greyDark} />
                 ) : (
                   <AppIcon.EyeOff width={18} height={18} color={theme.colors.greyDark} />
@@ -127,11 +83,9 @@ const DashboardBalanceCard: React.FC<IDashboardBalanceCardProps> = ({
             </View>
           </View>
 
-          <TouchableOpacity
-            style={styles.balanceRow}
-            onPress={() => setIsModalOpen(true)}
-            activeOpacity={0.7}
-          >
+          
+
+          <View style={styles.balanceRow}>
             {isRefreshing ? (
               <ActivityIndicator size="small" color={theme.colors.primary} />
             ) : (
@@ -161,40 +115,22 @@ const DashboardBalanceCard: React.FC<IDashboardBalanceCardProps> = ({
                     </CustomText>
                   ) : null}
                 </View>
-                <View style={styles.chevronWrapper}>
-                  <AppIcon.ChevronDown width={16} height={16} color={theme.colors.black} />
-                </View>
               </>
             )}
-          </TouchableOpacity>
-
-          {/* <TouchableOpacity
-            style={styles.accountDetailsLink}
-            onPress={handleAccountDetailsPress}
-            activeOpacity={0.7}
-          >
-            <CustomText style={[styles.accountDetailsText, { color: theme.colors.primary }]}>
-              Account Details
+          </View>
+          {subtitle ? (
+            <CustomText style={[styles.subtitleText, { color: theme.colors.greyDark }]}>
+              {subtitle}
             </CustomText>
-          </TouchableOpacity> */}
+          ) : null}
         </View>
 
-        <View style={styles.footerContainer}>
-          <DashboardActionButtons />
-        </View>
+        {showActionButtons ? (
+          <View style={styles.footerContainer}>
+            <DashboardActionButtons />
+          </View>
+        ) : null}
       </GlassyWrapper>
-
-      <BalanceBreakdownModal
-        visible={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        totalBalance={totalBalance}
-        payAiroBalance={payAiroBalance}
-        cryptoBalance={cryptoBalance}
-        userId={userId}
-        isBalanceVisible={localBalanceVisible}
-        onToggleVisibility={handleToggleVisibility}
-        isRefreshing={isRefreshing}
-      />
     </View>
   );
 };

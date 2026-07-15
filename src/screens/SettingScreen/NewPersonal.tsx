@@ -138,12 +138,12 @@ const NewPersonal: React.FC = () => {
         icon: <AppIcon.Profile_Rewards width={22} height={22} />,
         route: NAVIGATION_SCREENS.NEW_REWARDS_AND_REFERRALS_SCREEN as AppRouteName,
       },
-      {
-        key: "bankStatement",
-        label: "Bank Statement",
-        icon: <AppIcon.Profile_Bankstatement width={22} height={22} />,
-        route: NAVIGATION_SCREENS.NEW_BANK_STATEMENT_SCREEN as AppRouteName,
-      },
+      // {
+      //   key: "bankStatement",
+      //   label: "Bank Statement",
+      //   icon: <AppIcon.Profile_Bankstatement width={22} height={22} />,
+      //   route: NAVIGATION_SCREENS.NEW_BANK_STATEMENT_SCREEN as AppRouteName,
+      // },
       {
         key: "settings",
         label: "Settings",
@@ -154,7 +154,7 @@ const NewPersonal: React.FC = () => {
         key: "support",
         label: "Support",
         icon: <AppIcon.Headphones width={22} height={22} />,
-        route: NAVIGATION_SCREENS.SUPPORT_SCREEN as AppRouteName,
+        route: NAVIGATION_SCREENS.FRESHCHAT_SCREEN as AppRouteName,
       },
     ],
     []

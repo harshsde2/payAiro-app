@@ -1,24 +1,17 @@
 import { StyleProp, ViewStyle } from 'react-native';
 
-export interface IBankBalance {
-  platform_balance?: number;
-  platform_available?: number;
-  bank_account?: { usd?: number };
-}
-
-export interface IAggregatedCryptoBalances {
-  usd_value_available?: number;
-}
-
 export interface IDashboardBalanceCardProps {
   style?: StyleProp<ViewStyle>;
-  userId: string;
-  bankBalance?: IBankBalance | null;
-  aggregatedCryptoBalances?: IAggregatedCryptoBalances | null;
-  onToggleVisibility?: () => void;
-  onQRCodePress?: () => void;
-  onAccountDetailsPress?: () => void;
-  isBalanceVisible?: boolean;
+  /** Label shown above the balance, e.g. "Payairo Balance" or "Total Crypto Balance". */
+  title: string;
+  /** Optional small caption shown below the title, e.g. "This is your Stablecoin balance". */
+  subtitle?: string;
+  /** USD value to display. */
+  balance: number;
   onRefreshBalance?: () => Promise<void>;
   isRefreshing?: boolean;
+  /** Send/Receive/Add Balance/Withdraw row. Defaults to true (shown). */
+  showActionButtons?: boolean;
+  /** Height of the white container. */
+  whiteContainerHeight?: number;
 }

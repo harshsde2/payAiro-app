@@ -141,6 +141,7 @@ export const mapRecentActivityToUnified = (
       tags: [],
       refund_details: null,
       regulatory_receipt: item.regulatoryReceipt ?? null,
+      fee_breakdown: item.feeBreakdown ?? null,
     };
   }
 

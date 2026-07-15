@@ -63,6 +63,8 @@ interface RouteParams {
   isError?: boolean;
   customTitle?: string;
   customDescription?: string;
+  /** Specific failure reason from the API (e.g. "Insufficient balance"). Shown inline on failure. */
+  errorMessage?: string;
 }
 
 const keyLabels = {
@@ -78,7 +80,6 @@ const keyLabels = {
   asset: "Asset",
   status: "Status",
   final_amount: "Final Amount",
-  Transaction_fee_persentage: "Transaction Fee",
 } as const;
 
 type CoinmeTransactionData = {
@@ -193,8 +194,6 @@ const buildCoinmeDetailRows = (td: CoinmeTransactionData | null) => {
   );
   if (rate) pushIf("Rate", rate);
 
-  pushIf("Total fees", formatCoinmeAmountPair(td.totalFees, td.feeCurrencyCode));
-
   const statusLabel = formatCoinmeStatus(td.transactionStatus);
   pushIf("Status", statusLabel);
 
@@ -219,7 +218,8 @@ const TransactionResult: FC = () => {
     isSuccess = false,
     isError = false,
     customTitle,
-    customDescription
+    customDescription,
+    errorMessage,
   } = params || {};
 
   // console.log("transactionData =>", JSON.stringify(transactionData, null, 2));
@@ -373,8 +373,9 @@ const TransactionResult: FC = () => {
   const renderDescription = () => {
     const status = getTransactionStatus();
 
-    // Use custom description if provided
-    if (customDescription) {
+    // Use custom description if provided — except on failure, which is routed through the
+    // inline error banner below so every failure surfaces the specific reason consistently.
+    if (customDescription && status !== 'failed') {
       return (
         <CustomText variant="body" style={styles.description}>
           {customDescription}
@@ -446,12 +447,26 @@ const TransactionResult: FC = () => {
             Your payment of <CustomText size={16} variant="caption" fontWeight="semiBold" color={newTheme.colors.primary} fontFamily="inter" >{`$${(transactionData as any)?.data?.amount || 0}`}</CustomText> has successfully sent to <CustomText size={16} variant="caption" fontWeight="semiBold" color={newTheme.colors.primary} fontFamily="inter" >{(transactionData as any)?.data?.recipient_username || 'N/A'}</CustomText>.
           </CustomText>
         );
-      case 'failed':
+      case 'failed': {
+        // Surface the actual API failure reason inline (it's passed as `errorMessage`
+        // by the send / add-balance flows). Falls back to a generic line when absent.
+        const failureText =
+          errorMessage?.trim() ||
+          customDescription?.trim() ||
+          'There was an error processing your transaction. Please try again.';
         return (
-          <CustomText variant="caption" size={16} fontFamily="inter" style={styles.description}>
-            There was an error processing your transaction. Please try again.
-          </CustomText>
+          <View style={styles.errorBanner}>
+            <CustomText
+              variant="caption"
+              size={15}
+              fontFamily="inter"
+              style={styles.errorBannerText}
+            >
+              {failureText}
+            </CustomText>
+          </View>
         );
+      }
       default:
         return (
           <CustomText variant="caption" size={16} fontFamily="inter" style={styles.description}>
@@ -697,6 +712,21 @@ const customStyles = (theme: Theme) =>
       color: '#838383',
       letterSpacing: 0.1,
       fontWeight: '400',
+      fontFamily: 'inter',
+    },
+    errorBanner: {
+      width: "100%",
+      backgroundColor: `${theme.colors.palette.error}14`, // ~8% tint of the error color
+      borderColor: theme.colors.palette.error,
+      borderWidth: 1,
+      borderRadius: theme.spacing.spacing[3],
+      paddingVertical: theme.spacing.spacing[3],
+      paddingHorizontal: theme.spacing.spacing[4],
+    },
+    errorBannerText: {
+      textAlign: "center",
+      color: theme.colors.palette.error,
+      letterSpacing: 0.1,
       fontFamily: 'inter',
     },
     detailsContainer: {

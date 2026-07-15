@@ -165,6 +165,7 @@ export const NAVIGATION_SCREENS = {
   NEW_EMAIL_VERIFICATION: "NewEmailVerification",
   STATE_COMPLIANCE_ACKNOWLEDGMENT: "StateComplianceAcknowledgment",
   STATE_COMPLIANCE_PRE_TRANSACTION: "StateCompliancePreTransaction",
+  STATE_RESTRICTED_BLOCK: "StateRestrictedBlock",
   NEW_CRYPTO_REQUESTS: "NewCryptoRequests",
   NEW_CRYPTO_REQUEST_DETAIL: "NewCryptoRequestDetail",
   NEW_PRIVACY_SECURITY_SCREEN: "NewPrivacySecurityScreen",

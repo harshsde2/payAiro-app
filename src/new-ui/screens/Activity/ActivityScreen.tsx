@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  RefreshControl,
   ScrollView,
   TouchableOpacity,
   View,
@@ -26,11 +27,30 @@ import { AppIcon } from "@new-ui/assets/svgs";
 import {
   usePaymentTransactionHistory,
   useUserCryptoMarketList,
+  type PaymentTransactionHistoryFilters,
 } from "query/hooks/useCrypto";
 import { navigateFromRecentActivity } from "query/utils/navigateFromRecentActivity";
 import { cryptoRequestKeys } from "query/hooks/useCryptoRequest";
+import ActivityFilterModal from "./ActivityFilterModal";
 
-const FILTER_CHIPS = ["All", "Send", "Received", "Pending", "Completed"] as const;
+const FILTER_CHIPS = ["All", "Send", "Trade", "Request", "Receive"] as const;
+
+// Quick-filter shortcut → same API params the Filter modal uses. Tapping a chip
+// REPLACES the active filters (single quick-filter at a time), same as picking
+// one option in the modal and applying it.
+//
+// These are ACTIVITY shortcuts only. Status-based chips (e.g. "Pending"/"Completed")
+// can't work here: the API scopes each status filter to one activity bucket, trades
+// have no status filter at all, and the vocab differs per bucket (SUCCESS vs COMPLETED
+// vs FULFILLED) — so a cross-type status chip would silently let rows leak through.
+// Status filtering lives in the Filter modal, where it's activity-aware.
+const CHIP_FILTERS: Record<(typeof FILTER_CHIPS)[number], PaymentTransactionHistoryFilters> = {
+  All: {},
+  Send: { activity: "send" },
+  Trade: { activity: "trade" },
+  Request: { activity: "request" },
+  Receive: { activity: "receive" },
+};
 
 function groupActivityItemsByDay(items: RecentActivityItem[]) {
   const sorted = [...items].sort(
@@ -80,8 +100,20 @@ const ActivityScreen = () => {
   const styles = activityScreenStyles(theme);
   const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
-  const [selectedChip, setSelectedChip] =
-    useState<(typeof FILTER_CHIPS)[number]>("All");
+  const [filters, setFilters] = useState<PaymentTransactionHistoryFilters>({});
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const hasActiveFilters = Object.values(filters).some(
+    (v) => v !== undefined && v !== "all"
+  );
+
+  // Derive the chip highlight from the applied filters (rather than separate state) so
+  // the row stays in sync when the Filter modal changes the activity.
+  const selectedChip =
+    FILTER_CHIPS.find((chip) => {
+      const chipActivity = CHIP_FILTERS[chip].activity;
+      const current = filters.activity === "all" ? undefined : filters.activity;
+      return chipActivity === current;
+    }) ?? "All";
 
   // Refresh the pending-request banner/badge whenever Activity gains focus —
   // the bottom-tab badge observer never remounts, so a focus-driven
@@ -92,11 +124,21 @@ const ActivityScreen = () => {
     }, [queryClient])
   );
 
-  const { data: historyResponse, isLoading } = usePaymentTransactionHistory(
-    "all",
-    20
-  );
-  const { data: marketRows = [] } = useUserCryptoMarketList("USD");
+  const {
+    data: historyResponse,
+    isLoading,
+    isRefetching: isHistoryRefetching,
+    refetch: refetchHistory,
+  } = usePaymentTransactionHistory(filters);
+  const {
+    data: marketRows = [],
+    isRefetching: isMarketRefetching,
+    refetch: refetchMarket,
+  } = useUserCryptoMarketList("USD");
+
+  const handleRefresh = useCallback(() => {
+    return Promise.allSettled([refetchHistory(), refetchMarket()]);
+  }, [refetchHistory, refetchMarket]);
 
   const priceByCurrency = useMemo(() => {
     const map = new Map<string, number>();
@@ -118,6 +160,15 @@ const ActivityScreen = () => {
       safeArea
       safeAreaEdges={["bottom"]}
       scrollable
+      scrollViewProps={{
+        refreshControl: (
+          <RefreshControl
+            refreshing={isHistoryRefetching || isMarketRefetching}
+            onRefresh={handleRefresh}
+            tintColor={theme.colors.tertiary}
+          />
+        ),
+      }}
       contentStyle={styles.scrollContent}
       backgroundColor={theme.colors.background}
     >
@@ -125,12 +176,29 @@ const ActivityScreen = () => {
 
       <View style={styles.filterRow}>
         <TouchableOpacity
-          style={styles.filterButton}
-          onPress={() => {}}
+          style={[
+            styles.filterButton,
+            hasActiveFilters && {
+              backgroundColor: theme.colors.primary,
+              borderColor: theme.colors.primary,
+            },
+          ]}
+          onPress={() => setFilterModalVisible(true)}
           activeOpacity={0.7}
         >
-          <AppIcon.FilterIcon width={16} height={16} />
-          <CustomText style={styles.filterButtonLabel}>Filter</CustomText>
+          <AppIcon.FilterIcon
+            width={16}
+            height={16}
+            color={hasActiveFilters ? theme.colors.white : undefined}
+          />
+          <CustomText
+            style={[
+              styles.filterButtonLabel,
+              hasActiveFilters && { color: theme.colors.white },
+            ]}
+          >
+            Filter
+          </CustomText>
         </TouchableOpacity>
         <ScrollView
           horizontal
@@ -143,7 +211,7 @@ const ActivityScreen = () => {
               key={label}
               label={label}
               selected={selectedChip === label}
-              onPress={() => setSelectedChip(label)}
+              onPress={() => setFilters(CHIP_FILTERS[label])}
             />
           ))}
         </ScrollView>
@@ -178,6 +246,16 @@ const ActivityScreen = () => {
           </View>
         ))
       )}
+
+      <ActivityFilterModal
+        visible={filterModalVisible}
+        initialFilters={filters}
+        onClose={() => setFilterModalVisible(false)}
+        onApply={(next) => {
+          setFilters(next);
+          setFilterModalVisible(false);
+        }}
+      />
     </ScreenWrapper>
   );
 };

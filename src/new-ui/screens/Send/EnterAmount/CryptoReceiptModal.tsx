@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Modal, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 import CustomText from '@new-ui/components/common-components/CustomText';
@@ -12,7 +12,6 @@ type CryptoReceiptModalProps = {
   onClose: () => void;
   onPayNow: () => void;
   usdAmount: number;
-  feePercent: number;
   variant?: CryptoReceiptVariant;
   /** Required when variant is `full` (default). */
   tokenSymbol?: string;
@@ -28,13 +27,12 @@ const CryptoReceiptModal: React.FC<CryptoReceiptModalProps> = ({
   tokenAmount = 0,
   priceUSD = 0,
   usdAmount,
-  feePercent,
   variant = 'full',
 }) => {
   const { theme } = useTheme();
   const styles = enterAmountStyles(theme);
-  const feeAmount = useMemo(() => (usdAmount * feePercent) / 100, [feePercent, usdAmount]);
-  const total = useMemo(() => usdAmount + feeAmount, [feeAmount, usdAmount]);
+  // No transaction fee on the frontend — total is just the amount.
+  const total = usdAmount;
   const isFiatOnly = variant === 'fiatOnly';
 
   if (!visible) return null;
@@ -80,13 +78,6 @@ const CryptoReceiptModal: React.FC<CryptoReceiptModalProps> = ({
               {isFiatOnly ? 'Amount' : 'Subtotal'}
             </CustomText>
             <CustomText>${usdAmount.toFixed(2)}</CustomText>
-          </View>
-
-          <View style={styles.cryptoReceiptRow}>
-            <CustomText variant="caption" fontWeight="light" style={styles.cryptoReceiptLabel}>
-              Fees ({feePercent}%)
-            </CustomText>
-            <CustomText>${feeAmount.toFixed(2)}</CustomText>
           </View>
 
           <View style={styles.cryptoReceiptRowTotal}>

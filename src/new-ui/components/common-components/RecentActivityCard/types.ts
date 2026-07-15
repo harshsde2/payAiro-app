@@ -41,6 +41,29 @@ export interface RegulatoryReceipt {
   transactionType: string;
 }
 
+/**
+ * Coinme fee breakdown stored on a completed trade. `youPay` is the fiat the user
+ * actually paid (buys) — unlike the regulatory receipt's `total`, it does NOT add the
+ * fees on top (the fees come out of that amount).
+ * NOTE: Coinme reports the crypto side as 0 for sells, so `youPay` can be "0" there —
+ * always fall back to the transaction's own amount when it isn't a positive number.
+ */
+export interface ActivityFeeBreakdown {
+  tradeType?: string;
+  youPay?: string;
+  youReceive?: string;
+  youReceiveCurrency?: string;
+  currency?: string;
+  total?: string;
+  transactionFees?: string;
+  cardProcessingFee?: string;
+  instantWithdrawalFee?: string;
+  finalFee?: string;
+  cryptoAsset?: string;
+  cryptoPrice?: string;
+  fields?: { key: string; label: string; value: string }[];
+}
+
 /** CaaS trade row from unified activity history. */
 export interface ActivityTradeItem {
   activity: "TRADE_BUY" | "TRADE_SELL";
@@ -65,6 +88,7 @@ export interface ActivityTradeItem {
     tradeType?: "buy" | "sell";
     details?: ActivityTradeQuoteDetails;
   };
+  feeBreakdown?: ActivityFeeBreakdown | null;
   regulatoryReceipt?: RegulatoryReceipt | null;
 }
 

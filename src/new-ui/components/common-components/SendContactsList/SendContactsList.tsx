@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, TouchableOpacity, Image } from 'react-native';
+import { View, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 import CustomText from '@new-ui/components/common-components/CustomText';
 import { sendContactsListStyles } from '@new-ui/styles/components/sendContactsListStyles';
@@ -40,7 +40,7 @@ const SendContactsList: React.FC<ISendContactsListProps> = ({
   const effectiveQuery = hasQuery ? trimmed : 'a';
 
   const apiLimit = Math.min(Math.max(limit, 1), 25);
-  const { data } = useFastApiUsersSearch(effectiveQuery, apiLimit, 1);
+  const { data, isLoading, isFetching } = useFastApiUsersSearch(effectiveQuery, apiLimit, 1);
 
   const contacts: ISendContactItem[] = useMemo(() => {
     const users = data?.data?.users ?? [];
@@ -68,6 +68,29 @@ const SendContactsList: React.FC<ISendContactsListProps> = ({
     if (base.length <= 12) return base;
     return `${base.slice(0, 4)}...${base.slice(-4)}`;
   };
+
+  // Only surface "not found" once the user has actually typed a query (the empty-input
+  // case searches a generic fallback for default suggestions, which shouldn't read as "not found").
+  const showLoading = hasQuery && (isLoading || isFetching) && contacts.length === 0;
+  const showNotFound = hasQuery && !isLoading && !isFetching && contacts.length === 0;
+
+  if (showLoading) {
+    return (
+      <View style={[styles.container, { paddingVertical: theme.spacing.lg, alignItems: 'center' }]}>
+        <ActivityIndicator color={theme.colors.primary} />
+      </View>
+    );
+  }
+
+  if (showNotFound) {
+    return (
+      <View style={[styles.container, { paddingVertical: theme.spacing.lg, alignItems: 'center' }]}>
+        <CustomText variant="body" size={14} color={theme.colors.greyDark} align="center">
+          No PayAiro user found for "{trimmed}"
+        </CustomText>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

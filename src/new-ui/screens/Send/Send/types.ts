@@ -46,6 +46,14 @@ export interface IEnterAmountRouteParams {
   tradeMode?: 'buy' | 'sell';
   /** Required when `tradeMode` is set. */
   cryptoAsset?: ICryptoAssetTradeContext;
+
+  /**
+   * Set when Send was opened from a specific crypto's details page. Used only in
+   * send mode (never trade mode) to default the funding source to this asset
+   * instead of the state stablecoin — kept separate from `cryptoAsset` so it
+   * can't accidentally affect `isTradeMode`.
+   */
+  preselectedAsset?: ICryptoAssetTradeContext;
 }
 
 export type EnterAmountRouteProp = RouteProp<

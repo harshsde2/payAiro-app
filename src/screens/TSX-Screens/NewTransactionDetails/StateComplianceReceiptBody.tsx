@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useMemo, useRef } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View, Alert } from "react-native";
 import Clipboard from "@react-native-clipboard/clipboard";
 import { formatServerDate } from "utils/dateUtils";
@@ -88,11 +88,23 @@ const StateComplianceReceiptBody: React.FC<Props> = ({ transactionData, receipt 
 
   const fields = (receipt.receiptFields ?? []).filter((f) => !isEmptyValue(f.value));
 
-  const totalField = fields.find((f) => f.key === "total");
-  const bigAmount =
-    (totalField ? formatUsd(totalField.value) : null) ??
-    formatUsd(String(transactionData.final_amount ?? transactionData.amount ?? "")) ??
-    "";
+  /**
+   * The regulatory receipt's `total` ADDS the fees on top of the trade amount
+   * (e.g. $20 buy → "20.80"), which misreads as if the user paid extra — the fees are
+   * actually taken out of the $20. The true amount is the fee breakdown's `youPay`.
+   * Coinme reports the crypto side as 0 for sells, so fall back to the transaction's
+   * own amount whenever `youPay` isn't a positive number.
+   */
+  const trueTotal = useMemo(() => {
+    const youPay = Number.parseFloat(
+      String(transactionData.fee_breakdown?.youPay ?? "").replace(/[^0-9.-]/g, "")
+    );
+    if (Number.isFinite(youPay) && youPay > 0) return String(youPay);
+    const fallback = String(transactionData.amount ?? transactionData.final_amount ?? "");
+    return fallback;
+  }, [transactionData.amount, transactionData.fee_breakdown?.youPay, transactionData.final_amount]);
+
+  const bigAmount = formatUsd(trueTotal) ?? "";
 
   const formatFieldValue = useCallback((key: string, value: string): string => {
     if (key === "date_and_time") {
@@ -244,6 +256,11 @@ const StateComplianceReceiptBody: React.FC<Props> = ({ transactionData, receipt 
               }
 
               const isTotal = field.key === "total";
+              // Show the true "You Pay" amount for Total — the backend's value adds the
+              // fees on top, which overstates what the user actually paid.
+              const displayValue = isTotal
+                ? formatUsd(trueTotal) ?? formatFieldValue(field.key, field.value)
+                : formatFieldValue(field.key, field.value);
               return (
                 <View key={field.key} style={rowStyle}>
                   <CustomText
@@ -261,7 +278,7 @@ const StateComplianceReceiptBody: React.FC<Props> = ({ transactionData, receipt 
                     color={theme.colors.text}
                     style={styles.valueCol}
                   >
-                    {formatFieldValue(field.key, field.value)}
+                    {displayValue}
                   </CustomText>
                 </View>
               );

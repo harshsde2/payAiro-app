@@ -28,11 +28,18 @@ const dashboardBalanceCardStyles = (theme: ITheme) => StyleSheet.create({
   },
   headerTitle: {
     fontSize: 16,
-    fontFamily: theme.typography.fontFamily.interRegular,
+    fontFamily: theme.typography.fontFamily.interSemiBold,
   },
   eyeIconButton: {
     padding: 2,
     marginLeft: 6,
+  },
+  subtitleText: {
+    fontSize: 12,
+    fontFamily: theme.typography.fontFamily.interRegular,
+    textAlign: 'center',
+    marginTop: -4,
+    marginBottom: theme.spacing.sm,
   },
   balanceRow: {
     flexDirection: 'row',
@@ -90,6 +97,11 @@ const dashboardBalanceCardStyles = (theme: ITheme) => StyleSheet.create({
     width: '90%',
     borderRadius: theme.radius.xl,
     height: 240,
+  },
+  // Shorter variant when the action-buttons footer is hidden (e.g. NewCrypto's card) —
+  // avoids the big empty gap that the fixed 240 height leaves without the footer row.
+  containerNoActions: {
+    height: 160,
   },
 });
 

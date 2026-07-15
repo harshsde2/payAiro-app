@@ -7,6 +7,7 @@ import CustomText from 'new-ui/components/common-components/CustomText';
 import TermAndConditionModal from 'tsx-components/modals/TermAndConditionModal';
 import type { TermAndConditionModalRef } from 'tsx-components/modals/modal.types';
 import { useComplianceStatus } from 'query/hooks/useComplianceDisclosure';
+import { EnvConfig } from 'config/env.config';
 
 const COINME_TERMS_URL =
   'https://help.coinme.com/en/articles/9039676-terms-of-service';
@@ -14,7 +15,7 @@ const COINME_PRIVACY_URL =
   'https://help.coinme.com/en/articles/9039704-privacy-policy';
 const COINME_DISCLOSURES_URL =
   'https://help.coinme.com/en/articles/10535881-disclosures';
-const PAYAIRO_STATE_DISCLOSURES_URL = 'https://official.payairo.com/disclosures';
+const PAYAIRO_STATE_DISCLOSURES_URL = EnvConfig.STATE_DISCLOSURES_URL;
 
 const CoinmeAgreementScreen = () => {
   const { theme: newUITheme } = useNewUITheme();

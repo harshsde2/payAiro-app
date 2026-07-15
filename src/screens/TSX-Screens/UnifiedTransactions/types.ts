@@ -1,6 +1,9 @@
 // Unified Transaction Types
 
-import type { RegulatoryReceipt } from "new-ui/components/common-components/RecentActivityCard/types";
+import type {
+  ActivityFeeBreakdown,
+  RegulatoryReceipt,
+} from "new-ui/components/common-components/RecentActivityCard/types";
 
 export type { RegulatoryReceipt, RegulatoryReceiptField } from "new-ui/components/common-components/RecentActivityCard/types";
 
@@ -204,6 +207,8 @@ export interface IUnifiedTransaction {
   cash_onramp_details?: ICashOnRampDetails | null;
   cash_offramp_details?: ICashOffRampDetails | null;
   regulatory_receipt?: RegulatoryReceipt | null;
+  /** Coinme fee breakdown (trades only) — source of the true "You Pay" amount. */
+  fee_breakdown?: ActivityFeeBreakdown | null;
 }
 
 // Category percentages interface

@@ -270,7 +270,7 @@ const CyrptoDetails: React.FC = () => {
       icon: SvgIcons.NewSendIcon,
       route: NAVIGATION_SCREENS.NEW_SEND,
       params: {
-        
+        preselectedAsset: cryptoAsset,
       },
     },
     {

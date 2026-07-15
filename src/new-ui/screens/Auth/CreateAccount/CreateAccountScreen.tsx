@@ -13,7 +13,7 @@ import { validateEmailOrPhone } from "utils/validation";
 import { getSmsHash } from "utils/smsHash";
 import { useUserOtpRequest } from "query/hooks/useAPIAuth";
 import { getItem, STORAGE_KEYS } from "storage/mmkv";
-import { isProduction } from "config/env.config";
+import { isProduction, EnvConfig } from "config/env.config";
 import PoliticalModal from "components/PolitaclModal";
 import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
 import type { TermAndConditionModalRef } from "tsx-components/modals/modal.types";
@@ -24,8 +24,8 @@ const COINME_PRIVACY_URL =
   "https://help.coinme.com/en/articles/9039704-privacy-policy";
 const COINME_DISCLOSURES_URL =
   "https://help.coinme.com/en/articles/10535881-disclosures";
-const PAYAIRO_TERMS_URL = "https://official.payairo.com/terms-of-service";
-const PAYAIRO_PRIVACY_URL = "https://official.payairo.com/privacy-policy";
+const PAYAIRO_TERMS_URL = EnvConfig.TERMS_AND_CONDITIONS_URL;
+const PAYAIRO_PRIVACY_URL = EnvConfig.PRIVACY_POLICY_URL;
 
 const CreateAccountScreen: React.FC = () => {
   const navigation = useNavigation<any>();

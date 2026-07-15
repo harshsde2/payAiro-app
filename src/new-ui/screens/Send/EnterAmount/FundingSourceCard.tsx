@@ -11,6 +11,8 @@ type FundingSourceCardProps = {
   onPress: () => void;
   readOnly?: boolean;
   maskedSubtitle?: string;
+  /** Optional heading shown at the top of the card, e.g. "Select Crypto". */
+  label?: string;
 };
 
 const maskLast4 = (id: string): string => {
@@ -23,6 +25,7 @@ const FundingSourceCard: React.FC<FundingSourceCardProps> = ({
   onPress,
   readOnly = false,
   maskedSubtitle,
+  label,
 }) => {
   const { theme } = useTheme();
   const styles = enterAmountStyles(theme);
@@ -48,8 +51,21 @@ const FundingSourceCard: React.FC<FundingSourceCardProps> = ({
     readOnly;
 
   const inner = (
-    <View style={styles.fundingCardRow}>
-      <View style={styles.fundingCardLeft}>
+    <>
+      {label ? (
+        <CustomText
+          variant="h4"
+          size={16}
+          fontWeight="semiBold"
+          fontFamily="poppins"
+          color={theme.colors.primary}
+          style={styles.fundingCardLabel}
+        >
+          {label}
+        </CustomText>
+      ) : null}
+      <View style={styles.fundingCardRow}>
+        <View style={styles.fundingCardLeft}>
         {showPayairoIcon ? (
           <View style={styles.fundingCardPayairoIconCircle}>
             <AppIcon.PayairoLogoBlack width={38} height={38} />
@@ -71,7 +87,7 @@ const FundingSourceCard: React.FC<FundingSourceCardProps> = ({
               color={theme.colors.textSecondary}
               style={styles.fundingCardMasked}
             >
-              {source?.cryptoMeta?.symbol} balance
+              {source?.cryptoMeta?.maxUsdBalance}
             </CustomText>
           ) : bankSubtitle ? (
             <CustomText
@@ -87,26 +103,23 @@ const FundingSourceCard: React.FC<FundingSourceCardProps> = ({
       </View>
 
       {!readOnly ? (
-        <View style={styles.fundingCardChevron}>
+        // Only the dropdown arrow opens the crypto list (the rest of the card is inert),
+        // so tapping the card body doesn't accidentally open the selector.
+        <TouchableOpacity
+          style={styles.fundingCardChevron}
+          activeOpacity={0.7}
+          onPress={onPress}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
           <AppIcon.ChevronDown width={20} height={20} color={theme.colors.primary} />
-        </View>
+        </TouchableOpacity>
       ) : null}
-    </View>
+      </View>
+    </>
   );
 
-  if (readOnly) {
-    return <View style={styles.fundingCard}>{inner}</View>;
-  }
-
-  return (
-    <TouchableOpacity
-      activeOpacity={0.85}
-      style={styles.fundingCard}
-      onPress={onPress}
-    >
-      {inner}
-    </TouchableOpacity>
-  );
+  // The whole card is no longer pressable — only the chevron above opens the selector.
+  return <View style={styles.fundingCard}>{inner}</View>;
 };
 
 export default FundingSourceCard;

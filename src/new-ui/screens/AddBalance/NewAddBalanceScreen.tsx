@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useEmailVerificationGuard } from 'hooks/useEmailVerificationGuard';
-import { useSelector } from 'react-redux';
 import ScreenWrapper from '@new-ui/components/common-components/ScreenWrapper';
 import Button from '@new-ui/components/common-components/layout/Button';
 import {
@@ -12,6 +11,7 @@ import {
   DebitCardPaymentRow,
   PaymentMethodPickerModal,
   AddDebitCardModal,
+  getCardEligibility,
 } from '@new-ui/components/common-components/AddBalance';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 import { addBalanceStyles } from '@new-ui/styles/screens/addBalance/addBalanceStyles';
@@ -28,18 +28,18 @@ import { useAppLock } from 'hooks/useAppLock';
 import {
   useCoinmeTradeExecute,
   type CoinmeTradeExecutePayload,
+  useCryptoAssetsListData,
   useUserCryptoMarketList,
   useWalletAddresses,
 } from 'query/hooks/useCrypto';
 import { fetchWebSessionId } from 'services/coinmeRiskLifecycle';
 import { useCoinmeAccountId } from 'hooks/useCoinmeAccountId';
-import { showError } from 'utils/toast';
+import { showError, showInfo } from 'utils/toast';
 import CryptoReceiptModal from '@new-ui/screens/Send/EnterAmount/CryptoReceiptModal';
 import CustomText from '@new-ui/components/common-components/CustomText';
+import { useStateStablecoin } from 'hooks/useStateStablecoin';
 
 const QUICK_AMOUNTS = [50, 100, 200, 500, 1000];
-
-const DEFAULT_TRADE_ASSET = 'SOL';
 
 const COINME_DEFAULTS = {
   paymentMethodId: 'uhygtfr5e354rtyu76g6b7i8',
@@ -65,13 +65,16 @@ const NewAddBalanceScreen: React.FC = () => {
   const { requireEmailVerified } = useEmailVerificationGuard();
   const tradeExecute = useCoinmeTradeExecute();
 
-  const bankBalance = useSelector((state: { authenticationSlice?: { bankBalance?: Record<string, unknown> } }) => {
-    return state.authenticationSlice?.bankBalance;
-  });
-
   const coinmeAccountId = useCoinmeAccountId();
 
+  // Registered-state stablecoin (TX → DAI, others → USDC). Backend derives the chain
+  // from this asset symbol and ignores whatever chain we send.
+  const stateStablecoin = useStateStablecoin();
+
   const { data: marketRows = [], isPending: isMarketPending } = useUserCryptoMarketList('USD');
+  // Same source NewDashboard's "Payairo Balance" card uses — the user's actual held
+  // USD value of their registered-state stablecoin, not just its unit price.
+  const { data: balances = [] } = useCryptoAssetsListData('USD');
   const { data: walletResponse, isPending: isWalletPending } = useWalletAddresses();
   const walletRows = walletResponse?.walletAddresses ?? [];
 
@@ -79,7 +82,7 @@ const NewAddBalanceScreen: React.FC = () => {
   console.log('walletRows', walletRows);
 
   const cryptoAsset = useMemo((): HiddenTradeCryptoAsset | null => {
-    const sym = DEFAULT_TRADE_ASSET;
+    const sym = stateStablecoin;
     const marketItem = marketRows.find((i) => String(i.asset ?? '').toUpperCase() === sym);
     if (!marketItem) return null;
     const price = Number(marketItem.usd_price ?? 0);
@@ -98,33 +101,26 @@ const NewAddBalanceScreen: React.FC = () => {
       currentPrice: Number.isFinite(price) ? price : 0,
       sourceWalletAddress: solRow?.walletAddress,
     };
-  }, [marketRows, walletRows]);
+  }, [marketRows, walletRows, stateStablecoin]);
 
   console.log('cryptoAsset', cryptoAsset);
 
   const tradePriceUSD = cryptoAsset?.currentPrice ?? 0;
 
-  const formattedAvailable = useMemo(() => {
-    const bb = bankBalance as
-      | {
-          platform_available?: number;
-          platform_balance?: number;
-          bank_account?: { usd?: number };
-        }
-      | null
-      | undefined;
-    if (!bb || typeof bb !== 'object') {
-      return '$0.00';
-    }
-    const n = Number(
-      bb.platform_available ?? bb.platform_balance ?? bb.bank_account?.usd ?? 0
+  const stablecoinBalance = useMemo(() => {
+    const row = balances.find(
+      (b) => String(b.asset ?? '').toUpperCase() === stateStablecoin
     );
-    const safe = Number.isFinite(n) ? n : 0;
+    return Number(row?.usd_value_available ?? 0);
+  }, [balances, stateStablecoin]);
+
+  const formattedAvailable = useMemo(() => {
+    const safe = Number.isFinite(stablecoinBalance) ? stablecoinBalance : 0;
     return `$${safe.toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
-  }, [bankBalance]);
+  }, [stablecoinBalance]);
 
   const [amountText, setAmountText] = useState('');
   const [selectedChipIndex, setSelectedChipIndex] = useState<number | null>(null);
@@ -300,20 +296,42 @@ const NewAddBalanceScreen: React.FC = () => {
     async (result: AddedCardResult) => {
       setAddCardVisible(false);
 
-      const res = await paymentMethodsQuery.refetch();
-      const items = res.data?.data?.items ?? [];
       const wanted = result.payment_method_id;
+      const findCard = (items: PaymentMethodItem[]): PaymentMethodItem | null => {
+        if (!wanted) return null;
+        if (wanted.startsWith('last4:')) {
+          const last4 = wanted.replace('last4:', '');
+          return items.find((i) => String(i.card_last4 ?? '') === String(last4)) ?? null;
+        }
+        return items.find((i) => i.payment_method_id === wanted) ?? null;
+      };
 
-      let selected: PaymentMethodItem | null = null;
-      if (wanted.startsWith('last4:')) {
-        const last4 = wanted.replace('last4:', '');
-        selected =
-          items.find((i) => String(i.card_last4 ?? '') === String(last4)) ?? null;
-      } else {
-        selected = items.find((i) => i.payment_method_id === wanted) ?? null;
+      // Always fetch the latest data before trusting the card. A freshly added card is often
+      // still being verified by the issuer, so poll a few times to give a quick verification a
+      // chance to land before deciding whether to auto-select it.
+      let found: PaymentMethodItem | null = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const res = await paymentMethodsQuery.refetch();
+        found = findCard(res.data?.data?.items ?? []);
+        if (found && getCardEligibility(found, 'buy').ok) break;
+        if (attempt < 2) {
+          await new Promise((resolve) => setTimeout(resolve, 1200));
+        }
       }
 
-      setSelectedPaymentMethod(selected);
+      if (found && getCardEligibility(found, 'buy').ok) {
+        // Verified and usable — select it so the user can pay right away.
+        setSelectedPaymentMethod(found);
+      } else {
+        // Card was added but isn't verified yet: never present it as a ready-to-use selection.
+        // Leaving it unselected also keeps the Proceed button disabled until it's approved.
+        setSelectedPaymentMethod(null);
+        showInfo(
+          'Card added — verifying',
+          "We're verifying your card with the issuer. This usually takes a moment — you'll be able to select it once it's approved."
+        );
+      }
+
       setTimeout(() => setDebitInfoVisible(true), 350);
     },
     [paymentMethodsQuery]
@@ -411,7 +429,6 @@ const NewAddBalanceScreen: React.FC = () => {
         }}
         variant="fiatOnly"
         usdAmount={parsedAmount}
-        feePercent={0}
       />
 
       <PaymentMethodPickerModal

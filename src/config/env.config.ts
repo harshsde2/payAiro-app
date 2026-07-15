@@ -36,6 +36,8 @@ export interface IEnvConfig {
   // External Links
   PRIVACY_POLICY_URL: string;
   TERMS_AND_CONDITIONS_URL: string;
+  /** State-specific regulatory disclosures page (Coinme Legal / Acknowledgment screens). */
+  STATE_DISCLOSURES_URL: string;
   
   // App Configuration
   APP_NAME: string;
@@ -70,6 +72,7 @@ const REQUIRED_VARS: (keyof IEnvConfig)[] = [
   'ENV_TYPE',
   'PRIVACY_POLICY_URL',
   'TERMS_AND_CONDITIONS_URL',
+  'STATE_DISCLOSURES_URL',
   'APP_NAME',
   'APP_DISPLAY_NAME',
 ];
@@ -284,6 +287,10 @@ function buildConfig(): IEnvConfig {
     TERMS_AND_CONDITIONS_URL: validateUrl(
       (Config as any).TERMS_AND_CONDITIONS_URL,
       'TERMS_AND_CONDITIONS_URL'
+    ),
+    STATE_DISCLOSURES_URL: validateUrl(
+      (Config as any).STATE_DISCLOSURES_URL,
+      'STATE_DISCLOSURES_URL'
     ),
     APP_NAME: String((Config as any).APP_NAME).trim(),
     APP_DISPLAY_NAME: String((Config as any).APP_DISPLAY_NAME).trim(),

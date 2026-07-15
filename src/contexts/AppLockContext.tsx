@@ -1,18 +1,17 @@
 import React, { createContext, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { useSelector } from 'react-redux';
-import { getPin, setPin, getNumber, setNumber, removeItem, STORAGE_KEYS } from 'storage/mmkv';
-import { getBiometric, setBiometric } from 'services/Auth';
+import { getPin, setPin, getNumber, setNumber, removeItem, getAppLockTimeoutMs, STORAGE_KEYS } from 'storage/mmkv';
+import { readAuthSession } from 'auth/authSession';
+import { getBiometric } from 'services/Auth';
 import { userApiClient } from 'api/userApiClient';
 import { USER_AUTH } from 'api/endpoints';
 import { showError } from 'utils/toast';
 import { AppLockContextType } from 'types/appLock.types';
-import { LOCK_CONFIG } from 'types/appLock.types';
 
 // Create the context
 export const AppLockContext = createContext<AppLockContextType | undefined>(undefined);
 
-const GRACE_PERIOD_MS = LOCK_CONFIG.GRACE_PERIOD_MS;
 const PIN_SETUP_REMINDER_MS = 10 * 60 * 1000;
 
 // Provider props
@@ -39,14 +38,25 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
   
   // Track if a native modal/permission dialog is currently showing
   const isNativeModalVisibleRef = useRef<boolean>(false);
+
+  // True only when the app ACTUALLY hit the 'background' state (home, app switcher,
+  // phone lock) — distinguishes real departures from momentary 'inactive' blips
+  // (Face ID dialog, Control Center, permission prompts) which must never lock.
+  const wentToBackgroundRef = useRef<boolean>(false);
   
   // Get authentication state and token from Redux
   const isLogin = useSelector((state: any) => state.authenticationSlice?.isLogin);
   const accessToken = useSelector((state: any) => state.authenticationSlice?.tokens?.access);
   
-  // Capture the initial login state on first render
+  // Capture whether this is a cold start of an already-logged-in user, on first render.
+  // Read SYNCHRONOUSLY from storage — the Redux `isLogin` flag hydrates asynchronously
+  // (App.js fetches /users/me then dispatches setAppAccessGranted), so reading it here
+  // misclassifies a returning user as logged-out and skips the cold-start lock. A persisted,
+  // fully-onboarded session means the app launched already logged in (i.e. a real cold start);
+  // a fresh login starts with no tokens, so this stays false and won't lock right after sign-in.
   if (wasLoggedInOnMount.current === null) {
-    wasLoggedInOnMount.current = isLogin === true;
+    const session = readAuthSession();
+    wasLoggedInOnMount.current = !!session.tokens && session.onboardingComplete;
   }
 
   const refreshPinStatus = useCallback(() => {
@@ -73,8 +83,12 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
       }
     }
 
-    await setBiometric(biometric);
-    setIsBiometricEnabled(biometric);
+    // Biometric is a DEVICE-LOCAL preference (Face ID / fingerprint enrollment is
+    // per-device) — never overwrite it from the backend. The backend value also lags
+    // reality while the Settings-screen upsert is disabled, so applying it here wiped
+    // the user's local choice on every launch. Re-read the local preference instead.
+    const localBiometric = await getBiometric();
+    setIsBiometricEnabled(localBiometric === true);
     refreshPinStatus();
 
     return { hasBackendPin, biometric };
@@ -158,24 +172,36 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
     }
 
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      // Going to background
+      // Keep the last-active timestamp fresh whenever we leave 'active' — it's what the
+      // cold-start check compares against if the app is killed from here.
       if (appState.current === 'active' && nextAppState.match(/inactive|background/)) {
-        // Only save timestamp if user has account + PIN
-        const timestamp = Date.now();
-        setNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME, timestamp);
+        setNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME, Date.now());
       }
-      
+
+      // Only a REAL background transition arms the lock. Momentary 'inactive' blips —
+      // Face ID / biometric dialogs, Control Center, permission prompts, share sheets —
+      // must never re-lock (with an "Instant" timeout they'd loop the biometric prompt
+      // forever: each dialog dismissal would immediately lock again).
+      if (nextAppState === 'background') {
+        wentToBackgroundRef.current = true;
+      }
+
       // Coming to foreground - check grace period before locking
       if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        const cameFromBackground = wentToBackgroundRef.current;
+        wentToBackgroundRef.current = false;
+
         // Don't lock if a native modal was showing (permission dialog, share sheet, etc.)
         // The flag will be reset by the component that set it (with a delay)
-        if (!isNativeModalVisibleRef.current) {
-          // Check if we're within the grace period (60 seconds)
+        if (!isNativeModalVisibleRef.current && cameFromBackground) {
+          // Check if we're within the user-selected grace period (read fresh so a
+          // Settings change takes effect on the very next foreground).
+          const gracePeriodMs = getAppLockTimeoutMs();
           const lastActiveTime = getNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME);
           const currentTime = Date.now();
           if (lastActiveTime !== undefined) {
             const timeSinceLastActive = currentTime - lastActiveTime;
-            if (timeSinceLastActive >= GRACE_PERIOD_MS) {
+            if (timeSinceLastActive >= gracePeriodMs) {
               setIsLocked(true);
             } else {
               setNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME, currentTime);
@@ -183,12 +209,16 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
           } else {
             setIsLocked(true);
           }
+        } else {
+          // Trusted return (native dialog blip / pure inactive) — refresh the timestamp
+          // so this pause doesn't count toward the next lock decision.
+          setNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME, Date.now());
         }
-        // Note: We don't reset the flag here because the share sheet may cause multiple
-        // state transitions (active -> inactive -> active -> inactive -> active)
+        // Note: We don't reset the native-modal flag here because the share sheet may cause
+        // multiple state transitions (active -> inactive -> active -> inactive -> active)
         // The component will reset the flag after the modal is fully dismissed
       }
-      
+
       appState.current = nextAppState;
     };
     
@@ -205,26 +235,24 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
     if (shouldShowLock && !hasCheckedColdStart.current && wasLoggedInOnMount.current) {
       hasCheckedColdStart.current = true;
 
-      // Check if we're within the grace period (60 seconds)
-      const lastActiveTime = getNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME);
-      const currentTime = Date.now();
-      if (lastActiveTime !== undefined) {
-        const timeSinceLastActive = currentTime - lastActiveTime;
-        if (timeSinceLastActive >= GRACE_PERIOD_MS) {
-          setIsLocked(true);
-        } else {
-          setNumber(STORAGE_KEYS.APP_LOCK_LAST_ACTIVE_TIME, currentTime);
-        }
-      } else {
-        setIsLocked(true);
-      }
+      // Cold start (app was killed and reopened): ALWAYS lock, regardless of the
+      // user-selected auto-lock timing. The timing only governs background→foreground
+      // while the app is still alive; a fresh process must re-authenticate immediately.
+      setIsLocked(true);
       setIsLockCheckComplete(true);
     }
   }, [shouldShowLock]);
 
-  // Reset flags when user logs out (so next session works correctly)
+  // Reset flags when user logs out (so next session works correctly).
+  // IMPORTANT: only on a REAL logged-in → logged-out transition. At mount isLogin is
+  // still false (Redux hydrates asynchronously), and resetting there would wipe the
+  // synchronously-captured wasLoggedInOnMount flag before the cold-start lock check
+  // runs — silently disabling the lock on every app kill + reopen.
+  const prevIsLoginRef = useRef<boolean | null>(null);
   useEffect(() => {
-    if (!isLogin) {
+    const prev = prevIsLoginRef.current;
+    prevIsLoginRef.current = isLogin === true;
+    if (prev === true && isLogin !== true) {
       hasCheckedColdStart.current = false;
       wasLoggedInOnMount.current = false;
     }

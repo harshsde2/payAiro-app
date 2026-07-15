@@ -43,12 +43,12 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
         routeName: NAVIGATION_SCREENS.NEW_NOTIFICATION_SCREEN,
         badgeLabel: unreadLabel,
       },
-      {
-        key: 'profile' as const,
-        label: 'Profile Details',
-        icon: <AppIcon.User width={18} height={18} />,
-        routeName: NAVIGATION_SCREENS.NEW_PERSONAL,
-      },
+      // {
+      //   key: 'profile' as const,
+      //   label: 'Profile Details',
+      //   icon: <AppIcon.User width={18} height={18} />,
+      //   routeName: NAVIGATION_SCREENS.NEW_PERSONAL,
+      // },
       {
         key: 'paymentMethods' as const,
         label: 'Payment method',
@@ -67,12 +67,12 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
         icon: <AppIcon.RewardsIcon width={18} height={18} />,
         routeName: NAVIGATION_SCREENS.NEW_REWARDS_AND_REFERRALS_SCREEN,
       },
-      {
-        key: 'bankStatement' as const,
-        label: 'Bank Statement',
-        icon: <AppIcon.BankStatement width={18} height={18} />,
-        routeName: NAVIGATION_SCREENS.NEW_BANK_STATEMENT_SCREEN,
-      },
+      // {
+      //   key: 'bankStatement' as const,
+      //   label: 'Bank Statement',
+      //   icon: <AppIcon.BankStatement width={18} height={18} />,
+      //   routeName: NAVIGATION_SCREENS.NEW_BANK_STATEMENT_SCREEN,
+      // },
       {
         key: 'settings' as const,
         label: 'Settings',
@@ -83,7 +83,7 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
         key: 'support' as const,
         label: 'Support',
         icon: <AppIcon.Headphones width={18} height={18} />,
-        routeName: NAVIGATION_SCREENS.SUPPORT_SCREEN,
+        routeName: NAVIGATION_SCREENS.FRESHCHAT_SCREEN,
       },
       // 'About' omitted: no route/screen yet.
     ],
@@ -191,7 +191,7 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
               color="#8B6914"
               style={logoutModalStyles.warningText}
             >
-              This will remove all accounts and clear all data from the app.
+              Are you sure you want to logout?
             </CustomText>
           </View>
 

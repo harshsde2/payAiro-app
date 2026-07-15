@@ -44,7 +44,13 @@ const AmountInput: React.FC<AmountInputProps> = ({
           variant="h1"
           fontWeight="semiBold"
           size={dynamicFontSize}
-          style={styles.amountCurrency}
+          style={[
+            styles.amountCurrency,
+            // Match the TextInput's explicit lineHeight below so both sit in
+            // identically-sized line boxes — otherwise `flex-end` aligns their
+            // bottoms to slightly different points on Android.
+            Platform.OS === 'android' ? { lineHeight: dynamicFontSize * 1.2 } : null,
+          ]}
         >
           {leftPrefix}
         </CustomText>
@@ -62,6 +68,20 @@ const AmountInput: React.FC<AmountInputProps> = ({
               fontFamily: theme.typography.fontFamily.semiBold,
               color: theme.colors.text,
             },
+            // Android's TextInput reserves extra vertical space around the glyphs
+            // (includeFontPadding) that a sibling Text doesn't have, and computes its
+            // own default line-height independently of Text — both push the digits out
+            // of baseline alignment with the "$" prefix in this flex-end row. Pinning an
+            // explicit, identical lineHeight on both elements makes their line boxes the
+            // same height so flex-end lines up their bottoms exactly. None of this
+            // applies on iOS (props are no-ops there / already aligned).
+            Platform.OS === 'android'
+              ? {
+                  includeFontPadding: false,
+                  textAlignVertical: 'center' as const,
+                  lineHeight: dynamicFontSize * 1.2,
+                }
+              : null,
           ]}
           autoFocus
           returnKeyType="done"
@@ -74,7 +94,11 @@ const AmountInput: React.FC<AmountInputProps> = ({
             variant="h1"
             fontWeight="semiBold"
             size={dynamicFontSize}
-            style={styles.amountSuffix}
+            style={[
+              styles.amountSuffix,
+              // Same fix as the "$" prefix — match the TextInput's explicit lineHeight.
+              Platform.OS === 'android' ? { lineHeight: dynamicFontSize * 1.2 } : null,
+            ]}
           >
             {rightSuffix}
           </CustomText>

@@ -23,8 +23,8 @@ import {
   useCryptoAssetsListData,
   usePaymentTransactionHistory,
   useUserCryptoMarketList,
-  useUserCryptoBalanceFastApi,
 } from "query/hooks/useCrypto";
+import { useStateStablecoin } from "hooks/useStateStablecoin";
 import RecentActivityCard, {
   isTradeActivity,
 } from "@new-ui/components/common-components/RecentActivityCard";
@@ -84,24 +84,18 @@ const NewDashboard = () => {
     isLoading: isHistoryLoading,
     isRefetching: isHistoryRefetching,
     refetch: refetchHistory,
-  } = usePaymentTransactionHistory("all", 20);
+  } = usePaymentTransactionHistory({ scope: "all", limit: 20 });
   const { data: marketRows = [] } = useUserCryptoMarketList("USD");
 
-  // Crypto balance for the dashboard balance card: sum of every asset's estimatedBalanceValue.
-  const {
-    data: cryptoBalanceRows = [],
-    isFetching: isCryptoBalanceFetching,
-    refetch: refetchCryptoBalance,
-  } = useUserCryptoBalanceFastApi();
+  // Registered-state stablecoin (TX → DAI, others → USDC): the Dashboard's "Payairo Balance".
+  const stateStablecoin = useStateStablecoin();
+  const stablecoinBalance = useMemo(() => {
+    const row = balances.find(
+      (b) => String(b.asset ?? "").toUpperCase() === stateStablecoin
+    );
+    return Number(row?.usd_value_available ?? 0);
+  }, [balances, stateStablecoin]);
 
-  const cryptoTotalUsd = useMemo(
-    () =>
-      cryptoBalanceRows.reduce((sum, row) => {
-        const value = Number(row?.estimatedBalanceValue ?? 0);
-        return Number.isFinite(value) ? sum + value : sum;
-      }, 0),
-    [cryptoBalanceRows]
-  );
   const {
     data: userContactsData,
     isLoading: isContactsLoading,
@@ -259,12 +253,12 @@ const NewDashboard = () => {
       {/* Keep commented dashboard widgets for future enablement */}
       {/* <NewDashboardCard /> */}
       <DashboardBalanceCard
-        userId={"123"}
-        // bankBalance — PayAiro fiat balance, added later
-        aggregatedCryptoBalances={{ usd_value_available: cryptoTotalUsd }}
-        isRefreshing={isCryptoBalanceFetching}
+        title="Payairo Balance"
+        subtitle="This is your Stablecoin balance"
+        balance={stablecoinBalance}
+        isRefreshing={isRefetchingCrypto}
         onRefreshBalance={async () => {
-          await refetchCryptoBalance();
+          await Promise.all([refetchMarket(), refetchBalance()]);
         }}
       />
       {/* <MemoizedDashboardSection title="Your Accounts" /> */}
@@ -372,7 +366,7 @@ const NewDashboard = () => {
           <DashboardSection
             title="Recent Activities"
             actionText="See all"
-            onActionPress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_CONTACTS_SCREEN as never)}
+            onActionPress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_ACTIVITY_SCREEN as never)}
           >
             {isHistoryLoading ? (
               <View style={{ paddingVertical: 24, alignItems: "center" }}>

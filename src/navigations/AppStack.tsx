@@ -60,6 +60,7 @@ import {
 } from "@new-ui/screens/CashRamp/Sell";
 import CommonErrorScreen from "@new-ui/screens/Auth/CommonError/CommonErrorScreen";
 import StateComplianceAcknowledgmentScreen from "@new-ui/screens/Compliance/StateComplianceAcknowledgmentScreen";
+import StateRestrictedScreen from "@new-ui/screens/Compliance/StateRestrictedScreen";
 import PreTransactionDisclosureScreen from "@new-ui/screens/Compliance/PreTransactionDisclosureScreen";
 
 const Stack = createNativeStackNavigator();
@@ -76,12 +77,14 @@ export function AppStackHeader(props: NativeStackHeaderProps) {
   const isActivityScreen = props.route?.name === NAVIGATION_SCREENS.NEW_ACTIVITY_SCREEN;
   const rightButton = isNewSendScreen
     ? { icon: <AppIcon.QrCode width={24} height={24} color={newTheme.colors.primary} onPress={() => { navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL) }}/> }
-    : isActivityScreen
-      ? {
-          icon: <AppIcon.Download width={24} height={24} color={newTheme.colors.primary} />,
-          onPress: () => {},
-        }
-      : undefined;
+    // : 
+    // isActivityScreen
+    //   ? {
+    //       icon: <AppIcon.Download width={24} height={24} color={newTheme.colors.primary} />,
+    //       onPress: () => {},
+    //     }
+      : 
+      undefined;
 
   return <CustomHeader {...props}  title={title} rightButton={rightButton} />;
 }
@@ -410,6 +413,17 @@ export default function AppStack() {
         }}
         name={NAVIGATION_SCREENS.STATE_COMPLIANCE_ACKNOWLEDGMENT}
         component={StateComplianceAcknowledgmentScreen}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: false,
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+          animationTypeForReplace: 'push',
+          gestureEnabled: false,
+        }}
+        name={NAVIGATION_SCREENS.STATE_RESTRICTED_BLOCK}
+        component={StateRestrictedScreen}
       />
       <Stack.Screen
         options={{

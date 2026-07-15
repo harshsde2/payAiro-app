@@ -33,6 +33,7 @@ import {
 } from 'query/hooks';
 import { bankKeys } from 'query/hooks/useBank';
 import { queryClient } from 'query/queryClient';
+import { useStateStablecoin } from 'hooks/useStateStablecoin';
 import { showError, getApiErrorMessage } from 'utils/toast';
 import type { FundingSource } from './enterAmount.types';
 import { useEnterAmountState } from './useEnterAmountState';
@@ -109,6 +110,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     tradeMode,
     cryptoAsset,
     recipientUserId,
+    preselectedAsset,
   } =
     route.params || ({} as any);
     
@@ -193,6 +195,8 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     !!cryptoAsset &&
     typeof cryptoAsset === 'object';
   const isCryptoSendMode = type === 'send' && !tradeMode;
+  // Registered-state stablecoin (TX → DAI, others → USDC): the default crypto-send source.
+  const stateStablecoin = useStateStablecoin();
   const tradeAssetSymbol = String(cryptoAsset?.asset || '').toUpperCase();
   const tradePriceUSD = Number(cryptoAsset?.currentPrice ?? 0);
 
@@ -322,12 +326,6 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     return shouldHideCrypto ? [] : cryptoSources;
   }, [cryptoSources, type]);
 
-  const transactionFeePercent = useMemo(() => {
-    if (isTradeMode) return 0;
-    const raw = walletData?.TransactionFees_persentage;
-    const n = typeof raw === 'string' ? parseFloat(raw) : Number(raw);
-    return Number.isFinite(n) ? n : 0;
-  }, [isTradeMode, walletData?.TransactionFees_persentage]);
 
   const tradeFundingSource = useMemo<FundingSource | null>(() => {
     if (!isTradeMode || !tradeAssetSymbol) return null;
@@ -352,8 +350,17 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     if (!isCryptoSendMode) return null;
     if (!Array.isArray(cryptoSources) || cryptoSources.length === 0) return null;
 
-    const btc = cryptoSources.find((c) => String(c.asset ?? '').toUpperCase() === 'BTC');
-    const item = btc ?? cryptoSources[0];
+    // Default the funding source to: the asset the user was already viewing (e.g.
+    // tapped ETH → Send from its details page) when present, else the registered-state
+    // stablecoin (TX → DAI, others → USDC). The user can still switch to any other crypto.
+    const preselectedSymbol = String(preselectedAsset?.asset ?? '').toUpperCase();
+    const preferred = preselectedSymbol
+      ? cryptoSources.find((c) => String(c.asset ?? '').toUpperCase() === preselectedSymbol)
+      : undefined;
+    const stateDefault = preferred
+      ? undefined
+      : cryptoSources.find((c) => String(c.asset ?? '').toUpperCase() === stateStablecoin);
+    const item = preferred ?? stateDefault ?? cryptoSources[0];
     if (!item) return null;
 
     const symbol = String(item.asset || 'CRYPTO').toUpperCase();
@@ -376,7 +383,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
         logo: item.logo,
       },
     };
-  }, [cryptoSources, isCryptoSendMode]);
+  }, [cryptoSources, isCryptoSendMode, stateStablecoin, preselectedAsset?.asset]);
 
   const initialSelectedSource = useMemo(() => {
     if (tradeFundingSource) return tradeFundingSource;
@@ -408,13 +415,11 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     toggleInputMode,
   } = useEnterAmountState({
     initialSelectedSource,
-    transactionFeePercent,
     initialInputValue: requestedInitialInputValue,
-    initialInputMode: isTradeMode
-      ? 'fiat'
-      : isCryptoSendMode
-        ? 'asset'
-        : 'fiat',
+    // Always start in USD entry — including crypto-send, which used to default
+    // to asset (crypto) amount entry. Users can still toggle to crypto via the
+    // header's ↻ button or by picking a different funding source.
+    initialInputMode: 'fiat',
     preferFiatCryptoEntry: isTradeMode && tradeMode === 'buy',
     defaultFiatOnCryptoSource: isTradeMode && tradeMode === 'sell',
   });
@@ -561,26 +566,28 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
             isError: false,
           } as never);
         } else {
+          const failMsg =
+            data?.data?.data?.error ||
+            'Custodial account is suspended or Level 2 KYC is pending.';
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
             isLoading: false,
             transactionData: data,
             isSuccess: false,
             isError: true,
+            errorMessage: failMsg,
           } as never);
-          showError(
-            'Payment blocked',
-            data?.data?.data?.error ||
-              'Custodial account is suspended or Level 2 KYC is pending.'
-          );
+          showError('Payment blocked', failMsg);
         }
       },
       onError: (error: unknown) => {
         console.log('error =>', JSON.stringify(error, null, 2));
+        const failMsg = getApiErrorMessage(error, 'Something went wrong. Please try again.');
         navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
           isLoading: false,
           transactionData: null,
           isSuccess: false,
           isError: true,
+          errorMessage: failMsg,
         } as never);
       },
       onSettled: () => {},
@@ -633,27 +640,29 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
               'Your payment request has been sent successfully!',
           } as never);
         } else {
+          const failMsg = data?.message || 'Already have pending request with this account';
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
             isLoading: false,
             transactionData: data,
             isSuccess: false,
             isError: true,
+            errorMessage: failMsg,
           } as never);
 
-          showError(
-            data?.message || 'Already have pending request with this account'
-          );
+          showError(failMsg);
         }
       },
       onError: (error: unknown) => {
         console.log('Payment request error:', error);
+        const failMsg = 'You already have a pending request with this account.';
         navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
           isLoading: false,
           transactionData: null,
           isSuccess: false,
           isError: true,
+          errorMessage: failMsg,
         } as never);
-        showError("Couldn't send request", 'You already have a pending request with this account.');
+        showError("Couldn't send request", failMsg);
       },
     });
   }, [
@@ -697,24 +706,28 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
             customDescription: `Your payment of $${requestAmountForUi} to ${requesterNameOrUsername} has been sent for processing.`,
           } as never);
         } else {
+          const failMsg = data?.message || 'Insufficient balance or something went wrong.';
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
             isLoading: false,
             transactionData: data,
             isSuccess: false,
             isError: true,
+            errorMessage: failMsg,
           } as never);
-          showError('Payment failed', data?.message || 'Insufficient balance or something went wrong.');
+          showError('Payment failed', failMsg);
         }
       },
       onError: (error: unknown) => {
         console.log('Pay request error:', JSON.stringify(error, null, 2));
+        const failMsg = getApiErrorMessage(error, 'Insufficient balance or something went wrong.');
         navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
           isLoading: false,
           transactionData: null,
           isSuccess: false,
           isError: true,
+          errorMessage: failMsg,
         } as never);
-        showError('Payment failed', 'Insufficient balance or something went wrong.');
+        showError('Payment failed', failMsg);
       },
     });
   }, [
@@ -776,14 +789,16 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
         },
         onError: (error: unknown) => {
           console.log('crypto send error =>', JSON.stringify(error, null, 2));
+          const failMsg = getApiErrorMessage(error, 'Something went wrong while sending crypto.');
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
             isLoading: false,
             transactionData: null,
             isSuccess: false,
             isError: true,
+            errorMessage: failMsg,
           } as never);
           cryptoPaymentRef.current = null;
-          showError('Transfer failed', 'Something went wrong while sending crypto.');
+          showError('Transfer failed', failMsg);
         },
         onSettled: () => {
           setIsPaying(false);
@@ -800,7 +815,10 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
 
     const symbol = selectedSource.cryptoMeta.symbol;
     const chain = selectedSource.cryptoMeta.network || symbol;
-    const amountStr = String(assetAmount.toFixed(8)).replace(/\.?0+$/, '') || '0';
+    // Never send more than the real balance: a Max amount round-tripped through USD can
+    // land a hair above the balance from display rounding — clamp it to the actual max.
+    const sendAsset = maxAsset > 0 ? Math.min(assetAmount, maxAsset) : assetAmount;
+    const amountStr = String(sendAsset.toFixed(8)).replace(/\.?0+$/, '') || '0';
 
     const payload = recipientUserId
       ? ({ type: 'internal', amount: amountStr, currency: symbol, chain, recipientUserId } as const)
@@ -814,20 +832,25 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: cryptoKeys.allCryptoBalances() });
         const ok = data?.ok ?? data?.status ?? true;
+        const failMsg = (data as any)?.message || 'Please try again.';
         navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
           isLoading: false, transactionData: data, isSuccess: !!ok, isError: !ok,
+          ...(ok ? {} : { errorMessage: failMsg }),
         } as never);
-        if (!ok) showError('Transaction failed', (data as any)?.message || 'Please try again.');
+        if (!ok) showError('Transaction failed', failMsg);
       },
       onError: (error: unknown) => {
+        const failMsg = getApiErrorMessage(error, 'Please try again.');
         navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
           isLoading: false, transactionData: null, isSuccess: false, isError: true,
+          errorMessage: failMsg,
         } as never);
-        showError('Transaction failed', getApiErrorMessage(error, 'Please try again.'));
+        showError('Transaction failed', failMsg);
       },
     });
   }, [
     assetAmount,
+    maxAsset,
     navigation,
     queryClient,
     recipient_identifier,
@@ -1135,6 +1158,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     } else {
       const errors = validateCrypto();
       if (errors.length > 0) {
+        console.log('errors =>', errors);
         showError('Please check the form', errors[0]);
         return;
       }
@@ -1252,24 +1276,20 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
 
           {isCryptoMode ? (
             <View style={styles.cryptoModeContainer}>
-              <CustomText style={styles.cryptoFeeText} variant="caption">
-                Fee: {feePercent}%
-              </CustomText>
-
               {!isTradeMode ? (
                 <TouchableOpacity style={styles.cryptoMaxContainer} activeOpacity={0.9} onPress={fillMax}>
                   <CustomText variant="caption" style={styles.cryptoMaxText}>
-                    Max: {maxAsset.toFixed(maxAsset >= 1 ? 4 : 8)} {assetSymbol} ~$
+                    Max: {maxAsset.toFixed(8).replace(/\.?0+$/, '') || '0'} {assetSymbol} ~$
                     {maxUsd.toFixed(2)}
                   </CustomText>
                 </TouchableOpacity>
               ) : null}
 
-              <CustomText variant="caption" style={styles.cryptoEquivalentText}>
+              {/* <CustomText variant="caption" style={styles.cryptoEquivalentText}>
                 {inputMode === 'asset'
                   ? `~$${Number(displayFiatEquivalent || 0).toFixed(2)}`
                   : `~${Number(displayAssetEquivalent || 0).toFixed(6)} ${assetSymbol}`}
-              </CustomText>
+              </CustomText> */}
             </View>
           ) : null}
 
@@ -1301,12 +1321,15 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
                 maskedDetail={paymentSubtitle}
                 onPress={openDebitPaymentPicker}
               />
-            ) : isCryptoMode && !isTradeMode ? (
+            ) 
+            : isCryptoMode && !isTradeMode ? (
               <FundingSourceCard
+                label="Select Another coin if you'd like to change"
                 source={selectedSource}
                 onPress={handlePressFundingSource}
               />
-            ) : (
+            )
+            : (
               <DebitCardPaymentRow
                 title="Select Payment Method"
                 maskedDetail={paymentSubtitle}
@@ -1396,7 +1419,6 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
           tokenAmount={assetAmount}
           priceUSD={selectedSource?.cryptoMeta?.priceUSD ?? tradePriceUSD ?? 0}
           usdAmount={amount}
-          feePercent={feePercent}
         />
 
         <RequestDetailsSheet

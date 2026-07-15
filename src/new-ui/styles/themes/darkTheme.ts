@@ -16,6 +16,9 @@ export const darkTheme: ITheme = {
     grey: COLORS.grey,
     greyLight: '#2C2C2E',
     greyDark: COLORS.greyDark,
+    // Light theme steps greyLight2 darker than greyLight for contrast against white;
+    // on dark the equivalent step goes lighter, so it stays visible against #000/#1C1C1E.
+    greyLight2: '#48484A',
     white: COLORS.white,
     black: COLORS.black,
     background: '#000000',

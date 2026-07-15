@@ -4,7 +4,6 @@ import { useTheme } from '@new-ui/styles/ThemeContext';
 import { rewardsAndReferralsScreenStyles } from '@new-ui/styles/screens/rewards/rewardsAndReferralsScreenStyles';
 import CustomText from '@new-ui/components/common-components/CustomText';
 import { AppIcon } from '@new-ui/assets/svgs';
-import GlassyWrapper from '@new-ui/components/common-components/GlassyWrapper';
 
 interface IBreakdownRow {
   label: string;
@@ -68,7 +67,7 @@ const RewardsBreakdownModal: React.FC<IRewardsBreakdownModalProps> = ({
               </TouchableOpacity>
             </View>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <AppIcon.Close width={18} height={18} color={theme.colors.text} />
+              <AppIcon.Cancel width={18} height={18} color={theme.colors.text} />
             </TouchableOpacity>
           </View>
 
@@ -100,12 +99,11 @@ const RewardsBreakdownModal: React.FC<IRewardsBreakdownModalProps> = ({
             </View>
           </TouchableOpacity>
 
-          <GlassyWrapper
-            style={[styles.modalBreakdownCard, { borderColor: theme.colors.border }]}
-            borderRadius={12}
-            blurAmount={20}
-            blurType="light"
-            overlayOpacity={0.06}
+          <View
+            style={[
+              styles.modalBreakdownCard,
+              { backgroundColor: theme.colors.white, borderColor: theme.colors.border },
+            ]}
           >
             {BREAKDOWN.map((row, idx) => (
               <View
@@ -121,17 +119,31 @@ const RewardsBreakdownModal: React.FC<IRewardsBreakdownModalProps> = ({
                 ]}
               >
                 <View style={styles.modalIconCircle}>
-                  <AppIcon.RewardsIcon width={18} height={18} />
+                  <AppIcon.RewardsIcon width={20} height={20} />
                 </View>
                 <View style={styles.modalBreakdownInfo}>
-                  <CustomText variant="body" size={14} color={theme.colors.greyDark}>{row.label}</CustomText>
+                  <CustomText
+                    variant="body"
+                    size={15}
+                    fontFamily="poppins"
+                    fontWeight="semiBold"
+                    color={theme.colors.black}
+                  >
+                    {row.label}
+                  </CustomText>
                 </View>
-                <CustomText variant="body" size={15} fontWeight="semiBold" color={theme.colors.text}>
+                <CustomText
+                  variant="body"
+                  size={15}
+                  fontFamily="poppins"
+                  fontWeight="semiBold"
+                  color={theme.colors.black}
+                >
                   {balanceVisible ? row.amount : '••••'}
                 </CustomText>
               </View>
             ))}
-          </GlassyWrapper>
+          </View>
         </Pressable>
       </Pressable>
     </Modal>

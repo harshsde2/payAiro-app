@@ -8,18 +8,19 @@ import { AppIcon } from '@new-ui/assets/svgs';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 import { newSendStyles } from '@new-ui/styles/screens/send/newSendStyles';
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
-import { useVerifyUserByIdentifier } from 'query/hooks/useUser';
+import { useVerifyPayairoUser } from 'query/hooks/useContact';
 import { detectBlockchainNameService } from 'utils/blockchainNameService';
 import { showError } from 'utils/toast';
 import { IBankBalance, IBankItem } from 'screens/Dashboard/types';
 import { useSelector } from 'react-redux';
 import { useAllBankAccounts } from 'query/hooks';
+import { useStateStablecoin } from 'hooks/useStateStablecoin';
 import { SendContactsList, ISendContactItem } from '@new-ui/components/common-components/SendContactsList';
 import { INewSendProps } from './types';
 
 const NewSend: React.FC<INewSendProps> = ({ route }) => {
   const params = route?.params ?? {};
-  const { requested, type, sender: senderFromParams } = params;
+  const { requested, type, sender: senderFromParams, preselectedAsset } = params;
 
   // console.log("params =>", JSON.stringify(params, null, 2));
 
@@ -55,9 +56,11 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
   const selectedBank = mainBanks?.[0] ?? null;
 
   const {
-    mutateAsync: verifyUserByIdentifier,
+    mutateAsync: verifyPayairoUser,
     isPending: userLoading,
-  } = useVerifyUserByIdentifier();
+  } = useVerifyPayairoUser();
+
+  const stateStablecoin = useStateStablecoin();
 
   const [sender, setSender] = useState<string>(senderFromParams ?? '');
   const [note, setNote] = useState<string>('');
@@ -89,40 +92,38 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
     const trimmedSender = sender.trim();
 
     if (!trimmedSender) {
-      showValidationError(
-        'Please enter a PayAiroTag, Phone, or Email'
-      );
+      showValidationError('Please enter a PayAiro Tag, Email, or Wallet Address');
       return;
     }
 
     setPendingVerification(true);
     try {
-      const data = await verifyUserByIdentifier({
-        identifier: trimmedSender,
-      });
+      // Verify against the FastAPI user search (the same working endpoint the suggestion
+      // list uses) — the old Django verify endpoint 401'd with "session expired".
+      const match = await verifyPayairoUser(trimmedSender);
 
-      if (data && data.status) {
-        const verifiedUser = (data as { data?: { username?: string } })?.data;
+      if (match) {
         const recipientUserId =
-          verifiedUser?.username?.trim() || trimmedSender;
-        navigation.navigate(
-          NAVIGATION_SCREENS.ENTER_AMOUNT as never,
-          {
-            type: 'send',
-            recipient_identifier: trimmedSender,
-            recipientUserId,
-            selectedContact: selectedContact,
-          }
-        );
+          (match.username ?? '').trim() ||
+          (match.payairo_tag ?? '').trim() ||
+          trimmedSender;
+        navigation.navigate(NAVIGATION_SCREENS.ENTER_AMOUNT as never, {
+          type: 'send',
+          recipient_identifier: trimmedSender,
+          recipientUserId,
+          selectedContact,
+          preselectedAsset,
+        } as never);
       } else {
-        showValidationError(
-          data?.message || 'Recipient not found'
+        showError(
+          'User not found',
+          `No PayAiro user matches "${trimmedSender}". Check the tag, or paste a wallet address.`
         );
       }
     } catch (e: any) {
-      showValidationError(
-        e?.response?.data?.data?.message ||
-        'Something went wrong. Please try again.'
+      showError(
+        'Something went wrong',
+        e?.response?.data?.message || 'Please try again.'
       );
     } finally {
       setPendingVerification(false);
@@ -189,6 +190,7 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
         type: 'send',
         recipient_identifier: trimmedSender,
         // recipientUserId intentionally absent → EnterAmount uses external payload
+        preselectedAsset,
       } as never);
       return;
     }
@@ -234,10 +236,11 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
           recipientUserId:
             contact.username?.trim() || trimmedSender,
           selectedContact: contact,
+          preselectedAsset,
         } as never
       );
     },
-    [navigation, requested, type, selectedBank]
+    [navigation, requested, type, selectedBank, preselectedAsset]
   );
 
   const handleContactProfilePress = useCallback(
@@ -282,7 +285,7 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
                 } as never);
               }}
             />
-            <CustomText variant="body" size={12} color={theme.colors.greyDark} style={styles.inputHint}>Valid USDC Polygon network addresses only</CustomText>
+            <CustomText variant="body" size={12} color={theme.colors.greyDark} style={styles.inputHint}>Valid {stateStablecoin} network addresses only</CustomText>
           </View>
           {/* inline suggestions removed for new UI; contacts now shown in list below */}
         </View>

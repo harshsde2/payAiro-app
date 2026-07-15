@@ -11,6 +11,9 @@ import {
   authenticateWithBiometricDetailed,
 } from 'services/BiometricService'
 import { showError, showSuccess } from 'utils/toast'
+import { getAppLockTimeoutMs, setAppLockTimeoutMs } from 'storage/mmkv'
+import { APP_LOCK_TIMEOUT_OPTIONS } from 'types/appLock.types'
+import FilterChip from 'new-ui/components/common-components/FilterChip/FilterChip'
 // TODO: enable server sync once backend endpoint is finalized
 // import { useUpsertUserSecurityPinSettings } from 'query/hooks'
 // import { getPin as getLocalPin } from 'storage/mmkv'
@@ -21,6 +24,7 @@ const PrivacyAndSecurityScreen = () => {
 
   const [biometricStatus, setBiometricStatus] = useState(false)
   const [isUpdatingBiometric, setIsUpdatingBiometric] = useState(false)
+  const [timeoutMs, setTimeoutMs] = useState(() => getAppLockTimeoutMs())
 
   const {
     setNativeModalVisible,
@@ -161,6 +165,14 @@ const PrivacyAndSecurityScreen = () => {
     }
   }
 
+  const handleSelectTimeout = (valueMs: number) => {
+    if (valueMs === timeoutMs) return
+    setAppLockTimeoutMs(valueMs)
+    setTimeoutMs(valueMs)
+    const label = APP_LOCK_TIMEOUT_OPTIONS.find((o) => o.valueMs === valueMs)?.label ?? ''
+    showSuccess('Auto-lock updated', `PayAiro will lock after ${label.toLowerCase()}.`)
+  }
+
   return (
     <ScreenWrapper safeArea safeAreaEdges={['bottom']} scrollable contentStyle={styles.content}>
       <View style={styles.card}>
@@ -183,6 +195,30 @@ const PrivacyAndSecurityScreen = () => {
           thumbColor={theme.colors.white}
         />
       </View>
+
+      <View style={styles.timeoutCard}>
+        <View style={styles.cardLeft}>
+          <AppIcon.Privacy />
+          <View style={styles.cardTextWrapper}>
+            <CustomText variant="h5" size={16} fontWeight="semiBold">
+              Auto-Lock Timing
+            </CustomText>
+            <CustomText variant="caption" size={12} fontWeight="light" color={theme.colors.greyDark}>
+              Require unlock when you return to PayAiro after this long
+            </CustomText>
+          </View>
+        </View>
+        <View style={styles.chipsRow}>
+          {APP_LOCK_TIMEOUT_OPTIONS.map((option) => (
+            <FilterChip
+              key={option.valueMs}
+              label={option.label}
+              selected={option.valueMs === timeoutMs}
+              onPress={() => handleSelectTimeout(option.valueMs)}
+            />
+          ))}
+        </View>
+      </View>
     </ScreenWrapper>
   )
 }
@@ -202,6 +238,19 @@ const privacyAndSecurityStyles = (theme: ReturnType<typeof useTheme>['theme']) =
       borderWidth: 1,
       borderRadius: theme.radius.lg,
       padding: theme.spacing.md,
+    },
+    timeoutCard: {
+      borderColor: theme.colors.greyLight,
+      borderWidth: 1,
+      borderRadius: theme.radius.lg,
+      padding: theme.spacing.md,
+      marginTop: theme.spacing.md,
+    },
+    chipsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: theme.spacing.sm,
+      marginTop: theme.spacing.md,
     },
     cardLeft: {
       flexDirection: 'row',

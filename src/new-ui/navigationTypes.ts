@@ -126,6 +126,10 @@ export type NewUIDashboardStackParamList = {
     blocking?: boolean;
     onComplete?: () => void;
   };
+  [NAVIGATION_SCREENS.STATE_RESTRICTED_BLOCK]: {
+    /** Registered-state code that triggered the block (e.g. 'NY', 'VT'). */
+    stateCode: string;
+  };
   [NAVIGATION_SCREENS.STATE_COMPLIANCE_PRE_TRANSACTION]: {
     stateCode: StateCode;
     tradeType: 'buy' | 'sell';

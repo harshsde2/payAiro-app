@@ -1,4 +1,5 @@
 import { MMKV } from "react-native-mmkv";
+import { APP_LOCK_TIMEOUT_OPTIONS, DEFAULT_APP_LOCK_TIMEOUT_MS } from "types/appLock.types";
 
 // Create the storage instance
 export const storage = new MMKV({
@@ -121,4 +122,20 @@ export function setCachedComplianceStatus(status: unknown): void {
 
 export function clearCachedComplianceStatus(): void {
   removeItem(STORAGE_KEYS.STATE_COMPLIANCE_STATUS);
+}
+
+/**
+ * Auto-lock grace period (ms) chosen by the user in Privacy & Security.
+ * Falls back to the default when unset, and rejects any stored value that isn't
+ * one of the known options (guards against stale/garbage data).
+ */
+export function getAppLockTimeoutMs(): number {
+  const stored = getNumber(STORAGE_KEYS.APP_LOCK_TIMEOUT);
+  if (stored === undefined) return DEFAULT_APP_LOCK_TIMEOUT_MS;
+  const isKnown = APP_LOCK_TIMEOUT_OPTIONS.some((o) => o.valueMs === stored);
+  return isKnown ? stored : DEFAULT_APP_LOCK_TIMEOUT_MS;
+}
+
+export function setAppLockTimeoutMs(ms: number): void {
+  setNumber(STORAGE_KEYS.APP_LOCK_TIMEOUT, ms);
 }

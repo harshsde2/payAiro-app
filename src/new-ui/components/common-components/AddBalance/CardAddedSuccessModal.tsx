@@ -1,12 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Animated, Easing, Pressable } from 'react-native';
 import LottieView from 'lottie-react-native';
 import { TRANSACTION_SUCCESS } from 'lottie/lottie';
 import CustomText from '@new-ui/components/common-components/CustomText';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 import { addBalanceStyles } from '@new-ui/styles/screens/addBalance/addBalanceStyles';
-// TEMP-DEBUG: production add-card diagnostics (see addCardDebugReport.ts for removal).
-import { copyAddCardDebugReport } from '@new-ui/components/common-components/AddBalance/addCardDebugReport';
 
 const ENTRANCE_MS = 280;
 const FALLBACK_COMPLETE_MS = 2800;
@@ -16,8 +14,6 @@ export type CardAddedSuccessModalProps = {
   onComplete: () => void;
   title?: string;
   message?: string;
-  /** TEMP-DEBUG: shows a copy-debug-info button and waits for a tap instead of auto-dismissing. */
-  showDebugCopy?: boolean;
 };
 
 const CardAddedSuccessModal: React.FC<CardAddedSuccessModalProps> = ({
@@ -25,7 +21,6 @@ const CardAddedSuccessModal: React.FC<CardAddedSuccessModalProps> = ({
   onComplete,
   title = 'Card Added Successfully',
   message = 'Your debit card is ready to use.',
-  showDebugCopy = false,
 }) => {
   const { theme } = useTheme();
   const styles = addBalanceStyles(theme);
@@ -72,10 +67,7 @@ const CardAddedSuccessModal: React.FC<CardAddedSuccessModalProps> = ({
       }),
     ]).start();
 
-    // TEMP-DEBUG: with the copy button visible, wait for the user instead of auto-dismissing.
-    if (!showDebugCopy) {
-      fallbackTimerRef.current = setTimeout(finishOnce, FALLBACK_COMPLETE_MS);
-    }
+    fallbackTimerRef.current = setTimeout(finishOnce, FALLBACK_COMPLETE_MS);
 
     return () => {
       if (fallbackTimerRef.current) {
@@ -83,24 +75,15 @@ const CardAddedSuccessModal: React.FC<CardAddedSuccessModalProps> = ({
         fallbackTimerRef.current = null;
       }
     };
-  }, [visible, finishOnce, opacity, scale, showDebugCopy]);
+  }, [visible, finishOnce, opacity, scale]);
 
   const handleAnimationFinish = useCallback(
     (isCancelled?: boolean) => {
       if (isCancelled) return;
-      if (showDebugCopy) return; // TEMP-DEBUG: dismissal is via backdrop tap only.
       finishOnce();
     },
-    [finishOnce, showDebugCopy]
+    [finishOnce]
   );
-
-  // TEMP-DEBUG: "Copied ✓" feedback for the copy-debug-info button.
-  const [debugCopied, setDebugCopied] = useState(false);
-  const handleCopyDebugInfo = useCallback(() => {
-    if (!copyAddCardDebugReport()) return;
-    setDebugCopied(true);
-    setTimeout(() => setDebugCopied(false), 2000);
-  }, []);
 
   if (!visible) {
     return null;
@@ -138,19 +121,6 @@ const CardAddedSuccessModal: React.FC<CardAddedSuccessModalProps> = ({
           >
             {message}
           </CustomText>
-          {/* TEMP-DEBUG */}
-          {showDebugCopy ? (
-            <Pressable onPress={handleCopyDebugInfo} hitSlop={8}>
-              <CustomText
-                variant="caption"
-                color={theme.colors.textSecondary}
-                align="center"
-                style={{ marginTop: theme.spacing.md, textDecorationLine: 'underline' }}
-              >
-                {debugCopied ? 'Copied ✓' : 'Copy debug info'}
-              </CustomText>
-            </Pressable>
-          ) : null}
         </Animated.View>
       </Pressable>
     </Pressable>

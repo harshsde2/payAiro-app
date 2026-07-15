@@ -161,10 +161,26 @@ export const enterAmountStyles = (theme: ITheme) =>
       justifyContent: 'center',
       alignItems: 'center',
     },
+    fundingCardLabel: {
+      marginBottom: theme.spacing.sm,
+    },
     checkBalanceText: {
       marginTop: theme.spacing.xs,
     },
 
+    selectorSheetBody: {
+      flex: 1,
+    },
+    selectorHeadingTitle: {
+      marginBottom: theme.spacing.xs,
+    },
+    selectorHeading: {
+      marginBottom: theme.spacing.md,
+    },
+    selectorDoneButton: {
+      paddingTop: theme.spacing.sm,
+      paddingBottom: theme.spacing.sm,
+    },
     selectorContainer: {
       flex: 1,
     },

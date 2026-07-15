@@ -3,6 +3,7 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   TextInput as RNTextInput,
   View,
   useWindowDimensions,
@@ -34,6 +35,7 @@ import { showError } from "utils/toast";
 import { useAppLock } from "hooks/useAppLock";
 import { fetchWebSessionId } from "services/coinmeRiskLifecycle";
 import { useCoinmeAccountId } from "hooks/useCoinmeAccountId";
+import { useStateStablecoin } from "hooks/useStateStablecoin";
 import {
   DebitCardPaymentRow,
   PaymentMethodPickerModal,
@@ -53,11 +55,16 @@ const COINME_DEFAULTS = {
   sourceWalletAddress: ",mu9n7777777545e5vr",
 };
 
-const DEFAULT_SELL_ASSETS = new Set(["SOL", "SOLANA"]);
+// Name variants a balances row may use for each stablecoin symbol.
+const SELL_ASSET_ALIASES: Record<string, string[]> = {
+  USDC: ["USDC", "USD COIN", "USDCOIN"],
+  DAI: ["DAI", "DAI STABLECOIN"],
+};
 
-function isSolBalanceRow(item: CryptoFundingItem): boolean {
+function isSellAssetRow(item: CryptoFundingItem, symbol: string): boolean {
   const a = String(item?.asset ?? "").toUpperCase();
-  return DEFAULT_SELL_ASSETS.has(a);
+  const aliases = SELL_ASSET_ALIASES[symbol] ?? [symbol];
+  return aliases.includes(a);
 }
 
 const CryptoWithdraw: React.FC = () => {
@@ -72,6 +79,9 @@ const CryptoWithdraw: React.FC = () => {
   const { data: fetchedCryptoBalances = [] } = useCryptoAssetsListData("USD");
   const { requestPaymentVerification } = useAppLock();
   const tradeExecute = useCoinmeTradeExecute();
+
+  // Registered-state stablecoin (TX → DAI, others → USDC): the asset this screen sells.
+  const sellAsset = useStateStablecoin();
 
   const coinmeAccountId = useCoinmeAccountId();
 
@@ -121,8 +131,8 @@ const CryptoWithdraw: React.FC = () => {
   }, [allCryptoBalances, fetchedCryptoBalances]);
 
   const solRow = useMemo(() => {
-    return mergedCryptoBalances.find((item) => isSolBalanceRow(item)) ?? null;
-  }, [mergedCryptoBalances]);
+    return mergedCryptoBalances.find((item) => isSellAssetRow(item, sellAsset)) ?? null;
+  }, [mergedCryptoBalances, sellAsset]);
 
   const coinmeCryptoAsset = useMemo(() => {
     if (!solRow?.asset) return null;
@@ -142,13 +152,13 @@ const CryptoWithdraw: React.FC = () => {
 
     return {
       asset: String(solRow.asset).toUpperCase(),
-      chain: String((solRow as any)?.chain ?? "SOL").toUpperCase(),
+      chain: String((solRow as any)?.chain ?? sellAsset).toUpperCase(),
       logo: solRow.logo,
       fiatCurrency: "USD" as const,
       currentPrice,
       sourceWalletAddress: (solRow as any)?.sourceWalletAddress,
     };
-  }, [solRow]);
+  }, [solRow, sellAsset]);
 
   const convertToFundingSource = useCallback((item: CryptoFundingItem): FundingSource | null => {
     const assetSymbol = item?.asset;
@@ -374,7 +384,19 @@ const CryptoWithdraw: React.FC = () => {
         style={styles.keyboardAvoiding}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={{ flex: 1 }}>
+        {/* Scrollable instead of a rigid flex split: iOS's KeyboardAvoidingView "padding"
+            behavior isn't reliable enough on its own in nested layouts like this one — when
+            its push falls short, a fixed (non-scrolling) layout has no fallback and the
+            keyboard just covers the Payment Method / Proceed button. Scrolling guarantees
+            everything stays reachable regardless of exact keyboard-height math. The flex
+            spacer keeps Payment Method/Proceed visually pinned near the bottom when there's
+            slack space (keyboard closed), same as the original layout looked. */}
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.header}>
             <AppIcon.ArrowLeft width={25} height={25} onPress={() => navigation.goBack()} />
             <View style={styles.headerTitleContainer}>
@@ -401,79 +423,81 @@ const CryptoWithdraw: React.FC = () => {
             leftPrefix="$"
             rightSuffix=""
           />
-        </View>
 
-        <View style={styles.bottomAreaTrade}>
-          <DashboardSection
-            title="Payment Method"
-            titleStyle={{ fontSize: 16 }}
-            style={{ marginVertical: 0, width: "100%" }}
-            contentContainerStyle={{ width: "100%" }}
-          >
-            <View style={{ gap: theme.spacing.sm, width: "100%" }}>
-              <View style={{ borderRadius: theme.radius.lg, overflow: "hidden" }}>
-                <DebitCardPaymentRow
-                  title="Cash"
-                  maskedDetail="Pay with cash at nearby stores"
-                  onPress={() => setSelectedPaymentMode("cash")}
-                />
-                {selectedPaymentMode === "cash" && (
-                  <View
-                    style={{
-                      position: "absolute",
-                      top: 8,
-                      right: 8,
-                      paddingHorizontal: 8,
-                      paddingVertical: 3,
-                      borderRadius: 999,
-                      backgroundColor: theme.colors.primary,
-                    }}
-                  >
-                    <CustomText variant="caption" color={theme.colors.white}>
-                      Selected
-                    </CustomText>
-                  </View>
-                )}
-              </View>
+          <View style={{ flex: 1 }} />
 
-              <View style={{ borderRadius: theme.radius.lg, overflow: "hidden" }}>
-                <DebitCardPaymentRow
-                  title="Debit Card"
-                  maskedDetail={paymentSubtitle}
-                  onPress={() => {
-                    Keyboard.dismiss();
-                    setSelectedPaymentMode("debit");
-                    setDebitInfoVisible(true);
-                  }}
-                />
-                {selectedPaymentMode === "debit" && (
-                  <View
-                    style={{
-                      position: "absolute",
-                      top: 8,
-                      right: 8,
-                      paddingHorizontal: 8,
-                      paddingVertical: 3,
-                      borderRadius: 999,
-                      backgroundColor: theme.colors.primary,
+          <View style={styles.bottomAreaTrade}>
+            <DashboardSection
+              title="Payment Method"
+              titleStyle={{ fontSize: 16 }}
+              style={{ marginVertical: 0, width: "100%" }}
+              contentContainerStyle={{ width: "100%" }}
+            >
+              <View style={{ gap: theme.spacing.sm, width: "100%" }}>
+                <View style={{ borderRadius: theme.radius.lg, overflow: "hidden" }}>
+                  <DebitCardPaymentRow
+                    title="Cash"
+                    maskedDetail="Pay with cash at nearby stores"
+                    onPress={() => setSelectedPaymentMode("cash")}
+                  />
+                  {selectedPaymentMode === "cash" && (
+                    <View
+                      style={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        paddingHorizontal: 8,
+                        paddingVertical: 3,
+                        borderRadius: 999,
+                        backgroundColor: theme.colors.primary,
+                      }}
+                    >
+                      <CustomText variant="caption" color={theme.colors.white}>
+                        Selected
+                      </CustomText>
+                    </View>
+                  )}
+                </View>
+
+                <View style={{ borderRadius: theme.radius.lg, overflow: "hidden" }}>
+                  <DebitCardPaymentRow
+                    title="Debit Card"
+                    maskedDetail={paymentSubtitle}
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      setSelectedPaymentMode("debit");
+                      setDebitInfoVisible(true);
                     }}
-                  >
-                    <CustomText variant="caption" color={theme.colors.white}>
-                      Selected
-                    </CustomText>
-                  </View>
-                )}
+                  />
+                  {selectedPaymentMode === "debit" && (
+                    <View
+                      style={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        paddingHorizontal: 8,
+                        paddingVertical: 3,
+                        borderRadius: 999,
+                        backgroundColor: theme.colors.primary,
+                      }}
+                    >
+                      <CustomText variant="caption" color={theme.colors.white}>
+                        Selected
+                      </CustomText>
+                    </View>
+                  )}
+                </View>
               </View>
+            </DashboardSection>
+            <View style={styles.bottomTradePayRow}>
+              <PayButton
+                disabled={selectedPaymentMode === "debit" && tradeExecute.isPending}
+                onPress={handlePayPress}
+                label={selectedPaymentMode === "cash" ? "Find a Location" : "Proceed"}
+              />
             </View>
-          </DashboardSection>
-          <View style={styles.bottomTradePayRow}>
-            <PayButton
-              disabled={selectedPaymentMode === "debit" && tradeExecute.isPending}
-              onPress={handlePayPress}
-              label={selectedPaymentMode === "cash" ? "Find a Location" : "Proceed"}
-            />
           </View>
-        </View>
+        </ScrollView>
 
         <PaymentMethodPickerModal
           visible={debitInfoVisible}

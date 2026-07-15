@@ -55,20 +55,37 @@ type PaymentMethodPickerModalProps = {
   includeRetailCashOption?: boolean;
 };
 
-type Eligibility = { ok: boolean; reason?: string };
+export type CardEligibility = { ok: boolean; reason?: string };
 
 // Coinme card statuses that mean the card is usable. (Lifecycle: CREATED → VERIFIED → DELETED;
 // DELETED cards should already be filtered out server-side.)
 const USABLE_CARD_STATUSES = new Set(['ACTIVE', 'VERIFIED']);
 
+// Statuses that mean the card was accepted but the issuer/Coinme is still verifying it. These
+// resolve to a usable status on their own, so we surface a "being verified" message rather than a
+// hard "not active" — the card becomes selectable automatically once approved.
+const PENDING_CARD_STATUSES = new Set([
+  'CREATED',
+  'PENDING',
+  'PENDING_VERIFICATION',
+  'UNVERIFIED',
+  'PROCESSING',
+  'NEW',
+]);
+
 /** A card is unusable if expired, not in a usable status, or it doesn't support the current ramp. */
-function getCardEligibility(item: PaymentMethodItem, flow: PaymentFlow): Eligibility {
+export function getCardEligibility(item: PaymentMethodItem, flow: PaymentFlow): CardEligibility {
   if (isCardExpired(item.exp_month, item.exp_year)) {
     return { ok: false, reason: 'Expired' };
   }
   const status = (item.status ?? '').toUpperCase();
   if (status && !USABLE_CARD_STATUSES.has(status)) {
-    return { ok: false, reason: status === 'CREATED' ? 'Pending verification' : 'Inactive' };
+    return {
+      ok: false,
+      reason: PENDING_CARD_STATUSES.has(status)
+        ? 'Verifying card — available once approved'
+        : 'Not active',
+    };
   }
   // Backend may omit the flag — only block on an explicit `false`.
   const supported = flow === 'buy' ? item.buy_supported : item.sell_supported;

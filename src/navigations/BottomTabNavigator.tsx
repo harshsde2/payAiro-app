@@ -18,6 +18,7 @@ import { setTheme } from "redux/slices/animationSlice";
 import { usePendingPaymentRequests } from "query/hooks";
 import { useCryptoRequestHistory } from "query/hooks/useCryptoRequest";
 import { useComplianceGate } from "hooks/useComplianceGate";
+import { useBlockedStateGate } from "hooks/useBlockedStateGate";
 import { useSelector, useDispatch } from "react-redux";
 import NewCrypto from "new-ui/screens/Crypto/NewCrypto";
 import ActivityScreen from "new-ui/screens/Activity/ActivityScreen";
@@ -145,6 +146,7 @@ const BottomTabNavigator = () => {
 
   // State regulatory compliance: presents the blocking one-time disclosure at launch when required.
   useComplianceGate();
+  useBlockedStateGate();
 
   // Use staleTime to avoid refetching on every render
   const { data: pendingRequestsData } = usePendingPaymentRequests(false);

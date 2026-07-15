@@ -6,7 +6,9 @@ export { default as AddNewCardLink } from './AddNewCardLink';
 export {
   default as PaymentMethodPickerModal,
   RETAIL_CASH_PAYMENT_METHOD_ID,
+  getCardEligibility,
   type PaymentFlow,
+  type CardEligibility,
 } from './PaymentMethodPickerModal';
 export { default as AddDebitCardModal } from './AddDebitCardModal';
 export { default as CardAddedSuccessModal } from './CardAddedSuccessModal';

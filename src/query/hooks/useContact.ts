@@ -379,3 +379,29 @@ export const useFastApiUsersSearch = (
     staleTime: 30000,
   });
 };
+
+/**
+ * Verify a PayAiro user exists by exact identifier (payairo tag / username), via the
+ * working FastAPI search endpoint (Bearer token). Resolves to the matched user or `null`.
+ * Replaces the legacy `useVerifyUserByIdentifier` (Django, stale-token 401 → "session expired").
+ */
+export const useVerifyPayairoUser = () => {
+  return useMutation<IFastApiUserSearchUser | null, Error, string>({
+    mutationFn: async (identifier: string) => {
+      const q = identifier.trim();
+      if (!q) return null;
+      const res = await userApiClient.get<IFastApiUserSearchResponse>(
+        `${USER_AUTH.USERS_SEARCH}?q=${encodeURIComponent(q)}&limit=10`
+      );
+      const users = res?.data?.users ?? [];
+      const lc = q.toLowerCase();
+      return (
+        users.find(
+          (u) =>
+            (u.username ?? "").trim().toLowerCase() === lc ||
+            (u.payairo_tag ?? "").trim().toLowerCase() === lc
+        ) ?? null
+      );
+    },
+  });
+};

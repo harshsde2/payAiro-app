@@ -48,12 +48,6 @@ import { getDeviceFingerprint } from 'utils/getDeviceFingerprint';
 import { fetchCoinmeCaasAuthToken } from 'services/coinmeCaasAuth';
 import { useSavePaymentMethod } from 'query/hooks/usePaymentMethods';
 import { EnvConfig } from 'config/env.config';
-// TEMP-DEBUG: production add-card diagnostics (see addCardDebugReport.ts for removal).
-import {
-  ADD_CARD_DEBUG_COPY_ENABLED,
-  copyAddCardDebugReport,
-  setAddCardDebugReport,
-} from '@new-ui/components/common-components/AddBalance/addCardDebugReport';
 
 export type AddedCardResult = {
   payment_method_id: string;
@@ -170,12 +164,7 @@ const AddDebitCardModal: React.FC<AddDebitCardModalProps> = ({ visible, onClose,
           onPress={handleBackdropPress}
         >
           {phase === 'success' ? (
-            <CardAddedSuccessModal
-              visible
-              onComplete={handleSuccessComplete}
-              // TEMP-DEBUG
-              showDebugCopy={ADD_CARD_DEBUG_COPY_ENABLED}
-            />
+            <CardAddedSuccessModal visible onComplete={handleSuccessComplete} />
           ) : visible ? (
             // Mount the vault only while the form is open so it is created fresh and disposed on close.
             <CoinmeVaultProvider
@@ -232,15 +221,6 @@ const CardFormBody: React.FC<CardFormBodyProps> = ({ onClose, onSubmitted }) => 
   const [state, setState] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // TEMP-DEBUG: "Copied ✓" feedback for the copy-debug-info button.
-  const [debugCopied, setDebugCopied] = useState(false);
-
-  // TEMP-DEBUG
-  const handleCopyDebugInfo = useCallback(() => {
-    if (!copyAddCardDebugReport()) return;
-    setDebugCopied(true);
-    setTimeout(() => setDebugCopied(false), 2000);
-  }, []);
 
   // Phase-3 risk warm-up: start the Risk SDK update()/submit() early once the modal settles,
   // so the webSessionId is ready by the time the user taps Proceed. Ported from the prior flow.
@@ -285,10 +265,8 @@ const CardFormBody: React.FC<CardFormBodyProps> = ({ onClose, onSubmitted }) => 
       return;
     }
 
+    // Kept in outer scope so the catch's risk-engine logging can reference it.
     let webSessionId: string | undefined;
-    // TEMP-DEBUG: kept in outer scope so the failure report can include them.
-    let fingerprint: string | undefined;
-    let caasToken: string | undefined;
     setIsSubmitting(true);
     try {
       // iOS: let the modal interactions settle before driving the native Risk SDK.
@@ -308,12 +286,12 @@ const CardFormBody: React.FC<CardFormBodyProps> = ({ onClose, onSubmitted }) => 
         riskFlow: 'cardlinking',
       });
 
-      fingerprint = await getDeviceFingerprint();
+      const fingerprint = await getDeviceFingerprint();
 
       // Auth: Coinme's vault route does NOT inject auth — the client must send the partner
       // Bearer JWT. We mint a fresh one from Coinme CaaS (Basic partnerId:clientSecret →
       // /services/authorize, ~30-min token) right before each submit. See services/coinmeCaasAuth.
-      caasToken = await fetchCoinmeCaasAuthToken();
+      const caasToken = await fetchCoinmeCaasAuthToken();
 
       const result = await submitPaymentMethod(vault, {
         customerId: coinmeAccountId,
@@ -335,19 +313,6 @@ const CardFormBody: React.FC<CardFormBodyProps> = ({ onClose, onSubmitted }) => 
 
       // Inspect the exact response shape on a real success (Coinme's created payment method).
       console.log('[AddDebitCard] vault submit result =>', JSON.stringify(result));
-
-      // TEMP-DEBUG: capture the successful attempt for the copy-debug-info button.
-      if (ADD_CARD_DEBUG_COPY_ENABLED) {
-        await setAddCardDebugReport({
-          outcome: 'success',
-          customerId: coinmeAccountId,
-          providerId: PROVIDER_ID,
-          webSessionId,
-          caasToken,
-          deviceFingerprint: fingerprint,
-          addPaymentMethod: result,
-        });
-      }
 
       // The card was created DIRECTLY at Coinme — tell our backend so its records stay in sync.
       // Best-effort: if this fails the card is still linked at Coinme, so we don't block success.
@@ -388,18 +353,6 @@ const CardFormBody: React.FC<CardFormBodyProps> = ({ onClose, onSubmitted }) => 
         expectedWebSessionId: webSessionId,
         accountId: coinmeAccountId ?? undefined,
       });
-      // TEMP-DEBUG: capture the failed attempt for the copy-debug-info button.
-      if (ADD_CARD_DEBUG_COPY_ENABLED) {
-        await setAddCardDebugReport({
-          outcome: 'failure',
-          customerId: coinmeAccountId,
-          providerId: PROVIDER_ID,
-          webSessionId,
-          caasToken,
-          deviceFingerprint: fingerprint,
-          addPaymentMethod: e,
-        });
-      }
       setError(messageForVaultError(e));
       console.warn('[AddDebitCard] vault submit failed', e);
     } finally {
@@ -510,14 +463,6 @@ const CardFormBody: React.FC<CardFormBodyProps> = ({ onClose, onSubmitted }) => 
             textStyle={fieldStyles.secureText}
           />
 
-          <FieldLabel text="Apt / Suite (optional)" theme={theme} />
-          <CoinmeTextField
-            fieldName={VAULT_FIELD_NAMES.address2}
-            placeholder="Apt 4B"
-            containerStyle={fieldStyles.secureContainer}
-            textStyle={fieldStyles.secureText}
-          />
-
           <View style={fieldStyles.row}>
             <View style={fieldStyles.halfCol}>
               <FieldLabel text="City" theme={theme} />
@@ -567,18 +512,6 @@ const CardFormBody: React.FC<CardFormBodyProps> = ({ onClose, onSubmitted }) => 
             <CustomText variant="bodySmall" color={theme.colors.error}>
               {error}
             </CustomText>
-            {/* TEMP-DEBUG */}
-            {ADD_CARD_DEBUG_COPY_ENABLED ? (
-              <Pressable onPress={handleCopyDebugInfo} hitSlop={8}>
-                <CustomText
-                  variant="caption"
-                  color={theme.colors.textSecondary}
-                  style={{ marginTop: theme.spacing.xs, textDecorationLine: 'underline' }}
-                >
-                  {debugCopied ? 'Copied ✓' : 'Copy debug info'}
-                </CustomText>
-              </Pressable>
-            ) : null}
           </View>
         ) : null}
 

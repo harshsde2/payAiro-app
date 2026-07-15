@@ -212,7 +212,7 @@ const AddContactScreen = () => {
       <View style={styles.inputContainer}>
         <TextInput
           label="Mobile"
-          placeholder="e.g. 112 34567"
+          placeholder="e.g. 1234567890"
           value={mobile}
           onChangeText={(value) => {
             setMobile(value);
@@ -241,7 +241,7 @@ const AddContactScreen = () => {
             clearFieldError('general');
           }}
           autoCapitalize="none"
-          rightIcon={payAiroTagRight}
+          // rightIcon={payAiroTagRight}
           showRightSeparator={false}
         />
         {errors.payAiroTag ? (

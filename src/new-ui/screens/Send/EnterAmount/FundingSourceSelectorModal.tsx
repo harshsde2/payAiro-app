@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Modal, ScrollView, TouchableOpacity, View } from 'react-native';
 import CustomText from '@new-ui/components/common-components/CustomText';
+import Button from '@new-ui/components/common-components/layout/Button';
 import { BottomSheet } from '@new-ui/components/common-components/BottomSheet';
 import { AppIcon } from '@new-ui/assets/svgs';
 import { useTheme } from '@new-ui/styles/ThemeContext';
@@ -83,27 +84,29 @@ const FundingSourceSelectorModal: React.FC<FundingSourceSelectorModalProps> = ({
         <BottomSheet
           ref={sheetRef}
           snapPoints={['85%', '98%']}
-          initialSnapIndex={0}
+          // Open fully expanded so the crypto list is visible without an extra drag.
+          initialSnapIndex={1}
           enableDrag
           enableBackdropPress={false}
           onClose={onClose}
         >
-          <ScrollView
-            style={styles.selectorContainer}
-            contentContainerStyle={styles.selectorScrollContent}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            {Array.isArray(sources) && sources.length > 0 ? (
-              <CustomText
-                variant="label"
-                fontWeight="semiBold"
-                size={16}
-                style={styles.selectorTitle}
-              >
-                Select bank
-              </CustomText>
-            ) : null}
+          <View style={styles.selectorSheetBody}>
+            <ScrollView
+              style={styles.selectorContainer}
+              contentContainerStyle={styles.selectorScrollContent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              {Array.isArray(sources) && sources.length > 0 ? (
+                <CustomText
+                  variant="label"
+                  fontWeight="semiBold"
+                  size={16}
+                  style={styles.selectorTitle}
+                >
+                  Select bank
+                </CustomText>
+              ) : null}
 
             {sources.map((item: FundingSource) => {
                 const isSelected = item.id === selectedSource?.id;
@@ -171,7 +174,12 @@ const FundingSourceSelectorModal: React.FC<FundingSourceSelectorModalProps> = ({
                 <CryptoFundingList data={cryptoSources} onSelect={handleSelectCrypto} />
               </View>
             ) : null}
-          </ScrollView>
+            </ScrollView>
+
+            <View style={styles.selectorDoneButton}>
+              <Button onPress={() => sheetRef.current?.close()}>Done</Button>
+            </View>
+          </View>
         </BottomSheet>
       </View>
     </Modal>

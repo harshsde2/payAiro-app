@@ -9,6 +9,7 @@ import {
   RefreshControl,
   Image,
   Linking,
+  Platform,
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import ScreenWrapper from '@new-ui/components/common-components/ScreenWrapper'
@@ -150,18 +151,16 @@ const NotificationScreen = () => {
   const { mutate: updatePrefs, isPending: isUpdatingPrefs } =
     useUpdateNotificationPreferences()
 
-  // Local switch state, seeded once from the first successful preferences load.
-  // After that the user's toggles win — we never overwrite them with server data.
-  const serverPushEnabled = prefsResponse?.data?.push_enabled
-  const [allowNotifications, setAllowNotifications] = useState(false)
-  const prefsSeededRef = useRef(false)
-  useEffect(() => {
-    if (prefsSeededRef.current) return
-    if (typeof serverPushEnabled === 'boolean') {
-      prefsSeededRef.current = true
-      setAllowNotifications(serverPushEnabled)
-    }
-  }, [serverPushEnabled])
+  // The API nests the toggles under `data.preferences` — reading `data.push_enabled`
+  // always yielded undefined, so the seed below never ran and the switch fell back to
+  // its `false` default on every remount even when the server had push enabled.
+  const serverPushEnabled = prefsResponse?.data?.preferences?.push_enabled
+
+  // Server value is the source of truth; `localOverride` only holds the optimistic
+  // value while a toggle is in flight, so returning to the screen always reflects
+  // the persisted state instead of a stale local default.
+  const [localOverride, setLocalOverride] = useState<boolean | null>(null)
+  const allowNotifications = localOverride ?? serverPushEnabled ?? false
 
   const items = useMemo(
     () => flattenNotifications(data?.pages),
@@ -194,12 +193,14 @@ const NotificationScreen = () => {
 
   const onToggle = useCallback(
     (value: boolean) => {
-      setAllowNotifications(value) // optimistic
+      setLocalOverride(value) // optimistic
       updatePrefs(
         { push_enabled: value },
         {
+          // Drop the override once the refetched preferences are authoritative.
+          onSuccess: () => setLocalOverride(null),
           onError: () => {
-            setAllowNotifications(!value) // revert
+            setLocalOverride(null) // revert to the server value
             showError(
               'Could not update notifications',
               'Please try again in a moment.'
@@ -283,8 +284,14 @@ const NotificationScreen = () => {
         value={allowNotifications}
         onValueChange={onToggle}
         disabled={isUpdatingPrefs}
-        trackColor={{ false: theme.colors.greyLight, true: theme.colors.primary }}
+        // greyLight (#F5F5F5) is near-white and vanished against the card — greyLight2
+        // (#CCCCCC) reads as a real "off" track. ios_backgroundColor is required or iOS
+        // renders its own default grey behind the track and ignores trackColor.false.
+        trackColor={{ false: theme.colors.greyLight2, true: theme.colors.primary }}
+        ios_backgroundColor={theme.colors.greyLight2}
         thumbColor={theme.colors.white}
+        // Android's switch renders noticeably smaller than iOS's — nudge it up to match.
+        style={Platform.OS === 'android' ? styles.androidSwitch : undefined}
       />
     </View>
   )
@@ -355,6 +362,9 @@ const notificationStyles = (theme: ReturnType<typeof useTheme>['theme']) =>
       alignItems: 'center',
       justifyContent: 'space-between',
       marginBottom: theme.spacing['3xl'],
+    },
+    androidSwitch: {
+      transform: [{ scaleX: 1.15 }, { scaleY: 1.15 }],
     },
     sectionHeader: {
       flexDirection: 'row',

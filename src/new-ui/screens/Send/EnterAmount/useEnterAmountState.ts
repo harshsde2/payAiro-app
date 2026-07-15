@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FundingSource, SendPayload } from './enterAmount.types';
 
 type UseEnterAmountStateArgs = {
@@ -74,6 +74,23 @@ export const useEnterAmountState = ({
     });
   }, [initialSelectedSource]);
 
+  // Clear the amount when the user switches to a DIFFERENT funding source — the entered
+  // number was specific to the previous asset/account (e.g. "0.05" meant 0.05 BTC, which
+  // is meaningless once ETH is selected). Skips the initial null → first-source assignment
+  // so a preset initial amount (e.g. a requested amount) isn't wiped on mount.
+  const prevSourceIdRef = useRef<string | null>(selectedSource?.id ?? null);
+  useEffect(() => {
+    const currentId = selectedSource?.id ?? null;
+    if (
+      prevSourceIdRef.current !== null &&
+      currentId !== null &&
+      prevSourceIdRef.current !== currentId
+    ) {
+      setInputValue('');
+    }
+    prevSourceIdRef.current = currentId;
+  }, [selectedSource?.id]);
+
   const feePercent = useMemo(() => {
     const n = Number(transactionFeePercent);
     return Number.isFinite(n) ? n : 0;
@@ -92,8 +109,9 @@ export const useEnterAmountState = ({
     if ((preferFiatCryptoEntry || defaultFiatOnCryptoSource) && inputMode === 'fiat') {
       return { maxIntDigits: 5, maxDecimals: 2 };
     }
-    // Crypto rule: max 5 digits before decimal, max 5 decimals.
-    return { maxIntDigits: 5, maxDecimals: 5 };
+    // Crypto rule: max 5 digits before decimal, max 8 decimals (so a full-precision
+    // crypto balance — e.g. BTC's 8 dp — is enterable and Max can equal the real balance).
+    return { maxIntDigits: 5, maxDecimals: 8 };
   }, [defaultFiatOnCryptoSource, inputMode, preferFiatCryptoEntry, viewMode]);
 
   const parsedInput = useMemo(() => safeParseAmount(inputValue), [inputValue]);
@@ -118,14 +136,11 @@ export const useEnterAmountState = ({
 
   const maxAsset = useMemo(() => {
     if (viewMode !== 'crypto') return 0;
+    // Full balance — the frontend no longer applies a transaction fee to sends.
     const balanceAsset = Number(selectedSource?.balance ?? 0);
     if (!Number.isFinite(balanceAsset) || balanceAsset <= 0) return 0;
-    if (!feePercent || feePercent <= 0) return balanceAsset;
-    const effectiveFee = (balanceAsset * feePercent) / 100;
-    const max = balanceAsset - effectiveFee;
-    if (!Number.isFinite(max)) return 0;
-    return Math.max(0, max);
-  }, [feePercent, selectedSource?.balance, viewMode]);
+    return Math.max(0, balanceAsset);
+  }, [selectedSource?.balance, viewMode]);
 
   const maxUsd = useMemo(() => {
     if (viewMode !== 'crypto') return 0;
@@ -157,23 +172,36 @@ export const useEnterAmountState = ({
   );
 
   const toggleInputMode = useCallback(() => {
-    setInputMode((prev) => (prev === 'fiat' ? 'asset' : 'fiat'));
-  }, []);
+    const nextMode = inputMode === 'fiat' ? 'asset' : 'fiat';
+    const price = selectedSource?.cryptoMeta?.priceUSD ?? 0;
+    // Convert the current value so the economic amount stays the same across units
+    // (e.g. 0.05372 BTC ⇄ $3,457), instead of re-labelling the raw digits.
+    if (viewMode === 'crypto' && price > 0) {
+      const current = safeParseAmount(inputValue);
+      if (current > 0) {
+        const converted = nextMode === 'asset' ? current / price : current * price;
+        const decimals = nextMode === 'fiat' ? 2 : 8;
+        // Normal rounding so repeated swaps stay stable (flooring every time would shave
+        // a bit off on each round-trip and the value would visibly shrink). The tiny
+        // Max-boundary overshoot this can introduce is absorbed by validateCrypto's
+        // price-based tolerance, and the payload is clamped to the real balance.
+        setInputValue(converted.toFixed(decimals).replace(/\.?0+$/, '') || '0');
+      }
+    }
+    setInputMode(nextMode);
+  }, [inputMode, inputValue, selectedSource?.cryptoMeta?.priceUSD, viewMode]);
 
   const fillMax = useCallback(() => {
     if (viewMode !== 'crypto') return;
     // Always fill as asset amount; the UI toggle can show USD equivalent.
     setInputMode('asset');
-    const next = Number.isFinite(maxAsset) ? maxAsset : 0;
-    // Keep enough precision for crypto but avoid scientific notation.
-    const nextText = next.toFixed(amountInputLimits.maxDecimals);
+    const raw = Number.isFinite(maxAsset) ? maxAsset : 0;
+    // FLOOR (not round) to 8 dp so the filled value can never exceed the real balance
+    // and trip the "insufficient" validator; strip trailing zeros for a clean display.
+    const floored = Math.floor(raw * 1e8) / 1e8;
+    const nextText = floored.toFixed(8).replace(/\.?0+$/, '') || '0';
     onChangeAmountText(nextText);
-  }, [
-    amountInputLimits.maxDecimals,
-    maxAsset,
-    onChangeAmountText,
-    viewMode,
-  ]);
+  }, [maxAsset, onChangeAmountText, viewMode]);
 
   const handleSetSelectedSource = useCallback(
     (source: FundingSource | null) => {
@@ -226,7 +254,7 @@ export const useEnterAmountState = ({
     }
 
     // In crypto mode, `amount` represents USD equivalent (based on inputMode).
-    if (amount < 2) {
+    if (amount < 1) {
       errors.push(
         fiatNeutralCryptoValidation
           ? '$2.00 or more is required.'
@@ -240,15 +268,17 @@ export const useEnterAmountState = ({
       );
     }
 
-    // `maxAsset` already includes platform fee percent (fee-adjusted max you can send).
-    if (assetAmount > maxAsset) {
+    // Tolerate the ≤1-cent USD display-rounding wobble (converted to asset units) so an
+    // exact Max round-tripped through USD doesn't falsely read as over-balance. Genuine
+    // overages (more than a cent over) are still caught. The payload is clamped to the
+    // real balance so we never actually send more than the user holds.
+    const overBalanceTolerance = priceUSD > 0 ? 0.01 / priceUSD : 1e-8;
+    if (assetAmount > maxAsset + overBalanceTolerance) {
       if (fiatNeutralCryptoValidation) {
         errors.push('Insufficient balance for this withdrawal.');
       } else {
-        const maxDigits = maxAsset >= 1 ? 4 : 8;
-        errors.push(
-          `Insufficient balance. Max send after fees: ${maxAsset.toFixed(maxDigits)} ${symbol}`
-        );
+        const maxLabel = maxAsset.toFixed(8).replace(/\.?0+$/, '') || '0';
+        errors.push(`Insufficient balance. Max send: ${maxLabel} ${symbol}`);
       }
     }
 

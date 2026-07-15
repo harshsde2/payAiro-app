@@ -32,8 +32,8 @@ export const cryptoKeys = {
   userCryptoMarket: (fiat: string) => [...cryptoKeys.all, "userCryptoMarket", fiat] as const,
   userCryptoBalance: () => [...cryptoKeys.all, "userCryptoBalance"] as const,
   walletAddresses: () => [...cryptoKeys.all, "walletAddresses"] as const,
-  paymentTransactionHistory: (scope: string, limit: number) =>
-    [...cryptoKeys.all, "paymentTransactionHistory", scope, limit] as const,
+  paymentTransactionHistory: (filters: PaymentTransactionHistoryFilters) =>
+    [...cryptoKeys.all, "paymentTransactionHistory", filters] as const,
   coinmeTradeQuote: (payload: CoinmeTradeQuotePayload) =>
     [
       ...cryptoKeys.all,
@@ -580,16 +580,118 @@ export const usePaymentTransactionSend = () => {
   });
 };
 
+export type PaymentTransactionHistoryActivity =
+  | "all"
+  | "send"
+  | "trade"
+  | "ramp"
+  | "offramp"
+  | "request"
+  | "receive";
+export type PaymentTransactionHistoryType = "internal" | "external";
+export type PaymentTransactionHistoryScope = "all" | "sent" | "received";
+/** `status`/`sendStatus` — applies to `send` activity only. */
+export type PaymentTransactionHistoryStatus = "PENDING" | "SUCCESS" | "FAILED";
+export type PaymentTransactionHistoryTradeSide = "buy" | "sell";
+/** `requestStatus` — applies to `request` activity only. */
+export type PaymentTransactionHistoryRequestStatus =
+  | "PENDING"
+  | "FULFILLED"
+  | "DECLINED"
+  | "CANCELLED"
+  | "EXPIRED";
+/** `receiveStatus` — applies to `receive` activity only. Note: COMPLETED, not SUCCESS. */
+export type PaymentTransactionHistoryReceiveStatus =
+  | "PENDING"
+  | "COMPLETED"
+  | "FAILED";
+
+/**
+ * Filters for GET /api/v1/payment-transactions/send/history/.
+ *
+ * IMPORTANT: the status-ish filters are scoped to a single activity bucket by the
+ * backend — `type`/`status` only affect `send`, `tradeSide` only `trade`,
+ * `requestStatus` only `request`, `receiveStatus` only `receive`, `rampStatus` only
+ * `ramp`. Sending them alongside a different (or `all`) activity silently does
+ * nothing, so callers should only set the ones matching the chosen activity.
+ */
+export interface PaymentTransactionHistoryFilters {
+  activity?: PaymentTransactionHistoryActivity;
+  /** 1-200, default 50. */
+  limit?: number;
+  /** send only. */
+  type?: PaymentTransactionHistoryType;
+  scope?: PaymentTransactionHistoryScope;
+  /** send only. */
+  status?: PaymentTransactionHistoryStatus;
+  /** trade only. */
+  tradeSide?: PaymentTransactionHistoryTradeSide;
+  /** request only. */
+  requestStatus?: PaymentTransactionHistoryRequestStatus;
+  /** receive only. */
+  receiveStatus?: PaymentTransactionHistoryReceiveStatus;
+  /** ramp (cash on-ramp) only. */
+  rampStatus?: string;
+  /** ISO 8601 datetime. */
+  startDate?: string;
+  /** ISO 8601 datetime. */
+  endDate?: string;
+}
+
 export const usePaymentTransactionHistory = (
-  scope: "all" | "sent" | "received" = "all",
-  limit: number = 20
+  filters: PaymentTransactionHistoryFilters = {}
 ) => {
+  const {
+    activity = "all",
+    limit = 50,
+    type,
+    scope = "all",
+    status,
+    tradeSide,
+    requestStatus,
+    receiveStatus,
+    rampStatus,
+    startDate,
+    endDate,
+  } = filters;
+
   return useQuery<SendHistoryResponse>({
-    queryKey: cryptoKeys.paymentTransactionHistory(scope, limit),
-    queryFn: () =>
-      userApiClient.get<SendHistoryResponse>(
-        `${USER_AUTH.PAYMENT_TRANSACTIONS_SEND_HISTORY}?limit=${limit}&scope=${scope}`
-      ),
+    queryKey: cryptoKeys.paymentTransactionHistory({
+      activity,
+      limit,
+      type,
+      scope,
+      status,
+      tradeSide,
+      requestStatus,
+      receiveStatus,
+      rampStatus,
+      startDate,
+      endDate,
+    }),
+    queryFn: () => {
+      const params = new URLSearchParams();
+      params.set("limit", String(Math.min(Math.max(limit, 1), 200)));
+      params.set("scope", scope);
+      if (activity && activity !== "all") params.set("activity", activity);
+      if (startDate) params.set("startDate", startDate);
+      if (endDate) params.set("endDate", endDate);
+
+      // Each of these only has an effect on its own activity bucket — send only the
+      // one matching the chosen activity so stale/irrelevant params can't leak through.
+      if (activity === "send") {
+        if (type) params.set("type", type);
+        if (status) params.set("status", status);
+      }
+      if (activity === "trade" && tradeSide) params.set("tradeSide", tradeSide);
+      if (activity === "request" && requestStatus) params.set("requestStatus", requestStatus);
+      if (activity === "receive" && receiveStatus) params.set("receiveStatus", receiveStatus);
+      if (activity === "ramp" && rampStatus) params.set("rampStatus", rampStatus);
+
+      return userApiClient.get<SendHistoryResponse>(
+        `${USER_AUTH.PAYMENT_TRANSACTIONS_SEND_HISTORY}?${params.toString()}`
+      );
+    },
     // History is safe to show briefly stale; 30s freshness with background refresh.
     staleTime: queryStaleTime.FAST_STALE_TIME,
   });
