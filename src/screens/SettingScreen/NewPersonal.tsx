@@ -132,12 +132,12 @@ const NewPersonal: React.FC = () => {
         icon: <AppIcon.Profile_Transaction width={22} height={22} />,
         route: NAVIGATION_SCREENS.TRANSACTION_LIMIT_SCREEN as AppRouteName,
       },
-      {
-        key: "rewards",
-        label: "Rewards and Referrals",
-        icon: <AppIcon.Profile_Rewards width={22} height={22} />,
-        route: NAVIGATION_SCREENS.NEW_REWARDS_AND_REFERRALS_SCREEN as AppRouteName,
-      },
+      // {
+      //   key: "rewards",
+      //   label: "Rewards and Referrals",
+      //   icon: <AppIcon.Profile_Rewards width={22} height={22} />,
+      //   route: NAVIGATION_SCREENS.NEW_REWARDS_AND_REFERRALS_SCREEN as AppRouteName,
+      // },
       // {
       //   key: "bankStatement",
       //   label: "Bank Statement",
@@ -305,7 +305,7 @@ const NewPersonal: React.FC = () => {
                 color="#8B6914"
                 style={customTheme.warningText}
               >
-                This will remove all accounts and clear all data from the app.
+                Are you sure you want to logout?
               </CustomText>
             </View>
 

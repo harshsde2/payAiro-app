@@ -23,8 +23,15 @@ import {
   resolveTradeDisplayStatus,
 } from "./tradeActivity";
 import {
+  formatRequestCryptoAmount,
+  getRequestCardTitle,
+  getRequestInitial,
+  resolveRequestDisplayStatus,
+} from "./requestActivity";
+import {
   isCashOffRampActivity,
   isCashOnRampActivity,
+  isRequestActivity,
   isTradeActivity,
   type IRecentActivityCardProps,
   type SendHistoryParty,
@@ -213,6 +220,54 @@ const RecentActivityCard: React.FC<IRecentActivityCardProps> = ({
     }
 
     return <View style={styles.container}>{body}</View>;
+  }
+
+  if (isRequestActivity(item)) {
+    const display = resolveRequestDisplayStatus(item);
+    const statusColor =
+      display.colorKey === "success"
+        ? theme.colors.success
+        : display.colorKey === "error"
+          ? theme.colors.error
+          : theme.colors.warning;
+    const datetime = formatActivityTimestamp(item.createdAt);
+    const amt = Number.parseFloat(item.amount ?? "0");
+    const hasUsd =
+      usdPrice != null && Number.isFinite(usdPrice) && (usdPrice as number) > 0;
+    const cryptoStr = formatRequestCryptoAmount(item);
+    const primary =
+      hasUsd && Number.isFinite(amt)
+        ? `$${(amt * (usdPrice as number)).toFixed(2)}`
+        : cryptoStr;
+
+    // Non-pressable: a request has no transaction-details page (tapping the old
+    // fallback opened a broken NEW_TRANSACTION_DETAILS with mismatched data).
+    return (
+      <View style={styles.container}>
+        <View style={styles.iconCircle}>
+          <View style={styles.iconCircleInner}>
+            <CustomText style={styles.initialText}>{getRequestInitial(item)}</CustomText>
+          </View>
+        </View>
+        <View style={styles.textContainer}>
+          <CustomText style={styles.title} numberOfLines={1}>
+            {getRequestCardTitle(item)}
+          </CustomText>
+          <CustomText style={[styles.statusSubtitle, { color: statusColor }]} numberOfLines={1}>
+            {display.label}
+          </CustomText>
+          <CustomText style={styles.datetime}>{datetime}</CustomText>
+        </View>
+        <View style={styles.amountsColumn}>
+          <CustomText style={styles.fiatAmount}>{primary}</CustomText>
+          {hasUsd ? (
+            <CustomText style={styles.cryptoAmount} numberOfLines={1}>
+              {cryptoStr}
+            </CustomText>
+          ) : null}
+        </View>
+      </View>
+    );
   }
 
   let title: string;

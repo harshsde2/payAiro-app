@@ -21,7 +21,12 @@ import {
   bankKeys,
   cryptoKeys,
   useCryptoAssetsListData,
+  useCryptoMarketForCurrency,
+  useUserCryptoBalanceFastApi,
   useCoinmeTradeExecute,
+  useCoinmeTradeQuote,
+  getExpectedFeeUsd,
+  getCoinmeTradeQuoteErrorMessage,
   type CoinmeTradeExecutePayload,
 } from "query/hooks";
 import { queryClient } from "query/queryClient";
@@ -36,10 +41,14 @@ import { useAppLock } from "hooks/useAppLock";
 import { fetchWebSessionId } from "services/coinmeRiskLifecycle";
 import { useCoinmeAccountId } from "hooks/useCoinmeAccountId";
 import { useStateStablecoin } from "hooks/useStateStablecoin";
+import { useTransactionLimit } from "hooks/useTransactionLimit";
+import TransactionLimitMeter from "@new-ui/components/common-components/TransactionLimitMeter";
+import { coinmeTransactionLimitsKeys } from "query/hooks/useCoinmeTransactionLimits";
 import {
   DebitCardPaymentRow,
   PaymentMethodPickerModal,
   AddDebitCardModal,
+  useApplyDefaultPaymentMethod,
 } from "@new-ui/components/common-components/AddBalance";
 import type { AddedCardResult } from "@new-ui/components/common-components/AddBalance/AddDebitCardModal";
 import DashboardSection from "tsx-components/DashboardSection";
@@ -47,6 +56,7 @@ import {
   usePaymentMethodsList,
   type PaymentMethodItem,
 } from "query/hooks/usePaymentMethods";
+import WithdrawConfirmationModal from "./WithdrawConfirmationModal";
 
 type WithdrawPaymentMode = "debit" | "cash";
 
@@ -54,6 +64,10 @@ const COINME_DEFAULTS = {
   paymentMethodId: "uhygtfr5e354rtyu76g6b7i8",
   sourceWalletAddress: ",mu9n7777777545e5vr",
 };
+
+// Withdraw keeps a 2% buffer of the balance so the fee always fits — the max the user
+// may enter is balance × this fraction. Client-side input guard only; real fee = quote.
+const SELL_WITHDRAW_MAX_FRACTION = 0.98;
 
 // Name variants a balances row may use for each stablecoin symbol.
 const SELL_ASSET_ALIASES: Record<string, string[]> = {
@@ -87,9 +101,18 @@ const CryptoWithdraw: React.FC = () => {
 
   const [debitInfoVisible, setDebitInfoVisible] = useState(false);
   const [addCardVisible, setAddCardVisible] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedPaymentMode, setSelectedPaymentMode] = useState<WithdrawPaymentMode>("debit");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodItem | null>(null);
   const paymentMethodsQuery = usePaymentMethodsList(20);
+
+  // Pre-select the user's default card (frontend-only) once the list loads.
+  useApplyDefaultPaymentMethod({
+    items: paymentMethodsQuery.data?.data?.items ?? [],
+    flow: "sell",
+    selected: selectedPaymentMethod,
+    onSelect: setSelectedPaymentMethod,
+  });
 
   const paymentSubtitle = useMemo(() => {
     if (!selectedPaymentMethod) return "Select a card";
@@ -130,9 +153,34 @@ const CryptoWithdraw: React.FC = () => {
     return [];
   }, [allCryptoBalances, fetchedCryptoBalances]);
 
+  // The general market list is state-filtered per user by the backend and can HIDE
+  // the sell asset (USDC/DAI) — fetch it explicitly (`?currencies=` bypasses the
+  // filter) and pair it with the balance-API holding as a fallback row.
+  const { data: sellMarketRows = [] } = useCryptoMarketForCurrency(sellAsset, "USD");
+  const { data: sellBalanceRows = [] } = useUserCryptoBalanceFastApi();
+
   const solRow = useMemo(() => {
-    return mergedCryptoBalances.find((item) => isSellAssetRow(item, sellAsset)) ?? null;
-  }, [mergedCryptoBalances, sellAsset]);
+    const fromMerged =
+      mergedCryptoBalances.find((item) => isSellAssetRow(item, sellAsset)) ?? null;
+    if (fromMerged) return fromMerged;
+
+    const marketRow = sellMarketRows.find(
+      (m) => String(m.asset ?? "").toUpperCase() === sellAsset
+    );
+    if (!marketRow) return null;
+    const balRow = sellBalanceRows.find(
+      (r) => String(r.currencySymbol ?? "").toUpperCase() === sellAsset
+    );
+    const qty = Number(balRow?.balance ?? 0);
+    const usd = Number(balRow?.estimatedBalanceValue ?? 0);
+    return {
+      ...marketRow,
+      platform_available: Number.isFinite(qty) ? Math.max(0, qty) : 0,
+      rounded_balance: Number.isFinite(qty) ? Math.max(0, qty) : 0,
+      usd_value_available: Number.isFinite(usd) ? Math.max(0, usd) : 0,
+      usd_value_total: Number.isFinite(usd) ? Math.max(0, usd) : 0,
+    } as CryptoFundingItem;
+  }, [mergedCryptoBalances, sellAsset, sellMarketRows, sellBalanceRows]);
 
   const coinmeCryptoAsset = useMemo(() => {
     if (!solRow?.asset) return null;
@@ -206,6 +254,8 @@ const CryptoWithdraw: React.FC = () => {
     selectedSource,
     inputMode,
     assetAmount,
+    maxUsd,
+    maxInputLength,
     onChangeAmountText,
     setSelectedSource,
   } = useEnterAmountState({
@@ -221,6 +271,33 @@ const CryptoWithdraw: React.FC = () => {
     }
   }, [selectedSource, solFundingSource, setSelectedSource]);
 
+  // Sell limits for the selected rail: debit → debit_sell, cash → ncr_sell.
+  // `amount` is always USD here regardless of entry mode, so it validates directly.
+  const sellLimit = useTransactionLimit("sell", selectedPaymentMode);
+  const limitError = sellLimit.validate(amount);
+
+  // Keep a 2% buffer in the wallet so the fee fits — never let the user withdraw more
+  // than balance − 2% (else the quote fails on a full-balance withdrawal).
+  const maxSpendableUsd = useMemo(
+    () => (maxUsd > 0 ? Math.floor(maxUsd * SELL_WITHDRAW_MAX_FRACTION * 100) / 100 : 0),
+    [maxUsd]
+  );
+  const balanceError =
+    maxSpendableUsd > 0 && amount > maxSpendableUsd + 0.005
+      ? `You can Instant withdraw up to $${maxSpendableUsd.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })} after the withdrawal fee is applied.`
+      : null;
+
+  const handleUseMaxLimit = useCallback(() => {
+    const fillTarget =
+      maxSpendableUsd > 0
+        ? Math.min(sellLimit.effectiveMaxUsd, maxSpendableUsd)
+        : sellLimit.effectiveMaxUsd;
+    onChangeAmountText(String(fillTarget));
+  }, [maxSpendableUsd, onChangeAmountText, sellLimit.effectiveMaxUsd]);
+
   const dynamicFontSize = useMemo(() => {
     const totalChars = (displayAmount || "0.00").length + 1;
     const availableWidth = width - 80;
@@ -230,6 +307,42 @@ const CryptoWithdraw: React.FC = () => {
     const min = 24;
     return Math.min(max, Math.max(min, ideal));
   }, [displayAmount, width]);
+
+  // Expected fee shown in the confirmation modal — fetched only while it's open.
+  // Declared above handleTradeExecute so the sell execute can net it out.
+  const withdrawQuoteEnabled = showConfirmModal && amount > 0 && !!coinmeCryptoAsset;
+  const {
+    data: withdrawQuoteData,
+    isLoading: isWithdrawQuoteLoading,
+    isError: isWithdrawQuoteError,
+    error: withdrawQuoteError,
+  } = useCoinmeTradeQuote(
+    {
+      tradeType: "sell",
+      chain: String(coinmeCryptoAsset?.chain || "ETH").toUpperCase(),
+      cryptoCurrencyCode: String(coinmeCryptoAsset?.asset || "").toUpperCase(),
+      fiatCurrencyCode: "USD",
+      amountValue: String(inputMode === "fiat" ? amount : assetAmount),
+      amountCurrencyCode:
+        inputMode === "fiat" ? "USD" : String(coinmeCryptoAsset?.asset || "").toUpperCase(),
+    },
+    withdrawQuoteEnabled
+  );
+  const withdrawExpectedFee = getExpectedFeeUsd(withdrawQuoteData?.feeBreakdown);
+
+  // Surface the quote's own failure (e.g. insufficient balance) as a toast, deduped
+  // by message so it fires once per distinct error rather than on every re-render.
+  const lastWithdrawQuoteErrorToast = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isWithdrawQuoteError || !withdrawQuoteError) {
+      lastWithdrawQuoteErrorToast.current = null;
+      return;
+    }
+    const msg = getCoinmeTradeQuoteErrorMessage(withdrawQuoteError);
+    if (lastWithdrawQuoteErrorToast.current === msg) return;
+    lastWithdrawQuoteErrorToast.current = msg;
+    showError("Something went wrong", msg);
+  }, [isWithdrawQuoteError, withdrawQuoteError]);
 
   const inputRef = useRef<RNTextInput | null>(null);
   const handlePressAmountFocus = useCallback(() => inputRef.current?.focus(), []);
@@ -270,6 +383,8 @@ const CryptoWithdraw: React.FC = () => {
       });
 
       const isFiatEntry = inputMode === "fiat";
+      // Send the entered amount as-is. The 2% entry buffer keeps room in the wallet
+      // so the backend can auto-deduct the fee on top.
       const payloadAmountValue = isFiatEntry ? amount : assetAmount;
       const payloadAmountCurrency = isFiatEntry
         ? coinmeCryptoAsset.fiatCurrency || "USD"
@@ -294,6 +409,8 @@ const CryptoWithdraw: React.FC = () => {
 
       queryClient.invalidateQueries({ queryKey: cryptoKeys.allCryptoBalances() });
       queryClient.invalidateQueries({ queryKey: bankKeys.balance() });
+      // This sell consumed part of the daily/monthly allowance — refresh the meter.
+      queryClient.invalidateQueries({ queryKey: coinmeTransactionLimitsKeys.all });
 
       navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
         isLoading: false,
@@ -343,6 +460,18 @@ const CryptoWithdraw: React.FC = () => {
       return;
     }
 
+    // The meter already shows this inline; the guard stops the flow if the button
+    // is reached any other way. No-op when limits are unavailable (validate → null).
+    if (limitError) {
+      showError("Limit reached", limitError);
+      return;
+    }
+    // Enforce the 2% balance buffer (guards any path to Proceed).
+    if (balanceError) {
+      showError("Amount too high", balanceError);
+      return;
+    }
+
     if (selectedPaymentMode === "cash") {
       if (!coinmeCryptoAsset) {
         showError("Couldn't open locations", "Unable to open cash locations. Please try again.");
@@ -357,14 +486,22 @@ const CryptoWithdraw: React.FC = () => {
       return;
     }
 
-    requestPaymentVerification(handleActionsAfterPinVerified);
+    // Debit: a card must be selected before showing the review summary / PIN.
+    if (!selectedPaymentMethod) {
+      showError("Select a payment method", "Please choose how you want to pay.");
+      return;
+    }
+
+    // Debit: show the review summary (with expected fee) before PIN.
+    setShowConfirmModal(true);
   }, [
     amount,
+    balanceError,
     coinmeCryptoAsset,
-    handleActionsAfterPinVerified,
     inputValue,
+    limitError,
     navigation,
-    requestPaymentVerification,
+    selectedPaymentMethod,
     selectedPaymentMode,
   ]);
 
@@ -422,6 +559,17 @@ const CryptoWithdraw: React.FC = () => {
             onPressFocus={handlePressAmountFocus}
             leftPrefix="$"
             rightSuffix=""
+            maxLength={maxInputLength}
+          />
+
+          <TransactionLimitMeter
+            style={styles.limitMeterSpacer}
+            limit={sellLimit}
+            amountUsd={amount}
+            error={limitError || balanceError}
+            // The limit is a USD figure — only offer to fill it while the user
+            // is entering USD, otherwise it would land in the input as crypto.
+            onUseMax={inputMode === "fiat" ? handleUseMaxLimit : undefined}
           />
 
           <View style={{ flex: 1 }} />
@@ -435,11 +583,11 @@ const CryptoWithdraw: React.FC = () => {
             >
               <View style={{ gap: theme.spacing.sm, width: "100%" }}>
                 <View style={{ borderRadius: theme.radius.lg, overflow: "hidden" }}>
-                  <DebitCardPaymentRow
+                  {/* <DebitCardPaymentRow
                     title="Cash"
                     maskedDetail="Pay with cash at nearby stores"
                     onPress={() => setSelectedPaymentMode("cash")}
-                  />
+                  /> */}
                   {selectedPaymentMode === "cash" && (
                     <View
                       style={{
@@ -491,7 +639,11 @@ const CryptoWithdraw: React.FC = () => {
             </DashboardSection>
             <View style={styles.bottomTradePayRow}>
               <PayButton
-                disabled={selectedPaymentMode === "debit" && tradeExecute.isPending}
+                disabled={
+                  (selectedPaymentMode === "debit" && tradeExecute.isPending) ||
+                  !!limitError ||
+                  !!balanceError
+                }
                 onPress={handlePayPress}
                 label={selectedPaymentMode === "cash" ? "Find a Location" : "Proceed"}
               />
@@ -520,6 +672,21 @@ const CryptoWithdraw: React.FC = () => {
           visible={addCardVisible}
           onClose={() => setAddCardVisible(false)}
           onAdded={handleAddedCard}
+        />
+
+        <WithdrawConfirmationModal
+          visible={showConfirmModal}
+          usdAmount={amount}
+          expectedFee={withdrawExpectedFee}
+          expectedFeeLoading={withdrawQuoteEnabled && isWithdrawQuoteLoading}
+          feeLabel="Expected Instant Withdrawal Fee"
+          totalLabel="Total (Including Withdrawal fee)"
+          isSubmitting={tradeExecute.isPending}
+          onClose={() => setShowConfirmModal(false)}
+          onConfirm={() => {
+            setShowConfirmModal(false);
+            requestPaymentVerification(handleActionsAfterPinVerified);
+          }}
         />
       </KeyboardAvoidingView>
     </ScreenWrapper>

@@ -253,14 +253,9 @@ const OTPVerificationScreen: React.FC = () => {
                 }
               );
             } else if (step === 1) {
-              dispatch(setShowLoader(true));
-              const result = await bootstrapMainAppSession(dispatch);
-              dispatch(setShowLoader(false));
-              if (!result.ok) {
-                showError("Couldn't load your profile", result.message || "Please try again.");
-              } else {
-                showSuccess("Welcome back", "You're logged in.");
-              }
+              // KYC identity fetched but not yet verified — resume at step 2 instead of
+              // logging in. The verify screen prefills from the draft / /users/me.
+              (navigation as any).navigate(NAVIGATION_SCREENS.NEW_KYC_VERIFY);
             } else if (step === 2) {
               dispatch(setShowLoader(true));
               const result = await bootstrapMainAppSession(dispatch);

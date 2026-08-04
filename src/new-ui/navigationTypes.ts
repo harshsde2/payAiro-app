@@ -2,6 +2,8 @@ import { NavigatorScreenParams } from "@react-navigation/native";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import type { StateCode } from './constants/compliance';
 import type { ICryptoRequest } from 'query/hooks/cryptoRequest.types';
+import type { ActionOtpChannel } from 'query/hooks/useUserLock';
+import type { KycVerifyDetails } from 'auth/authSession';
 import type {
   SellCashRampEntryParams,
   SellCashRampLocationSnapshot,
@@ -64,6 +66,12 @@ export type NewUIAuthStackParamList = {
     isEmail?: boolean;
     data?: any;
   };
+  /**
+   * KYC step 2. `details` is the identity returned by step 1; it is absent when the
+   * screen is resumed after an app restart, in which case it falls back to the
+   * persisted draft and then to /users/me.
+   */
+  [NAVIGATION_SCREENS.NEW_KYC_VERIFY]: { details?: KycVerifyDetails } | undefined;
   [NAVIGATION_SCREENS.NEW_ADDRESS]: undefined;
   [NAVIGATION_SCREENS.NEW_FORGOT_PASSWORD]: undefined;
   [NAVIGATION_SCREENS.NEW_FORGOT_PASSWORD_VERIFICATION]: { email?: string };
@@ -114,6 +122,21 @@ export type NewUIDashboardStackParamList = {
   [NAVIGATION_SCREENS.NEW_CONTACTS_SCREEN]: undefined;
   [NAVIGATION_SCREENS.NEW_ADD_CONTACT_SCREEN]: undefined;
   [NAVIGATION_SCREENS.NEW_PRIVACY_SECURITY_SCREEN]: undefined;
+  [NAVIGATION_SCREENS.NEW_APP_VERSION_SCREEN]: undefined;
+  [NAVIGATION_SCREENS.NEW_CHANGE_PIN_SCREEN]: undefined;
+  [NAVIGATION_SCREENS.NEW_FORGOT_PIN_SCREEN]: undefined;
+  /**
+   * `change` carries the PIN the user just proved they know, so the final
+   * `pin/change/` call can send it as `old_pin`; `forgot` has nothing to carry
+   * because the OTP itself is the proof of identity.
+   */
+  [NAVIGATION_SCREENS.NEW_PIN_ACTION_OTP_SCREEN]:
+    | { mode: 'change'; channel: ActionOtpChannel; oldPin: string }
+    | { mode: 'forgot'; channel: ActionOtpChannel };
+  /** `forgot` reaches here with the action_token minted by the OTP verify step. */
+  [NAVIGATION_SCREENS.NEW_SET_NEW_PIN_SCREEN]:
+    | { mode: 'change'; oldPin: string }
+    | { mode: 'forgot'; actionToken: string };
   [NAVIGATION_SCREENS.NEW_BANK_STATEMENT_SCREEN]: undefined;
   [NAVIGATION_SCREENS.NEW_VIEW_STATEMENT_SCREEN]: undefined;
   [NAVIGATION_SCREENS.NEW_REWARDS_AND_REFERRALS_SCREEN]: undefined;

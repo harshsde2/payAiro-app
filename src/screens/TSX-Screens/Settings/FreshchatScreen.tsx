@@ -399,11 +399,11 @@ const FreshchatScreen = () => {
             cStyle={styles.faqButton}
           />
 
-          {/* <GenericButton
-            title="Email Support"
+          <GenericButton
+            title="✉️ Email Support"
             onPress={openEmailSupportForm}
-            cStyle={styles.faqButton}
-          /> */}
+            cStyle={styles.emailSupportButton}
+          />
 
           {/* Info Note */}
           <View style={styles.noteContainer}>
@@ -514,8 +514,12 @@ const customStyles = (theme: Theme) =>
       marginBottom: 12,
     },
     faqButton: {
-      marginBottom: 16,
+      marginBottom: 12,
     //   backgroundColor: theme.colors.palette.grey100,
+    },
+    // Last action before the info note, so it carries the larger gap.
+    emailSupportButton: {
+      marginBottom: 16,
     },
     noteContainer: {
       flexDirection: "row",

@@ -1,5 +1,6 @@
 import { View, TouchableOpacity } from 'react-native'
-import React, { useRef } from 'react'
+import React, { useMemo, useRef } from 'react'
+import DeviceInfo from 'react-native-device-info'
 import ScreenWrapper from 'new-ui/components/common-components/ScreenWrapper'
 import { useTheme as useNewUITheme } from '@new-ui/styles/ThemeContext'
 import { AppIcon } from 'new-ui/assets/svgs'
@@ -18,6 +19,18 @@ const SettingsScreen = () => {
     const PAYAIRO_TERMS_URL = EnvConfig.TERMS_AND_CONDITIONS_URL;
     const PAYAIRO_PRIVACY_URL = EnvConfig.PRIVACY_POLICY_URL;
 
+    // App version for the footer. DeviceInfo getters are native calls that can throw
+    // if unlinked, so guard each read and fall back rather than crash the screen.
+    const appVersionLabel = useMemo(() => {
+      try {
+        const version = DeviceInfo.getVersion();
+        const build = String(DeviceInfo.getBuildNumber());
+        return version ? `Version ${version} (${build})` : '';
+      } catch {
+        return '';
+      }
+    }, []);
+
     // Acknowledgment History is only relevant to Connecticut users (one-time +
     // per-transaction disclosures). Hidden entirely for everyone else.
     const { data: complianceStatus } = useComplianceStatus();
@@ -29,16 +42,21 @@ const SettingsScreen = () => {
             icon: <AppIcon.Privacy />,
             onPress: () => navigation.navigate(NAVIGATION_SCREENS.NEW_PRIVACY_SECURITY_SCREEN as never),
         },
+        {
+            title: 'Payment Methods',
+            icon: <AppIcon.DebitCard />,
+            onPress: () => navigation.navigate(NAVIGATION_SCREENS.PAYMENT_METHODS_SCREEN as never),
+        },
         // {
         //     title: 'Bank Statements',
         //     icon: <AppIcon.BankStatement />,
         //     onPress: () => navigation.navigate(NAVIGATION_SCREENS.NEW_BANK_STATEMENT_SCREEN as never),
         // },
-        {
-            title: 'Rewards and Referrals',
-            icon: <AppIcon.RewardsIcon />,
-            onPress: () => navigation.navigate(NAVIGATION_SCREENS.NEW_REWARDS_AND_REFERRALS_SCREEN as never),
-        },
+        // {
+        //     title: 'Rewards and Referrals',
+        //     icon: <AppIcon.RewardsIcon />,
+        //     onPress: () => navigation.navigate(NAVIGATION_SCREENS.NEW_REWARDS_AND_REFERRALS_SCREEN as never),
+        // },
         {
             title: 'Coinme Legal',
             icon: <AppIcon.Agreement />,
@@ -66,6 +84,11 @@ const SettingsScreen = () => {
             title: 'Privacy Policy',
             icon: <AppIcon.PrivacyPolicy />,
             onPress: () => webDocRef.current?.showWebDocument?.('Privacy Policy', PAYAIRO_PRIVACY_URL),
+        },
+        {
+            title: 'App Version',
+            icon: <AppIcon.AppVersion />,
+            onPress: () => navigation.navigate(NAVIGATION_SCREENS.NEW_APP_VERSION_SCREEN as never),
         },
     ]
 
@@ -97,6 +120,17 @@ const SettingsScreen = () => {
           <View style={{  alignItems: 'center',paddingHorizontal: 20 }}>
             <CustomText variant="h5" size={16} style={{ textAlign: 'center' }} fontWeight='light'>© 2026 PayAiro Inc.
             All Rights Reserved. </CustomText>
+            {appVersionLabel ? (
+              <CustomText
+                variant="body"
+                size={13}
+                color={newUITheme.colors.greyDark}
+                style={{ textAlign: 'center', marginTop: 4 }}
+                fontWeight="light"
+              >
+                {appVersionLabel}
+              </CustomText>
+            ) : null}
           </View>
       </View>
       <TermAndConditionModal isAgree={false} ref={webDocRef} />

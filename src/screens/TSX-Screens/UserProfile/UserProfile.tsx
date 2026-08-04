@@ -14,6 +14,7 @@ import { useUserProfileTransactions } from "query/hooks/useUserDetails";
 import { useTheme } from "styles/ThemeContext";
 import moment from "moment";
 import { UserTransaction } from "./types";
+import type { ISendScreenRouteParams } from "screens/Dashboard/types";
 import { CustomText } from "tsx-components";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { SvgIcons } from "constants/svgs";
@@ -32,6 +33,12 @@ const UserProfile = () => {
       identifier?: string;
       profile_photo?: string | null;
     };
+    /**
+     * Set when this screen was reached from Send while a specific crypto was selected
+     * (Crypto details → Send → profile). This screen only relays it back on Pay so the
+     * chosen coin survives the detour; it is never read here.
+     */
+    preselectedAsset?: ISendScreenRouteParams["preselectedAsset"];
   };
 
   const targetUserIdRaw =
@@ -241,6 +248,7 @@ const UserProfile = () => {
                 navigation.navigate(NAVIGATION_SCREENS.NEW_SEND, {
                   requested: false,
                   sender: user?.username,
+                  preselectedAsset: params?.preselectedAsset,
                 })
               }
               style={[

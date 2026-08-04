@@ -13,3 +13,10 @@ export {
 export { default as AddDebitCardModal } from './AddDebitCardModal';
 export { default as CardAddedSuccessModal } from './CardAddedSuccessModal';
 export { default as SellTradeMethodPickerModal } from './SellTradeMethodPickerModal';
+export {
+  useDefaultPaymentMethodId,
+  getDefaultPaymentMethodId,
+  setDefaultPaymentMethodId,
+  clearDefaultPaymentMethodId,
+} from './defaultPaymentMethod';
+export { useApplyDefaultPaymentMethod } from './useApplyDefaultPaymentMethod';

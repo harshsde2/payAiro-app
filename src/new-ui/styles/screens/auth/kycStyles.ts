@@ -86,6 +86,14 @@ export const kycStyles = (theme: ITheme) => {
     proceedButton: {
       marginBottom: theme.spacing.base,
     },
+    startOverButton: {
+      alignSelf: 'center',
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.base,
+    },
+    startOverText: {
+      textAlign: 'center',
+    },
     disclaimerContainer: {
       marginTop: theme.spacing.sm,
     },

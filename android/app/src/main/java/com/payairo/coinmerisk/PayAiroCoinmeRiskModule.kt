@@ -17,10 +17,12 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.ReadableMap
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
@@ -46,7 +48,22 @@ import kotlin.coroutines.resumeWithException
 class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
 
-    private val moduleScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+    // Last-resort net: anything that escapes a per-call catch (e.g. thrown while acquiring the
+    // mutex) would otherwise propagate out of the coroutine and terminate the process.
+    private val exceptionHandler = CoroutineExceptionHandler { _, e ->
+        Log.e(TAG, "Unhandled exception in Coinme Risk coroutine", e)
+    }
+
+    private val moduleScope =
+        CoroutineScope(Dispatchers.Main.immediate + SupervisorJob() + exceptionHandler)
+
+    /**
+     * Guards every CoinmeRiskEngine call. Sardine (the engine's underlying SDK) is not safe
+     * against concurrent operations — two overlapping calls corrupt its heap and abort the
+     * process, which no `catch` can intercept. Every method that touches the engine must hold
+     * this, including the read-only ones: a `getConfig()` racing an in-flight `submit()` is
+     * enough to trip it.
+     */
     private val sdkMutex = Mutex()
 
     override fun getName(): String = MODULE_NAME
@@ -76,14 +93,17 @@ class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext)
             return
         }
 
-        // Sardine's MobileIntelligence.init() is safest on the main thread.
-        activity.runOnUiThread {
-            try {
-                CoinmeRiskEngine.setupCoinmeRiskEngine(activity, setupOpts)
-                promise.resolve(null)
-            } catch (e: Exception) {
-                Log.e(TAG, "setup failed", e)
-                promise.reject(ErrorCodes.SETUP_FAILED, e.localizedMessage ?: "setup failed", e)
+        // moduleScope runs on Dispatchers.Main.immediate — MobileIntelligence.init() is safest on
+        // the main thread — and the mutex keeps it from overlapping any in-flight engine call.
+        moduleScope.launch {
+            sdkMutex.withLock {
+                try {
+                    CoinmeRiskEngine.setupCoinmeRiskEngine(activity, setupOpts)
+                    promise.resolve(null)
+                } catch (e: Throwable) {
+                    Log.e(TAG, "setup failed", e)
+                    promise.reject(ErrorCodes.SETUP_FAILED, e.localizedMessage ?: "setup failed", e)
+                }
             }
         }
     }
@@ -103,7 +123,7 @@ class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext)
                     val updateOpts = parseUpdateOptions(options)
                     CoinmeRiskEngine.updateCoinmeRiskEngine(updateOpts)
                     promise.resolve(null)
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     Log.e(TAG, "update failed", e)
                     promise.reject(ErrorCodes.UNKNOWN_ERROR, e.localizedMessage ?: "update failed", e)
                 }
@@ -113,52 +133,73 @@ class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext)
 
     @ReactMethod
     fun reset(promise: Promise) {
-        try {
-            CoinmeRiskEngine.reset()
-            promise.resolve(null)
-        } catch (e: Exception) {
-            Log.w(TAG, "reset failed (non-fatal): ${e.localizedMessage}")
-            promise.resolve(null)
+        moduleScope.launch {
+            sdkMutex.withLock {
+                try {
+                    CoinmeRiskEngine.reset()
+                    promise.resolve(null)
+                } catch (e: Throwable) {
+                    Log.w(TAG, "reset failed (non-fatal): ${e.localizedMessage}")
+                    promise.resolve(null)
+                }
+            }
         }
     }
 
     @ReactMethod
     fun resetStoredSessionKey(promise: Promise) {
-        if (!CoinmeRiskEngine.isInitialized()) {
-            promise.resolve(null)
-            return
-        }
-        try {
-            CoinmeRiskEngine.resetStoredSessionKey()
-            promise.resolve(null)
-        } catch (e: Exception) {
-            Log.w(TAG, "resetStoredSessionKey failed (non-fatal): ${e.localizedMessage}")
-            promise.resolve(null)
+        moduleScope.launch {
+            sdkMutex.withLock {
+                if (!CoinmeRiskEngine.isInitialized()) {
+                    promise.resolve(null)
+                    return@withLock
+                }
+                try {
+                    CoinmeRiskEngine.resetStoredSessionKey()
+                    promise.resolve(null)
+                } catch (e: Throwable) {
+                    Log.w(TAG, "resetStoredSessionKey failed (non-fatal): ${e.localizedMessage}")
+                    promise.resolve(null)
+                }
+            }
         }
     }
 
     @ReactMethod
     fun isInitialized(promise: Promise) {
-        promise.resolve(CoinmeRiskEngine.isInitialized())
+        moduleScope.launch {
+            sdkMutex.withLock {
+                try {
+                    promise.resolve(CoinmeRiskEngine.isInitialized())
+                } catch (e: Throwable) {
+                    Log.w(TAG, "isInitialized failed (non-fatal): ${e.localizedMessage}")
+                    promise.resolve(false)
+                }
+            }
+        }
     }
 
     @ReactMethod
     fun getConfig(promise: Promise) {
-        if (!CoinmeRiskEngine.isInitialized()) {
-            promise.resolve(null)
-            return
-        }
-        try {
-            val config: RiskEngineUpdateOptions = CoinmeRiskEngine.getCoinmeRiskEngineConfig()
-            val result = Arguments.createMap().apply {
-                putString("customerId", config.customerId)
-                putString("sessionKey", config.sessionKey)
-                putString("flow", config.flow?.value)
+        moduleScope.launch {
+            sdkMutex.withLock {
+                if (!CoinmeRiskEngine.isInitialized()) {
+                    promise.resolve(null)
+                    return@withLock
+                }
+                try {
+                    val config: RiskEngineUpdateOptions = CoinmeRiskEngine.getCoinmeRiskEngineConfig()
+                    val result = Arguments.createMap().apply {
+                        putString("customerId", config.customerId)
+                        putString("sessionKey", config.sessionKey)
+                        putString("flow", config.flow?.value)
+                    }
+                    promise.resolve(result)
+                } catch (e: Throwable) {
+                    Log.w(TAG, "getConfig failed (non-fatal): ${e.localizedMessage}")
+                    promise.resolve(null)
+                }
             }
-            promise.resolve(result)
-        } catch (e: Exception) {
-            Log.w(TAG, "getConfig failed (non-fatal): ${e.localizedMessage}")
-            promise.resolve(null)
         }
     }
 
@@ -177,8 +218,11 @@ class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext)
                 }
                 try {
                     submitAndWait()
+                    // Sardine keeps working after the success callback fires; hold the lock
+                    // until it settles so the next engine mutation cannot overlap it.
+                    delay(POST_SUBMIT_SETTLE_MS)
                     promise.resolve(null)
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     promise.reject(
                         ErrorCodes.SUBMIT_FAILED,
                         e.localizedMessage ?: "submit failed",
@@ -204,7 +248,11 @@ class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext)
                 try {
                     CoinmeRiskEngine.submit()
                     promise.resolve(null)
-                } catch (e: Exception) {
+                    // Fire-and-forget to the SDK, but Sardine keeps uploading after submit()
+                    // returns. Hold the lock until it settles so the next engine mutation
+                    // cannot land mid-upload and corrupt its heap.
+                    delay(POST_SUBMIT_SETTLE_MS)
+                } catch (e: Throwable) {
                     promise.reject(
                         ErrorCodes.SUBMIT_FAILED,
                         e.localizedMessage ?: "submitWithoutCallbacks failed",
@@ -259,6 +307,7 @@ class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext)
                     )
 
                     submitAndWait()
+                    delay(POST_SUBMIT_SETTLE_MS)
 
                     val result = Arguments.createMap().apply {
                         putString("webSessionID", data.webSessionID)
@@ -273,7 +322,7 @@ class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext)
                         e.localizedMessage ?: "executeSessionPipeline failed",
                         e
                     )
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     promise.reject(
                         ErrorCodes.PARTNER_SESSION_FAILED,
                         e.localizedMessage ?: "executeSessionPipeline failed",
@@ -298,7 +347,7 @@ class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext)
                         }
                     }
                 )
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 if (settled.compareAndSet(false, true)) {
                     cont.resumeWithException(e)
                 }
@@ -314,13 +363,6 @@ class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext)
      */
     @ReactMethod
     fun getPartnerSessionTag(options: ReadableMap, promise: Promise) {
-        if (!CoinmeRiskEngine.isInitialized()) {
-            promise.reject(
-                ErrorCodes.NOT_INITIALIZED,
-                "CoinmeRiskEngine is not initialized. Call setup() first."
-            )
-            return
-        }
         val tagOpts = try {
             parsePartnerSessionTagOptions(options)
         } catch (e: IllegalArgumentException) {
@@ -330,6 +372,13 @@ class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext)
 
         moduleScope.launch {
             sdkMutex.withLock {
+                if (!CoinmeRiskEngine.isInitialized()) {
+                    promise.reject(
+                        ErrorCodes.NOT_INITIALIZED,
+                        "CoinmeRiskEngine is not initialized. Call setup() first."
+                    )
+                    return@withLock
+                }
                 try {
                     val data = CoinmeRiskEngine.getPartnerSessionTag(tagOpts)
                     val result = Arguments.createMap().apply {
@@ -343,7 +392,7 @@ class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext)
                         e.localizedMessage ?: "getPartnerSessionTag failed",
                         e
                     )
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     promise.reject(
                         ErrorCodes.PARTNER_SESSION_FAILED,
                         e.localizedMessage ?: "getPartnerSessionTag failed",
@@ -363,13 +412,6 @@ class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext)
      */
     @ReactMethod
     fun getSessionTag(options: ReadableMap, promise: Promise) {
-        if (!CoinmeRiskEngine.isInitialized()) {
-            promise.reject(
-                ErrorCodes.NOT_INITIALIZED,
-                "CoinmeRiskEngine is not initialized. Call setup() first."
-            )
-            return
-        }
         val tagOpts = try {
             parseSessionTagOptions(options)
         } catch (e: IllegalArgumentException) {
@@ -379,30 +421,39 @@ class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext)
 
         val settled = AtomicBoolean(false)
         moduleScope.launch {
-            try {
-                val data = CoinmeRiskEngine.getSessionTag(tagOpts)
-                if (settled.compareAndSet(false, true)) {
-                    val result = Arguments.createMap().apply {
-                        putString("webSessionID", data.webSessionID)
-                        putString("orgID", data.orgID)
+            sdkMutex.withLock {
+                if (!CoinmeRiskEngine.isInitialized()) {
+                    promise.reject(
+                        ErrorCodes.NOT_INITIALIZED,
+                        "CoinmeRiskEngine is not initialized. Call setup() first."
+                    )
+                    return@withLock
+                }
+                try {
+                    val data = CoinmeRiskEngine.getSessionTag(tagOpts)
+                    if (settled.compareAndSet(false, true)) {
+                        val result = Arguments.createMap().apply {
+                            putString("webSessionID", data.webSessionID)
+                            putString("orgID", data.orgID)
+                        }
+                        promise.resolve(result)
                     }
-                    promise.resolve(result)
-                }
-            } catch (e: SessionTagException) {
-                if (settled.compareAndSet(false, true)) {
-                    promise.reject(
-                        ErrorCodes.PARTNER_SESSION_FAILED,
-                        e.localizedMessage ?: "getSessionTag failed",
-                        e
-                    )
-                }
-            } catch (e: Exception) {
-                if (settled.compareAndSet(false, true)) {
-                    promise.reject(
-                        ErrorCodes.PARTNER_SESSION_FAILED,
-                        e.localizedMessage ?: "getSessionTag failed",
-                        e
-                    )
+                } catch (e: SessionTagException) {
+                    if (settled.compareAndSet(false, true)) {
+                        promise.reject(
+                            ErrorCodes.PARTNER_SESSION_FAILED,
+                            e.localizedMessage ?: "getSessionTag failed",
+                            e
+                        )
+                    }
+                } catch (e: Throwable) {
+                    if (settled.compareAndSet(false, true)) {
+                        promise.reject(
+                            ErrorCodes.PARTNER_SESSION_FAILED,
+                            e.localizedMessage ?: "getSessionTag failed",
+                            e
+                        )
+                    }
                 }
             }
         }
@@ -412,37 +463,45 @@ class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext)
 
     @ReactMethod
     fun trackTextChange(viewId: String, text: String, promise: Promise) {
-        if (!CoinmeRiskEngine.isInitialized()) {
-            promise.reject(
-                ErrorCodes.NOT_INITIALIZED,
-                "CoinmeRiskEngine is not initialized. Call setup() first."
-            )
-            return
-        }
-        try {
-            CoinmeRiskEngine.trackTextChange(viewId, text)
-            promise.resolve(null)
-        } catch (e: Exception) {
-            Log.w(TAG, "trackTextChange failed (non-fatal): ${e.localizedMessage}")
-            promise.resolve(null)
+        moduleScope.launch {
+            sdkMutex.withLock {
+                if (!CoinmeRiskEngine.isInitialized()) {
+                    promise.reject(
+                        ErrorCodes.NOT_INITIALIZED,
+                        "CoinmeRiskEngine is not initialized. Call setup() first."
+                    )
+                    return@withLock
+                }
+                try {
+                    CoinmeRiskEngine.trackTextChange(viewId, text)
+                    promise.resolve(null)
+                } catch (e: Throwable) {
+                    Log.w(TAG, "trackTextChange failed (non-fatal): ${e.localizedMessage}")
+                    promise.resolve(null)
+                }
+            }
         }
     }
 
     @ReactMethod
     fun trackFocusChange(viewId: String, isFocus: Boolean, promise: Promise) {
-        if (!CoinmeRiskEngine.isInitialized()) {
-            promise.reject(
-                ErrorCodes.NOT_INITIALIZED,
-                "CoinmeRiskEngine is not initialized. Call setup() first."
-            )
-            return
-        }
-        try {
-            CoinmeRiskEngine.trackFocusChange(viewId, isFocus)
-            promise.resolve(null)
-        } catch (e: Exception) {
-            Log.w(TAG, "trackFocusChange failed (non-fatal): ${e.localizedMessage}")
-            promise.resolve(null)
+        moduleScope.launch {
+            sdkMutex.withLock {
+                if (!CoinmeRiskEngine.isInitialized()) {
+                    promise.reject(
+                        ErrorCodes.NOT_INITIALIZED,
+                        "CoinmeRiskEngine is not initialized. Call setup() first."
+                    )
+                    return@withLock
+                }
+                try {
+                    CoinmeRiskEngine.trackFocusChange(viewId, isFocus)
+                    promise.resolve(null)
+                } catch (e: Throwable) {
+                    Log.w(TAG, "trackFocusChange failed (non-fatal): ${e.localizedMessage}")
+                    promise.resolve(null)
+                }
+            }
         }
     }
 
@@ -603,6 +662,12 @@ class PayAiroCoinmeRiskModule(private val reactContext: ReactApplicationContext)
     companion object {
         const val MODULE_NAME = "PayAiroCoinmeRisk"
         private const val TAG = "PayAiroCoinmeRisk"
+
+        /**
+         * Sardine keeps uploading after `submit()` reports completion. The SDK lock is held
+         * this long afterwards so the next engine mutation cannot land mid-upload.
+         */
+        private const val POST_SUBMIT_SETTLE_MS = 1200L
     }
 
     private object ErrorCodes {

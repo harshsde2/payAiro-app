@@ -21,6 +21,9 @@ export interface IAddUserContactPayload {
 
 export interface IUserContact {
   id?: number | string;
+  /** The target user's id (the contact person). `id` above is the contact-list row id,
+   *  NOT the user — use this for anything that needs the user (e.g. profile lookups). */
+  contact_user_id?: number | string;
   username?: string;
   payairo_id?: string;
   email?: string;

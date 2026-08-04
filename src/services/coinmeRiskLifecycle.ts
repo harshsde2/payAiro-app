@@ -254,14 +254,16 @@ export async function onUserLoggedOut(): Promise<void> {
   if (!isSupportedPlatform) return;
   if (!PayAiroCoinmeRisk.isModuleAvailable()) return;
 
+  // Both calls mutate engine state, so they queue behind any in-flight session work rather
+  // than tearing the engine down underneath it.
   try {
-    await PayAiroCoinmeRisk.resetStoredSessionKey();
+    await enqueueSdkOperation(() => PayAiroCoinmeRisk.resetStoredSessionKey());
   } catch {
     // best-effort; do not block logout
   }
 
   try {
-    await PayAiroCoinmeRisk.reset();
+    await enqueueSdkOperation(() => PayAiroCoinmeRisk.reset());
     console.log(`${TAG} reset ok`);
   } catch (e) {
     if (e instanceof CoinmeRiskError) {
@@ -344,7 +346,14 @@ export async function awaitCardlinkingPostSubmitDelay(): Promise<void> {
 type CardlinkingSubmitMode = "noCallbacks" | "callbacks";
 
 let cardlinkingPhase3PreparedForAccount: string | null = null;
-let cardlinkingPhase3PrepareInFlight: string | null = null;
+/**
+ * The running early-prepare, held as a promise so a second caller *joins* it instead of
+ * starting a racing one. Never cleared from the outside — only by its own settle handler.
+ */
+let cardlinkingPhase3PrepareInFlight: {
+  id: string;
+  promise: Promise<void>;
+} | null = null;
 
 async function iosSdkPause(): Promise<void> {
   if (isIOS) await sleep(IOS_SDK_STEP_MS);
@@ -466,7 +475,7 @@ export async function runCardlinkingRiskFlow(accountId: string): Promise<string>
     logCardlinkingPhase(phase, submitMode, webSessionId);
 
     if (isCoinmeRiskDebugLoggingEnabled()) {
-      await debugLogCoinmeRiskEngine(`cardlinking:phase${phase}:afterSubmit`, {
+      await debugLogCoinmeRiskEngineUnserialized(`cardlinking:phase${phase}:afterSubmit`, {
         expectedWebSessionId: webSessionId,
         accountId: id,
       });
@@ -479,80 +488,103 @@ export async function runCardlinkingRiskFlow(accountId: string): Promise<string>
 /**
  * Phase 3: early `update` + `submit` when add-card modal opens (not on Proceed).
  */
-export async function prepareCardlinkingRiskSession(
-  accountId: string
-): Promise<void> {
+export function prepareCardlinkingRiskSession(accountId: string): Promise<void> {
   const phase = resolveCardlinkingPhase();
   if (phase !== 3) {
     console.log(
       `${TAG} prepareCardlinkingRiskSession skipped (COINME_CARDLINKING_PHASE=${String(phase)}, expected 3 — rebuild app if .env changed)`
     );
-    return;
+    return Promise.resolve();
   }
 
   const id = accountId.trim();
   if (!id) {
     console.log(`${TAG} prepareCardlinkingRiskSession skipped (empty accountId)`);
-    return;
+    return Promise.resolve();
   }
-  if (
-    cardlinkingPhase3PreparedForAccount === id ||
-    cardlinkingPhase3PrepareInFlight === id
-  ) {
+  if (cardlinkingPhase3PreparedForAccount === id) {
     console.log(`${TAG} prepareCardlinkingRiskSession skipped (already prepared for account)`);
-    return;
+    return Promise.resolve();
+  }
+  // Join the running prepare rather than starting a second one. Two concurrent cardlinking
+  // sessions put two Sardine uploads in flight at once, which double-frees and aborts the app.
+  if (cardlinkingPhase3PrepareInFlight?.id === id) {
+    console.log(`${TAG} prepareCardlinkingRiskSession joined (prepare already in flight)`);
+    return cardlinkingPhase3PrepareInFlight.promise;
   }
 
-  cardlinkingPhase3PrepareInFlight = id;
   console.log(`${TAG} Phase3 modal-open: starting early prepare accountId=${prefix(id)}`);
 
-  try {
-    await enqueueSdkOperation(async () => {
-      await ensureCoinmeRiskReady();
-      if (cardlinkingPhase3PreparedForAccount === id) return;
+  const run = enqueueSdkOperation(async () => {
+    await ensureCoinmeRiskReady();
+    if (cardlinkingPhase3PreparedForAccount === id) return;
 
-      await cardlinkingEnsureLocation();
-      logCardlinkingPhase(3, "early+noCallbacks");
+    await cardlinkingEnsureLocation();
+    logCardlinkingPhase(3, "early+noCallbacks");
 
-      await cardlinkingResetIfNeeded(id);
-      if (isIOS) await iosSdkPause();
+    // Always start a new add-card journey from a clean Sardine session.
+    //
+    // cardlinkingResetIfNeeded() is deliberately NOT used here: after one successful add it
+    // sees the same customer and the same "cardlinking" flow and skips the reset, so a second
+    // journey would run update()+submit() on a session that has already submitted. That is the
+    // "add a card → remove it → add again → crash" path; the stale submit corrupts Sardine and
+    // the process dies on the next engine call.
+    try {
+      await PayAiroCoinmeRisk.resetStoredSessionKey();
+      console.log(`${TAG} Phase3 modal-open: stored session key reset (fresh journey)`);
+    } catch {
+      /* best-effort — a failed reset must not block the warm-up */
+    }
+    if (isIOS) await iosSdkPause();
 
-      console.log(
-        `${TAG} Phase3 modal-open: update(customerId=${prefix(id)}, flow=cardlinking)`
-      );
-      await cardlinkingUpdate(id);
-      console.log(`${TAG} Phase3 modal-open: update() done`);
-      if (isIOS) await iosSdkPause();
+    console.log(
+      `${TAG} Phase3 modal-open: update(customerId=${prefix(id)}, flow=cardlinking)`
+    );
+    await cardlinkingUpdate(id);
+    console.log(`${TAG} Phase3 modal-open: update() done`);
+    if (isIOS) await iosSdkPause();
 
-      // iOS: callback submit avoids MobileIntelligence SIGABRT; Android uses no-callback per Coinme Phase 1.
-      const earlySubmitMode: CardlinkingSubmitMode = isIOS
-        ? "callbacks"
-        : "noCallbacks";
-      console.log(
-        `${TAG} Phase3 modal-open: submit() mode=${earlySubmitMode}`
-      );
-      await cardlinkingSubmit(earlySubmitMode);
-      console.log(`${TAG} Phase3 modal-open: submit() done`);
+    // iOS: callback submit avoids MobileIntelligence SIGABRT; Android uses no-callback per Coinme Phase 1.
+    const earlySubmitMode: CardlinkingSubmitMode = isIOS
+      ? "callbacks"
+      : "noCallbacks";
+    console.log(
+      `${TAG} Phase3 modal-open: submit() mode=${earlySubmitMode}`
+    );
+    // The native bridges hold their SDK lock past submit() until Sardine's upload settles
+    // (POST_SUBMIT_SETTLE_MS / postSubmitSettle), so this resolves only once it is safe for
+    // the next engine call to run. No extra wait is needed here.
+    await cardlinkingSubmit(earlySubmitMode);
+    console.log(`${TAG} Phase3 modal-open: submit() done`);
 
-      cardlinkingPhase3PreparedForAccount = id;
-      lastKnownCustomerId = id;
-      lastSessionRiskFlow = "cardlinking";
+    cardlinkingPhase3PreparedForAccount = id;
+    lastKnownCustomerId = id;
+    lastSessionRiskFlow = "cardlinking";
 
-      console.log(
-        `${TAG} Phase3 modal-open: early prepare complete accountId=${prefix(id)}`
-      );
-    });
-  } finally {
-    if (cardlinkingPhase3PrepareInFlight === id) {
+    console.log(
+      `${TAG} Phase3 modal-open: early prepare complete accountId=${prefix(id)}`
+    );
+  });
+
+  const tracked = run.finally(() => {
+    if (cardlinkingPhase3PrepareInFlight?.id === id) {
       cardlinkingPhase3PrepareInFlight = null;
     }
-  }
+  });
+  cardlinkingPhase3PrepareInFlight = { id, promise: tracked };
+  return tracked;
 }
 
-/** Clears Phase 3 prepare guard when add-card modal closes. */
+/**
+ * Clears the Phase 3 "already prepared" marker when the add-card modal closes, so the next
+ * add-card journey warms up again.
+ *
+ * Deliberately does NOT touch `cardlinkingPhase3PrepareInFlight`: dropping that marker while
+ * the prepare is still running inside Sardine lets the next caller start a second, concurrent
+ * session — the double-free that crashes the app. An in-flight prepare clears its own marker.
+ */
 export function resetCardlinkingPhase3Prepare(): void {
   cardlinkingPhase3PreparedForAccount = null;
-  cardlinkingPhase3PrepareInFlight = null;
 }
 
 /**
@@ -589,7 +621,7 @@ export async function completeCardlinkingRiskFlow(accountId: string): Promise<st
     logCardlinkingPhase(3, "lateMintOnly", webSessionId);
 
     if (isCoinmeRiskDebugLoggingEnabled()) {
-      await debugLogCoinmeRiskEngine("cardlinking:phase3:beforePost", {
+      await debugLogCoinmeRiskEngineUnserialized("cardlinking:phase3:beforePost", {
         expectedWebSessionId: webSessionId,
         accountId: id,
       });
@@ -687,7 +719,7 @@ async function fetchWebSessionIdIOSSteps(
   );
 
   if (isCoinmeRiskDebugLoggingEnabled()) {
-    await debugLogCoinmeRiskEngine("fetchWebSessionId:afterIOSteps", {
+    await debugLogCoinmeRiskEngineUnserialized("fetchWebSessionId:afterIOSteps", {
       expectedWebSessionId: data.webSessionID,
       accountId,
       partnerId,
@@ -817,7 +849,7 @@ export async function fetchWebSessionId(
     );
 
     if (isCoinmeRiskDebugLoggingEnabled()) {
-      await debugLogCoinmeRiskEngine("fetchWebSessionId:afterPipeline", {
+      await debugLogCoinmeRiskEngineUnserialized("fetchWebSessionId:afterPipeline", {
         expectedWebSessionId: data.webSessionID,
         accountId,
         partnerId,
@@ -854,6 +886,22 @@ export type CoinmeRiskDebugLogOptions = {
  * whether the engine still holds the same sessionKey as the payload — i.e. client vs server cause for 203-*.
  */
 export async function debugLogCoinmeRiskEngine(
+  context: string,
+  options?: CoinmeRiskDebugLogOptions
+): Promise<void> {
+  if (!isCoinmeRiskDebugLoggingEnabled()) return;
+  // Reading engine config still touches the SDK, so it has to take its turn on the chain —
+  // a getConfig() racing an in-flight submit() is enough to trip Sardine's double-free.
+  await enqueueSdkOperation(() =>
+    debugLogCoinmeRiskEngineUnserialized(context, options)
+  );
+}
+
+/**
+ * Body of {@link debugLogCoinmeRiskEngine} without the chain hop. Only call this from code
+ * already running inside `enqueueSdkOperation` — nesting an enqueue inside the chain deadlocks.
+ */
+async function debugLogCoinmeRiskEngineUnserialized(
   context: string,
   options?: CoinmeRiskDebugLogOptions
 ): Promise<void> {
@@ -912,7 +960,7 @@ export async function logCoinmeRiskBeforeAddCardApiCall(
   const riskFlow = options.riskFlow ?? "cardlinking";
   const fingerprint = await getDeviceFingerprint();
   const initialized = PayAiroCoinmeRisk.isModuleAvailable()
-    ? await PayAiroCoinmeRisk.isInitialized()
+    ? await enqueueSdkOperation(() => PayAiroCoinmeRisk.isInitialized())
     : false;
 
   const locationPermission =

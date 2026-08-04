@@ -12,6 +12,8 @@ type PaymentMethodCardRowProps = {
   isDeleting: boolean;
   deleteDisabled: boolean;
   showDivider?: boolean;
+  isDefault?: boolean;
+  onSetDefault?: (item: PaymentMethodItem) => void;
   onDelete: (item: PaymentMethodItem) => void;
 };
 
@@ -20,6 +22,8 @@ const PaymentMethodCardRow: React.FC<PaymentMethodCardRowProps> = ({
   isDeleting,
   deleteDisabled,
   showDivider = true,
+  isDefault = false,
+  onSetDefault,
   onDelete,
 }) => {
   const { theme } = useTheme();
@@ -32,9 +36,28 @@ const PaymentMethodCardRow: React.FC<PaymentMethodCardRowProps> = ({
         <AppIcon.DebitCard width={22} height={22} color={theme.colors.primary} />
       </View>
       <View style={styles.cardTextBlock}>
-        <CustomText variant="body" fontWeight="semiBold" numberOfLines={1}>
-          {formatCardLabel(item)}
-        </CustomText>
+        <View style={styles.cardLabelRow}>
+          <CustomText
+            variant="body"
+            fontWeight="semiBold"
+            numberOfLines={1}
+            style={{ flexShrink: 1 }}
+          >
+            {formatCardLabel(item)}
+          </CustomText>
+          {isDefault ? (
+            <View style={styles.defaultBadge}>
+              <CustomText
+                variant="caption"
+                fontWeight="semiBold"
+                color={theme.colors.white}
+                style={styles.defaultBadgeText}
+              >
+                Default
+              </CustomText>
+            </View>
+          ) : null}
+        </View>
         {expiry ? (
           <CustomText
             variant="bodySmall"
@@ -43,6 +66,17 @@ const PaymentMethodCardRow: React.FC<PaymentMethodCardRowProps> = ({
           >
             Expires {expiry}
           </CustomText>
+        ) : null}
+        {!isDefault && onSetDefault ? (
+          <Pressable onPress={() => onSetDefault(item)} hitSlop={6} style={{ marginTop: theme.spacing.xs }}>
+            <CustomText
+              variant="bodySmall"
+              fontWeight="semiBold"
+              color={theme.colors.primary}
+            >
+              Set as default
+            </CustomText>
+          </Pressable>
         ) : null}
       </View>
       <Pressable

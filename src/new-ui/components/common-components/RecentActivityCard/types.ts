@@ -221,11 +221,40 @@ export interface ActivityCashOnRampItem {
   };
 }
 
+/** Party on a crypto payment request (creator or payer). */
+export interface ActivityRequestParty {
+  userId: number | null;
+  username: string | null;
+  firstName: string | null;
+  lastName: string | null;
+}
+
+/** Crypto payment-request row from unified activity history (source "crypto_request"). */
+export interface ActivityRequestItem {
+  activity: "REQUEST";
+  id: number;
+  source?: string;
+  chain?: string | null;
+  currency?: string | null;
+  amount?: string;
+  /** From the current user's view: "received" = requested of me; "sent" = I requested. */
+  direction: SendHistoryDirection;
+  status?: string | null;
+  note?: string | null;
+  expiresAt?: string | null;
+  fulfilledByTransactionId?: string | null;
+  requestedBy?: ActivityRequestParty | null;
+  requestedFrom?: ActivityRequestParty | null;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export type RecentActivityItem =
   | ActivityTradeItem
   | ActivitySendItem
   | ActivityCashOnRampItem
-  | ActivityCashOffRampItem;
+  | ActivityCashOffRampItem
+  | ActivityRequestItem;
 
 /** @deprecated Use RecentActivityItem */
 export type SendHistoryItem = RecentActivityItem;
@@ -272,6 +301,20 @@ export function isCashOffRampActivity(
   return String(item.activity ?? "").toUpperCase() === "CASH_OFFRAMP";
 }
 
+export function isRequestActivity(
+  item: RecentActivityItem
+): item is ActivityRequestItem {
+  return (
+    String(item.activity ?? "").toUpperCase() === "REQUEST" ||
+    String((item as ActivityRequestItem).source ?? "").toLowerCase() === "crypto_request"
+  );
+}
+
 export function isSendActivity(item: RecentActivityItem): item is ActivitySendItem {
-  return !isTradeActivity(item) && !isCashOnRampActivity(item) && !isCashOffRampActivity(item);
+  return (
+    !isTradeActivity(item) &&
+    !isCashOnRampActivity(item) &&
+    !isCashOffRampActivity(item) &&
+    !isRequestActivity(item)
+  );
 }

@@ -1037,10 +1037,10 @@
   resolved "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@coinme-security/vault-sdk-react-native@^1.1.0":
-  version "1.1.0"
-  resolved "https://npm.coinme.com/coinme-security-wrapper/@coinme-security/vault-sdk-react-native/-/vault-sdk-react-native-1.1.0.tgz"
-  integrity sha512-ywlPgTZoTLKxh/vJCDp1SOjBIWpuwlwvCdMzWFwAap5MeeZyh/8Md73meFPCAiSAyEWQ6+xihUoEgb5KjrHnlA==
+"@coinme-security/vault-sdk-react-native@^1.1.1":
+  version "1.1.1"
+  resolved "https://npm.coinme.com/coinme-security-wrapper/@coinme-security/vault-sdk-react-native/-/vault-sdk-react-native-1.1.1.tgz"
+  integrity sha512-y5O0jnCo2KFuXbGMazSXir6NI5z3KjzR5JmXMKHVeYsnvdRL307VdJdIkPBb9tGG2ud4WIbHaJCMwUXL7rmPxQ==
 
 "@egjs/hammerjs@^2.0.17":
   version "2.0.17"
@@ -3143,10 +3143,10 @@
   resolved "https://registry.npmjs.org/@ungap/structured-clone/-/structured-clone-1.3.0.tgz"
   integrity sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==
 
-"@vgs/collect-react-native@^1.1", "@vgs/collect-react-native@^1.1.5":
-  version "1.1.5"
-  resolved "https://registry.npmjs.org/@vgs/collect-react-native/-/collect-react-native-1.1.5.tgz"
-  integrity sha512-oDs+Yrg8EuV8MB/maizaxzeyT8rQ/7OdQ7MHTG48dhEMpDWeVnwgPMPt2g1jAghQ0LmibFn9DBvMet2VpWYLfg==
+"@vgs/collect-react-native@^1.1.5", "@vgs/collect-react-native@^1.1.6":
+  version "1.1.6"
+  resolved "https://registry.npmjs.org/@vgs/collect-react-native/-/collect-react-native-1.1.6.tgz"
+  integrity sha512-lI6i0Oyeyrt5eYZRvihtxC7SiY29fuxXZmFUJTrRy0s8mzDrd/44GpncP/uwzNt/PIQKuR1i2QwVaB/Y31EbDQ==
 
 "@vscode/sudo-prompt@^9.0.0":
   version "9.3.2"

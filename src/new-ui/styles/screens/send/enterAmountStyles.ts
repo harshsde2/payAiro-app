@@ -80,11 +80,15 @@ export const enterAmountStyles = (theme: ITheme) =>
       alignItems: 'center',
       marginTop: theme.spacing.xl,
       paddingHorizontal: theme.spacing.base,
+      // Now that the bottom block is pinned to the end of a scroll view, it needs its
+      // own bottom gap or the last button (Request) sits flush against the screen edge.
+      paddingBottom: theme.spacing.base,
     },
     /** Trade: full-width payment row, then pay control — avoids cramped side-by-side layout. */
     bottomAreaTrade: {
       marginTop: theme.spacing.xl,
       paddingHorizontal: theme.spacing.base,
+      paddingBottom: theme.spacing.base,
       width: '100%',
       gap: theme.spacing.md,
     },
@@ -102,10 +106,6 @@ export const enterAmountStyles = (theme: ITheme) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       gap: theme.spacing.base,
-    },
-    requestButton: {
-      flex: 1,
-      backgroundColor: theme.colors.black,
     },
     payButton: {
       width: '100%',
@@ -163,6 +163,40 @@ export const enterAmountStyles = (theme: ITheme) =>
     },
     fundingCardLabel: {
       marginBottom: theme.spacing.sm,
+    },
+    // Read-only "which coin is being sent" row. The asset is fixed by the entry
+    // point (state stablecoin, or the coin the user opened Send from), so this is
+    // deliberately not tappable and carries no chevron.
+    sendingAssetRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: theme.spacing.md,
+      paddingHorizontal: theme.spacing.base,
+      borderRadius: theme.radius.lg,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      backgroundColor: theme.colors.white,
+      gap: theme.spacing.sm,
+    },
+    sendingAssetLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+      flexShrink: 1,
+    },
+    sendingAssetIconCircle: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: theme.colors.greyLight,
+      justifyContent: 'center',
+      alignItems: 'center',
+      overflow: 'hidden',
+    },
+    sendingAssetIconImage: {
+      width: 28,
+      height: 28,
     },
     checkBalanceText: {
       marginTop: theme.spacing.xs,
@@ -297,6 +331,14 @@ export const enterAmountStyles = (theme: ITheme) =>
     cryptoModeContainer: {
       marginTop: theme.spacing.sm,
       alignItems: 'center',
+    },
+    // Placement for TransactionLimitMeter. alignSelf escapes EnterAmount's
+    // centering parent (cryptoModeContainer) so the bar spans full width; the
+    // padding matches `header`/`bottomArea` so it lines up with the payment row.
+    limitMeterSpacer: {
+      alignSelf: 'stretch',
+      marginTop: theme.spacing.lg,
+      paddingHorizontal: theme.spacing.base,
     },
     cryptoToggleButton: {
       minWidth: 76,

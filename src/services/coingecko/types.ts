@@ -49,6 +49,10 @@ export interface CryptoRouteParams {
   usd_price: number;
   logo: string;
   recent_activity: any;
+  /** false = view-only token (no wallet yet); Buy creates it. */
+  tradable?: boolean;
+  /** User-facing explanation shown on details when the token is view-only. */
+  view_only_description?: string;
 }
 
 

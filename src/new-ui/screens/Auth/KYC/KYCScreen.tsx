@@ -3,7 +3,6 @@ import { View, TouchableOpacity } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { useDispatch } from "react-redux";
-import { setShowLoader } from "redux/slices/newBackendAuthSlice";
 import { setProfileCompleted, setStepCount } from "redux/slices/newOnboardingSlice";
 import { useTheme } from "@new-ui/styles/ThemeContext";
 import { kycStyles } from "@new-ui/styles/screens/auth/kycStyles";
@@ -18,8 +17,13 @@ import { AppIcon } from "@new-ui/assets/svgs";
 import TermAndConditionModal from "tsx-components/modals/TermAndConditionModal";
 import { useUserKycComplete } from "query/hooks/useAPIAuth";
 import { validateEmail } from "utils/validation";
-import { bootstrapMainAppSession } from "auth/bootstrapMainAppSession";
+import {
+  saveKycVerifyDraft,
+  setOnboardingStep,
+  type KycVerifyDetails,
+} from "auth/authSession";
 import { showError, showSuccess, getApiErrorMessage } from "utils/toast";
+import { useRestartSignup } from "@new-ui/screens/Auth/useRestartSignup";
 
 const KYCScreen: React.FC = () => {
   const navigation = useNavigation<KYCScreenNavigationProp>();
@@ -39,7 +43,8 @@ const KYCScreen: React.FC = () => {
 
   const [firstName, setFirstName] = useState(params.firstName || "");
   const [lastName, setLastName] = useState(params.lastName || "");
-  const [payairoName, setPayairoName] = useState(params.username || "");
+  // PayAiro Tag is user-chosen — start empty rather than prefilling from onboarding.
+  const [payairoName, setPayairoName] = useState("");
   const [userEmail, setUserEmail] = useState((params.email || "").toLowerCase());
   const [ssnLastFour, setSsnLastFour] = useState("");
   const [isPending, setIsPending] = useState(false);
@@ -48,6 +53,7 @@ const KYCScreen: React.FC = () => {
     useState(false);
 
   const { mutate: submitKycComplete } = useUserKycComplete();
+  const handleStartOver = useRestartSignup();
 
   const handlePDFViewAMLPolicy = () => {
     (navigation as any).navigate(NAVIGATION_SCREENS.PDF_VIEWER, {
@@ -116,29 +122,25 @@ const KYCScreen: React.FC = () => {
     setIsPending(true);
 
     submitKycComplete(payload, {
-      onSuccess: async (resp: any) => {
+      onSuccess: (resp) => {
+        setIsPending(false);
+
         if (!resp?.status) {
-          setIsPending(false);
           showError("Couldn't submit details", resp?.message || "Please try again.");
           return;
         }
 
-        showSuccess("Details submitted", resp?.message || "Your profile has been updated.");
+        showSuccess("Details submitted", resp?.message || "Please verify your details.");
         dispatch(setProfileCompleted(true));
+        dispatch(setStepCount(1));
 
-        dispatch(setShowLoader(true));
-        try {
-          const result = await bootstrapMainAppSession(dispatch);
-          if (result.ok) {
-            dispatch(setStepCount(2));
-            showSuccess("You're all set", "Welcome to PayAiro.");
-          } else {
-            showError("Couldn't load your details", result.message || "Please try again.");
-          }
-        } finally {
-          dispatch(setShowLoader(false));
-          setIsPending(false);
-        }
+        // Step 1 only fetches the identity — nothing is verified yet, so the user goes to
+        // step 2 rather than into the app. Persist so a restart resumes there too.
+        setOnboardingStep(1);
+        const details = (resp?.data || {}) as KycVerifyDetails;
+        saveKycVerifyDraft(details);
+
+        (navigation as any).navigate(NAVIGATION_SCREENS.NEW_KYC_VERIFY, { details });
       },
       onError: (error: any) => {
         setIsPending(false);
@@ -309,6 +311,22 @@ const KYCScreen: React.FC = () => {
         >
           Proceed
         </Button>
+
+        <TouchableOpacity
+          onPress={handleStartOver}
+          disabled={isPending}
+          activeOpacity={0.7}
+          style={styles.startOverButton}
+        >
+          <CustomText
+            variant="bodySmall"
+            fontFamily="inter"
+            color={theme.colors.primary}
+            style={styles.startOverText}
+          >
+            Sign in with a different number
+          </CustomText>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.disclaimerContainer}>

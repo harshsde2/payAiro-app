@@ -6,13 +6,10 @@ import { readAuthSession } from 'auth/authSession';
 import { getBiometric } from 'services/Auth';
 import { userApiClient } from 'api/userApiClient';
 import { USER_AUTH } from 'api/endpoints';
-import { showError } from 'utils/toast';
 import { AppLockContextType } from 'types/appLock.types';
 
 // Create the context
 export const AppLockContext = createContext<AppLockContextType | undefined>(undefined);
-
-const PIN_SETUP_REMINDER_MS = 10 * 60 * 1000;
 
 // Provider props
 interface AppLockProviderProps {
@@ -296,14 +293,12 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
       return;
     }
 
-    const lastPromptAt = getNumber(STORAGE_KEYS.APP_LOCK_PIN_SETUP_PROMPT_AT);
-    const now = Date.now();
-    if (lastPromptAt !== undefined && now - lastPromptAt < PIN_SETUP_REMINDER_MS) {
-      showError("PIN required", "Please set your PIN to continue transactions.");
-      return;
-    }
-
-    setNumber(STORAGE_KEYS.APP_LOCK_PIN_SETUP_PROMPT_AT, now);
+    // No PIN anywhere → open the create-PIN screen. Proceed/Pay is an explicit user
+    // action, so always show setup — no re-prompt throttle. On Android the hardware Back
+    // button can dismiss this sheet; the old throttle then left the user stuck on a "PIN
+    // required" toast for 10 minutes instead of re-opening setup. iOS never hit that (no
+    // Back button, opaque full-screen sheet). Dropping the throttle makes both platforms
+    // behave the same: re-tapping Proceed reliably reopens the create-PIN screen.
     setPaymentVerificationRequest({ onVerified, requirePinSetup: true });
   }, [syncSecuritySettingsFromBackend]);
 

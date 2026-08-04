@@ -8,6 +8,7 @@ export const NAVIGATION_SCREENS = {
   NEW_COINME_MOBILE_AUTH: "NewCoinmeMobileAuth",
   NEW_COMMON_ERROR: "NewCommonError",
   NEW_KYC: "NewKYC",
+  NEW_KYC_VERIFY: "NewKYCVerify",
   NEW_ADDRESS: "NewAddress",
   NEW_FORGOT_PASSWORD: "NewForgotPassword",
   NEW_FORGOT_PASSWORD_VERIFICATION: "NewForgotPasswordVerification",
@@ -169,4 +170,9 @@ export const NAVIGATION_SCREENS = {
   NEW_CRYPTO_REQUESTS: "NewCryptoRequests",
   NEW_CRYPTO_REQUEST_DETAIL: "NewCryptoRequestDetail",
   NEW_PRIVACY_SECURITY_SCREEN: "NewPrivacySecurityScreen",
+  NEW_CHANGE_PIN_SCREEN: "NewChangePinScreen",
+  NEW_FORGOT_PIN_SCREEN: "NewForgotPinScreen",
+  NEW_PIN_ACTION_OTP_SCREEN: "NewPinActionOtpScreen",
+  NEW_SET_NEW_PIN_SCREEN: "NewSetNewPinScreen",
+  NEW_APP_VERSION_SCREEN: "NewAppVersionScreen",
 } as const;

@@ -18,6 +18,9 @@ type AmountInputProps = {
   leftPrefix?: string;
   rightSuffix?: string;
   editable?: boolean;
+  /** Native character cap. Stops the field accepting input sanitize would reject
+   *  (which is what causes the value to "shake" as it snaps back). */
+  maxLength?: number;
 };
 
 const AmountInput: React.FC<AmountInputProps> = ({
@@ -29,6 +32,7 @@ const AmountInput: React.FC<AmountInputProps> = ({
   leftPrefix = '$',
   rightSuffix,
   editable = true,
+  maxLength,
 }) => {
   const { theme } = useTheme();
   const styles = enterAmountStyles(theme);
@@ -88,6 +92,7 @@ const AmountInput: React.FC<AmountInputProps> = ({
           // Controlled TextInput: keep it single-line for amount entry.
           multiline={false}
           editable={editable}
+          maxLength={maxLength}
         />
         {rightSuffix ? (
           <CustomText

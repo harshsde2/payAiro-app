@@ -61,12 +61,12 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
         icon: <AppIcon.TransactionLimit width={18} height={18} />,
         routeName: NAVIGATION_SCREENS.TRANSACTION_LIMIT_SCREEN,
       },
-      {
-        key: 'rewards' as const,
-        label: 'Rewards and Referrals',
-        icon: <AppIcon.RewardsIcon width={18} height={18} />,
-        routeName: NAVIGATION_SCREENS.NEW_REWARDS_AND_REFERRALS_SCREEN,
-      },
+      // {
+      //   key: 'rewards' as const,
+      //   label: 'Rewards and Referrals',
+      //   icon: <AppIcon.RewardsIcon width={18} height={18} />,
+      //   routeName: NAVIGATION_SCREENS.NEW_REWARDS_AND_REFERRALS_SCREEN,
+      // },
       // {
       //   key: 'bankStatement' as const,
       //   label: 'Bank Statement',

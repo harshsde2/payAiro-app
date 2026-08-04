@@ -98,10 +98,8 @@ const dashboardBalanceCardStyles = (theme: ITheme) => StyleSheet.create({
     borderRadius: theme.radius.xl,
     height: 240,
   },
-  // Shorter variant when the action-buttons footer is hidden (e.g. NewCrypto's card) —
-  // avoids the big empty gap that the fixed 240 height leaves without the footer row.
   containerNoActions: {
-    height: 160,
+    height: 105,
   },
 });
 

@@ -28,8 +28,11 @@ const RewardsAndReferralsScreen = () => {
     { label: 'Referrals', amount: `$${referralsUsd.toFixed(2)}` },
   ];
 
+  // Only the bottom safe-area edge: the native AppStackHeader already covers the top
+  // inset, so a `top` edge here would add the status-bar height again as an empty gap
+  // below the header (and content would scroll against that dead space).
   return (
-    <ScreenWrapper scrollable>
+    <ScreenWrapper scrollable safeAreaEdges={['bottom']}>
       <View style={styles.content}>
         <RewardBalanceCard
           title="Total Balance"

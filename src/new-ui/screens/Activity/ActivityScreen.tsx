@@ -130,6 +130,7 @@ const ActivityScreen = () => {
     isRefetching: isHistoryRefetching,
     refetch: refetchHistory,
   } = usePaymentTransactionHistory(filters);
+
   const {
     data: marketRows = [],
     isRefetching: isMarketRefetching,

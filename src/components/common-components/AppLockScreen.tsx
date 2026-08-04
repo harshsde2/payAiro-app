@@ -435,7 +435,7 @@ const AppLockScreen: React.FC = () => {
                   onPress={() => {
                     unlockApp();
                     setTimeout(() => {
-                      navigation.navigate(NAVIGATION_SCREENS.FORGOT_PIN_SCREEN);
+                      navigation.navigate(NAVIGATION_SCREENS.NEW_FORGOT_PIN_SCREEN);
                     }, 100);
                   }}
                   activeOpacity={0.7}

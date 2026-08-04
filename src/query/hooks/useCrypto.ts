@@ -30,6 +30,8 @@ export const cryptoKeys = {
   prices: () => [...cryptoKeys.all, "prices"] as const,
   cryptoMarketData: () => [...cryptoKeys.all, "cryptoMarketData"] as const,
   userCryptoMarket: (fiat: string) => [...cryptoKeys.all, "userCryptoMarket", fiat] as const,
+  userCryptoMarketCurrency: (fiat: string, currency: string) =>
+    [...cryptoKeys.all, "userCryptoMarket", fiat, currency] as const,
   userCryptoBalance: () => [...cryptoKeys.all, "userCryptoBalance"] as const,
   walletAddresses: () => [...cryptoKeys.all, "walletAddresses"] as const,
   paymentTransactionHistory: (filters: PaymentTransactionHistoryFilters) =>
@@ -72,6 +74,10 @@ interface IUserCryptoMarketItem {
   low?: string | number;
   change_24h?: string | number;
   icon_url?: string;
+  /** false = view-only token (no wallet yet); Buy creates it. Flips true after first buy. */
+  tradable?: boolean;
+  /** Present only when `tradable` is false — user-facing explanation of the view-only state. */
+  view_only_description?: string;
 }
 
 interface IUserCryptoMarketResponse {
@@ -226,6 +232,8 @@ const mapMarketItemToCryptoListItem = (
     low,
     change_24h: change,
     platform_pending: 0,
+    tradable: item?.tradable,
+    view_only_description: item?.view_only_description,
   };
 };
 
@@ -236,6 +244,14 @@ interface IUserCryptoBalanceApiBody {
   errorResponse?: unknown;
 }
 
+/**
+ * General market list — WARNING: the backend STATE-FILTERS this list per
+ * authenticated user (it hides USDC/DAI depending on the user's registered
+ * state). Fine for the dashboard/crypto display lists, but flows that need the
+ * state stablecoin's row (Add Balance, Send funding source) must NOT rely on it
+ * — use {@link useCryptoMarketForCurrency}, which fetches the coin explicitly
+ * via `?currencies=` and bypasses the filter.
+ */
 export const useUserCryptoMarketList = (fiat: string = "USD") => {
   return useQuery<ICryptoAssetItem[]>({
     queryKey: cryptoKeys.userCryptoMarket(fiat),
@@ -246,9 +262,39 @@ export const useUserCryptoMarketList = (fiat: string = "USD") => {
       const items = response?.data?.items ?? [];
       return items.map(mapMarketItemToCryptoListItem);
     },
-    // Prices are not money-authoritative; 15s freshness with background refresh.
-    staleTime: queryStaleTime.VERY_FAST_STALE_TIME,
+    // Always refetch (staleTime 0) and never restore from disk (excluded from MMKV
+    // persistence in query/index.tsx): the per-user filtered list must reflect the
+    // backend's CURRENT answer — a cached copy once froze Add Balance / Send.
+    staleTime: queryStaleTime.INSTANT_STALE_TIME,
     gcTime: CRYPTO_LIST_GC_TIME_MS,
+  });
+};
+
+/**
+ * Market row for ONE specific currency via `?currencies=SYMBOL`. The backend
+ * serves this regardless of the per-user state filtering that can hide the coin
+ * from the general list — the sanctioned way to price the state stablecoin
+ * (TX → DAI, others → USDC) for Add Balance / Send.
+ */
+export const useCryptoMarketForCurrency = (
+  currency: string | null | undefined,
+  fiat: string = "USD"
+) => {
+  const symbol = String(currency ?? "").trim().toUpperCase();
+  return useQuery<ICryptoAssetItem[]>({
+    queryKey: cryptoKeys.userCryptoMarketCurrency(fiat, symbol),
+    queryFn: async () => {
+      const response = await userApiClient.get<IUserCryptoMarketResponse>(
+        `${USER_AUTH.CRYPTO_MARKET}?fiat=${encodeURIComponent(fiat)}&currencies=${encodeURIComponent(symbol)}`
+      );
+      const items = response?.data?.items ?? [];
+      return items.map(mapMarketItemToCryptoListItem);
+    },
+    // Same policy as the general list: always fresh, never persisted (the
+    // "userCryptoMarket" key segment is excluded from MMKV in query/index.tsx).
+    staleTime: queryStaleTime.INSTANT_STALE_TIME,
+    gcTime: CRYPTO_LIST_GC_TIME_MS,
+    enabled: symbol.length > 0,
   });
 };
 
@@ -790,8 +836,41 @@ export interface CoinmeFeeBreakdown {
   cryptoPrice: string;
   spreadAmount?: string;
   spreadCurrencyCode?: string;
+  /** All-in fee incl. spread ("Total Cost (Inc. Spread)"). Returned by the API but
+   *  historically missing from this interface. Also present as fields[key==='final_fee']. */
+  finalFee?: string;
   fields: CoinmeFeeField[];
 }
+
+/**
+ * The "expected fee" to surface in pre-trade summaries — the all-in fee incl. spread
+ * (`finalFee` / the `final_fee` field). Returns null when unavailable so callers can
+ * hide the row rather than show a wrong/zero fee.
+ */
+export const getExpectedFeeUsd = (
+  fb?: CoinmeFeeBreakdown | null
+): number | null => {
+  if (!fb) return null;
+  const direct = Number(fb.finalFee);
+  if (Number.isFinite(direct)) return direct;
+  const field = fb.fields?.find((f) => f.key === "final_fee")?.value;
+  const parsed = Number(String(field ?? "").replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+/**
+ * Human-readable message from a failed trade-quote request (e.g. the 400
+ * "USDC wallet doesn't have enough balance…"). Reads the backend's own message so
+ * the user sees why the quote/trade can't proceed instead of a silent no-op.
+ */
+export const getCoinmeTradeQuoteErrorMessage = (error: unknown): string => {
+  const data = (
+    error as {
+      response?: { data?: { message?: string; error?: { message?: string } } };
+    }
+  )?.response?.data;
+  return data?.message || data?.error?.message || "Unable to load fee details.";
+};
 
 export interface CoinmeTradeQuoteResponse {
   ok?: boolean;

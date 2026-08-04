@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useRef } from "react";
-import { ScrollView, StyleSheet, TouchableOpacity, View, Alert } from "react-native";
+import { Linking, ScrollView, StyleSheet, TouchableOpacity, View, Alert } from "react-native";
+import Svg, { Circle, Path } from "react-native-svg";
 import Clipboard from "@react-native-clipboard/clipboard";
 import { formatServerDate } from "utils/dateUtils";
 import ViewShot from "react-native-view-shot";
@@ -20,6 +21,23 @@ const ASSET_NAMES: Record<string, string> = {
   USDC: "USD Coin",
   USDT: "Tether",
 };
+
+const COINME_WEB_URL = "https://coinme.com";
+
+const CoinmeGlobeIcon: React.FC<{ color: string; size?: number }> = ({
+  color,
+  size = 14,
+}) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.4" />
+    <Path d="M12 3v18M3 12h18" stroke={color} strokeWidth="1.4" />
+    <Path
+      d="M5.5 5.5c3 4.5 3 8.5 0 13M18.5 5.5c-3 4.5-3 8.5 0 13"
+      stroke={color}
+      strokeWidth="1.2"
+    />
+  </Svg>
+);
 
 function truncateId(id: string, head = 10, tail = 5): string {
   const t = (id ?? "").trim();
@@ -83,28 +101,63 @@ const StateComplianceReceiptBody: React.FC<Props> = ({ transactionData, receipt 
     badgeBg = theme.colors.error;
   } else {
     badgeLabel = isBuy ? "Purchased" : "Sold";
-    badgeBg = isBuy ? theme.colors.success : theme.colors.grey;
+    badgeBg = theme.colors.success;
   }
 
-  const fields = (receipt.receiptFields ?? []).filter((f) => !isEmptyValue(f.value));
+  // Card Processing Fee only ever applies to sells (Coinme charges it on the payout
+  // rail) — the backend still sends a "0" row for buys, which reads as noise.
+  // On sells, the separate "Transaction Fees" row is dropped in favor of a single
+  // "Instant Withdrawal Fee" row carrying the true all-in cost (see trueFeeValue).
+  const fields = (receipt.receiptFields ?? []).filter(
+    (f) =>
+      !isEmptyValue(f.value) &&
+      !(isBuy && f.key === "card_processing_fee") &&
+      !(!isBuy && f.key === "transaction_fees")
+  );
+
+  const isSell = !isBuy;
 
   /**
-   * The regulatory receipt's `total` ADDS the fees on top of the trade amount
-   * (e.g. $20 buy → "20.80"), which misreads as if the user paid extra — the fees are
-   * actually taken out of the $20. The true amount is the fee breakdown's `youPay`.
-   * Coinme reports the crypto side as 0 for sells, so fall back to the transaction's
-   * own amount whenever `youPay` isn't a positive number.
+   * The true USD figure for the header / Sell Amount / Total. The regulatory receipt's
+   * `total` ADDS fees on top and its `sell_amount` is the CRYPTO amount, both wrong to
+   * show as the USD value.
+   *   - Buy:  USD paid   = fee breakdown `youPay`.
+   *   - Sell: USD received = fee breakdown `youReceive` (`youPay` there is the tiny
+   *           crypto side — e.g. 0.01 ETH — which showed "$0.01" for a $22 sell).
+   * Falls back to the transaction's own amount when the quote figure isn't positive.
    */
   const trueTotal = useMemo(() => {
+    const fb = transactionData.fee_breakdown;
+    if (isSell) {
+      const youReceive = Number.parseFloat(
+        String(fb?.youReceive ?? "").replace(/[^0-9.-]/g, "")
+      );
+      if (Number.isFinite(youReceive) && youReceive > 0) return String(youReceive);
+    }
     const youPay = Number.parseFloat(
-      String(transactionData.fee_breakdown?.youPay ?? "").replace(/[^0-9.-]/g, "")
+      String(fb?.youPay ?? "").replace(/[^0-9.-]/g, "")
     );
-    if (Number.isFinite(youPay) && youPay > 0) return String(youPay);
+    if (Number.isFinite(youPay) && youPay > 0 && !isSell) return String(youPay);
     const fallback = String(transactionData.amount ?? transactionData.final_amount ?? "");
     return fallback;
-  }, [transactionData.amount, transactionData.fee_breakdown?.youPay, transactionData.final_amount]);
+  }, [
+    isSell,
+    transactionData.amount,
+    transactionData.fee_breakdown?.youPay,
+    transactionData.fee_breakdown?.youReceive,
+    transactionData.final_amount,
+  ]);
 
   const bigAmount = formatUsd(trueTotal) ?? "";
+
+  /**
+   * The regulatory receipt's raw fee field (buy: `transaction_fees`, sell:
+   * `instant_withdrawal_fee`) omits the spread — the fee breakdown's `finalFee`
+   * ("Total Cost (Inc. Spread)") is the true all-in cost of the trade. Shown under
+   * the receipt's own label for that row so no new row is added to the certified
+   * field set; falls back to the receipt's own value when finalFee isn't present.
+   */
+  const trueFeeValue = transactionData.fee_breakdown?.finalFee;
 
   const formatFieldValue = useCallback((key: string, value: string): string => {
     if (key === "date_and_time") {
@@ -120,6 +173,10 @@ const StateComplianceReceiptBody: React.FC<Props> = ({ transactionData, receipt 
     }
     return value;
   }, []);
+
+  // The backend's labels carry disclosure markers ("Transaction Fees*",
+  // "Amount Exchanged**") tied to receiptFooter text — stripped per design request.
+  const cleanLabel = useCallback((label: string): string => label.replace(/\*+\s*$/, ""), []);
 
   const onCopyTxn = useCallback((value: string) => {
     const v = (value ?? "").trim();
@@ -228,7 +285,7 @@ const StateComplianceReceiptBody: React.FC<Props> = ({ transactionData, receipt 
                       color={theme.colors.textSecondary}
                       style={styles.label}
                     >
-                      {field.label}
+                      {cleanLabel(field.label)}
                     </CustomText>
                     <TouchableOpacity onPress={() => onCopyTxn(field.value)} style={styles.copyRow}>
                       <CustomText
@@ -256,11 +313,19 @@ const StateComplianceReceiptBody: React.FC<Props> = ({ transactionData, receipt 
               }
 
               const isTotal = field.key === "total";
-              // Show the true "You Pay" amount for Total — the backend's value adds the
-              // fees on top, which overstates what the user actually paid.
-              const displayValue = isTotal
-                ? formatUsd(trueTotal) ?? formatFieldValue(field.key, field.value)
-                : formatFieldValue(field.key, field.value);
+              const isFeeRow = field.key === "transaction_fees" || field.key === "instant_withdrawal_fee";
+              // Sell's `sell_amount` field is the CRYPTO amount (e.g. 0.012 ETH), not the
+              // USD sold — show the USD the user sold (`trueTotal` = youReceive) instead.
+              const isSellAmount = isSell && field.key === "sell_amount";
+              // Show the true "You Pay"/"You Receive" USD for Total & Sell Amount — the
+              // backend's value adds fees on top / is the crypto side. Show the true
+              // all-in cost (incl. spread) on the fee row — receipt's value omits spread.
+              const displayValue =
+                isTotal || isSellAmount
+                  ? formatUsd(trueTotal) ?? formatFieldValue(field.key, field.value)
+                  : isFeeRow
+                    ? formatUsd(trueFeeValue ?? "") ?? formatFieldValue(field.key, field.value)
+                    : formatFieldValue(field.key, field.value);
               return (
                 <View key={field.key} style={rowStyle}>
                   <CustomText
@@ -269,7 +334,7 @@ const StateComplianceReceiptBody: React.FC<Props> = ({ transactionData, receipt 
                     color={theme.colors.textSecondary}
                     style={styles.label}
                   >
-                    {field.label}
+                    {cleanLabel(field.label)}
                   </CustomText>
                   <CustomText
                     variant="caption"
@@ -285,8 +350,9 @@ const StateComplianceReceiptBody: React.FC<Props> = ({ transactionData, receipt 
             })}
           </View>
 
-          {/* Regulatory Footer (state-aware, served by the backend) */}
-          {!!receipt.receiptFooter && (
+          {/* Regulatory Footer (state-aware, served by the backend) — shown above the
+              Coinme attribution when present. */}
+          {receipt.receiptFooter ? (
             <CustomText
               variant="caption"
               size={11}
@@ -295,7 +361,43 @@ const StateComplianceReceiptBody: React.FC<Props> = ({ transactionData, receipt 
             >
               {receipt.receiptFooter}
             </CustomText>
-          )}
+          ) : null}
+
+          {/* Coinme attribution — always shown, for every user/receipt. */}
+          <View style={styles.coinmeFooter}>
+            <CustomText
+              variant="label"
+              size={14}
+              fontWeight="semiBold"
+              color={theme.colors.text}
+              style={styles.coinmeFooterTitle}
+            >
+              Powered by Coinme
+            </CustomText>
+            <CustomText
+              variant="body"
+              size={12}
+              color={theme.colors.textSecondary}
+              style={styles.coinmeFooterAddress}
+            >
+              255 S. King Street Suite 800 Seattle, WA 98104
+            </CustomText>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={styles.coinmeLinkRow}
+              onPress={() => Linking.openURL(COINME_WEB_URL)}
+            >
+              <CoinmeGlobeIcon color={theme.colors.primary} size={14} />
+              <CustomText
+                variant="body"
+                size={12}
+                color={theme.colors.primary}
+                style={styles.coinmeLinkText}
+              >
+                coinme.com
+              </CustomText>
+            </TouchableOpacity>
+          </View>
         </ViewShot>
 
         <View style={styles.shareBtn}>
@@ -320,7 +422,9 @@ const receiptStyles = (theme: ITheme) =>
       width: 80,
       height: 80,
       borderRadius: 40,
-      backgroundColor: "#1A1F71",
+      // Was hardcoded Visa navy (#1A1F71), which read as an off-brand purple against
+      // the app's green theme. White "VISA" text sits well on the primary green.
+      backgroundColor: theme.colors.primary,
       alignItems: "center",
       justifyContent: "center",
       marginBottom: 12,
@@ -397,6 +501,27 @@ const receiptStyles = (theme: ITheme) =>
       lineHeight: 16,
       paddingHorizontal: 20,
       marginBottom: 16,
+    },
+    coinmeFooter: {
+      paddingHorizontal: 20,
+      marginBottom: 16,
+      alignItems: "center",
+    },
+    coinmeFooterTitle: {
+      textAlign: "center",
+      marginBottom: 6,
+    },
+    coinmeFooterAddress: {
+      textAlign: "center",
+      marginBottom: 8,
+    },
+    coinmeLinkRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+    },
+    coinmeLinkText: {
+      marginTop: 1,
     },
     shareBtn: {
       paddingHorizontal: 20,

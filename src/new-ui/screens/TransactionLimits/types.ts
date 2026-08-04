@@ -21,10 +21,20 @@ export type CoinmeTransactionLimitItem = {
   };
 };
 
+/** Sell-side rules that apply across both sell rails (debit_sell + ncr_sell). */
+export type CoinmeSellConfig = {
+  isActive?: boolean;
+  /** Reserved by the backend on sells. Intentionally unused by the app — fee
+   *  math lives server-side and is deliberately not reintroduced on the client. */
+  sellFeeReservePercent?: string;
+  minimumSellAmountUsd?: string;
+};
+
 export type CoinmeTransactionLimitsData = {
   currency?: string;
   enabled?: boolean;
   limits?: CoinmeTransactionLimitItem[];
+  sellConfig?: CoinmeSellConfig;
 };
 
 export type CoinmeTransactionLimitsResponse = {
@@ -38,8 +48,12 @@ export type TransactionLimitTab = 'buy' | 'sell';
 export type TransactionLimitRow = {
   key: 'cash' | 'debit';
   label: string;
-  dailyLimitUsd: string;
-  monthlyLimitUsd: string;
+  dailyLimitUsd: number;
+  monthlyLimitUsd: number;
+  dailyUsedUsd: number;
+  monthlyUsedUsd: number;
+  dailyRemainingUsd: number;
+  monthlyRemainingUsd: number;
 };
 
 export type TransactionLimitTabRows = {

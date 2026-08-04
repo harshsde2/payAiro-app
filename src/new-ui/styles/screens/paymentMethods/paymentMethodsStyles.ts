@@ -45,6 +45,20 @@ export const paymentMethodsStyles = (theme: ITheme) =>
       marginLeft: theme.spacing.md,
       minWidth: 0,
     },
+    cardLabelRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+    },
+    defaultBadge: {
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 2,
+      borderRadius: 999,
+      backgroundColor: theme.colors.primary,
+    },
+    defaultBadgeText: {
+      lineHeight: 16,
+    },
     cardRowDelete: {
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: theme.spacing.xs,

@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { Alert, Linking, StyleSheet, Switch, View } from 'react-native'
+import { Alert, Linking, StyleSheet, Switch, TouchableOpacity, View } from 'react-native'
+import { useNavigation } from '@react-navigation/native'
 import ScreenWrapper from 'new-ui/components/common-components/ScreenWrapper'
 import CustomText from 'new-ui/components/common-components/CustomText'
 import { useTheme } from '@new-ui/styles/ThemeContext'
 import { AppIcon } from 'new-ui/assets/svgs'
+import { NAVIGATION_SCREENS } from 'navigations/navigationConstants'
 import { useAppLock } from 'hooks/useAppLock'
 import { getBiometric, setBiometric } from 'services/Auth'
 import {
@@ -18,9 +20,23 @@ import FilterChip from 'new-ui/components/common-components/FilterChip/FilterChi
 // import { useUpsertUserSecurityPinSettings } from 'query/hooks'
 // import { getPin as getLocalPin } from 'storage/mmkv'
 
+const PIN_ROWS = [
+  {
+    screen: NAVIGATION_SCREENS.NEW_CHANGE_PIN_SCREEN,
+    title: 'Change PIN',
+    subtitle: 'Update your transaction PIN using your current one',
+  },
+  {
+    screen: NAVIGATION_SCREENS.NEW_FORGOT_PIN_SCREEN,
+    title: 'Forgot PIN',
+    subtitle: "Verify your phone number to set a new PIN",
+  },
+] as const
+
 const PrivacyAndSecurityScreen = () => {
   const { theme } = useTheme()
   const styles = privacyAndSecurityStyles(theme)
+  const navigation = useNavigation<any>()
 
   const [biometricStatus, setBiometricStatus] = useState(false)
   const [isUpdatingBiometric, setIsUpdatingBiometric] = useState(false)
@@ -219,6 +235,28 @@ const PrivacyAndSecurityScreen = () => {
           ))}
         </View>
       </View>
+
+      {PIN_ROWS.map((row) => (
+        <TouchableOpacity
+          key={row.screen}
+          style={styles.navCard}
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate(row.screen as never)}
+        >
+          <View style={styles.cardLeft}>
+            <AppIcon.Privacy />
+            <View style={styles.cardTextWrapper}>
+              <CustomText variant="h5" size={16} fontWeight="semiBold">
+                {row.title}
+              </CustomText>
+              <CustomText variant="caption" size={12} fontWeight="light" color={theme.colors.greyDark}>
+                {row.subtitle}
+              </CustomText>
+            </View>
+          </View>
+          <AppIcon.ChevronRight width={20} height={20} />
+        </TouchableOpacity>
+      ))}
     </ScreenWrapper>
   )
 }
@@ -240,6 +278,17 @@ const privacyAndSecurityStyles = (theme: ReturnType<typeof useTheme>['theme']) =
       padding: theme.spacing.md,
     },
     timeoutCard: {
+      borderColor: theme.colors.greyLight,
+      borderWidth: 1,
+      borderRadius: theme.radius.lg,
+      padding: theme.spacing.md,
+      marginTop: theme.spacing.md,
+    },
+    // Same box as `card`, but chevron-tappable instead of holding a control.
+    navCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       borderColor: theme.colors.greyLight,
       borderWidth: 1,
       borderRadius: theme.radius.lg,

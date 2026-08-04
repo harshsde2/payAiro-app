@@ -45,6 +45,13 @@ const sanitizeAmountInput = (
   return `${intCapped}.${decCapped}`;
 };
 
+// Enough integer digits to enter any amount the transaction limits allow — the largest,
+// a monthly sell cap, is $500,000 (6 digits). The old cap of 5 blocked amounts over
+// $99,999 outright AND caused a reject-and-revert "shake": at the 6th digit the native
+// field briefly showed the extra character before sanitize sliced it back. Over-limit
+// amounts are still caught by the limit meter / balance validation, not by this cap.
+const MAX_INT_DIGITS = 7;
+
 const safeParseAmount = (sanitizedInput: string): number => {
   if (!sanitizedInput || sanitizedInput === '.') return 0;
   const n = Number(sanitizedInput);
@@ -102,17 +109,25 @@ export const useEnterAmountState = ({
   );
 
   const amountInputLimits = useMemo(() => {
-    // Fiat/banking rule: max 5 digits before decimal, max 2 decimals.
+    // Fiat/banking rule: max 2 decimals.
     if (viewMode !== 'crypto') {
-      return { maxIntDigits: 5, maxDecimals: 2 };
+      return { maxIntDigits: MAX_INT_DIGITS, maxDecimals: 2 };
     }
     if ((preferFiatCryptoEntry || defaultFiatOnCryptoSource) && inputMode === 'fiat') {
-      return { maxIntDigits: 5, maxDecimals: 2 };
+      return { maxIntDigits: MAX_INT_DIGITS, maxDecimals: 2 };
     }
-    // Crypto rule: max 5 digits before decimal, max 8 decimals (so a full-precision
-    // crypto balance — e.g. BTC's 8 dp — is enterable and Max can equal the real balance).
-    return { maxIntDigits: 5, maxDecimals: 8 };
+    // Crypto rule: max 8 decimals (so a full-precision crypto balance — e.g. BTC's
+    // 8 dp — is enterable and Max can equal the real balance).
+    return { maxIntDigits: MAX_INT_DIGITS, maxDecimals: 8 };
   }, [defaultFiatOnCryptoSource, inputMode, preferFiatCryptoEntry, viewMode]);
+
+  // Native cap for the TextInput (`maxLength`). Capping at the source stops the field
+  // from ever accepting a character sanitize would reject, which is what removes the
+  // flicker — the value never overshoots and gets snapped back. +1 for the decimal point.
+  const maxInputLength = useMemo(
+    () => amountInputLimits.maxIntDigits + 1 + amountInputLimits.maxDecimals,
+    [amountInputLimits.maxDecimals, amountInputLimits.maxIntDigits]
+  );
 
   const parsedInput = useMemo(() => safeParseAmount(inputValue), [inputValue]);
 
@@ -254,13 +269,13 @@ export const useEnterAmountState = ({
     }
 
     // In crypto mode, `amount` represents USD equivalent (based on inputMode).
-    if (amount < 1) {
-      errors.push(
-        fiatNeutralCryptoValidation
-          ? '$2.00 or more is required.'
-          : '$2.00 or more is required to send'
-      );
-    }
+    // if (amount < 1) {
+    //   errors.push(
+    //     fiatNeutralCryptoValidation
+    //       ? '$2.00 or more is required.'
+    //       : '$2.00 or more is required to send'
+    //   );
+    // }
 
     if (assetAmount <= 0) {
       errors.push(
@@ -273,9 +288,31 @@ export const useEnterAmountState = ({
     // overages (more than a cent over) are still caught. The payload is clamped to the
     // real balance so we never actually send more than the user holds.
     const overBalanceTolerance = priceUSD > 0 ? 0.01 / priceUSD : 1e-8;
+    if (__DEV__ && assetAmount > maxAsset + overBalanceTolerance) {
+      // Diagnostic for "entered less than my balance but still insufficient". Prints every
+      // value that feeds the comparison so the failing term is obvious.
+      console.log('[EnterAmount] balance check FAILED', {
+        typed: parsedInput,
+        inputMode,
+        symbol,
+        priceUSD,
+        amountUSD: amount,
+        assetAmount,
+        maxAsset,
+        maxUsdFromPrice: maxAsset * priceUSD,
+        overBalanceTolerance,
+        overBy: assetAmount - maxAsset,
+      });
+    }
     if (assetAmount > maxAsset + overBalanceTolerance) {
       if (fiatNeutralCryptoValidation) {
         errors.push('Insufficient balance for this withdrawal.');
+      } else if (inputMode === 'fiat') {
+        // Quote the max in the unit the user is actually typing. Showing token units next to a
+        // dollar field reads as a number they are already under, so the error looks wrong.
+        // FLOOR to cents so the quoted figure is one they can retype and have accepted.
+        const maxUsdLabel = (Math.floor(maxAsset * priceUSD * 100) / 100).toFixed(2);
+        errors.push(`Insufficient balance. Max send: $${maxUsdLabel}`);
       } else {
         const maxLabel = maxAsset.toFixed(8).replace(/\.?0+$/, '') || '0';
         errors.push(`Insufficient balance. Max send: ${maxLabel} ${symbol}`);
@@ -283,7 +320,16 @@ export const useEnterAmountState = ({
     }
 
     return errors;
-  }, [amount, assetAmount, fiatNeutralCryptoValidation, maxAsset, selectedSource, viewMode]);
+  }, [
+    amount,
+    assetAmount,
+    fiatNeutralCryptoValidation,
+    inputMode,
+    maxAsset,
+    parsedInput,
+    selectedSource,
+    viewMode,
+  ]);
 
   const cryptoIsValid = useMemo(() => validateCrypto().length === 0, [validateCrypto]);
 
@@ -320,6 +366,7 @@ export const useEnterAmountState = ({
     assetAmount,
     maxAsset,
     maxUsd,
+    maxInputLength,
     feePercent,
 
     // setters / handlers

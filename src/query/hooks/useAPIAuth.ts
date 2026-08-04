@@ -22,6 +22,22 @@ const mapFastApiOkResponseToApiResponse = (
   toast_message: body?.message || body?.toast_message || "",
 });
 
+/**
+ * KYC responses carry the onboarding `step` (1 = identity fetched, awaiting verify;
+ * 2 = verified, onboarding complete) and `next_action`, which the plain mapper drops.
+ * The backend repeats both inside `data`, so fall back to that copy.
+ */
+export type KycApiResponse = ApiResponse<any> & {
+  step?: number;
+  nextAction?: string;
+};
+
+const mapFastApiKycResponse = (body: any): KycApiResponse => ({
+  ...mapFastApiOkResponseToApiResponse(body),
+  step: body?.step ?? body?.data?.step,
+  nextAction: body?.next_action ?? body?.data?.next_action,
+});
+
 const mapFastApiOtpVerifyToApiResponse = (body: any): ApiResponse<any> => {
   const tokens = body?.data?.tokens ?? {};
   const stepCount =
@@ -208,15 +224,44 @@ export type UserKycCompletePayload = {
   ssn_last_four: string;
 };
 
+/** KYC step 1: submit basic details, get back the identity Coinme holds for this user. */
 export const useUserKycComplete = () => {
-  return useMutation<ApiResponse<any>, Error, UserKycCompletePayload>({
+  return useMutation<KycApiResponse, Error, UserKycCompletePayload>({
     mutationFn: async (payload) => {
       const resp = await userApiClient.post<any>(
         USER_AUTH.KYC_COMPLETE,
         payload,
         false
       );
-      return mapFastApiOkResponseToApiResponse(resp);
+      return mapFastApiKycResponse(resp);
+    },
+  });
+};
+
+/**
+ * KYC step 2: confirm (and optionally correct) the details returned by step 1.
+ * Every field is optional — send only what the user has. SSN and phone are locked.
+ */
+export type UserKycVerifyPayload = {
+  first_name?: string;
+  last_name?: string;
+  address_line1?: string;
+  address_line2?: string;
+  city?: string;
+  state?: string;
+  postal_code?: string;
+  date_of_birth?: string;
+};
+
+export const useUserKycVerify = () => {
+  return useMutation<KycApiResponse, Error, UserKycVerifyPayload>({
+    mutationFn: async (payload) => {
+      const resp = await userApiClient.post<any>(
+        USER_AUTH.KYC_VERIFY,
+        payload,
+        false
+      );
+      return mapFastApiKycResponse(resp);
     },
   });
 };

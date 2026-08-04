@@ -8,10 +8,13 @@ import Button from "@new-ui/components/common-components/layout/Button";
 
 type WithdrawConfirmationModalProps = {
   visible: boolean;
-  assetSymbol: string;
-  assetAmount: number;
   usdAmount: number;
-  walletAddress: string;
+  /** All-in expected fee (USD) from the trade quote. Row hidden when null & not loading. */
+  expectedFee?: number | null;
+  expectedFeeLoading?: boolean;
+  /** Row labels — vary per flow. */
+  feeLabel?: string;
+  totalLabel?: string;
   isSubmitting?: boolean;
   onClose: () => void;
   onConfirm: () => void;
@@ -19,10 +22,11 @@ type WithdrawConfirmationModalProps = {
 
 const WithdrawConfirmationModal: React.FC<WithdrawConfirmationModalProps> = ({
   visible,
-  assetSymbol,
-  assetAmount,
   usdAmount,
-  walletAddress,
+  expectedFee = null,
+  expectedFeeLoading = false,
+  feeLabel = 'Expected Fee',
+  totalLabel = 'Total',
   isSubmitting = false,
   onClose,
   onConfirm,
@@ -59,37 +63,34 @@ const WithdrawConfirmationModal: React.FC<WithdrawConfirmationModalProps> = ({
           <View style={{ marginTop: theme.spacing.xl }}>
           <View style={styles.modalRow}>
             <CustomText variant="caption" style={styles.modalLabel}>
-              Asset
-            </CustomText>
-            <CustomText variant="body" fontWeight="semiBold">
-              {assetSymbol}
-            </CustomText>
-          </View>
-
-          <View style={styles.modalRow}>
-            <CustomText variant="caption" style={styles.modalLabel}>
               Amount
-            </CustomText>
-            <CustomText variant="body" fontWeight="semiBold">
-              {assetAmount.toFixed(assetAmount >= 1 ? 4 : 8)} {assetSymbol}
-            </CustomText>
-          </View>
-
-          <View style={styles.modalRow}>
-            <CustomText variant="caption" style={styles.modalLabel}>
-              Est. USD
             </CustomText>
             <CustomText variant="body" fontWeight="semiBold">
               ${usdAmount.toFixed(2)}
             </CustomText>
           </View>
 
+          {expectedFeeLoading || expectedFee != null ? (
+            <View style={styles.modalRow}>
+              <CustomText variant="caption" style={styles.modalLabel}>
+                {feeLabel}
+              </CustomText>
+              {expectedFeeLoading ? (
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+              ) : (
+                <CustomText variant="body" fontWeight="semiBold">
+                  ${(expectedFee ?? 0).toFixed(2)}
+                </CustomText>
+              )}
+            </View>
+          ) : null}
+
           <View style={styles.modalRow}>
             <CustomText variant="caption" style={styles.modalLabel}>
-              Wallet
+              {totalLabel}
             </CustomText>
-            <CustomText variant="caption" style={styles.modalAddressText}>
-              {walletAddress}
+            <CustomText variant="body" fontWeight="bold">
+              ${(usdAmount + (expectedFee ?? 0)).toFixed(2)}
             </CustomText>
           </View>
           </View>

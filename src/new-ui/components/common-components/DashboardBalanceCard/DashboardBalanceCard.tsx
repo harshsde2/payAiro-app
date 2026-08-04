@@ -7,12 +7,9 @@ import { IDashboardBalanceCardProps } from './types';
 import GlassyWrapper from '../GlassyWrapper';
 import { AppIcon } from 'new-ui/assets/svgs';
 import DashboardActionButtons from './DashboardActionButtons';
+import { formatSpendableBalance } from 'utils/formatMoney';
 
-const formatBalance = (amount: number): string =>
-  Number(amount ?? 0).toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+const formatBalance = (amount: number): string => formatSpendableBalance(amount);
 
 /** Split balance for display: integer part (bold, large) + decimal part (smaller, gray) */
 const splitBalanceForDisplay = (formatted: string): { integer: string; decimal: string } => {
@@ -27,6 +24,7 @@ const splitBalanceForDisplay = (formatted: string): { integer: string; decimal: 
 };
 
 const DashboardBalanceCard: React.FC<IDashboardBalanceCardProps> = ({
+  style,
   title,
   subtitle,
   balance,
@@ -53,7 +51,7 @@ const DashboardBalanceCard: React.FC<IDashboardBalanceCardProps> = ({
   }, [visible, onRefreshBalance]);
 
   return (
-    <View style={[styles.container, !showActionButtons && styles.containerNoActions]}>
+    <View style={[styles.container, !showActionButtons && styles.containerNoActions, style]}>
       <GlassyWrapper
         style={styles.glassyWrapper}
         borderRadius={theme.radius.xl}

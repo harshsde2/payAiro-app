@@ -15,6 +15,10 @@ export interface ICryptoAssetItem {
   low?: number;
   /** Optional 24h change percentage, if provided by the backend in the future. */
   change_24h?: number;
+  /** false = view-only token (no wallet yet). Undefined for legacy/balance rows. */
+  tradable?: boolean;
+  /** User-facing explanation shown on details when the token is view-only. */
+  view_only_description?: string;
   [key: string]: unknown;
 }
 

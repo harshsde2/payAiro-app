@@ -40,23 +40,6 @@ export const scratchCardScreenStyles = (theme: ITheme) =>
     overlayCanvas: {
       ...StyleSheet.absoluteFillObject,
     },
-    giftOverlay: {
-      ...StyleSheet.absoluteFillObject,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: theme.colors.primary,
-      borderRadius: theme.radius.xl,
-    },
-    giftEmoji: {
-      fontSize: 60,
-      marginBottom: theme.spacing.sm,
-    },
-    giftText: {
-      color: theme.colors.white,
-      fontSize: 18,
-      fontFamily: theme.typography.fontFamily.semiBold,
-      textAlign: 'center',
-    },
     revealedEmoji: {
       fontSize: 48,
       marginBottom: theme.spacing.sm,
@@ -103,6 +86,9 @@ export const scratchCardScreenStyles = (theme: ITheme) =>
     },
     brandDiscount: {
       fontSize: 28,
+      // Explicit lineHeight ≥ fontSize — without it CustomText's default `body`
+      // variant lineHeight (24) is smaller than the 28px glyphs and clips "N pts".
+      lineHeight: 36,
       fontFamily: theme.typography.fontFamily.bold,
       color: theme.colors.primary,
       marginBottom: theme.spacing.xs,

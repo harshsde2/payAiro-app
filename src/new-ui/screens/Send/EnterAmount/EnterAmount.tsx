@@ -3,6 +3,7 @@ import {
   View,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   TextInput as RNTextInput,
   useWindowDimensions,
   Keyboard,
@@ -25,7 +26,12 @@ import {
   useAllBankAccounts,
   useCreatePaymentRequest,
   useCoinmeTradeExecute,
+  useCoinmeTradeQuote,
+  getExpectedFeeUsd,
+  getCoinmeTradeQuoteErrorMessage,
   useCryptoAssetsListData,
+  useCryptoMarketForCurrency,
+  useUserCryptoBalanceFastApi,
   useCryptoTransfer,
   usePaymentTransactionSend,
   usePayPaymentRequest,
@@ -34,14 +40,16 @@ import {
 import { bankKeys } from 'query/hooks/useBank';
 import { queryClient } from 'query/queryClient';
 import { useStateStablecoin } from 'hooks/useStateStablecoin';
+import { useTransactionLimit } from 'hooks/useTransactionLimit';
+import TransactionLimitMeter from '@new-ui/components/common-components/TransactionLimitMeter';
+import { coinmeTransactionLimitsKeys } from 'query/hooks/useCoinmeTransactionLimits';
 import { showError, getApiErrorMessage } from 'utils/toast';
 import type { FundingSource } from './enterAmount.types';
 import { useEnterAmountState } from './useEnterAmountState';
 import RecipientHeader from './RecipientHeader';
 import AmountInput from './AmountInput';
-import FundingSourceCard from './FundingSourceCard';
+import SendingAssetRow from './SendingAssetRow';
 import PayButton from './PayButton';
-import FundingSourceSelectorModal from './FundingSourceSelectorModal';
 import type { CryptoFundingItem } from './cryptoFundingTypes';
 import { AppIcon } from 'new-ui/assets/svgs';
 import CustomText from 'new-ui/components/common-components/CustomText';
@@ -65,6 +73,7 @@ import {
   PaymentMethodPickerModal,
   AddDebitCardModal,
   RETAIL_CASH_PAYMENT_METHOD_ID,
+  useApplyDefaultPaymentMethod,
 } from '@new-ui/components/common-components/AddBalance';
 import Button from '@new-ui/components/common-components/layout/Button';
 import type { AddedCardResult } from '@new-ui/components/common-components/AddBalance/AddDebitCardModal';
@@ -79,6 +88,10 @@ const COINME_DEFAULTS = {
   paymentMethodId: 'uhygtfr5e354rtyu76g6b7i8',
   sourceWalletAddress: ',mu9n7777777545e5vr',
 };
+
+// Sell keeps a 2% buffer of the balance so the fee always fits — the max the user may
+// enter is balance × this fraction. Client-side input guard only; real fee = quote.
+const SELL_WITHDRAW_MAX_FRACTION = 0.98;
 
 const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   const { theme } = useTheme();
@@ -195,12 +208,16 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     !!cryptoAsset &&
     typeof cryptoAsset === 'object';
   const isCryptoSendMode = type === 'send' && !tradeMode;
+  // Dashboard "plain send" (no coin preselected): present it as a normal USD send —
+  // hide the asset chip, the USD⇄crypto swap, and Max, and show a USD-only receipt.
+  // A send opened from a coin's details page (preselectedAsset set) keeps every
+  // crypto affordance. UI-only: the payload/amount math are unchanged.
+  const isFiatStyleSend = isCryptoSendMode && !preselectedAsset;
   // Registered-state stablecoin (TX → DAI, others → USDC): the default crypto-send source.
   const stateStablecoin = useStateStablecoin();
   const tradeAssetSymbol = String(cryptoAsset?.asset || '').toUpperCase();
   const tradePriceUSD = Number(cryptoAsset?.currentPrice ?? 0);
 
-  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   const [showCryptoReceiptModal, setShowCryptoReceiptModal] = useState(false);
   const [requestSheetVisible, setRequestSheetVisible] = useState(false);
@@ -212,6 +229,16 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   );
   const [tradePaymentRail, setTradePaymentRail] = useState<'debit' | 'retail_cash'>('debit');
   const paymentMethodsQuery = usePaymentMethodsList(20);
+
+  // Pre-select the user's default card (frontend-only) for trade (buy/sell) — plain P2P
+  // send has no card, so it's disabled there.
+  useApplyDefaultPaymentMethod({
+    items: paymentMethodsQuery.data?.data?.items ?? [],
+    flow: tradeMode === 'sell' ? 'sell' : 'buy',
+    selected: selectedPaymentMethod,
+    onSelect: setSelectedPaymentMethod,
+    enabled: isTradeMode,
+  });
 
   useEffect(() => {
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -291,13 +318,6 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     inputRef.current?.focus();
   }, []);
 
-  const handlePressFundingSource = useCallback(() => {
-    // Ensure native keyboard is dismissed so the backdrop covers the full RN screen.
-    Keyboard.dismiss();
-    setIsSelectorOpen(true);
-  }, []);
-
-
   // Only consider Payairo \"main\" bank accounts as funding sources.
   const mainBanks = useMemo(() => {
     if (!Array.isArray(bankLists)) return [];
@@ -308,23 +328,11 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     return bankLists.length > 0 ? [bankLists[0]] : [];
   }, [bankLists]);
 
-  const sources = useMemo(() => {
-    return mainBanks
-      .map((b: any) => convertToFundingSource(b))
-      .filter(Boolean) as FundingSource[];
-  }, [convertToFundingSource, mainBanks]);
-
   const cryptoSources = useMemo<CryptoFundingItem[]>(() => {
     if (!Array.isArray(allCryptoBalances)) return [];
     const list = allCryptoBalances as CryptoFundingItem[];
     return list.filter((item) => item?.asset !== 'Bank Balance');
   }, [allCryptoBalances]);
-
-  // For request/requested flows, show only fiat/bank funding sources in the selector.
-  const cryptoSourcesForModal = useMemo<CryptoFundingItem[]>(() => {
-    const shouldHideCrypto = type === 'request' || type === 'requested';
-    return shouldHideCrypto ? [] : cryptoSources;
-  }, [cryptoSources, type]);
 
 
   const tradeFundingSource = useMemo<FundingSource | null>(() => {
@@ -346,29 +354,102 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     };
   }, [cryptoAsset, isTradeMode, tradeAssetSymbol, tradeMode, tradePriceUSD]);
 
+  // The coin this send transacts in — chosen by how the user got here, never by them.
+  const sendIntendedSymbol = isCryptoSendMode
+    ? String(preselectedAsset?.asset ?? '').toUpperCase() || stateStablecoin
+    : '';
+  // The general market list is state-filtered per user by the backend and can HIDE
+  // USDC/DAI — fetch the intended coin explicitly (`?currencies=`), which bypasses
+  // the filter, and take held balances straight from the balance API.
+  const { data: sendMarketRows = [] } = useCryptoMarketForCurrency(
+    sendIntendedSymbol || null,
+    'USD'
+  );
+  const { data: sendBalanceRows = [] } = useUserCryptoBalanceFastApi();
+
   const cryptoSendInitialSource = useMemo<FundingSource | null>(() => {
     if (!isCryptoSendMode) return null;
-    if (!Array.isArray(cryptoSources) || cryptoSources.length === 0) return null;
 
-    // Default the funding source to: the asset the user was already viewing (e.g.
-    // tapped ETH → Send from its details page) when present, else the registered-state
-    // stablecoin (TX → DAI, others → USDC). The user can still switch to any other crypto.
+    // The asset is decided by how the user got here and is NOT theirs to change:
+    // the coin they opened Send from (e.g. tapped ETH → Send on its details page),
+    // otherwise the registered-state stablecoin (TX → DAI, others → USDC).
     const preselectedSymbol = String(preselectedAsset?.asset ?? '').toUpperCase();
-    const preferred = preselectedSymbol
-      ? cryptoSources.find((c) => String(c.asset ?? '').toUpperCase() === preselectedSymbol)
+    const intendedSymbol = preselectedSymbol || stateStablecoin;
+    if (!intendedSymbol) return null;
+
+    const item = Array.isArray(cryptoSources)
+      ? cryptoSources.find(
+          (c) => String(c.asset ?? '').toUpperCase() === intendedSymbol
+        )
       : undefined;
-    const stateDefault = preferred
-      ? undefined
-      : cryptoSources.find((c) => String(c.asset ?? '').toUpperCase() === stateStablecoin);
-    const item = preferred ?? stateDefault ?? cryptoSources[0];
-    if (!item) return null;
+
+    if (!item) {
+      // Not in the general list (state filter hides the coin): price it via the
+      // explicit `?currencies=` row and pair it with the balance-API holding.
+      const marketRow = sendMarketRows.find(
+        (m) => String(m.asset ?? '').toUpperCase() === intendedSymbol
+      );
+      const directPrice = Number(marketRow?.usd_price ?? 0);
+      if (marketRow && directPrice > 0) {
+        const balRow = sendBalanceRows.find(
+          (r) => String(r.currencySymbol ?? '').toUpperCase() === intendedSymbol
+        );
+        const qty = Number(balRow?.balance ?? 0);
+        const safeQty = Number.isFinite(qty) ? Math.max(0, qty) : 0;
+        // Price this holding the SAME way its balance was valued for display, rather than at
+        // market spot. The balance API returns both the token quantity and its USD value, and
+        // those must agree with what validation enforces — otherwise the user is shown a
+        // dollar balance that spot pricing then says they cannot afford to send.
+        const balUsd = Number(balRow?.estimatedBalanceValue ?? 0);
+        const balDerivedPrice = safeQty > 0 && balUsd > 0 ? balUsd / safeQty : 0;
+        return {
+          id: `crypto-${intendedSymbol}`,
+          name: intendedSymbol,
+          balance: safeQty,
+          type: 'crypto',
+          cryptoMeta: {
+            symbol: intendedSymbol,
+            network: String(preselectedAsset?.chain ?? intendedSymbol).toUpperCase(),
+            priceUSD: balDerivedPrice > 0 ? balDerivedPrice : directPrice,
+            maxAssetBalance: safeQty,
+            logo: marketRow.logo ?? preselectedAsset?.logo,
+          },
+        };
+      }
+
+      // Never substitute a different coin. With no selector on this screen the user
+      // couldn't correct it, and they'd send the wrong asset. If the details screen
+      // handed us the asset we can still show it (balance 0 → validateCrypto blocks
+      // with "Insufficient balance"); otherwise render nothing rather than guess.
+      const fallbackPrice = Number(preselectedAsset?.currentPrice ?? 0);
+      if (!preselectedSymbol || !(fallbackPrice > 0)) return null;
+      const fallbackBalance = Number(preselectedAsset?.platformAvailable ?? 0);
+      const safeBalance = Number.isFinite(fallbackBalance) ? Math.max(0, fallbackBalance) : 0;
+      return {
+        id: `crypto-${preselectedSymbol}`,
+        name: preselectedSymbol,
+        balance: safeBalance,
+        type: 'crypto',
+        cryptoMeta: {
+          symbol: preselectedSymbol,
+          network: String(preselectedAsset?.chain ?? preselectedSymbol).toUpperCase(),
+          priceUSD: fallbackPrice,
+          maxAssetBalance: safeBalance,
+          logo: preselectedAsset?.logo,
+        },
+      };
+    }
 
     const symbol = String(item.asset || 'CRYPTO').toUpperCase();
     const maxAssetBalance = Number(item.platform_available ?? item.rounded_balance ?? 0);
     const maxUsdBalance = Number(item.usd_value_available ?? item.usd_value_total ?? 0);
     const rawPrice = Number(item.usd_price ?? 0);
     const derivedPrice = maxAssetBalance > 0 && maxUsdBalance > 0 ? maxUsdBalance / maxAssetBalance : 0;
-    const priceUSD = rawPrice > 0 ? rawPrice : derivedPrice;
+    // Prefer the price implied by this holding's own USD valuation over market spot. Spot is a
+    // second, slightly different price for the same coin, and mixing the two means the balance
+    // shown to the user converts back to MORE tokens than they hold — so entering the balance
+    // they were just shown fails as "insufficient". One price, used for both, keeps them equal.
+    const priceUSD = derivedPrice > 0 ? derivedPrice : rawPrice;
 
     return {
       id: `crypto-${symbol}`,
@@ -383,17 +464,30 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
         logo: item.logo,
       },
     };
-  }, [cryptoSources, isCryptoSendMode, stateStablecoin, preselectedAsset?.asset]);
+  }, [
+    cryptoSources,
+    isCryptoSendMode,
+    stateStablecoin,
+    preselectedAsset,
+    sendMarketRows,
+    sendBalanceRows,
+  ]);
 
   const initialSelectedSource = useMemo(() => {
     if (tradeFundingSource) return tradeFundingSource;
     if (cryptoSendInitialSource) return cryptoSendInitialSource;
-    // For now we always default to the first main Payairo bank, if available.
+    // A crypto send must NEVER fall back to a bank source. On a cold start the
+    // market/balances queries may not have resolved yet; seeding a bank here won the
+    // race and permanently locked the screen into the legacy fiat branch (the
+    // "Select Payment Method" UI users saw on fresh installs). Stay null — the
+    // useEnterAmountState effect fills the source in once the crypto list arrives.
+    if (isCryptoSendMode) return null;
+    // Request/requested (fiat) flows still default to the first main Payairo bank.
     if (mainBanks.length > 0) {
       return convertToFundingSource(mainBanks[0]);
     }
     return null;
-  }, [convertToFundingSource, cryptoSendInitialSource, mainBanks, tradeFundingSource]);
+  }, [convertToFundingSource, cryptoSendInitialSource, isCryptoSendMode, mainBanks, tradeFundingSource]);
 
   const {
     amount,
@@ -406,12 +500,12 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     inputMode,
     maxAsset,
     maxUsd,
+    maxInputLength,
     feePercent,
     fillMax,
     assetAmount,
     validateCrypto,
     onChangeAmountText,
-    setSelectedSource,
     toggleInputMode,
   } = useEnterAmountState({
     initialSelectedSource,
@@ -444,6 +538,39 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   );
 
   const isCryptoMode = viewMode === 'crypto';
+
+  // Coinme buy/sell limits apply to trade mode only — a P2P crypto send has none.
+  // The hook must run unconditionally, so it's fed a safe default outside trade mode
+  // and its result is gated by `isTradeMode` below.
+  const tradeLimit = useTransactionLimit(
+    tradeMode === 'sell' ? 'sell' : 'buy',
+    tradePaymentRail === 'retail_cash' ? 'cash' : 'debit'
+  );
+  const limitError = isTradeMode ? tradeLimit.validate(amount) : null;
+
+  // SELL only: keep a 2% buffer in the wallet so the fee fits — never let the user
+  // enter more than balance − 2% (else the quote fails on a full-balance sell).
+  const isSell = isTradeMode && tradeMode === 'sell';
+  const maxSpendableUsd = useMemo(
+    () => (maxUsd > 0 ? Math.floor(maxUsd * SELL_WITHDRAW_MAX_FRACTION * 100) / 100 : 0),
+    [maxUsd]
+  );
+  const sellBalanceError =
+    isSell && maxSpendableUsd > 0 && amount > maxSpendableUsd + 0.005
+      ? `You can Instant withdraw up to $${maxSpendableUsd.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })} after the withdrawal fee is applied.`
+      : null;
+
+  const handleUseMaxLimit = useCallback(() => {
+    const fillTarget =
+      isSell && maxSpendableUsd > 0
+        ? Math.min(tradeLimit.effectiveMaxUsd, maxSpendableUsd)
+        : tradeLimit.effectiveMaxUsd;
+    onChangeAmountText(String(fillTarget));
+  }, [isSell, maxSpendableUsd, onChangeAmountText, tradeLimit.effectiveMaxUsd]);
+
   const cashBuyWalletAddress = useMemo(
     () => String(cryptoAsset?.sourceWalletAddress ?? '').trim(),
     [cryptoAsset?.sourceWalletAddress]
@@ -455,6 +582,45 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     isCryptoMode;
   const leftPrefix = isCryptoMode && inputMode === 'asset' ? '' : '$';
   const rightSuffix = isCryptoMode && inputMode === 'asset' ? assetSymbol : '';
+
+  // Expected fee shown in the summary modal — trade (buy/sell) only, fetched while the
+  // receipt modal is open. Plain P2P crypto send has no quote, so no fee row there.
+  // Declared here (above handleTradeExecute) so the sell execute can net it out.
+  const tradeQuoteEnabled = showCryptoReceiptModal && isTradeMode && amount > 0;
+  const {
+    data: tradeQuoteData,
+    isLoading: isTradeQuoteLoading,
+    isError: isTradeQuoteError,
+    error: tradeQuoteError,
+  } = useCoinmeTradeQuote(
+    {
+      tradeType: tradeMode === 'sell' ? 'sell' : 'buy',
+      chain: String(cryptoAsset?.chain || 'ETH').toUpperCase(),
+      cryptoCurrencyCode: String(cryptoAsset?.asset || '').toUpperCase(),
+      fiatCurrencyCode: String(cryptoAsset?.fiatCurrency || 'USD').toUpperCase(),
+      amountValue: String(inputMode === 'fiat' ? amount : assetAmount),
+      amountCurrencyCode:
+        inputMode === 'fiat'
+          ? String(cryptoAsset?.fiatCurrency || 'USD').toUpperCase()
+          : String(cryptoAsset?.asset || '').toUpperCase(),
+    },
+    tradeQuoteEnabled
+  );
+  const tradeExpectedFee = isTradeMode ? getExpectedFeeUsd(tradeQuoteData?.feeBreakdown) : null;
+
+  // Surface the quote's own failure (e.g. insufficient balance) as a toast, deduped
+  // by message so it fires once per distinct error rather than on every re-render.
+  const lastTradeQuoteErrorToast = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isTradeQuoteError || !tradeQuoteError) {
+      lastTradeQuoteErrorToast.current = null;
+      return;
+    }
+    const msg = getCoinmeTradeQuoteErrorMessage(tradeQuoteError);
+    if (lastTradeQuoteErrorToast.current === msg) return;
+    lastTradeQuoteErrorToast.current = msg;
+    showError('Something went wrong', msg);
+  }, [isTradeQuoteError, tradeQuoteError]);
   const pricePreviewText = useMemo(() => {
     if (!isTradeMode || !tradeAssetSymbol) return '';
     if (!Number.isFinite(tradePriceUSD) || tradePriceUSD <= 0) return '';
@@ -964,6 +1130,8 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
       console.log('step two =>', webSessionId);
 
       const isFiatEntry = inputMode === 'fiat';
+      // Send the entered amount as-is (both buy and sell). The wallet keeps a 2%
+      // buffer at entry time so the backend can auto-deduct the fee on top.
       const payload: CoinmeTradeExecutePayload = {
         tradeType: tradeMode,
         chain: String(cryptoAsset.chain || 'ETH').toUpperCase(),
@@ -986,6 +1154,8 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
 
       queryClient.invalidateQueries({ queryKey: cryptoKeys.allCryptoBalances() });
       queryClient.invalidateQueries({ queryKey: bankKeys.balance() });
+      // This trade consumed part of the daily/monthly allowance — refresh the meter.
+      queryClient.invalidateQueries({ queryKey: coinmeTransactionLimitsKeys.all });
 
       console.log('step four =>');
 
@@ -1082,6 +1252,13 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   );
 
   const proceedPay = useCallback(() => {
+    // Crypto send with no source yet (balances still loading, or the stablecoin is
+    // missing from the market list): without this guard a null source reads as
+    // viewMode 'fiat' and drops into the legacy path that demands a payment method.
+    if (isCryptoSendMode && !selectedSource) {
+      showError('Still loading', 'Fetching your balance — please try again in a moment.');
+      return;
+    }
     if (!isCryptoMode) {
       if (type === 'requested') {
         if (!requestId) {
@@ -1120,6 +1297,17 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
       }
       if (inputMode === 'asset' && assetAmount <= 0) {
         showError('Invalid amount', 'Please enter a valid amount.');
+        return;
+      }
+      // Shown inline by the meter; this guard covers any other path to Pay.
+      // No-op when limits are unavailable (validate → null).
+      if (limitError) {
+        showError('Limit reached', limitError);
+        return;
+      }
+      // Sell: enforce the 2% balance buffer (guards any path to Pay).
+      if (sellBalanceError) {
+        showError('Amount too high', sellBalanceError);
         return;
       }
       if (tradePaymentRail === 'retail_cash') {
@@ -1185,8 +1373,11 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     amount,
     assetAmount,
     isCryptoMode,
+    isCryptoSendMode,
     isTradeMode,
     inputMode,
+    limitError,
+    sellBalanceError,
     requestId,
     type,
     selectedSource,
@@ -1220,20 +1411,32 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
         style={styles.keyboardAvoiding}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={{ flex: 1 }}>
+        {/* Scrollable instead of a rigid flex split: iOS's KeyboardAvoidingView "padding"
+            behavior isn't reliable enough on its own in nested layouts like this one — when
+            its push falls short, a fixed (non-scrolling) layout has no fallback, so content
+            overflows (the funding row painting over the "Max:" pill) and the Request button
+            ends up under the keyboard. AmountInput autoFocuses, so the keyboard is up from
+            mount and this is the default state, not an edge case. The flex spacer below keeps
+            the bottom block pinned low when there's slack (keyboard closed). */}
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
          <View style={styles.header}>
           <AppIcon.ArrowLeft
             width={25}
             height={25}
             onPress={() => navigation.goBack()}
-            style={{ marginRight:isCryptoMode ? 45 : 0}}
+            style={{ marginRight:isCryptoMode && !isFiatStyleSend ? 45 : 0}}
           />
 
           <View style={styles.headerTitleContainer}>
             <CustomText variant='h1' fontWeight='bold' size={20}>Enter Amount</CustomText>
           </View>
 
-          {isCryptoMode ? (
+          {isCryptoMode && !isFiatStyleSend ? (
             <TouchableOpacity
               style={styles.cryptoToggleButton}
               activeOpacity={0.85}
@@ -1272,18 +1475,31 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
             editable={!isRequestedFlow}
             leftPrefix={leftPrefix}
             rightSuffix={rightSuffix}
+            maxLength={maxInputLength}
           />
 
-          {isCryptoMode ? (
+          {isCryptoMode && !isFiatStyleSend ? (
             <View style={styles.cryptoModeContainer}>
               {!isTradeMode ? (
                 <TouchableOpacity style={styles.cryptoMaxContainer} activeOpacity={0.9} onPress={fillMax}>
                   <CustomText variant="caption" style={styles.cryptoMaxText}>
-                    Max: {maxAsset.toFixed(8).replace(/\.?0+$/, '') || '0'} {assetSymbol} ~$
-                    {maxUsd.toFixed(2)}
+                    Available balance:{' '}
+                    {inputMode === 'asset'
+                      ? `${maxAsset.toFixed(8).replace(/\.?0+$/, '') || '0'} ${assetSymbol}`
+                      : `$${maxUsd.toFixed(2)}`}
                   </CustomText>
                 </TouchableOpacity>
-              ) : null}
+              ) : (
+                <TransactionLimitMeter
+                  style={styles.limitMeterSpacer}
+                  limit={tradeLimit}
+                  amountUsd={amount}
+                  error={limitError || sellBalanceError}
+                  // The limit is a USD figure — only offer to fill it during USD
+                  // entry, else it would land in the input as a crypto amount.
+                  onUseMax={inputMode === 'fiat' ? handleUseMaxLimit : undefined}
+                />
+              )}
 
               {/* <CustomText variant="caption" style={styles.cryptoEquivalentText}>
                 {inputMode === 'asset'
@@ -1305,7 +1521,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
             />
           ) : null}
 
-        </View>
+        <View style={{ flex: 1 }} />
 
         <View
           style={
@@ -1322,12 +1538,17 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
                 onPress={openDebitPaymentPicker}
               />
             ) 
-            : isCryptoMode && !isTradeMode ? (
-              <FundingSourceCard
-                label="Select Another coin if you'd like to change"
-                source={selectedSource}
-                onPress={handlePressFundingSource}
-              />
+            : isCryptoSendMode ? (
+              // Keyed off the FLOW (not viewMode): while the crypto source is still
+              // loading, viewMode reads 'fiat' and the old condition dropped a send
+              // into the legacy debit-card row below. A send shows its asset chip
+              // (crypto-details flow) or nothing (plain USD send / still loading).
+              isFiatStyleSend || !selectedSource ? null : (
+                <SendingAssetRow
+                  symbol={assetSymbol}
+                  logo={selectedSource?.cryptoMeta?.logo}
+                />
+              )
             )
             : (
               <DebitCardPaymentRow
@@ -1337,7 +1558,17 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
               />
             )}
             {!isTradeMode || tradePaymentRail === 'debit' ? (
-              <PayButton disabled={isPaying || isSendingPaymentTx} onPress={handlePayPress} />
+              <PayButton
+                disabled={
+                  isPaying ||
+                  isSendingPaymentTx ||
+                  !!limitError ||
+                  !!sellBalanceError ||
+                  // Crypto send: disabled until the funding source resolves.
+                  (isCryptoSendMode && !selectedSource)
+                }
+                onPress={handlePayPress}
+              />
             ) : null}
             {canRequest ? (
               <Button
@@ -1354,24 +1585,22 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
               <Button
                 onPress={handleFindCashLocation}
                 style={styles.payButton}
-                disabled={!cashBuyWalletAddress || !Number.isFinite(amount) || amount <= 0}
+                disabled={
+                  !cashBuyWalletAddress ||
+                  !Number.isFinite(amount) ||
+                  amount <= 0 ||
+                  !!limitError ||
+                  !!sellBalanceError
+                }
               >
                 Find a Location
               </Button>
             ) : null}
           </View>
         </View>
+        </ScrollView>
 
-        {isSelectorOpen && isCryptoMode && !isTradeMode ? (
-          <FundingSourceSelectorModal
-            sources={isCryptoSendMode ? [] : sources}
-            cryptoSources={cryptoSourcesForModal}
-            selectedSource={selectedSource}
-            onSelect={(source) => setSelectedSource(source)}
-            onClose={() => setIsSelectorOpen(false)}
-          />
-        ) : null}
-
+        {/* Modals stay outside the ScrollView — they overlay the whole screen. */}
         <PaymentMethodPickerModal
           visible={debitInfoVisible}
           onClose={() => setDebitInfoVisible(false)}
@@ -1415,10 +1644,22 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
             setShowCryptoReceiptModal(false);
             requestPaymentVerification(handleActionsAfterPinVerified);
           }}
+          variant={isFiatStyleSend ? 'fiatOnly' : 'full'}
           tokenSymbol={assetSymbol}
           tokenAmount={assetAmount}
           priceUSD={selectedSource?.cryptoMeta?.priceUSD ?? tradePriceUSD ?? 0}
           usdAmount={amount}
+          expectedFee={tradeExpectedFee}
+          expectedFeeLoading={tradeQuoteEnabled && isTradeQuoteLoading}
+          feeLabel={isTradeMode && tradeMode === 'sell' ? 'Expected Instant Withdrawal Fee' : 'Expected Fee'}
+          totalLabel={
+            isTradeMode
+              ? tradeMode === 'sell'
+                ? 'Total'
+                : 'Expected Tokens Received'
+              : 'Total'
+          }
+          addFeeToTotal={isTradeMode && tradeMode === 'sell'}
         />
 
         <RequestDetailsSheet

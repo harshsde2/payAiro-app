@@ -41,6 +41,12 @@ const CyrptoDetails: React.FC = () => {
   const cryptoItem = routeParams?.item as any;
   const currency = String(cryptoItem?.asset || "").toUpperCase();
 
+  // View-only tokens (e.g. SOL/XRP before first buy): the market API marks them
+  // `tradable: false` and supplies a user-facing explanation. Shown until the user's
+  // first buy flips it tradable (API-driven — no client state).
+  const isViewOnly = cryptoItem?.tradable === false;
+  const viewOnlyMessage = String(cryptoItem?.view_only_description ?? "").trim();
+
   useLayoutEffect(() => {
     if (!cryptoItem?.asset) {
       navigation.setOptions({ headerTitle: "Crypto" });
@@ -332,6 +338,27 @@ const CyrptoDetails: React.FC = () => {
           </View>
         </View>
 
+        {/* View-only notice (tradable === false) */}
+        {isViewOnly && viewOnlyMessage ? (
+          <View style={styles.viewOnlyCard}>
+            <CustomText
+              fontWeight="bold"
+              size={14}
+              color={theme.colors.palette.green700}
+              style={styles.viewOnlyTitle}
+            >
+              Available for viewing only
+            </CustomText>
+            <CustomText
+              size={13}
+              color={theme.colors.text.secondary}
+              style={styles.viewOnlyText}
+            >
+              {viewOnlyMessage}
+            </CustomText>
+          </View>
+        ) : null}
+
         {/* Chart Section */}
         <View style={styles.chartSection}>
           <CryptoChart
@@ -435,6 +462,21 @@ const createStyles = (theme: any) =>
       minHeight: 280,
       paddingHorizontal: theme.spacing.spacing[4],
       marginVertical: theme.spacing.spacing[4],
+    },
+    viewOnlyCard: {
+      backgroundColor: theme.colors.palette.green100,
+      borderColor: theme.colors.palette.green200,
+      borderWidth: 1,
+      borderRadius: 12,
+      paddingHorizontal: theme.spacing.spacing[4],
+      paddingVertical: theme.spacing.spacing[3],
+      marginTop: theme.spacing.spacing[3],
+    },
+    viewOnlyTitle: {
+      marginBottom: theme.spacing.spacing[1],
+    },
+    viewOnlyText: {
+      lineHeight: 19,
     },
     actionButtonsContainer: {
       flexDirection: "row",

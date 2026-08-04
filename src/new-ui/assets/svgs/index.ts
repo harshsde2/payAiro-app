@@ -29,6 +29,7 @@ import PayairoLogoBlack from './PayairoLogoBlack.svg';
 import LogOut from './LogOut.svg';
 import Notification from './Notification.svg';
 import Settings from './Settings.svg';
+import AppVersion from './AppVersion.svg';
 import User from './User.svg';
 import Headphones from './Headphones.svg';
 import HelpCircle from './HelpCircle.svg';
@@ -107,6 +108,7 @@ export const AppIcon = {
   PrivacyPolicy,
   TermsAndConditions,
   Agreement,
+  AppVersion,
   BankStatement,
   RewardsIcon,
   AllRightReserves,

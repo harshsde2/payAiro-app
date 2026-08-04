@@ -3,38 +3,64 @@ import { View, TouchableOpacity } from 'react-native';
 import ScreenWrapper from '@new-ui/components/common-components/ScreenWrapper';
 import CustomText from '@new-ui/components/common-components/CustomText';
 import FilterChip from '@new-ui/components/common-components/FilterChip';
+import LimitBar from '@new-ui/components/common-components/LimitBar';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 import { transactionLimitsStyles } from '@new-ui/styles/screens/transactionLimits/transactionLimitsStyles';
 import { useCoinmeTransactionLimits } from 'query/hooks/useCoinmeTransactionLimits';
 import type { TransactionLimitRow, TransactionLimitTab } from './types';
 import {
-  formatLimitLine,
+  formatUsd,
   getActiveRowsForTab,
   mapLimitsForTab,
 } from './transactionLimits.utils';
 
+type Styles = ReturnType<typeof transactionLimitsStyles>;
+
+/** One period's usage: label + spent-of-cap, over the shared LimitBar. */
+const LimitPeriod: React.FC<{
+  title: string;
+  usedUsd: number;
+  limitUsd: number;
+  styles: Styles;
+  labelColor: string;
+}> = ({ title, usedUsd, limitUsd, styles, labelColor }) => (
+  <View style={styles.periodBlock}>
+    <View style={styles.periodHeader}>
+      <CustomText variant="bodySmall" color={labelColor}>
+        {title}
+      </CustomText>
+      <CustomText variant="bodySmall" fontWeight="semiBold">
+        {formatUsd(usedUsd)} of {formatUsd(limitUsd)}
+      </CustomText>
+    </View>
+    <LimitBar usedUsd={usedUsd} limitUsd={limitUsd} />
+  </View>
+);
+
 const LimitRow: React.FC<{
   row: TransactionLimitRow;
   isLast: boolean;
-  styles: ReturnType<typeof transactionLimitsStyles>;
-  monthlyColor: string;
-}> = ({ row, isLast, styles, monthlyColor }) => (
+  styles: Styles;
+  labelColor: string;
+}> = ({ row, isLast, styles, labelColor }) => (
   <View style={[styles.row, !isLast && styles.rowBorder]}>
-    <CustomText variant="h5" fontWeight="semiBold" style={styles.rowLabel}>
+    <CustomText variant="h5" fontWeight="semiBold">
       {row.label}
     </CustomText>
-    <View style={styles.amountsColumn}>
-      <CustomText variant="body" fontWeight="semiBold">
-        {formatLimitLine(row.dailyLimitUsd, 'day')}
-      </CustomText>
-      <CustomText
-        variant="bodySmall"
-        color={monthlyColor}
-        style={styles.monthlyAmount}
-      >
-        {formatLimitLine(row.monthlyLimitUsd, 'month')}
-      </CustomText>
-    </View>
+    <LimitPeriod
+      title="Daily"
+      usedUsd={row.dailyUsedUsd}
+      limitUsd={row.dailyLimitUsd}
+      styles={styles}
+      labelColor={labelColor}
+    />
+    <LimitPeriod
+      title="Monthly"
+      usedUsd={row.monthlyUsedUsd}
+      limitUsd={row.monthlyLimitUsd}
+      styles={styles}
+      labelColor={labelColor}
+    />
   </View>
 );
 
@@ -107,7 +133,7 @@ const TransactionLimitsScreen: React.FC = () => {
             row={row}
             isLast={index === activeRows.length - 1}
             styles={styles}
-            monthlyColor={theme.colors.textSecondary}
+            labelColor={theme.colors.greyDark}
           />
         ))}
       </View>

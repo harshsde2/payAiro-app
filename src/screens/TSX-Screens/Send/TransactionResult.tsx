@@ -13,8 +13,10 @@ import {
   ScrollView,
   StyleSheet,
   View,
-  BackHandler
+  BackHandler,
+  TouchableOpacity
 } from "react-native";
+import { SvgIcons } from "constants/svgs";
 import { Theme, useTheme } from "styles";
 import { useGlobalStyles } from "styles/GlobalStyles";
 // import { CustomText } from "tsx-components";
@@ -252,6 +254,17 @@ const TransactionResult: FC = () => {
     }
   };
 
+  const handleContactSupport = () => {
+    // This screen is presented as a modal (slide-from-bottom). Pushing on top of it
+    // would stack the support screen inside the modal. `replace` closes this modal
+    // and opens the support screen as a normal card instead.
+    if (typeof navigation.replace === 'function') {
+      navigation.replace(NAVIGATION_SCREENS.FRESHCHAT_SCREEN as never);
+    } else {
+      navigation.navigate(NAVIGATION_SCREENS.FRESHCHAT_SCREEN as never);
+    }
+  };
+
   const isCoinmeTrade = isCoinmeTradeResponse(transactionData);
 
   const getTransactionStatus = () => {
@@ -352,7 +365,9 @@ const TransactionResult: FC = () => {
       case 'success':
         return (
           <CustomText variant="h3" fontWeight='semiBold' style={[styles.title]} >
-            Payment Successful
+            {isPaymentTransactionSendResponse(transactionData)
+              ? 'Payment Initiated'
+              : 'Payment Successful'}
           </CustomText>
         );
       case 'failed':
@@ -625,16 +640,33 @@ const TransactionResult: FC = () => {
   const renderActionButton = () => {
     if (showLoader) return null;
 
+    const isFailed = getTransactionStatus() === 'failed';
+
     return (
       <View style={styles.buttonContainer}>
-        {/* <GenericButton
-          title="Done"
-          cStyle={styles.doneButton}
-          onPress={handleClose}
-        /> */}
         <Button onPress={handleClose} >
           Done
         </Button>
+
+        {/* On failure, offer a direct line to live chat support (MNC-style secondary,
+            outlined button below the primary action). */}
+        {isFailed ? (
+          <TouchableOpacity
+            onPress={handleContactSupport}
+            activeOpacity={0.8}
+            style={styles.supportButton}
+          >
+            <SvgIcons.ChatSupport width={22} height={22} />
+            <CustomText
+              style={{
+                color: newTheme.colors.primary,
+                fontFamily: newTheme.typography.fontFamily.semiBold,
+              }}
+            >
+              Contact Support
+            </CustomText>
+          </TouchableOpacity>
+        ) : null}
       </View>
     );
   };
@@ -760,5 +792,18 @@ const customStyles = (theme: Theme) =>
       justifyContent: "center",
       alignItems: "center",
       marginVertical: theme.spacing.spacing[2],
+    },
+    supportButton: {
+      marginTop: theme.spacing.spacing[3],
+      height: 46,
+      width: "100%",
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.colors.palette.primary,
+      backgroundColor: theme.colors.palette.white,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: theme.spacing.spacing[2],
     },
   });

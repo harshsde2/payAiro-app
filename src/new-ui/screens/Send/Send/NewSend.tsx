@@ -4,19 +4,20 @@ import { useNavigation } from '@react-navigation/native';
 import ScreenWrapper from '@new-ui/components/common-components/ScreenWrapper';
 import { TextInput, Button } from '@new-ui/components/common-components/layout';
 import CustomText from '@new-ui/components/common-components/CustomText';
-import { AppIcon } from '@new-ui/assets/svgs';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 import { newSendStyles } from '@new-ui/styles/screens/send/newSendStyles';
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
+import { navigateToBottomTabScreen } from 'navigations/navigateToBottomTab';
 import { useVerifyPayairoUser } from 'query/hooks/useContact';
 import { detectBlockchainNameService } from 'utils/blockchainNameService';
-import { showError } from 'utils/toast';
+import { isWalletAddress } from 'utils/walletAddress';
 import { IBankBalance, IBankItem } from 'screens/Dashboard/types';
 import { useSelector } from 'react-redux';
 import { useAllBankAccounts } from 'query/hooks';
 import { useStateStablecoin } from 'hooks/useStateStablecoin';
 import { SendContactsList, ISendContactItem } from '@new-ui/components/common-components/SendContactsList';
 import { INewSendProps } from './types';
+import { AppIcon } from 'new-ui/assets/svgs';
 
 const NewSend: React.FC<INewSendProps> = ({ route }) => {
   const params = route?.params ?? {};
@@ -62,8 +63,16 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
 
   const stateStablecoin = useStateStablecoin();
 
+  // Coming from a crypto's details page the user already picked the coin, so the hint must
+  // name that coin's network. Entering from the dashboard carries no preselectedAsset, and
+  // the send then defaults to the state stablecoin — same rule EnterAmount resolves against.
+  const sendAssetSymbol =
+    String(preselectedAsset?.asset ?? '').toUpperCase() || stateStablecoin;
+
   const [sender, setSender] = useState<string>(senderFromParams ?? '');
   const [note, setNote] = useState<string>('');
+  // Recipient lookup errors are shown inline on this screen (not as a toast popup).
+  const [recipientError, setRecipientError] = useState<string | null>(null);
   const [pendingVerification, setPendingVerification] =
     useState<boolean>(false);
   const [selectedContactUuid, setSelectedContactUuid] =
@@ -74,14 +83,17 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
     senderFromParams === '' || senderFromParams === undefined;
   const isLoading = userLoading || pendingVerification;
 
+  // Inline (on-screen) instead of a toast popup.
   const showValidationError = (message: string): void => {
-    showError('Something went wrong', message);
+    setRecipientError(message);
   };
 
   const handleSenderChange = useCallback((text: string) => {
     setSender(text);
     // If user manually edits, clear selected contact highlight
     setSelectedContactUuid(null);
+    // Clear any prior lookup error as the user edits the recipient.
+    setRecipientError(null);
   }, []);
 
   const getBalanceDisplay = (): string => {
@@ -97,6 +109,7 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
     }
 
     setPendingVerification(true);
+    setRecipientError(null);
     try {
       // Verify against the FastAPI user search (the same working endpoint the suggestion
       // list uses) — the old Django verify endpoint 401'd with "session expired".
@@ -115,32 +128,15 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
           preselectedAsset,
         } as never);
       } else {
-        showError(
-          'User not found',
+        setRecipientError(
           `No PayAiro user matches "${trimmedSender}". Check the tag, or paste a wallet address.`
         );
       }
     } catch (e: any) {
-      showError(
-        'Something went wrong',
-        e?.response?.data?.message || 'Please try again.'
-      );
+      setRecipientError(e?.response?.data?.message || 'Please try again.');
     } finally {
       setPendingVerification(false);
     }
-  };
-
-  const isWalletAddress = (input: string): boolean => {
-    const s = input.trim();
-    // Ethereum/EVM: 0x followed by 40 hex chars
-    if (/^0x[0-9a-fA-F]{40}$/.test(s)) return true;
-    // Solana: 32–44 base58 chars (no 0, O, I, l)
-    if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(s)) return true;
-    // Bitcoin bech32: bc1...
-    if (/^bc1[a-zA-HJ-NP-Z0-9]{25,87}$/.test(s)) return true;
-    // Bitcoin legacy: starts with 1 or 3, 25–34 base58 chars
-    if (/^[13][a-km-zA-HJ-NP-Z1-9]{24,33}$/.test(s)) return true;
-    return false;
   };
 
   const handleNextPress = async (): Promise<void> => {
@@ -216,6 +212,7 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
       setSender(identifier);
       setSelectedContactUuid(uuid);
       setSelectedContact(contact);
+      setRecipientError(null);
 
       const trimmedSender = identifier.trim();
 
@@ -253,9 +250,13 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
           identifier: contact.username?.trim() || '',
           profile_photo: contact.profile_photo,
         },
+        // Carried through so UserProfile's Pay can hand it back: this detour must not
+        // silently reset the send to the state stablecoin when the user arrived here
+        // from a specific coin's details page.
+        preselectedAsset,
       } as never);
     },
-    [navigation]
+    [navigation, preselectedAsset]
   );
 
   return (
@@ -277,15 +278,21 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
               value={sender}
               editable={isEditable}
               onChangeText={handleSenderChange}
-              rightIcon={<AppIcon.QrCode width={20} height={20} color={theme.colors.greyDark} />}
+              rightIcon={preselectedAsset ? <AppIcon.QrCode color={theme.colors.greyDark} /> : undefined}
               onRightIconPress={() => {
-                navigation.navigate('MainTabs' as never, {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  screen: NAVIGATION_SCREENS.SCANS as any,
-                } as never);
+                if (preselectedAsset) {
+                  navigateToBottomTabScreen(navigation, NAVIGATION_SCREENS.SCANS);
+                }
               }}
+
             />
-            <CustomText variant="body" size={12} color={theme.colors.greyDark} style={styles.inputHint}>Valid {stateStablecoin} network addresses only</CustomText>
+            {recipientError ? (
+              <CustomText variant="body" size={12} color={theme.colors.error} style={[(styles as any).inputHint]}>
+                {recipientError}
+              </CustomText>
+            ) : preselectedAsset ? (
+              <CustomText variant="body" size={12} color={theme.colors.greyDark} style={[(styles as any).inputHint]}>Valid {sendAssetSymbol} network addresses only</CustomText>
+            ) : null}
           </View>
           {/* inline suggestions removed for new UI; contacts now shown in list below */}
         </View>

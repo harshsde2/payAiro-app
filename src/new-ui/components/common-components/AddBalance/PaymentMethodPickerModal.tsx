@@ -9,7 +9,6 @@ import {
   Alert,
   InteractionManager,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   View,
@@ -25,11 +24,7 @@ import {
   type PaymentMethodItem,
 } from 'query/hooks/usePaymentMethods';
 import { showError, showSuccess } from 'utils/toast';
-import { useCoinmeAccountId } from 'hooks/useCoinmeAccountId';
-import {
-  prepareCardlinkingRiskSession,
-  resolveCardlinkingPhase,
-} from 'services/coinmeRiskLifecycle';
+import { useDefaultPaymentMethodId } from './defaultPaymentMethod';
 
 export const RETAIL_CASH_PAYMENT_METHOD_ID = '__retail_cash__';
 
@@ -135,7 +130,7 @@ const PaymentMethodPickerModal: React.FC<PaymentMethodPickerModalProps> = ({
 
   const { data, isLoading, isError, refetch, isFetching } = usePaymentMethodsList(20);
   const deleteMutation = useDeletePaymentMethod();
-  const coinmeAccountId = useCoinmeAccountId();
+  const { defaultId, setDefault, clearDefault } = useDefaultPaymentMethodId();
 
   const debitCards = useMemo(() => {
     const items = data?.data?.items ?? [];
@@ -186,37 +181,13 @@ const PaymentMethodPickerModal: React.FC<PaymentMethodPickerModalProps> = ({
     }
   }, [eligibleIds, localSelectedId, visible]);
 
-  // Coinme-approved warm-up: the moment the picker opens, start the cardlinking Risk session
-  // early (update + submit) so Coinme/Sardine receive the device data well before the user
-  // adds a card — this is the only point at which Coinme gets that device data. The Proceed
-  // step in AddDebitCardModal then only mints the webSessionId (no re-submit).
+  // NOTE: the Phase 3 cardlinking warm-up deliberately does NOT run here. It is owned solely by
+  // AddDebitCardModal, which is the one component every add-card entry point goes through
+  // (PaymentMethodsScreen opens it with no picker at all).
   //
-  // Phase 3 only; prepareCardlinkingRiskSession self-guards (idempotent per account) and no-ops
-  // for other phases. The guard is cleared when AddDebitCardModal closes
-  // (resetCardlinkingPhase3Prepare), so a fresh add-card journey warms up again.
-  useEffect(() => {
-    if (!visible) return;
-    if (resolveCardlinkingPhase() !== 3) return;
-    if (!coinmeAccountId) return;
-
-    let cancelled = false;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    // Defer past the modal animation — running native SDK calls mid-animation can SIGABRT on iOS.
-    InteractionManager.runAfterInteractions(() => {
-      if (cancelled) return;
-      const deferMs = Platform.OS === 'ios' ? 900 : 350;
-      timeoutId = setTimeout(() => {
-        if (cancelled) return;
-        prepareCardlinkingRiskSession(coinmeAccountId).catch((e) =>
-          console.warn('[PaymentMethodPicker] cardlinking warm-up failed', e)
-        );
-      }, deferMs);
-    });
-    return () => {
-      cancelled = true;
-      if (timeoutId != null) clearTimeout(timeoutId);
-    };
-  }, [visible, coinmeAccountId]);
+  // Warming up here as well used to start a second cardlinking session while this one was still
+  // uploading — two concurrent Sardine sessions double-free inside MobileIntelligence and abort
+  // the process. That was the "tap New Debit Card → crash" report on iOS.
 
   const currentSelectedId = localSelectedId ?? null;
 
@@ -227,6 +198,9 @@ const PaymentMethodPickerModal: React.FC<PaymentMethodPickerModalProps> = ({
         const res = await deleteMutation.mutateAsync(item.payment_method_id);
         if (localSelectedId === item.payment_method_id) {
           setLocalSelectedId(null);
+        }
+        if (defaultId === item.payment_method_id) {
+          clearDefault();
         }
         onPaymentMethodDeleted?.(item.payment_method_id);
         showSuccess('Card removed', res?.message || 'Your card has been removed.');
@@ -240,7 +214,7 @@ const PaymentMethodPickerModal: React.FC<PaymentMethodPickerModalProps> = ({
         setDeletingId(null);
       }
     },
-    [deleteMutation, localSelectedId, onPaymentMethodDeleted]
+    [deleteMutation, localSelectedId, onPaymentMethodDeleted, defaultId, clearDefault]
   );
 
   const handleDeleteCard = useCallback(
@@ -281,6 +255,15 @@ const PaymentMethodPickerModal: React.FC<PaymentMethodPickerModalProps> = ({
       const last4 = item.card_last4 ? item.card_last4 : '••••';
       const isDeleting = deletingId === item.payment_method_id;
       const deleteDisabled = deletingId !== null;
+      const isDefault = defaultId === item.payment_method_id;
+      const toggleDefault = () => {
+        if (isDefault) {
+          clearDefault();
+        } else {
+          setDefault(item.payment_method_id);
+          setLocalSelectedId(item.payment_method_id);
+        }
+      };
       return (
         <View key={item.payment_method_id} style={styles.cardRow}>
           <Pressable
@@ -292,7 +275,29 @@ const PaymentMethodPickerModal: React.FC<PaymentMethodPickerModalProps> = ({
               <CustomText variant="body" fontWeight="semiBold">
                 {provider}  •••• {last4}
               </CustomText>
+              {isDefault ? (
+                <CustomText
+                  variant="caption"
+                  fontWeight="semiBold"
+                  color={theme.colors.primary}
+                  style={{ marginTop: 2 }}
+                >
+                  Default
+                </CustomText>
+              ) : null}
             </View>
+          </Pressable>
+          <Pressable
+            onPress={toggleDefault}
+            hitSlop={8}
+            style={({ pressed }) => [{ paddingHorizontal: 6, opacity: pressed ? 0.6 : 1 }]}
+          >
+            <CustomText
+              size={20}
+              color={isDefault ? theme.colors.primary : theme.colors.greyDark}
+            >
+              {isDefault ? '★' : '☆'}
+            </CustomText>
           </Pressable>
           <Pressable
             onPress={() => handleDeleteCard(item)}
@@ -317,7 +322,7 @@ const PaymentMethodPickerModal: React.FC<PaymentMethodPickerModalProps> = ({
         </View>
       );
     },
-    [currentSelectedId, deletingId, handleDeleteCard, renderRadio, styles, theme]
+    [currentSelectedId, deletingId, handleDeleteCard, renderRadio, styles, theme, defaultId, setDefault, clearDefault]
   );
 
   const renderIneligibleCardRow = useCallback(
@@ -580,7 +585,7 @@ const PaymentMethodPickerModal: React.FC<PaymentMethodPickerModalProps> = ({
               'A',
               <AppIcon.ApplePay width={24} height={24} />
             )}
-            {includeRetailCashOption ? renderRetailCashRow() : null}
+            {/* {includeRetailCashOption ? renderRetailCashRow() : null} */}
           </ScrollView>
 
           <View style={styles.confirmContainer}>

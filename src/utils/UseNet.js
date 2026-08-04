@@ -1,65 +1,65 @@
-import React, { Component } from 'react';
-import {  Text ,Alert, View} from 'react-native'
-import { useNetInfo } from '@react-native-community/netinfo'
-export default class UseNet extends Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      netInfo: undefined,
-      temp: 1,
-    }
-    // console.log("constructor=> ",this.state.temp);
-  }
+import React, { useCallback, useEffect, useRef } from "react";
+import { Alert } from "react-native";
+import NetInfo, { useNetInfo } from "@react-native-community/netinfo";
+import { useQueryClient } from "@tanstack/react-query";
 
-  setNetInfo = netInfo => {
-    // this.setState({temp:this.state.temp+1})
-    this.setState({ netInfo })
-    // console.log("setNetInfo() in class => ",netInfo);
-  }
-  myfunction()
-  {
-    // console.log("myfunction() in class => ",this.state.netInfo);
-      if(this.state.netInfo == false)
-      {
-          Alert.alert(
-              'No Internet !',
-              'Your internet does not seems to work',
-              [
-                  { text: "Try again", onPress: () => this.myfunction() }
-              ],
-              { cancelable: false }
-          )
+/**
+ * Connectivity watcher. Shows a "No Internet" alert while offline, and — critically —
+ * when connectivity is restored (either detected automatically OR via the "Try again"
+ * button) it forces a full React-Query refetch. That refetch re-hydrates everything,
+ * including the `/users/me` profile query (`UsersMeHydrator`), so the dashboard header /
+ * balances fill in without needing to restart the app.
+ */
+export default function UseNet() {
+  const netInfo = useNetInfo();
+  const queryClient = useQueryClient();
+  const wasOfflineRef = useRef(false);
+  const alertShownRef = useRef(false);
+
+  const reloadAll = useCallback(() => {
+    // Refetch every query (profile, balances, contacts, history, …).
+    queryClient.invalidateQueries();
+  }, [queryClient]);
+
+  const showAlert = useCallback(() => {
+    if (alertShownRef.current) return;
+    alertShownRef.current = true;
+    Alert.alert(
+      "No Internet !",
+      "Your internet does not seem to work",
+      [
+        {
+          text: "Try again",
+          onPress: async () => {
+            alertShownRef.current = false;
+            // Check live state (not the possibly-stale hook value) on explicit retry.
+            const state = await NetInfo.fetch();
+            if (state.isConnected) {
+              wasOfflineRef.current = false;
+              reloadAll();
+            } else {
+              showAlert();
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  }, [reloadAll]);
+
+  useEffect(() => {
+    if (netInfo.isConnected === false) {
+      wasOfflineRef.current = true;
+      showAlert();
+    } else if (netInfo.isConnected === true) {
+      // Transitioned offline → online: reload data that failed while offline.
+      if (wasOfflineRef.current) {
+        wasOfflineRef.current = false;
+        alertShownRef.current = false;
+        reloadAll();
       }
-  }
+    }
+  }, [netInfo.isConnected, reloadAll, showAlert]);
 
-
-  render() {
-    // console.log("render => ",this.state.netInfo);
-    return (
-      <View >
-        <SetNetInfo setNetInfo={this.setNetInfo} />
-        {this.state.netInfo == null || this.state.netInfo == true ? null: Alert.alert(
-                    'No Internet !',
-                    'Your internet does not seems to work',
-                    [
-                        { text: "Try again", onPress: () => this.myfunction() }
-                    ],
-                    { cancelable: false }
-        )}
-      </View>
-    )
-  }
-
-}
-
-const SetNetInfo = ({ setNetInfo }) => {
-  const netInfo = useNetInfo()
-  // console.log("functional comp start ")
-  React.useEffect(() => {
-      setNetInfo(netInfo.isConnected)
-      // console.log("functional comp 2 => ",netInfo.isConnected);
-      // console.log("functional comp 3 => ",netInfo);
-  },[netInfo])
-
-  return null
+  return null;
 }

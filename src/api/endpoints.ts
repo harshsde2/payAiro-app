@@ -152,7 +152,10 @@ export const USER_AUTH = {
   OTP_VERIFY: "api/v1/users/auth/otp/verify/",
   TOKEN_REFRESH: "api/v1/users/auth/token/refresh/",
   PROFILE_UPDATE: "api/v1/users/profile/update/",
+  /** KYC step 1 — fetches the user's identity (DOB, address) from Coinme. Returns step 1. */
   KYC_COMPLETE: "api/v1/users/profile/kyc-complete/",
+  /** KYC step 2 — user confirms/corrects the fetched details; finalizes onboarding. Returns step 2. */
+  KYC_VERIFY: "api/v1/users/profile/kyc-verify/",
   ADDRESS_UPDATE: "api/v1/users/address/update/",
   USERS_ME: "api/v1/users/me/",
   PHONE_OTP_REQUEST: "api/v1/users/me/phone-otp/request/",
@@ -191,6 +194,18 @@ export const USER_AUTH = {
   COINME_CASH_OFFRAMP_PICKUP_CODE: "api/v1/integrations/coinme/cash-offramp/pickup-code/",
   COINME_TRANSACTION_LIMITS: "api/v1/integrations/coinme/transaction-limits/",
   SECURITY_PIN_SETTINGS: "api/v1/users/security/pin/",
+  /** Change the transaction PIN when the user still knows it: { old_pin, new_pin }. */
+  SECURITY_PIN_CHANGE: "api/v1/users/security/pin/change/",
+  /** Reset the transaction PIN with an action_token from ACTION_OTP_VERIFY: { action_token, new_pin }. */
+  SECURITY_PIN_RESET: "api/v1/users/security/pin/reset/",
+  /**
+   * Sends an OTP for a privileged action (e.g. "transaction_pin_change") to the
+   * logged-in user's registered phone/email. Distinct from OTP_REQUEST, which is the
+   * unauthenticated login/signup OTP.
+   */
+  ACTION_OTP_REQUEST: "api/v1/users/action-otp/request/",
+  /** Verifies an action OTP and returns a short-lived action_token. */
+  ACTION_OTP_VERIFY: "api/v1/users/action-otp/verify/",
   COINME_2FA_MOBILE_AUTH: "api/v1/users/me/coinme-2fa/mobile-auth/",
   COINME_2FA_INSTANT_LINK: "api/v1/users/me/coinme-2fa/instant-link/",
   /** Register/refresh this device's FCM token for push notifications. */

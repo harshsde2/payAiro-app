@@ -15,6 +15,23 @@ export type AuthResumeParams = {
   isEmail?: boolean;
 };
 
+/** The identity block returned by KYC step 1 and echoed by step 2. */
+export type KycVerifyDetails = {
+  username?: string;
+  email?: string;
+  phone?: string;
+  first_name?: string;
+  last_name?: string;
+  date_of_birth?: string;
+  ssn_last_four?: string;
+  address_line1?: string;
+  address_line2?: string | null;
+  city?: string;
+  state?: string;
+  postal_code?: string;
+  country?: string;
+};
+
 export type AuthSession = {
   tokens: Record<string, unknown> | null;
   onboardingComplete: boolean;
@@ -89,11 +106,34 @@ export const saveAuthResumeParams = (params: AuthResumeParams): void => {
 export const getAuthResumeParams = (): AuthResumeParams | null =>
   readAuthSession().resumeParams;
 
+/**
+ * Identity returned by KYC step 1 (`kyc-complete`). Persisted so the step 2 verify
+ * screen can prefill even when the user kills the app between the two steps.
+ */
+export const saveKycVerifyDraft = (details: KycVerifyDetails): void => {
+  setItem(STORAGE_KEYS.KYC_VERIFY_DRAFT, JSON.stringify(details));
+};
+
+export const getKycVerifyDraft = (): KycVerifyDetails | null => {
+  const raw = getItem(STORAGE_KEYS.KYC_VERIFY_DRAFT);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as KycVerifyDetails;
+  } catch {
+    return null;
+  }
+};
+
+export const clearKycVerifyDraft = (): void => {
+  removeItem(STORAGE_KEYS.KYC_VERIFY_DRAFT);
+};
+
 export const clearAuthSession = (): void => {
   removeItem(STORAGE_KEYS.AUTH_TOKENS);
   removeItem(STORAGE_KEYS.ONBOARDING_COMPLETE);
   removeItem(STORAGE_KEYS.AUTH_ONBOARDING_STEP);
   removeItem(STORAGE_KEYS.AUTH_RESUME_PARAMS);
+  removeItem(STORAGE_KEYS.KYC_VERIFY_DRAFT);
 };
 
 /**
@@ -116,8 +156,10 @@ export const resolveAuthInitialRoute = (
   if (step === 0) {
     return NAVIGATION_SCREENS.NEW_COINME_MOBILE_AUTH;
   }
+  // Step 1 = KYC identity fetched but not yet verified. Resume at step 2 rather than
+  // sending the user back through Coinme 2FA.
   if (step === 1) {
-    return NAVIGATION_SCREENS.NEW_ONBOARDING;
+    return NAVIGATION_SCREENS.NEW_KYC_VERIFY;
   }
   return NAVIGATION_SCREENS.NEW_ONBOARDING;
 };

@@ -14,6 +14,7 @@ import {
   type PaymentMethodItem,
 } from 'query/hooks/usePaymentMethods';
 import { showError, showSuccess } from 'utils/toast';
+import { useDefaultPaymentMethodId } from '@new-ui/components/common-components/AddBalance';
 import PaymentMethodCardRow from './PaymentMethodCardRow';
 import {
   filterDebitCards,
@@ -29,6 +30,7 @@ const PaymentMethodsScreen: React.FC = () => {
 
   const { data, isPending, isError, refetch } = usePaymentMethodsList(20);
   const deleteMutation = useDeletePaymentMethod();
+  const { defaultId, setDefault, clearDefault } = useDefaultPaymentMethodId();
 
   const debitCards = useMemo(
     () => filterDebitCards(data?.data?.items),
@@ -44,6 +46,9 @@ const PaymentMethodsScreen: React.FC = () => {
       setDeletingId(item.payment_method_id);
       try {
         const res = await deleteMutation.mutateAsync(item.payment_method_id);
+        if (defaultId === item.payment_method_id) {
+          clearDefault();
+        }
         showSuccess('Card removed', res?.message || 'Your card has been removed.');
       } catch (e: any) {
         const msg =
@@ -75,6 +80,14 @@ const PaymentMethodsScreen: React.FC = () => {
       );
     },
     [deletingId, performDelete]
+  );
+
+  const handleSetDefault = useCallback(
+    (item: PaymentMethodItem) => {
+      setDefault(item.payment_method_id);
+      showSuccess('Default card set', `${formatCardLabel(item)} will be selected by default.`);
+    },
+    [setDefault]
   );
 
   const handleAddedCard = useCallback(
@@ -129,6 +142,8 @@ const PaymentMethodsScreen: React.FC = () => {
         isDeleting={deletingId === item.payment_method_id}
         deleteDisabled={deletingId !== null}
         showDivider={index < debitCards.length - 1}
+        isDefault={defaultId === item.payment_method_id}
+        onSetDefault={handleSetDefault}
         onDelete={handleDeleteCard}
       />
     ));

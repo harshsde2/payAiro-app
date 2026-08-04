@@ -223,7 +223,11 @@ const CardFormBody: React.FC<CardFormBodyProps> = ({ onClose, onSubmitted }) => 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Phase-3 risk warm-up: start the Risk SDK update()/submit() early once the modal settles,
-  // so the webSessionId is ready by the time the user taps Proceed. Ported from the prior flow.
+  // so the webSessionId is ready by the time the user taps Proceed.
+  //
+  // This is the SOLE owner of the warm-up — the payment-method picker deliberately no longer
+  // runs one. Every add-card entry point mounts this modal, and a second concurrent warm-up
+  // put two Sardine uploads in flight at once, which double-frees and kills the app.
   useEffect(() => {
     const cardlinkingPhase = resolveCardlinkingPhase();
     if (cardlinkingPhase !== 3 || !coinmeAccountId) return;
@@ -248,7 +252,10 @@ const CardFormBody: React.FC<CardFormBodyProps> = ({ onClose, onSubmitted }) => 
 
   const plainValid =
     firstName.trim().length > 0 && lastName.trim().length > 0 && state.trim().length >= 2;
-  const canSubmit = vaultValid && plainValid && !isSubmitting;
+  // `coinmeAccountId` is null both while /users/me is still loading and when the user has no
+  // CAAS account, so gate the button on it rather than letting a tap fail in handleSubmit.
+  const accountReady = !!coinmeAccountId;
+  const canSubmit = vaultValid && plainValid && accountReady && !isSubmitting;
 
   const handleSubmit = useCallback(async () => {
     setError(null);
@@ -513,6 +520,15 @@ const CardFormBody: React.FC<CardFormBodyProps> = ({ onClose, onSubmitted }) => 
               {error}
             </CustomText>
           </View>
+        ) : !accountReady ? (
+          <CustomText
+            variant="caption"
+            color={theme.colors.textSecondary}
+            align="center"
+            style={{ marginTop: theme.spacing.sm }}
+          >
+            Preparing your account…
+          </CustomText>
         ) : null}
 
         <View style={{ marginTop: theme.spacing.md }}>

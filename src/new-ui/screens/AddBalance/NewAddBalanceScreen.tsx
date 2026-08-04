@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useEmailVerificationGuard } from 'hooks/useEmailVerificationGuard';
@@ -12,6 +12,7 @@ import {
   PaymentMethodPickerModal,
   AddDebitCardModal,
   getCardEligibility,
+  useApplyDefaultPaymentMethod,
 } from '@new-ui/components/common-components/AddBalance';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 import { addBalanceStyles } from '@new-ui/styles/screens/addBalance/addBalanceStyles';
@@ -28,18 +29,26 @@ import { useAppLock } from 'hooks/useAppLock';
 import {
   useCoinmeTradeExecute,
   type CoinmeTradeExecutePayload,
-  useCryptoAssetsListData,
-  useUserCryptoMarketList,
+  useCryptoMarketForCurrency,
+  useUserCryptoBalanceFastApi,
   useWalletAddresses,
+  useCoinmeTradeQuote,
+  getExpectedFeeUsd,
+  getCoinmeTradeQuoteErrorMessage,
 } from 'query/hooks/useCrypto';
 import { fetchWebSessionId } from 'services/coinmeRiskLifecycle';
 import { useCoinmeAccountId } from 'hooks/useCoinmeAccountId';
 import { showError, showInfo } from 'utils/toast';
+import { formatSpendableBalance } from 'utils/formatMoney';
 import CryptoReceiptModal from '@new-ui/screens/Send/EnterAmount/CryptoReceiptModal';
 import CustomText from '@new-ui/components/common-components/CustomText';
+import TransactionLimitMeter from '@new-ui/components/common-components/TransactionLimitMeter';
 import { useStateStablecoin } from 'hooks/useStateStablecoin';
+import { useTransactionLimit } from 'hooks/useTransactionLimit';
+import { coinmeTransactionLimitsKeys } from 'query/hooks/useCoinmeTransactionLimits';
+import { queryClient } from 'query/queryClient';
 
-const QUICK_AMOUNTS = [50, 100, 200, 500, 1000];
+const QUICK_AMOUNTS = [20, 50, 100, 200, 500];
 
 const COINME_DEFAULTS = {
   paymentMethodId: 'uhygtfr5e354rtyu76g6b7i8',
@@ -71,19 +80,22 @@ const NewAddBalanceScreen: React.FC = () => {
   // from this asset symbol and ignores whatever chain we send.
   const stateStablecoin = useStateStablecoin();
 
-  const { data: marketRows = [], isPending: isMarketPending } = useUserCryptoMarketList('USD');
-  // Same source NewDashboard's "Payairo Balance" card uses — the user's actual held
-  // USD value of their registered-state stablecoin, not just its unit price.
-  const { data: balances = [] } = useCryptoAssetsListData('USD');
+  // The general market list is state-filtered per user by the backend and can HIDE
+  // the state stablecoin (that's what disabled Proceed for real users) — fetch the
+  // coin explicitly via `?currencies=`, which bypasses the filter.
+  const { data: stablecoinMarketRows = [], isPending: isMarketPending } =
+    useCryptoMarketForCurrency(stateStablecoin, 'USD');
+  // Balance straight from the balance API — the merged market+balance list is keyed
+  // off the filtered market list, which showed $0.00 when the coin was hidden.
+  const { data: balanceRows = [] } = useUserCryptoBalanceFastApi();
   const { data: walletResponse, isPending: isWalletPending } = useWalletAddresses();
   const walletRows = walletResponse?.walletAddresses ?? [];
 
-  console.log('marketRows', marketRows);
-  console.log('walletRows', walletRows);
-
   const cryptoAsset = useMemo((): HiddenTradeCryptoAsset | null => {
     const sym = stateStablecoin;
-    const marketItem = marketRows.find((i) => String(i.asset ?? '').toUpperCase() === sym);
+    const marketItem = stablecoinMarketRows.find(
+      (i) => String(i.asset ?? '').toUpperCase() === sym
+    );
     if (!marketItem) return null;
     const price = Number(marketItem.usd_price ?? 0);
     const solRow = walletRows.find(
@@ -91,7 +103,6 @@ const NewAddBalanceScreen: React.FC = () => {
         String(r.currencySymbol ?? '').toUpperCase() === sym ||
         String(r.assetId ?? '').toUpperCase() === sym
     );
-    console.log('solRow', solRow);
     const chain = String(solRow?.chain ?? sym).toUpperCase();
     return {
       asset: sym,
@@ -101,26 +112,24 @@ const NewAddBalanceScreen: React.FC = () => {
       currentPrice: Number.isFinite(price) ? price : 0,
       sourceWalletAddress: solRow?.walletAddress,
     };
-  }, [marketRows, walletRows, stateStablecoin]);
-
-  console.log('cryptoAsset', cryptoAsset);
+  }, [stablecoinMarketRows, walletRows, stateStablecoin]);
 
   const tradePriceUSD = cryptoAsset?.currentPrice ?? 0;
 
-  const stablecoinBalance = useMemo(() => {
-    const row = balances.find(
-      (b) => String(b.asset ?? '').toUpperCase() === stateStablecoin
-    );
-    return Number(row?.usd_value_available ?? 0);
-  }, [balances, stateStablecoin]);
+  // console.log("row ->",balanceRows)
 
-  const formattedAvailable = useMemo(() => {
-    const safe = Number.isFinite(stablecoinBalance) ? stablecoinBalance : 0;
-    return `$${safe.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  }, [stablecoinBalance]);
+  const stablecoinBalance = useMemo(() => {
+    const row = balanceRows.find(
+      (b) => String(b.currencySymbol ?? '').toUpperCase() === stateStablecoin
+    );
+    const usd = Number(row?.estimatedBalanceValue ?? 0);
+    return Number.isFinite(usd) ? usd : 0;
+  }, [balanceRows, stateStablecoin]);
+
+  const formattedAvailable = useMemo(
+    () => `$${formatSpendableBalance(stablecoinBalance)}`,
+    [stablecoinBalance]
+  );
 
   const [amountText, setAmountText] = useState('');
   const [selectedChipIndex, setSelectedChipIndex] = useState<number | null>(null);
@@ -134,6 +143,14 @@ const NewAddBalanceScreen: React.FC = () => {
 
   const paymentMethodsQuery = usePaymentMethodsList(20);
 
+  // Pre-select the user's default card (frontend-only) once the list loads.
+  useApplyDefaultPaymentMethod({
+    items: paymentMethodsQuery.data?.data?.items ?? [],
+    flow: 'buy',
+    selected: selectedPaymentMethod,
+    onSelect: setSelectedPaymentMethod,
+  });
+
   const handleAmountChange = useCallback((text: string) => {
     const next = sanitizeMoneyInput(text);
     setAmountText(next);
@@ -146,7 +163,23 @@ const NewAddBalanceScreen: React.FC = () => {
   }, []);
 
   const parsedAmount = parseMoneyAmount(amountText);
+
+  // Limits follow the rail the user is actually paying with: debit → debit_buy,
+  // cash → green_dot_buy (whose caps are far lower, $500/txn vs $20,000).
+  const buyLimit = useTransactionLimit('buy', selectedPaymentMode);
+  const limitError = buyLimit.validate(parsedAmount);
+  const handleUseMaxLimit = useCallback(() => {
+    setAmountText(String(buyLimit.effectiveMaxUsd));
+    setSelectedChipIndex(null);
+  }, [buyLimit.effectiveMaxUsd]);
+
   const isTradeContextLoading = isMarketPending || isWalletPending;
+  // The market list has no row for the user's state stablecoin, or no usable price
+  // (e.g. DAI absent from the production market response for a TX-registered user).
+  // Surfaced as an inline message — otherwise the user just stares at a Proceed
+  // button that can never enable.
+  const topUpUnavailable =
+    !isTradeContextLoading && (cryptoAsset === null || tradePriceUSD <= 0);
   const canProceedDebit =
     amountText.length > 0 &&
     Number.isFinite(parsedAmount) &&
@@ -161,7 +194,12 @@ const NewAddBalanceScreen: React.FC = () => {
     Number.isFinite(parsedAmount) &&
     parsedAmount > 0 &&
     !isTradeContextLoading;
-  const canProceed = selectedPaymentMode === 'debit' ? canProceedDebit : canProceedCash;
+  const canProceed =
+    (selectedPaymentMode === 'debit' ? canProceedDebit : canProceedCash) &&
+    !limitError &&
+    // Cash also needs the stablecoin market row (proceedAddBalance builds the
+    // location-finder params from it) — keep both rails disabled when unavailable.
+    !topUpUnavailable;
 
   const handleTradeExecute = useCallback(async () => {
     if (!cryptoAsset) return;
@@ -203,6 +241,10 @@ const NewAddBalanceScreen: React.FC = () => {
 
       const res = await tradeExecute.mutateAsync(payload);
       const ok = res?.ok ?? res?.status ?? true;
+
+      // This buy consumed part of the daily/monthly allowance — without this the
+      // meter would keep showing the pre-purchase "remaining" for up to staleTime.
+      queryClient.invalidateQueries({ queryKey: coinmeTransactionLimitsKeys.all });
 
       navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
         isLoading: false,
@@ -285,6 +327,41 @@ const NewAddBalanceScreen: React.FC = () => {
     requireEmailVerified(proceedAddBalance);
   }, [requireEmailVerified, proceedAddBalance]);
 
+  // Expected fee shown in the summary modal — fetched only while it's open (debit buy).
+  const quoteEnabled =
+    showReceiptModal && selectedPaymentMode === 'debit' && parsedAmount > 0 && !!cryptoAsset;
+  const {
+    data: quoteData,
+    isLoading: isQuoteLoading,
+    isError: isQuoteError,
+    error: quoteError,
+  } = useCoinmeTradeQuote(
+    {
+      tradeType: 'buy',
+      chain: cryptoAsset?.chain ?? '',
+      cryptoCurrencyCode: cryptoAsset?.asset ?? '',
+      fiatCurrencyCode: 'USD',
+      amountValue: String(parsedAmount),
+      amountCurrencyCode: 'USD',
+    },
+    quoteEnabled
+  );
+  const expectedFee = getExpectedFeeUsd(quoteData?.feeBreakdown);
+
+  // Surface the quote's own failure (e.g. insufficient balance) instead of a silent
+  // no-op. Deduped by message so it toasts once per distinct error.
+  const lastQuoteErrorToast = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isQuoteError || !quoteError) {
+      lastQuoteErrorToast.current = null;
+      return;
+    }
+    const msg = getCoinmeTradeQuoteErrorMessage(quoteError);
+    if (lastQuoteErrorToast.current === msg) return;
+    lastQuoteErrorToast.current = msg;
+    showError('Something went wrong', msg);
+  }, [isQuoteError, quoteError]);
+
   const paymentSubtitle = useMemo(() => {
     if (!selectedPaymentMethod) return 'Select a card';
     const provider = (selectedPaymentMethod.card_provider || 'Card').toUpperCase();
@@ -354,16 +431,23 @@ const NewAddBalanceScreen: React.FC = () => {
             selectedIndex={selectedChipIndex}
             onSelect={handleChipSelect}
           />
+          <TransactionLimitMeter
+            style={styles.limitMeterSpacer}
+            limit={buyLimit}
+            amountUsd={parsedAmount}
+            error={limitError}
+            onUseMax={handleUseMaxLimit}
+          />
         </View>
 
         <DashboardSection title="Payment Method" titleStyle={{ fontSize: 16 }}>
           <View style={{ gap: theme.spacing.sm }}>
             <View style={{ borderRadius: theme.radius.lg, overflow: 'hidden' }}>
-              <DebitCardPaymentRow
+              {/* <DebitCardPaymentRow
                 title="Cash"
                 maskedDetail="Pay with cash at nearby stores"
                 onPress={() => setSelectedPaymentMode('cash')}
-              />
+              /> */}
               {selectedPaymentMode === 'cash' && (
                 <View
                   style={{
@@ -415,6 +499,17 @@ const NewAddBalanceScreen: React.FC = () => {
 
         <View style={styles.proceedSpacer} />
 
+        {topUpUnavailable ? (
+          <CustomText
+            variant="caption"
+            color={theme.colors.error}
+            style={{ textAlign: 'center', marginBottom: theme.spacing.sm }}
+          >
+            Adding balance is temporarily unavailable. Please check your connection
+            and try again in a moment.
+          </CustomText>
+        ) : null}
+
         <Button disabled={!canProceed} onPress={handleProceed}>
           {selectedPaymentMode === 'cash' ? 'Find a Location' : 'Proceed'}
         </Button>
@@ -429,6 +524,9 @@ const NewAddBalanceScreen: React.FC = () => {
         }}
         variant="fiatOnly"
         usdAmount={parsedAmount}
+        expectedFee={expectedFee}
+        expectedFeeLoading={quoteEnabled && isQuoteLoading}
+        totalLabel="Amount to Be Added"
       />
 
       <PaymentMethodPickerModal

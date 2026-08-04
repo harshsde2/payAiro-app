@@ -12,16 +12,26 @@ interface QueryProviderProps {
 const PERSIST_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
- * Balances are money-authoritative and must never be shown from disk on cold
- * start. We keep them in the in-memory cache (instant render mid-session) but
- * exclude them from MMKV persistence so a fresh launch always fetches them.
+ * Money-authoritative data that must never be shown from disk on cold start. It
+ * stays in the in-memory cache (instant render mid-session) but is excluded from
+ * MMKV persistence so a fresh launch always fetches it.
+ *
+ * - `balance`: showing a stale balance misrepresents the user's funds.
+ * - `transactionLimits`: carries live daily/monthly `usage`, and a restored stale
+ *   copy would both display a wrong "left today" and drive amount enforcement.
+ * - `userCryptoMarket`: the supported-assets catalog + prices that gate Add
+ *   Balance / Send. The backend intermittently serves a degraded "fallback" list
+ *   (missing USDC); restoring such a copy from disk froze those flows on launch.
  */
-const isBalanceQuery = (queryKey: unknown): boolean =>
+const NEVER_PERSISTED_KEY_SEGMENTS = ['balance', 'transactionlimits', 'usercryptomarket'];
+
+const isNeverPersistedQuery = (queryKey: unknown): boolean =>
   Array.isArray(queryKey) &&
-  queryKey.some(
-    (segment) =>
-      typeof segment === 'string' && segment.toLowerCase().includes('balance')
-  );
+  queryKey.some((segment) => {
+    if (typeof segment !== 'string') return false;
+    const lower = segment.toLowerCase();
+    return NEVER_PERSISTED_KEY_SEGMENTS.some((needle) => lower.includes(needle));
+  });
 
 // Use regular provider by default to avoid persistence issues
 export const QueryProvider: React.FC<QueryProviderProps> = ({ children }) => {
@@ -44,7 +54,7 @@ export const PersistQueryProvider: React.FC<QueryProviderProps> = ({ children })
         buster: 'v1',
         dehydrateOptions: {
           shouldDehydrateQuery: (query) =>
-            !isBalanceQuery(query.queryKey) &&
+            !isNeverPersistedQuery(query.queryKey) &&
             defaultShouldDehydrateQuery(query),
         },
       }}

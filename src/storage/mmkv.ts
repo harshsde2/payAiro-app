@@ -46,6 +46,8 @@ export const STORAGE_KEYS = {
   ONBOARDING_COMPLETE: "onboarding_complete",
   AUTH_ONBOARDING_STEP: "auth_onboarding_step",
   AUTH_RESUME_PARAMS: "auth_resume_params",
+  /** Identity returned by KYC step 1, so step 2 can prefill after an app restart. */
+  KYC_VERIFY_DRAFT: "kyc_verify_draft",
   USER_DATA: "user_data",
   WALLET_DATA: "wallet_data",
   BIOMETRIC_AVAILABLE: "biometric_available",
@@ -87,6 +89,9 @@ export const STORAGE_KEYS = {
   STATE_COMPLIANCE_ACKS: "state_compliance_acks",
   /** JSON: last ComplianceStatus from GET state-compliance/status/ — lets the launch gate work offline. */
   STATE_COMPLIANCE_STATUS: "state_compliance_status",
+  /** Frontend-only: the user's chosen default debit card (payment_method_id). Pre-selects it
+   *  on Add Balance / Buy / Sell / Withdraw. Not a backend field. */
+  DEFAULT_PAYMENT_METHOD_ID: "default_payment_method_id",
 };
 
 export function getComplianceAckedVersion(stateCode: string): string | null {

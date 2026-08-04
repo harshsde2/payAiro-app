@@ -22,9 +22,11 @@ import EmailVerificationBanner from "new-ui/components/common-components/EmailVe
 import {
   useCryptoAssetsListData,
   usePaymentTransactionHistory,
+  useUserCryptoBalanceFastApi,
   useUserCryptoMarketList,
 } from "query/hooks/useCrypto";
 import { useStateStablecoin } from "hooks/useStateStablecoin";
+import { useUserStateCode } from "hooks/useUserStateCode";
 import RecentActivityCard, {
   isTradeActivity,
 } from "@new-ui/components/common-components/RecentActivityCard";
@@ -39,7 +41,6 @@ import { isCashOnRampActivity } from "new-ui/components/common-components/Recent
 import {
   getUserContactAvatar,
   getUserContactDisplayName,
-  getUserContactSendIdentifier,
   IUserContact,
   useUserContacts,
 } from "query/hooks/useContact";
@@ -74,32 +75,40 @@ const NewDashboard = () => {
   const {
     data: balances = [],
     isMarketLoading: isLoading,
-    isRefetchingCrypto,
     refetchMarket,
     refetchBalance,
   } = useCryptoAssetsListData("USD");
 
+  // The balance-reveal (eye) spinner and the pull-to-refresh spinner each get their own
+  // flag so one action never lights up the other's loader. They used to share the query's
+  // `isRefetchingCrypto`, so revealing the balance also spun the top control and vice versa.
+  const [isRevealingBalance, setIsRevealingBalance] = useState(false);
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+
   const {
     data: historyResponse,
     isLoading: isHistoryLoading,
-    isRefetching: isHistoryRefetching,
     refetch: refetchHistory,
   } = usePaymentTransactionHistory({ scope: "all", limit: 20 });
   const { data: marketRows = [] } = useUserCryptoMarketList("USD");
 
   // Registered-state stablecoin (TX → DAI, others → USDC): the Dashboard's "Payairo Balance".
   const stateStablecoin = useStateStablecoin();
+  // Straight from the balance API: the merged market+balance list is keyed off the
+  // state-FILTERED market list, which can hide the stablecoin row entirely and made
+  // this card read $0.00 while the user actually held funds.
+  const { data: balanceRows = [] } = useUserCryptoBalanceFastApi();
   const stablecoinBalance = useMemo(() => {
-    const row = balances.find(
-      (b) => String(b.asset ?? "").toUpperCase() === stateStablecoin
+    const row = balanceRows.find(
+      (b) => String(b.currencySymbol ?? "").toUpperCase() === stateStablecoin
     );
-    return Number(row?.usd_value_available ?? 0);
-  }, [balances, stateStablecoin]);
+    const usd = Number(row?.estimatedBalanceValue ?? 0);
+    return Number.isFinite(usd) ? usd : 0;
+  }, [balanceRows, stateStablecoin]);
 
   const {
     data: userContactsData,
     isLoading: isContactsLoading,
-    isRefetching: isContactsRefetching,
     refetch: refetchUserContacts,
   } = useUserContacts();
 
@@ -111,6 +120,26 @@ const NewDashboard = () => {
       refetchUserContacts(),
     ]);
   }, [refetchMarket, refetchBalance, refetchHistory, refetchUserContacts]);
+
+  // Eye button: fetch fresh prices/balance to reveal, driving ONLY the balance-card spinner.
+  const handleRevealBalance = useCallback(async () => {
+    setIsRevealingBalance(true);
+    try {
+      await Promise.all([refetchMarket(), refetchBalance()]);
+    } finally {
+      setIsRevealingBalance(false);
+    }
+  }, [refetchMarket, refetchBalance]);
+
+  // Pull-to-refresh: refresh everything, driving ONLY the top RefreshControl spinner.
+  const handlePullRefresh = useCallback(async () => {
+    setIsPullRefreshing(true);
+    try {
+      await refreshAll();
+    } finally {
+      setIsPullRefreshing(false);
+    }
+  }, [refreshAll]);
 
   const throttledAutoRefresh = useCallback(() => {
     const now = Date.now();
@@ -140,9 +169,6 @@ const NewDashboard = () => {
     return () => sub.remove();
   }, [throttledAutoRefresh]);
 
-  const listRefreshing =
-    isRefetchingCrypto || isHistoryRefetching || isContactsRefetching;
-
   const priceByCurrency = useMemo(() => {
     const map = new Map<string, number>();
     for (const row of marketRows) {
@@ -155,17 +181,37 @@ const NewDashboard = () => {
     return map;
   }, [marketRows]);
 
+  // Display-only stablecoin hiding for the "Crypto" list (does NOT touch the balance
+  // card / Add Balance / Withdraw math): hide USDC in every state; also hide DAI for TX.
+  const isTexas = (useUserStateCode() as string | null) === "TX";
+  const displayBalances = useMemo(
+    () =>
+      balances.filter((row) => {
+        const sym = String(row?.asset ?? "").toUpperCase();
+        if (sym === "USDC") return false;
+        if (isTexas && sym === "DAI") return false;
+        return true;
+      }),
+    [balances, isTexas]
+  );
+
   const recentActivityItems = historyResponse?.data?.items ?? [];
   const savedContacts = userContactsData?.contacts?.slice(0, DASHBOARD_RECENT_CONTACTS_LIMIT) ?? [];
 
   const handleRecentContactPress = useCallback(
     (contact: IUserContact) => {
-      const sender = getUserContactSendIdentifier(contact);
-      if (!sender) return;
-      navigation.navigate(NAVIGATION_SCREENS.NEW_SEND as never, {
-        requested: false,
-        sender,
-      });
+      // `contact.id` is the contact-list row id; the profile screen needs the target
+      // user's id (`contact_user_id`) for api/v1/users/{id}/profile-transactions/.
+      const targetUserId = contact.contact_user_id;
+      if (targetUserId === undefined || targetUserId === null) return;
+      navigation.navigate(NAVIGATION_SCREENS.USER_PROFILE as never, {
+        userDetails: {
+          id: targetUserId,
+          username: contact.username,
+          identifier: contact.username,
+          profile_photo: getUserContactAvatar(contact),
+        },
+      } as never);
     },
     [navigation]
   );
@@ -219,8 +265,8 @@ const NewDashboard = () => {
       scrollViewProps={{
         refreshControl: (
           <RefreshControl
-            refreshing={listRefreshing}
-            onRefresh={refreshAll}
+            refreshing={isPullRefreshing}
+            onRefresh={handlePullRefresh}
             tintColor={newUITheme.colors.tertiary}
           />
         ),
@@ -253,13 +299,11 @@ const NewDashboard = () => {
       {/* Keep commented dashboard widgets for future enablement */}
       {/* <NewDashboardCard /> */}
       <DashboardBalanceCard
-        title="Payairo Balance"
+        title="PayAiro Balance"
         subtitle="This is your Stablecoin balance"
         balance={stablecoinBalance}
-        isRefreshing={isRefetchingCrypto}
-        onRefreshBalance={async () => {
-          await Promise.all([refetchMarket(), refetchBalance()]);
-        }}
+        isRefreshing={isRevealingBalance}
+        onRefreshBalance={handleRevealBalance}
       />
       {/* <MemoizedDashboardSection title="Your Accounts" /> */}
 
@@ -415,7 +459,7 @@ const NewDashboard = () => {
           </DashboardSection>
           )}
           <DashboardSection title="Crypto">
-            <CryptoAssetsList data={balances.slice(0, 5)} isLoading={isLoading} />
+            <CryptoAssetsList data={displayBalances} isLoading={isLoading} />
           </DashboardSection>
         </View>
       </DashboardCardWrapper>

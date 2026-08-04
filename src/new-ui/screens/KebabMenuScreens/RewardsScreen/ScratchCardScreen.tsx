@@ -159,15 +159,10 @@ const ScratchCardScreen = () => {
 
           {cardState === 'unscratched' && (
             <>
-              {/* Green overlay – scratched away by Skia */}
-              <View style={styles.giftOverlay} pointerEvents="none">
-                <AppIcon.RewardsGift width={24} height={24} />
-                <CustomText style={styles.giftText}>
-                  Scratch to reveal{'\n'}your reward!
-                </CustomText>
-              </View>
-
-              {/* Skia canvas for erasing the overlay, driven by the pan gesture */}
+              {/* Skia green scratch surface, erased by the pan gesture to reveal the
+                  reward `underlay` beneath. No separate same-color overlay View — that
+                  only hid the reward behind an identical green, making scratching look
+                  like it did nothing. */}
               <GestureDetector gesture={panGesture}>
                 <View style={styles.overlayCanvas}>
                   <Canvas style={{ flex: 1 }}>

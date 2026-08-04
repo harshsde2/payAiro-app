@@ -11,6 +11,7 @@ import NewOTPVerificationScreen from "../new-ui/screens/Auth/OTPVerification";
 import NewCoinmeMobileAuthScreen from "../new-ui/screens/Auth/CoinmeMobileAuth";
 import NewCommonErrorScreen from "../new-ui/screens/Auth/CommonError";
 import NewKYCScreen from "../new-ui/screens/Auth/KYC";
+import NewKYCVerifyScreen from "../new-ui/screens/Auth/KYCVerify";
 import NewAddressScreen from "../new-ui/screens/Auth/Address";
 import NewForgotPasswordScreen from "../new-ui/screens/Auth/ForgotPassword";
 import NewForgotPasswordVerificationScreen from "../new-ui/screens/Auth/ForgotPasswordVerification";
@@ -114,6 +115,15 @@ export default function AuthStack({
         }}
         name={NAVIGATION_SCREENS.NEW_KYC}
         component={NewKYCScreen}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          header: AuthStackHeader,
+           headerTitle: "KYC Verify"
+        }}
+        name={NAVIGATION_SCREENS.NEW_KYC_VERIFY}
+        component={NewKYCVerifyScreen}
       />
       <Stack.Screen
         options={{

@@ -1,7 +1,7 @@
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import { SvgIcons } from "constants/svgs";
-import React, { useState, useRef, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useRef, useCallback, useMemo } from "react";
 import {
   Alert,
   Dimensions,
@@ -22,7 +22,6 @@ import { colors, useTheme } from "styles";
 import { CustomText } from "tsx-components";
 import Fonts from "../../constants/Fonts";
 import { SCREENS } from "../../constants/SCREENS";
-import { IProcessedQRCode, QRCodeType } from "./types";
 import { PayAiroQRScanner, QRScannerError, QRScannerErrorCode } from "../../utils/PayAiroQRScanner";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { useSelector } from "react-redux";
@@ -34,8 +33,7 @@ import type { IReceiveQRSheetRef } from "@new-ui/components/common-components/Re
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import useSelectorAction from "hooks/useSelectorAction";
 import { showError } from "utils/toast";
-import { useUserSearch } from "query/hooks";
-import type { ISendContactItem } from "@new-ui/components/common-components/SendContactsList";
+import { isWalletAddress, normalizeWalletCandidate } from "utils/walletAddress";
 
 const { width, height } = Dimensions.get("window");
 
@@ -43,119 +41,47 @@ const { width, height } = Dimensions.get("window");
 const SCAN_AREA_SIZE = width * 0.7;
 
 /**
- * Processes QR code string or object and determines the type and sender
- * @param codeStringValue - The QR code value (can be string or parsed object)
- * @returns Object containing type and sender based on QR code content
+ * The only two QR codes PayAiro's scanner accepts:
+ *  - `payairo`: our PayAiro-to-PayAiro receive QR — a JSON object
+ *    `{ type: "receive", username, tag }` (from ReceiveQRSheet). → prefill username.
+ *  - `wallet`:  a plain crypto wallet address (from the Crypto Receive QR). → prefill address.
+ * Anything else is `invalid`.
  */
-const processQRCodeData = (
-  codeStringValue: string | object | null | undefined
-): IProcessedQRCode => {
-  console.log(
-    "codeStringValue ->",
-    JSON.stringify(codeStringValue ?? "{}", null, 2)
-  );
+type ScanResult =
+  | { kind: "payairo"; username: string }
+  | { kind: "wallet"; address: string }
+  | { kind: "invalid" };
 
-  if (!codeStringValue) {
-    return {
-      type: "receiveMerchant",
-      sender: "",
-    };
+/** Classify a raw scanned/decoded QR string into one of the supported kinds. */
+const classifyScannedQR = (raw: string | null | undefined): ScanResult => {
+  const value = String(raw ?? "").trim();
+  if (!value) return { kind: "invalid" };
+
+  // 1) Our PayAiro receive QR is a JSON object with a username/tag.
+  let parsed: unknown = null;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    parsed = null;
+  }
+  if (parsed && typeof parsed === "object") {
+    const obj = parsed as { type?: unknown; username?: unknown; tag?: unknown };
+    const username = String(obj.username ?? obj.tag ?? "").trim();
+    const typeStr = String(obj.type ?? "").toLowerCase();
+    if (username && (typeStr === "receive" || "tag" in obj || "username" in obj)) {
+      return { kind: "payairo", username };
+    }
+    // A JSON object that isn't our receive QR (order/merchant/etc.) is not supported.
+    return { kind: "invalid" };
   }
 
-  // Handle object format: { "type": "receive", "username": "pratap", "tag": "pratap" }
-  if (typeof codeStringValue === "object" && codeStringValue !== null) {
-    const qrObject = codeStringValue as {
-      type?: string;
-      username?: string;
-      orderID?: unknown;
-      merchantSend?: unknown;
-      [key: string]: unknown;
-    };
-
-    // Extract username as sender if available, otherwise use the full object
-    const sender = qrObject.username ? qrObject.username : qrObject;
-
-    // If object has a type field, use it directly
-    if (qrObject.type) {
-      const validTypes: QRCodeType[] = ["request", "merchantSend", "send", "receiveMerchant"];
-
-      const type = validTypes.includes(qrObject.type as QRCodeType)
-        ? (qrObject.type as QRCodeType)
-        : "receiveMerchant";
-
-      return {
-        type,
-        sender,
-      };
-    }
-
-    // If object doesn't have type but has orderID, it's a request
-    if ("orderID" in qrObject || qrObject.orderID) {
-      return {
-        type: "request",
-        sender,
-      };
-    }
-
-    // If object has merchantSend, it's merchantSend
-    if ("merchantSend" in qrObject || qrObject.merchantSend) {
-      return {
-        type: "merchantSend",
-        sender,
-      };
-    }
-
-    // Default for object without type field
-    return {
-      type: "receiveMerchant",
-      sender,
-    };
+  // 2) Plain string → only a valid wallet address is accepted.
+  const candidate = normalizeWalletCandidate(value);
+  if (isWalletAddress(candidate)) {
+    return { kind: "wallet", address: candidate };
   }
 
-  // Handle string format (legacy support)
-  const codeString = codeStringValue as string;
-
-  // Check conditions in priority order
-  if (codeString.includes("orderID")) {
-    try {
-      return {
-        type: "request",
-        sender: JSON.parse(codeString),
-      };
-    } catch {
-      return {
-        type: "request",
-        sender: codeString,
-      };
-    }
-  }
-
-  if (codeString.includes("merchantSend")) {
-    try {
-      return {
-        type: "merchantSend",
-        sender: JSON.parse(codeString),
-      };
-    } catch {
-      return {
-        type: "merchantSend",
-        sender: codeString,
-      };
-    }
-  }
-
-  if (codeString.includes("sending")) {
-    return {
-      type: "send",
-      sender: codeString.replace("sending: ", ""),
-    };
-  }
-
-  // Default case
-  return {
-    type: "send",
-    sender: codeString.replace("sending: ", ""),
-  };
+  return { kind: "invalid" };
 };
 
 export default function Scans(): React.ReactElement {
@@ -174,52 +100,6 @@ export default function Scans(): React.ReactElement {
   const isProcessingRef = useRef<boolean>(false);
   const receiveSheetRef = useRef<IReceiveQRSheetRef>(null);
 
-  // For send QR scans, we pause scanning and resolve the scanned identifier via user-search,
-  // then navigate to EnterAmount with the matched contact object.
-  const [pendingSendIdentifier, setPendingSendIdentifier] = useState<string | null>(null);
-  const {
-    data: pendingSendSearchData,
-    isLoading: isPendingSendSearchLoading,
-  } = useUserSearch(pendingSendIdentifier ?? '', 1, 1, 20);
-
-  useEffect(() => {
-    if (!pendingSendIdentifier) return;
-    if (isPendingSendSearchLoading) return;
-
-    const users = pendingSendSearchData?.data?.data ?? [];
-    const matchUser = users.find((u: any) => u?.usernames === pendingSendIdentifier);
-
-    if (matchUser) {
-      const selectedContact: ISendContactItem = {
-        uuid: matchUser.email || matchUser.mobile_number || '',
-        nickname: `${matchUser.name || ''} ${matchUser.lastname || ''}`.trim() || matchUser.usernames || '',
-        username: matchUser.usernames || '',
-        email: matchUser.email || '',
-        profile_photo: matchUser.profile_photo || null,
-      };
-
-      setPendingSendIdentifier(null);
-      navigation.navigate(NAVIGATION_SCREENS.ENTER_AMOUNT as any, {
-        type: "send",
-        recipient_identifier: pendingSendIdentifier,
-        selectedContact,
-      } as any);
-      return;
-    }
-
-    // No exact match found => resume scanning.
-    showError("Recipient not found", "We couldn't find that recipient.");
-    setPendingSendIdentifier(null);
-    isProcessingRef.current = false;
-    setIsScanning(true);
-    setIsCameraActive(true);
-  }, [
-    isPendingSendSearchLoading,
-    navigation,
-    pendingSendIdentifier,
-    pendingSendSearchData,
-  ]);
-  
   const { setNativeModalVisible } = useAppLock();
   
   // Camera permission hook with comprehensive handling
@@ -236,68 +116,80 @@ export default function Scans(): React.ReactElement {
   // Get back camera device
   const device = useCameraDevice("back");
 
-  // Handle QR code detection from camera
-  const handleQRCodeScanned = useCallback((codes: Code[]): void => {
-    // Prevent multiple rapid scans
-    if (isProcessingRef.current || codes.length === 0) {
-      return;
-    }
+  // Re-arm the scanner after a rejected scan so the user can try again.
+  const resumeScanning = useCallback((): void => {
+    isProcessingRef.current = false;
+    setIsScanning(true);
+    setIsCameraActive(true);
+  }, []);
 
-    const code = codes[0];
-    const codeValue = code.value;
+  /**
+   * Route a classified QR to NewSend (username or wallet prefilled) or reject it.
+   * Shared by live-camera and gallery-upload paths.
+   * @returns true if navigation happened; false if rejected (caller resumes scanning).
+   */
+  const routeScannedQR = useCallback(
+    (rawValue: string | null | undefined): boolean => {
+      const result = classifyScannedQR(rawValue);
 
-    if (!codeValue || codeValue.length === 0) {
-      return;
-    }
+      if (result.kind === "invalid") {
+        showError(
+          "Invalid QR code",
+          "This isn't a PayAiro QR code. Scan a PayAiro payment QR or a crypto wallet QR."
+        );
+        return false;
+      }
 
-    console.log("QR Code scanned:", codeValue);
-    
-    // Set processing flag to prevent duplicate navigation
-    isProcessingRef.current = true;
-    setIsScanning(false);
+      if (result.kind === "payairo") {
+        // Guard against scanning your own PayAiro code.
+        if (
+          myUsername &&
+          result.username.toLowerCase() === String(myUsername).toLowerCase()
+        ) {
+          showError("Invalid QR code", "You can't scan your own QR code.");
+          return false;
+        }
+        navigation.navigate(NAVIGATION_SCREENS.NEW_SEND, {
+          requested: false,
+          sender: result.username,
+        });
+        return true;
+      }
 
-    // Try to parse as JSON, if it fails, pass as string
-    let parsedValue: string | object;
-    try {
-      parsedValue = JSON.parse(codeValue);
-    } catch {
-      parsedValue = codeValue;
-    }
-
-    const { type, sender } = processQRCodeData(parsedValue);
-
-    // console.log("type =>", type);
-    // console.log("sender =>", sender);
-    if(sender === myUsername){
-      showError("Invalid QR code", "You can't scan your own QR code.");
-      isProcessingRef.current = false;
-      setIsScanning(true);
-      setIsCameraActive(true);
-      return;
-    }
-
-    if (type === "receiveMerchant") {
+      // Wallet address → prefill on NewSend; its Proceed handles the external send.
       navigation.navigate(NAVIGATION_SCREENS.NEW_SEND, {
         requested: false,
-        sender,
+        sender: result.address,
       });
-    } else if(type === "send"){
+      return true;
+    },
+    [myUsername, navigation]
+  );
 
-      const trimmedSender =
-        typeof sender === "string" ? sender.trim() : String(sender).trim();
-
-      if (!trimmedSender) {
-        showError("Recipient not found", "We couldn't find that recipient.");
-        isProcessingRef.current = false;
-        setIsScanning(true);
-        setIsCameraActive(true);
+  // Handle QR code detection from camera
+  const handleQRCodeScanned = useCallback(
+    (codes: Code[]): void => {
+      // Prevent multiple rapid scans
+      if (isProcessingRef.current || codes.length === 0) {
         return;
       }
 
-      // Pause scanning until user-search resolves.
-      setPendingSendIdentifier(trimmedSender);
-    }
-  }, [navigation]);
+      const codeValue = codes[0]?.value;
+      if (!codeValue || codeValue.length === 0) {
+        return;
+      }
+
+      // Set processing flag to prevent duplicate navigation
+      isProcessingRef.current = true;
+      setIsScanning(false);
+
+      const navigated = routeScannedQR(codeValue);
+      if (!navigated) {
+        resumeScanning();
+      }
+    },
+    [resumeScanning, routeScannedQR]
+  );
 
   // Code scanner configuration - optimized for QR codes
   const codeScanner = useCodeScanner({
@@ -357,47 +249,10 @@ export default function Scans(): React.ReactElement {
         const codeStringValue = scanResult.value;
         console.log("QR Code scanned from gallery:", codeStringValue);
 
-        // Try to parse as JSON, if it fails, use as string
-        let parsedValue: string | object;
-        try {
-          parsedValue = JSON.parse(codeStringValue);
-          console.log("Parsed QR code as object:", parsedValue);
-        } catch {
-          parsedValue = codeStringValue;
-          console.log("QR code is string format");
-
-          // Validate that it's a PayAiro QR code (contains "sending:", "orderID", or "merchantSend")
-          // Or if it's a valid JSON object, process it
-          if (
-            !codeStringValue.includes("sending:") &&
-            !codeStringValue.includes("orderID") &&
-            !codeStringValue.includes("merchantSend") &&
-            !codeStringValue.startsWith("{")
-          ) {
-            Alert.alert(
-              "Invalid QR Code",
-              "Please scan a valid PayAiro QR code."
-            );
-            setNativeModalVisible(false);
-            return;
-          }
-        }
-
-        // Process QR code data using the helper function
+        // Same classification as the live camera: PayAiro username, wallet address, or
+        // invalid. `routeScannedQR` shows the invalid-QR error itself when unsupported.
         setIsScanning(false);
-        const { type, sender } = processQRCodeData(parsedValue);
-
-        if (type === "receiveMerchant") {
-          navigation.navigate(NAVIGATION_SCREENS.NEW_SEND, {
-            requested: false,
-            sender,
-          });
-        } else {
-          navigation.navigate(NAVIGATION_SCREENS.ENTER_AMOUNT, {
-            type,
-            sender,
-          });
-        }
+        routeScannedQR(codeStringValue);
       } catch (error) {
         console.log("QR Decode Error:", error);
         
@@ -433,7 +288,7 @@ export default function Scans(): React.ReactElement {
       Alert.alert("Error", "Unable to access the selected image.");
       setNativeModalVisible(false);
     }
-  }, [navigation, setNativeModalVisible]);
+  }, [navigation, routeScannedQR, setNativeModalVisible]);
 
   // Handle permission request
   const handleRequestPermission = useCallback(async (): Promise<void> => {

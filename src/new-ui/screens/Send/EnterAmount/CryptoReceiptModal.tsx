@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 import CustomText from '@new-ui/components/common-components/CustomText';
 import Button from '@new-ui/components/common-components/layout/Button';
@@ -17,6 +17,14 @@ type CryptoReceiptModalProps = {
   tokenSymbol?: string;
   tokenAmount?: number;
   priceUSD?: number;
+  /** All-in expected fee (USD) from the trade quote. Row hidden when null & not loading. */
+  expectedFee?: number | null;
+  expectedFeeLoading?: boolean;
+  /** Row labels — vary per flow (buy vs sell/withdraw). */
+  feeLabel?: string;
+  totalLabel?: string;
+  /** Sell/withdraw: Total = Amount + Fee (charged). Buy/add-balance (default): Amount − Fee. */
+  addFeeToTotal?: boolean;
 };
 
 const CryptoReceiptModal: React.FC<CryptoReceiptModalProps> = ({
@@ -28,11 +36,19 @@ const CryptoReceiptModal: React.FC<CryptoReceiptModalProps> = ({
   priceUSD = 0,
   usdAmount,
   variant = 'full',
+  expectedFee = null,
+  expectedFeeLoading = false,
+  feeLabel = 'Expected Fee',
+  totalLabel = 'Total',
+  addFeeToTotal = false,
 }) => {
   const { theme } = useTheme();
   const styles = enterAmountStyles(theme);
-  // No transaction fee on the frontend — total is just the amount.
-  const total = usdAmount;
+  // Sell/withdraw: Total = Amount + Fee (total charged). Buy/add-balance & plain P2P
+  // send: Total = Amount − Fee (net; no fee → equals the amount). Clamped ≥ 0.
+  const total = addFeeToTotal
+    ? usdAmount + (expectedFee ?? 0)
+    : Math.max(0, usdAmount - (expectedFee ?? 0));
   const isFiatOnly = variant === 'fiatOnly';
 
   if (!visible) return null;
@@ -80,9 +96,22 @@ const CryptoReceiptModal: React.FC<CryptoReceiptModalProps> = ({
             <CustomText>${usdAmount.toFixed(2)}</CustomText>
           </View>
 
+          {expectedFeeLoading || expectedFee != null ? (
+            <View style={styles.cryptoReceiptRow}>
+              <CustomText variant="caption" fontWeight="light" style={styles.cryptoReceiptLabel}>
+                {feeLabel}
+              </CustomText>
+              {expectedFeeLoading ? (
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+              ) : (
+                <CustomText>${(expectedFee ?? 0).toFixed(2)}</CustomText>
+              )}
+            </View>
+          ) : null}
+
           <View style={styles.cryptoReceiptRowTotal}>
             <CustomText variant="subtitle2" size={14} fontWeight="light" style={styles.cryptoReceiptLabel}>
-              Total
+              {totalLabel}
             </CustomText>
             <CustomText size={14} variant="subtitle2" style={styles.cryptoReceiptTotal}>
               ${total.toFixed(2)}

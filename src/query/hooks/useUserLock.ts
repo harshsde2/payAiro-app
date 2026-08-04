@@ -111,3 +111,107 @@ export const useUpsertUserSecurityPinSettings = () => {
     },
   });
 };
+
+/** The only privileged action the OTP endpoints are used for today. */
+export type ActionOtpAction = "transaction_pin_change";
+export type ActionOtpChannel = "phone" | "email";
+
+export interface ActionOtpVerifyData {
+  /** Short-lived ticket (900s) that authorises SECURITY_PIN_RESET. Single-use. */
+  action_token: string;
+  expires_in_seconds: number;
+}
+
+interface FastApiActionOtpRequestResponse {
+  ok: boolean;
+  message: string;
+}
+
+interface FastApiActionOtpVerifyResponse {
+  ok: boolean;
+  message: string;
+  data: ActionOtpVerifyData;
+}
+
+/** Sends an OTP to the logged-in user's registered phone/email for a privileged action. */
+export const useActionOtpRequest = () => {
+  return useMutation<
+    FastApiActionOtpRequestResponse,
+    Error,
+    { channel: ActionOtpChannel; action: ActionOtpAction }
+  >({
+    mutationFn: async (payload) => {
+      return await userApiClient.post<FastApiActionOtpRequestResponse>(
+        USER_AUTH.ACTION_OTP_REQUEST,
+        payload,
+        false
+      );
+    },
+  });
+};
+
+/** Verifies an action OTP and returns the action_token needed to reset the PIN. */
+export const useActionOtpVerify = () => {
+  return useMutation<
+    FastApiActionOtpVerifyResponse,
+    Error,
+    { channel: ActionOtpChannel; action: ActionOtpAction; otp_code: string }
+  >({
+    mutationFn: async (payload) => {
+      return await userApiClient.post<FastApiActionOtpVerifyResponse>(
+        USER_AUTH.ACTION_OTP_VERIFY,
+        payload,
+        false
+      );
+    },
+  });
+};
+
+/**
+ * Changes the PIN when the user knows the current one. The backend re-validates
+ * `old_pin` and answers 401 INVALID_CREDENTIALS if it's wrong.
+ */
+export const useSecurityPinChange = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ApiResponse<UserSecurityPinSettingsData>,
+    Error,
+    { old_pin: string; new_pin: string }
+  >({
+    mutationFn: async (payload) => {
+      const response = await userApiClient.post<FastApiSecurityPinResponse>(
+        USER_AUTH.SECURITY_PIN_CHANGE,
+        payload,
+        false
+      );
+      return mapFastApiResponse(response);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: USER_SECURITY_PIN_QUERY_KEY });
+    },
+  });
+};
+
+/** Resets the PIN for a user who forgot it, authorised by an action_token. */
+export const useSecurityPinReset = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ApiResponse<UserSecurityPinSettingsData>,
+    Error,
+    { action_token: string; new_pin: string }
+  >({
+    mutationFn: async (payload) => {
+      const response = await userApiClient.post<FastApiSecurityPinResponse>(
+        USER_AUTH.SECURITY_PIN_RESET,
+        payload,
+        false
+      );
+      return mapFastApiResponse(response);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: USER_SECURITY_PIN_QUERY_KEY });
+    },
+  });
+};

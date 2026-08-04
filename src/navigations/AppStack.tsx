@@ -30,6 +30,11 @@ import { useTheme as useNewTheme } from "@new-ui/styles/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
 import SettingsScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/SettingsScreen";
 import PrivacyAndSecurityScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/PrivacyAndSecurityScreen";
+import AppVersionScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/AppVersionScreen";
+import NewChangePinScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/ChangePin";
+import NewForgotPinScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/ForgotPin";
+import PinActionOtpScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/PinActionOtpScreen";
+import SetNewPinScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/SetNewPinScreen";
 import CoinmeAgreementScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/CoinmeAgreementScreen";
 import DisclosureHistoryScreen from "new-ui/screens/KebabMenuScreens/DisclosureHistoryScreen/DisclosureHistoryScreen";
 import EmailVerificationScreen from "new-ui/screens/Auth/EmailVerification/EmailVerificationScreen";
@@ -75,18 +80,22 @@ export function AppStackHeader(props: NativeStackHeaderProps) {
 
   const isNewSendScreen = props.route?.name === NAVIGATION_SCREENS.NEW_SEND;
   const isActivityScreen = props.route?.name === NAVIGATION_SCREENS.NEW_ACTIVITY_SCREEN;
-  const rightButton = isNewSendScreen
-    ? { icon: <AppIcon.QrCode width={24} height={24} color={newTheme.colors.primary} onPress={() => { navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL) }}/> }
+  const rightButton = isNewSendScreen 
+    // ? { icon: <AppIcon.QrCode width={24} height={24} color={newTheme.colors.primary} onPress={() => { navigation.navigate(NAVIGATION_SCREENS.NEW_PERSONAL) }}/> }
     // : 
     // isActivityScreen
     //   ? {
     //       icon: <AppIcon.Download width={24} height={24} color={newTheme.colors.primary} />,
     //       onPress: () => {},
     //     }
-      : 
-      undefined;
+      // : 
+      // undefined;
 
-  return <CustomHeader {...props}  title={title} rightButton={rightButton} />;
+  return <CustomHeader 
+  {...props}  
+  title={title} 
+  // rightButton={rightButton} 
+  />;
 }
 
 export default function AppStack() {
@@ -367,6 +376,31 @@ export default function AppStack() {
         options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Privacy and Security' }}
         name={NAVIGATION_SCREENS.NEW_PRIVACY_SECURITY_SCREEN}
         component={PrivacyAndSecurityScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'App Version' }}
+        name={NAVIGATION_SCREENS.NEW_APP_VERSION_SCREEN}
+        component={AppVersionScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Change PIN' }}
+        name={NAVIGATION_SCREENS.NEW_CHANGE_PIN_SCREEN}
+        component={NewChangePinScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Forgot PIN' }}
+        name={NAVIGATION_SCREENS.NEW_FORGOT_PIN_SCREEN}
+        component={NewForgotPinScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Verify OTP' }}
+        name={NAVIGATION_SCREENS.NEW_PIN_ACTION_OTP_SCREEN}
+        component={PinActionOtpScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Set New PIN' }}
+        name={NAVIGATION_SCREENS.NEW_SET_NEW_PIN_SCREEN}
+        component={SetNewPinScreen}
       />
       <Stack.Screen
         options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Bank Statement' }}

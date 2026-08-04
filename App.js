@@ -1,7 +1,7 @@
 import notifee, { AndroidImportance, EventType } from "@notifee/react-native";
 import messaging from "@react-native-firebase/messaging";
 import { NavigationContainer } from "@react-navigation/native";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { AppState, Linking, Platform, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
@@ -36,19 +36,20 @@ import { USER_AUTH } from "./src/api/endpoints";
 import {
   hydrateUserFromMe,
   setAppAccessGranted,
+  setUserData,
 } from "./src/redux/slices/newBackendAuthSlice";
 import {
   clearAuthSession,
   readAuthSession,
   getAuthStackInitialRoute,
 } from "./src/auth/authSession";
-import { bootstrapMainAppSession } from "./src/auth/bootstrapMainAppSession";
 import {
   bootstrapCoinmeRisk,
   scheduleOnUserLoggedIn,
 } from "./src/services/coinmeRiskLifecycle";
 import { ThemeProvider } from "./src/styles";
 import { ThemeProvider as NewUIThemeProvider } from "./src/new-ui/styles/ThemeContext";
+import ErrorBoundary from "./src/new-ui/components/common-components/ErrorBoundary";
 import GlobalLoader from "./src/tsx-components/GlobalLoader";
 import { LinkingPath } from "./src/utils/linking";
 import {
@@ -58,6 +59,7 @@ import {
 import UseNet from "./src/utils/UseNet";
 import AppLockScreen from "./src/components/common-components/AppLockScreen";
 import AppGateOverlay from "./src/components/common-components/AppGateOverlay";
+import BootHydrationOverlay from "./src/tsx-components/BootHydrationOverlay";
 import Toast from "./src/components/common-components/Toast";
 import ForceUpdateModal from "./src/components/common-components/ForceUpdateModal";
 import { AppLockProvider } from "./src/contexts/AppLockContext";
@@ -67,6 +69,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useAppVersionCheck } from "./src/hooks/useAppVersionCheck";
 import FCMService from "./src/services/FCMService";
 import FCMTokenManager from "./src/components/common-components/FCMTokenManager";
+import UsersMeHydrator from "./src/components/common-components/UsersMeHydrator";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { GorhomBottomSheetProvider } from "@new-ui/components/common-components/GorhomBottomSheet";
 
@@ -89,6 +92,8 @@ export default function App() {
     useSelector((state) => state.authenticationSlice);
 
   const dispatch = useDispatch();
+
+  console.log("Tokens ->",tokens)
 
   // -------------------- Navigation Ref --------------------
   // Create navigation ref for deep link navigation
@@ -137,7 +142,14 @@ export default function App() {
   // Fetch initial data when app loads
   useEffect(() => {
     getInitialData();
+    // Safety backstop: never let the launch loader hang if a bootstrap await stalls.
+    const bootTimeout = setTimeout(() => setisFetching(false), 6000);
+    return () => clearTimeout(bootTimeout);
   }, []);
+
+  // Reconnect/foreground re-hydration of /users/me is handled by <UsersMeHydrator /> (a
+  // React-Query query: refetchOnReconnect + refetchOnWindowFocus), and the UseNet "Try
+  // again" button forces a full refetch via queryClient.invalidateQueries().
 
   // -------------------- Deep Link Initialization --------------------
   // Initialize deep linking for referral codes
@@ -146,92 +158,123 @@ export default function App() {
     return cleanup;
   }, []);
 
+  // Fetch + hydrate the signed-in user's profile (/users/me). Reusable so it can run on
+  // cold-launch bootstrap AND again when connectivity returns (offline launch strands the
+  // raw fetch, leaving an empty "dummy user" until this re-runs). A ref prevents overlapping
+  // in-flight calls. Returns true if the profile was hydrated.
+  const usersMeInFlightRef = useRef(false);
+  const hydrateUsersMe = useCallback(async () => {
+    if (usersMeInFlightRef.current) return false;
+    usersMeInFlightRef.current = true;
+    try {
+      const me = await userApiClient.get(USER_AUTH.USERS_ME);
+      if (me?.ok && me?.data) {
+        setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(me?.data?.user || {}));
+        useDispatchAction(hydrateUserFromMe(me.data));
+        const coinmeAccountId = me.data?.caas_onboarding?.caas_customer_id;
+        if (coinmeAccountId != null) {
+          scheduleOnUserLoggedIn(String(coinmeAccountId));
+        }
+        return true;
+      }
+      return false;
+    } catch (e) {
+      if (e?.response?.status === 401) {
+        clearAuthSession();
+        useDispatchAction(setTokens(null));
+        useDispatchAction(setAppAccessGranted(false));
+      } else {
+        console.log("[App] Failed to fetch /users/me:", e?.message || e);
+      }
+      return false;
+    } finally {
+      usersMeInFlightRef.current = false;
+    }
+  }, []);
+
   // Get all necessary data from storage and set in Redux
   const getInitialData = async () => {
-    const session = readAuthSession();
-    const guide = getItem(STORAGE_KEYS.GUIDE) || null;
-    const selectedCurrency = getItem(STORAGE_KEYS.SELECTED_CURRENCY) || null;
-    const totalDisbursable = getItem(STORAGE_KEYS.TOTAL_DISBURSABLE) || null;
-    const cryptoData = getItem(STORAGE_KEYS.CRYPTO_DATA) || null;
-    const allCryptoBalances = getItem(STORAGE_KEYS.ALL_CRYPTO_BALANCES) || null;
+    try {
+      const session = readAuthSession();
+      const guide = getItem(STORAGE_KEYS.GUIDE) || null;
+      const selectedCurrency = getItem(STORAGE_KEYS.SELECTED_CURRENCY) || null;
+      const totalDisbursable = getItem(STORAGE_KEYS.TOTAL_DISBURSABLE) || null;
+      const cryptoData = getItem(STORAGE_KEYS.CRYPTO_DATA) || null;
+      const allCryptoBalances = getItem(STORAGE_KEYS.ALL_CRYPTO_BALANCES) || null;
 
-    const wallet = await getWalletDataAuth();
-
-    bootstrapCoinmeRisk().catch(() => {});
-
-    if (session.tokens) {
-      useDispatchAction(setTokens(session.tokens));
-      if (guide) {
-        try {
-          useDispatchAction(setShowGuide(JSON.parse(guide)));
-        } catch {
-          // ignore invalid guide cache
-        }
-      }
-
+      let wallet = null;
       try {
-        const me = await userApiClient.get(USER_AUTH.USERS_ME);
-        if (me?.ok && me?.data) {
-          setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(me?.data?.user || {}));
-          useDispatchAction(hydrateUserFromMe(me.data));
-          const coinmeAccountId = me.data?.caas_onboarding?.caas_customer_id;
-          if (coinmeAccountId != null) {
-            scheduleOnUserLoggedIn(String(coinmeAccountId));
-          }
-        }
+        wallet = await getWalletDataAuth();
       } catch (e) {
-        if (e?.response?.status === 401) {
-          clearAuthSession();
-          useDispatchAction(setTokens(null));
-          useDispatchAction(setAppAccessGranted(false));
-        } else {
-          console.log("[App] Failed to fetch /users/me:", e?.message || e);
-        }
+        console.log("[App] getWalletDataAuth failed:", e?.message || e);
       }
 
-      const refreshed = readAuthSession();
+      bootstrapCoinmeRisk().catch(() => {});
 
-      const applyLoggedInBootstrap = (tokensForMerchant) => {
-        if (wallet) {
-          useDispatchAction(setWalletData(wallet));
-        }
-        getMerchentRequest(tokensForMerchant);
-        useDispatchAction(setAppAccessGranted(true));
-
-        if (selectedCurrency) {
-          useDispatchAction(setSelectedCurrency(JSON.parse(selectedCurrency)));
-        }
-        if (totalDisbursable) {
-          useDispatchAction(setTotalDisbursable(JSON.parse(totalDisbursable)));
-        }
-        if (cryptoData) {
-          useDispatchAction(setCryptoData(JSON.parse(cryptoData)));
-        }
-        if (allCryptoBalances) {
-          useDispatchAction(
-            setAllCryptoBalances(JSON.parse(allCryptoBalances))
-          );
-        }
-      };
-
-      if (refreshed.tokens && refreshed.onboardingComplete) {
-        applyLoggedInBootstrap(refreshed.tokens);
-      } else if (
-        refreshed.tokens &&
-        !refreshed.onboardingComplete &&
-        refreshed.onboardingStep === 1
-      ) {
-        const result = await bootstrapMainAppSession(dispatch);
-        if (result.ok) {
-          const afterBootstrap = readAuthSession();
-          if (afterBootstrap.tokens) {
-            applyLoggedInBootstrap(afterBootstrap.tokens);
+      if (session.tokens) {
+        useDispatchAction(setTokens(session.tokens));
+        if (guide) {
+          try {
+            useDispatchAction(setShowGuide(JSON.parse(guide)));
+          } catch {
+            // ignore invalid guide cache
           }
         }
-      }
-    }
 
-    setisFetching(false);
+        // Seed the header identity from the last-known persisted profile so it shows
+        // immediately — even on an OFFLINE launch, before /users/me can be re-fetched.
+        const persistedUser = getItem(STORAGE_KEYS.USER_DATA);
+        if (persistedUser) {
+          try {
+            const parsedUser = JSON.parse(persistedUser);
+            if (parsedUser && Object.keys(parsedUser).length > 0) {
+              useDispatchAction(setUserData(parsedUser));
+            }
+          } catch {
+            // ignore corrupt cached user
+          }
+        }
+
+        await hydrateUsersMe();
+
+        const refreshed = readAuthSession();
+
+        const applyLoggedInBootstrap = (tokensForMerchant) => {
+          if (wallet) {
+            useDispatchAction(setWalletData(wallet));
+          }
+          getMerchentRequest(tokensForMerchant);
+          useDispatchAction(setAppAccessGranted(true));
+
+          if (selectedCurrency) {
+            useDispatchAction(setSelectedCurrency(JSON.parse(selectedCurrency)));
+          }
+          if (totalDisbursable) {
+            useDispatchAction(setTotalDisbursable(JSON.parse(totalDisbursable)));
+          }
+          if (cryptoData) {
+            useDispatchAction(setCryptoData(JSON.parse(cryptoData)));
+          }
+          if (allCryptoBalances) {
+            useDispatchAction(
+              setAllCryptoBalances(JSON.parse(allCryptoBalances))
+            );
+          }
+        };
+
+        // Only a completed onboarding enters the app. Step 1 means KYC identity was
+        // fetched but never verified — those users fall through to the AuthStack, which
+        // getAuthStackInitialRoute() resolves to the KYC verify screen.
+        if (refreshed.tokens && refreshed.onboardingComplete) {
+          applyLoggedInBootstrap(refreshed.tokens);
+        }
+      }
+    } catch (e) {
+      console.log("[App] getInitialData error:", e?.message || e);
+    } finally {
+      // Always clear the boot gate so the launch loader can never hang (e.g. offline).
+      setisFetching(false);
+    }
   };
 
 
@@ -523,6 +566,8 @@ export default function App() {
 
   // -------------------- Render Logic --------------------
   return (
+    // Outermost so it also catches failures in the providers themselves.
+    <ErrorBoundary>
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <ThemeProvider>
@@ -531,6 +576,7 @@ export default function App() {
               <GorhomBottomSheetProvider>
                 <PersistQueryProvider>
                   <FCMTokenManager />
+                  <UsersMeHydrator />
                   <AppLockProvider>
                     <View style={{ flex: 1 }}>
                       <NavigationContainer
@@ -638,6 +684,10 @@ export default function App() {
                           onAnimationEnd={() => setSplashVisible(false)}
                         />
                       )}
+                      {/* After the splash animation ends, keep the UI covered until the
+                          session bootstrap resolves — prevents the Auth stack flashing
+                          before `isLogin` flips true on a logged-in cold launch. */}
+                      {!splashVisible && isFetching && <BootHydrationOverlay />}
                     </View>
                   </AppLockProvider>
                 </PersistQueryProvider>
@@ -647,6 +697,7 @@ export default function App() {
         </ThemeProvider>
       </GestureHandlerRootView>
     </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
 

@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@adrianso/react-native-barcode-builder": "^1.0.13",
-    "@coinme-security/vault-sdk-react-native": "^1.1.0",
+    "@coinme-security/vault-sdk-react-native": "^1.1.1",
     "@gorhom/bottom-sheet": "^5.2.8",
     "@legendapp/list": "^1.0.14",
     "@mxenabled/react-native-widget-sdk": "^1.1.4",

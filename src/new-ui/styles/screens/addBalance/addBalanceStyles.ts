@@ -92,6 +92,9 @@ export const addBalanceStyles = (theme: ITheme) =>
       flexGrow: 1,
       minHeight: theme.spacing.xl,
     },
+    limitMeterSpacer: {
+      marginTop: theme.spacing.base,
+    },
     modalKav: {
       flex: 1,
     },

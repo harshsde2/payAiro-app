@@ -55,7 +55,7 @@ const SellTradeMethodPickerModal: React.FC<SellTradeMethodPickerModalProps> = ({
           </CustomText>
 
           <View style={{ marginTop: theme.spacing.xl, gap: theme.spacing.md }}>
-            <Pressable
+            {/* <Pressable
               onPress={handleCash}
               style={({ pressed }) => [rowStyle, { opacity: pressed ? 0.9 : 1 }]}
             >
@@ -86,7 +86,7 @@ const SellTradeMethodPickerModal: React.FC<SellTradeMethodPickerModalProps> = ({
                 </CustomText>
               </View>
               <AppIcon.ChevronRight width={24} height={24} color={theme.colors.primary} />
-            </Pressable>
+            </Pressable> */}
 
             <Pressable
               onPress={handleDebit}

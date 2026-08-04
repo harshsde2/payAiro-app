@@ -24,25 +24,22 @@ export const transactionLimitsStyles = (theme: ITheme) =>
       backgroundColor: theme.colors.white,
     },
     row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.lg,
+      gap: theme.spacing.md,
     },
     rowBorder: {
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.greyLight,
     },
-    rowLabel: {
-      flex: 1,
+    periodBlock: {
+      gap: theme.spacing.sm,
     },
-    amountsColumn: {
-      alignItems: 'flex-end',
-      gap: theme.spacing.xs,
-    },
-    monthlyAmount: {
-      fontSize: 13,
+    periodHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing.sm,
     },
     centerMessage: {
       paddingVertical: theme.spacing['2xl'],

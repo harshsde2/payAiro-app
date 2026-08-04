@@ -5,9 +5,19 @@ import CoinmeRiskSDK
 /**
  * PayAiro Coinme Risk SDK Native Module for iOS
  *
- * All CoinmeRiskEngine access is serialized on `sdkQueue` and executed on the
- * main thread to avoid Sardine MobileIntelligence races (double-free) when JS
- * issues multiple bridge calls between awaits.
+ * Every CoinmeRiskEngine call is funnelled through `serialize(_:)`, which guarantees that no
+ * two engine operations overlap — including across `await` suspension points.
+ *
+ * Why that guarantee needs real machinery: a plain `DispatchQueue.async { DispatchQueue.main.async { … } }`
+ * serializes nothing, because the queue block returns the instant it schedules the inner work
+ * and frees its slot. `Task { @MainActor in … await … }` is no better: the MainActor is released
+ * at every `await`, so two tasks interleave. Sardine (MobileIntelligence, bundled by
+ * CoinmeRiskSDK) is not safe against that — two concurrent operations double-free and the
+ * process dies with `malloc_zone_error` → SIGABRT, which no Swift `catch` can intercept.
+ *
+ * `serialize` therefore blocks its (background) queue slot on a semaphore until the operation
+ * signals completion, so the SDK sees strictly one caller at a time. The main thread is never
+ * blocked: the work runs on main, the waiting happens on `sdkQueue`.
  */
 @objc(PayAiroCoinmeRisk)
 final class PayAiroCoinmeRiskModule: NSObject {
@@ -27,6 +37,14 @@ final class PayAiroCoinmeRiskModule: NSObject {
     qos: .userInitiated
   )
 
+  /// Sardine keeps uploading after `submit()` reports success. Hold the gate this long
+  /// afterwards so the next engine mutation cannot land mid-upload.
+  private static let postSubmitSettle: TimeInterval = 1.2
+
+  /// Upper bound on how long one operation may hold the gate. Guards against a vendor
+  /// callback that never fires wedging every later call.
+  private static let operationTimeout: TimeInterval = 30
+
   @objc
   static func moduleName() -> String {
     return "PayAiroCoinmeRisk"
@@ -37,6 +55,26 @@ final class PayAiroCoinmeRiskModule: NSObject {
     return true
   }
 
+  // MARK: - Serial gate
+
+  /**
+   * Runs `body` on the main thread and holds the serial queue slot until `body` calls its
+   * `done` argument. `done` is idempotent and safe to call from any thread.
+   */
+  private static func serialize(_ body: @escaping (@escaping () -> Void) -> Void) {
+    sdkQueue.async {
+      let semaphore = DispatchSemaphore(value: 0)
+      let guardBox = PromiseGuard()
+      let done: () -> Void = { guardBox.settle { semaphore.signal() } }
+
+      DispatchQueue.main.async { body(done) }
+
+      if semaphore.wait(timeout: .now() + operationTimeout) == .timedOut {
+        NSLog("[PayAiroCoinmeRisk] operation exceeded %.0fs; releasing gate", operationTimeout)
+      }
+    }
+  }
+
   // MARK: - setup
 
   @objc
@@ -45,29 +83,18 @@ final class PayAiroCoinmeRiskModule: NSObject {
     resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
-    Self.sdkQueue.async {
-      DispatchQueue.main.async {
-        guard let setupOptions = self.parseSetupOptions(options) else {
-          Self.rejectOnMain(
-            reject,
-            code: ErrorCode.invalidOptions.rawValue,
-            message: "Invalid setup options. `mode` and `clientId` are required.",
-            error: nil
-          )
-          return
-        }
-        do {
-          _ = CoinmeRiskEngine.setupCoinmeRiskEngine(options: setupOptions)
-          Self.resolveOnMain { resolve(nil) }
-        } catch {
-          Self.rejectOnMain(
-            reject,
-            code: ErrorCode.setupFailed.rawValue,
-            message: error.localizedDescription,
-            error: error
-          )
-        }
+    Self.serialize { done in
+      defer { done() }
+      guard let setupOptions = self.parseSetupOptions(options) else {
+        reject(
+          ErrorCode.invalidOptions.rawValue,
+          "Invalid setup options. `mode` and `clientId` are required.",
+          nil
+        )
+        return
       }
+      _ = CoinmeRiskEngine.setupCoinmeRiskEngine(options: setupOptions)
+      resolve(nil)
     }
   }
 
@@ -79,13 +106,14 @@ final class PayAiroCoinmeRiskModule: NSObject {
     resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
-    Self.runOnSdkQueue(resolve: resolve, reject: reject) {
+    Self.serialize { done in
+      defer { done() }
       guard CoinmeRiskEngine.isInitialized() else {
-        throw SdkError.notInitialized
+        Self.rejectNotInitialized(reject)
+        return
       }
-      let updateOptions = self.parseUpdateOptions(options)
-      CoinmeRiskEngine.updateCoinmeRiskEngine(updateOptions)
-      return nil
+      CoinmeRiskEngine.updateCoinmeRiskEngine(self.parseUpdateOptions(options))
+      resolve(nil)
     }
   }
 
@@ -98,16 +126,12 @@ final class PayAiroCoinmeRiskModule: NSObject {
     resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
-    Self.sdkQueue.async {
+    Self.serialize { done in
       Task { @MainActor in
+        defer { done() }
         do {
           guard CoinmeRiskEngine.isInitialized() else {
-            Self.rejectOnMain(
-              reject,
-              code: ErrorCode.notInitialized.rawValue,
-              message: "CoinmeRiskEngine is not initialized. Call setup() first.",
-              error: nil
-            )
+            Self.rejectNotInitialized(reject)
             return
           }
 
@@ -116,11 +140,10 @@ final class PayAiroCoinmeRiskModule: NSObject {
           }
 
           guard let tagOptions = self.parsePartnerSessionTagOptions(options) else {
-            Self.rejectOnMain(
-              reject,
-              code: ErrorCode.invalidOptions.rawValue,
-              message: "Invalid options. `partnerId`, `accountId`, and `fingerprint` are required.",
-              error: nil
+            reject(
+              ErrorCode.invalidOptions.rawValue,
+              "Invalid options. `partnerId`, `accountId`, and `fingerprint` are required.",
+              nil
             )
             return
           }
@@ -147,25 +170,17 @@ final class PayAiroCoinmeRiskModule: NSObject {
           )
 
           try await Self.submitAndWait()
+          await Self.settleAfterSubmit()
 
-          let result: [String: Any] = [
+          resolve([
             "webSessionID": data.webSessionID,
             "orgID": data.orgID as Any
-          ]
-          Self.resolveOnMain { resolve(result) }
-        } catch let error as SdkError {
-          Self.rejectOnMain(
-            reject,
-            code: error.code,
-            message: error.message,
-            error: nil
-          )
+          ])
         } catch {
-          Self.rejectOnMain(
-            reject,
-            code: ErrorCode.partnerSessionFailed.rawValue,
-            message: error.localizedDescription,
-            error: error
+          reject(
+            ErrorCode.partnerSessionFailed.rawValue,
+            error.localizedDescription,
+            error
           )
         }
       }
@@ -180,45 +195,35 @@ final class PayAiroCoinmeRiskModule: NSObject {
     resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
-    Self.sdkQueue.async {
+    Self.serialize { done in
       Task { @MainActor in
+        defer { done() }
         guard CoinmeRiskEngine.isInitialized() else {
-          Self.rejectOnMain(
-            reject,
-            code: ErrorCode.notInitialized.rawValue,
-            message: "CoinmeRiskEngine is not initialized. Call setup() first.",
-            error: nil
-          )
+          Self.rejectNotInitialized(reject)
           return
         }
 
         guard let tagOptions = self.parsePartnerSessionTagOptions(options) else {
-          Self.rejectOnMain(
-            reject,
-            code: ErrorCode.invalidOptions.rawValue,
-            message: "Invalid options. `partnerId`, `accountId`, and `fingerprint` are required.",
-            error: nil
+          reject(
+            ErrorCode.invalidOptions.rawValue,
+            "Invalid options. `partnerId`, `accountId`, and `fingerprint` are required.",
+            nil
           )
           return
         }
 
-        let guardBox = PromiseGuard()
         do {
           let data = try await CoinmeRiskEngine.getPartnerSessionTag(options: tagOptions)
-          let result: [String: Any] = [
+          resolve([
             "webSessionID": data.webSessionID,
             "orgID": data.orgID as Any
-          ]
-          guardBox.settle { Self.resolveOnMain { resolve(result) } }
+          ])
         } catch {
-          guardBox.settle {
-            Self.rejectOnMain(
-              reject,
-              code: ErrorCode.partnerSessionFailed.rawValue,
-              message: error.localizedDescription,
-              error: error
-            )
-          }
+          reject(
+            ErrorCode.partnerSessionFailed.rawValue,
+            error.localizedDescription,
+            error
+          )
         }
       }
     }
@@ -231,26 +236,22 @@ final class PayAiroCoinmeRiskModule: NSObject {
     _ resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
-    Self.sdkQueue.async {
+    Self.serialize { done in
       Task { @MainActor in
+        defer { done() }
         do {
           guard CoinmeRiskEngine.isInitialized() else {
-            Self.rejectOnMain(
-              reject,
-              code: ErrorCode.notInitialized.rawValue,
-              message: "CoinmeRiskEngine is not initialized. Call setup() first.",
-              error: nil
-            )
+            Self.rejectNotInitialized(reject)
             return
           }
           try await Self.submitAndWait()
-          Self.resolveOnMain { resolve(nil) }
+          await Self.settleAfterSubmit()
+          resolve(nil)
         } catch {
-          Self.rejectOnMain(
-            reject,
-            code: ErrorCode.submitFailed.rawValue,
-            message: error.localizedDescription,
-            error: error
+          reject(
+            ErrorCode.submitFailed.rawValue,
+            error.localizedDescription,
+            error
           )
         }
       }
@@ -263,20 +264,17 @@ final class PayAiroCoinmeRiskModule: NSObject {
     _ resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
-    Self.sdkQueue.async {
-      DispatchQueue.main.async {
-        guard CoinmeRiskEngine.isInitialized() else {
-          Self.rejectOnMain(
-            reject,
-            code: ErrorCode.notInitialized.rawValue,
-            message: "CoinmeRiskEngine is not initialized. Call setup() first.",
-            error: nil
-          )
-          return
-        }
-        CoinmeRiskEngine.submit()
-        Self.resolveOnMain { resolve(nil) }
+    Self.serialize { done in
+      guard CoinmeRiskEngine.isInitialized() else {
+        Self.rejectNotInitialized(reject)
+        done()
+        return
       }
+      CoinmeRiskEngine.submit()
+      resolve(nil)
+      // Fire-and-forget to the SDK, but the gate stays held until the upload settles so the
+      // next engine mutation cannot overlap it.
+      DispatchQueue.main.asyncAfter(deadline: .now() + Self.postSubmitSettle) { done() }
     }
   }
 
@@ -289,12 +287,14 @@ final class PayAiroCoinmeRiskModule: NSObject {
     resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
-    Self.runOnSdkQueue(resolve: resolve, reject: reject) {
+    Self.serialize { done in
+      defer { done() }
       guard CoinmeRiskEngine.isInitialized() else {
-        throw SdkError.notInitialized
+        Self.rejectNotInitialized(reject)
+        return
       }
       CoinmeRiskEngine.trackTextChange(viewId: viewId as String, text: text as String)
-      return nil
+      resolve(nil)
     }
   }
 
@@ -305,12 +305,14 @@ final class PayAiroCoinmeRiskModule: NSObject {
     resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
-    Self.runOnSdkQueue(resolve: resolve, reject: reject) {
+    Self.serialize { done in
+      defer { done() }
       guard CoinmeRiskEngine.isInitialized() else {
-        throw SdkError.notInitialized
+        Self.rejectNotInitialized(reject)
+        return
       }
       CoinmeRiskEngine.trackFocusChange(viewId: viewId as String, isFocus: isFocus)
-      return nil
+      resolve(nil)
     }
   }
 
@@ -321,15 +323,17 @@ final class PayAiroCoinmeRiskModule: NSObject {
     _ resolve: @escaping RCTPromiseResolveBlock,
     rejecter _: @escaping RCTPromiseRejectBlock
   ) {
-    Self.runOnSdkQueue(resolve: resolve, reject: { _, _, _ in }) {
+    Self.serialize { done in
+      defer { done() }
       guard let config = CoinmeRiskEngine.getCoinmeRiskEngineConfig() else {
-        return nil
+        resolve(nil)
+        return
       }
-      return [
+      resolve([
         "customerId": config.customerId as Any,
         "sessionKey": config.sessionKey as Any,
         "flow": config.flow?.rawValue as Any
-      ]
+      ])
     }
   }
 
@@ -338,11 +342,12 @@ final class PayAiroCoinmeRiskModule: NSObject {
     _ resolve: @escaping RCTPromiseResolveBlock,
     rejecter _: @escaping RCTPromiseRejectBlock
   ) {
-    Self.runOnSdkQueue(resolve: resolve, reject: { _, _, _ in }) {
+    Self.serialize { done in
+      defer { done() }
       if CoinmeRiskEngine.isInitialized() {
         CoinmeRiskEngine.resetStoredSessionKey()
       }
-      return nil
+      resolve(nil)
     }
   }
 
@@ -351,9 +356,10 @@ final class PayAiroCoinmeRiskModule: NSObject {
     _ resolve: @escaping RCTPromiseResolveBlock,
     rejecter _: @escaping RCTPromiseRejectBlock
   ) {
-    Self.runOnSdkQueue(resolve: resolve, reject: { _, _, _ in }) {
+    Self.serialize { done in
+      defer { done() }
       CoinmeRiskEngine.reset()
-      return nil
+      resolve(nil)
     }
   }
 
@@ -362,53 +368,20 @@ final class PayAiroCoinmeRiskModule: NSObject {
     _ resolve: @escaping RCTPromiseResolveBlock,
     rejecter _: @escaping RCTPromiseRejectBlock
   ) {
-    Self.sdkQueue.async {
-      DispatchQueue.main.async {
-        Self.resolveOnMain { resolve(CoinmeRiskEngine.isInitialized()) }
-      }
+    Self.serialize { done in
+      defer { done() }
+      resolve(CoinmeRiskEngine.isInitialized())
     }
   }
 
-  // MARK: - SDK queue helpers
+  // MARK: - SDK helpers
 
-  private struct SdkError: Error {
-    let code: String
-    let message: String
-
-    static let notInitialized = SdkError(
-      code: ErrorCode.notInitialized.rawValue,
-      message: "CoinmeRiskEngine is not initialized. Call setup() first."
+  private static func rejectNotInitialized(_ reject: RCTPromiseRejectBlock) {
+    reject(
+      ErrorCode.notInitialized.rawValue,
+      "CoinmeRiskEngine is not initialized. Call setup() first.",
+      nil
     )
-  }
-
-  private static func runOnSdkQueue(
-    resolve: @escaping RCTPromiseResolveBlock,
-    reject: @escaping RCTPromiseRejectBlock,
-    operation: @escaping () throws -> Any?
-  ) {
-    sdkQueue.async {
-      DispatchQueue.main.async {
-        do {
-          let result = try operation()
-          Self.resolveOnMain {
-            if let result {
-              resolve(result)
-            } else {
-              resolve(nil)
-            }
-          }
-        } catch let error as SdkError {
-          Self.rejectOnMain(reject, code: error.code, message: error.message, error: nil)
-        } catch {
-          Self.rejectOnMain(
-            reject,
-            code: ErrorCode.updateFailed.rawValue,
-            message: error.localizedDescription,
-            error: error
-          )
-        }
-      }
-    }
   }
 
   @MainActor
@@ -426,23 +399,9 @@ final class PayAiroCoinmeRiskModule: NSObject {
     }
   }
 
-  private static func resolveOnMain(_ work: @escaping () -> Void) {
-    if Thread.isMainThread {
-      work()
-    } else {
-      DispatchQueue.main.async(execute: work)
-    }
-  }
-
-  private static func rejectOnMain(
-    _ reject: @escaping RCTPromiseRejectBlock,
-    code: String,
-    message: String,
-    error: Error?
-  ) {
-    resolveOnMain {
-      reject(code, message, error)
-    }
+  /// Keeps the serial gate held while Sardine finishes the work `submit()` kicked off.
+  private static func settleAfterSubmit() async {
+    try? await Task.sleep(nanoseconds: UInt64(postSubmitSettle * 1_000_000_000))
   }
 
   // MARK: - Parsing
