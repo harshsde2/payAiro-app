@@ -1,9 +1,13 @@
-import React from 'react';
-import { ActivityIndicator, Modal, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 import CustomText from '@new-ui/components/common-components/CustomText';
 import Button from '@new-ui/components/common-components/layout/Button';
+import InfoModal from '@new-ui/components/common-components/InfoModal';
+import { AppIcon } from '@new-ui/assets/svgs';
 import { enterAmountStyles } from '@new-ui/styles/screens/send/enterAmountStyles';
+import { addBalanceStyles } from '@new-ui/styles/screens/addBalance/addBalanceStyles';
 
 type CryptoReceiptVariant = 'full' | 'fiatOnly';
 
@@ -23,6 +27,8 @@ type CryptoReceiptModalProps = {
   /** Row labels — vary per flow (buy vs sell/withdraw). */
   feeLabel?: string;
   totalLabel?: string;
+  /** When set, an info (i) button appears on the fee row that opens this explanation. */
+  feeInfoText?: string;
   /** Sell/withdraw: Total = Amount + Fee (charged). Buy/add-balance (default): Amount − Fee. */
   addFeeToTotal?: boolean;
 };
@@ -40,10 +46,14 @@ const CryptoReceiptModal: React.FC<CryptoReceiptModalProps> = ({
   expectedFeeLoading = false,
   feeLabel = 'Expected Fee',
   totalLabel = 'Total',
+  feeInfoText,
   addFeeToTotal = false,
 }) => {
   const { theme } = useTheme();
   const styles = enterAmountStyles(theme);
+  const modalStyles = addBalanceStyles(theme);
+  const insets = useSafeAreaInsets();
+  const [feeInfoVisible, setFeeInfoVisible] = useState(false);
   // Sell/withdraw: Total = Amount + Fee (total charged). Buy/add-balance & plain P2P
   // send: Total = Amount − Fee (net; no fee → equals the amount). Clamped ≥ 0.
   const total = addFeeToTotal
@@ -55,9 +65,25 @@ const CryptoReceiptModal: React.FC<CryptoReceiptModalProps> = ({
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.cryptoReceiptBackdrop}>
-        <View style={[styles.cryptoReceiptSheet, { backgroundColor: theme.colors.white }]}>
-          <CustomText variant="h3" fontWeight="bold" style={styles.cryptoReceiptTitle}>
+      <KeyboardAvoidingView
+        style={modalStyles.modalKav}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <Pressable
+          style={[
+            modalStyles.modalBackdrop,
+            { paddingTop: insets.top + theme.spacing.sm, paddingBottom: Math.max(insets.bottom, theme.spacing.md) },
+          ]}
+          onPress={onClose}
+        >
+          <View style={modalStyles.modalCloseRow}>
+            <Pressable onPress={onClose} style={modalStyles.modalCloseButton}>
+              <AppIcon.Cancel width={32} height={32} color={theme.colors.text} />
+            </Pressable>
+          </View>
+
+          <Pressable style={modalStyles.modalCard} onPress={(e) => e.stopPropagation()}>
+          <CustomText variant="h5" fontWeight="bold" align="center" style={{ marginBottom: theme.spacing.sm }}>
             Summary
           </CustomText>
 
@@ -98,9 +124,37 @@ const CryptoReceiptModal: React.FC<CryptoReceiptModalProps> = ({
 
           {expectedFeeLoading || expectedFee != null ? (
             <View style={styles.cryptoReceiptRow}>
-              <CustomText variant="caption" fontWeight="light" style={styles.cryptoReceiptLabel}>
-                {feeLabel}
-              </CustomText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}>
+                <CustomText variant="caption" fontWeight="light" style={styles.cryptoReceiptLabel}>
+                  {feeLabel}
+                </CustomText>
+                {feeInfoText ? (
+                  <TouchableOpacity
+                    onPress={() => setFeeInfoVisible(true)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    activeOpacity={0.7}
+                    style={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: theme.colors.primary,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginLeft: 6,
+                    }}
+                  >
+                    <CustomText
+                      size={11}
+                      fontWeight="bold"
+                      color={theme.colors.primary}
+                      style={{ lineHeight: 14 }}
+                    >
+                      i
+                    </CustomText>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
               {expectedFeeLoading ? (
                 <ActivityIndicator size="small" color={theme.colors.primary} />
               ) : (
@@ -118,28 +172,23 @@ const CryptoReceiptModal: React.FC<CryptoReceiptModalProps> = ({
             </CustomText>
           </View>
 
-          <View style={styles.cryptoReceiptButtonArea}>
+          <View style={{ marginTop: theme.spacing.lg }}>
             <Button onPress={onPayNow} height={46} loading={false}>
               Proceed
             </Button>
-
-            <TouchableOpacity
-              onPress={onClose}
-              activeOpacity={0.9}
-              style={styles.cryptoReceiptCancelButton}
-            >
-              <CustomText
-                style={{
-                  color: theme.colors.white,
-                  fontFamily: theme.typography.fontFamily.semiBold,
-                }}
-              >
-                Cancel
-              </CustomText>
-            </TouchableOpacity>
           </View>
-        </View>
-      </View>
+          </Pressable>
+        </Pressable>
+      </KeyboardAvoidingView>
+
+      {feeInfoText ? (
+        <InfoModal
+          visible={feeInfoVisible}
+          onClose={() => setFeeInfoVisible(false)}
+          title="Privilege Discount"
+          message={feeInfoText}
+        />
+      ) : null}
     </Modal>
   );
 };

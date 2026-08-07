@@ -39,6 +39,11 @@ export interface RegulatoryReceipt {
   stateCode: string;
   transactionStatus: string;
   transactionType: string;
+  /**
+   * Optional privilege-discount explanation (e.g. the 100% fee-waiver copy). Served by the
+   * backend only for eligible trades; rendered as a footer note when present, hidden otherwise.
+   */
+  "Privilege Discount"?: string;
 }
 
 /**

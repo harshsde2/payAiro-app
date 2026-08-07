@@ -157,7 +157,7 @@ const LoginScreen: React.FC = () => {
 
         <TouchableOpacity
           style={styles.forgotPasswordLink}
-          onPress={() => (navigation as any).navigate(NAVIGATION_SCREENS.SUPPORT_SCREEN)}
+          onPress={() => (navigation as any).navigate(NAVIGATION_SCREENS.SUPPORT_SCREEN, { mode: 'accountRecovery' })}
         >
           <CustomText fontFamily="inter" size={12} color={theme.colors.primary}>
             Having trouble logging in? Recover your account

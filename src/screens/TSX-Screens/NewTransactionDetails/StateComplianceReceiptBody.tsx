@@ -350,6 +350,19 @@ const StateComplianceReceiptBody: React.FC<Props> = ({ transactionData, receipt 
             })}
           </View>
 
+          {/* Privilege Discount note (served by the backend on eligible trades) — same
+              treatment as the regulatory footer; hidden when absent/empty. */}
+          {receipt["Privilege Discount"] ? (
+            <CustomText
+              variant="caption"
+              size={11}
+              color={theme.colors.textSecondary}
+              style={styles.footerText}
+            >
+              {receipt["Privilege Discount"]}
+            </CustomText>
+          ) : null}
+
           {/* Regulatory Footer (state-aware, served by the backend) — shown above the
               Coinme attribution when present. */}
           {receipt.receiptFooter ? (

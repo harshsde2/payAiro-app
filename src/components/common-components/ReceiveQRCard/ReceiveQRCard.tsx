@@ -126,7 +126,9 @@ const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
           )}
 
           <View style={styles.qrWrapper}>
-            <QRCode value={qrString} size={QR_SIZE} />
+            {/* ecl="H" (~30% recovery) so the centered PayAiro logo overlay doesn't
+                corrupt the code — required for reliable decoding with the logo on top. */}
+            <QRCode value={qrString} size={QR_SIZE} ecl="H" />
             <View
               style={[
                 styles.logoOverlay,

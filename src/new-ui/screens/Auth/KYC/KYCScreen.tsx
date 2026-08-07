@@ -198,7 +198,7 @@ const KYCScreen: React.FC = () => {
       <View style={styles.inputContainer}>
         <TextInput
           label="PayAiro Tag"
-          placeholder="e.g. rahuldev"
+          placeholder="e.g. JaneDoe123"
           value={payairoName}
           onChangeText={setPayairoName}
           autoCapitalize="none"

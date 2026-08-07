@@ -1,300 +1,487 @@
-import { View, StyleSheet } from "react-native";
-import React, { useState } from "react";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { Theme, useTheme } from "styles";
-import { useNavigation } from "@react-navigation/native";
-import { ScreenContainer } from "HOC";
-import HeaderTitle from "components/HeaderTitle";
-import { useCommonAddBalanceStyles } from "../AddBalance/Styles";
+import React, { useMemo, useState, useCallback } from "react";
+import {
+  View,
+  TouchableOpacity,
+  Modal,
+  Pressable,
+  FlatList,
+  StyleSheet,
+} from "react-native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { useTheme } from "@new-ui/styles/ThemeContext";
+import { ITheme } from "@new-ui/styles/themes/themeTypes";
+import CustomText from "@new-ui/components/common-components/CustomText";
+import { TextInput, Button } from "@new-ui/components/common-components/layout";
+import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
+import CustomHeader from "@new-ui/components/common-components/CustomHeader";
+import { AppIcon } from "@new-ui/assets/svgs";
 import { SvgIcons } from "constants/svgs";
-import { CustomText } from "tsx-components";
-import TextInputField from "components/TextInputField";
-// import UploadFile from "components/UploadFile"; // Image upload temporarily disabled for account recovery
-import useSelectorAction from "hooks/useSelectorAction";
-import GenericButton from "components/GenericButton";
-import { showError } from "utils/toast";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
+import { showError, showSuccess, getApiErrorMessage } from "utils/toast";
 import { validateEmailOrPhone } from "utils/validation";
+import { pickImageFromGallery } from "utils/ImagePicker";
+import { useSubmitGuestQuery } from "query/hooks/useGuestQuery";
 
-const SupportScreen = () => {
-  const { theme } = useTheme();
+type SupportMode = "accountRecovery" | "emailSupport";
+
+const SUPPORT_CATEGORIES = [
+  "Account Issues",
+  "Login & Security",
+  "KYC Verification",
+  "Deposits & Withdrawals",
+  "Transactions",
+  "Technical Issue",
+  "General Inquiry",
+  "Other",
+];
+
+// Per-mode copy + which fields show. Both modes hit the SAME guest-query API; only
+// labels/content and the category field differ.
+const MODE_CONFIG: Record<
+  SupportMode,
+  { headerTitle: string; description: string; showCategory: boolean; submitLabel: string }
+> = {
+  accountRecovery: {
+    headerTitle: "Support Request",
+    description:
+      "Tell us how we can help. Please provide as much detail as possible, and our support team will get back to you within 24–48 hours.",
+    showCategory: true,
+    submitLabel: "Submit recovery request",
+  },
+  emailSupport: {
+    headerTitle: "Email Support",
+    description:
+      "Send us a message and our support team will get back to you within 24–48 hours. Please include as much detail as possible.",
+    showCategory: false,
+    submitLabel: "Submit request",
+  },
+};
+
+type Attachment = { uri: string; name?: string; type?: string };
+
+// ── Category picker (modeled on the new-ui StatePicker field + modal) ───────────
+const CategoryPicker: React.FC<{
+  label: string;
+  placeholder: string;
+  value: string | null;
+  options: string[];
+  onSelect: (value: string) => void;
+  styles: ReturnType<typeof supportStyles>;
+  theme: ITheme;
+}> = ({ label, placeholder, value, options, onSelect, styles, theme }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleSelect = useCallback(
+    (item: string) => {
+      onSelect(item);
+      setIsOpen(false);
+    },
+    [onSelect]
+  );
+
+  return (
+    <View>
+      <CustomText variant="label" fontWeight="semiBold" size={16} style={styles.fieldLabel}>
+        {label}
+      </CustomText>
+      <TouchableOpacity
+        style={styles.pickerField}
+        onPress={() => setIsOpen(true)}
+        activeOpacity={0.7}
+      >
+        <CustomText
+          variant="body"
+          fontFamily="inter"
+          color={value ? theme.colors.text : theme.colors.greyDark}
+        >
+          {value || placeholder}
+        </CustomText>
+        <AppIcon.ChevronDown />
+      </TouchableOpacity>
+
+      <Modal visible={isOpen} transparent animationType="slide" onRequestClose={() => setIsOpen(false)}>
+        <Pressable style={styles.modalBackdrop} onPress={() => setIsOpen(false)}>
+          <Pressable style={styles.modalSheet} onPress={() => {}}>
+            <View style={styles.modalHeader}>
+              <CustomText variant="h4" fontWeight="semiBold">
+                Select a category
+              </CustomText>
+              <TouchableOpacity onPress={() => setIsOpen(false)} activeOpacity={0.7}>
+                <CustomText variant="body" color={theme.colors.primary}>
+                  Close
+                </CustomText>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={options}
+              keyExtractor={(item) => item}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => {
+                const isSelected = item === value;
+                return (
+                  <TouchableOpacity
+                    style={styles.optionItem}
+                    onPress={() => handleSelect(item)}
+                    activeOpacity={0.7}
+                  >
+                    <CustomText
+                      variant="body"
+                      fontFamily="inter"
+                      fontWeight={isSelected ? "medium" : "regular"}
+                      color={isSelected ? theme.colors.primary : theme.colors.text}
+                    >
+                      {item}
+                    </CustomText>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </View>
+  );
+};
+
+const SupportScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const customStyle = customStyles(theme);
-  const styles = { ...useCommonAddBalanceStyles(), ...customStyle };
+  const route = useRoute<any>();
+  const { theme } = useTheme();
+  const styles = useMemo(() => supportStyles(theme), [theme]);
+
+  const mode: SupportMode =
+    route.params?.mode === "emailSupport" ? "emailSupport" : "accountRecovery";
+  const config = MODE_CONFIG[mode];
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [registeredContact, setRegisteredContact] = useState("");
-  const [message, setMessage] = useState("");
+  const [email, setEmail] = useState("");
+  const [category, setCategory] = useState<string | null>(null);
   const [subject, setSubject] = useState("");
-  // const [attachment, setAttachment] = useState<any>(null); // Image upload is disabled for now
+  const [message, setMessage] = useState("");
+  const [attachment, setAttachment] = useState<Attachment | null>(null);
 
-  const { walletData } = useSelectorAction();
+  const { mutateAsync: submitGuestQuery, isPending } = useSubmitGuestQuery();
 
-  const handleSubmit = async () => {
-    try {
-      const trimmedFirstName = firstName.trim();
-      const trimmedLastName = lastName.trim();
-      const trimmedRegisteredContact = registeredContact.trim();
-
-      if (!trimmedFirstName) {
-        showError("First name is required", "Please enter your first name.");
-        return;
-      }
-
-      if (!trimmedLastName) {
-        showError("Last name is required", "Please enter your last name.");
-        return;
-      }
-
-      if (!trimmedRegisteredContact) {
-        showError(
-          "Registered email is required",
-          "Please enter the email address linked to your account."
-        );
-        return;
-      }
-
-      const validationResult = validateEmailOrPhone(trimmedRegisteredContact);
-
-      if (!validationResult.isValid) {
-        showError(validationResult.errorMessage || "Invalid contact", validationResult.helperText || "Enter a valid email or phone number linked to your account.");
-        return;
-      }
-
-      // Contact form requires an email; ensure we have one
-      if (validationResult.inputType !== "email") {
-        showError(
-          "Email address required",
-          "Please enter the email address linked to your account so we can reach you."
-        );
-        return;
-      }
-
-      if (subject.length === 0) {
-        showError("Reason for recovery is empty", "Please tell us why you need to recover your account.");
-        return;
-      }
-      if (message.length === 0) {
-        showError("Details are empty", "Please describe your issue so we can help you recover your account.");
-        return;
-      }
-
-      // Account-recovery submission is temporarily disabled pending migration to userApiClient + a new endpoint.
-      showError(
-        "Temporarily unavailable",
-        "Account recovery requests are currently unavailable. Please try again later."
-      );
-    } catch (error: any) {
-      const errorMessage =
-        error?.message || "An unexpected error occurred. Please try again.";
-      showError("Something went wrong", errorMessage);
-      console.error("Support form submission error:", error);
+  const handlePickAttachment = async () => {
+    const file = await pickImageFromGallery();
+    if (file) {
+      setAttachment({ uri: file.uri, name: file.name, type: file.type });
     }
   };
 
-  //   const han;
+  const handleSubmit = async () => {
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
+    const trimmedEmail = email.trim();
+    const trimmedSubject = subject.trim();
+    const trimmedMessage = message.trim();
 
-  // console.log("wallet data. =>", JSON.stringify(walletData, null, 2));
+    if (!trimmedFirstName) {
+      showError("First name is required", "Please enter your first name.");
+      return;
+    }
+    if (!trimmedLastName) {
+      showError("Last name is required", "Please enter your last name.");
+      return;
+    }
+    if (!trimmedEmail) {
+      showError("Registered email is required", "Please enter the email address linked to your account.");
+      return;
+    }
+    const validation = validateEmailOrPhone(trimmedEmail);
+    if (!validation.isValid || validation.inputType !== "email") {
+      showError("Invalid email", "Please enter a valid email address.");
+      return;
+    }
+    if (config.showCategory && !category) {
+      showError("Category is required", "Please select a support category.");
+      return;
+    }
+    if (!trimmedSubject) {
+      showError("Subject is required", "Please briefly describe your issue.");
+      return;
+    }
+    if (!trimmedMessage) {
+      showError("Details are required", "Please provide details about your issue.");
+      return;
+    }
+
+    // Field → API mapping (confirmed):
+    //  - Account Recovery: reason = category; description = "Subject: <subject>\n\n<message>"
+    //  - Email Support:    reason = subject;  description = message
+    const reason = mode === "accountRecovery" ? String(category) : trimmedSubject;
+    const description =
+      mode === "accountRecovery"
+        ? `Subject: ${trimmedSubject}\n\n${trimmedMessage}`
+        : trimmedMessage;
+
+    try {
+      const res = await submitGuestQuery({
+        firstName: trimmedFirstName,
+        lastName: trimmedLastName,
+        email: trimmedEmail,
+        reason,
+        description,
+        attachment,
+      });
+      const ok = res?.ok ?? res?.status ?? true;
+      if (ok) {
+        showSuccess(
+          "Request submitted",
+          "Thanks — our support team will get back to you within 24–48 hours."
+        );
+        navigation.goBack();
+      } else {
+        showError("Couldn't submit", res?.message || "Please try again.");
+      }
+    } catch (error: any) {
+      showError("Something went wrong", getApiErrorMessage(error, "Please try again."));
+    }
+  };
 
   return (
-    <ScreenContainer scrollable={false} padding={0}>
-      <HeaderTitle
-        title="Account Recovery"
-        leftIcon="true"
-        rightIcon={<SvgIcons.ChatWithAi width={30} height={30} />}
-        onPressRight={() => {
-          navigation.navigate(NAVIGATION_SCREENS.FRESHCHAT_SCREEN);
+    <View style={styles.root}>
+      <CustomHeader
+        {...({} as any)}
+        navigation={navigation}
+        title={config.headerTitle}
+        showBackButton
+        rightButton={{
+          icon: <SvgIcons.ChatWithAi width={26} height={26} />,
+          onPress: () => navigation.navigate(NAVIGATION_SCREENS.FRESHCHAT_SCREEN),
         }}
       />
-      <KeyboardAwareScrollView
-        style={customStyle.keyboardScrollView}
-        contentContainerStyle={customStyle.keyboardScrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        enableOnAndroid
-        extraScrollHeight={24}
-        enableAutomaticScroll
+      <ScreenWrapper
+        safeArea
+        safeAreaEdges={["bottom", "left", "right"]}
+        scrollable
+        padding={16}
+        contentStyle={styles.content}
       >
-      <View style={[styles.whiteSheetContainer]}>
-        <View style={customStyle.infoContainer}>
-          {/* <SvgIcons.InfoNote /> */}
+        <View style={styles.infoBanner}>
           <CustomText
-            variant="caption"
-            style={{ flex: 1, color: theme.colors.palette.grey600 }}
+            variant="bodySmall"
+            fontFamily="inter"
+            color={theme.colors.text}
+            style={styles.infoText}
           >
-            Tell us about your account and how you lost access. Our team will help you recover it within 48 hours.
+            {config.description}
           </CustomText>
         </View>
-        <View style={{ marginVertical: 20 }}>
-          <TextInputField
-            required
-            label="First name"
-            placeholder={"Enter your first name"}
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            label="First Name"
+            placeholder="Enter your first name"
             value={firstName}
-            cStyle={{ marginBottom: 15 }}
-            onChange={(e) => {
-              setFirstName(e);
-            }}
+            onChangeText={setFirstName}
           />
-          <TextInputField
-            required
-            label="Last name"
-            placeholder={"Enter your last name"}
+        </View>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            label="Last Name"
+            placeholder="Enter your last name"
             value={lastName}
-            cStyle={{ marginBottom: 15 }}
-            onChange={(e) => {
-              setLastName(e);
-            }}
+            onChangeText={setLastName}
           />
-          <TextInputField
-            required
-            label="Registered email"
-            placeholder={"Enter the email address linked to your account"}
-            value={registeredContact}
-            cStyle={{ marginBottom: 15 }}
-            onChange={(e) => {
-              setRegisteredContact(e);
-            }}
-          />
+        </View>
 
-          <TextInputField
-            required
-            label="Reason for recovery"
-            placeholder={"e.g. Lost access to phone, forgot password, suspicious activity"}
+        <View style={styles.inputContainer}>
+          <TextInput
+            label="Registered Email"
+            placeholder="Enter your email address"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+        </View>
+
+        {config.showCategory ? (
+          <View style={styles.inputContainer}>
+            <CategoryPicker
+              label="Support Category"
+              placeholder="Select a category"
+              value={category}
+              options={SUPPORT_CATEGORIES}
+              onSelect={setCategory}
+              styles={styles}
+              theme={theme}
+            />
+          </View>
+        ) : null}
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            label="Subject"
+            placeholder="Briefly describe your issue"
             value={subject}
-            isMultiLine={true}
-            iStyle={{
-              height: 120,
-              textAlignVertical: "top",
-              paddingVertical: 10,
-            }}
-            cStyle={{ marginBottom: 15 }}
-            onChange={(m) => {
-              setSubject(m);
-            }}
+            onChangeText={setSubject}
           />
+        </View>
 
-          <TextInputField
-            required
-            label="Describe your issue"
-            placeholder={
-              "Include any details that can help us verify your identity (last successful login, device, approximate balance, etc.)"
-            }
+        <View style={styles.inputContainer}>
+          <CustomText variant="label" fontWeight="semiBold" size={16} style={styles.fieldLabel}>
+            Describe Your Issue
+          </CustomText>
+          <TextInput
+            placeholder="Please provide details about your issue, including any relevant information such as error messages, transaction IDs, device, app version, or screenshots (if applicable)."
             value={message}
-            isMultiLine={true}
-            iStyle={{
-              height: 160,
-              textAlignVertical: "top",
-              paddingVertical: 10,
-            }}
-            cStyle={{ marginBottom: 15 }}
-            onChange={(m) => {
-              setMessage(m);
-            }}
+            onChangeText={setMessage}
+            multiline
+            height={150}
+            inputStyle={styles.multilineInput}
           />
-          {/* Image upload disabled for now
-          <UploadFile
-            label={"Add an attachment (optional)"}
-            selectedFile={(result: any) => {
-              if (result && result.length > 0 && result[0]) {
-                setAttachment(result[0]);
-              } else {
-                setAttachment(null);
-              }
-            }}
-            value={attachment?.name}
-            type={"image"}
-            key={"asdasd"}
-            boxStyle={customStyle.uploadBox}
+        </View>
+
+        <View style={styles.inputContainer}>
+          <CustomText variant="label" fontWeight="semiBold" size={16} style={styles.fieldLabel}>
+            Attachments (Optional)
+          </CustomText>
+          <TouchableOpacity
+            style={styles.uploadBox}
+            onPress={handlePickAttachment}
+            activeOpacity={0.7}
           >
+            <View style={styles.uploadIconWrap}>
+              <SvgIcons.UploadIcon width={26} height={26} />
+            </View>
             {attachment?.name ? (
-              <View style={{ alignItems: "center", padding: 10 }}>
-                <SvgIcons.UploadIcon width={40} height={40} />
-                <CustomText variant="body2" style={{ marginTop: 10 }}>
+              <>
+                <CustomText variant="bodySmall" fontFamily="inter" style={styles.uploadTextCenter}>
                   {attachment.name}
                 </CustomText>
-              </View>
+                <TouchableOpacity onPress={() => setAttachment(null)} activeOpacity={0.7}>
+                  <CustomText variant="bodySmall" fontFamily="inter" color={theme.colors.error}>
+                    Remove
+                  </CustomText>
+                </TouchableOpacity>
+              </>
             ) : (
-              <View style={{ alignItems: "center", padding: 10 }}>
-                <View
-                  style={{
-                    padding: 10,
-                    backgroundColor: theme.colors.palette.grey120,
-                    borderRadius: 50,
-                  }}
-                >
-                  <SvgIcons.UploadIcon width={30} height={30} />
-                </View>
-                <CustomText variant="body2" style={{ textAlign: "center" }}>
-                  <CustomText
-                    variant="body2"
-                    color={theme.colors.palette.green500}
-                  >
+              <>
+                <CustomText variant="bodySmall" fontFamily="inter" style={styles.uploadTextCenter}>
+                  <CustomText variant="bodySmall" fontFamily="inter" color={theme.colors.primary}>
                     Tap to upload
                   </CustomText>{" "}
-                  or drag and drop
+                  screenshots or supporting documents
                 </CustomText>
-                <CustomText
-                  variant="caption"
-                  color={theme.colors.palette.grey500}
-                  style={{ marginTop: 5 }}
-                >
+                <CustomText variant="caption" fontFamily="inter" color={theme.colors.textSecondary}>
                   PNG or JPG files
                 </CustomText>
-                <CustomText
-                  variant="caption"
-                  color={theme.colors.palette.grey400}
-                  style={{ marginTop: 15 }}
-                >
-                  You can upload a photo ID or a screenshot related to your account.
-                </CustomText>
-              </View>
+              </>
             )}
-          </UploadFile>
-          */}
+          </TouchableOpacity>
         </View>
-        <View style={{ gap: 10 }}>
-          <GenericButton
-            title="Submit recovery request"
-            onPress={() => {
-              handleSubmit();
-            }}
-          />
-        </View>
-      </View>
-      </KeyboardAwareScrollView>
-    </ScreenContainer>
+
+        <Button
+          onPress={handleSubmit}
+          loading={isPending}
+          disabled={isPending}
+          style={styles.submitButton}
+        >
+          {config.submitLabel}
+        </Button>
+      </ScreenWrapper>
+    </View>
   );
 };
 
 export default SupportScreen;
 
-const customStyles = (theme: Theme) =>
+const supportStyles = (theme: ITheme) =>
   StyleSheet.create({
-    keyboardScrollView: {
+    root: {
       flex: 1,
+      backgroundColor: theme.colors.background,
     },
-    keyboardScrollContent: {
+    content: {
       flexGrow: 1,
     },
-    infoContainer: {
-      width: "100%",
-      flexDirection: "row",
-      gap: 10,
-      backgroundColor: theme.colors.palette.green50,
-      padding: 15,
-      borderRadius: 10,
+    infoBanner: {
+      backgroundColor: theme.colors.primaryLight,
       borderLeftWidth: 4,
-      borderLeftColor: theme.colors.palette.green500,
+      borderLeftColor: theme.colors.primary,
+      borderRadius: 10,
+      padding: theme.spacing.base,
+      marginBottom: theme.spacing.lg,
+    },
+    infoText: {
+      lineHeight: 20,
+    },
+    inputContainer: {
+      marginBottom: theme.spacing.base,
+    },
+    fieldLabel: {
+      marginBottom: theme.spacing.sm,
+      color: theme.colors.text,
+    },
+    multilineInput: {
+      height: "100%",
+      textAlignVertical: "top",
+      paddingTop: 12,
+      paddingBottom: 12,
+    },
+    pickerField: {
+      height: 46,
+      borderWidth: 1,
+      borderColor: theme.colors.grey,
+      borderRadius: 8,
+      paddingHorizontal: 16,
+      flexDirection: "row",
       alignItems: "center",
+      justifyContent: "space-between",
+      backgroundColor: theme.colors.white,
+    },
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.4)",
+      justifyContent: "flex-end",
+    },
+    modalSheet: {
+      backgroundColor: theme.colors.background,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingHorizontal: theme.spacing.base,
+      paddingBottom: theme.spacing.xl,
+      maxHeight: "70%",
+    },
+    modalHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: theme.spacing.base,
+    },
+    optionItem: {
+      paddingVertical: theme.spacing.base,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.border,
     },
     uploadBox: {
-      height: 150,
+      minHeight: 140,
+      borderWidth: 1,
       borderStyle: "dashed",
-      borderColor: theme.colors.palette.grey400,
-      backgroundColor: theme.colors.palette.grey50,
+      borderColor: theme.colors.grey,
+      borderRadius: 10,
+      backgroundColor: theme.colors.greyLight,
       justifyContent: "center",
       alignItems: "center",
+      paddingVertical: theme.spacing.lg,
+      paddingHorizontal: theme.spacing.base,
+      gap: theme.spacing.sm,
+    },
+    uploadIconWrap: {
+      padding: theme.spacing.md,
+      backgroundColor: theme.colors.white,
+      borderRadius: 50,
+    },
+    uploadTextCenter: {
+      textAlign: "center",
+      lineHeight: 18,
+    },
+    submitButton: {
+      marginTop: theme.spacing.sm,
+      marginBottom: theme.spacing.xl,
     },
   });

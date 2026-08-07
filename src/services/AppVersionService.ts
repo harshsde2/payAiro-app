@@ -215,11 +215,15 @@ class AppVersionService {
    */
   private getStoreUrl(): string {
     if (Platform.OS === 'ios') {
-      // Replace with your actual App Store ID
-      return 'https://apps.apple.com/app/idYOUR_APP_ID';
+      // Numeric App Store ID comes from env (IOS_APP_STORE_ID). TODO: set this in
+      // .env.production / .env.staging once the app is live on the App Store.
+      const appStoreId = EnvConfig.IOS_APP_STORE_ID;
+      return appStoreId
+        ? `https://apps.apple.com/app/id${appStoreId}`
+        : 'https://apps.apple.com';
     } else {
-      // Replace with your actual package name
-      return 'https://play.google.com/store/apps/details?id=com.payairo';
+      const packageName = EnvConfig.ANDROID_PACKAGE_NAME || 'com.payairo';
+      return `https://play.google.com/store/apps/details?id=${packageName}`;
     }
   }
 

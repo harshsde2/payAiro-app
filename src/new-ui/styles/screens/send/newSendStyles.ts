@@ -5,7 +5,13 @@ export const newSendStyles = (theme: ITheme) =>
   StyleSheet.create({
     content: {
       flex: 1,
-      paddingBottom: theme.spacing.xl * 2,
+    },
+    flex: {
+      flex: 1,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      paddingBottom: theme.spacing.lg,
     },
     section: {
       marginBottom: theme.spacing.lg,
@@ -35,7 +41,11 @@ export const newSendStyles = (theme: ITheme) =>
       color: theme.colors.text,
     },
     proceedButtonContainer: {
-      marginTop: theme.spacing.md,
+      paddingTop: theme.spacing.md,
+      paddingBottom: theme.spacing.xs,
+      backgroundColor: theme.colors.background,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.border,
     },
   });
 

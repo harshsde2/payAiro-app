@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Platform, KeyboardAvoidingView } from 'react-native';
+import { View, Platform, KeyboardAvoidingView, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import ScreenWrapper from '@new-ui/components/common-components/ScreenWrapper';
 import { TextInput, Button } from '@new-ui/components/common-components/layout';
@@ -264,12 +264,17 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
       safeArea
       safeAreaEdges={['bottom']}
       padding={16}
-      scrollable
       contentStyle={styles.content}
     >
       <KeyboardAvoidingView
+        style={styles.flex}
         behavior={Platform.OS === 'ios' ? ('padding' as const) : undefined}
       >
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContent}
+        >
         <View style={styles.section}>
           <View style={styles.inputContainer}>
             <TextInput
@@ -336,6 +341,7 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
             onProfilePress={handleContactProfilePress}
           />
         </View>
+        </ScrollView>
 
         <View style={styles.proceedButtonContainer}>
           <Button

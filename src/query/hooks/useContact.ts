@@ -335,6 +335,8 @@ export interface IFastApiUserSearchUser {
   first_name: string;
   last_name: string;
   avatar_url: string | null;
+  /** External (off-platform) users — filtered out of the send suggestions. */
+  is_external?: boolean;
 }
 
 export interface IFastApiUserSearchData {

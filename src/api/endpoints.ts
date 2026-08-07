@@ -158,6 +158,8 @@ export const USER_AUTH = {
   KYC_VERIFY: "api/v1/users/profile/kyc-verify/",
   ADDRESS_UPDATE: "api/v1/users/address/update/",
   USERS_ME: "api/v1/users/me/",
+  /** Unauthenticated support/account-recovery form (multipart). */
+  GUEST_QUERY: "api/v1/users/guest-query/",
   PHONE_OTP_REQUEST: "api/v1/users/me/phone-otp/request/",
   PHONE_OTP_VERIFY: "api/v1/users/me/phone-otp/verify/",
   EMAIL_OTP_REQUEST: "api/v1/users/me/email-otp/request/",

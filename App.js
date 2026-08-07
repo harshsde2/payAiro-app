@@ -42,6 +42,7 @@ import {
   clearAuthSession,
   readAuthSession,
   getAuthStackInitialRoute,
+  hasCompletedSession,
 } from "./src/auth/authSession";
 import {
   bootstrapCoinmeRisk,
@@ -202,13 +203,6 @@ export default function App() {
       const cryptoData = getItem(STORAGE_KEYS.CRYPTO_DATA) || null;
       const allCryptoBalances = getItem(STORAGE_KEYS.ALL_CRYPTO_BALANCES) || null;
 
-      let wallet = null;
-      try {
-        wallet = await getWalletDataAuth();
-      } catch (e) {
-        console.log("[App] getWalletDataAuth failed:", e?.message || e);
-      }
-
       bootstrapCoinmeRisk().catch(() => {});
 
       if (session.tokens) {
@@ -235,14 +229,7 @@ export default function App() {
           }
         }
 
-        await hydrateUsersMe();
-
-        const refreshed = readAuthSession();
-
         const applyLoggedInBootstrap = (tokensForMerchant) => {
-          if (wallet) {
-            useDispatchAction(setWalletData(wallet));
-          }
           getMerchentRequest(tokensForMerchant);
           useDispatchAction(setAppAccessGranted(true));
 
@@ -262,11 +249,35 @@ export default function App() {
           }
         };
 
-        // Only a completed onboarding enters the app. Step 1 means KYC identity was
-        // fetched but never verified — those users fall through to the AuthStack, which
-        // getAuthStackInitialRoute() resolves to the KYC verify screen.
-        if (refreshed.tokens && refreshed.onboardingComplete) {
-          applyLoggedInBootstrap(refreshed.tokens);
+        // Grant app access SYNCHRONOUSLY from MMKV for a completed session (tokens +
+        // onboardingComplete). This flips `isLogin` immediately so the root gate shows the
+        // app — never the Auth stack — no matter how slow/offline the network is. Wallet +
+        // /users/me hydrate afterwards (best-effort) and must NOT block this grant.
+        // Only a completed onboarding enters the app; step 1 (KYC fetched, not verified) falls
+        // through to the AuthStack, which getAuthStackInitialRoute() resolves to KYC verify.
+        const grantedUpFront = !!session.tokens && session.onboardingComplete;
+        if (grantedUpFront) {
+          applyLoggedInBootstrap(session.tokens);
+        }
+
+        // Wallet data — best-effort; may stall/fail offline, so it runs AFTER access is granted.
+        try {
+          const wallet = await getWalletDataAuth();
+          if (wallet) {
+            useDispatchAction(setWalletData(wallet));
+          }
+        } catch (e) {
+          console.log("[App] getWalletDataAuth failed:", e?.message || e);
+        }
+
+        await hydrateUsersMe();
+
+        // If onboarding was completed during this launch (wasn't complete at start), grant now.
+        if (!grantedUpFront) {
+          const refreshed = readAuthSession();
+          if (refreshed.tokens && refreshed.onboardingComplete) {
+            applyLoggedInBootstrap(refreshed.tokens);
+          }
         }
       }
     } catch (e) {
@@ -493,11 +504,20 @@ export default function App() {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState(null);
+  // Once the user dismisses an OPTIONAL update, don't re-nag on every foreground —
+  // the version check re-runs on foreground and would otherwise reopen the modal.
+  // Forced updates ignore this guard and always re-show. Resets on cold start.
+  const optionalUpdateDismissedRef = useRef(false);
 
   // Show modal when update is available - with 10 second delay to let LockScreen work first
   useEffect(() => {
     let timeoutId = null;
-    
+
+    // Suppress optional updates already dismissed this session; forced updates always show.
+    if (shouldUpdate && optionalUpdateDismissedRef.current && !needsForceUpdate) {
+      return;
+    }
+
     if (shouldUpdate) {
       console.log('[App] Update available - will show modal after 10 seconds. needsForceUpdate:', needsForceUpdate);
       
@@ -542,6 +562,8 @@ export default function App() {
   // Handle close modal (for optional updates only)
   const handleCloseUpdateModal = () => {
     console.log('[App] Update modal closed by user');
+    // Remember the dismissal so foreground re-checks don't reopen it this session.
+    optionalUpdateDismissedRef.current = true;
     setShowUpdateModal(false);
     setIsUpdating(false);
     setUpdateError(null);
@@ -686,8 +708,14 @@ export default function App() {
                       )}
                       {/* After the splash animation ends, keep the UI covered until the
                           session bootstrap resolves — prevents the Auth stack flashing
-                          before `isLogin` flips true on a logged-in cold launch. */}
-                      {!splashVisible && isFetching && <BootHydrationOverlay />}
+                          before `isLogin` flips true on a logged-in cold launch. The
+                          `!isLogin && hasCompletedSession()` clause keeps the loader (never the
+                          Auth stack) for a persisted-logged-in user even if `isFetching` was
+                          already cleared by the 6s safety timeout on a slow/offline launch. */}
+                      {!splashVisible &&
+                        (isFetching || (!isLogin && hasCompletedSession())) && (
+                          <BootHydrationOverlay />
+                        )}
                     </View>
                   </AppLockProvider>
                 </PersistQueryProvider>

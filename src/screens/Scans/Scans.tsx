@@ -47,9 +47,11 @@ const SCAN_AREA_SIZE = width * 0.7;
  *  - `wallet`:  a plain crypto wallet address (from the Crypto Receive QR). → prefill address.
  * Anything else is `invalid`.
  */
+type ScannedAsset = { asset: string; chain: string; logo?: string };
+
 type ScanResult =
   | { kind: "payairo"; username: string }
-  | { kind: "wallet"; address: string }
+  | { kind: "wallet"; address: string; preselectedAsset?: ScannedAsset }
   | { kind: "invalid" };
 
 /** Classify a raw scanned/decoded QR string into one of the supported kinds. */
@@ -57,7 +59,8 @@ const classifyScannedQR = (raw: string | null | undefined): ScanResult => {
   const value = String(raw ?? "").trim();
   if (!value) return { kind: "invalid" };
 
-  // 1) Our PayAiro receive QR is a JSON object with a username/tag.
+  // 1) JSON QR — either our PayAiro receive QR (username/tag) or our crypto-wallet
+  //    receive QR (address + asset metadata, from CryptoReceiveScreen).
   let parsed: unknown = null;
   try {
     parsed = JSON.parse(value);
@@ -65,17 +68,46 @@ const classifyScannedQR = (raw: string | null | undefined): ScanResult => {
     parsed = null;
   }
   if (parsed && typeof parsed === "object") {
-    const obj = parsed as { type?: unknown; username?: unknown; tag?: unknown };
-    const username = String(obj.username ?? obj.tag ?? "").trim();
+    const obj = parsed as {
+      type?: unknown;
+      username?: unknown;
+      tag?: unknown;
+      address?: unknown;
+      symbol?: unknown;
+      chain?: unknown;
+      logo?: unknown;
+    };
     const typeStr = String(obj.type ?? "").toLowerCase();
+
+    // 1a) Crypto-wallet QR: carries the deposit address + the coin it belongs to, so the
+    //     Send flow can preselect that same asset/chain.
+    const walletCandidate = normalizeWalletCandidate(String(obj.address ?? "").trim());
+    if (
+      (typeStr === "crypto_wallet" || !!obj.symbol) &&
+      isWalletAddress(walletCandidate)
+    ) {
+      const symbol = String(obj.symbol ?? "").trim().toUpperCase();
+      const chain = String(obj.chain ?? "").trim().toUpperCase();
+      const logo = String(obj.logo ?? "").trim();
+      return {
+        kind: "wallet",
+        address: walletCandidate,
+        preselectedAsset: symbol
+          ? { asset: symbol, chain: chain || symbol, logo: logo || undefined }
+          : undefined,
+      };
+    }
+
+    // 1b) PayAiro receive QR (username/tag).
+    const username = String(obj.username ?? obj.tag ?? "").trim();
     if (username && (typeStr === "receive" || "tag" in obj || "username" in obj)) {
       return { kind: "payairo", username };
     }
-    // A JSON object that isn't our receive QR (order/merchant/etc.) is not supported.
+    // A JSON object that isn't one of ours (order/merchant/etc.) is not supported.
     return { kind: "invalid" };
   }
 
-  // 2) Plain string → only a valid wallet address is accepted.
+  // 2) Plain string → only a valid wallet address is accepted (no asset context).
   const candidate = normalizeWalletCandidate(value);
   if (isWalletAddress(candidate)) {
     return { kind: "wallet", address: candidate };
@@ -157,9 +189,12 @@ export default function Scans(): React.ReactElement {
       }
 
       // Wallet address → prefill on NewSend; its Proceed handles the external send.
+      // When the QR carried asset metadata (our crypto-receive QR), forward it as
+      // preselectedAsset so the send is locked to that same coin/chain.
       navigation.navigate(NAVIGATION_SCREENS.NEW_SEND, {
         requested: false,
         sender: result.address,
+        preselectedAsset: result.preselectedAsset,
       });
       return true;
     },

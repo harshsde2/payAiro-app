@@ -233,6 +233,18 @@ const NewTransactionDetails: FC = () => {
   const exchangeRate = cryptoDetails?.exchange_rate;
   const usdValue = cryptoDetails?.usd_value;
 
+  // External-wallet receive: the sender is an off-platform wallet, so there's no known
+  // display party (username/identifier) — fall back to the on-chain from_address instead
+  // of "Unknown" in the header subtitle and the "Received From" receipt row.
+  const shortenAddress = (addr?: string | null): string =>
+    addr && addr.length > 16 ? `${addr.substring(0, 10)}...${addr.slice(-4)}` : addr || "";
+  const hasKnownParty = !!displayUsername && displayUsername !== "Unknown";
+  const receivedFromDisplay = hasKnownParty
+    ? displayUsername
+    : fromAddress
+    ? shortenAddress(fromAddress)
+    : "Unknown";
+
   // Determine transaction scenario
   const txType = transactionData.transaction_type;
   const isCryptoBuy = txType === "crypto_buy";
@@ -266,7 +278,7 @@ const NewTransactionDetails: FC = () => {
   // Get transaction subtitle based on scenario (for crypto)
   const getCryptoSubtitle = (): string | null => {
     if (isCryptoSend) return `To ${displayUsername}`;
-    if (isCryptoReceive) return `From ${displayUsername}`;
+    if (isCryptoReceive) return `From ${receivedFromDisplay}`;
     if (isCryptoWithdrawal) {
       return displayUsername === "External Wallet"
         ? "To External Wallet"
@@ -1407,7 +1419,7 @@ const NewTransactionDetails: FC = () => {
                         color={theme.colors.text.primary}
                         style={slipStyles.slipValueText}
                       >
-                        {displayUsername}
+                        {receivedFromDisplay}
                       </CustomText>
                     </View>
 

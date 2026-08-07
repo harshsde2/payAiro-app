@@ -44,7 +44,11 @@ const SendContactsList: React.FC<ISendContactsListProps> = ({
 
   const contacts: ISendContactItem[] = useMemo(() => {
     const users = data?.data?.users ?? [];
-    return users.map((user) => {
+    // Only PayAiro (on-platform) users can be sent to from here — hide external users
+    // (is_external === true). Missing/undefined is treated as internal.
+    return users
+      .filter((user) => user.is_external !== true)
+      .map((user) => {
       const displayName =
         `${user.first_name || ''} ${user.last_name || ''}`.trim();
       const tagOrUsername =

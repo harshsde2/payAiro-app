@@ -365,9 +365,7 @@ const TransactionResult: FC = () => {
       case 'success':
         return (
           <CustomText variant="h3" fontWeight='semiBold' style={[styles.title]} >
-            {isPaymentTransactionSendResponse(transactionData)
-              ? 'Payment Initiated'
-              : 'Payment Successful'}
+            Payment Initiated
           </CustomText>
         );
       case 'failed':
@@ -428,7 +426,7 @@ const TransactionResult: FC = () => {
               <CustomText size={16} variant="caption" fontWeight="semiBold" color={newTheme.colors.primary} fontFamily="inter">
                 {crypto}
               </CustomText>
-              {' '}({fiat}) has been completed.
+              {' '}({fiat}) has been initiated.
             </CustomText>
           );
         }
@@ -459,7 +457,7 @@ const TransactionResult: FC = () => {
         }
         return (
           <CustomText variant="caption" size={16} fontFamily="inter" style={styles.description}>
-            Your payment of <CustomText size={16} variant="caption" fontWeight="semiBold" color={newTheme.colors.primary} fontFamily="inter" >{`$${(transactionData as any)?.data?.amount || 0}`}</CustomText> has successfully sent to <CustomText size={16} variant="caption" fontWeight="semiBold" color={newTheme.colors.primary} fontFamily="inter" >{(transactionData as any)?.data?.recipient_username || 'N/A'}</CustomText>.
+            Your payment of <CustomText size={16} variant="caption" fontWeight="semiBold" color={newTheme.colors.primary} fontFamily="inter" >{`$${(transactionData as any)?.data?.amount || 0}`}</CustomText> has been initiated to <CustomText size={16} variant="caption" fontWeight="semiBold" color={newTheme.colors.primary} fontFamily="inter" >{(transactionData as any)?.data?.recipient_username || 'N/A'}</CustomText>.
           </CustomText>
         );
       case 'failed': {

@@ -44,7 +44,13 @@ const SettingsScreen = () => {
         },
         {
             title: 'Payment Methods',
-            icon: <AppIcon.DebitCard />,
+            // DebitCard is a bare 24px glyph (no badge), unlike the other 40px badged
+            // icons — wrap it in a matching green circle so it aligns with the rest.
+            icon: (
+                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3FBF4', alignItems: 'center', justifyContent: 'center' }}>
+                    <AppIcon.DebitCard width={22} height={22} />
+                </View>
+            ),
             onPress: () => navigation.navigate(NAVIGATION_SCREENS.PAYMENT_METHODS_SCREEN as never),
         },
         // {

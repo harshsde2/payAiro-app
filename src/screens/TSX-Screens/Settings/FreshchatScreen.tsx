@@ -296,7 +296,7 @@ const FreshchatScreen = () => {
   };
 
   const openEmailSupportForm = () => {
-    navigation.navigate(NAVIGATION_SCREENS.SUPPORT_SCREEN);
+    navigation.navigate(NAVIGATION_SCREENS.SUPPORT_SCREEN, { mode: "emailSupport" });
   };
 
   // Render loading state

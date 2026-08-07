@@ -348,6 +348,18 @@ const NewAddBalanceScreen: React.FC = () => {
   );
   const expectedFee = getExpectedFeeUsd(quoteData?.feeBreakdown);
 
+  // The backend applies a "privilege" promo (e.g. `promoCode: "noFeesOrSpread"`) to the
+  // quote for eligible users. When present, badge the fee row so the user sees the discount.
+  const quotePromoCode =
+    (quoteData as any)?.data?.data?.promoCode ||
+    (quoteData as any)?.quote?.request?.promoCode ||
+    '';
+  const hasPrivilegeDiscount =
+    typeof quotePromoCode === 'string' && quotePromoCode.trim().length > 0;
+  const feeLabel = hasPrivilegeDiscount
+    ? 'Expected fees (Privilege Discount Applied)'
+    : 'Expected fees';
+
   // Surface the quote's own failure (e.g. insufficient balance) instead of a silent
   // no-op. Deduped by message so it toasts once per distinct error.
   const lastQuoteErrorToast = useRef<string | null>(null);
@@ -526,6 +538,12 @@ const NewAddBalanceScreen: React.FC = () => {
         usdAmount={parsedAmount}
         expectedFee={expectedFee}
         expectedFeeLoading={quoteEnabled && isQuoteLoading}
+        feeLabel={feeLabel}
+        feeInfoText={
+          hasPrivilegeDiscount
+            ? "As part of our Privilege Discount offer, you're receiving a 100% fee waiver. Your applicable fee for this transaction is $0.00."
+            : undefined
+        }
         totalLabel="Amount to Be Added"
       />
 

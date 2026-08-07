@@ -69,6 +69,21 @@ const CryptoReceiveScreen: React.FC = () => {
   const displayTitle = matched?.currencyName ?? symbol ?? 'Crypto';
   const address = matched?.walletAddress ?? '';
 
+  // The scannable QR carries just enough structured asset info (not just the raw address) so
+  // PayAiro's scanner can preselect the same coin/chain on the Send flow. Kept compact — the
+  // logo URL is intentionally NOT embedded (it bloats the payload and, with the centered logo
+  // overlay, made the QR too dense to decode; the Send flow resolves the logo from the symbol).
+  // The copied/shared value below stays the plain wallet address for external wallets.
+  const qrValue = useMemo(() => {
+    if (!address) return '';
+    return JSON.stringify({
+      type: 'crypto_wallet',
+      address,
+      symbol: String(symbol ?? '').toUpperCase(),
+      chain: String(matched?.chain ?? '').toUpperCase(),
+    });
+  }, [address, symbol, matched?.chain]);
+
   const copyToClipboard = (text: string, label: string = 'Text') => {
     Clipboard.setString(text);
     if (Platform.OS === 'android') {
@@ -229,7 +244,7 @@ const CryptoReceiveScreen: React.FC = () => {
             title={displayTitle}
             titleIcon={cryptoIcon}
             subtitle={chainSubtitle(matched.chain)}
-            qrValue={address}
+            qrValue={qrValue}
             payAiroTag={address}
             tagLabel={`${displayTitle} wallet address:`}
             tagValueStyle={styles.qrTagValue}

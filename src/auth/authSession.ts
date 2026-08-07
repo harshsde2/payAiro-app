@@ -172,3 +172,14 @@ export const getAuthStackInitialRoute = (): string => {
   }
   return NAVIGATION_SCREENS.NEW_ONBOARDING;
 };
+
+/**
+ * Synchronous "fully logged in" check from MMKV: tokens present AND onboarding complete.
+ * A mid-onboarding user (tokens but !onboardingComplete) is NOT complete — they still belong
+ * on the Auth stack (resumed via getAuthStackInitialRoute). Used by the root render gate to
+ * show a loader (never the Auth stack) while Redux `isLogin` hydrates on a logged-in cold launch.
+ */
+export const hasCompletedSession = (): boolean => {
+  const session = readAuthSession();
+  return !!session.tokens && session.onboardingComplete;
+};

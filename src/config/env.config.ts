@@ -55,7 +55,9 @@ export interface IEnvConfig {
   ENABLE_VERSION_TEST_MODE?: boolean;
   TEST_VERSION_OVERRIDE?: string;
   TEST_FORCE_UPDATE?: boolean;
-  FORCE_UPDATE_ENABLED?: boolean; // Production: true = force all updates, false = optional updates
+  FORCE_UPDATE_ENABLED?: boolean; // true = force all updates (blocking), false = optional (dismissible)
+  IOS_APP_STORE_ID?: string; // Numeric App Store ID, powers the iOS store-URL fallback/redirect
+  ANDROID_PACKAGE_NAME?: string; // Play Store package name (defaults to com.payairo)
 
   // Wert Checkout Settings (non-secret values only)
   WERT_CHECKOUT_PAGE_BASE_URL?: string;
@@ -92,7 +94,9 @@ const OPTIONAL_VARS: Partial<Record<keyof IEnvConfig, any>> = {
   ENABLE_VERSION_TEST_MODE: false,
   TEST_VERSION_OVERRIDE: undefined,
   TEST_FORCE_UPDATE: false,
-  FORCE_UPDATE_ENABLED: true, // Default: force all updates in production
+  FORCE_UPDATE_ENABLED: false, // Default: optional (dismissible) updates. Set true to force.
+  IOS_APP_STORE_ID: undefined,
+  ANDROID_PACKAGE_NAME: 'com.payairo',
   WERT_CHECKOUT_PAGE_BASE_URL: undefined,
   WERT_PARTNER_ID: undefined,
   WERT_WIDGET_ORIGIN: undefined,
@@ -354,6 +358,12 @@ function buildConfig(): IEnvConfig {
       OPTIONAL_VARS.FORCE_UPDATE_ENABLED as boolean,
       'FORCE_UPDATE_ENABLED'
     ),
+    IOS_APP_STORE_ID: (Config as any).IOS_APP_STORE_ID
+      ? String((Config as any).IOS_APP_STORE_ID).trim()
+      : undefined,
+    ANDROID_PACKAGE_NAME: (Config as any).ANDROID_PACKAGE_NAME
+      ? String((Config as any).ANDROID_PACKAGE_NAME).trim()
+      : (OPTIONAL_VARS.ANDROID_PACKAGE_NAME as string),
     WERT_CHECKOUT_PAGE_BASE_URL: (Config as any).WERT_CHECKOUT_PAGE_BASE_URL
       ? String((Config as any).WERT_CHECKOUT_PAGE_BASE_URL).trim()
       : undefined,
