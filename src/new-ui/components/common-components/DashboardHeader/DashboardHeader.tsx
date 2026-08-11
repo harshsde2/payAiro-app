@@ -70,6 +70,13 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
     onMenuPress?.();
   }, [onMenuPress]);
 
+  const handleSupportPress = useCallback(() => {
+    navigation.navigate(
+      NAVIGATION_SCREENS.SUPPORT_SCREEN as never,
+      { mode: 'emailSupport' } as never
+    );
+  }, [navigation]);
+
   const closeMenu = useCallback(() => {
     setIsMenuVisible(false);
   }, []);
@@ -138,28 +145,50 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
         </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.menuButton}
-        onPress={handleMenuPress}
-        activeOpacity={0.7}
-      >
-        <GlassyWrapper
-          style={styles.menuButtonGlassy}
-          borderRadius={20}
-          blurAmount={25}
-          blurType="light"
-          overlayOpacity={0.12}
-          borderWidth={1}
-          borderColor="rgba(255, 255, 255, 0.6)"
+      <View style={styles.rightSection}>
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={handleSupportPress}
+          activeOpacity={0.7}
         >
-          <View style={styles.menuIconWrapper}>
-            <MenuIcon width={25} height={25} />
-          </View>
-        </GlassyWrapper>
-            {unreadCount > 0 && (
-              <View style={styles.menuIconDot} />
-            )}
-      </TouchableOpacity>
+          <GlassyWrapper
+            style={styles.menuButtonGlassy}
+            borderRadius={20}
+            blurAmount={25}
+            blurType="light"
+            overlayOpacity={0.12}
+            borderWidth={1}
+            borderColor="rgba(255, 255, 255, 0.6)"
+          >
+            <View style={styles.menuIconWrapper}>
+              <AppIcon.Headphones width={22} height={22} />
+            </View>
+          </GlassyWrapper>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={handleMenuPress}
+          activeOpacity={0.7}
+        >
+          <GlassyWrapper
+            style={styles.menuButtonGlassy}
+            borderRadius={20}
+            blurAmount={25}
+            blurType="light"
+            overlayOpacity={0.12}
+            borderWidth={1}
+            borderColor="rgba(255, 255, 255, 0.6)"
+          >
+            <View style={styles.menuIconWrapper}>
+              <MenuIcon width={25} height={25} />
+            </View>
+          </GlassyWrapper>
+              {unreadCount > 0 && (
+                <View style={styles.menuIconDot} />
+              )}
+        </TouchableOpacity>
+      </View>
 
       <DashboardMenuModal
         visible={isMenuVisible}
