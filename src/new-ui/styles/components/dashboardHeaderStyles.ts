@@ -55,6 +55,11 @@ export const dashboardHeaderStyles = (theme: ITheme) =>
       color: theme.colors.text,
       fontFamily: theme.typography.fontFamily.semiBold,
     },
+    rightSection: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+    },
     menuButton: {
       width: 40,
       height: 40,
