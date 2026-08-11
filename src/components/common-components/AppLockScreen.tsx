@@ -5,6 +5,7 @@ import {
   AppState,
   type AppStateStatus,
   Modal,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -57,6 +58,28 @@ const AppLockScreen: React.FC = () => {
   const biometricFailureCount = useRef(0);
   const paymentMode = !!paymentVerificationRequest;
   const requiresPinSetup = paymentVerificationRequest?.requirePinSetup === true;
+
+  // The caller's onVerified() usually navigates to TRANSACTION_RESULT, which is a NATIVE modal
+  // (presentation: "modal"). On iOS, presenting that while THIS full-screen <Modal> is still
+  // mounted — and tearing this one down in the same tick — races and leaves a black stuck
+  // screen. So on iOS we dismiss this modal first and run onVerified in the Modal's onDismiss
+  // (after it has fully torn down); the setTimeout is a safety net if onDismiss never fires.
+  const pendingVerifiedRef = useRef<(() => void) | null>(null);
+  const flushPendingVerified = () => {
+    const cb = pendingVerifiedRef.current;
+    pendingVerifiedRef.current = null;
+    if (cb) cb();
+  };
+  const finishPaymentVerified = (onVerified: () => void) => {
+    if (Platform.OS === "ios") {
+      pendingVerifiedRef.current = onVerified;
+      clearPaymentVerification();
+      setTimeout(flushPendingVerified, 600);
+    } else {
+      onVerified();
+      clearPaymentVerification();
+    }
+  };
   const [paymentShowPin, setPaymentShowPin] = useState(false);
   /** True while native biometric dialog is visible; shows full white background instead of PIN UI. */
   const [isBiometricRunning, setIsBiometricRunning] = useState(false);
@@ -107,9 +130,10 @@ const AppLockScreen: React.FC = () => {
       setSetupPinFirstEntry("");
       setPin("");
       if (paymentVerificationRequest) {
-        paymentVerificationRequest.onVerified();
+        finishPaymentVerified(paymentVerificationRequest.onVerified);
+      } else {
+        clearPaymentVerification();
       }
-      clearPaymentVerification();
     } catch {
       setErrorMessage("Failed to save PIN. Please try again.");
       setPin("");
@@ -158,8 +182,7 @@ const AppLockScreen: React.FC = () => {
         setPin("");
         setErrorMessage("");
         if (paymentMode && paymentVerificationRequest) {
-          paymentVerificationRequest.onVerified();
-          clearPaymentVerification();
+          finishPaymentVerified(paymentVerificationRequest.onVerified);
         } else {
           resetBiometricFailures();
           unlockApp();
@@ -245,8 +268,7 @@ const AppLockScreen: React.FC = () => {
         if (result.success) {
           biometricFailureCount.current = 0;
           if (paymentMode && paymentVerificationRequest) {
-            paymentVerificationRequest.onVerified();
-            clearPaymentVerification();
+            finishPaymentVerified(paymentVerificationRequest.onVerified);
           } else {
             unlockApp();
           }
@@ -333,6 +355,9 @@ const AppLockScreen: React.FC = () => {
         onRequestClose={() => {
           if (paymentMode) clearPaymentVerification();
         }}
+        // iOS: fires after the modal has fully dismissed — run the deferred onVerified() here so
+        // navigating to the TRANSACTION_RESULT native modal doesn't race this one (black screen).
+        onDismiss={flushPendingVerified}
         style={{ flex: 1 }}
         presentationStyle="fullScreen"
       >

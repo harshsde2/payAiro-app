@@ -13,6 +13,8 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { NAVIGATION_SCREENS } from 'navigations/navigationConstants';
 import CustomText from '@new-ui/components/common-components/CustomText';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 import { addBalanceStyles } from '@new-ui/styles/screens/addBalance/addBalanceStyles';
@@ -190,6 +192,14 @@ const CardFormBody: React.FC<CardFormBodyProps> = ({ onClose, onSubmitted }) => 
   const styles = addBalanceStyles(theme);
   const fieldStyles = useMemo(() => makeFieldStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
+
+  // On a card-add failure, let the user jump straight to the email-support form. Close this
+  // modal first so the pushed support screen isn't left behind the (RN) modal overlay.
+  const handleContactSupport = useCallback(() => {
+    onClose();
+    navigation.navigate(NAVIGATION_SCREENS.SUPPORT_SCREEN, { mode: 'emailSupport' });
+  }, [navigation, onClose]);
   const { height: windowHeight } = useWindowDimensions();
   // Bottom-anchored card: cap height so the close button stays below the notch and the card
   // bottom stays above the home indicator. Reserve ~96px for the close row + breathing room.
@@ -518,6 +528,23 @@ const CardFormBody: React.FC<CardFormBodyProps> = ({ onClose, onSubmitted }) => 
           <View style={fieldStyles.errorBanner}>
             <CustomText variant="bodySmall" color={theme.colors.error}>
               {error}
+            </CustomText>
+            <CustomText
+              variant="bodySmall"
+              fontFamily="inter"
+              color={theme.colors.textSecondary}
+              style={{ marginTop: theme.spacing.xs }}
+            >
+              Still having trouble?{" "}
+              <CustomText
+                variant="bodySmall"
+                fontFamily="inter"
+                fontWeight="semiBold"
+                color={theme.colors.primary}
+                onPress={handleContactSupport}
+              >
+                Contact Email Support
+              </CustomText>
             </CustomText>
           </View>
         ) : !accountReady ? (

@@ -48,6 +48,8 @@ const KYCScreen: React.FC = () => {
   const [userEmail, setUserEmail] = useState((params.email || "").toLowerCase());
   const [ssnLastFour, setSsnLastFour] = useState("");
   const [isPending, setIsPending] = useState(false);
+  // Surface an email-support shortcut once submitting the KYC details has failed.
+  const [showSupport, setShowSupport] = useState(false);
   const [checked, setChecked] = useState(false);
   const [checkedCybridUserAgreement, setCheckedCybridUserAgreement] =
     useState(false);
@@ -120,6 +122,8 @@ const KYCScreen: React.FC = () => {
     };
 
     setIsPending(true);
+    // Clear any prior failure shortcut before a fresh attempt.
+    setShowSupport(false);
 
     submitKycComplete(payload, {
       onSuccess: (resp) => {
@@ -127,6 +131,7 @@ const KYCScreen: React.FC = () => {
 
         if (!resp?.status) {
           showError("Couldn't submit details", resp?.message || "Please try again.");
+          setShowSupport(true);
           return;
         }
 
@@ -148,6 +153,7 @@ const KYCScreen: React.FC = () => {
           "Couldn't submit details",
           getApiErrorMessage(error, "Please try again.")
         );
+        setShowSupport(true);
       },
     });
   };
@@ -217,6 +223,23 @@ const KYCScreen: React.FC = () => {
       </View>
 
       <View style={styles.inputContainer}>
+        <CustomText
+          variant="bodySmall"
+          fontFamily="inter"
+          color={theme.colors.textSecondary}
+          style={{ marginBottom: theme.spacing.sm, lineHeight: 20 }}
+        >
+          To complete the onboarding process and verify your KYC, you’ll need to provide the{" "}
+          <CustomText
+            variant="bodySmall"
+            fontFamily="inter"
+            fontWeight="semiBold"
+            color={theme.colors.text}
+          >
+           last 4 digits of your Social Security Numbers (SSN)
+          </CustomText>{" "}
+          This information is securely encrypted and is not stored by PayAiro.
+        </CustomText>
         <TextInput
           label="Last 4 digits of SSN"
           placeholder="1234"
@@ -303,6 +326,30 @@ const KYCScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
       <View style={styles.buttonContainer}>
+        {showSupport ? (
+          <CustomText
+            variant="bodySmall"
+            fontFamily="inter"
+            color={theme.colors.textSecondary}
+            style={{ textAlign: "center", marginBottom: theme.spacing.base }}
+          >
+            Still having trouble?{" "}
+            <CustomText
+              variant="bodySmall"
+              fontFamily="inter"
+              fontWeight="semiBold"
+              color={theme.colors.primary}
+              onPress={() =>
+                (navigation as any).navigate(NAVIGATION_SCREENS.SUPPORT_SCREEN, {
+                  mode: "emailSupport",
+                })
+              }
+            >
+              Contact Email Support
+            </CustomText>
+          </CustomText>
+        ) : null}
+
         <Button
           onPress={handleForm}
           style={styles.proceedButton}

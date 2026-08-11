@@ -1,41 +1,42 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { Animated, Easing, Pressable } from 'react-native';
+import { Animated, Easing, Pressable, View } from 'react-native';
 import LottieView from 'lottie-react-native';
 import { TRANSACTION_SUCCESS } from 'lottie/lottie';
 import CustomText from '@new-ui/components/common-components/CustomText';
+import Button from '@new-ui/components/common-components/layout/Button';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 import { addBalanceStyles } from '@new-ui/styles/screens/addBalance/addBalanceStyles';
 
 const ENTRANCE_MS = 280;
-const FALLBACK_COMPLETE_MS = 2800;
 
 export type CardAddedSuccessModalProps = {
   visible: boolean;
   onComplete: () => void;
   title?: string;
   message?: string;
+  infoNote?: string;
+  buttonLabel?: string;
 };
 
 const CardAddedSuccessModal: React.FC<CardAddedSuccessModalProps> = ({
   visible,
   onComplete,
   title = 'Card Added Successfully',
-  message = 'Your debit card is ready to use.',
+  message = 'Your card is being verified.',
+  infoNote = "Verifying your card can take 2–3 minutes — avoid paying with it until then, or the payment may fail. We'll notify you once it's verified.",
+  buttonLabel = 'Got it',
 }) => {
   const { theme } = useTheme();
   const styles = addBalanceStyles(theme);
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.96)).current;
   const completedRef = useRef(false);
-  const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // The modal stays open until the user taps "Got it" (no auto-dismiss), so they have time to
+  // read the verification note.
   const finishOnce = useCallback(() => {
     if (completedRef.current) return;
     completedRef.current = true;
-    if (fallbackTimerRef.current) {
-      clearTimeout(fallbackTimerRef.current);
-      fallbackTimerRef.current = null;
-    }
     onComplete();
   }, [onComplete]);
 
@@ -44,10 +45,6 @@ const CardAddedSuccessModal: React.FC<CardAddedSuccessModalProps> = ({
       completedRef.current = false;
       opacity.setValue(0);
       scale.setValue(0.96);
-      if (fallbackTimerRef.current) {
-        clearTimeout(fallbackTimerRef.current);
-        fallbackTimerRef.current = null;
-      }
       return;
     }
 
@@ -66,32 +63,18 @@ const CardAddedSuccessModal: React.FC<CardAddedSuccessModalProps> = ({
         useNativeDriver: true,
       }),
     ]).start();
-
-    fallbackTimerRef.current = setTimeout(finishOnce, FALLBACK_COMPLETE_MS);
-
-    return () => {
-      if (fallbackTimerRef.current) {
-        clearTimeout(fallbackTimerRef.current);
-        fallbackTimerRef.current = null;
-      }
-    };
-  }, [visible, finishOnce, opacity, scale]);
-
-  const handleAnimationFinish = useCallback(
-    (isCancelled?: boolean) => {
-      if (isCancelled) return;
-      finishOnce();
-    },
-    [finishOnce]
-  );
+  }, [visible, opacity, scale]);
 
   if (!visible) {
     return null;
   }
 
   return (
-    <Pressable style={styles.successModalBackdrop} onPress={finishOnce}>
-      <Pressable onPress={(e) => e.stopPropagation()}>
+    <Pressable style={styles.successModalBackdrop}>
+      <Pressable
+        style={{ width: '100%', alignItems: 'center' }}
+        onPress={(e) => e.stopPropagation()}
+      >
         <Animated.View
           style={[
             styles.successModalCard,
@@ -103,7 +86,6 @@ const CardAddedSuccessModal: React.FC<CardAddedSuccessModalProps> = ({
             source={TRANSACTION_SUCCESS}
             autoPlay
             loop={false}
-            onAnimationFinish={handleAnimationFinish}
           />
           <CustomText
             variant="h5"
@@ -121,6 +103,21 @@ const CardAddedSuccessModal: React.FC<CardAddedSuccessModalProps> = ({
           >
             {message}
           </CustomText>
+          {infoNote ? (
+            <CustomText
+              variant="caption"
+              fontFamily="inter"
+              color={theme.colors.textSecondary}
+              align="center"
+              style={{ marginTop: theme.spacing.sm, lineHeight: 18 }}
+            >
+              {infoNote}
+            </CustomText>
+          ) : null}
+
+          <View style={{ width: '100%', marginTop: theme.spacing.lg }}>
+            <Button onPress={finishOnce}>{buttonLabel}</Button>
+          </View>
         </Animated.View>
       </Pressable>
     </Pressable>

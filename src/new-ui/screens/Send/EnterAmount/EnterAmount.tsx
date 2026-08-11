@@ -1397,6 +1397,9 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   // Gate every money movement behind email verification; resumes the trade/send
   // automatically once the email is verified.
   const handlePayPress = useCallback(() => {
+    // Dismiss the amount keyboard before anything else, so its iOS "Done" accessory bar
+    // can't linger on later screens (e.g. after the payment completes on the dashboard).
+    Keyboard.dismiss();
     requireEmailVerified(proceedPay);
   }, [requireEmailVerified, proceedPay]);
 
