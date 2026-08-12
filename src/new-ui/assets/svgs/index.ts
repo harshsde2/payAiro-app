@@ -33,6 +33,7 @@ import AppVersion from './AppVersion.svg';
 import User from './User.svg';
 import Headphones from './Headphones.svg';
 import HelpCircle from './HelpCircle.svg';
+import Search from './Search.svg';
 import ChevronRight from './ChevronRight.svg';
 import QrCode from './QrCode.svg';
 import Cancel from './Cancel.svg';
@@ -100,6 +101,7 @@ export const AppIcon = {
   User,
   Headphones,
   HelpCircle,
+  Search,
   ChevronRight,
   QrCode,
   Cancel,

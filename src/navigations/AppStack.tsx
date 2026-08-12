@@ -42,6 +42,7 @@ import NotificationScreen from "new-ui/screens/KebabMenuScreens/NotificationScre
 import TransactionLimitsScreen from "@new-ui/screens/TransactionLimits";
 import PaymentMethodsScreen from "@new-ui/screens/PaymentMethods";
 import ContactsScreen from "@new-ui/screens/Contacts/ContactsScreen";
+import FAQScreen from "@new-ui/screens/FAQ/FAQScreen";
 import AddContactScreen from "@new-ui/screens/Contacts/AddContactScreen";
 import BankStatementScreen from "@new-ui/screens/KebabMenuScreens/BankStatementScreen/BankStatementScreen";
 import ViewStatementScreen from "@new-ui/screens/KebabMenuScreens/BankStatementScreen/ViewStatementScreen";
@@ -381,6 +382,11 @@ export default function AppStack() {
         options={{ headerShown: true, header: AppStackHeader, headerTitle: 'App Version' }}
         name={NAVIGATION_SCREENS.NEW_APP_VERSION_SCREEN}
         component={AppVersionScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'FAQ' }}
+        name={NAVIGATION_SCREENS.NEW_FAQ_SCREEN}
+        component={FAQScreen}
       />
       <Stack.Screen
         options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Change PIN' }}
