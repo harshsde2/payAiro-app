@@ -276,4 +276,9 @@ export const STATE_COMPLIANCE = {
   /** One-time + pre-transaction acknowledgments combined (Acknowledgment History screen). */
   COMBINED_DISCLOSURE_HISTORY: "api/v1/state-compliance/me/combined-disclosure-history/",
 };
- 
+
+// FAQ (user-facing) endpoints — FastAPI, relative to `USER_API_BASE_URL`. Public — no JWT required.
+export const FAQ = {
+  /** List FAQs. Supports ?search=<query> (server-side filter over question/answer/category). */
+  LIST: "api/v1/users/faq/",
+};

@@ -175,4 +175,5 @@ export const NAVIGATION_SCREENS = {
   NEW_PIN_ACTION_OTP_SCREEN: "NewPinActionOtpScreen",
   NEW_SET_NEW_PIN_SCREEN: "NewSetNewPinScreen",
   NEW_APP_VERSION_SCREEN: "NewAppVersionScreen",
+  NEW_FAQ_SCREEN: "NewFaqScreen",
 } as const;
