@@ -9,6 +9,7 @@ import ArrowLeft from './ArrowLeft.svg';
 import EyeOff from './EyeOff.svg';
 import EyeOn from './EyeOn.svg';
 import Mail from './Mail.svg';
+import Phone from './Phone.svg';
 import TickCheckedBox from './TickCheckedBox.svg';
 import UntickCheckedBox from './UntickCheckedBox.svg';
 import ChevronDown from './ChevronDown.svg';
@@ -77,6 +78,7 @@ export const AppIcon = {
   EyeOff,
   EyeOn,
   Mail,
+  Phone,
   TickCheckedBox,
   UntickCheckedBox,
   ChevronDown,

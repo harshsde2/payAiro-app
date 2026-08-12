@@ -17,7 +17,7 @@ import NewTransactionDetails from "screens/TSX-Screens/NewTransactionDetails/New
 import CyrptoDetails from "screens/TSX-Screens/CybridCrypto/CyrptoDetails";
 import BlockchainNameServiceTerms from "screens/TSX-Screens/Modals/BlockchainNameServiceTerms";
 import UserProfile from "screens/TSX-Screens/UserProfile/UserProfile";
-import NewPersonal from "screens/SettingScreen/NewPersonal";
+import ProfileScreen from "new-ui/screens/Profile/ProfileScreen";
 import Settings2 from "screens/Authentications/Settings2";
 import NewSend from "@new-ui/screens/Send/Send/index";
 import SelectPaymentMethod from "@new-ui/screens/Send/SelectPaymentMethod/SelectPaymentMethod";
@@ -232,7 +232,7 @@ export default function AppStack() {
       <Stack.Screen
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.NEW_PERSONAL}
-        component={NewPersonal}
+        component={ProfileScreen}
       />
       <Stack.Screen
         options={{ headerShown: true, header: AppStackHeader }}
