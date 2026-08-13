@@ -43,6 +43,7 @@ export type CommonErrorScreenParams = {
 };
 
 export type NewUIAuthStackParamList = {
+  [NAVIGATION_SCREENS.NEW_INTRO_SLIDER]: undefined;
   [NAVIGATION_SCREENS.NEW_ONBOARDING]: undefined;
   [NAVIGATION_SCREENS.NEW_LOGIN]: undefined;
   [NAVIGATION_SCREENS.NEW_CREATE_ACCOUNT]: undefined;

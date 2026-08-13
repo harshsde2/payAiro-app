@@ -43,6 +43,8 @@ export const clearAll = (): void => {
 // Key constants for the app
 export const STORAGE_KEYS = {
   AUTH_TOKENS: "auth_tokens",
+  /** Set once the user swipes/skips through the pre-onboarding intro slider. Never cleared on logout. */
+  APP_INTRO_SEEN: "app_intro_seen",
   ONBOARDING_COMPLETE: "onboarding_complete",
   AUTH_ONBOARDING_STEP: "auth_onboarding_step",
   AUTH_RESUME_PARAMS: "auth_resume_params",

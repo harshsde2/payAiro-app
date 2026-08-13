@@ -77,6 +77,14 @@ export const readAuthSession = (): AuthSession => {
 export const isOnboardingComplete = (): boolean =>
   getItem(STORAGE_KEYS.ONBOARDING_COMPLETE) === "true";
 
+/** Pre-onboarding intro slider — shown once ever per device install, independent of auth state. */
+export const hasSeenAppIntro = (): boolean =>
+  getItem(STORAGE_KEYS.APP_INTRO_SEEN) === "true";
+
+export const markAppIntroSeen = (): void => {
+  setItem(STORAGE_KEYS.APP_INTRO_SEEN, "true");
+};
+
 export const persistTokens = (tokens: Record<string, unknown>): void => {
   const existingRaw = getItem(STORAGE_KEYS.AUTH_TOKENS);
   let merged = tokens;
@@ -169,6 +177,9 @@ export const getAuthStackInitialRoute = (): string => {
   const session = readAuthSession();
   if (session.tokens && !session.onboardingComplete) {
     return resolveAuthInitialRoute(session.onboardingStep);
+  }
+  if (!hasSeenAppIntro()) {
+    return NAVIGATION_SCREENS.NEW_INTRO_SLIDER;
   }
   return NAVIGATION_SCREENS.NEW_ONBOARDING;
 };
