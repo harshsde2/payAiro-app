@@ -91,11 +91,11 @@ const SettingsScreen = () => {
             icon: <AppIcon.PrivacyPolicy />,
             onPress: () => webDocRef.current?.showWebDocument?.('Privacy Policy', PAYAIRO_PRIVACY_URL),
         },
-        {
-            title: 'App Version',
-            icon: <AppIcon.AppVersion />,
-            onPress: () => navigation.navigate(NAVIGATION_SCREENS.NEW_APP_VERSION_SCREEN as never),
-        },
+        // {
+        //     title: 'App Version',
+        //     icon: <AppIcon.AppVersion />,
+        //     onPress: () => navigation.navigate(NAVIGATION_SCREENS.NEW_APP_VERSION_SCREEN as never),
+        // },
     ]
 
   return (

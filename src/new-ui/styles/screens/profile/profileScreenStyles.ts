@@ -80,10 +80,10 @@ export const profileScreenStyles = (theme: ITheme) =>
       color: theme.colors.textSecondary,
     },
     cardFirst: {
-      marginTop: theme.spacing.lg,
+      marginTop: theme.spacing.base,
     },
     card: {
-      marginTop: 14,
+      marginTop: theme.spacing.md,
     },
     kicker: {
       fontFamily: theme.typography.fontFamily.semiBold,
@@ -91,13 +91,13 @@ export const profileScreenStyles = (theme: ITheme) =>
       letterSpacing: 1,
       textTransform: 'uppercase',
       color: theme.colors.primary,
-      marginBottom: theme.spacing.sm,
+      marginBottom: theme.spacing.xs,
     },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingVertical: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
       borderBottomWidth: 1,
       borderBottomColor: 'rgba(0,0,0,0.1)',
     },
