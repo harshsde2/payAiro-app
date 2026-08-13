@@ -1,6 +1,7 @@
 // Navigation Screen Names
 export const NAVIGATION_SCREENS = {
   // New UI (design v2) Auth & App screens
+  NEW_INTRO_SLIDER: "NewIntroSlider",
   NEW_ONBOARDING: "NewOnboarding",
   NEW_LOGIN: "NewLogin",
   NEW_CREATE_ACCOUNT: "NewCreateAccount",
