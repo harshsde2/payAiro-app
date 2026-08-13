@@ -15,9 +15,6 @@ import { AppIcon } from "@new-ui/assets/svgs";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { usePaymentMethodsList, type PaymentMethodItem } from "query/hooks/usePaymentMethods";
 import { formatCardLabel } from "@new-ui/screens/PaymentMethods/paymentMethods.utils";
-import { useTransactionLimit } from "hooks/useTransactionLimit";
-import { formatUsd } from "@new-ui/screens/TransactionLimits/transactionLimits.utils";
-import { useAppLock } from "hooks/useAppLock";
 import { performAppLogout } from "utils/performAppLogout";
 import {
   formatCountryName,
@@ -93,8 +90,6 @@ const ProfileScreen: React.FC = () => {
 
   const { data: paymentMethodsData, isPending: isPaymentMethodsPending } =
     usePaymentMethodsList(20);
-  const dailyLimit = useTransactionLimit("buy", "debit");
-  const { isBiometricEnabled } = useAppLock();
 
   const profileData = useMemo(() => {
     const u = { ...(usersMe?.user || {}), ...(userData || {}) };
@@ -140,6 +135,15 @@ const ProfileScreen: React.FC = () => {
       : null;
 
   const hasAddress = !!(profileData.address_line1 || profileData.city);
+  const addressText = [
+    [profileData.address_line1, profileData.address_line2].filter(Boolean).join(" "),
+    [profileData.city, [profileData.state, profileData.postal_code].filter(Boolean).join(" ")]
+      .filter(Boolean)
+      .join(", "),
+    profileData.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
   const paymentMethods: PaymentMethodItem[] = paymentMethodsData?.data?.items ?? [];
 
   const handleLogoutConfirm = async () => {
@@ -276,14 +280,7 @@ const ProfileScreen: React.FC = () => {
             <View style={styles.addressIcon}>
               <AppIcon.Home width={17} height={17} color={theme.colors.primary} />
             </View>
-            <CustomText style={styles.addressText}>
-              {[profileData.address_line1, profileData.address_line2].filter(Boolean).join(" ")}
-              {"\n"}
-              {[profileData.city, [profileData.state, profileData.postal_code].filter(Boolean).join(" ")]
-                .filter(Boolean)
-                .join(", ")}
-              {profileData.country ? `\n${profileData.country}` : ""}
-            </CustomText>
+            <CustomText style={styles.addressText}>{addressText}</CustomText>
           </View>
         ) : (
           <CustomText style={styles.emptyRowText}>No address on file yet.</CustomText>
@@ -302,7 +299,7 @@ const ProfileScreen: React.FC = () => {
         padding={16}
         flowLayout
       >
-        <CustomText style={styles.kicker}>Linked</CustomText>
+        <CustomText style={styles.kicker}>Linked cards</CustomText>
         {isPaymentMethodsPending ? (
           <ActivityIndicator color={theme.colors.primary} style={{ paddingVertical: theme.spacing.sm }} />
         ) : paymentMethods.length > 0 ? (
@@ -345,28 +342,16 @@ const ProfileScreen: React.FC = () => {
           styles={styles}
           isFirst
           icon={<AppIcon.Privacy width={17} height={17} color={theme.colors.primary} />}
-          label="Biometric login"
-          right={
-            <Pill
-              label={isBiometricEnabled ? "On" : "Off"}
-              variant={isBiometricEnabled ? "accent" : "outline"}
-              styles={styles}
-            />
-          }
+          label="Biometric"
+          right={<AppIcon.ChevronRight width={15} height={15} />}
           onPress={() => goTo(NAVIGATION_SCREENS.NEW_PRIVACY_SECURITY_SCREEN as AppRouteName)}
         />
         <Row
           styles={styles}
           isLast
           icon={<AppIcon.TransactionLimit width={17} height={17} color={theme.colors.primary} />}
-          label="Daily send limit"
-          right={
-            <Pill
-              label={dailyLimit.available ? formatUsd(dailyLimit.dailyLimitUsd) : "—"}
-              variant="outline"
-              styles={styles}
-            />
-          }
+          label="Daily Transaction Limit"
+          right={<AppIcon.ChevronRight width={15} height={15} />}
           onPress={() => goTo(NAVIGATION_SCREENS.TRANSACTION_LIMIT_SCREEN as AppRouteName)}
         />
       </GlassyWrapper>
