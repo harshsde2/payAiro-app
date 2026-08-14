@@ -83,7 +83,11 @@ export const profileScreenStyles = (theme: ITheme) =>
       marginTop: theme.spacing.base,
     },
     card: {
-      marginTop: theme.spacing.md,
+      marginTop: theme.spacing.base,
+    },
+    cardInner: {
+      paddingHorizontal: theme.spacing.base,
+      paddingVertical: 8,
     },
     kicker: {
       fontFamily: theme.typography.fontFamily.semiBold,
@@ -91,13 +95,13 @@ export const profileScreenStyles = (theme: ITheme) =>
       letterSpacing: 1,
       textTransform: 'uppercase',
       color: theme.colors.primary,
-      marginBottom: theme.spacing.xs,
+      marginBottom: 2,
     },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingVertical: theme.spacing.sm,
+      paddingVertical: 6,
       borderBottomWidth: 1,
       borderBottomColor: 'rgba(0,0,0,0.1)',
     },

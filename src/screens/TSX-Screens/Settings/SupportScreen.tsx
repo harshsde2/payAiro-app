@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   View,
   TouchableOpacity,
@@ -6,8 +6,12 @@ import {
   Pressable,
   FlatList,
   StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
+import { useSelector } from "react-redux";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { useCoinmeAccountId } from "hooks/useCoinmeAccountId";
 import { useTheme } from "@new-ui/styles/ThemeContext";
 import { ITheme } from "@new-ui/styles/themes/themeTypes";
 import CustomText from "@new-ui/components/common-components/CustomText";
@@ -161,6 +165,20 @@ const SupportScreen: React.FC = () => {
   const [message, setMessage] = useState("");
   const [attachment, setAttachment] = useState<Attachment | null>(null);
 
+  // `/users/me` is hydrated into Redux on login (useHydrateUsersMe); prefill from it here
+  // so the logged-in user doesn't retype their own name/email. Guarded so it never
+  // overwrites text the user already typed, and re-checked once if userData hydrates late.
+  const userData = useSelector((s: any) => s.authenticationSlice?.userData);
+  useEffect(() => {
+    if (!userData) return;
+    setFirstName((prev) => prev || userData.first_name || "");
+    setLastName((prev) => prev || userData.last_name || "");
+    setEmail((prev) => prev || userData.email || "");
+  }, [userData]);
+
+  // Sent to the backend alongside the form fields; not surfaced as a form field itself.
+  const caasId = useCoinmeAccountId();
+
   const { mutateAsync: submitGuestQuery, isPending } = useSubmitGuestQuery();
 
   const handlePickAttachment = async () => {
@@ -224,6 +242,7 @@ const SupportScreen: React.FC = () => {
         reason,
         description,
         attachment,
+        caasId,
       });
       const ok = res?.ok ?? res?.status ?? true;
       if (ok) {
@@ -252,6 +271,10 @@ const SupportScreen: React.FC = () => {
           onPress: () => navigation.navigate(NAVIGATION_SCREENS.FRESHCHAT_SCREEN),
         }}
       />
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoiding}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
       <ScreenWrapper
         safeArea
         safeAreaEdges={["bottom", "left", "right"]}
@@ -384,6 +407,7 @@ const SupportScreen: React.FC = () => {
           {config.submitLabel}
         </Button>
       </ScreenWrapper>
+      </KeyboardAvoidingView>
     </View>
   );
 };
@@ -395,6 +419,9 @@ const supportStyles = (theme: ITheme) =>
     root: {
       flex: 1,
       backgroundColor: theme.colors.background,
+    },
+    keyboardAvoiding: {
+      flex: 1,
     },
     content: {
       flexGrow: 1,

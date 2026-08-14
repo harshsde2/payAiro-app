@@ -16,6 +16,8 @@ export interface GuestQueryPayload {
   reason: string;
   description: string;
   attachment?: GuestQueryAttachment | null;
+  /** Coinme/CAAS customer id from `/users/me` (usersMe.caas_onboarding.caas_customer_id). Sent to the backend only — not shown as a form field. */
+  caasId?: string | null;
 }
 
 export interface GuestQueryResponse {
@@ -39,6 +41,9 @@ export const useSubmitGuestQuery = () =>
       form.append("email", payload.email.trim());
       form.append("reason", payload.reason.trim());
       form.append("description", payload.description.trim());
+      if (payload.caasId) {
+        form.append("caas_id", payload.caasId);
+      }
       if (payload.attachment?.uri) {
         form.append("attachment", {
           uri: payload.attachment.uri,
@@ -47,6 +52,7 @@ export const useSubmitGuestQuery = () =>
           // RN FormData file shape.
         } as unknown as Blob);
       }
+      console.log("form", form);
       return userApiClient.post<GuestQueryResponse>(
         USER_AUTH.GUEST_QUERY,
         form,

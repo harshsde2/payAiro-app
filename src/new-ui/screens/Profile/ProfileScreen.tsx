@@ -238,28 +238,30 @@ const ProfileScreen: React.FC = () => {
         overlayOpacity={0.5}
         borderWidth={1}
         borderColor="rgba(255,255,255,0.6)"
-        padding={16}
+        padding={0}
         flowLayout
       >
-        <CustomText style={styles.kicker}>Verification</CustomText>
-        <Row
-          styles={styles}
-          isFirst
-          icon={<AppIcon.Mail width={17} height={17} color={theme.colors.primary} />}
-          label={profileData.account_email || "—"}
-          right={
-            profileData.email_verified ? <Pill label="Verified" variant="accent" styles={styles} /> : null
-          }
-        />
-        <Row
-          styles={styles}
-          isLast
-          icon={<AppIcon.Phone width={17} height={17} color={theme.colors.primary} />}
-          label={profileData.mobile_number || "—"}
-          right={
-            profileData.phone_verified ? <Pill label="Verified" variant="accent" styles={styles} /> : null
-          }
-        />
+        <View style={styles.cardInner}>
+          <CustomText style={styles.kicker}>Verification</CustomText>
+          <Row
+            styles={styles}
+            isFirst
+            icon={<AppIcon.Mail width={17} height={17} color={theme.colors.primary} />}
+            label={profileData.account_email || "—"}
+            right={
+              profileData.email_verified ? <Pill label="Verified" variant="accent" styles={styles} /> : null
+            }
+          />
+          <Row
+            styles={styles}
+            isLast
+            icon={<AppIcon.Phone width={17} height={17} color={theme.colors.primary} />}
+            label={profileData.mobile_number || "—"}
+            right={
+              profileData.phone_verified ? <Pill label="Verified" variant="accent" styles={styles} /> : null
+            }
+          />
+        </View>
       </GlassyWrapper>
 
       {/* Address card */}
@@ -271,20 +273,22 @@ const ProfileScreen: React.FC = () => {
         overlayOpacity={0.5}
         borderWidth={1}
         borderColor="rgba(255,255,255,0.6)"
-        padding={16}
+        padding={0}
         flowLayout
       >
-        <CustomText style={styles.kicker}>Address</CustomText>
-        {hasAddress ? (
-          <View style={styles.addressRow}>
-            <View style={styles.addressIcon}>
-              <AppIcon.Home width={17} height={17} color={theme.colors.primary} />
+        <View style={styles.cardInner}>
+          <CustomText style={styles.kicker}>Address</CustomText>
+          {hasAddress ? (
+            <View style={styles.addressRow}>
+              <View style={styles.addressIcon}>
+                <AppIcon.Home width={17} height={17} color={theme.colors.primary} />
+              </View>
+              <CustomText style={styles.addressText}>{addressText}</CustomText>
             </View>
-            <CustomText style={styles.addressText}>{addressText}</CustomText>
-          </View>
-        ) : (
-          <CustomText style={styles.emptyRowText}>No address on file yet.</CustomText>
-        )}
+          ) : (
+            <CustomText style={styles.emptyRowText}>No address on file yet.</CustomText>
+          )}
+        </View>
       </GlassyWrapper>
 
       {/* Linked payment methods card */}
@@ -296,33 +300,35 @@ const ProfileScreen: React.FC = () => {
         overlayOpacity={0.5}
         borderWidth={1}
         borderColor="rgba(255,255,255,0.6)"
-        padding={16}
+        padding={0}
         flowLayout
       >
-        <CustomText style={styles.kicker}>Linked cards</CustomText>
-        {isPaymentMethodsPending ? (
-          <ActivityIndicator color={theme.colors.primary} style={{ paddingVertical: theme.spacing.sm }} />
-        ) : paymentMethods.length > 0 ? (
-          paymentMethods.map((item, index) => (
-            <Row
-              key={item.payment_method_id}
-              styles={styles}
-              isFirst={index === 0}
-              isLast={index === paymentMethods.length - 1}
-              icon={<AppIcon.DebitCard width={17} height={17} color={theme.colors.primary} />}
-              label={formatCardLabel(item)}
-              right={<AppIcon.ChevronRight width={15} height={15} />}
+        <View style={styles.cardInner}>
+          <CustomText style={styles.kicker}>Linked cards</CustomText>
+          {isPaymentMethodsPending ? (
+            <ActivityIndicator color={theme.colors.primary} style={{ paddingVertical: theme.spacing.sm }} />
+          ) : paymentMethods.length > 0 ? (
+            paymentMethods.map((item, index) => (
+              <Row
+                key={item.payment_method_id}
+                styles={styles}
+                isFirst={index === 0}
+                isLast={index === paymentMethods.length - 1}
+                icon={<AppIcon.DebitCard width={17} height={17} color={theme.colors.primary} />}
+                label={formatCardLabel(item)}
+                right={<AppIcon.ChevronRight width={15} height={15} />}
+                onPress={() => goTo(NAVIGATION_SCREENS.PAYMENT_METHODS_SCREEN as AppRouteName)}
+              />
+            ))
+          ) : (
+            <TouchableOpacity
+              activeOpacity={0.7}
               onPress={() => goTo(NAVIGATION_SCREENS.PAYMENT_METHODS_SCREEN as AppRouteName)}
-            />
-          ))
-        ) : (
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => goTo(NAVIGATION_SCREENS.PAYMENT_METHODS_SCREEN as AppRouteName)}
-          >
-            <CustomText style={styles.emptyRowText}>No payment methods linked yet.</CustomText>
-          </TouchableOpacity>
-        )}
+            >
+              <CustomText style={styles.emptyRowText}>No payment methods linked yet.</CustomText>
+            </TouchableOpacity>
+          )}
+        </View>
       </GlassyWrapper>
 
       {/* Security & limits card */}
@@ -334,26 +340,28 @@ const ProfileScreen: React.FC = () => {
         overlayOpacity={0.5}
         borderWidth={1}
         borderColor="rgba(255,255,255,0.6)"
-        padding={16}
+        padding={0}
         flowLayout
       >
-        <CustomText style={styles.kicker}>Security & limits</CustomText>
-        <Row
-          styles={styles}
-          isFirst
-          icon={<AppIcon.Privacy width={17} height={17} color={theme.colors.primary} />}
-          label="Biometric"
-          right={<AppIcon.ChevronRight width={15} height={15} />}
-          onPress={() => goTo(NAVIGATION_SCREENS.NEW_PRIVACY_SECURITY_SCREEN as AppRouteName)}
-        />
-        <Row
-          styles={styles}
-          isLast
-          icon={<AppIcon.TransactionLimit width={17} height={17} color={theme.colors.primary} />}
-          label="Daily Transaction Limit"
-          right={<AppIcon.ChevronRight width={15} height={15} />}
-          onPress={() => goTo(NAVIGATION_SCREENS.TRANSACTION_LIMIT_SCREEN as AppRouteName)}
-        />
+        <View style={styles.cardInner}>
+          <CustomText style={styles.kicker}>Security & limits</CustomText>
+          <Row
+            styles={styles}
+            isFirst
+            icon={<AppIcon.Privacy width={17} height={17} color={theme.colors.primary} />}
+            label="Biometric"
+            right={<AppIcon.ChevronRight width={15} height={15} />}
+            onPress={() => goTo(NAVIGATION_SCREENS.NEW_PRIVACY_SECURITY_SCREEN as AppRouteName)}
+          />
+          <Row
+            styles={styles}
+            isLast
+            icon={<AppIcon.TransactionLimit width={17} height={17} color={theme.colors.primary} />}
+            label="Daily Transaction Limit"
+            right={<AppIcon.ChevronRight width={15} height={15} />}
+            onPress={() => goTo(NAVIGATION_SCREENS.TRANSACTION_LIMIT_SCREEN as AppRouteName)}
+          />
+        </View>
       </GlassyWrapper>
 
       {/* Action buttons */}
