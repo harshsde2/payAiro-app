@@ -24,7 +24,7 @@ import GlassyWrapper from "@new-ui/components/common-components/GlassyWrapper";
 import { Button } from "@new-ui/components/common-components/layout";
 import { AppIcon } from "@new-ui/assets/svgs";
 import { IntroSliderScreenNavigationProp } from "./types";
-import ShieldPlus from "./assets/ShieldPlus.svg";
+import PayAiroMark from "./assets/PayAiroMark.svg";
 import IdCardCheck from "./assets/IdCardCheck.svg";
 import ShieldCheck from "./assets/ShieldCheck.svg";
 
@@ -34,9 +34,13 @@ type IntroSlide = {
   gradientStart: { x: number; y: number };
   gradientEnd: { x: number; y: number };
   title: string;
+  /** Optional secondary headline shown between the title and the subtitle. */
+  tagline?: string;
   subtitle: string;
   cta: string;
   Icon: React.FC<SvgProps>;
+  /** Defaults to a square 84x84 icon; override to preserve non-square art aspect ratio. */
+  iconSize?: { width: number; height: number };
 };
 
 const SUBTITLE_COLOR = "#3F4B45";
@@ -49,19 +53,21 @@ const INTRO_SLIDES: IntroSlide[] = [
     gradientStart: { x: 0, y: 0 },
     gradientEnd: { x: 1, y: 1 },
     title: "Welcome to PayAiro!",
+    tagline: "The only App You'll Love for Managing Crypto & Fiat.",
     subtitle:
-      "Send and receive fiat and crypto, all in one app. Pay using a QR code or your personal PayAiro Tag.",
+      "Manage fiat and crypto in one place: send, receive, buy, sell, or hold. Pay instantly with a QR code, wallet address, or your personal PayAiro Tag.",
     cta: "Next",
-    Icon: ShieldPlus,
+    Icon: PayAiroMark,
+    iconSize: { width: 52, height: 56 },
   },
   {
     key: "account-creation",
     gradientColors: ["#FFFFFF", "#D9FAD8", "#81EB7F"],
     gradientStart: { x: 1, y: 0 },
     gradientEnd: { x: 0, y: 1 },
-    title: "Create Your Account",
+    title: "Sign Up in Minutes",
     subtitle:
-      "Sign up in minutes and complete a quick identity check to activate your account.",
+      "Create your PayAiro account, provide your basic details, and complete a quick identity check. Once verified, your account is activated and ready to use.",
     cta: "Next",
     Icon: IdCardCheck,
   },
@@ -70,9 +76,9 @@ const INTRO_SLIDES: IntroSlide[] = [
     gradientColors: ["#81EB7F", "#FFFFFF", "#B8F5B6"],
     gradientStart: { x: 0, y: 1 },
     gradientEnd: { x: 1, y: 0 },
-    title: "Add Your Card, Start Paying",
+    title: "Add Your Card, Start Transactions",
     subtitle:
-      "Link your debit card to fund your account and make instant transactions anytime.",
+      "Link your debit card to buy or sell crypto anytime, from anywhere. Every transaction processes instantly, so your funds are ready when you need them.",
     cta: "Next",
     Icon: AppIcon.DebitCard,
   },
@@ -83,7 +89,7 @@ const INTRO_SLIDES: IntroSlide[] = [
     gradientEnd: { x: 0, y: 0 },
     title: "Your Safety, Our Priority",
     subtitle:
-      "Your account is protected with multi-layer authentication, including two-factor and biometric login.",
+      "Your account is protected with multilayer security, including two-factor authentication, biometric login, and bank-level encryption.",
     cta: "Get Started",
     Icon: ShieldCheck,
   },
@@ -241,16 +247,6 @@ const IntroSliderScreen: React.FC = () => {
         >
           {INTRO_SLIDES.map((slide) => (
             <View key={slide.key} style={[styles.centerContent, { width }]}>
-              <GlassyWrapper
-                style={styles.iconBadge}
-                borderRadius={85}
-                blurAmount={14}
-                blurType="light"
-                overlayOpacity={0.12}
-              >
-                <slide.Icon width={84} height={84} />
-              </GlassyWrapper>
-
               <CustomText
                 variant="h3"
                 fontWeight="extraBold"
@@ -259,6 +255,30 @@ const IntroSliderScreen: React.FC = () => {
               >
                 {slide.title}
               </CustomText>
+
+              <GlassyWrapper
+                style={styles.iconBadge}
+                borderRadius={85}
+                blurAmount={14}
+                blurType="light"
+                overlayOpacity={0.12}
+              >
+                <slide.Icon
+                  width={slide.iconSize?.width ?? 84}
+                  height={slide.iconSize?.height ?? 84}
+                />
+              </GlassyWrapper>
+
+              {slide.tagline && (
+                <CustomText
+                  variant="h6"
+                  fontWeight="semiBold"
+                  color={theme.colors.primary}
+                  style={styles.tagline}
+                >
+                  {slide.tagline}
+                </CustomText>
+              )}
               <CustomText
                 variant="bodySmall"
                 fontWeight="medium"

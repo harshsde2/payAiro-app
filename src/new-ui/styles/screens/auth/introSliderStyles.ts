@@ -33,8 +33,18 @@ export const introSliderStyles = (theme: ITheme) =>
     },
     headline: {
       textAlign: 'center',
-      marginBottom: theme.spacing.md,
+      // Matches iconBadge's marginBottom so the gap above and below the icon is equal.
+      marginBottom: theme.spacing.xl,
       maxWidth: 300,
+      // Explicit, more generous lineHeight than headingStyles.h3's default (tight * 24 = 28.8):
+      // with fontWeight="extraBold" layered on top of the custom Poppins font, Android clips
+      // the second wrapped line under the tighter default lineHeight.
+      lineHeight: theme.typography.fontSize['2xl'] * theme.typography.lineHeight.normal,
+    },
+    tagline: {
+      textAlign: 'center',
+      marginBottom: theme.spacing.md,
+      maxWidth: 280,
     },
     subtitle: {
       textAlign: 'center',
