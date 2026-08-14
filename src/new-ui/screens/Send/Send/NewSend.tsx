@@ -16,6 +16,7 @@ import { useSelector } from 'react-redux';
 import { useAllBankAccounts } from 'query/hooks';
 import { useStateStablecoin } from 'hooks/useStateStablecoin';
 import { SendContactsList, ISendContactItem } from '@new-ui/components/common-components/SendContactsList';
+import { isTopupUser } from 'utils/userIdentity';
 import { INewSendProps } from './types';
 import { AppIcon } from 'new-ui/assets/svgs';
 
@@ -242,6 +243,10 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
 
   const handleContactProfilePress = useCallback(
     (contact: ISendContactItem) => {
+      // Topup (cash-in shadow) accounts have no real profile to show.
+      if (isTopupUser(contact.username)) {
+        return;
+      }
       const numericId = Number(contact.uuid);
       navigation.navigate(NAVIGATION_SCREENS.USER_PROFILE as never, {
         userDetails: {
