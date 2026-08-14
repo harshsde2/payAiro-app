@@ -55,7 +55,7 @@ const INTRO_SLIDES: IntroSlide[] = [
     title: "Welcome to PayAiro!",
     tagline: "The only App You'll Love for Managing Crypto & Fiat.",
     subtitle:
-      "Manage fiat and crypto in one place: send, receive, buy, sell, or hold. Pay instantly with a QR code, wallet address, or your personal PayAiro Tag.",
+      "Manage fiat and crypto in one place: send, receive, buy, sell, or hold. Pay instantly with a QR code, wallet address, or personal PayAiro Tag.",
     cta: "Next",
     Icon: PayAiroMark,
     iconSize: { width: 52, height: 56 },
@@ -76,9 +76,9 @@ const INTRO_SLIDES: IntroSlide[] = [
     gradientColors: ["#81EB7F", "#FFFFFF", "#B8F5B6"],
     gradientStart: { x: 0, y: 1 },
     gradientEnd: { x: 1, y: 0 },
-    title: "Add Your Card, Start Transactions",
+    title: "Add Your Card, Start Paying",
     subtitle:
-      "Link your debit card to buy or sell crypto anytime, from anywhere. Every transaction processes instantly, so your funds are ready when you need them.",
+      "Link your debit card to fund your account and make instant transactions anytime.",
     cta: "Next",
     Icon: AppIcon.DebitCard,
   },

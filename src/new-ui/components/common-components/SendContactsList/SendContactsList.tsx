@@ -5,6 +5,7 @@ import CustomText from '@new-ui/components/common-components/CustomText';
 import { sendContactsListStyles } from '@new-ui/styles/components/sendContactsListStyles';
 import { useFastApiUsersSearch } from 'query/hooks';
 import { useDebounce } from 'hooks/useDebounce';
+import { isTopupUser } from 'utils/userIdentity';
 
 export interface ISendContactItem {
   uuid: string;
@@ -100,6 +101,8 @@ const SendContactsList: React.FC<ISendContactsListProps> = ({
     <View style={styles.container}>
       {contacts.map(contact => {
         const uri = profilePhotoUri(contact.profile_photo);
+        // Topup (cash-in shadow) accounts have no profile to show — avatar tap is disabled.
+        const isTopup = isTopupUser(contact.username);
 
         return (
           <View
@@ -107,7 +110,8 @@ const SendContactsList: React.FC<ISendContactsListProps> = ({
             style={styles.card}
           >
             <TouchableOpacity
-              activeOpacity={0.8}
+              activeOpacity={isTopup ? 1 : 0.8}
+              disabled={isTopup}
               onPress={() => onProfilePress?.(contact)}
             >
               <View style={styles.avatar}>
