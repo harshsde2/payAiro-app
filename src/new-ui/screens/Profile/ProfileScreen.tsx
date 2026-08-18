@@ -131,11 +131,23 @@ const ProfileScreen: React.FC = () => {
   const displayName =
     `${profileData.name || ""} ${profileData.last_name || ""}`.trim() || "User";
 
+  const initials = getInitials(displayName);
+
   const rawProfilePhoto = profileData.profile_photo;
-  const profilePhotoUri =
-    rawProfilePhoto && typeof rawProfilePhoto === "string" && rawProfilePhoto.trim() !== ""
-      ? rawProfilePhoto.replace(/^http:\/\//i, "https://")
-      : null;
+  const profilePhotoUri = useMemo(() => {
+    if (typeof rawProfilePhoto !== "string") return null;
+    const trimmed = rawProfilePhoto.trim();
+    if (!trimmed) return null;
+    // Only absolute, loadable sources count as a photo. A bare path ("/media/x.jpg") or a
+    // stringified placeholder ("null") makes <Image> render an empty box instead of falling
+    // through to the initials, which is what leaves the avatar blank.
+    if (!/^(https?:|data:|file:|content:|ph:|assets-library:)/i.test(trimmed)) return null;
+    return trimmed.replace(/^http:\/\//i, "https://");
+  }, [rawProfilePhoto]);
+
+  // Keyed by URI so a newly uploaded photo gets a fresh attempt without extra resetting.
+  const [failedAvatarUri, setFailedAvatarUri] = useState<string | null>(null);
+  const showAvatarImage = !!profilePhotoUri && profilePhotoUri !== failedAvatarUri;
 
   const hasAddress = !!(profileData.address_line1 || profileData.city);
   const addressText = [
@@ -264,11 +276,18 @@ const ProfileScreen: React.FC = () => {
       <View style={styles.avatarBlock}>
         <View>
           <View style={styles.avatar}>
-            {profilePhotoUri ? (
-              <Image source={{ uri: profilePhotoUri }} style={styles.avatarImage} />
-            ) : (
-              <CustomText style={styles.avatarInitials}>{getInitials(displayName)}</CustomText>
-            )}
+            {/* Initials always render underneath the photo, so a slow, broken or 404'd
+                avatar URL degrades to them instead of leaving an empty tile. */}
+            <CustomText style={styles.avatarInitials} allowFontScaling={false} numberOfLines={1}>
+              {initials}
+            </CustomText>
+            {showAvatarImage ? (
+              <Image
+                source={{ uri: profilePhotoUri as string }}
+                style={[styles.avatarImage, StyleSheet.absoluteFillObject]}
+                onError={() => setFailedAvatarUri(profilePhotoUri)}
+              />
+            ) : null}
             {isUploadingAvatar ? (
               <View
                 style={[

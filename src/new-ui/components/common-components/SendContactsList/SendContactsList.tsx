@@ -4,6 +4,12 @@ import { useTheme } from '@new-ui/styles/ThemeContext';
 import CustomText from '@new-ui/components/common-components/CustomText';
 import { sendContactsListStyles } from '@new-ui/styles/components/sendContactsListStyles';
 import { useFastApiUsersSearch } from 'query/hooks';
+import {
+  getUserContactAvatar,
+  getUserContactDisplayName,
+  IUserContact,
+  useUserContacts,
+} from 'query/hooks/useContact';
 import { useDebounce } from 'hooks/useDebounce';
 import { isTopupUser } from 'utils/userIdentity';
 
@@ -23,6 +29,28 @@ export interface ISendContactsListProps {
   onProfilePress?: (contact: ISendContactItem) => void;
 }
 
+const dedupeByUuid = (items: ISendContactItem[]): ISendContactItem[] => {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (!item.uuid || seen.has(item.uuid)) return false;
+    seen.add(item.uuid);
+    return true;
+  });
+};
+
+const toSendContact = (contact: IUserContact): ISendContactItem => {
+  // `contact_user_id` is the target user's id; `id` is only the contact-list row id.
+  const uuid = String(contact.contact_user_id ?? contact.id ?? contact.username ?? '');
+  const username = contact.username?.trim() ?? '';
+  return {
+    uuid,
+    nickname: getUserContactDisplayName(contact),
+    username,
+    email: contact.email?.trim() ?? '',
+    profile_photo: getUserContactAvatar(contact),
+  };
+};
+
 const SendContactsList: React.FC<ISendContactsListProps> = ({
   searchQuery,
   selectedId,
@@ -33,36 +61,96 @@ const SendContactsList: React.FC<ISendContactsListProps> = ({
   const { theme } = useTheme();
   const styles = sendContactsListStyles(theme);
 
-  const debounced = useDebounce(searchQuery, 300);
+  const trimmedInput = searchQuery.trim();
+  const isSearching = trimmedInput.length > 0;
 
-  // Always hit the user-search API by falling back to a generic query
-  const trimmed = debounced.trim();
-  const hasQuery = trimmed.length > 0;
-  const effectiveQuery = hasQuery ? trimmed : 'a';
+  const debouncedInput = useDebounce(trimmedInput, 300);
+  // Clearing the field must drop back to saved contacts instantly, without waiting out the
+  // debounce — so the search query is gated on the live input, not the debounced one.
+  const searchTerm = isSearching ? debouncedInput : '';
+
+  // Saved contacts: the default suggestions shown before the user types anything. Cached by
+  // React Query (shared with the dashboard), so re-entering this screen renders them instantly.
+  const { data: userContactsData, isLoading: isSavedLoading } = useUserContacts();
+
+  const savedContacts: ISendContactItem[] = useMemo(() => {
+    const contacts = userContactsData?.contacts ?? [];
+    return dedupeByUuid(
+      contacts
+        .map(toSendContact)
+        // A send needs a PayAiro tag to resolve against — phone/email-only contacts can't be
+        // verified by the send flow, so they aren't offered as suggestions here.
+        .filter((contact) => !!contact.username)
+    );
+  }, [userContactsData]);
 
   const apiLimit = Math.min(Math.max(limit, 1), 25);
-  const { data, isLoading, isFetching } = useFastApiUsersSearch(effectiveQuery, apiLimit, 1);
+  const { data, isFetching, isPlaceholderData } = useFastApiUsersSearch(
+    searchTerm,
+    apiLimit,
+    1
+  );
 
-  const contacts: ISendContactItem[] = useMemo(() => {
+  const searchResults: ISendContactItem[] = useMemo(() => {
+    if (!isSearching) return [];
     const users = data?.data?.users ?? [];
     // Only PayAiro (on-platform) users can be sent to from here — hide external users
     // (is_external === true). Missing/undefined is treated as internal.
     return users
       .filter((user) => user.is_external !== true)
       .map((user) => {
-      const displayName =
-        `${user.first_name || ''} ${user.last_name || ''}`.trim();
-      const tagOrUsername =
-        (user.payairo_tag?.trim() || user.username || '').trim();
-      return {
-        uuid: String(user.id),
-        nickname: displayName || tagOrUsername,
-        username: tagOrUsername,
-        email: '',
-        profile_photo: user.avatar_url ?? null,
-      };
-    });
-  }, [data]);
+        const displayName =
+          `${user.first_name || ''} ${user.last_name || ''}`.trim();
+        const tagOrUsername =
+          (user.payairo_tag?.trim() || user.username || '').trim();
+        return {
+          uuid: String(user.id),
+          nickname: displayName || tagOrUsername,
+          username: tagOrUsername,
+          email: '',
+          profile_photo: user.avatar_url ?? null,
+        };
+      });
+  }, [data, isSearching]);
+
+  // Instant local matches over the already-loaded saved contacts. They fill the list on the
+  // very first keystroke, before any search request has come back, so the switch from
+  // "suggestions" to "results" never flashes an empty box or a spinner.
+  const localMatches: ISendContactItem[] = useMemo(() => {
+    if (!isSearching) return [];
+    const needle = trimmedInput.toLowerCase();
+    return savedContacts.filter((contact) =>
+      [contact.nickname, contact.username, contact.email]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .includes(needle)
+    );
+  }, [isSearching, savedContacts, trimmedInput]);
+
+  // The search has "settled" only once the debounce has caught up with the input and the
+  // request for that exact term has finished. Until then results are provisional.
+  const isSearchSettled =
+    isSearching &&
+    debouncedInput === trimmedInput &&
+    !isFetching &&
+    !isPlaceholderData;
+
+  const contacts: ISendContactItem[] = useMemo(() => {
+    if (!isSearching) return savedContacts.slice(0, limit);
+    if (isSearchSettled) return searchResults.slice(0, limit);
+    // In flight: prefer whatever the previous search returned (kept by React Query),
+    // otherwise fall back to the local matches so the list stays populated.
+    const provisional = searchResults.length > 0 ? searchResults : localMatches;
+    return provisional.slice(0, limit);
+  }, [
+    isSearching,
+    isSearchSettled,
+    limit,
+    localMatches,
+    savedContacts,
+    searchResults,
+  ]);
 
   const profilePhotoUri = (uri?: string | null) =>
     uri ? uri.replace(/^http:\/\//i, 'https://') : null;
@@ -74,10 +162,14 @@ const SendContactsList: React.FC<ISendContactsListProps> = ({
     return `${base.slice(0, 4)}...${base.slice(-4)}`;
   };
 
-  // Only surface "not found" once the user has actually typed a query (the empty-input
-  // case searches a generic fallback for default suggestions, which shouldn't read as "not found").
-  const showLoading = hasQuery && (isLoading || isFetching) && contacts.length === 0;
-  const showNotFound = hasQuery && !isLoading && !isFetching && contacts.length === 0;
+  // A spinner only ever replaces the list when there is genuinely nothing to show — an
+  // in-flight search over an already-populated list leaves the rows in place.
+  const showLoading =
+    contacts.length === 0 && (isSearching ? !isSearchSettled : isSavedLoading);
+  const showSearchNotFound =
+    isSearching && isSearchSettled && contacts.length === 0;
+  const showNoSavedContacts =
+    !isSearching && !isSavedLoading && contacts.length === 0;
 
   if (showLoading) {
     return (
@@ -87,11 +179,21 @@ const SendContactsList: React.FC<ISendContactsListProps> = ({
     );
   }
 
-  if (showNotFound) {
+  if (showSearchNotFound) {
     return (
       <View style={[styles.container, { paddingVertical: theme.spacing.lg, alignItems: 'center' }]}>
         <CustomText variant="body" size={14} color={theme.colors.greyDark} align="center">
-          No PayAiro user found for "{trimmed}"
+          No PayAiro user found for "{trimmedInput}"
+        </CustomText>
+      </View>
+    );
+  }
+
+  if (showNoSavedContacts) {
+    return (
+      <View style={[styles.container, { paddingVertical: theme.spacing.lg, alignItems: 'center' }]}>
+        <CustomText variant="body" size={14} color={theme.colors.greyDark} align="center">
+          No saved contacts yet. Search by PayAiro Tag to send.
         </CustomText>
       </View>
     );
@@ -159,4 +261,3 @@ const SendContactsList: React.FC<ISendContactsListProps> = ({
 };
 
 export default SendContactsList;
-

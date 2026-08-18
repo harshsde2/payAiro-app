@@ -85,7 +85,7 @@ const CategoryPicker: React.FC<{
 
   return (
     <View>
-      <CustomText variant="label" fontWeight="semiBold" size={16} style={styles.fieldLabel}>
+      <CustomText variant="label" fontWeight="semiBold" size={14} style={styles.fieldLabel}>
         {label}
       </CustomText>
       <TouchableOpacity
@@ -96,6 +96,7 @@ const CategoryPicker: React.FC<{
         <CustomText
           variant="body"
           fontFamily="inter"
+          size={14}
           color={value ? theme.colors.text : theme.colors.greyDark}
         >
           {value || placeholder}
@@ -131,6 +132,7 @@ const CategoryPicker: React.FC<{
                     <CustomText
                       variant="body"
                       fontFamily="inter"
+                      size={14}
                       fontWeight={isSelected ? "medium" : "regular"}
                       color={isSelected ? theme.colors.primary : theme.colors.text}
                     >
@@ -305,7 +307,8 @@ const SupportScreen: React.FC = () => {
             value={firstName}
             onChangeText={setFirstName}
             editable={!lockIdentityFields}
-            inputStyle={lockIdentityFields ? styles.lockedInput : undefined}
+            labelStyle={styles.inputLabel}
+            inputStyle={[styles.inputText, lockIdentityFields && styles.lockedInput]}
           />
         </View>
 
@@ -316,7 +319,8 @@ const SupportScreen: React.FC = () => {
             value={lastName}
             onChangeText={setLastName}
             editable={!lockIdentityFields}
-            inputStyle={lockIdentityFields ? styles.lockedInput : undefined}
+            labelStyle={styles.inputLabel}
+            inputStyle={[styles.inputText, lockIdentityFields && styles.lockedInput]}
           />
         </View>
 
@@ -329,7 +333,8 @@ const SupportScreen: React.FC = () => {
             keyboardType="email-address"
             autoCapitalize="none"
             editable={!lockIdentityFields}
-            inputStyle={lockIdentityFields ? styles.lockedInput : undefined}
+            labelStyle={styles.inputLabel}
+            inputStyle={[styles.inputText, lockIdentityFields && styles.lockedInput]}
           />
         </View>
 
@@ -353,11 +358,13 @@ const SupportScreen: React.FC = () => {
             placeholder="Briefly describe your issue"
             value={subject}
             onChangeText={setSubject}
+            labelStyle={styles.inputLabel}
+            inputStyle={styles.inputText}
           />
         </View>
 
         <View style={styles.inputContainer}>
-          <CustomText variant="label" fontWeight="semiBold" size={16} style={styles.fieldLabel}>
+          <CustomText variant="label" fontWeight="semiBold" size={14} style={styles.fieldLabel}>
             Describe Your Issue
           </CustomText>
           <TextInput
@@ -371,7 +378,7 @@ const SupportScreen: React.FC = () => {
         </View>
 
         <View style={styles.inputContainer}>
-          <CustomText variant="label" fontWeight="semiBold" size={16} style={styles.fieldLabel}>
+          <CustomText variant="label" fontWeight="semiBold" size={14} style={styles.fieldLabel}>
             Attachments (Optional)
           </CustomText>
           <TouchableOpacity
@@ -446,23 +453,37 @@ const supportStyles = (theme: ITheme) =>
       marginBottom: theme.spacing.lg,
     },
     infoText: {
-      lineHeight: 20,
+      fontSize: 13,
+      lineHeight: 19,
     },
     inputContainer: {
       marginBottom: theme.spacing.base,
     },
     fieldLabel: {
-      marginBottom: theme.spacing.sm,
+      fontSize: 14,
+      marginBottom: 6,
       color: theme.colors.text,
+    },
+    // The shared TextInput defaults to a 16pt label / 16pt value; this form has many fields
+    // stacked, so it runs one step smaller throughout.
+    inputLabel: {
+      fontSize: 14,
+      marginBottom: 6,
+    },
+    inputText: {
+      fontSize: 14,
     },
     multilineInput: {
       height: "100%",
+      fontSize: 14,
       textAlignVertical: "top",
       paddingTop: 12,
       paddingBottom: 12,
     },
+    // Read-only, not empty: these carry the signed-in user's real name and email, so they keep
+    // the full text colour. Greying them out made them read as unfilled placeholders.
     lockedInput: {
-      color: theme.colors.textSecondary,
+      color: theme.colors.text,
     },
     pickerField: {
       height: 46,
@@ -518,6 +539,7 @@ const supportStyles = (theme: ITheme) =>
       borderRadius: 50,
     },
     uploadTextCenter: {
+      fontSize: 13,
       textAlign: "center",
       lineHeight: 18,
     },
