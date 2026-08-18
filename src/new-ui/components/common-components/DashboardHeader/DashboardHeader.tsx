@@ -41,9 +41,14 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
   const styles = dashboardHeaderStyles(theme) as any;
   const [isMenuVisible, setIsMenuVisible] = useState(false);
 
-  const { userData } = useSelector((state: any) => state.authenticationSlice);
+  const { userData, usersMe } = useSelector((state: any) => state.authenticationSlice);
 
-  const rawProfilePhoto = userData?.profile_photo || userData?.profile?.photo;
+  // The uploaded avatar comes back on /users/me as `profile.avatar_url` — check it first
+  // (same resolution order as ProfileScreen) so the header updates after an avatar upload.
+  const rawProfilePhoto =
+    usersMe?.profile?.avatar_url ||
+    userData?.profile_photo ||
+    userData?.profile?.photo;
   const profilePhotoUri = rawProfilePhoto
     ? String(rawProfilePhoto).replace(/^http:\/\//i, 'https://')
     : null;
@@ -161,7 +166,7 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
             borderColor="rgba(255, 255, 255, 0.6)"
           >
             <View style={styles.menuIconWrapper}>
-              <AppIcon.Headphones width={22} height={22} />
+              <AppIcon.Headphones width={22} height={22} color="#1F2937" />
             </View>
           </GlassyWrapper>
         </TouchableOpacity>

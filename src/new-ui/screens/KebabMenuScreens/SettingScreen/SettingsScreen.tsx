@@ -53,11 +53,17 @@ const SettingsScreen = () => {
             ),
             onPress: () => navigation.navigate(NAVIGATION_SCREENS.PAYMENT_METHODS_SCREEN as never),
         },
-        // {
-        //     title: 'Bank Statements',
-        //     icon: <AppIcon.BankStatement />,
-        //     onPress: () => navigation.navigate(NAVIGATION_SCREENS.NEW_BANK_STATEMENT_SCREEN as never),
-        // },
+        {
+            title: 'Support',
+            // Headphones is a bare glyph (no badge) — wrap it in the same green circle so it
+            // aligns with the other 40px badged icons.
+            icon: (
+                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3FBF4', alignItems: 'center', justifyContent: 'center' }}>
+                    <AppIcon.Headphones width={22} height={22} color="#00793F" />
+                </View>
+            ),
+            onPress: () => navigation.navigate(NAVIGATION_SCREENS.FRESHCHAT_SCREEN as never),
+        },
         // {
         //     title: 'Rewards and Referrals',
         //     icon: <AppIcon.RewardsIcon />,
@@ -83,12 +89,12 @@ const SettingsScreen = () => {
         //     : []),
         {
             title: 'Terms of Service',
-            icon: <AppIcon.TermsAndConditions />,
+            icon: <AppIcon.TermsAndConditions  />,
             onPress: () => webDocRef.current?.showWebDocument?.('Terms of Service', PAYAIRO_TERMS_URL),
         },
         {
             title: 'Privacy Policy',
-            icon: <AppIcon.PrivacyPolicy />,
+            icon: <AppIcon.PrivacyPolicy  />,
             onPress: () => webDocRef.current?.showWebDocument?.('Privacy Policy', PAYAIRO_PRIVACY_URL),
         },
         // {

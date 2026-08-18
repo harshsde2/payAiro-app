@@ -243,9 +243,9 @@ const NewDashboard = () => {
 
   const CARD_DATA = [
     {
-      title: 'Claim Your',
-      subTitle: 'First-Time Offer!',
-      description: 'Transfer money to abroad effortlessly & get rewards.',
+      title: 'Zero Fees.',
+      subTitle: 'More Freedom.',
+      description: 'Send instant P2P transfers to friends and family, buy and sell crypto with ease, and enjoy zero fees on your transactions.',
       icon: <AppIcon.PayairoOffer />,
     },
 
@@ -323,7 +323,9 @@ const NewDashboard = () => {
               style={{ height: 130, width: CARD_WIDTH }}
               borderRadius={newUITheme.radius.xl}
               blurAmount={25}
-              blurType='regular'
+              // 'light' (not 'regular') — on real iOS 'regular' is a dark-adaptive vibrancy that
+              // renders the card dark over the green gradient; 'light' stays light like the sim.
+              blurType='light'
               overlayOpacity={0.12}
               borderWidth={1}
               borderColor={newUITheme.colors.white}

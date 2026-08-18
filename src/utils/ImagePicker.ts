@@ -34,17 +34,47 @@ const prepareFileObject = (
 };
 
 /**
- * Opens gallery and allows user to pick and crop an image.
+ * Opt-in cropping options. Cropping stays OFF by default because callers like the QR
+ * gallery-scan and support attachments must receive the ORIGINAL image untouched.
+ */
+export interface PickImageOptions {
+  /** Open the crop editor after picking. */
+  cropping?: boolean;
+  /** Target crop size (square when only `width` is given). Requires `cropping`. */
+  width?: number;
+  height?: number;
+  /** Title shown on the crop editor toolbar. */
+  cropperToolbarTitle?: string;
+  /** iOS: convert HEIC/HEIF captures to JPEG (backends often reject HEIC). */
+  forceJpg?: boolean;
+}
+
+const buildCropOptions = (options: PickImageOptions) => {
+  const { cropping = false, width, height, cropperToolbarTitle, forceJpg } = options;
+  return {
+    ...(forceJpg ? { forceJpg: true as const } : {}),
+    ...(cropping
+      ? {
+          cropping: true as const,
+          ...(width ? { width, height: height ?? width } : {}),
+          ...(cropperToolbarTitle ? { cropperToolbarTitle } : {}),
+        }
+      : { cropping: false as const }),
+  };
+};
+
+/**
+ * Opens gallery and allows user to pick (and optionally crop) an image.
  * @returns A file object or null if cancelled or error occurs
  */
 export const pickImageFromGallery =
-  async (): Promise<PickedImageFile | null> => {
+  async (options: PickImageOptions = {}): Promise<PickedImageFile | null> => {
     console.log("step 1");
     try {
       const image = await ImagePicker.openPicker({
         mediaType: "photo",
-        // cropping: true,
         compressImageQuality: 0.8,
+        ...buildCropOptions(options),
       });
       console.log("step 2");
       if (!image || !image.path) {
@@ -71,12 +101,12 @@ export const pickImageFromGallery =
  * @returns A file object or null if cancelled or error occurs
  */
 export const captureImageFromCamera =
-  async (): Promise<PickedImageFile | null> => {
+  async (options: PickImageOptions = {}): Promise<PickedImageFile | null> => {
     try {
       const image = await ImagePicker.openCamera({
         mediaType: "photo",
-        // cropping: true,
         compressImageQuality: 0.8,
+        ...buildCropOptions(options),
       });
 
       if (!image || !image.path) {

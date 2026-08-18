@@ -288,11 +288,11 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
               value={sender}
               editable={isEditable}
               onChangeText={handleSenderChange}
-              rightIcon={preselectedAsset ? <AppIcon.QrCode color={theme.colors.greyDark} /> : undefined}
+              rightIcon={<AppIcon.QrCode color={theme.colors.greyDark} />}
               onRightIconPress={() => {
-                if (preselectedAsset) {
+                // if (preselectedAsset) {
                   navigateToBottomTabScreen(navigation, NAVIGATION_SCREENS.SCANS);
-                }
+                // }
               }}
 
             />

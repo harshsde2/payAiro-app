@@ -157,6 +157,11 @@ const SupportScreen: React.FC = () => {
     route.params?.mode === "emailSupport" ? "emailSupport" : "accountRecovery";
   const config = MODE_CONFIG[mode];
 
+  // Email Support is opened by a logged-in user; their name/email are prefilled from the
+  // profile and must not be edited. Account Recovery can be reached while logged out, so those
+  // stay editable.
+  const lockIdentityFields = mode === "emailSupport";
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -299,6 +304,8 @@ const SupportScreen: React.FC = () => {
             placeholder="Enter your first name"
             value={firstName}
             onChangeText={setFirstName}
+            editable={!lockIdentityFields}
+            inputStyle={lockIdentityFields ? styles.lockedInput : undefined}
           />
         </View>
 
@@ -308,6 +315,8 @@ const SupportScreen: React.FC = () => {
             placeholder="Enter your last name"
             value={lastName}
             onChangeText={setLastName}
+            editable={!lockIdentityFields}
+            inputStyle={lockIdentityFields ? styles.lockedInput : undefined}
           />
         </View>
 
@@ -319,6 +328,8 @@ const SupportScreen: React.FC = () => {
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
+            editable={!lockIdentityFields}
+            inputStyle={lockIdentityFields ? styles.lockedInput : undefined}
           />
         </View>
 
@@ -449,6 +460,9 @@ const supportStyles = (theme: ITheme) =>
       textAlignVertical: "top",
       paddingTop: 12,
       paddingBottom: 12,
+    },
+    lockedInput: {
+      color: theme.colors.textSecondary,
     },
     pickerField: {
       height: 46,
