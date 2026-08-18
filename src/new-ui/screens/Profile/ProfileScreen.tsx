@@ -1,5 +1,5 @@
 import React, { useContext, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Image, Modal, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, Modal, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { BottomTabBarHeightContext } from "@react-navigation/bottom-tabs";
 import { useSelector } from "react-redux";
@@ -15,6 +15,9 @@ import { AppIcon } from "@new-ui/assets/svgs";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { usePaymentMethodsList, type PaymentMethodItem } from "query/hooks/usePaymentMethods";
 import { formatCardLabel } from "@new-ui/screens/PaymentMethods/paymentMethods.utils";
+import { useUpdateProfileAvatar } from "query/hooks/useUpdateProfileAvatar";
+import { pickImageFromGallery } from "utils/ImagePicker";
+import { showError, showSuccess, getApiErrorMessage } from "utils/toast";
 import { performAppLogout } from "utils/performAppLogout";
 import {
   formatCountryName,
@@ -146,6 +149,51 @@ const ProfileScreen: React.FC = () => {
     .join(", ");
   const paymentMethods: PaymentMethodItem[] = paymentMethodsData?.data?.items ?? [];
 
+  const { mutateAsync: uploadAvatar, isPending: isUploadingAvatar } =
+    useUpdateProfileAvatar();
+  // Picked + cropped image awaiting the user's confirmation before it's uploaded.
+  const [pendingAvatar, setPendingAvatar] = useState<{
+    uri: string;
+    name?: string;
+    type?: string;
+  } | null>(null);
+
+  // Square crop sized for an avatar; the confirm sheet below previews the result.
+  const pickAvatarImage = async () => {
+    const file = await pickImageFromGallery({
+      cropping: true,
+      width: 512,
+      height: 512,
+      cropperToolbarTitle: "Crop photo",
+      // iOS photos are often HEIC, which the avatar API rejects — force JPEG output.
+      forceJpg: true,
+    });
+    if (file?.uri) {
+      setPendingAvatar({ uri: file.uri, name: file.name, type: file.type });
+    }
+  };
+
+  const handleChangeAvatar = () => {
+    if (isUploadingAvatar) return;
+    void pickAvatarImage();
+  };
+
+  const handleConfirmAvatar = async () => {
+    if (!pendingAvatar) return;
+    try {
+      const res = await uploadAvatar(pendingAvatar);
+      const ok = (res as any)?.ok ?? (res as any)?.status ?? true;
+      if (ok) {
+        setPendingAvatar(null);
+        showSuccess("Photo updated", "Your profile photo has been updated.");
+      } else {
+        showError("Couldn't update photo", (res as any)?.message || "Please try again.");
+      }
+    } catch (error) {
+      showError("Couldn't update photo", getApiErrorMessage(error, "Please try again."));
+    }
+  };
+
   const handleLogoutConfirm = async () => {
     try {
       await performAppLogout();
@@ -214,12 +262,52 @@ const ProfileScreen: React.FC = () => {
 
       {/* Avatar block */}
       <View style={styles.avatarBlock}>
-        <View style={styles.avatar}>
-          {profilePhotoUri ? (
-            <Image source={{ uri: profilePhotoUri }} style={styles.avatarImage} />
-          ) : (
-            <CustomText style={styles.avatarInitials}>{getInitials(displayName)}</CustomText>
-          )}
+        <View>
+          <View style={styles.avatar}>
+            {profilePhotoUri ? (
+              <Image source={{ uri: profilePhotoUri }} style={styles.avatarImage} />
+            ) : (
+              <CustomText style={styles.avatarInitials}>{getInitials(displayName)}</CustomText>
+            )}
+            {isUploadingAvatar ? (
+              <View
+                style={[
+                  StyleSheet.absoluteFillObject,
+                  {
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "rgba(0,0,0,0.35)",
+                  },
+                ]}
+              >
+                <ActivityIndicator color={theme.colors.white} />
+              </View>
+            ) : null}
+          </View>
+          {/* Edit-photo badge — bottom-right, outside the avatar's overflow:hidden clip. */}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={handleChangeAvatar}
+            disabled={isUploadingAvatar}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={{
+              position: "absolute",
+              bottom: -2,
+              right: -2,
+              width: 28,
+              height: 28,
+              borderRadius: 14,
+              backgroundColor: theme.colors.primary,
+              alignItems: "center",
+              justifyContent: "center",
+              borderWidth: 2,
+              borderColor: theme.colors.white,
+            }}
+          >
+            <CustomText size={18} fontWeight="bold" color={theme.colors.white} style={{ lineHeight: 20 }}>
+              +
+            </CustomText>
+          </TouchableOpacity>
         </View>
         <CustomText style={styles.name}>{displayName}</CustomText>
         <CustomText style={styles.caption}>
@@ -357,7 +445,7 @@ const ProfileScreen: React.FC = () => {
             styles={styles}
             isLast
             icon={<AppIcon.TransactionLimit width={17} height={17} color={theme.colors.primary} />}
-            label="Daily Transaction Limit"
+            label="Transaction Limit"
             right={<AppIcon.ChevronRight width={15} height={15} />}
             onPress={() => goTo(NAVIGATION_SCREENS.TRANSACTION_LIMIT_SCREEN as AppRouteName)}
           />
@@ -381,6 +469,98 @@ const ProfileScreen: React.FC = () => {
           Logout
         </Button>
       </View>
+
+      {/* Confirm the cropped photo before uploading */}
+      <Modal
+        visible={!!pendingAvatar}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          if (!isUploadingAvatar) setPendingAvatar(null);
+        }}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            justifyContent: "flex-end",
+            paddingBottom: 40,
+            paddingHorizontal: 15,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: theme.colors.white,
+              borderRadius: 24,
+              paddingHorizontal: 24,
+              paddingTop: 28,
+              paddingBottom: 32,
+              gap: 20,
+              alignItems: "center",
+            }}
+          >
+            <CustomText variant="h4" fontWeight="bold" align="center">
+              Use this photo?
+            </CustomText>
+
+            {pendingAvatar ? (
+              <Image
+                source={{ uri: pendingAvatar.uri }}
+                style={{
+                  width: 160,
+                  height: 160,
+                  borderRadius: 28,
+                  backgroundColor: theme.colors.greyLight,
+                }}
+              />
+            ) : null}
+
+            <CustomText
+              variant="bodySmall"
+              fontFamily="inter"
+              color={theme.colors.textSecondary}
+              align="center"
+            >
+              This will replace your current profile photo.
+            </CustomText>
+
+            <View style={{ flexDirection: "row", gap: 12, width: "100%" }}>
+              <Button
+                color={theme.colors.greyDark}
+                style={{ flex: 1 }}
+                disabled={isUploadingAvatar}
+                onPress={() => setPendingAvatar(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                color={theme.colors.primary}
+                style={{ flex: 1 }}
+                loading={isUploadingAvatar}
+                disabled={isUploadingAvatar}
+                onPress={handleConfirmAvatar}
+              >
+                Use photo
+              </Button>
+            </View>
+
+            <TouchableOpacity
+              activeOpacity={0.7}
+              disabled={isUploadingAvatar}
+              onPress={pickAvatarImage}
+            >
+              <CustomText
+                variant="bodySmall"
+                fontFamily="inter"
+                fontWeight="semiBold"
+                color={theme.colors.primary}
+              >
+                Choose another photo
+              </CustomText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* QR bottom sheet (shared with the dashboard Receive action) */}
       <ReceiveQRSheet ref={receiveSheetRef} />

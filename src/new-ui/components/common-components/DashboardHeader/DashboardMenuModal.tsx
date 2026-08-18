@@ -82,7 +82,7 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
       {
         key: 'support' as const,
         label: 'Support',
-        icon: <AppIcon.Headphones width={18} height={18} />,
+        icon: <AppIcon.Headphones width={18} height={18} color="#1F2937" />,
         routeName: NAVIGATION_SCREENS.FRESHCHAT_SCREEN,
       },
       // 'About' omitted: no route/screen yet.
