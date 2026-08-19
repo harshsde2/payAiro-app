@@ -149,6 +149,11 @@ const ProfileScreen: React.FC = () => {
   const [failedAvatarUri, setFailedAvatarUri] = useState<string | null>(null);
   const showAvatarImage = !!profilePhotoUri && profilePhotoUri !== failedAvatarUri;
 
+  // Tapping the avatar previews the photo full screen. Only offered when there's actually a
+  // loadable photo — with initials showing there is nothing to enlarge, and the "+" badge
+  // stays the way to change it.
+  const [isPhotoViewerVisible, setIsPhotoViewerVisible] = useState(false);
+
   const hasAddress = !!(profileData.address_line1 || profileData.city);
   const addressText = [
     [profileData.address_line1, profileData.address_line2].filter(Boolean).join(" "),
@@ -275,34 +280,40 @@ const ProfileScreen: React.FC = () => {
       {/* Avatar block */}
       <View style={styles.avatarBlock}>
         <View>
-          <View style={styles.avatar}>
-            {/* Initials always render underneath the photo, so a slow, broken or 404'd
-                avatar URL degrades to them instead of leaving an empty tile. */}
-            <CustomText style={styles.avatarInitials} allowFontScaling={false} numberOfLines={1}>
-              {initials}
-            </CustomText>
-            {showAvatarImage ? (
-              <Image
-                source={{ uri: profilePhotoUri as string }}
-                style={[styles.avatarImage, StyleSheet.absoluteFillObject]}
-                onError={() => setFailedAvatarUri(profilePhotoUri)}
-              />
-            ) : null}
-            {isUploadingAvatar ? (
-              <View
-                style={[
-                  StyleSheet.absoluteFillObject,
-                  {
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: "rgba(0,0,0,0.35)",
-                  },
-                ]}
-              >
-                <ActivityIndicator color={theme.colors.white} />
-              </View>
-            ) : null}
-          </View>
+          <TouchableOpacity
+            activeOpacity={showAvatarImage ? 0.85 : 1}
+            disabled={!showAvatarImage || isUploadingAvatar}
+            onPress={() => setIsPhotoViewerVisible(true)}
+          >
+            <View style={styles.avatar}>
+              {/* Initials always render underneath the photo, so a slow, broken or 404'd
+                  avatar URL degrades to them instead of leaving an empty tile. */}
+              <CustomText style={styles.avatarInitials} allowFontScaling={false} numberOfLines={1}>
+                {initials}
+              </CustomText>
+              {showAvatarImage ? (
+                <Image
+                  source={{ uri: profilePhotoUri as string }}
+                  style={[styles.avatarImage, StyleSheet.absoluteFillObject]}
+                  onError={() => setFailedAvatarUri(profilePhotoUri)}
+                />
+              ) : null}
+              {isUploadingAvatar ? (
+                <View
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    {
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: "rgba(0,0,0,0.35)",
+                    },
+                  ]}
+                >
+                  <ActivityIndicator color={theme.colors.white} />
+                </View>
+              ) : null}
+            </View>
+          </TouchableOpacity>
           {/* Edit-photo badge — bottom-right, outside the avatar's overflow:hidden clip. */}
           <TouchableOpacity
             activeOpacity={0.8}
@@ -488,6 +499,55 @@ const ProfileScreen: React.FC = () => {
           Logout
         </Button>
       </View>
+
+      {/* Full-screen profile photo viewer (tap the avatar) */}
+      <Modal
+        visible={isPhotoViewerVisible && showAvatarImage}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsPhotoViewerVisible(false)}
+      >
+        {/* Tapping anywhere dismisses, matching the usual lightbox gesture. */}
+        <TouchableOpacity
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.92)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          activeOpacity={1}
+          onPress={() => setIsPhotoViewerVisible(false)}
+        >
+          {profilePhotoUri ? (
+            <Image
+              source={{ uri: profilePhotoUri }}
+              style={{ width: "100%", height: "100%" }}
+              resizeMode="contain"
+            />
+          ) : null}
+
+          <TouchableOpacity
+            style={{
+              position: "absolute",
+              top: 50,
+              right: 20,
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              backgroundColor: "rgba(255, 255, 255, 0.18)",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            onPress={() => setIsPhotoViewerVisible(false)}
+          >
+            <CustomText size={18} fontWeight="bold" color={theme.colors.white}>
+              ✕
+            </CustomText>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Confirm the cropped photo before uploading */}
       <Modal
