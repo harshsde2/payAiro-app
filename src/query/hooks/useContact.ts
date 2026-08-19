@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import Contacts from "react-native-contacts";
 import { ApiResponse, RecentContact, User } from "../../api/types";
 import { userContactKeys } from "query/queryKeys";
@@ -382,6 +387,9 @@ export const useFastApiUsersSearch = (
     },
     enabled: !!query && query.length >= minCharacters,
     staleTime: 30000,
+    // Keep the previous query's results on screen while the next keystroke's request is in
+    // flight — the suggestion list must never collapse to empty between debounced searches.
+    placeholderData: keepPreviousData,
   });
 };
 

@@ -48,7 +48,9 @@ export const profileScreenStyles = (theme: ITheme) =>
       width: 76,
       height: 76,
       borderRadius: 24,
-      backgroundColor: 'rgba(217,250,216,0.65)',
+      // Opaque on purpose: a translucent tile let the screen's green gradient bleed through
+      // and washed the initials out (most visibly on Android).
+      backgroundColor: theme.colors.greenLight2,
       alignItems: 'center',
       justifyContent: 'center',
       overflow: 'hidden',
@@ -66,9 +68,15 @@ export const profileScreenStyles = (theme: ITheme) =>
       resizeMode: 'cover',
     },
     avatarInitials: {
-      fontFamily: theme.typography.fontFamily.semiBold,
+      fontFamily: theme.typography.fontFamily.bold,
       fontSize: 26,
+      lineHeight: 32,
+      letterSpacing: 0.5,
       color: theme.colors.primary,
+      textAlign: 'center',
+      // Android pads glyphs vertically by default, which pushes the initials off-centre.
+      includeFontPadding: false,
+      textAlignVertical: 'center',
     },
     name: {
       fontFamily: theme.typography.fontFamily.semiBold,

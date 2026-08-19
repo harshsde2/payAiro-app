@@ -335,7 +335,7 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
               fontWeight="semiBold"
               size={16}
             >
-              Contacts
+              {sender.trim() ? 'Search results' : 'Saved contacts'}
             </CustomText>
           </View>
           <SendContactsList
