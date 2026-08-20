@@ -31,6 +31,7 @@ import {
   type BiometricAuthResult,
 } from "services/BiometricService";
 import { LOCK_CONFIG } from "types/appLock.types";
+import { afterModalTransition } from "utils/afterModalTransition";
 import { AppIcon } from "@new-ui/assets/svgs";
 import { Button } from "new-ui/components/common-components/layout";
 import { useUpsertUserSecurityPinSettings } from "query/hooks";
@@ -61,25 +62,64 @@ const AppLockScreen: React.FC = () => {
 
   // The caller's onVerified() usually navigates to TRANSACTION_RESULT, which is a NATIVE modal
   // (presentation: "modal"). On iOS, presenting that while THIS full-screen <Modal> is still
-  // mounted — and tearing this one down in the same tick — races and leaves a black stuck
-  // screen. So on iOS we dismiss this modal first and run onVerified in the Modal's onDismiss
-  // (after it has fully torn down); the setTimeout is a safety net if onDismiss never fires.
+  // on screen races UIKit and leaves a stuck black transition view. So on iOS we dismiss this
+  // modal first and run onVerified from the Modal's onDismiss, once it has fully torn down.
+  //
+  // For onDismiss to fire at all, this component must stay MOUNTED and the modal dismissed via
+  // `visible={false}` — see the render below. Returning null here (as this used to) unmounts
+  // RCTModalHostView mid-transition, iOS drops the dismissal callback, and the whole thing
+  // degrades to a fixed timer that only wins the race on fast devices.
   const pendingVerifiedRef = useRef<(() => void) | null>(null);
+  const flushFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelDeferredFlushRef = useRef<(() => void) | null>(null);
+  /**
+   * Guards against onVerified() running twice for one payment. Face ID's own dismissal
+   * emits inactive→active, which can re-trigger the biometric effect before
+   * clearPaymentVerification() has flushed through React state — a second prompt, a second
+   * success, and a second transaction for the same tap.
+   */
+  const verifiedOnceRef = useRef(false);
+  /** True while a native biometric dialog is on screen, so we never stack two. */
+  const promptInFlightRef = useRef(false);
+  /** True while a PIN verification is resolving, so keypad + Confirm can't both fire. */
+  const pinVerifyInFlightRef = useRef(false);
+
   const flushPendingVerified = () => {
+    if (flushFallbackRef.current) {
+      clearTimeout(flushFallbackRef.current);
+      flushFallbackRef.current = null;
+    }
     const cb = pendingVerifiedRef.current;
     pendingVerifiedRef.current = null;
-    if (cb) cb();
+    if (!cb) return;
+    // Let the dismissal animation drain before presenting the next native modal.
+    cancelDeferredFlushRef.current = afterModalTransition(cb);
   };
+
   const finishPaymentVerified = (onVerified: () => void) => {
+    if (verifiedOnceRef.current) return;
+    verifiedOnceRef.current = true;
+
     if (Platform.OS === "ios") {
       pendingVerifiedRef.current = onVerified;
       clearPaymentVerification();
-      setTimeout(flushPendingVerified, 600);
+      // Safety net only — onDismiss is the real trigger. Generous, because firing this
+      // early is what caused the black screen; firing it late costs nothing.
+      flushFallbackRef.current = setTimeout(flushPendingVerified, 1500);
     } else {
+      // Android has no onDismiss for RN Modal, and no UIKit presentation conflict.
       onVerified();
       clearPaymentVerification();
     }
   };
+
+  useEffect(
+    () => () => {
+      if (flushFallbackRef.current) clearTimeout(flushFallbackRef.current);
+      cancelDeferredFlushRef.current?.();
+    },
+    []
+  );
   const [paymentShowPin, setPaymentShowPin] = useState(false);
   /** True while native biometric dialog is visible; shows full white background instead of PIN UI. */
   const [isBiometricRunning, setIsBiometricRunning] = useState(false);
@@ -172,6 +212,10 @@ const AppLockScreen: React.FC = () => {
   const handleVerifyPin = async (pinToVerify?: string) => {
     const pinToCheck = pinToVerify || pin;
     if (pinToCheck.length < 4) return;
+    // The keypad auto-verifies on the 4th digit AND the Confirm button calls this, so a
+    // fast tap can enter twice before `isVerifyingPin` has re-rendered the disabled prop.
+    if (pinVerifyInFlightRef.current) return;
+    pinVerifyInFlightRef.current = true;
 
     setIsVerifyingPin(true);
     setErrorMessage("");
@@ -196,6 +240,7 @@ const AppLockScreen: React.FC = () => {
       setErrorMessage("Failed to verify PIN. Please try again.");
       setPin("");
     } finally {
+      pinVerifyInFlightRef.current = false;
       setIsVerifyingPin(false);
     }
   };
@@ -208,6 +253,12 @@ const AppLockScreen: React.FC = () => {
   // Reset PIN and error when lock screen becomes visible
   useEffect(() => {
     if (isLocked) {
+      // Arm the single-fire guard for this lock, and clear the biometric overlay. The
+      // overlay is deliberately left up on a successful unlock (so the keypad doesn't
+      // flash during dismissal), so without this reset a later lock with biometrics
+      // switched off would render a blank white sheet over the PIN keypad.
+      verifiedOnceRef.current = false;
+      setIsBiometricRunning(false);
       setPin("");
       setErrorMessage("");
     }
@@ -225,6 +276,18 @@ const AppLockScreen: React.FC = () => {
       "change",
       (nextAppState: AppStateStatus) => {
         if (nextAppState !== "active") return;
+        // A successful Face ID dismissal ITSELF emits inactive→active. Re-arming here
+        // while this verification is already resolving would present a second prompt on
+        // top of a modal that is tearing down, and a second success would fire
+        // onVerified again — the same tap booked twice. Only re-arm when nothing is
+        // pending: no prompt on screen, nothing verified, nothing waiting to flush.
+        if (
+          promptInFlightRef.current ||
+          verifiedOnceRef.current ||
+          pendingVerifiedRef.current
+        ) {
+          return;
+        }
         const shouldRun =
           !requiresPinSetup &&
           ((shouldShowLock &&
@@ -248,16 +311,21 @@ const AppLockScreen: React.FC = () => {
 
   useEffect(() => {
     if (!shouldRunBiometric) return;
+    // One LAContext prompt at a time. This effect's deps include state that can change
+    // while the prompt is open, and a re-run would stack a second system dialog.
+    if (promptInFlightRef.current) return;
 
     let cancelled = false;
 
     const runBiometric = async () => {
+      promptInFlightRef.current = true;
       setIsBiometricRunning(true);
       // Mark the native biometric dialog as a native modal: on Android the system
       // BiometricPrompt backgrounds the activity, and without this flag that trip
       // would arm the app lock and re-lock right after a successful unlock
       // (an infinite prompt loop with the "Instant" auto-lock timing).
       setNativeModalVisible(true);
+      let succeeded = false;
       try {
         const result: BiometricAuthResult =
           await authenticateWithBiometricDetailed(
@@ -266,6 +334,7 @@ const AppLockScreen: React.FC = () => {
           );
         if (cancelled) return;
         if (result.success) {
+          succeeded = true;
           biometricFailureCount.current = 0;
           if (paymentMode && paymentVerificationRequest) {
             finishPaymentVerified(paymentVerificationRequest.onVerified);
@@ -296,7 +365,11 @@ const AppLockScreen: React.FC = () => {
           }
         }
       } finally {
-        setIsBiometricRunning(false);
+        promptInFlightRef.current = false;
+        // On success the modal is already dismissing — dropping the white overlay here
+        // would flash the full PIN keypad for a frame on the way out. Keep it until the
+        // modal is gone; the reset below handles the next verification.
+        if (!succeeded) setIsBiometricRunning(false);
         // Delay reset: dialog dismissal can emit several AppState transitions
         // (active -> inactive -> active); keep suppression up until they settle.
         setTimeout(() => setNativeModalVisible(false), 800);
@@ -325,7 +398,11 @@ const AppLockScreen: React.FC = () => {
 
   useEffect(() => {
     if (paymentMode) {
+      // A NEW verification request — arm the single-fire guard for it. (Only ever reset
+      // here, so the guard stays closed for the whole lifetime of one request.)
+      verifiedOnceRef.current = false;
       setPaymentShowPin(false);
+      setIsBiometricRunning(false);
       setPin("");
       setErrorMessage("");
       setSetupPinFirstEntry("");
@@ -344,24 +421,28 @@ const AppLockScreen: React.FC = () => {
   }, [isLocked, shouldShowLock, paymentMode]);
 
   const showModal = (shouldShowLock && isLocked) || paymentMode;
-  if (!showModal) return null;
 
+  // NOTE: no `if (!showModal) return null` here, and that is load-bearing. The <Modal>
+  // must stay mounted and be dismissed by flipping `visible` to false — unmounting
+  // RCTModalHostView mid-transition makes iOS drop `onDismiss`, which is the signal we
+  // use to know it is safe to present the next native modal. Children are gated on
+  // `showModal` so nothing renders while hidden.
   return (
-    <SafeAreaView edges={[]} style={styles.modalContainer}>
-      <Modal
-        animationType="fade"
-        transparent={false}
-        visible={showModal}
-        onRequestClose={() => {
-          if (paymentMode) clearPaymentVerification();
-        }}
-        // iOS: fires after the modal has fully dismissed — run the deferred onVerified() here so
-        // navigating to the TRANSACTION_RESULT native modal doesn't race this one (black screen).
-        onDismiss={flushPendingVerified}
-        style={{ flex: 1 }}
-        presentationStyle="fullScreen"
-      >
-        {!isBiometricRunning && (
+    <Modal
+      animationType="fade"
+      transparent={false}
+      visible={showModal}
+      onRequestClose={() => {
+        if (paymentMode) clearPaymentVerification();
+      }}
+      // iOS: fires after the modal has fully dismissed — run the deferred onVerified() here so
+      // navigating to the TRANSACTION_RESULT native modal doesn't race this one (black screen).
+      onDismiss={flushPendingVerified}
+      style={{ flex: 1 }}
+      presentationStyle="fullScreen"
+    >
+      <SafeAreaView edges={[]} style={styles.modalContainer}>
+        {showModal && !isBiometricRunning && (
           <View
             style={[
               {
@@ -390,7 +471,7 @@ const AppLockScreen: React.FC = () => {
           </View>
         )}
 
-        {isBiometricRunning ? (
+        {!showModal || isBiometricRunning ? (
           <View style={styles.biometricOverlay} />
         ) : (
           <View style={styles.mainContent}>
@@ -532,8 +613,8 @@ const AppLockScreen: React.FC = () => {
             </View>
           </View>
         )}
-      </Modal>
-    </SafeAreaView>
+      </SafeAreaView>
+    </Modal>
   );
 };
 
@@ -542,6 +623,9 @@ export default AppLockScreen;
 const customStyles = (theme: Theme) =>
   StyleSheet.create({
     modalContainer: {
+      // Root inside the Modal now, so it must fill it — otherwise the PIN keypad
+      // collapses to zero height and the modal renders as a blank sheet.
+      flex: 1,
       backgroundColor: "#FFFFFF",
     },
     biometricOverlay: {

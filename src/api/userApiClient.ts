@@ -34,6 +34,21 @@ type RefreshBody = {
 
 let refreshPromise: Promise<Tokens | null> | null = null;
 
+/**
+ * `error.code` set when a token refresh succeeded but the original request was NOT
+ * replayed because repeating it is unsafe (a non-idempotent POST/PUT/PATCH). The
+ * session is healthy again — the caller just has to decide whether re-submitting is
+ * safe. Money flows must NOT auto-retry on this; they surface an "outcome unknown"
+ * state instead (see `transactionGuard`).
+ */
+export const AUTH_REFRESHED_RETRY_REQUIRED = "AUTH_REFRESHED_RETRY_REQUIRED";
+
+/** HTTP methods that are safe to replay verbatim after a token refresh. */
+const REPLAY_SAFE_METHODS = new Set(["get", "head", "options"]);
+
+const isReplaySafe = (method?: string): boolean =>
+  REPLAY_SAFE_METHODS.has((method || "get").toLowerCase());
+
 const getStoredTokens = (): Partial<Tokens> | null => {
   try {
     const tokensString = getItem(STORAGE_KEYS.AUTH_TOKENS);
@@ -219,9 +234,13 @@ userApi.interceptors.response.use(
       | (InternalAxiosRequestConfig & { _retry?: boolean })
       | undefined;
 
-    // If unauthorized / forbidden (expired token), attempt refresh + retry once.
+    // Expired token → refresh once. ONLY on 401: the backend answers an expired
+    // access token with 401 + `code: "token_not_valid"` ("Token is expired"). A 403
+    // from these APIs always means a business-logic/authorization rejection, so
+    // treating it as an expiry used to refresh + replay a request the backend had
+    // already rejected on purpose.
     if (
-      (status === 401 || status === 403) &&
+      status === 401 &&
       originalRequest &&
       !originalRequest._retry &&
       typeof originalRequest.url === "string"
@@ -242,9 +261,21 @@ userApi.interceptors.response.use(
 
           const newTokens = await refreshPromise;
           if (newTokens?.access) {
-            originalRequest.headers = originalRequest.headers || {};
-            (originalRequest.headers as any).Authorization = `Bearer ${newTokens.access}`;
-            return userApi.request(originalRequest);
+            // Refresh succeeded, so the NEXT request the app makes will be authorized.
+            // But only replay this one if repeating it is safe. Replaying a POST is how
+            // a token that expires mid-transaction turns one tap into two transactions:
+            // the backend may already have processed the original before rejecting the
+            // (stale-token) connection. Safe methods are replayed; everything else is
+            // rejected so the caller can decide (see AUTH_REFRESHED_RETRY_REQUIRED).
+            if (isReplaySafe(originalRequest.method)) {
+              originalRequest.headers = originalRequest.headers || {};
+              (originalRequest.headers as any).Authorization = `Bearer ${newTokens.access}`;
+              return userApi.request(originalRequest);
+            }
+
+            (error as AxiosError & { code?: string }).code =
+              AUTH_REFRESHED_RETRY_REQUIRED;
+            return Promise.reject(error);
           }
         } catch {
           // fall through to showError below

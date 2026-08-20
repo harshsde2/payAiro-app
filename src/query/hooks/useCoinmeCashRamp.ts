@@ -184,12 +184,17 @@ export function useCoinmeOrderTemplateStatusPoll(
 
 export const useCoinmeOrderTemplateMutation = () => {
   return useMutation({
-    mutationFn: async (body: CoinmeOrderTemplateRequest) => {
+    // Mints a real cash-buy order — never auto-retry (see queryClient.ts).
+    retry: 0,
+    mutationFn: async ({
+      idempotencyKey,
+      ...body
+    }: CoinmeOrderTemplateRequest & { idempotencyKey: string }) => {
       const raw = await userApiClient.post<CoinmeOrderTemplateResponse>(
         USER_AUTH.COINME_ORDER_TEMPLATE,
         body,
         false,
-        COINME_POST_HEADERS
+        { ...COINME_POST_HEADERS, "Idempotency-Key": idempotencyKey }
       );
       return unwrapCoinmeBody<CoinmeOrderTemplateResponse>(raw);
     },
@@ -198,12 +203,17 @@ export const useCoinmeOrderTemplateMutation = () => {
 
 export const useCoinmeCashOfframpExecuteMutation = () => {
   return useMutation({
-    mutationFn: async (body: CoinmeCashOfframpExecuteRequest) => {
+    // Executes a real off-ramp — never auto-retry (see queryClient.ts).
+    retry: 0,
+    mutationFn: async ({
+      idempotencyKey,
+      ...body
+    }: CoinmeCashOfframpExecuteRequest & { idempotencyKey: string }) => {
       const raw = await userApiClient.post<CoinmeCashOfframpExecuteResponse>(
         USER_AUTH.COINME_CASH_OFFRAMP_EXECUTE,
         body,
         false,
-        COINME_POST_HEADERS
+        { ...COINME_POST_HEADERS, "Idempotency-Key": idempotencyKey }
       );
       return unwrapCoinmeBody<CoinmeCashOfframpExecuteResponse>(raw);
     },

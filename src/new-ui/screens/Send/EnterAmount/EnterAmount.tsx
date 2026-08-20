@@ -44,6 +44,14 @@ import { useTransactionLimit } from 'hooks/useTransactionLimit';
 import TransactionLimitMeter from '@new-ui/components/common-components/TransactionLimitMeter';
 import { coinmeTransactionLimitsKeys } from 'query/hooks/useCoinmeTransactionLimits';
 import { showError, getApiErrorMessage } from 'utils/toast';
+import { useTransactionSubmit } from 'hooks/useTransactionSubmit';
+import {
+  buildIntentSignature,
+  isOutcomeUnknown,
+  UNKNOWN_OUTCOME_MESSAGE,
+} from 'services/transactionGuard';
+import { confirmDuplicateTransaction } from 'utils/confirmDuplicateTransaction';
+import { afterModalTransition } from 'utils/afterModalTransition';
 import type { FundingSource } from './enterAmount.types';
 import { useEnterAmountState } from './useEnterAmountState';
 import RecipientHeader from './RecipientHeader';
@@ -201,8 +209,12 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
   const { mutate: createPaymentRequest } = useCreatePaymentRequest();
   const { mutate: payPaymentRequest } = usePayPaymentRequest();
   const tradeExecute = useCoinmeTradeExecute();
-  const { mutate: sendPaymentTransaction, isPending: isSendingPaymentTx } = usePaymentTransactionSend();
+  const { mutateAsync: sendPaymentTransaction, isPending: isSendingPaymentTx } = usePaymentTransactionSend();
   const { mutate: createCryptoRequest, isPending: isCreatingRequest } = useCreateCryptoRequest();
+  // Every money submit on this screen goes through here: one POST per transaction
+  // intent, no matter how many taps, retries or re-renders happen around it.
+  const { submit: submitTransaction, isSubmitting: isSubmittingTransaction } =
+    useTransactionSubmit();
   const isTradeMode =
     (tradeMode === 'buy' || tradeMode === 'sell') &&
     !!cryptoAsset &&
@@ -990,32 +1002,59 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
       ? ({ type: 'internal', amount: amountStr, currency: symbol, chain, recipientUserId } as const)
       : ({ type: 'external', amount: amountStr, currency: symbol, chain, destinationWalletAddress: recipient_identifier || '' } as const);
 
-    navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
-      isLoading: true, transactionData: null, isSuccess: false, isError: false,
-    } as never);
+    // Everything that makes this send distinct from another one the user could
+    // legitimately make. Nothing time-based, or a genuine retry would look like a new
+    // transaction and lose its protection.
+    const signature = buildIntentSignature([
+      'send',
+      payload.type,
+      chain,
+      symbol,
+      amountStr,
+      recipientUserId || recipient_identifier,
+    ]);
 
-    sendPaymentTransaction(payload, {
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: cryptoKeys.allCryptoBalances() });
-        const ok = data?.ok ?? data?.status ?? true;
-        const failMsg = (data as any)?.message || 'Please try again.';
-        navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
-          isLoading: false, transactionData: data, isSuccess: !!ok, isError: !ok,
-          ...(ok ? {} : { errorMessage: failMsg }),
+    void submitTransaction(
+      signature,
+      async (idempotencyKey) => {
+        navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+          isLoading: true, transactionData: null, isSuccess: false, isError: false,
         } as never);
-        if (!ok) showError('Transaction failed', failMsg);
+
+        try {
+          const data = await sendPaymentTransaction({ ...payload, idempotencyKey });
+          queryClient.invalidateQueries({ queryKey: cryptoKeys.allCryptoBalances() });
+          const ok = data?.ok ?? data?.status ?? true;
+          const failMsg = (data as any)?.message || 'Please try again.';
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+            isLoading: false, transactionData: data, isSuccess: !!ok, isError: !ok,
+            ...(ok ? {} : { errorMessage: failMsg }),
+          } as never);
+          if (!ok) showError('Transaction failed', failMsg);
+        } catch (error: unknown) {
+          // No response at all → we do NOT know whether the send happened. Never offer a
+          // plain retry here; send the user to check Activity instead.
+          const unknown = isOutcomeUnknown(error);
+          const failMsg = unknown
+            ? UNKNOWN_OUTCOME_MESSAGE
+            : getApiErrorMessage(error, 'Please try again.');
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+            isLoading: false, transactionData: null, isSuccess: false, isError: true,
+            errorMessage: failMsg, outcomeUnknown: unknown,
+          } as never);
+          showError(unknown ? "Couldn't confirm" : 'Transaction failed', failMsg);
+          // Rethrow so the guard records the outcome and keeps the intent locked.
+          throw error;
+        }
       },
-      onError: (error: unknown) => {
-        const failMsg = getApiErrorMessage(error, 'Please try again.');
-        navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
-          isLoading: false, transactionData: null, isSuccess: false, isError: true,
-          errorMessage: failMsg,
-        } as never);
-        showError('Transaction failed', failMsg);
+      {
+        onDuplicate: (retry) => confirmDuplicateTransaction(retry),
+        onUnknownOutcome: () => showError("Couldn't confirm", UNKNOWN_OUTCOME_MESSAGE),
       },
-    });
+    );
   }, [
     assetAmount,
+    confirmDuplicateTransaction,
     maxAsset,
     navigation,
     queryClient,
@@ -1024,6 +1063,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     selectedSource,
     sendPaymentTransaction,
     showError,
+    submitTransaction,
   ]);
 
   // --- Crypto Request (P2P) ----------------------------------------------
@@ -1109,80 +1149,104 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
       return;
     }
 
-    navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
-      isLoading: true,
-      transactionData: null,
-      isSuccess: false,
-      isError: false,
-      customTitle: 'Processing',
-      customDescription: 'Submitting your trade...',
-    } as never);
+    const isFiatEntry = inputMode === 'fiat';
+    const chain = String(cryptoAsset.chain || 'ETH').toUpperCase();
+    const cryptoCurrencyCode = String(cryptoAsset.asset || '').toUpperCase();
+    const fiatCurrencyCode = String(cryptoAsset.fiatCurrency || 'USD').toUpperCase();
+    const amountValue = String(isFiatEntry ? amount : assetAmount);
+    const amountCurrencyCode = isFiatEntry ? fiatCurrencyCode : cryptoCurrencyCode;
+    const paymentMethodId =
+      selectedPaymentMethod?.payment_method_id ?? COINME_DEFAULTS.paymentMethodId;
 
-    try {
-      console.log('step one =>');
-      const webSessionId = await fetchWebSessionId({
-        accountId: coinmeAccountId,
-        riskFlow: 'cardtransaction',
-      });
+    // NOTE: webSessionId is deliberately NOT part of the signature. It is minted fresh
+    // per attempt by the risk SDK, so including it would make every retry look like a
+    // brand-new intent and defeat the whole guard.
+    const signature = buildIntentSignature([
+      'trade',
+      tradeMode,
+      chain,
+      cryptoCurrencyCode,
+      amountValue,
+      amountCurrencyCode,
+      paymentMethodId,
+    ]);
 
+    await submitTransaction(
+      signature,
+      async (idempotencyKey) => {
+        navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+          isLoading: true,
+          transactionData: null,
+          isSuccess: false,
+          isError: false,
+          customTitle: 'Processing',
+          customDescription: 'Submitting your trade...',
+        } as never);
 
+        try {
+          const webSessionId = await fetchWebSessionId({
+            accountId: coinmeAccountId,
+            riskFlow: 'cardtransaction',
+          });
 
-      console.log('step two =>', webSessionId);
+          // Send the entered amount as-is (both buy and sell). The wallet keeps a 2%
+          // buffer at entry time so the backend can auto-deduct the fee on top.
+          const payload: CoinmeTradeExecutePayload = {
+            tradeType: tradeMode,
+            chain,
+            cryptoCurrencyCode,
+            fiatCurrencyCode,
+            amountValue,
+            amountCurrencyCode,
+            paymentMethodId,
+            sourceWalletAddress:
+              cryptoAsset.sourceWalletAddress || COINME_DEFAULTS.sourceWalletAddress,
+            webSessionId,
+          };
 
-      const isFiatEntry = inputMode === 'fiat';
-      // Send the entered amount as-is (both buy and sell). The wallet keeps a 2%
-      // buffer at entry time so the backend can auto-deduct the fee on top.
-      const payload: CoinmeTradeExecutePayload = {
-        tradeType: tradeMode,
-        chain: String(cryptoAsset.chain || 'ETH').toUpperCase(),
-        cryptoCurrencyCode: String(cryptoAsset.asset || '').toUpperCase(),
-        fiatCurrencyCode: String(cryptoAsset.fiatCurrency || 'USD').toUpperCase(),
-        amountValue: String(isFiatEntry ? amount : assetAmount),
-        amountCurrencyCode: isFiatEntry
-          ? String(cryptoAsset.fiatCurrency || 'USD').toUpperCase()
-          : String(cryptoAsset.asset || '').toUpperCase(),
-        paymentMethodId:
-          selectedPaymentMethod?.payment_method_id ?? COINME_DEFAULTS.paymentMethodId,
-        sourceWalletAddress:
-          cryptoAsset.sourceWalletAddress || COINME_DEFAULTS.sourceWalletAddress,
-        webSessionId,
-      };
+          const res = await tradeExecute.mutateAsync({ ...payload, idempotencyKey });
+          const ok = res?.ok ?? res?.status ?? true;
 
-      console.log('step three =>');
-      const res = await tradeExecute.mutateAsync(payload);
-      const ok = res?.ok ?? res?.status ?? true;
+          queryClient.invalidateQueries({ queryKey: cryptoKeys.allCryptoBalances() });
+          queryClient.invalidateQueries({ queryKey: bankKeys.balance() });
+          // This trade consumed part of the daily/monthly allowance — refresh the meter.
+          queryClient.invalidateQueries({ queryKey: coinmeTransactionLimitsKeys.all });
 
-      queryClient.invalidateQueries({ queryKey: cryptoKeys.allCryptoBalances() });
-      queryClient.invalidateQueries({ queryKey: bankKeys.balance() });
-      // This trade consumed part of the daily/monthly allowance — refresh the meter.
-      queryClient.invalidateQueries({ queryKey: coinmeTransactionLimitsKeys.all });
-
-      console.log('step four =>');
-
-      navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
-        isLoading: false,
-        transactionData: res,
-        isSuccess: !!ok,
-        isError: !ok,
-        customTitle: tradeMode === 'buy' ? 'Buy submitted' : 'Sell submitted',
-      } as never);
-    } catch (err: unknown) {
-
-      console.log('step five =>', JSON.stringify(err, null, 2));
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      const errorMessage =
-        e?.response?.data?.message ||
-        e?.message ||
-        'Something went wrong while executing the trade';
-      navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
-        isLoading: false,
-        transactionData: null,
-        isSuccess: false,
-        isError: true,
-        errorMessage,
-      } as never);
-      showError('Transaction failed', errorMessage);
-    }
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+            isLoading: false,
+            transactionData: res,
+            isSuccess: !!ok,
+            isError: !ok,
+            customTitle: tradeMode === 'buy' ? 'Buy submitted' : 'Sell submitted',
+          } as never);
+        } catch (err: unknown) {
+          // No response at all → we do NOT know whether the trade executed. Never offer
+          // a plain retry here; send the user to check Activity instead.
+          const unknown = isOutcomeUnknown(err);
+          const e = err as { response?: { data?: { message?: string } }; message?: string };
+          const errorMessage = unknown
+            ? UNKNOWN_OUTCOME_MESSAGE
+            : e?.response?.data?.message ||
+              e?.message ||
+              'Something went wrong while executing the trade';
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+            isLoading: false,
+            transactionData: null,
+            isSuccess: false,
+            isError: true,
+            errorMessage,
+            outcomeUnknown: unknown,
+          } as never);
+          showError(unknown ? "Couldn't confirm" : 'Transaction failed', errorMessage);
+          // Rethrow so the guard records the outcome and keeps the intent locked.
+          throw err;
+        }
+      },
+      {
+        onDuplicate: (retry) => confirmDuplicateTransaction(retry),
+        onUnknownOutcome: () => showError("Couldn't confirm", UNKNOWN_OUTCOME_MESSAGE),
+      },
+    );
   }, [
     amount,
     assetAmount,
@@ -1193,6 +1257,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
     navigation,
     queryClient,
     showError,
+    submitTransaction,
     tradeExecute,
     tradeMode,
     selectedPaymentMethod?.payment_method_id,
@@ -1565,6 +1630,10 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
                 disabled={
                   isPaying ||
                   isSendingPaymentTx ||
+                  // Buy/sell was missing from this list entirely, so the Pay button
+                  // stayed live for the whole duration of an in-flight trade.
+                  tradeExecute.isPending ||
+                  isSubmittingTransaction ||
                   !!limitError ||
                   !!sellBalanceError ||
                   // Crypto send: disabled until the funding source resolves.
@@ -1645,8 +1714,14 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
           onClose={() => setShowCryptoReceiptModal(false)}
           onPayNow={() => {
             setShowCryptoReceiptModal(false);
-            requestPaymentVerification(handleActionsAfterPinVerified);
+            // Wait for this modal's dismissal to finish before presenting the lock
+            // screen's modal. Dismissing one and presenting another in the same tick
+            // is the second way this flow produces a stuck black screen on iOS.
+            afterModalTransition(() =>
+              requestPaymentVerification(handleActionsAfterPinVerified),
+            );
           }}
+          isSubmitting={isSubmittingTransaction}
           variant={isFiatStyleSend ? 'fiatOnly' : 'full'}
           tokenSymbol={assetSymbol}
           tokenAmount={assetAmount}

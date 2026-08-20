@@ -2,6 +2,13 @@ import {
   useCoinmeCashOfframpExecuteMutation,
   type CoinmeCashOfframpExecuteResponse,
 } from "query/hooks/useCoinmeCashRamp";
+import {
+  begin,
+  buildIntentSignature,
+  isOutcomeUnknown,
+  settle,
+  type SettleOutcome,
+} from "services/transactionGuard";
 import { ERR_CASH_OFF_RAMP, ERR_MISSING_CHAIN, ERR_MISSING_LOCATION, ERR_MISSING_WALLET } from "../cashRampBarcodeCopy";
 import type { SellCashRampPostExecute, SellCashRampSession } from "./sellFlow.types";
 
@@ -67,8 +74,33 @@ export function useSellExecute() {
   const executeSell = async (session: SellCashRampSession): Promise<SellCashRampPostExecute> => {
     try {
       const body = mapSessionToOfframpRequest(session);
-      const res = await mutation.mutateAsync(body);
-      return parsePostExecuteFromResponse(res);
+      // The calling screen holds its own in-flight ref, but that only stops a repeat
+      // from THIS mount. The guard's key survives remounts and rides along on the
+      // request so a deduping backend collapses any repeat into one off-ramp.
+      const signature = buildIntentSignature([
+        "cash-offramp",
+        body.chain,
+        body.debitCurrencyCode,
+        body.amountValue,
+        body.amountCurrencyCode,
+        body.locationReference,
+        body.sourceWalletAddress,
+      ]);
+      const claim = begin(signature);
+      let outcome: SettleOutcome = "rejected";
+      try {
+        const res = await mutation.mutateAsync({
+          ...body,
+          idempotencyKey: claim.idempotencyKey,
+        });
+        outcome = "succeeded";
+        return parsePostExecuteFromResponse(res);
+      } catch (err) {
+        outcome = isOutcomeUnknown(err) ? "unknown" : "rejected";
+        throw err;
+      } finally {
+        settle(signature, outcome);
+      }
     } catch (e) {
       if (e instanceof SellExecuteError) throw e;
       const err = e as { response?: { data?: { message?: string } }; message?: string };

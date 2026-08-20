@@ -49,6 +49,13 @@ export const queryGCInterval = {
   VERY_VERY_VERY_VERY_SLOW_GC_INTERVAL: 24 * 60 * 60 * 1000, // 24 hours
 };
 
+/**
+ * Retry policy for QUERIES ONLY (GET — safe to repeat).
+ *
+ * IMPORTANT (fintech rule): mutations must NEVER inherit this. A POST that reached
+ * the backend but lost its response would be booked twice. `queryClient.ts` pins
+ * `mutations.retry: 0` deliberately — do not wire RETRY_COUNT into mutations.
+ */
 export const queryRetry = {
   RETRY_COUNT: 1, // Number of retries for failed queries
   RETRY_DELAY: 1000, // Delay between retries in milliseconds
