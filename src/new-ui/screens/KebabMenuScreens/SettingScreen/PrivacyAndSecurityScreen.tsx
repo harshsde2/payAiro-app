@@ -207,7 +207,12 @@ const PrivacyAndSecurityScreen = () => {
           value={biometricStatus}
           onValueChange={handleBiometricToggle}
           disabled={isUpdatingBiometric}
-          trackColor={{ false: theme.colors.greyLight, true: theme.colors.primary }}
+          // greyLight (#F5F5F5) is all but invisible against the white card — the off
+          // state read as a faded/disabled control. greyLight2 gives the track a visible
+          // edge, and ios_backgroundColor must match it or iOS paints its own pale
+          // default behind the track while the toggle animates.
+          trackColor={{ false: theme.colors.greyLight2, true: theme.colors.primary }}
+          ios_backgroundColor={theme.colors.greyLight2}
           thumbColor={theme.colors.white}
         />
       </View>

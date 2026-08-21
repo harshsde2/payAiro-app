@@ -1217,7 +1217,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
             transactionData: res,
             isSuccess: !!ok,
             isError: !ok,
-            customTitle: tradeMode === 'buy' ? 'Buy submitted' : 'Sell submitted',
+            customTitle: tradeMode === 'buy' ? 'Buy Order Submitted' : 'Sell Order Submitted',
           } as never);
         } catch (err: unknown) {
           // No response at all → we do NOT know whether the trade executed. Never offer

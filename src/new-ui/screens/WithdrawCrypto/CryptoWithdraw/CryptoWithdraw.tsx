@@ -444,9 +444,9 @@ const CryptoWithdraw: React.FC = () => {
             transactionData: res,
             isSuccess: !!ok,
             isError: !ok,
-            customTitle: ok ? "Withdrawal completed" : "Withdrawal unsuccessful",
+            customTitle: ok ? "Withdrawal Request Submitted" : "Withdrawal unsuccessful",
             customDescription: ok
-              ? "Your funds will be sent to your selected debit card according to your bank's timing."
+              ? "Your funds will be transferred to your selected debit card in accordance with your bank's processing timeline."
               : "Unable to complete withdrawal. Please try again.",
             hideCoinmeCurrencyDetails: true,
           } as never);

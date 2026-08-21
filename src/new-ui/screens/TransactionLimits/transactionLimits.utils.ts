@@ -108,7 +108,9 @@ export function mapLimitsForTab(
 }
 
 export function getActiveRowsForTab(rows: TransactionLimitTabRows): TransactionLimitRow[] {
-  return [rows.cash, rows.debit].filter(
+  // Cash limits are hidden from the Buy/Sell tabs for now — restore `rows.cash`
+  // at the front of this list when we're ready to show them again.
+  return [/* rows.cash, */ rows.debit].filter(
     (row): row is TransactionLimitRow => row !== null
   );
 }

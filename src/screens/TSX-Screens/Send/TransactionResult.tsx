@@ -407,7 +407,6 @@ const TransactionResult: FC = () => {
         if (isCoinmeTrade) {
           const tx = transactionData as CoinmeTradeResponse;
           const tradeMeta = tx.meta || {};
-          const verb = tradeMeta.tradeType === 'sell' ? 'Sell' : 'Buy';
           const td = getCoinmeTransactionPayload(tx);
           const isSell = tradeMeta.tradeType === 'sell';
           const crypto = isSell
@@ -416,17 +415,14 @@ const TransactionResult: FC = () => {
           const fiat = isSell
             ? td?.creditCurrencyCode || tradeMeta.fiatCurrencyCode || 'USD'
             : td?.debitCurrencyCode || tradeMeta.fiatCurrencyCode || 'USD';
+          const action = isSell ? 'sale' : 'purchase';
           return (
             <CustomText variant="caption" size={16} fontFamily="inter" style={styles.description}>
-              Your{' '}
-              <CustomText size={16} variant="caption" fontWeight="semiBold" color={newTheme.colors.primary} fontFamily="inter">
-                {verb}
-              </CustomText>
-              {' '}of{' '}
+              Your {action} of{' '}
               <CustomText size={16} variant="caption" fontWeight="semiBold" color={newTheme.colors.primary} fontFamily="inter">
                 {crypto}
               </CustomText>
-              {' '}({fiat}) has been initiated.
+              {' '}({fiat}) has been successfully initiated and is now being processed.
             </CustomText>
           );
         }

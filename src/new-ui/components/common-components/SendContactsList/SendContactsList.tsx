@@ -38,6 +38,29 @@ const dedupeByUuid = (items: ISendContactItem[]): ISendContactItem[] => {
   });
 };
 
+// The PayAiro tag is the primary key a send resolves against, so it also drives the
+// ordering of the suggestion list: exact tag → tag prefix → tag substring → anything that
+// only matched on name/email. Ties keep their incoming order (API relevance / saved order).
+const tagMatchRank = (contact: ISendContactItem, needle: string): number => {
+  const tag = contact.username.trim().toLowerCase();
+  if (!tag || !needle) return 3;
+  if (tag === needle) return 0;
+  if (tag.startsWith(needle)) return 1;
+  if (tag.includes(needle)) return 2;
+  return 3;
+};
+
+const sortByTagMatch = (
+  items: ISendContactItem[],
+  needle: string
+): ISendContactItem[] => {
+  if (!needle) return items;
+  return items
+    .map((item, index) => ({ item, index, rank: tagMatchRank(item, needle) }))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .map(({ item }) => item);
+};
+
 const toSendContact = (contact: IUserContact): ISendContactItem => {
   // `contact_user_id` is the target user's id; `id` is only the contact-list row id.
   const uuid = String(contact.contact_user_id ?? contact.id ?? contact.username ?? '');
@@ -93,10 +116,11 @@ const SendContactsList: React.FC<ISendContactsListProps> = ({
 
   const searchResults: ISendContactItem[] = useMemo(() => {
     if (!isSearching) return [];
+    const needle = trimmedInput.toLowerCase();
     const users = data?.data?.users ?? [];
     // Only PayAiro (on-platform) users can be sent to from here — hide external users
     // (is_external === true). Missing/undefined is treated as internal.
-    return users
+    const mapped = users
       .filter((user) => user.is_external !== true)
       .map((user) => {
         const displayName =
@@ -111,7 +135,8 @@ const SendContactsList: React.FC<ISendContactsListProps> = ({
           profile_photo: user.avatar_url ?? null,
         };
       });
-  }, [data, isSearching]);
+    return sortByTagMatch(mapped, needle);
+  }, [data, isSearching, trimmedInput]);
 
   // Instant local matches over the already-loaded saved contacts. They fill the list on the
   // very first keystroke, before any search request has come back, so the switch from
@@ -119,13 +144,14 @@ const SendContactsList: React.FC<ISendContactsListProps> = ({
   const localMatches: ISendContactItem[] = useMemo(() => {
     if (!isSearching) return [];
     const needle = trimmedInput.toLowerCase();
-    return savedContacts.filter((contact) =>
+    const matched = savedContacts.filter((contact) =>
       [contact.nickname, contact.username, contact.email]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
         .includes(needle)
     );
+    return sortByTagMatch(matched, needle);
   }, [isSearching, savedContacts, trimmedInput]);
 
   // The search has "settled" only once the debounce has caught up with the input and the

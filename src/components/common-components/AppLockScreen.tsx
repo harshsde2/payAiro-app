@@ -439,7 +439,13 @@ const AppLockScreen: React.FC = () => {
       // navigating to the TRANSACTION_RESULT native modal doesn't race this one (black screen).
       onDismiss={flushPendingVerified}
       style={{ flex: 1 }}
-      presentationStyle="fullScreen"
+      // overFullScreen, NOT fullScreen. With fullScreen, UIKit detaches the presenting
+      // view controller's view once this modal is up, so during the fade-out there is
+      // nothing behind us but the UIWindow — and Fabric's modal host VC has a
+      // transparent view of its own, so animating its alpha exposes that window. That
+      // was the black flash after Face ID. overFullScreen keeps the screen underneath
+      // attached and already drawn, so the fade reveals it instead of the window.
+      presentationStyle="overFullScreen"
     >
       <SafeAreaView edges={[]} style={styles.modalContainer}>
         {showModal && !isBiometricRunning && (
