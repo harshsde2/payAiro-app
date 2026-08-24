@@ -15,7 +15,6 @@ import { useNavigation } from '@react-navigation/native'
 import ScreenWrapper from '@new-ui/components/common-components/ScreenWrapper'
 import CustomText from '@new-ui/components/common-components/CustomText'
 import { useTheme } from '@new-ui/styles/ThemeContext'
-import { AppIcon } from '@new-ui/assets/svgs'
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants'
 import { showError } from 'utils/toast'
 import { formatShortDate } from 'utils/dateUtils'
@@ -31,54 +30,14 @@ import {
   useNotificationPreferences,
   useUpdateNotificationPreferences,
 } from 'query/hooks/useNotificationsFeed'
-
-type NotificationIconType = 'wallet' | 'feature' | 'pending' | 'success' | 'info'
+// Icon/tint mapping lives beside the screen so the detail popup renders the tapped item
+// exactly like its card.
+import { categoryToIconType, ICON_BG, NotificationIcon } from './notificationVisuals'
+import NotificationDetailModal from './NotificationDetailModal'
 
 interface NotificationSection {
   title: string
   data: NotificationItem[]
-}
-
-/** Map a backend category to the screen's icon/colour styling. */
-const categoryToIconType = (
-  category?: string,
-  eventType?: string
-): NotificationIconType => {
-  // Crypto Request (P2P): an incoming request is "pending"; a fulfilled one is a success.
-  if (eventType === 'CRYPTO_REQUEST_RECEIVED') return 'pending'
-  if (eventType === 'CRYPTO_REQUEST_FULFILLED') return 'success'
-  switch (category) {
-    case 'transaction':
-    case 'payment':
-      return 'success'
-    case 'account':
-    case 'security':
-      return 'info'
-    case 'system':
-    case 'promo':
-      return 'feature'
-    default:
-      return 'pending'
-  }
-}
-
-const ICON_BG: Record<NotificationIconType, string> = {
-  wallet: '#E8F7EE',
-  success: '#E8F7EE',
-  feature: '#F2F2F7',
-  info: '#F2F2F7',
-  pending: '#FFF8E1',
-}
-
-const NotificationIcon: React.FC<{ type: NotificationIconType }> = ({ type }) => {
-  switch (type) {
-    case 'wallet':   return <AppIcon.AddBalance width={24} height={24} />
-    case 'feature':  return <AppIcon.Notification width={24} height={24} />
-    case 'pending':  return <AppIcon.HelpCircle width={24} height={24} />
-    case 'success':  return <AppIcon.TickCheckedBox width={24} height={24} />
-    case 'info':     return <AppIcon.HelpCircle width={24} height={24} />
-    default:         return null
-  }
 }
 
 const isToday = (iso?: string): boolean => {
@@ -162,6 +121,10 @@ const NotificationScreen = () => {
   const [localOverride, setLocalOverride] = useState<boolean | null>(null)
   const allowNotifications = localOverride ?? serverPushEnabled ?? false
 
+  /** The notification whose detail popup is open; `null` when closed. */
+  const [selectedNotification, setSelectedNotification] =
+    useState<NotificationItem | null>(null)
+
   const items = useMemo(
     () => flattenNotifications(data?.pages),
     [data?.pages]
@@ -212,9 +175,19 @@ const NotificationScreen = () => {
     [updatePrefs]
   )
 
-  const onPressItem = useCallback(
+  const onPressItem = useCallback((item: NotificationItem) => {
+    // Items are already marked read on screen open; tap opens the detail popup, which
+    // carries the deep link on its action button.
+    setSelectedNotification(item)
+  }, [])
+
+  const onCloseDetail = useCallback(() => setSelectedNotification(null), [])
+
+  const onOpenDetailLink = useCallback(
     (item: NotificationItem) => {
-      // Items are already marked read on screen open; tap just follows the deep link.
+      // Close first: navigating out from under an open RN modal leaves the overlay
+      // stranded on top of the destination screen.
+      setSelectedNotification(null)
       handleDeepLink(item.deep_link, navigation)
     },
     [navigation]
@@ -344,6 +317,12 @@ const NotificationScreen = () => {
             />
           ) : null
         }
+      />
+
+      <NotificationDetailModal
+        notification={selectedNotification}
+        onClose={onCloseDetail}
+        onOpenLink={onOpenDetailLink}
       />
     </ScreenWrapper>
   )
