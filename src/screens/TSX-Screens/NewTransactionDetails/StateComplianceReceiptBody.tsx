@@ -39,12 +39,6 @@ const CoinmeGlobeIcon: React.FC<{ color: string; size?: number }> = ({
   </Svg>
 );
 
-function truncateId(id: string, head = 10, tail = 5): string {
-  const t = (id ?? "").trim();
-  if (t.length <= head + tail + 3) return t;
-  return `${t.slice(0, head)}...${t.slice(-tail)}`;
-}
-
 function isEmptyValue(value: string | null | undefined): boolean {
   return value == null || String(value).trim() === "";
 }
@@ -293,10 +287,12 @@ const StateComplianceReceiptBody: React.FC<Props> = ({ transactionData, receipt 
                         size={11}
                         fontWeight="semiBold"
                         color={theme.colors.text}
-                        numberOfLines={1}
-                        style={{ maxWidth: 150 }}
+                        // Shown in full and allowed to wrap — this is the ID the user
+                        // quotes to support, and clipping it hides the digits that
+                        // distinguish one transaction from another.
+                        style={{ flexShrink: 1, textAlign: "right" }}
                       >
-                        {truncateId(field.value)}
+                        {field.value}
                       </CustomText>
                       <CustomText
                         variant="caption"
@@ -506,6 +502,8 @@ const receiptStyles = (theme: ITheme) =>
       flexDirection: "row",
       alignItems: "center",
       gap: 8,
+      // Lets the full transaction ID wrap inside the row instead of overflowing it.
+      flexShrink: 1,
     },
     link: {
       textDecorationLine: "underline",

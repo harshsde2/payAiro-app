@@ -21,6 +21,7 @@ import { Theme, useTheme } from "styles";
 import { useGlobalStyles } from "styles/GlobalStyles";
 // import { CustomText } from "tsx-components";
 import CustomText from "@new-ui/components/common-components/CustomText";
+import { getApiErrorMessage } from "utils/toast";
 import { useTheme as useNewTheme } from "@new-ui/styles/ThemeContext";
 
 
@@ -457,12 +458,17 @@ const TransactionResult: FC = () => {
           </CustomText>
         );
       case 'failed': {
-        // Surface the actual API failure reason inline (it's passed as `errorMessage`
-        // by the send / add-balance flows). Falls back to a generic line when absent.
+        // Surface the actual API failure reason inline. Callers pass it as `errorMessage`;
+        // when one doesn't, fall back to reading it straight off the response body they
+        // handed us (`message` / `error.message`) rather than showing a generic line that
+        // hides what the backend actually said.
         const failureText =
           errorMessage?.trim() ||
           customDescription?.trim() ||
-          'There was an error processing your transaction. Please try again.';
+          getApiErrorMessage(
+            transactionData,
+            'There was an error processing your transaction. Please try again.'
+          );
         return (
           <View style={styles.errorBanner}>
             <CustomText

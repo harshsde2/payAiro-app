@@ -184,7 +184,7 @@ const SendContactsList: React.FC<ISendContactsListProps> = ({
   const getDisplayTag = (item: ISendContactItem): string => {
     const base = item.username || item.email || '';
     if (!base) return '';
-    if (base.length <= 12) return base;
+    if (base.length <= 35) return base;
     return `${base.slice(0, 4)}...${base.slice(-4)}`;
   };
 
@@ -268,15 +268,15 @@ const SendContactsList: React.FC<ISendContactsListProps> = ({
                 fontWeight="semiBold"
                 size={14}
                 style={styles.nameText}
-              >
-                {contact.nickname || contact.username || contact.email}
+                >
+                {getDisplayTag(contact)}
               </CustomText>
               <CustomText
                 variant="caption"
                 size={12}
                 style={styles.tagText}
-              >
-                {getDisplayTag(contact)}
+                >
+                {contact.nickname || contact.username || contact.email}
               </CustomText>
             </TouchableOpacity>
           </View>

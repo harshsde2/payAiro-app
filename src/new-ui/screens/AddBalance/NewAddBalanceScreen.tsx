@@ -38,7 +38,7 @@ import {
 } from 'query/hooks/useCrypto';
 import { fetchWebSessionId } from 'services/coinmeRiskLifecycle';
 import { useCoinmeAccountId } from 'hooks/useCoinmeAccountId';
-import { showError, showInfo } from 'utils/toast';
+import { showError, showInfo, getApiErrorMessage } from 'utils/toast';
 import { useTransactionSubmit } from 'hooks/useTransactionSubmit';
 import {
   buildIntentSignature,
@@ -275,23 +275,33 @@ const NewAddBalanceScreen: React.FC = () => {
           // meter would keep showing the pre-purchase "remaining" for up to staleTime.
           queryClient.invalidateQueries({ queryKey: coinmeTransactionLimitsKeys.all });
 
+          // A 2xx body can still carry a rejection (`ok: false`) — surface its reason
+          // instead of captioning a failure as "Payment submitted".
+          const failureMessage = ok
+            ? undefined
+            : getApiErrorMessage(res, 'Unable to complete your purchase. Please try again.');
+
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
             isLoading: false,
             transactionData: res,
             isSuccess: !!ok,
             isError: !ok,
-            customTitle: 'Payment submitted',
+            customTitle: ok ? 'Payment submitted' : 'Payment unsuccessful',
+            ...(ok ? {} : { errorMessage: failureMessage }),
           } as never);
+
+          if (!ok) {
+            showError('Purchase failed', failureMessage!);
+          }
         } catch (err: unknown) {
           // No response at all → we do NOT know whether the buy went through. Never
           // offer a plain retry here; send the user to check Activity instead.
           const unknown = isOutcomeUnknown(err);
-          const e = err as { response?: { data?: { message?: string } }; message?: string };
+          // The backend answered — show ITS reason (e.g. a 503 maintenance notice).
+          // Only a no-response failure gets the generic unknown-outcome copy.
           const errorMessage = unknown
             ? UNKNOWN_OUTCOME_MESSAGE
-            : e?.response?.data?.message ||
-              e?.message ||
-              'Something went wrong while executing the trade';
+            : getApiErrorMessage(err, 'Something went wrong while executing the trade');
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
             isLoading: false,
             transactionData: null,

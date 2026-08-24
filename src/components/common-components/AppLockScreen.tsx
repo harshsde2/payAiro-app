@@ -45,6 +45,7 @@ const AppLockScreen: React.FC = () => {
     unlockApp,
     shouldShowLock,
     isBiometricEnabled,
+    isTransactionBiometricEnabled,
     showPinScreen,
     requestShowPinScreen,
     resetBiometricFailures,
@@ -250,6 +251,16 @@ const AppLockScreen: React.FC = () => {
     setShowPin((prev) => !prev);
   };
 
+  /** "Use Biometric" on the payment keypad — go back to the prompt after a failed scan or a
+   *  "Use PIN" tap. Clearing `paymentShowPin` flips `shouldRunBiometric` back on, and the
+   *  biometric effect (which lists both in its deps) re-fires on its own. */
+  const handleRetryBiometric = () => {
+    biometricFailureCount.current = 0;
+    setPin("");
+    setErrorMessage("");
+    setPaymentShowPin(false);
+  };
+
   // Reset PIN and error when lock screen becomes visible
   useEffect(() => {
     if (isLocked) {
@@ -264,11 +275,14 @@ const AppLockScreen: React.FC = () => {
     }
   }, [isLocked]);
 
-  // When overlay is visible and biometric enabled, show native biometric on top; success → unlock or payment callback, fail → after N show PIN
+  // When overlay is visible and biometric enabled, show native biometric on top; success → unlock or payment callback, fail → after N show PIN.
+  // The two rails read DIFFERENT preferences: app unlock uses `isBiometricEnabled`
+  // (Biometric App Lock), payments use `isTransactionBiometricEnabled` (Biometric for
+  // Transactions). They are independent — one being on says nothing about the other.
   const shouldRunBiometric =
     !requiresPinSetup &&
     ((shouldShowLock && isLocked && !showPinScreen && isBiometricEnabled) ||
-      (paymentMode && isBiometricEnabled && !paymentShowPin));
+      (paymentMode && isTransactionBiometricEnabled && !paymentShowPin));
 
   // Re-show native biometric modal when app returns to foreground (e.g. after phone lock dismissed the dialog)
   useEffect(() => {
@@ -294,7 +308,7 @@ const AppLockScreen: React.FC = () => {
             isLocked &&
             !showPinScreen &&
             isBiometricEnabled) ||
-            (paymentMode && isBiometricEnabled && !paymentShowPin));
+            (paymentMode && isTransactionBiometricEnabled && !paymentShowPin));
         if (shouldRun) setBiometricRetriggerKey((k) => k + 1);
       }
     );
@@ -304,6 +318,7 @@ const AppLockScreen: React.FC = () => {
     isLocked,
     showPinScreen,
     isBiometricEnabled,
+    isTransactionBiometricEnabled,
     paymentMode,
     paymentShowPin,
     requiresPinSetup,
@@ -348,7 +363,20 @@ const AppLockScreen: React.FC = () => {
           const systemCanceled =
             result.errorCode === "SYSTEM_CANCELED" ||
             result.errorCode === "ERROR_CANCELED";
-          if (userChosePin) {
+          // Preference is on but the device can't satisfy it (biometrics removed or never
+          // enrolled since). Retrying can't help, so drop to the PIN immediately instead of
+          // burning three identical prompts on the user.
+          const code = (result.errorCode || "").toLowerCase();
+          const message = (result.error || "").toLowerCase();
+          const biometricUnusable =
+            code.includes("not_enrolled") ||
+            code.includes("noneenrolled") ||
+            code.includes("biometrynotenrolled") ||
+            code.includes("not_available") ||
+            code.includes("notavailable") ||
+            message.includes("not enrolled") ||
+            message.includes("no biometric");
+          if (userChosePin || biometricUnusable) {
             if (paymentMode) setPaymentShowPin(true);
             else requestShowPinScreen();
           } else if (systemCanceled) {
@@ -383,6 +411,7 @@ const AppLockScreen: React.FC = () => {
   }, [
     shouldRunBiometric,
     biometricRetriggerKey,
+    isTransactionBiometricEnabled,
     paymentMode,
     paymentShowPin,
     paymentVerificationRequest,
@@ -555,6 +584,23 @@ const AppLockScreen: React.FC = () => {
                   <CustomText style={styles.forgotPinText}>Forgot PIN?</CustomText>
                 </TouchableOpacity>
               )}
+
+              {/* Same slot as "Forgot PIN?" (which is hidden in payment mode): a way back to
+                  the scan after one bad read, so a single failure doesn't force the keypad.
+                  Device-neutral label — Android is a fingerprint, not Face ID. */}
+              {paymentMode &&
+                !requiresPinSetup &&
+                paymentShowPin &&
+                isTransactionBiometricEnabled && (
+                  <TouchableOpacity
+                    style={styles.forgotPinContainer}
+                    onPress={handleRetryBiometric}
+                    activeOpacity={0.7}
+                    disabled={isVerifyingPin}
+                  >
+                    <CustomText style={styles.forgotPinText}>Use Biometric</CustomText>
+                  </TouchableOpacity>
+                )}
             </View>
 
             <View style={styles.keypadContainer}>

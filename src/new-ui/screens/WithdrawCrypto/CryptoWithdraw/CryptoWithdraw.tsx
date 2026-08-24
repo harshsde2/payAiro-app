@@ -36,7 +36,7 @@ import PayButton from "@new-ui/screens/Send/EnterAmount/PayButton";
 import RecipientHeader from "@new-ui/screens/Send/EnterAmount/RecipientHeader";
 import type { FundingSource } from "@new-ui/screens/Send/EnterAmount/enterAmount.types";
 import type { CryptoFundingItem } from "@new-ui/screens/Send/EnterAmount/cryptoFundingTypes";
-import { showError } from "utils/toast";
+import { showError, getApiErrorMessage } from "utils/toast";
 import { useTransactionSubmit } from "hooks/useTransactionSubmit";
 import {
   buildIntentSignature,
@@ -439,35 +439,47 @@ const CryptoWithdraw: React.FC = () => {
           // This sell consumed part of the daily/monthly allowance — refresh the meter.
           queryClient.invalidateQueries({ queryKey: coinmeTransactionLimitsKeys.all });
 
+          // A 2xx body can still carry a rejection (`ok: false`) — its `message` /
+          // `error.message` is the reason to show, not a generic line.
+          const failureMessage = ok
+            ? undefined
+            : getApiErrorMessage(res, "Unable to complete withdrawal. Please try again.");
+
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
             isLoading: false,
             transactionData: res,
             isSuccess: !!ok,
             isError: !ok,
             customTitle: ok ? "Withdrawal Request Submitted" : "Withdrawal unsuccessful",
-            customDescription: ok
-              ? "Your funds will be transferred to your selected debit card in accordance with your bank's processing timeline."
-              : "Unable to complete withdrawal. Please try again.",
+            ...(ok
+              ? {
+                  customDescription:
+                    "Your funds will be transferred to your selected debit card in accordance with your bank's processing timeline.",
+                }
+              : { errorMessage: failureMessage }),
             hideCoinmeCurrencyDetails: true,
           } as never);
 
           if (!ok) {
-            showError("Withdrawal failed", "Unable to complete withdrawal. Please try again.");
+            showError("Withdrawal failed", failureMessage!);
           }
         } catch (err: unknown) {
           // No response at all → we do NOT know whether the withdrawal executed. Never
           // offer a plain retry here; send the user to check Activity instead.
           const unknown = isOutcomeUnknown(err);
+          // The backend answered (e.g. 503 "This banking rail is currently under
+          // maintenance") — show ITS reason. Only a no-response failure gets the
+          // generic unknown-outcome copy.
           const description = unknown
             ? UNKNOWN_OUTCOME_MESSAGE
-            : "Unable to complete withdrawal. Please try again.";
+            : getApiErrorMessage(err, "Unable to complete withdrawal. Please try again.");
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
             isLoading: false,
             transactionData: null,
             isSuccess: false,
             isError: true,
             customTitle: unknown ? "Withdrawal not confirmed" : "Withdrawal unsuccessful",
-            customDescription: description,
+            errorMessage: description,
             outcomeUnknown: unknown,
           } as never);
           showError(

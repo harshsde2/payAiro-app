@@ -19,6 +19,11 @@ export interface AppLockContextType {
   isBiometricEnabled: boolean;
   /** Re-read biometric preference from secure storage (Settings can toggle it). */
   refreshBiometricStatus: () => Promise<void>;
+  /** User has enabled biometric approval for transactions — separate from app unlock, so
+   *  the app can open with a PIN while payments use Face ID / Touch ID / Fingerprint. */
+  isTransactionBiometricEnabled: boolean;
+  /** Re-read the transaction-biometric preference (Settings can toggle it). */
+  refreshTransactionBiometricStatus: () => void;
   /** Show PIN entry (e.g. after biometric failures or when biometric disabled). */
   showPinScreen: ShowPinScreen;
   /** Call when user should see PIN screen (e.g. after max biometric failures). */

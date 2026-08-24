@@ -321,7 +321,7 @@ const NotificationScreen = () => {
         keyExtractor={(item) => String(item.id)}
         renderItem={renderCard}
         renderSectionHeader={renderSectionHeader}
-        ListHeaderComponent={ListHeader}
+        // ListHeaderComponent={ListHeader}
         ListEmptyComponent={renderEmpty}
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}

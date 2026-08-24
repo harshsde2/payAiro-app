@@ -960,6 +960,15 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
             transactionData: data,
             isSuccess: !!ok,
             isError: !ok,
+            // A 2xx body can still be a rejection — carry its reason through.
+            ...(ok
+              ? {}
+              : {
+                  errorMessage: getApiErrorMessage(
+                    data,
+                    'Something went wrong while sending crypto.'
+                  ),
+                }),
           } as never);
 
           // Clear draft after success/failure (avoid reusing stale payloads)
@@ -1212,23 +1221,42 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
           // This trade consumed part of the daily/monthly allowance — refresh the meter.
           queryClient.invalidateQueries({ queryKey: coinmeTransactionLimitsKeys.all });
 
+          // A 2xx body can still carry a rejection (`ok: false`) — surface its reason
+          // instead of captioning a failure as "Order Submitted".
+          const failureMessage = ok
+            ? undefined
+            : getApiErrorMessage(
+                res,
+                `Unable to complete your ${tradeMode === 'buy' ? 'purchase' : 'sale'}. Please try again.`
+              );
+
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
             isLoading: false,
             transactionData: res,
             isSuccess: !!ok,
             isError: !ok,
-            customTitle: tradeMode === 'buy' ? 'Buy Order Submitted' : 'Sell Order Submitted',
+            customTitle: ok
+              ? tradeMode === 'buy'
+                ? 'Buy Order Submitted'
+                : 'Sell Order Submitted'
+              : tradeMode === 'buy'
+                ? 'Buy unsuccessful'
+                : 'Sell unsuccessful',
+            ...(ok ? {} : { errorMessage: failureMessage }),
           } as never);
+
+          if (!ok) {
+            showError('Transaction failed', failureMessage!);
+          }
         } catch (err: unknown) {
           // No response at all → we do NOT know whether the trade executed. Never offer
           // a plain retry here; send the user to check Activity instead.
           const unknown = isOutcomeUnknown(err);
-          const e = err as { response?: { data?: { message?: string } }; message?: string };
+          // The backend answered — show ITS reason (e.g. a 503 maintenance notice).
+          // Only a no-response failure gets the generic unknown-outcome copy.
           const errorMessage = unknown
             ? UNKNOWN_OUTCOME_MESSAGE
-            : e?.response?.data?.message ||
-              e?.message ||
-              'Something went wrong while executing the trade';
+            : getApiErrorMessage(err, 'Something went wrong while executing the trade');
           navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
             isLoading: false,
             transactionData: null,
