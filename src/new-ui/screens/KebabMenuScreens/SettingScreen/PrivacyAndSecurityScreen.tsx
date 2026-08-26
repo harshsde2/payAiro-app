@@ -13,7 +13,12 @@ import {
   authenticateWithBiometricDetailed,
 } from 'services/BiometricService'
 import { showError, showSuccess } from 'utils/toast'
-import { getAppLockTimeoutMs, setAppLockTimeoutMs } from 'storage/mmkv'
+import {
+  getAppLockTimeoutMs,
+  setAppLockTimeoutMs,
+  getTransactionBiometricEnabled,
+  setTransactionBiometricEnabled,
+} from 'storage/mmkv'
 import { APP_LOCK_TIMEOUT_OPTIONS } from 'types/appLock.types'
 import FilterChip from 'new-ui/components/common-components/FilterChip/FilterChip'
 // TODO: enable server sync once backend endpoint is finalized
@@ -40,11 +45,16 @@ const PrivacyAndSecurityScreen = () => {
 
   const [biometricStatus, setBiometricStatus] = useState(false)
   const [isUpdatingBiometric, setIsUpdatingBiometric] = useState(false)
+  const [txnBiometricStatus, setTxnBiometricStatus] = useState(() =>
+    getTransactionBiometricEnabled()
+  )
+  const [isUpdatingTxnBiometric, setIsUpdatingTxnBiometric] = useState(false)
   const [timeoutMs, setTimeoutMs] = useState(() => getAppLockTimeoutMs())
 
   const {
     setNativeModalVisible,
     refreshBiometricStatus: refreshBiometricStatusInContext,
+    refreshTransactionBiometricStatus,
     resetBiometricFailures,
   } = useAppLock()
   // TODO: enable server sync once backend endpoint is finalized
@@ -62,6 +72,109 @@ const PrivacyAndSecurityScreen = () => {
     }
     loadBiometricStatus()
   }, [])
+
+  /**
+   * Shared enable-path for both biometric switches: confirm the device actually has
+   * biometrics enrolled, then make the user prove one before the preference is written.
+   * Resolves false (after surfacing the reason) when the user cancels or fails.
+   */
+  const confirmBiometricEnrollment = async (promptMessage: string): Promise<boolean> => {
+    const availability = await checkBiometricAvailability()
+    if (!availability.available) {
+      const code = (availability?.errorCode || '').toLowerCase()
+      const message = (availability?.error || '').toLowerCase()
+      const isNotEnrolled =
+        code.includes('not_enrolled') ||
+        code.includes('noneenrolled') ||
+        code.includes('biometrynotenrolled') ||
+        message.includes('not enrolled') ||
+        message.includes('no biometric')
+
+      if (isNotEnrolled) {
+        Alert.alert(
+          'No biometrics enrolled',
+          'To use biometrics, first add Face ID / Touch ID / Fingerprint in your device settings.',
+          [
+            { text: 'Not now', style: 'cancel' },
+            {
+              text: 'Open Settings',
+              onPress: () => {
+                // Opens the OS settings page for this app (best effort).
+                Linking.openSettings?.()
+              },
+            },
+          ]
+        )
+      } else {
+        showError(
+          'Biometric unavailable',
+          availability?.error ||
+            'Biometric authentication is not available on this device.'
+        )
+      }
+      return false
+    }
+
+    const authResult = await authenticateWithBiometricDetailed(promptMessage)
+    if (!authResult?.success) {
+      // Security: never enable off the back of a cancelled or failed scan.
+      const code = (authResult?.errorCode || '').toLowerCase()
+      if (code.includes('user_cancel') || code.includes('cancel')) {
+        showError('Cancelled', 'Biometric authentication was cancelled.')
+      } else if (code.includes('lockout')) {
+        showError('Biometrics locked', 'Please try again later or use your PIN.')
+      } else if (code.includes('passcode_not_set')) {
+        showError('Passcode required', 'Set a device passcode to use Face ID / Touch ID.')
+      } else {
+        showError('Authentication failed', authResult?.error || 'Biometric authentication failed.')
+      }
+      return false
+    }
+
+    return true
+  }
+
+  /**
+   * Transactions only. Deliberately independent of the app-lock switch above: a user may
+   * want to open the app with a PIN but approve payments with a face/fingerprint, or the
+   * reverse. Turning this OFF is not gated behind a confirmation — it makes payments
+   * stricter (PIN every time), unlike disabling the app lock.
+   */
+  const handleTxnBiometricToggle = async () => {
+    if (isUpdatingTxnBiometric) return
+    setIsUpdatingTxnBiometric(true)
+
+    if (txnBiometricStatus) {
+      setTransactionBiometricEnabled(false)
+      setTxnBiometricStatus(false)
+      refreshTransactionBiometricStatus()
+      showSuccess('PIN required', 'Transactions will now ask for your PIN.')
+      setIsUpdatingTxnBiometric(false)
+      return
+    }
+
+    // Mark the native biometric prompt as a native modal so AppState lock logic
+    // doesn't accidentally lock/unlock during the system UI transition.
+    setNativeModalVisible(true)
+    try {
+      const verified = await confirmBiometricEnrollment(
+        'Enable biometric approval for transactions'
+      )
+      if (!verified) return
+
+      setTransactionBiometricEnabled(true)
+      setTxnBiometricStatus(true)
+      refreshTransactionBiometricStatus()
+      showSuccess(
+        'Biometric enabled for transactions',
+        'Approve payments with biometrics instead of your PIN.'
+      )
+    } finally {
+      // Delay reset to handle multiple AppState transitions during system UI dismissal.
+      setTimeout(() => setNativeModalVisible(false), 800)
+      setIsUpdatingTxnBiometric(false)
+    }
+  }
 
   const handleBiometricToggle = async () => {
     if (isUpdatingBiometric) return
@@ -107,59 +220,10 @@ const PrivacyAndSecurityScreen = () => {
         return
       }
 
-      const availability = await checkBiometricAvailability()
-      if (!availability.available) {
-        const code = (availability?.errorCode || '').toLowerCase()
-        const message = (availability?.error || '').toLowerCase()
-        const isNotEnrolled =
-          code.includes('not_enrolled') ||
-          code.includes('noneenrolled') ||
-          code.includes('biometrynotenrolled') ||
-          message.includes('not enrolled') ||
-          message.includes('no biometric')
-
-        if (isNotEnrolled) {
-          Alert.alert(
-            'No biometrics enrolled',
-            'To enable biometric unlock, first add Face ID / Touch ID / Fingerprint in your device settings.',
-            [
-              { text: 'Not now', style: 'cancel' },
-              {
-                text: 'Open Settings',
-                onPress: () => {
-                  // Opens the OS settings page for this app (best effort).
-                  Linking.openSettings?.()
-                },
-              },
-            ]
-          )
-        } else {
-          showError(
-            'Biometric unavailable',
-            availability?.error ||
-              'Biometric authentication is not available on this device.'
-          )
-        }
-        return
-      }
-
-      const authResult = await authenticateWithBiometricDetailed(
+      const verified = await confirmBiometricEnrollment(
         'Enable biometric unlock for PayAiro'
       )
-      if (!authResult?.success) {
-        // Security: do not enable biometric if user cancels/fails.
-        const code = (authResult?.errorCode || '').toLowerCase()
-        if (code.includes('user_cancel') || code.includes('cancel')) {
-          showError('Cancelled', 'Biometric authentication was cancelled.')
-        } else if (code.includes('lockout')) {
-          showError('Biometrics locked', 'Please try again later or use your PIN.')
-        } else if (code.includes('passcode_not_set')) {
-          showError('Passcode required', 'Set a device passcode to use Face ID / Touch ID.')
-        } else {
-          showError('Authentication failed', authResult?.error || 'Biometric authentication failed.')
-        }
-        return
-      }
+      if (!verified) return
 
       await setBiometric(true)
       setBiometricStatus(true)
@@ -207,7 +271,34 @@ const PrivacyAndSecurityScreen = () => {
           value={biometricStatus}
           onValueChange={handleBiometricToggle}
           disabled={isUpdatingBiometric}
-          trackColor={{ false: theme.colors.greyLight, true: theme.colors.primary }}
+          // greyLight (#F5F5F5) is all but invisible against the white card — the off
+          // state read as a faded/disabled control. greyLight2 gives the track a visible
+          // edge, and ios_backgroundColor must match it or iOS paints its own pale
+          // default behind the track while the toggle animates.
+          trackColor={{ false: theme.colors.greyLight2, true: theme.colors.primary }}
+          ios_backgroundColor={theme.colors.greyLight2}
+          thumbColor={theme.colors.white}
+        />
+      </View>
+
+      <View style={styles.spacedCard}>
+        <View style={styles.cardLeft}>
+          <AppIcon.Privacy />
+          <View style={styles.cardTextWrapper}>
+            <CustomText variant="h5" size={16} fontWeight="semiBold">
+              Biometric for Transactions
+            </CustomText>
+            <CustomText variant="caption" size={12} fontWeight="light" color={theme.colors.greyDark}>
+              Approve payments with Face ID / Touch ID / Fingerprint instead of your PIN
+            </CustomText>
+          </View>
+        </View>
+        <Switch
+          value={txnBiometricStatus}
+          onValueChange={handleTxnBiometricToggle}
+          disabled={isUpdatingTxnBiometric}
+          trackColor={{ false: theme.colors.greyLight2, true: theme.colors.primary }}
+          ios_backgroundColor={theme.colors.greyLight2}
           thumbColor={theme.colors.white}
         />
       </View>
@@ -276,6 +367,17 @@ const privacyAndSecurityStyles = (theme: ReturnType<typeof useTheme>['theme']) =
       borderWidth: 1,
       borderRadius: theme.radius.lg,
       padding: theme.spacing.md,
+    },
+    // Same box as `card`, spaced from the one above it.
+    spacedCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      borderColor: theme.colors.greyLight,
+      borderWidth: 1,
+      borderRadius: theme.radius.lg,
+      padding: theme.spacing.md,
+      marginTop: theme.spacing.md,
     },
     timeoutCard: {
       borderColor: theme.colors.greyLight,

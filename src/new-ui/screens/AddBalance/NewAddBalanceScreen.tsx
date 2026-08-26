@@ -38,7 +38,15 @@ import {
 } from 'query/hooks/useCrypto';
 import { fetchWebSessionId } from 'services/coinmeRiskLifecycle';
 import { useCoinmeAccountId } from 'hooks/useCoinmeAccountId';
-import { showError, showInfo } from 'utils/toast';
+import { showError, showInfo, getApiErrorMessage } from 'utils/toast';
+import { useTransactionSubmit } from 'hooks/useTransactionSubmit';
+import {
+  buildIntentSignature,
+  isOutcomeUnknown,
+  UNKNOWN_OUTCOME_MESSAGE,
+} from 'services/transactionGuard';
+import { confirmDuplicateTransaction } from 'utils/confirmDuplicateTransaction';
+import { afterModalTransition } from 'utils/afterModalTransition';
 import { formatSpendableBalance } from 'utils/formatMoney';
 import CryptoReceiptModal from '@new-ui/screens/Send/EnterAmount/CryptoReceiptModal';
 import CustomText from '@new-ui/components/common-components/CustomText';
@@ -73,6 +81,9 @@ const NewAddBalanceScreen: React.FC = () => {
   const { requestPaymentVerification } = useAppLock();
   const { requireEmailVerified } = useEmailVerificationGuard();
   const tradeExecute = useCoinmeTradeExecute();
+  // One POST per transaction intent, regardless of taps, retries or re-renders.
+  const { submit: submitTransaction, isSubmitting: isSubmittingTransaction } =
+    useTransactionSubmit();
 
   const coinmeAccountId = useCoinmeAccountId();
 
@@ -204,77 +215,118 @@ const NewAddBalanceScreen: React.FC = () => {
   const handleTradeExecute = useCallback(async () => {
     if (!cryptoAsset) return;
 
-    navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
-      isLoading: true,
-      transactionData: null,
-      isSuccess: false,
-      isError: false,
-      customTitle: 'Processing',
-      customDescription: 'Submitting your payment…',
-    } as never);
+    const fiatCurrencyCode = cryptoAsset.fiatCurrency || 'USD';
+    const paymentMethodId =
+      selectedPaymentMethod?.payment_method_id ?? COINME_DEFAULTS.paymentMethodId;
 
-    try {
-      if (!coinmeAccountId) {
-        throw new Error(
-          'Your Coinme account is not ready yet. Please complete onboarding and try again.'
-        );
-      }
+    // NOTE: webSessionId is deliberately NOT part of the signature — it is minted fresh
+    // per attempt, so including it would make every retry look like a new intent.
+    const signature = buildIntentSignature([
+      'trade',
+      'buy',
+      cryptoAsset.chain,
+      cryptoAsset.asset,
+      String(parsedAmount),
+      fiatCurrencyCode,
+      paymentMethodId,
+    ]);
 
-      const webSessionId = await fetchWebSessionId({
-        accountId: coinmeAccountId,
-        riskFlow: 'cardtransaction',
-      });
+    await submitTransaction(
+      signature,
+      async (idempotencyKey) => {
+        navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+          isLoading: true,
+          transactionData: null,
+          isSuccess: false,
+          isError: false,
+          customTitle: 'Processing',
+          customDescription: 'Submitting your payment…',
+        } as never);
 
-      const payload: CoinmeTradeExecutePayload = {
-        tradeType: 'buy',
-        chain: cryptoAsset.chain,
-        cryptoCurrencyCode: cryptoAsset.asset,
-        fiatCurrencyCode: cryptoAsset.fiatCurrency || 'USD',
-        amountValue: String(parsedAmount),
-        amountCurrencyCode: cryptoAsset.fiatCurrency || 'USD',
-        paymentMethodId:
-          selectedPaymentMethod?.payment_method_id ?? COINME_DEFAULTS.paymentMethodId,
-        sourceWalletAddress:
-          cryptoAsset.sourceWalletAddress || COINME_DEFAULTS.sourceWalletAddress,
-        webSessionId,
-      };
+        try {
+          if (!coinmeAccountId) {
+            throw new Error(
+              'Your Coinme account is not ready yet. Please complete onboarding and try again.'
+            );
+          }
 
-      const res = await tradeExecute.mutateAsync(payload);
-      const ok = res?.ok ?? res?.status ?? true;
+          const webSessionId = await fetchWebSessionId({
+            accountId: coinmeAccountId,
+            riskFlow: 'cardtransaction',
+          });
 
-      // This buy consumed part of the daily/monthly allowance — without this the
-      // meter would keep showing the pre-purchase "remaining" for up to staleTime.
-      queryClient.invalidateQueries({ queryKey: coinmeTransactionLimitsKeys.all });
+          const payload: CoinmeTradeExecutePayload = {
+            tradeType: 'buy',
+            chain: cryptoAsset.chain,
+            cryptoCurrencyCode: cryptoAsset.asset,
+            fiatCurrencyCode,
+            amountValue: String(parsedAmount),
+            amountCurrencyCode: fiatCurrencyCode,
+            paymentMethodId,
+            sourceWalletAddress:
+              cryptoAsset.sourceWalletAddress || COINME_DEFAULTS.sourceWalletAddress,
+            webSessionId,
+          };
 
-      navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
-        isLoading: false,
-        transactionData: res,
-        isSuccess: !!ok,
-        isError: !ok,
-        customTitle: 'Payment submitted',
-      } as never);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      console.log('coinme trade error =>', e?.message || err);
-      const errorMessage =
-        e?.response?.data?.message ||
-        e?.message ||
-        'Something went wrong while executing the trade';
-      navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
-        isLoading: false,
-        transactionData: null,
-        isSuccess: false,
-        isError: true,
-        errorMessage,
-      } as never);
-      showError('Purchase failed', errorMessage);
-    }
+          const res = await tradeExecute.mutateAsync({ ...payload, idempotencyKey });
+          const ok = res?.ok ?? res?.status ?? true;
+
+          // This buy consumed part of the daily/monthly allowance — without this the
+          // meter would keep showing the pre-purchase "remaining" for up to staleTime.
+          queryClient.invalidateQueries({ queryKey: coinmeTransactionLimitsKeys.all });
+
+          // A 2xx body can still carry a rejection (`ok: false`) — surface its reason
+          // instead of captioning a failure as "Payment submitted".
+          const failureMessage = ok
+            ? undefined
+            : getApiErrorMessage(res, 'Unable to complete your purchase. Please try again.');
+
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+            isLoading: false,
+            transactionData: res,
+            isSuccess: !!ok,
+            isError: !ok,
+            customTitle: ok ? 'Payment submitted' : 'Payment unsuccessful',
+            ...(ok ? {} : { errorMessage: failureMessage }),
+          } as never);
+
+          if (!ok) {
+            showError('Purchase failed', failureMessage!);
+          }
+        } catch (err: unknown) {
+          // No response at all → we do NOT know whether the buy went through. Never
+          // offer a plain retry here; send the user to check Activity instead.
+          const unknown = isOutcomeUnknown(err);
+          // The backend answered — show ITS reason (e.g. a 503 maintenance notice).
+          // Only a no-response failure gets the generic unknown-outcome copy.
+          const errorMessage = unknown
+            ? UNKNOWN_OUTCOME_MESSAGE
+            : getApiErrorMessage(err, 'Something went wrong while executing the trade');
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+            isLoading: false,
+            transactionData: null,
+            isSuccess: false,
+            isError: true,
+            errorMessage,
+            outcomeUnknown: unknown,
+          } as never);
+          showError(unknown ? "Couldn't confirm" : 'Purchase failed', errorMessage);
+          // Rethrow so the guard records the outcome and keeps the intent locked.
+          throw err;
+        }
+      },
+      {
+        onDuplicate: (retry) => confirmDuplicateTransaction(retry),
+        onUnknownOutcome: () => showError("Couldn't confirm", UNKNOWN_OUTCOME_MESSAGE),
+      },
+    );
   }, [
     cryptoAsset,
     coinmeAccountId,
     navigation,
     parsedAmount,
     selectedPaymentMethod?.payment_method_id,
+    submitTransaction,
     tradeExecute,
   ]);
 
@@ -522,7 +574,10 @@ const NewAddBalanceScreen: React.FC = () => {
           </CustomText>
         ) : null}
 
-        <Button disabled={!canProceed} onPress={handleProceed}>
+        <Button
+          disabled={!canProceed || isSubmittingTransaction || tradeExecute.isPending}
+          onPress={handleProceed}
+        >
           {selectedPaymentMode === 'cash' ? 'Find a Location' : 'Proceed'}
         </Button>
       </View>
@@ -532,8 +587,14 @@ const NewAddBalanceScreen: React.FC = () => {
         onClose={() => setShowReceiptModal(false)}
         onPayNow={() => {
           setShowReceiptModal(false);
-          requestPaymentVerification(handleAfterPinVerified);
+          // Wait for this modal's dismissal to finish before presenting the lock
+          // screen's modal — dismiss-then-present in one tick leaves a stuck black
+          // screen on iOS.
+          afterModalTransition(() =>
+            requestPaymentVerification(handleAfterPinVerified),
+          );
         }}
+        isSubmitting={isSubmittingTransaction}
         variant="fiatOnly"
         usdAmount={parsedAmount}
         expectedFee={expectedFee}

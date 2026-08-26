@@ -20,7 +20,12 @@ export const queryClient = new QueryClient({
       refetchOnReconnect: true,
     },
     mutations: {
-      retry: queryRetry.RETRY_COUNT,
+      // NEVER auto-retry mutations. Money movement is not idempotent: if the first
+      // POST reached the backend and only the response was lost (very common on a
+      // timeout), an automatic retry books a SECOND transaction. The backend does
+      // not dedupe, so this default must stay 0 — a mutation that is genuinely safe
+      // to repeat can opt back in on its own hook.
+      retry: 0,
       retryDelay: queryRetry.RETRY_DELAY,
     },
   },

@@ -56,12 +56,6 @@ import { showError, showSuccess } from "utils/toast";
 
 const POLL_ERROR_AFTER_MS = 120_000;
 
-function truncateId(id: string, head = 10, tail = 5): string {
-  const t = id.trim();
-  if (t.length <= head + tail + 3) return t;
-  return `${t.slice(0, head)}...${t.slice(-tail)}`;
-}
-
 function formatUsd(value: string | null | undefined): string | null {
   if (!value) return null;
   const n = Number.parseFloat(value);
@@ -188,10 +182,16 @@ const CashOffRampTransactionDetailsBody: React.FC<Props> = ({
     Linking.openURL(CASH_OFFRAMP_SUPPORT_URL).catch(() => {});
   }, []);
 
+  // Identifiers (transaction id / hash) are shown IN FULL and wrap — they are copied and
+  // quoted to support, so clipping the tail would hide exactly the distinguishing part.
   const renderCopyValue = (value: string, label: string) => (
     <View style={styles.copyRow}>
-      <CustomText variant="body" color={theme.colors.text} style={{ textAlign: "right" }}>
-        {truncateId(value)}
+      <CustomText
+        variant="body"
+        color={theme.colors.text}
+        style={{ textAlign: "right", flexShrink: 1 }}
+      >
+        {value}
       </CustomText>
       <TouchableOpacity onPress={() => onCopy(value, label)}>
         <CustomText variant="body" color={theme.colors.text} style={styles.link}>

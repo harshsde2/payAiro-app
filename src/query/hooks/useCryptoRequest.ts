@@ -135,12 +135,20 @@ export const useCryptoRequestById = (
 // ---------------------------------------------------------------------------
 export const usePayCryptoRequest = () => {
   const queryClient = useQueryClient();
-  return useMutation<IPayCryptoRequestEnvelope, any, number | string>({
-    mutationFn: async (requestId) =>
+  return useMutation<
+    IPayCryptoRequestEnvelope,
+    any,
+    { requestId: number | string; idempotencyKey: string }
+  >({
+    // Moves real money — never auto-retry (see queryClient.ts).
+    retry: 0,
+    mutationFn: async ({ requestId, idempotencyKey }) =>
       throwIfApiError(
         await userApiClient.post<IPayCryptoRequestEnvelope>(
           USER_AUTH.CRYPTO_REQUEST_PAY(requestId),
-          {}
+          {},
+          false,
+          { "Idempotency-Key": idempotencyKey }
         )
       ),
     onSuccess: () => invalidateRequestQueries(queryClient),

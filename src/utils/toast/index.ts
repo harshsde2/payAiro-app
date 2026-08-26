@@ -179,10 +179,15 @@ export const getApiErrorMessage = (error: unknown, fallback: string): string => 
   const candidate =
     fromErrorData ||
     (typeof data?.message === "string" ? data.message : undefined) ||
+    // FastAPI integration errors: { ok: false, message, error: { code, message } }.
+    // Some rails only populate the nested one.
+    (typeof data?.error?.message === "string" ? data.error.message : undefined) ||
     (typeof data?.toast_message === "string" ? data.toast_message : undefined) ||
     (typeof data?.errorResponse?.message === "string"
       ? data.errorResponse.message
       : undefined) ||
+    // FastAPI's own error envelope (validation / HTTPException).
+    (typeof data?.detail === "string" ? data.detail : undefined) ||
     rawErrMessage;
 
   const cleaned = typeof candidate === "string" ? candidate.trim() : "";

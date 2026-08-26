@@ -86,7 +86,8 @@ export const cashOffRampTransactionDetailsStyles = (theme: ITheme) =>
     },
     label: { flex: 1, marginRight: theme.spacing.sm },
     valueCol: { flex: 1.2, alignItems: "flex-end" },
-    copyRow: { flexDirection: "row", alignItems: "center", gap: theme.spacing.sm },
+    // flexShrink lets a full-length id/hash wrap inside the value column.
+    copyRow: { flexDirection: "row", alignItems: "center", gap: theme.spacing.sm, flexShrink: 1 },
     link: { textDecorationLine: "underline" },
     fraudLink: {
       textAlign: "center",

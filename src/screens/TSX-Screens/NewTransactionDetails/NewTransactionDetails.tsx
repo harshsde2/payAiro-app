@@ -16,6 +16,7 @@ import RNFS from "react-native-fs";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import moment from "moment";
 import { formatDetailDate, formatDetailTime } from "utils/dateUtils";
+import { shortenWalletAddress } from "utils/formatIdentifier";
 import Svg, { SvgUri, Circle, Path } from "react-native-svg";
 import { useTheme, Theme } from "styles";
 import CustomText from "tsx-components/CustomText";
@@ -236,8 +237,7 @@ const NewTransactionDetails: FC = () => {
   // External-wallet receive: the sender is an off-platform wallet, so there's no known
   // display party (username/identifier) — fall back to the on-chain from_address instead
   // of "Unknown" in the header subtitle and the "Received From" receipt row.
-  const shortenAddress = (addr?: string | null): string =>
-    addr && addr.length > 16 ? `${addr.substring(0, 10)}...${addr.slice(-4)}` : addr || "";
+  const shortenAddress = (addr?: string | null): string => shortenWalletAddress(addr);
   const hasKnownParty = !!displayUsername && displayUsername !== "Unknown";
   const receivedFromDisplay = hasKnownParty
     ? displayUsername
@@ -789,18 +789,26 @@ const NewTransactionDetails: FC = () => {
               </CustomText>
               <TouchableOpacity
                 onPress={handleCopyTransactionId}
-                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                  gap: 8,
+                  // Shrink (and wrap) instead of clipping: the ID is shown in full, and
+                  // the digits that tell two transactions apart are at the END.
+                  flexShrink: 1,
+                }}
               >
                 <CustomText
                   variant={SLIP_VALUE_VARIANT}
                   fontWeight="semiBold"
                   color={theme.colors.text.primary}
-                  numberOfLines={1}
-                  style={[slipStyles.slipValueText, { maxWidth: 150 }]}
+                  style={[
+                    slipStyles.slipValueText,
+                    { flexShrink: 1, textAlign: "right" },
+                  ]}
                 >
-                  {transactionData.transaction_id.length > 16
-                    ? `${transactionData.transaction_id.substring(0, 16)}...`
-                    : transactionData.transaction_id}
+                  {transactionData.transaction_id}
                 </CustomText>
                 <SvgIcons.CopyOutlineBlack
                   width={14}
@@ -1268,12 +1276,12 @@ const NewTransactionDetails: FC = () => {
                             numberOfLines={1}
                             style={[
                               slipStyles.slipValueText,
-                              { maxWidth: 150 },
+                              // Already elided in the middle — a maxWidth here would
+                              // tail-clip it again and eat the last characters.
+                              { flexShrink: 1, textAlign: "right" },
                             ]}
                           >
-                            {fromAddress.length > 16
-                              ? `${fromAddress.substring(0, 16)}...`
-                              : fromAddress}
+                            {shortenWalletAddress(fromAddress)}
                           </CustomText>
                           <SvgIcons.CopyOutlineBlack
                             width={14}
@@ -1308,9 +1316,7 @@ const NewTransactionDetails: FC = () => {
                             numberOfLines={1}
                             style={{ maxWidth: 150 }}
                           >
-                            {toAddress.length > 16
-                              ? `${toAddress.substring(0, 16)}...`
-                              : toAddress}
+                            {shortenWalletAddress(toAddress)}
                           </CustomText>
                           <SvgIcons.CopyOutlineBlack
                             width={14}
@@ -1469,12 +1475,12 @@ const NewTransactionDetails: FC = () => {
                             numberOfLines={1}
                             style={[
                               slipStyles.slipValueText,
-                              { maxWidth: 150 },
+                              // Already elided in the middle — a maxWidth here would
+                              // tail-clip it again and eat the last characters.
+                              { flexShrink: 1, textAlign: "right" },
                             ]}
                           >
-                            {fromAddress.length > 16
-                              ? `${fromAddress.substring(0, 16)}...`
-                              : fromAddress}
+                            {shortenWalletAddress(fromAddress)}
                           </CustomText>
                           <SvgIcons.CopyOutlineBlack
                             width={14}
@@ -1510,12 +1516,12 @@ const NewTransactionDetails: FC = () => {
                             numberOfLines={1}
                             style={[
                               slipStyles.slipValueText,
-                              { maxWidth: 150 },
+                              // Already elided in the middle — a maxWidth here would
+                              // tail-clip it again and eat the last characters.
+                              { flexShrink: 1, textAlign: "right" },
                             ]}
                           >
-                            {toAddress.length > 16
-                              ? `${toAddress.substring(0, 16)}...`
-                              : toAddress}
+                            {shortenWalletAddress(toAddress)}
                           </CustomText>
                           <SvgIcons.CopyOutlineBlack
                             width={14}
@@ -1541,22 +1547,21 @@ const NewTransactionDetails: FC = () => {
                           style={{
                             flexDirection: "row",
                             alignItems: "center",
+                            justifyContent: "flex-end",
                             gap: 8,
+                            flexShrink: 1,
                           }}
                         >
                           <CustomText
                             variant={SLIP_VALUE_VARIANT}
                             fontWeight="semiBold"
                             color={theme.colors.text.primary}
-                            numberOfLines={1}
                             style={[
                               slipStyles.slipValueText,
-                              { maxWidth: 150 },
+                              { flexShrink: 1, textAlign: "right" },
                             ]}
                           >
-                            {txHash.length > 16
-                              ? `${txHash.substring(0, 16)}...`
-                              : txHash}
+                            {txHash}
                           </CustomText>
                           <SvgIcons.CopyOutlineBlack
                             width={14}
@@ -1652,9 +1657,12 @@ const NewTransactionDetails: FC = () => {
                           fontWeight="semiBold"
                           color={theme.colors.text.primary}
                           numberOfLines={1}
-                          style={[slipStyles.slipValueText, { maxWidth: 150 }]}
+                          style={[
+                            slipStyles.slipValueText,
+                            { flexShrink: 1, textAlign: "right" },
+                          ]}
                         >
-                          {fromAddress.length > 16 ? `${fromAddress.substring(0, 16)}...` : fromAddress}
+                          {shortenWalletAddress(fromAddress)}
                         </CustomText>
                         <SvgIcons.CopyOutlineBlack
                           width={14}
@@ -1690,12 +1698,12 @@ const NewTransactionDetails: FC = () => {
                             numberOfLines={1}
                             style={[
                               slipStyles.slipValueText,
-                              { maxWidth: 150 },
+                              // Already elided in the middle — a maxWidth here would
+                              // tail-clip it again and eat the last characters.
+                              { flexShrink: 1, textAlign: "right" },
                             ]}
                           >
-                            {toAddress.length > 16
-                              ? `${toAddress.substring(0, 16)}...`
-                              : toAddress}
+                            {shortenWalletAddress(toAddress)}
                           </CustomText>
                           <SvgIcons.CopyOutlineBlack
                             width={14}

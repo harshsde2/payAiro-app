@@ -47,6 +47,14 @@ import {
   type CashRampPurchaseReceipt,
 } from "./useCashRampBarcodeStatus";
 import { showError } from "utils/toast";
+import {
+  begin,
+  buildIntentSignature,
+  isOutcomeUnknown,
+  settle,
+  UNKNOWN_OUTCOME_MESSAGE,
+  type SettleOutcome,
+} from "services/transactionGuard";
 import { resolveBarcodeExpiryAt } from "./useCountdownTo";
 
 const ILLUSTRATIVE_PROCESSING_FEE_USD = 3.95;
@@ -254,15 +262,41 @@ const CashRampBarcodeScreen: React.FC = () => {
         return;
       }
 
+      const body = {
+        amountValue: String(amount),
+        amountCurrencyCode: fiat.toUpperCase(),
+        locationReference: locationRef,
+        sourceWalletAddress,
+        debitCurrencyCode: cryptoCode,
+        chain: chainParam,
+      };
+
+      // This effect re-runs on ANY dep change (amount, currency, route params), and the
+      // `cancelled` flag below only suppresses state updates — the request still goes
+      // out. Without this claim a re-render would execute a second real off-ramp.
+      const signature = buildIntentSignature([
+        "cash-offramp",
+        body.chain,
+        body.debitCurrencyCode,
+        body.amountValue,
+        body.amountCurrencyCode,
+        body.locationReference,
+        body.sourceWalletAddress,
+      ]);
+      const claim = begin(signature);
+      if (!claim.ok) {
+        // Already running or already executed — never fire a second one.
+        if (!cancelled && claim.reason !== "in-flight") setSellSessionStatus("error");
+        return;
+      }
+
+      let outcome: SettleOutcome = "rejected";
       try {
         const res = await postCashOfframp({
-          amountValue: String(amount),
-          amountCurrencyCode: fiat.toUpperCase(),
-          locationReference: locationRef,
-          sourceWalletAddress,
-          debitCurrencyCode: cryptoCode,
-          chain: chainParam,
+          ...body,
+          idempotencyKey: claim.idempotencyKey,
         });
+        outcome = "succeeded";
         if (cancelled) return;
         if (res?.ok === false) {
           showError("Something went wrong", res?.message || ERR_CASH_OFF_RAMP);
@@ -272,13 +306,18 @@ const CashRampBarcodeScreen: React.FC = () => {
         setSellResponse(res);
         setSellSessionStatus("success");
       } catch (e: unknown) {
+        const unknown = isOutcomeUnknown(e);
+        outcome = unknown ? "unknown" : "rejected";
         if (cancelled) return;
-        const msg =
-          typeof e === "object" && e !== null && "message" in e
+        const msg = unknown
+          ? UNKNOWN_OUTCOME_MESSAGE
+          : typeof e === "object" && e !== null && "message" in e
             ? String((e as { message?: string }).message)
             : "Network error";
-        showError("Something went wrong", msg);
+        showError(unknown ? "Couldn't confirm" : "Something went wrong", msg);
         setSellSessionStatus("error");
+      } finally {
+        settle(signature, outcome);
       }
     };
 
@@ -317,18 +356,40 @@ const CashRampBarcodeScreen: React.FC = () => {
       return;
     }
 
+    const body = {
+      debitCurrencyCode: fiat.toUpperCase(),
+      creditCurrencyCode: cryptoCode,
+      amountValue: String(amount),
+      amountCurrencyCode: fiat.toUpperCase(),
+      locationReference: locationRef,
+    };
+
+    // Each order template is a real cash-buy order. The "loading" phase only appears
+    // after CASH_BUY_BARCODE_LOAD_SLOW_MS, so nothing stops rapid taps inside that
+    // window from minting several orders — `loadCancelledRef` is a cancel flag, not a
+    // lock. Claim the intent instead.
+    const signature = buildIntentSignature([
+      "order-template",
+      body.creditCurrencyCode,
+      body.debitCurrencyCode,
+      body.amountValue,
+      body.amountCurrencyCode,
+      body.locationReference,
+    ]);
+    const claim = begin(signature);
+    if (!claim.ok) return;
+
     const slowTimer = setTimeout(() => {
       if (!loadCancelledRef.current) setBuyPhase("loadingBarcode");
     }, CASH_BUY_BARCODE_LOAD_SLOW_MS);
 
+    let outcome: SettleOutcome = "rejected";
     try {
       const res = await postOrderTemplate({
-        debitCurrencyCode: fiat.toUpperCase(),
-        creditCurrencyCode: cryptoCode,
-        amountValue: String(amount),
-        amountCurrencyCode: fiat.toUpperCase(),
-        locationReference: locationRef,
+        ...body,
+        idempotencyKey: claim.idempotencyKey,
       });
+      outcome = "succeeded";
       clearTimeout(slowTimer);
       if (loadCancelledRef.current) return;
 
@@ -349,14 +410,19 @@ const CashRampBarcodeScreen: React.FC = () => {
       setQuoteRestartKey((k) => k + 1);
       setBuyPhase("barcodeVisible");
     } catch (e: unknown) {
+      const unknown = isOutcomeUnknown(e);
+      outcome = unknown ? "unknown" : "rejected";
       clearTimeout(slowTimer);
       if (loadCancelledRef.current) return;
-      const msg =
-        typeof e === "object" && e !== null && "message" in e
+      const msg = unknown
+        ? UNKNOWN_OUTCOME_MESSAGE
+        : typeof e === "object" && e !== null && "message" in e
           ? String((e as { message?: string }).message)
           : "Network error";
       navigateLoadError(msg);
       setBuyPhase("instruction");
+    } finally {
+      settle(signature, outcome);
     }
   }, [
     amount,

@@ -71,6 +71,9 @@ export const STORAGE_KEYS = {
   APP_LOCK_LAST_ACTIVE_TIME: "app.lock.last_active_time",
   APP_LOCK_TIMEOUT: "app.lock.timeout",
   APP_LOCK_PIN_SETUP_PROMPT_AT: "app.lock.pin_setup_prompt_at",
+  /** Boolean: approve transactions with biometrics instead of the PIN. Separate from the
+   *  app-unlock biometric preference (which lives in EncryptedStorage under "biometric"). */
+  APP_LOCK_TXN_BIOMETRIC: "app.lock.txn_biometric",
   KYC_CONGRATULATIONS_SHOWN: "kyc_congratulations_shown",
   SMS_HASH: "sms_hash",
   /** Debug: last time a push notification was received (ISO string). For TestFlight debugging. */
@@ -145,4 +148,20 @@ export function getAppLockTimeoutMs(): number {
 
 export function setAppLockTimeoutMs(ms: number): void {
   setNumber(STORAGE_KEYS.APP_LOCK_TIMEOUT, ms);
+}
+
+/**
+ * Whether transactions are approved with biometrics instead of the PIN — the
+ * "Biometric for Transactions" switch in Privacy & Security. Independent of the
+ * app-unlock biometric preference, and off unless the user explicitly enabled it.
+ *
+ * Kept in MMKV (not EncryptedStorage) because the lock screen reads it synchronously
+ * while deciding whether to prompt; `clearAll()` on logout resets it per user.
+ */
+export function getTransactionBiometricEnabled(): boolean {
+  return storage.getBoolean(STORAGE_KEYS.APP_LOCK_TXN_BIOMETRIC) === true;
+}
+
+export function setTransactionBiometricEnabled(enabled: boolean): void {
+  storage.set(STORAGE_KEYS.APP_LOCK_TXN_BIOMETRIC, enabled);
 }
