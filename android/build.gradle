@@ -12,6 +12,11 @@ buildscript {
         kotlinVersion = "2.3.21"
         // AndroidX Browser version for react-native-inappbrowser-reborn (compatible with compileSdk 36)
         androidXBrowser = "1.9.0"
+        // react-native-otp-verify resolves play-services-auth as "+" (latest) unless this
+        // is set, which makes builds non-reproducible — it broke the release build when
+        // Google removed Auth.GOOGLE_SIGN_IN_API in 21.3.0. Pinned to match the version
+        // @react-native-firebase/app already puts on the app classpath.
+        googlePlayServicesVersion = "21.4.0"
     }
     repositories {
         google()

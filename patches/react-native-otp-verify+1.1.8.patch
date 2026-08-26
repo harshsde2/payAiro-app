@@ -1,0 +1,36 @@
+diff --git a/node_modules/react-native-otp-verify/android/src/main/java/com/faizal/OtpVerify/OtpVerifyModule.java b/node_modules/react-native-otp-verify/android/src/main/java/com/faizal/OtpVerify/OtpVerifyModule.java
+index 16d7779..c5e9d65 100644
+--- a/node_modules/react-native-otp-verify/android/src/main/java/com/faizal/OtpVerify/OtpVerifyModule.java
++++ b/node_modules/react-native-otp-verify/android/src/main/java/com/faizal/OtpVerify/OtpVerifyModule.java
+@@ -14,13 +14,11 @@ import com.facebook.react.bridge.LifecycleEventListener;
+ 
+ import com.facebook.react.bridge.ActivityEventListener;
+ import com.facebook.react.bridge.WritableArray;
+-import com.google.android.gms.auth.api.Auth;
+ import com.google.android.gms.auth.api.identity.GetPhoneNumberHintIntentRequest;
+ import com.google.android.gms.auth.api.identity.Identity;
+ import com.google.android.gms.auth.api.phone.SmsRetriever;
+ import com.google.android.gms.auth.api.phone.SmsRetrieverClient;
+ import com.google.android.gms.common.api.ApiException;
+-import com.google.android.gms.common.api.GoogleApiClient;
+ import com.google.android.gms.tasks.OnCanceledListener;
+ import com.google.android.gms.tasks.OnCompleteListener;
+ import com.google.android.gms.tasks.OnFailureListener;
+@@ -40,7 +38,6 @@ public class OtpVerifyModule extends ReactContextBaseJavaModule implements Lifec
+     public static final String NAME = "OtpVerify";
+     private static final String TAG = OtpVerifyModule.class.getSimpleName();
+     private static final int RESOLVE_HINT = 10001;
+-    private GoogleApiClient apiClient;
+     private Promise requestHintCallback;
+     private final ReactApplicationContext reactContext;
+     private BroadcastReceiver mReceiver;
+@@ -53,9 +50,6 @@ public class OtpVerifyModule extends ReactContextBaseJavaModule implements Lifec
+                 getReactApplicationContext().addLifecycleEventListener(this);
+         registerReceiverIfNecessary(mReceiver);
+         reactContext.addActivityEventListener(this);
+-        apiClient = new GoogleApiClient.Builder(reactContext)
+-                .addApi(Auth.GOOGLE_SIGN_IN_API)
+-                .build();
+     }
+ 
+     @Override
