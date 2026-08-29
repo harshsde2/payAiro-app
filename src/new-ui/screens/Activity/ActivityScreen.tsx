@@ -190,12 +190,12 @@ const ActivityScreen = () => {
           <AppIcon.FilterIcon
             width={16}
             height={16}
-            color={hasActiveFilters ? theme.colors.white : undefined}
+            color={hasActiveFilters ? theme.colors.onPrimary : theme.colors.text}
           />
           <CustomText
             style={[
               styles.filterButtonLabel,
-              hasActiveFilters && { color: theme.colors.white },
+              hasActiveFilters && { color: theme.colors.onPrimary },
             ]}
           >
             Filter

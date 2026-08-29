@@ -45,7 +45,7 @@ const EmailVerificationBanner: React.FC = () => {
         <CustomText variant="caption" fontWeight="bold" color={theme.colors.primary}>
           Verify
         </CustomText>
-        <AppIcon.ChevronRight width={16} height={16} />
+        <AppIcon.ChevronRight width={16} height={16} color={theme.colors.text} />
       </View>
     </TouchableOpacity>
   );
@@ -56,7 +56,7 @@ const makeStyles = (theme: ITheme) =>
     banner: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderWidth: 1,
       borderColor: theme.colors.greyLight,
       borderRadius: theme.radius.lg,

@@ -16,10 +16,10 @@ import Share from "react-native-share";
 import ViewShot from "react-native-view-shot";
 import { NAVIGATION_SCREENS } from "navigations/navigationConstants";
 import { CustomText } from "tsx-components";
-import { Theme, useTheme } from "styles";
+import { useTheme } from "@new-ui/styles/ThemeContext";
+import { ITheme } from "@new-ui/styles/themes/themeTypes";
 import { SvgIcons } from "constants/svgs";
 import CommonModal from "tsx-components/modals/CommonModal";
-import { useGlobalStyles } from "styles/GlobalStyles";
 import { ReceiveQRCard } from "components/common-components/ReceiveQRCard";
 import type { IReceiveQRCardRef } from "components/common-components/ReceiveQRCard";
 import { BankDetailsDisplay, CapturingProvider, useCapturing } from "components/common-components/BankDetailsDisplay";
@@ -50,7 +50,7 @@ const ReceiveContent = () => {
   const { theme } = useTheme();
   const { setIsCapturing } = useCapturing();
 
-  const styles = { ...useGlobalStyles(), ...customStyles(theme) };
+  const styles = customStyles(theme);
   const qrCardRef = useRef<IReceiveQRCardRef>(null);
   const shareCardRef = useRef<any>(null);
   const [showShareDetailsModal, setShowShareDetailsModal] = useState(false);
@@ -302,7 +302,8 @@ const ReceiveContent = () => {
             result: "tmpfile",
           }}
           style={{
-            backgroundColor: theme.colors.palette.white || "#FFFFFF",
+            // Fixed, not themed — see whiteSheetContainerForShare below.
+            backgroundColor: "#FFFFFF",
             padding: 20,
             borderRadius: 15,
             width: 350,
@@ -335,7 +336,7 @@ const ReceiveContent = () => {
                     <View
                       style={[
                         styles.logoOverlay,
-                        { backgroundColor: theme.colors.palette.green700 },
+                        { backgroundColor: "#00793F" },
                       ]}
                     >
                       <SvgIcons.PayairoWhiteLogo width={LOGO_ICON_SIZE} height={LOGO_ICON_SIZE} />
@@ -346,7 +347,7 @@ const ReceiveContent = () => {
             )}
             {checkedBoxArray.some((item) => item.name === "PayAiro Tag" && item.isChecked) && (
               <CustomText
-                color={theme.colors.palette.black || "#000000"}
+                color={"#000000"}
                 size={14}
                 style={{ marginBottom: 10, textAlign: "center" }}
               >
@@ -357,7 +358,7 @@ const ReceiveContent = () => {
               payairoBank && (
                 <View style={{ width: "100%", marginTop: 10 }}>
                   <CustomText
-                    color={theme.colors.palette.black || "#000000"}
+                    color={"#000000"}
                     size={14}
                     fontWeight="bold"
                     style={{ marginBottom: 10, textAlign: "center" }}
@@ -365,21 +366,21 @@ const ReceiveContent = () => {
                     Bank Details:
                   </CustomText>
                   <CustomText
-                    color={theme.colors.palette.grey700 || "#374151"}
+                    color={"#374151"}
                     size={13}
                     style={{ marginBottom: 5, textAlign: "center" }}
                   >
                     Account Holder: {walletData?.name || "N/A"}
                   </CustomText>
                   <CustomText
-                    color={theme.colors.palette.grey700 || "#374151"}
+                    color={"#374151"}
                     size={13}
                     style={{ marginBottom: 5, textAlign: "center" }}
                   >
                     Routing Number: {payairoBank.ref_code || "N/A"}
                   </CustomText>
                   <CustomText
-                    color={theme.colors.palette.grey700 || "#374151"}
+                    color={"#374151"}
                     size={13}
                     style={{ marginBottom: 10, textAlign: "center" }}
                   >
@@ -404,7 +405,7 @@ const Receive = () => {
 
 export default Receive;
 
-const customStyles = (theme: Theme) =>
+const customStyles = (theme: ITheme) =>
   StyleSheet.create({
     title: {
       fontWeight: "bold",
@@ -419,24 +420,26 @@ const customStyles = (theme: Theme) =>
     },
     infotext: {
       textAlign: "center",
-      color: theme.colors.palette.grey700,
+      color: theme.colors.textSecondary,
       width: '80%',
     },
     whiteSheetContainer: {
       flex: 1,
-      backgroundColor: theme.colors.palette.white,
-      borderTopEndRadius: theme.spacing.spacing[8],
-      borderTopStartRadius: theme.spacing.spacing[8],
-      // marginTop: theme.spacing.spacing[5],
-      // padding: theme.spacing.spacing[5],
+      backgroundColor: theme.colors.surfaceElevated,
+      borderTopEndRadius: theme.spacing['2xl'],
+      borderTopStartRadius: theme.spacing['2xl'],
+      // marginTop: theme.spacing.lg,
+      // padding: theme.spacing.lg,
     },
     whiteSheetContainerForShare: {
       flex: 1,
-      backgroundColor: theme.colors.palette.white,
-      borderTopEndRadius: theme.spacing.spacing[8],
-      borderTopStartRadius: theme.spacing.spacing[8],
-      marginTop: theme.spacing.spacing[5],
-      padding: theme.spacing.spacing[5],
+      // Fixed, not themed: this sheet is captured by ViewShot and shared as an image
+      // outside the app, so it must look the same whatever theme the sender is using.
+      backgroundColor: "#FFFFFF",
+      borderTopEndRadius: theme.spacing['2xl'],
+      borderTopStartRadius: theme.spacing['2xl'],
+      marginTop: theme.spacing.lg,
+      padding: theme.spacing.lg,
     },
     row: {
       width: "100%",

@@ -49,7 +49,7 @@ const TRANSACTIONS: ITransaction[] = [
   },
 ];
 
-const txIcon = (tx: ITransaction, greyLight: string) => {
+const txIcon = (tx: ITransaction, greyLight: string, ink: string) => {
   if (tx.imageUri) {
     return (
       <Image
@@ -62,7 +62,7 @@ const txIcon = (tx: ITransaction, greyLight: string) => {
     return <AppIcon.Add width={24} height={24} />;
   }
   if (tx.amountType === 'crypto') {
-    return <AppIcon.ArrowRight width={24} height={24} />;
+    return <AppIcon.ArrowRight width={24} height={24} color={ink} />;
   }
   return <AppIcon.Send width={24} height={24} />;
 };
@@ -100,7 +100,7 @@ const ViewStatementScreen = () => {
         {filtered.map(tx => (
           <StatementTransactionItem
             key={tx.id}
-            icon={txIcon(tx, theme.colors.greyLight)}
+            icon={txIcon(tx, theme.colors.greyLight, theme.colors.text)}
             title={tx.title}
             datetime={tx.datetime}
             amount={tx.amount}
@@ -111,7 +111,7 @@ const ViewStatementScreen = () => {
 
       <TouchableOpacity style={styles.shareRow} onPress={() => {}} activeOpacity={0.7}>
         <Text style={styles.shareText}>Share Statement</Text>
-        <AppIcon.ArrowRight width={18} height={18} />
+        <AppIcon.ArrowRight width={18} height={18} color={theme.colors.text} />
       </TouchableOpacity>
 
       <Button onPress={() => {}} style={styles.downloadButton}>

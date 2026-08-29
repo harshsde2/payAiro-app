@@ -38,7 +38,7 @@ const SellTradeMethodPickerModal: React.FC<SellTradeMethodPickerModalProps> = ({
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: theme.radius.lg,
-    backgroundColor: theme.colors.white,
+    backgroundColor: theme.colors.surfaceElevated,
   };
 
   return (

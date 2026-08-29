@@ -14,6 +14,7 @@ export const cashBuyBarcodeStyles = (theme: ITheme) =>
       borderRadius: 28,
       alignSelf: "center",
       marginBottom: theme.spacing.lg,
+      // Intentionally fixed, not themed: third-party retailer logos are drawn for a white field.
       backgroundColor: theme.colors.white,
     },
     headline: {
@@ -127,6 +128,7 @@ export const cashBuyBarcodeStyles = (theme: ITheme) =>
       paddingHorizontal: theme.spacing.xl,
     },
     barcodeCard: {
+      // Intentionally fixed, not themed: barcode must stay on white to remain scannable.
       backgroundColor: theme.colors.white,
       borderRadius: theme.radius.xl,
       padding: theme.spacing.lg,
@@ -160,7 +162,7 @@ export const cashBuyBarcodeStyles = (theme: ITheme) =>
     },
     receiptDivider: {
       height: 1,
-      backgroundColor: "rgba(0,0,0,0.12)",
+      backgroundColor: theme.colors.overlay,
       marginVertical: theme.spacing.lg,
     },
     footer: {

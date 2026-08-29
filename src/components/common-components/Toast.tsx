@@ -7,6 +7,7 @@ import React from "react";
 import { View, StyleSheet, TouchableOpacity, Platform, Pressable } from "react-native";
 import ToastManager from "toastify-react-native";
 import { useTheme } from "styles";
+import { useTheme as useNewUITheme } from "@new-ui/styles/ThemeContext";
 import { CustomText } from "tsx-components";
 import { SvgIcons } from "constants/svgs";
 
@@ -28,6 +29,7 @@ const CustomToast: React.FC<ICustomToastProps> = ({
   ...rest
 }) => {
   const { theme } = useTheme();
+  const { theme: newUITheme } = useNewUITheme();
 
   // Handle both text1 and message props (for compatibility)
   const displayText1 = text1 || message || "";
@@ -106,6 +108,9 @@ const CustomToast: React.FC<ICustomToastProps> = ({
       style={({ pressed }) => [
         styles.toastContainer,
         {
+          // Toast is mounted above the navigator and outlives any screen, so it takes its
+          // surface straight from the theme rather than the white literal below.
+          backgroundColor: newUITheme.colors.surfaceElevated,
           borderLeftColor: stylesConfig.accentColor,
           opacity: pressed ? 0.9 : 1,
         },
@@ -124,6 +129,7 @@ const CustomToast: React.FC<ICustomToastProps> = ({
             style={[
               styles.title,
               {
+                color: newUITheme.colors.text,
                 fontFamily: theme.typography.fontFamily.montserratSemiBold,
               },
             ]}
@@ -139,6 +145,7 @@ const CustomToast: React.FC<ICustomToastProps> = ({
             style={[
               styles.message,
               {
+                color: newUITheme.colors.textSecondary,
                 fontFamily: theme.typography.fontFamily.montserrat,
               },
             ]}
@@ -229,7 +236,6 @@ const styles = StyleSheet.create({
     width: "90%",
     minHeight: 70,
     borderRadius: 8, // Standard card radius
-    backgroundColor: "#FFFFFF", // White background
     borderLeftWidth: 6, // Colored left strip
     paddingVertical: 14,
     paddingHorizontal: 16,

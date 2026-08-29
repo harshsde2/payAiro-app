@@ -31,6 +31,12 @@ type CryptoReceiptModalProps = {
   feeInfoText?: string;
   /** Sell/withdraw: Total = Amount + Fee (charged). Buy/add-balance (default): Amount − Fee. */
   addFeeToTotal?: boolean;
+  /**
+   * True while a transaction from this screen is in flight. Locks Proceed so a second
+   * tap can't queue another verification — this is the shared confirm button for both
+   * send and add-balance, and it used to be permanently enabled.
+   */
+  isSubmitting?: boolean;
 };
 
 const CryptoReceiptModal: React.FC<CryptoReceiptModalProps> = ({
@@ -48,6 +54,7 @@ const CryptoReceiptModal: React.FC<CryptoReceiptModalProps> = ({
   totalLabel = 'Total',
   feeInfoText,
   addFeeToTotal = false,
+  isSubmitting = false,
 }) => {
   const { theme } = useTheme();
   const styles = enterAmountStyles(theme);
@@ -173,7 +180,12 @@ const CryptoReceiptModal: React.FC<CryptoReceiptModalProps> = ({
           </View>
 
           <View style={{ marginTop: theme.spacing.lg }}>
-            <Button onPress={onPayNow} height={46} loading={false}>
+            <Button
+              onPress={onPayNow}
+              height={46}
+              loading={isSubmitting}
+              disabled={isSubmitting}
+            >
               Proceed
             </Button>
           </View>

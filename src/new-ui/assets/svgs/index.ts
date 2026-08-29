@@ -9,6 +9,7 @@ import ArrowLeft from './ArrowLeft.svg';
 import EyeOff from './EyeOff.svg';
 import EyeOn from './EyeOn.svg';
 import Mail from './Mail.svg';
+import Phone from './Phone.svg';
 import TickCheckedBox from './TickCheckedBox.svg';
 import UntickCheckedBox from './UntickCheckedBox.svg';
 import ChevronDown from './ChevronDown.svg';
@@ -33,6 +34,7 @@ import AppVersion from './AppVersion.svg';
 import User from './User.svg';
 import Headphones from './Headphones.svg';
 import HelpCircle from './HelpCircle.svg';
+import Search from './Search.svg';
 import ChevronRight from './ChevronRight.svg';
 import QrCode from './QrCode.svg';
 import Cancel from './Cancel.svg';
@@ -77,6 +79,7 @@ export const AppIcon = {
   EyeOff,
   EyeOn,
   Mail,
+  Phone,
   TickCheckedBox,
   UntickCheckedBox,
   ChevronDown,
@@ -100,6 +103,7 @@ export const AppIcon = {
   User,
   Headphones,
   HelpCircle,
+  Search,
   ChevronRight,
   QrCode,
   Cancel,

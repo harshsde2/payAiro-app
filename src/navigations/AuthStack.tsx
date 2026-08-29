@@ -4,6 +4,7 @@ import { NAVIGATION_SCREENS } from "./navigationConstants";
 import PDFViewer from "tsx-components/PDFViewer";
 import SupportScreen from "screens/TSX-Screens/Settings/SupportScreen";
 // New UI (design v2) auth screens
+import NewIntroSliderScreen from "../new-ui/screens/Auth/IntroSlider";
 import NewOnboardingScreen from "../new-ui/screens/Auth/Onboarding";
 import NewLoginScreen from "../new-ui/screens/Auth/Login";
 import NewCreateAccountScreen from "../new-ui/screens/Auth/CreateAccount";
@@ -17,6 +18,7 @@ import NewForgotPasswordScreen from "../new-ui/screens/Auth/ForgotPassword";
 import NewForgotPasswordVerificationScreen from "../new-ui/screens/Auth/ForgotPasswordVerification";
 import CustomHeader from "../new-ui/components/common-components/CustomHeader";
 import FreshchatScreen from "screens/TSX-Screens/Settings/FreshchatScreen";
+import FAQScreen from "@new-ui/screens/FAQ/FAQScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -62,7 +64,17 @@ export default function AuthStack({
         name={NAVIGATION_SCREENS.FRESHCHAT_SCREEN}
         component={FreshchatScreen}
       />
+      <Stack.Screen
+        options={{ headerShown: true, header: AuthStackHeader, headerTitle: 'FAQ' }}
+        name={NAVIGATION_SCREENS.NEW_FAQ_SCREEN}
+        component={FAQScreen}
+      />
       {/* New UI (design v2) auth flow */}
+      <Stack.Screen
+        options={{ headerShown: false }}
+        name={NAVIGATION_SCREENS.NEW_INTRO_SLIDER}
+        component={NewIntroSliderScreen}
+      />
       <Stack.Screen
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.NEW_ONBOARDING}

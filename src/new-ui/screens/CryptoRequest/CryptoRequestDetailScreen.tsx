@@ -25,6 +25,13 @@ import { getCryptoRequestError } from "query/hooks/cryptoRequest.types";
 import type { ICryptoRequest } from "query/hooks/cryptoRequest.types";
 import { useAppLock } from "hooks/useAppLock";
 import { showSuccess, showError } from "utils/toast";
+import { useTransactionSubmit } from "hooks/useTransactionSubmit";
+import {
+  buildIntentSignature,
+  isOutcomeUnknown,
+  UNKNOWN_OUTCOME_MESSAGE,
+} from "services/transactionGuard";
+import { confirmDuplicateTransaction } from "utils/confirmDuplicateTransaction";
 
 /** First initial for the avatar. */
 function initialOf(name: string): string {
@@ -44,7 +51,10 @@ const CryptoRequestDetailScreen: React.FC = () => {
   const { id, request: requestParam } = route.params ?? {};
 
   const { requestPaymentVerification } = useAppLock();
-  const { mutate: payRequest, isPending: isPaying } = usePayCryptoRequest();
+  const { mutateAsync: payRequest, isPending: isPaying } = usePayCryptoRequest();
+  // One POST per transaction intent, regardless of taps, retries or re-renders.
+  const { submit: submitTransaction, isSubmitting: isSubmittingTransaction } =
+    useTransactionSubmit();
   const { mutate: cancelRequest, isPending: isCancelling } = useCancelCryptoRequest();
 
   // Payer's crypto balances (same source EnterAmount trusts) for the pre-check.
@@ -160,22 +170,45 @@ const CryptoRequestDetailScreen: React.FC = () => {
       return;
     }
 
+    // Paying a request is money movement: one POST per intent, no matter how many
+    // taps or retries happen around it.
+    const signature = buildIntentSignature([
+      "request-pay",
+      request.id,
+      request.currency,
+      request.amount,
+    ]);
+
     requestPaymentVerification(() => {
-      payRequest(request.id, {
-        onSuccess: (data) => {
-          // Queries are already invalidated by the mutation; leave the pay screen.
-          showSuccess(
-            data?.message || "Request fulfilled successfully.",
-            `You sent ${formatRequestAmount(request.amount)} ${request.currency} to ${partyName(requester)}.`
-          );
-          navigation.goBack();
+      void submitTransaction(
+        signature,
+        async (idempotencyKey) => {
+          try {
+            const data = await payRequest({ requestId: request.id, idempotencyKey });
+            // Queries are already invalidated by the mutation; leave the pay screen.
+            showSuccess(
+              data?.message || "Request fulfilled successfully.",
+              `You sent ${formatRequestAmount(request.amount)} ${request.currency} to ${partyName(requester)}.`
+            );
+            navigation.goBack();
+          } catch (error: unknown) {
+            // No response at all → we do NOT know whether the payment went through.
+            if (isOutcomeUnknown(error)) {
+              showError("Couldn't confirm", UNKNOWN_OUTCOME_MESSAGE);
+            } else {
+              const { message } = getCryptoRequestError(error, "Payment failed.");
+              showError("Payment failed", message);
+            }
+            refetch();
+            // Rethrow so the guard records the outcome and keeps the intent locked.
+            throw error;
+          }
         },
-        onError: (error: unknown) => {
-          const { message } = getCryptoRequestError(error, "Payment failed.");
-          showError("Payment failed", message);
-          refetch();
+        {
+          onDuplicate: (retry) => confirmDuplicateTransaction(retry),
+          onUnknownOutcome: () => showError("Couldn't confirm", UNKNOWN_OUTCOME_MESSAGE),
         },
-      });
+      );
     });
   };
 
@@ -284,13 +317,17 @@ const CryptoRequestDetailScreen: React.FC = () => {
 
       <View style={styles.actions}>
         {canPay && (
-          <Button onPress={handlePay} loading={isPaying} disabled={isPaying}>
+          <Button
+            onPress={handlePay}
+            loading={isPaying || isSubmittingTransaction}
+            disabled={isPaying || isSubmittingTransaction}
+          >
             Pay {formatRequestAmount(request.amount)} {request.currency}
           </Button>
         )}
         {canCancel && (
           <Button
-            color={theme.colors.white}
+            color={theme.colors.onPrimary}
             style={styles.cancelButton}
             textStyle={{ color: theme.colors.error }}
             onPress={handleCancel}
@@ -342,7 +379,7 @@ const makeStyles = (theme: ITheme) =>
       textAlign: "center",
     },
     card: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderWidth: 1,
       borderColor: theme.colors.greyLight,
       borderRadius: theme.radius.lg,

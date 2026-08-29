@@ -34,6 +34,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import useSelectorAction from "hooks/useSelectorAction";
 import { showError } from "utils/toast";
 import { isWalletAddress, normalizeWalletCandidate } from "utils/walletAddress";
+import { isTopupUser } from "utils/userIdentity";
 
 const { width, height } = Dimensions.get("window");
 
@@ -107,7 +108,14 @@ const classifyScannedQR = (raw: string | null | undefined): ScanResult => {
     return { kind: "invalid" };
   }
 
-  // 2) Plain string → only a valid wallet address is accepted (no asset context).
+  // 2) Web/topup QR encodes a PayAiro tag handle like "@ronit1.tag". Strip a leading "@" and,
+  //    if it's a ".tag" handle, treat it as a PayAiro tag → prefilled on NewSend like a username.
+  const handle = value.replace(/^@+/, "").trim();
+  if (isTopupUser(handle)) {
+    return { kind: "payairo", username: handle };
+  }
+
+  // 3) Plain string → only a valid wallet address is accepted (no asset context).
   const candidate = normalizeWalletCandidate(value);
   if (isWalletAddress(candidate)) {
     return { kind: "wallet", address: candidate };
@@ -209,11 +217,14 @@ export default function Scans(): React.ReactElement {
         return;
       }
 
+
       const codeValue = codes[0]?.value;
       if (!codeValue || codeValue.length === 0) {
         return;
       }
 
+
+      console.log("CodeValue ->", codeValue);
       // Set processing flag to prevent duplicate navigation
       isProcessingRef.current = true;
       setIsScanning(false);

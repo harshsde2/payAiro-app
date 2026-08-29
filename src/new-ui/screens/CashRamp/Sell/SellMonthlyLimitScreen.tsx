@@ -21,7 +21,7 @@ const SellMonthlyLimitScreen: React.FC = () => {
     <ScreenWrapper
       safeArea
       safeAreaEdges={["bottom"]}
-      backgroundColor={theme.colors.white}
+      backgroundColor={theme.colors.background}
       contentStyle={{ flex: 1 }}
     >
       <View style={styles.limitScreen}>

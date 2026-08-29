@@ -41,9 +41,14 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
   const styles = dashboardHeaderStyles(theme) as any;
   const [isMenuVisible, setIsMenuVisible] = useState(false);
 
-  const { userData } = useSelector((state: any) => state.authenticationSlice);
+  const { userData, usersMe } = useSelector((state: any) => state.authenticationSlice);
 
-  const rawProfilePhoto = userData?.profile_photo || userData?.profile?.photo;
+  // The uploaded avatar comes back on /users/me as `profile.avatar_url` — check it first
+  // (same resolution order as ProfileScreen) so the header updates after an avatar upload.
+  const rawProfilePhoto =
+    usersMe?.profile?.avatar_url ||
+    userData?.profile_photo ||
+    userData?.profile?.photo;
   const profilePhotoUri = rawProfilePhoto
     ? String(rawProfilePhoto).replace(/^http:\/\//i, 'https://')
     : null;
@@ -69,6 +74,13 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
     setIsMenuVisible(true);
     onMenuPress?.();
   }, [onMenuPress]);
+
+  const handleSupportPress = useCallback(() => {
+    navigation.navigate(
+      NAVIGATION_SCREENS.SUPPORT_SCREEN as never,
+      { mode: 'emailSupport' } as never
+    );
+  }, [navigation]);
 
   const closeMenu = useCallback(() => {
     setIsMenuVisible(false);
@@ -138,28 +150,46 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
         </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.menuButton}
-        onPress={handleMenuPress}
-        activeOpacity={0.7}
-      >
-        <GlassyWrapper
-          style={styles.menuButtonGlassy}
-          borderRadius={20}
-          blurAmount={25}
-          blurType="light"
-          overlayOpacity={0.12}
-          borderWidth={1}
-          borderColor="rgba(255, 255, 255, 0.6)"
+      <View style={styles.rightSection}>
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={handleSupportPress}
+          activeOpacity={0.7}
         >
-          <View style={styles.menuIconWrapper}>
-            <MenuIcon width={25} height={25} />
-          </View>
-        </GlassyWrapper>
-            {unreadCount > 0 && (
-              <View style={styles.menuIconDot} />
-            )}
-      </TouchableOpacity>
+          <GlassyWrapper
+            style={styles.menuButtonGlassy}
+            borderRadius={20}
+            blurAmount={25}
+            overlayOpacity={0.12}
+            borderWidth={1}
+          >
+            <View style={styles.menuIconWrapper}>
+              <AppIcon.Headphones width={22} height={22} color={theme.colors.text} />
+            </View>
+          </GlassyWrapper>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={handleMenuPress}
+          activeOpacity={0.7}
+        >
+          <GlassyWrapper
+            style={styles.menuButtonGlassy}
+            borderRadius={20}
+            blurAmount={25}
+            overlayOpacity={0.12}
+            borderWidth={1}
+          >
+            <View style={styles.menuIconWrapper}>
+              <MenuIcon width={25} height={25} color={theme.colors.text} />
+            </View>
+          </GlassyWrapper>
+              {unreadCount > 0 && (
+                <View style={styles.menuIconDot} />
+              )}
+        </TouchableOpacity>
+      </View>
 
       <DashboardMenuModal
         visible={isMenuVisible}

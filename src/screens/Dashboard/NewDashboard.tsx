@@ -232,20 +232,20 @@ const NewDashboard = () => {
         <CustomText
           variant="body"
           fontWeight="semiBold"
-          color={newUITheme.colors.white}
+          color={newUITheme.colors.onPrimary}
         >
           {getContactInitials(displayName)}
         </CustomText>
       );
     },
-    [newUITheme.colors.white]
+    [newUITheme.colors.onPrimary]
   );
 
   const CARD_DATA = [
     {
-      title: 'Claim Your',
-      subTitle: 'First-Time Offer!',
-      description: 'Transfer money to abroad effortlessly & get rewards.',
+      title: 'Zero Fees.',
+      subTitle: 'More Freedom.',
+      description: 'Send instant P2P transfers to friends and family, buy and sell crypto with ease, and enjoy zero fees on your transactions.',
       icon: <AppIcon.PayairoOffer />,
     },
 
@@ -276,13 +276,13 @@ const NewDashboard = () => {
       gradientColors={[
         newUITheme.colors.greenLight2,
         newUITheme.colors.greenLight2,
-        newUITheme.colors.white,
+        newUITheme.colors.background,
         newUITheme.colors.greenLight2,
         newUITheme.colors.greenLight1,
         newUITheme.colors.tertiary,
         newUITheme.colors.greenLight1,
         newUITheme.colors.greenLight2,
-        newUITheme.colors.white,
+        newUITheme.colors.background,
       ]}
       gradientStart={{ x: 1, y: 1 }}
       gradientEnd={{ x: 0, y: 0 }}
@@ -323,10 +323,10 @@ const NewDashboard = () => {
               style={{ height: 130, width: CARD_WIDTH }}
               borderRadius={newUITheme.radius.xl}
               blurAmount={25}
-              blurType='regular'
+              // 'light' (not 'regular') — on real iOS 'regular' is a dark-adaptive vibrancy that
+              // renders the card dark over the green gradient; 'light' stays light like the sim.
               overlayOpacity={0.12}
               borderWidth={1}
-              borderColor={newUITheme.colors.white}
               key={index}
             >
               <View style={{ flex: 1, alignSelf: 'stretch' }}>

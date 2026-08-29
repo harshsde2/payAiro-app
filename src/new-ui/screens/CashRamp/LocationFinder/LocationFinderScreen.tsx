@@ -254,6 +254,7 @@ const LocationFinderScreen: React.FC = () => {
     <ScreenWrapper
       safeArea
       safeAreaEdges={["bottom"]}
+      // Fixed, not themed: full-bleed map screen, dark in both themes.
       backgroundColor={theme.colors.black}
       contentStyle={{ flex: 1 }}
       statusBarStyle="light-content"
@@ -278,7 +279,7 @@ const LocationFinderScreen: React.FC = () => {
           >
             <View style={styles.markerWrap}>
               <View style={styles.markerDot}>
-                <CustomText variant="bodySmall" color={theme.colors.white}>
+                <CustomText variant="bodySmall" color={theme.colors.onPrimary}>
                   {item.markerLabel}
                 </CustomText>
               </View>
@@ -328,13 +329,13 @@ const LocationFinderScreen: React.FC = () => {
         </View>
       ) : isError ? (
         <View style={styles.stateWrap}>
-          <CustomText variant="body" color={theme.colors.white}>
+          <CustomText variant="body" color={theme.colors.onPrimary}>
             Unable to load nearby stores.
           </CustomText>
         </View>
       ) : showEmptyList ? (
         <View style={styles.emptyNearbyWrap}>
-          <CustomText variant="body" color={theme.colors.white} style={{ textAlign: "center" }}>
+          <CustomText variant="body" color={theme.colors.onPrimary} style={{ textAlign: "center" }}>
             No cash locations near this area.
           </CustomText>
         </View>

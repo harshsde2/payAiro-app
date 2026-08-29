@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   View,
   TouchableOpacity,
@@ -6,8 +6,12 @@ import {
   Pressable,
   FlatList,
   StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
+import { useSelector } from "react-redux";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { useCoinmeAccountId } from "hooks/useCoinmeAccountId";
 import { useTheme } from "@new-ui/styles/ThemeContext";
 import { ITheme } from "@new-ui/styles/themes/themeTypes";
 import CustomText from "@new-ui/components/common-components/CustomText";
@@ -81,7 +85,7 @@ const CategoryPicker: React.FC<{
 
   return (
     <View>
-      <CustomText variant="label" fontWeight="semiBold" size={16} style={styles.fieldLabel}>
+      <CustomText variant="label" fontWeight="semiBold" size={14} style={styles.fieldLabel}>
         {label}
       </CustomText>
       <TouchableOpacity
@@ -92,6 +96,7 @@ const CategoryPicker: React.FC<{
         <CustomText
           variant="body"
           fontFamily="inter"
+          size={14}
           color={value ? theme.colors.text : theme.colors.greyDark}
         >
           {value || placeholder}
@@ -127,6 +132,7 @@ const CategoryPicker: React.FC<{
                     <CustomText
                       variant="body"
                       fontFamily="inter"
+                      size={14}
                       fontWeight={isSelected ? "medium" : "regular"}
                       color={isSelected ? theme.colors.primary : theme.colors.text}
                     >
@@ -153,6 +159,11 @@ const SupportScreen: React.FC = () => {
     route.params?.mode === "emailSupport" ? "emailSupport" : "accountRecovery";
   const config = MODE_CONFIG[mode];
 
+  // Email Support is opened by a logged-in user; their name/email are prefilled from the
+  // profile and must not be edited. Account Recovery can be reached while logged out, so those
+  // stay editable.
+  const lockIdentityFields = mode === "emailSupport";
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -160,6 +171,20 @@ const SupportScreen: React.FC = () => {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [attachment, setAttachment] = useState<Attachment | null>(null);
+
+  // `/users/me` is hydrated into Redux on login (useHydrateUsersMe); prefill from it here
+  // so the logged-in user doesn't retype their own name/email. Guarded so it never
+  // overwrites text the user already typed, and re-checked once if userData hydrates late.
+  const userData = useSelector((s: any) => s.authenticationSlice?.userData);
+  useEffect(() => {
+    if (!userData) return;
+    setFirstName((prev) => prev || userData.first_name || "");
+    setLastName((prev) => prev || userData.last_name || "");
+    setEmail((prev) => prev || userData.email || "");
+  }, [userData]);
+
+  // Sent to the backend alongside the form fields; not surfaced as a form field itself.
+  const caasId = useCoinmeAccountId();
 
   const { mutateAsync: submitGuestQuery, isPending } = useSubmitGuestQuery();
 
@@ -224,6 +249,7 @@ const SupportScreen: React.FC = () => {
         reason,
         description,
         attachment,
+        caasId,
       });
       const ok = res?.ok ?? res?.status ?? true;
       if (ok) {
@@ -252,6 +278,10 @@ const SupportScreen: React.FC = () => {
           onPress: () => navigation.navigate(NAVIGATION_SCREENS.FRESHCHAT_SCREEN),
         }}
       />
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoiding}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
       <ScreenWrapper
         safeArea
         safeAreaEdges={["bottom", "left", "right"]}
@@ -276,6 +306,9 @@ const SupportScreen: React.FC = () => {
             placeholder="Enter your first name"
             value={firstName}
             onChangeText={setFirstName}
+            editable={!lockIdentityFields}
+            labelStyle={styles.inputLabel}
+            inputStyle={[styles.inputText, lockIdentityFields && styles.lockedInput]}
           />
         </View>
 
@@ -285,6 +318,9 @@ const SupportScreen: React.FC = () => {
             placeholder="Enter your last name"
             value={lastName}
             onChangeText={setLastName}
+            editable={!lockIdentityFields}
+            labelStyle={styles.inputLabel}
+            inputStyle={[styles.inputText, lockIdentityFields && styles.lockedInput]}
           />
         </View>
 
@@ -296,6 +332,9 @@ const SupportScreen: React.FC = () => {
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
+            editable={!lockIdentityFields}
+            labelStyle={styles.inputLabel}
+            inputStyle={[styles.inputText, lockIdentityFields && styles.lockedInput]}
           />
         </View>
 
@@ -319,11 +358,13 @@ const SupportScreen: React.FC = () => {
             placeholder="Briefly describe your issue"
             value={subject}
             onChangeText={setSubject}
+            labelStyle={styles.inputLabel}
+            inputStyle={styles.inputText}
           />
         </View>
 
         <View style={styles.inputContainer}>
-          <CustomText variant="label" fontWeight="semiBold" size={16} style={styles.fieldLabel}>
+          <CustomText variant="label" fontWeight="semiBold" size={14} style={styles.fieldLabel}>
             Describe Your Issue
           </CustomText>
           <TextInput
@@ -337,7 +378,7 @@ const SupportScreen: React.FC = () => {
         </View>
 
         <View style={styles.inputContainer}>
-          <CustomText variant="label" fontWeight="semiBold" size={16} style={styles.fieldLabel}>
+          <CustomText variant="label" fontWeight="semiBold" size={14} style={styles.fieldLabel}>
             Attachments (Optional)
           </CustomText>
           <TouchableOpacity
@@ -384,6 +425,7 @@ const SupportScreen: React.FC = () => {
           {config.submitLabel}
         </Button>
       </ScreenWrapper>
+      </KeyboardAvoidingView>
     </View>
   );
 };
@@ -395,6 +437,9 @@ const supportStyles = (theme: ITheme) =>
     root: {
       flex: 1,
       backgroundColor: theme.colors.background,
+    },
+    keyboardAvoiding: {
+      flex: 1,
     },
     content: {
       flexGrow: 1,
@@ -408,20 +453,37 @@ const supportStyles = (theme: ITheme) =>
       marginBottom: theme.spacing.lg,
     },
     infoText: {
-      lineHeight: 20,
+      fontSize: 13,
+      lineHeight: 19,
     },
     inputContainer: {
       marginBottom: theme.spacing.base,
     },
     fieldLabel: {
-      marginBottom: theme.spacing.sm,
+      fontSize: 14,
+      marginBottom: 6,
       color: theme.colors.text,
+    },
+    // The shared TextInput defaults to a 16pt label / 16pt value; this form has many fields
+    // stacked, so it runs one step smaller throughout.
+    inputLabel: {
+      fontSize: 14,
+      marginBottom: 6,
+    },
+    inputText: {
+      fontSize: 14,
     },
     multilineInput: {
       height: "100%",
+      fontSize: 14,
       textAlignVertical: "top",
       paddingTop: 12,
       paddingBottom: 12,
+    },
+    // Read-only, not empty: these carry the signed-in user's real name and email, so they keep
+    // the full text colour. Greying them out made them read as unfilled placeholders.
+    lockedInput: {
+      color: theme.colors.text,
     },
     pickerField: {
       height: 46,
@@ -432,7 +494,7 @@ const supportStyles = (theme: ITheme) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     modalBackdrop: {
       flex: 1,
@@ -473,10 +535,11 @@ const supportStyles = (theme: ITheme) =>
     },
     uploadIconWrap: {
       padding: theme.spacing.md,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderRadius: 50,
     },
     uploadTextCenter: {
+      fontSize: 13,
       textAlign: "center",
       lineHeight: 18,
     },

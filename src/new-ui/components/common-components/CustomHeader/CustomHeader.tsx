@@ -96,7 +96,7 @@ const CustomHeader: React.FC<ICustomHeaderProps> = ({
             onPress={handleBackPress}
             activeOpacity={0.7}
           >
-            <AppIcon.ArrowLeft width={24} height={24} />
+            <AppIcon.ArrowLeft width={24} height={24} color={theme.colors.text} />
           </TouchableOpacity>
         ) : (
           <View style={styles.leftButton} />

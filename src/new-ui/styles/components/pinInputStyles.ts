@@ -29,12 +29,12 @@ export const pinInputStyles = (theme: ITheme) =>
     inputActive: {
       borderColor: theme.colors.primary,
       borderWidth: 2,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     inputFilled: {
       borderColor: theme.colors.success,
       borderWidth: 1.5,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     inputDisabled: {
       borderColor: theme.colors.border,

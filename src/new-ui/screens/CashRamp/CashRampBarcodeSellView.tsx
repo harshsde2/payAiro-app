@@ -105,7 +105,6 @@ const CashRampBarcodeSellView: React.FC<CashRampBarcodeSellViewProps> = ({
         blurType="regular"
         overlayOpacity={0.12}
         borderWidth={1}
-        borderColor={theme.colors.white}
         padding={theme.spacing.lg}
       >
         {renderGlass()}

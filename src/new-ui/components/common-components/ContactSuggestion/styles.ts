@@ -1,10 +1,10 @@
 import { StyleSheet, Platform } from "react-native";
-import { Theme } from "styles/theme";
+import { ITheme } from "@new-ui/styles/themes/themeTypes";
 
-export const contactSuggestionStyles = (theme: Theme) =>
+export const contactSuggestionStyles = (theme: ITheme) =>
   StyleSheet.create({
     container: {
-      backgroundColor: theme.colors.palette.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderRadius: 16,
       marginTop: 12,
       overflow: "hidden",
@@ -26,8 +26,8 @@ export const contactSuggestionStyles = (theme: Theme) =>
       paddingVertical: 14,
       paddingHorizontal: 16,
       borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border.light,
-      backgroundColor: theme.colors.palette.white,
+      borderBottomColor: theme.colors.border,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     suggestionItemLast: {
       borderBottomWidth: 0,
@@ -37,7 +37,7 @@ export const contactSuggestionStyles = (theme: Theme) =>
       height: 24,
       borderRadius: 12,
       borderWidth: 2,
-      borderColor: theme.colors.border.light,
+      borderColor: theme.colors.border,
       justifyContent: "center",
       alignItems: "center",
       marginRight: 12,
@@ -52,7 +52,7 @@ export const contactSuggestionStyles = (theme: Theme) =>
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: theme.colors.palette.green100,
+      backgroundColor: theme.colors.primaryLight,
       justifyContent: "center",
       alignItems: "center",
       marginRight: 12,

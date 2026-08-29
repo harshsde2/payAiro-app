@@ -5,6 +5,7 @@ import ScreenWrapper from 'new-ui/components/common-components/ScreenWrapper'
 import { useTheme as useNewUITheme } from '@new-ui/styles/ThemeContext'
 import { AppIcon } from 'new-ui/assets/svgs'
 import CustomText from 'new-ui/components/common-components/CustomText'
+import SettingsIconBadge from 'new-ui/components/common-components/SettingsIconBadge'
 import { useNavigation } from '@react-navigation/native'
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants'
 import TermAndConditionModal from 'tsx-components/modals/TermAndConditionModal'
@@ -39,25 +40,47 @@ const SettingsScreen = () => {
     const LIST_ITEMS = [
         {
             title: 'Privacy and Security',
-            icon: <AppIcon.Privacy />,
+            icon: (
+                <SettingsIconBadge>
+                    <AppIcon.Privacy width={40} height={40} color={newUITheme.colors.primary} />
+                </SettingsIconBadge>
+            ),
             onPress: () => navigation.navigate(NAVIGATION_SCREENS.NEW_PRIVACY_SECURITY_SCREEN as never),
+        },
+        {
+            title: 'Appearance',
+            // Bare glyph like DebitCard (no baked-in badge), so wrap it in the same circle
+            // to line up with the badged icons in this list.
+            // TODO: swap for a dedicated sun/moon glyph once design provides one.
+            icon: (
+                <SettingsIconBadge>
+                    <AppIcon.Settings width={22} height={22} color={newUITheme.colors.primary} />
+                </SettingsIconBadge>
+            ),
+            onPress: () => navigation.navigate(NAVIGATION_SCREENS.NEW_APPEARANCE_SCREEN as never),
         },
         {
             title: 'Payment Methods',
             // DebitCard is a bare 24px glyph (no badge), unlike the other 40px badged
             // icons — wrap it in a matching green circle so it aligns with the rest.
             icon: (
-                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3FBF4', alignItems: 'center', justifyContent: 'center' }}>
-                    <AppIcon.DebitCard width={22} height={22} />
-                </View>
+                <SettingsIconBadge>
+                    <AppIcon.DebitCard width={22} height={22} color={newUITheme.colors.primary} />
+                </SettingsIconBadge>
             ),
             onPress: () => navigation.navigate(NAVIGATION_SCREENS.PAYMENT_METHODS_SCREEN as never),
         },
-        // {
-        //     title: 'Bank Statements',
-        //     icon: <AppIcon.BankStatement />,
-        //     onPress: () => navigation.navigate(NAVIGATION_SCREENS.NEW_BANK_STATEMENT_SCREEN as never),
-        // },
+        {
+            title: 'Support',
+            // Headphones is a bare glyph (no badge) — wrap it in the same green circle so it
+            // aligns with the other 40px badged icons.
+            icon: (
+                <SettingsIconBadge>
+                    <AppIcon.Headphones width={22} height={22} color={newUITheme.colors.primary} />
+                </SettingsIconBadge>
+            ),
+            onPress: () => navigation.navigate(NAVIGATION_SCREENS.FRESHCHAT_SCREEN as never),
+        },
         // {
         //     title: 'Rewards and Referrals',
         //     icon: <AppIcon.RewardsIcon />,
@@ -65,7 +88,11 @@ const SettingsScreen = () => {
         // },
         {
             title: 'Coinme Legal',
-            icon: <AppIcon.Agreement />,
+            icon: (
+                <SettingsIconBadge>
+                    <AppIcon.Agreement width={40} height={40} color={newUITheme.colors.primary} />
+                </SettingsIconBadge>
+            ),
             onPress: () =>
                 navigation.navigate(
                     NAVIGATION_SCREENS.NEW_COINME_AGREEMENT_SCREEN as never
@@ -83,19 +110,27 @@ const SettingsScreen = () => {
         //     : []),
         {
             title: 'Terms of Service',
-            icon: <AppIcon.TermsAndConditions />,
+            icon: (
+                <SettingsIconBadge>
+                    <AppIcon.TermsAndConditions width={40} height={40} color={newUITheme.colors.primary} />
+                </SettingsIconBadge>
+            ),
             onPress: () => webDocRef.current?.showWebDocument?.('Terms of Service', PAYAIRO_TERMS_URL),
         },
         {
             title: 'Privacy Policy',
-            icon: <AppIcon.PrivacyPolicy />,
+            icon: (
+                <SettingsIconBadge>
+                    <AppIcon.PrivacyPolicy width={40} height={40} color={newUITheme.colors.primary} />
+                </SettingsIconBadge>
+            ),
             onPress: () => webDocRef.current?.showWebDocument?.('Privacy Policy', PAYAIRO_PRIVACY_URL),
         },
-        {
-            title: 'App Version',
-            icon: <AppIcon.AppVersion />,
-            onPress: () => navigation.navigate(NAVIGATION_SCREENS.NEW_APP_VERSION_SCREEN as never),
-        },
+        // {
+        //     title: 'App Version',
+        //     icon: <AppIcon.AppVersion />,
+        //     onPress: () => navigation.navigate(NAVIGATION_SCREENS.NEW_APP_VERSION_SCREEN as never),
+        // },
     ]
 
   return (
@@ -113,11 +148,11 @@ const SettingsScreen = () => {
               activeOpacity={0.7}
               style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderColor: newUITheme.colors.greyLight, borderWidth: 1, borderRadius: newUITheme.radius.lg, padding: newUITheme.spacing.md }}
             >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: newUITheme.spacing.md }}>
                     {item.icon}
                     <CustomText variant="h5" size={16} fontWeight='semiBold'>{item.title}</CustomText>
                 </View>
-                <AppIcon.ChevronRight width={20} height={20} />
+                <AppIcon.ChevronRight width={20} height={20} color={newUITheme.colors.text} />
             </TouchableOpacity>
         ))}
       </View>

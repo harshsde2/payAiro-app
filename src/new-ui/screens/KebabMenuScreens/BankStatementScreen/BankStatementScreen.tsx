@@ -37,7 +37,7 @@ const BankStatementScreen = () => {
     setToDate('');
   };
 
-  const calendarIcon = <AppIcon.DebitCard width={20} height={20} />;
+  const calendarIcon = <AppIcon.DebitCard width={20} height={20} color={theme.colors.primary} />;
 
   return (
     <ScreenWrapper
@@ -132,7 +132,7 @@ const BankStatementScreen = () => {
       </View>
       <TouchableOpacity style={styles.downloadRow} onPress={() => {}} activeOpacity={0.7}>
         <CustomText style={styles.downloadText}>Download Statement</CustomText>
-        <AppIcon.ArrowRight width={18} height={18} />
+        <AppIcon.ArrowRight width={18} height={18} color={theme.colors.text} />
       </TouchableOpacity>
 
       <Button onPress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_VIEW_STATEMENT_SCREEN as never)}>

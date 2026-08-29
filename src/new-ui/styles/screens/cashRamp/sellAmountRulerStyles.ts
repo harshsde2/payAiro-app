@@ -54,7 +54,7 @@ export const sellAmountSliderStyles = (theme: ITheme) =>
       borderRadius: THUMB_SIZE / 2,
       backgroundColor: theme.colors.primary,
       borderWidth: 3,
-      borderColor: theme.colors.white,
+      borderColor: theme.colors.background,
       shadowColor: theme.colors.black,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.15,

@@ -17,7 +17,7 @@ import NewTransactionDetails from "screens/TSX-Screens/NewTransactionDetails/New
 import CyrptoDetails from "screens/TSX-Screens/CybridCrypto/CyrptoDetails";
 import BlockchainNameServiceTerms from "screens/TSX-Screens/Modals/BlockchainNameServiceTerms";
 import UserProfile from "screens/TSX-Screens/UserProfile/UserProfile";
-import NewPersonal from "screens/SettingScreen/NewPersonal";
+import ProfileScreen from "new-ui/screens/Profile/ProfileScreen";
 import Settings2 from "screens/Authentications/Settings2";
 import NewSend from "@new-ui/screens/Send/Send/index";
 import SelectPaymentMethod from "@new-ui/screens/Send/SelectPaymentMethod/SelectPaymentMethod";
@@ -30,6 +30,7 @@ import { useTheme as useNewTheme } from "@new-ui/styles/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
 import SettingsScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/SettingsScreen";
 import PrivacyAndSecurityScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/PrivacyAndSecurityScreen";
+import AppearanceScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/AppearanceScreen";
 import AppVersionScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/AppVersionScreen";
 import NewChangePinScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/ChangePin";
 import NewForgotPinScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/ForgotPin";
@@ -42,6 +43,7 @@ import NotificationScreen from "new-ui/screens/KebabMenuScreens/NotificationScre
 import TransactionLimitsScreen from "@new-ui/screens/TransactionLimits";
 import PaymentMethodsScreen from "@new-ui/screens/PaymentMethods";
 import ContactsScreen from "@new-ui/screens/Contacts/ContactsScreen";
+import FAQScreen from "@new-ui/screens/FAQ/FAQScreen";
 import AddContactScreen from "@new-ui/screens/Contacts/AddContactScreen";
 import BankStatementScreen from "@new-ui/screens/KebabMenuScreens/BankStatementScreen/BankStatementScreen";
 import ViewStatementScreen from "@new-ui/screens/KebabMenuScreens/BankStatementScreen/ViewStatementScreen";
@@ -232,7 +234,7 @@ export default function AppStack() {
       <Stack.Screen
         options={{ headerShown: false }}
         name={NAVIGATION_SCREENS.NEW_PERSONAL}
-        component={NewPersonal}
+        component={ProfileScreen}
       />
       <Stack.Screen
         options={{ headerShown: true, header: AppStackHeader }}
@@ -378,9 +380,19 @@ export default function AppStack() {
         component={PrivacyAndSecurityScreen}
       />
       <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Appearance' }}
+        name={NAVIGATION_SCREENS.NEW_APPEARANCE_SCREEN}
+        component={AppearanceScreen}
+      />
+      <Stack.Screen
         options={{ headerShown: true, header: AppStackHeader, headerTitle: 'App Version' }}
         name={NAVIGATION_SCREENS.NEW_APP_VERSION_SCREEN}
         component={AppVersionScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'FAQ' }}
+        name={NAVIGATION_SCREENS.NEW_FAQ_SCREEN}
+        component={FAQScreen}
       />
       <Stack.Screen
         options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Change PIN' }}

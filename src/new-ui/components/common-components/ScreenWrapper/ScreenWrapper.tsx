@@ -33,10 +33,19 @@ const ScreenWrapper: React.FC<IScreenWrapperProps> = ({
   loadingComponent,
   style,
 }) => {
-  const { theme } = useTheme();
+  const { theme, themeMode } = useTheme();
   const { width, height } = useWindowDimensions();
 
   const resolvedBackgroundColor = backgroundColor || theme.colors.background;
+
+  // 'default' is the "caller didn't care" sentinel, so derive it from the theme — otherwise
+  // dark-content icons stay black over a dark screen. An explicit style still wins.
+  const resolvedStatusBarStyle =
+    statusBarStyle === 'default'
+      ? themeMode === 'dark'
+        ? 'light-content'
+        : 'dark-content'
+      : statusBarStyle;
 
   const resolvedPadding = useMemo(() => {
     if (typeof padding === 'number') {
@@ -152,7 +161,7 @@ const ScreenWrapper: React.FC<IScreenWrapperProps> = ({
   return (
     <>
       <StatusBar
-        barStyle={statusBarStyle}
+        barStyle={resolvedStatusBarStyle}
         hidden={statusBarHidden}
         backgroundColor={resolvedBackgroundColor}
       />

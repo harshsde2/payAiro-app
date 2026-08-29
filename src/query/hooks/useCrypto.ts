@@ -616,11 +616,20 @@ export const useCryptoWithdrawal = () => {
  * Hook to send crypto withdrawal via FastAPI payment-transactions endpoint.
  */
 export const usePaymentTransactionSend = () => {
-  return useMutation<PaymentTransactionSendResponse, any, PaymentTransactionSendPayload>({
-    mutationFn: async (payload) => {
+  return useMutation<
+    PaymentTransactionSendResponse,
+    any,
+    PaymentTransactionSendPayload & { idempotencyKey: string }
+  >({
+    // Money movement is not idempotent — never auto-retry. Pinned here as well as on
+    // the QueryClient so a change to the global default can't silently re-arm it.
+    retry: 0,
+    mutationFn: async ({ idempotencyKey, ...payload }) => {
       return await userApiClient.post<PaymentTransactionSendResponse>(
         USER_AUTH.PAYMENT_TRANSACTIONS_SEND,
-        payload
+        payload,
+        false,
+        { "Idempotency-Key": idempotencyKey }
       );
     },
   });
@@ -782,8 +791,15 @@ export interface CoinmeTradeExecuteResponse {
  * `webSessionId` for this transaction (see `fetchWebSessionId`).
  */
 export const useCoinmeTradeExecute = () => {
-  return useMutation<CoinmeTradeExecuteResponse, Error, CoinmeTradeExecutePayload>({
-    mutationFn: async (payload) => {
+  return useMutation<
+    CoinmeTradeExecuteResponse,
+    Error,
+    CoinmeTradeExecutePayload & { idempotencyKey: string }
+  >({
+    // Money movement is not idempotent — never auto-retry. Pinned here as well as on
+    // the QueryClient so a change to the global default can't silently re-arm it.
+    retry: 0,
+    mutationFn: async ({ idempotencyKey, ...payload }) => {
       const fingerprint = await getDeviceFingerprint();
       return await userApiClient.post<CoinmeTradeExecuteResponse>(
         USER_AUTH.COINME_TRADE_EXECUTE,
@@ -791,6 +807,7 @@ export const useCoinmeTradeExecute = () => {
         false,
         {
           "x-device-fingerprint": fingerprint,
+          "Idempotency-Key": idempotencyKey,
         }
       );
     },

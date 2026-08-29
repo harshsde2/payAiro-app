@@ -16,7 +16,7 @@ export const bottomSheetStyles = (theme: ITheme) => {
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: theme.colors.background,
+      backgroundColor: theme.colors.surface,
       borderTopLeftRadius: theme.radius.xl,
       borderTopRightRadius: theme.radius.xl,
       zIndex: 10000,

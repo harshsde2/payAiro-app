@@ -16,8 +16,10 @@ import RNFS from "react-native-fs";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import moment from "moment";
 import { formatDetailDate, formatDetailTime } from "utils/dateUtils";
+import { shortenWalletAddress } from "utils/formatIdentifier";
 import Svg, { SvgUri, Circle, Path } from "react-native-svg";
-import { useTheme, Theme } from "styles";
+import { useTheme } from "@new-ui/styles/ThemeContext";
+import type { ITheme } from "@new-ui/styles/themes/themeTypes";
 import CustomText from "tsx-components/CustomText";
 import { SvgIcons } from "constants/svgs";
 import Button from "@new-ui/components/common-components/layout/Button";
@@ -236,8 +238,7 @@ const NewTransactionDetails: FC = () => {
   // External-wallet receive: the sender is an off-platform wallet, so there's no known
   // display party (username/identifier) — fall back to the on-chain from_address instead
   // of "Unknown" in the header subtitle and the "Received From" receipt row.
-  const shortenAddress = (addr?: string | null): string =>
-    addr && addr.length > 16 ? `${addr.substring(0, 10)}...${addr.slice(-4)}` : addr || "";
+  const shortenAddress = (addr?: string | null): string => shortenWalletAddress(addr);
   const hasKnownParty = !!displayUsername && displayUsername !== "Unknown";
   const receivedFromDisplay = hasKnownParty
     ? displayUsername
@@ -602,7 +603,7 @@ const NewTransactionDetails: FC = () => {
 
     return (
       <TouchableOpacity disabled={!isCrypto} activeOpacity={0.8} onPress={() => navigation.replace(NAVIGATION_SCREENS.USER_PROFILE, { userDetails })} style={styles(theme).avatarPlaceholderBig}>
-        <CustomText variant="h2" color={theme.colors.palette.white}>
+        <CustomText variant="h2" color={theme.colors.onPrimary}>
           {getInitials(displayUsername)}
         </CustomText>
       </TouchableOpacity>
@@ -637,7 +638,7 @@ const NewTransactionDetails: FC = () => {
     <ScreenWrapper
       safeArea
       safeAreaEdges={["bottom"]}
-      backgroundColor={newUITheme.colors.white}
+      backgroundColor={newUITheme.colors.background}
       padding={0}
     >
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -661,7 +662,7 @@ const NewTransactionDetails: FC = () => {
               <>
                 <CustomText
                   variant="h2"
-                  color={theme.colors.text.primary}
+                  color={theme.colors.text}
                   style={{ marginBottom: 4, fontSize: 20, fontWeight: "600" }}
                 >
                   {getCryptoTitle()}
@@ -670,7 +671,7 @@ const NewTransactionDetails: FC = () => {
                 {getCryptoSubtitle() && (
                   <CustomText
                     variant="body1"
-                    color={theme.colors.text.secondary}
+                    color={theme.colors.textSecondary}
                     style={{ marginBottom: 8, fontSize: 14 }}
                   >
                     {getCryptoSubtitle()}
@@ -680,7 +681,7 @@ const NewTransactionDetails: FC = () => {
             ) : (
               <CustomText
                 variant="body1"
-                color={theme.colors.text.primary}
+                color={theme.colors.text}
                 style={{ marginBottom: 4, fontSize: 16 }}
               >
                 {isIncoming ? "From" : "To"} {displayUsername}
@@ -693,7 +694,7 @@ const NewTransactionDetails: FC = () => {
                 variant="h1"
                 style={[
                   styles(theme).amountText,
-                  { color: theme.colors.palette.black },
+                  { color: theme.colors.text },
                 ]}
               >
                 {getCryptoAmount().amount} {getCryptoAmount().currency}
@@ -705,8 +706,8 @@ const NewTransactionDetails: FC = () => {
                   styles(theme).amountText,
                   {
                     color: isIncoming
-                      ? theme.colors.palette.green700
-                      : theme.colors.palette.black,
+                      ? theme.colors.primary
+                      : theme.colors.text,
                   },
                 ]}
               >
@@ -720,7 +721,7 @@ const NewTransactionDetails: FC = () => {
               <CustomText
                 variant="caption"
                 fontWeight="semiBold"
-                style={{ color: theme.colors.palette.white }}
+                style={{ color: theme.colors.onPrimary }}
               >
                 {statusText}
               </CustomText>
@@ -730,7 +731,7 @@ const NewTransactionDetails: FC = () => {
             {isCrypto && (
               <CustomText
                 variant="caption"
-                color={theme.colors.text.secondary}
+                color={theme.colors.textSecondary}
                 style={{ marginTop: 8 }}
               >
                 {getTransactionTypeLabel()}
@@ -741,10 +742,10 @@ const NewTransactionDetails: FC = () => {
           {/* White Card Section */}
           <View style={styles(theme).whiteCard}>
             {/* Date - Dynamic label based on scenario */}
-            <View style={styles(theme).detailRow}>
+            <View style={[styles(theme).detailRow, styles(theme).detailRowFirst]}>
               <CustomText
                 variant={SLIP_LABEL_VARIANT}
-                color={theme.colors.text.secondary}
+                color={theme.colors.textSecondary}
                 style={slipStyles.slipLabelText}
               >
                 {!isCrypto ? getDateLabel() : "Transfer Date"}
@@ -752,7 +753,7 @@ const NewTransactionDetails: FC = () => {
               <CustomText
                 variant={SLIP_VALUE_VARIANT}
                 fontWeight="semiBold"
-                color={theme.colors.text.primary}
+                color={theme.colors.text}
                 style={slipStyles.slipValueText}
               >
                 {formatDetailDate(transactionData.created_at)}
@@ -763,7 +764,7 @@ const NewTransactionDetails: FC = () => {
             <View style={styles(theme).detailRow}>
               <CustomText
                 variant={SLIP_LABEL_VARIANT}
-                color={theme.colors.text.secondary}
+                color={theme.colors.textSecondary}
                 style={slipStyles.slipLabelText}
               >
                 {!isCrypto ? getTimeLabel() : "Transfer Time"}
@@ -771,7 +772,7 @@ const NewTransactionDetails: FC = () => {
               <CustomText
                 variant={SLIP_VALUE_VARIANT}
                 fontWeight="semiBold"
-                color={theme.colors.text.primary}
+                color={theme.colors.text}
                 style={slipStyles.slipValueText}
               >
                 {formatDetailTime(transactionData.created_at)}
@@ -782,30 +783,38 @@ const NewTransactionDetails: FC = () => {
             <View style={styles(theme).detailRow}>
               <CustomText
                 variant={SLIP_LABEL_VARIANT}
-                color={theme.colors.text.secondary}
+                color={theme.colors.textSecondary}
                 style={slipStyles.slipLabelText}
               >
                 {!isCrypto ? getTransactionIdLabel() : "Transaction ID"}
               </CustomText>
               <TouchableOpacity
                 onPress={handleCopyTransactionId}
-                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                  gap: 8,
+                  // Shrink (and wrap) instead of clipping: the ID is shown in full, and
+                  // the digits that tell two transactions apart are at the END.
+                  flexShrink: 1,
+                }}
               >
                 <CustomText
                   variant={SLIP_VALUE_VARIANT}
                   fontWeight="semiBold"
-                  color={theme.colors.text.primary}
-                  numberOfLines={1}
-                  style={[slipStyles.slipValueText, { maxWidth: 150 }]}
+                  color={theme.colors.text}
+                  style={[
+                    slipStyles.slipValueText,
+                    { flexShrink: 1, textAlign: "right" },
+                  ]}
                 >
-                  {transactionData.transaction_id.length > 16
-                    ? `${transactionData.transaction_id.substring(0, 16)}...`
-                    : transactionData.transaction_id}
+                  {transactionData.transaction_id}
                 </CustomText>
                 <SvgIcons.CopyOutlineBlack
                   width={14}
                   height={14}
-                  // color={theme.colors.text.primary}
+                  color={theme.colors.text}
                 />
               </TouchableOpacity>
             </View>
@@ -815,7 +824,7 @@ const NewTransactionDetails: FC = () => {
               <View style={styles(theme).detailRow}>
                 <CustomText
                   variant={SLIP_LABEL_VARIANT}
-                  color={theme.colors.text.secondary}
+                  color={theme.colors.textSecondary}
                   style={slipStyles.slipLabelText}
                 >
                   Sender
@@ -823,7 +832,7 @@ const NewTransactionDetails: FC = () => {
                 <CustomText
                   variant={SLIP_VALUE_VARIANT}
                   fontWeight="semiBold"
-                  color={theme.colors.text.primary}
+                  color={theme.colors.text}
                   style={slipStyles.slipValueText}
                 >
                   {senderUsername}
@@ -836,7 +845,7 @@ const NewTransactionDetails: FC = () => {
               <View style={styles(theme).detailRow}>
                 <CustomText
                   variant={SLIP_LABEL_VARIANT}
-                  color={theme.colors.text.secondary}
+                  color={theme.colors.textSecondary}
                   style={slipStyles.slipLabelText}
                 >
                   Receiver
@@ -844,7 +853,7 @@ const NewTransactionDetails: FC = () => {
                 <CustomText
                   variant={SLIP_VALUE_VARIANT}
                   fontWeight="semiBold"
-                  color={theme.colors.text.primary}
+                  color={theme.colors.text}
                   style={slipStyles.slipValueText}
                 >
                   {recipientUsername}
@@ -857,7 +866,7 @@ const NewTransactionDetails: FC = () => {
               <View style={styles(theme).detailRow}>
                 <CustomText
                   variant={SLIP_LABEL_VARIANT}
-                  color={theme.colors.text.secondary}
+                  color={theme.colors.textSecondary}
                   style={slipStyles.slipLabelText}
                 >
                   Category
@@ -865,7 +874,7 @@ const NewTransactionDetails: FC = () => {
                 <CustomText
                   variant={SLIP_VALUE_VARIANT}
                   fontWeight="semiBold"
-                  color={theme.colors.text.primary}
+                  color={theme.colors.text}
                   style={slipStyles.slipValueText}
                 >
                   {transactionData.category
@@ -882,7 +891,7 @@ const NewTransactionDetails: FC = () => {
                 <View style={styles(theme).detailRow}>
                   <CustomText
                     variant={SLIP_LABEL_VARIANT}
-                    color={theme.colors.text.secondary}
+                    color={theme.colors.textSecondary}
                     style={slipStyles.slipLabelText}
                   >
                     Bank
@@ -890,7 +899,7 @@ const NewTransactionDetails: FC = () => {
                   <CustomText
                     variant={SLIP_VALUE_VARIANT}
                     fontWeight="semiBold"
-                    color={theme.colors.text.primary}
+                    color={theme.colors.text}
                     style={slipStyles.slipValueText}
                   >
                     {bankName}
@@ -901,7 +910,7 @@ const NewTransactionDetails: FC = () => {
                   <View style={styles(theme).detailRow}>
                     <CustomText
                       variant={SLIP_LABEL_VARIANT}
-                      color={theme.colors.text.secondary}
+                      color={theme.colors.textSecondary}
                       style={slipStyles.slipLabelText}
                     >
                       Account Number
@@ -909,7 +918,7 @@ const NewTransactionDetails: FC = () => {
                     <CustomText
                       variant={SLIP_VALUE_VARIANT}
                       fontWeight="semiBold"
-                      color={theme.colors.text.primary}
+                      color={theme.colors.text}
                       style={slipStyles.slipValueText}
                     >
                       {accountNumberMasked}
@@ -924,7 +933,7 @@ const NewTransactionDetails: FC = () => {
               <View style={styles(theme).detailRow}>
                 <CustomText
                   variant={SLIP_LABEL_VARIANT}
-                  color={theme.colors.text.secondary}
+                  color={theme.colors.textSecondary}
                   style={slipStyles.slipLabelText}
                 >
                   Transaction Fee
@@ -932,7 +941,7 @@ const NewTransactionDetails: FC = () => {
                 <CustomText
                   variant={SLIP_VALUE_VARIANT}
                   fontWeight="semiBold"
-                  color={theme.colors.text.primary}
+                  color={theme.colors.text}
                   style={slipStyles.slipValueText}
                 >
                   {currencySymbol} {feeAmount.toFixed(2)}
@@ -952,7 +961,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           Asset Purchased
@@ -964,7 +973,7 @@ const NewTransactionDetails: FC = () => {
                           <CustomText
                             variant={SLIP_VALUE_VARIANT}
                             fontWeight="semiBold"
-                            color={theme.colors.text.primary}
+                            color={theme.colors.text}
                             style={slipStyles.slipValueText}
                           >
                             {cryptoAsset}
@@ -978,7 +987,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           Paid In
@@ -986,7 +995,7 @@ const NewTransactionDetails: FC = () => {
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
-                          color={theme.colors.text.primary}
+                          color={theme.colors.text}
                           style={slipStyles.slipValueText}
                         >
                           {fromCurrency}
@@ -999,7 +1008,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           Received
@@ -1007,7 +1016,7 @@ const NewTransactionDetails: FC = () => {
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
-                          color={theme.colors.text.primary}
+                          color={theme.colors.text}
                           style={slipStyles.slipValueText}
                         >
                           {getCryptoBuyReceivedDisplay()}
@@ -1020,7 +1029,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           Exchange Rate
@@ -1028,7 +1037,7 @@ const NewTransactionDetails: FC = () => {
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
-                          color={theme.colors.text.primary}
+                          color={theme.colors.text}
                           style={slipStyles.slipValueText}
                         >
                           1 {fromCurrency || "USD"} ={" "}
@@ -1043,7 +1052,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           USD Value
@@ -1051,7 +1060,7 @@ const NewTransactionDetails: FC = () => {
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
-                          color={theme.colors.text.primary}
+                          color={theme.colors.text}
                           style={slipStyles.slipValueText}
                         >
                           ${parseFloat(usdValue).toFixed(2)}
@@ -1064,7 +1073,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           Transaction Fee
@@ -1072,7 +1081,7 @@ const NewTransactionDetails: FC = () => {
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
-                          color={theme.colors.text.primary}
+                          color={theme.colors.text}
                           style={slipStyles.slipValueText}
                         >
                           ${feeAmount.toFixed(2)} ({displayFeePercentage.toFixed(2)}%)
@@ -1090,7 +1099,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           Asset Sold
@@ -1102,7 +1111,7 @@ const NewTransactionDetails: FC = () => {
                           <CustomText
                             variant={SLIP_VALUE_VARIANT}
                             fontWeight="semiBold"
-                            color={theme.colors.text.primary}
+                            color={theme.colors.text}
                             style={slipStyles.slipValueText}
                           >
                             {fromCurrency}
@@ -1115,7 +1124,7 @@ const NewTransactionDetails: FC = () => {
                     <View style={styles(theme).detailRow}>
                       <CustomText
                         variant={SLIP_LABEL_VARIANT}
-                        color={theme.colors.text.secondary}
+                        color={theme.colors.textSecondary}
                         style={slipStyles.slipLabelText}
                       >
                         Received
@@ -1123,7 +1132,7 @@ const NewTransactionDetails: FC = () => {
                       <CustomText
                         variant={SLIP_VALUE_VARIANT}
                         fontWeight="semiBold"
-                        color={theme.colors.text.primary}
+                        color={theme.colors.text}
                         style={slipStyles.slipValueText}
                       >
                         {parseFloat(
@@ -1143,14 +1152,14 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                         >
                           Exchange Rate
                         </CustomText>
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
-                          color={theme.colors.text.primary}
+                          color={theme.colors.text}
                         >
                           1 {fromCurrency} ={" "}
                           {parseFloat(exchangeRate).toFixed(2)} USD
@@ -1163,14 +1172,14 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                         >
                           USD Value
                         </CustomText>
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
-                          color={theme.colors.text.primary}
+                          color={theme.colors.text}
                         >
                           ${parseFloat(usdValue).toFixed(2)}
                         </CustomText>
@@ -1182,7 +1191,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           Transaction Fee
@@ -1190,7 +1199,7 @@ const NewTransactionDetails: FC = () => {
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
-                          color={theme.colors.text.primary}
+                          color={theme.colors.text}
                           style={slipStyles.slipValueText}
                         >
                           ${feeAmount.toFixed(2)} ({displayFeePercentage.toFixed(2)}%)
@@ -1207,7 +1216,7 @@ const NewTransactionDetails: FC = () => {
                     <View style={styles(theme).detailRow}>
                       <CustomText
                         variant={SLIP_LABEL_VARIANT}
-                        color={theme.colors.text.secondary}
+                        color={theme.colors.textSecondary}
                         style={slipStyles.slipLabelText}
                       >
                         Sent To
@@ -1215,7 +1224,7 @@ const NewTransactionDetails: FC = () => {
                       <CustomText
                         variant={SLIP_VALUE_VARIANT}
                         fontWeight="semiBold"
-                        color={theme.colors.text.primary}
+                        color={theme.colors.text}
                         style={slipStyles.slipValueText}
                       >
                         {displayUsername}
@@ -1227,7 +1236,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           Network
@@ -1235,7 +1244,7 @@ const NewTransactionDetails: FC = () => {
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
-                          color={theme.colors.text.primary}
+                          color={theme.colors.text}
                           style={slipStyles.slipValueText}
                         >
                           {cryptoNetwork}
@@ -1248,7 +1257,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           From Address
@@ -1264,21 +1273,21 @@ const NewTransactionDetails: FC = () => {
                           <CustomText
                             variant={SLIP_VALUE_VARIANT}
                             fontWeight="semiBold"
-                            color={theme.colors.text.primary}
+                            color={theme.colors.text}
                             numberOfLines={1}
                             style={[
                               slipStyles.slipValueText,
-                              { maxWidth: 150 },
+                              // Already elided in the middle — a maxWidth here would
+                              // tail-clip it again and eat the last characters.
+                              { flexShrink: 1, textAlign: "right" },
                             ]}
                           >
-                            {fromAddress.length > 16
-                              ? `${fromAddress.substring(0, 16)}...`
-                              : fromAddress}
+                            {shortenWalletAddress(fromAddress)}
                           </CustomText>
                           <SvgIcons.CopyOutlineBlack
                             width={14}
                             height={14}
-                            color={theme.colors.text.primary}
+                            color={theme.colors.text}
                           />
                         </TouchableOpacity>
                       </View>
@@ -1289,7 +1298,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                         >
                           To Address
                         </CustomText>
@@ -1304,18 +1313,16 @@ const NewTransactionDetails: FC = () => {
                           <CustomText
                             variant={SLIP_VALUE_VARIANT}
                             fontWeight="semiBold"
-                            color={theme.colors.text.primary}
+                            color={theme.colors.text}
                             numberOfLines={1}
                             style={{ maxWidth: 150 }}
                           >
-                            {toAddress.length > 16
-                              ? `${toAddress.substring(0, 16)}...`
-                              : toAddress}
+                            {shortenWalletAddress(toAddress)}
                           </CustomText>
                           <SvgIcons.CopyOutlineBlack
                             width={14}
                             height={14}
-                            color={theme.colors.text.primary}
+                            color={theme.colors.text}
                           />
                         </TouchableOpacity>
                       </View>
@@ -1326,7 +1333,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                         >
                           Tx Hash
                         </CustomText>
@@ -1341,7 +1348,7 @@ const NewTransactionDetails: FC = () => {
                           <CustomText
                             variant={SLIP_VALUE_VARIANT}
                             fontWeight="semiBold"
-                            color={theme.colors.text.primary}
+                            color={theme.colors.text}
                             numberOfLines={1}
                             style={{ maxWidth: 150 }}
                           >
@@ -1352,7 +1359,7 @@ const NewTransactionDetails: FC = () => {
                           <SvgIcons.CopyOutlineBlack
                             width={14}
                             height={14}
-                            color={theme.colors.text.primary}
+                            color={theme.colors.text}
                           />
                         </TouchableOpacity>
                       </View>
@@ -1363,14 +1370,14 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                         >
                           USD Value
                         </CustomText>
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
-                          color={theme.colors.text.primary}
+                          color={theme.colors.text}
                         >
                           ${parseFloat(usdValue).toFixed(2)}
                         </CustomText>
@@ -1382,7 +1389,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           Transaction Fee
@@ -1390,7 +1397,7 @@ const NewTransactionDetails: FC = () => {
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
-                          color={theme.colors.text.primary}
+                          color={theme.colors.text}
                           style={slipStyles.slipValueText}
                         >
                           {currencySymbol} {feeAmount.toFixed(2)}
@@ -1408,7 +1415,7 @@ const NewTransactionDetails: FC = () => {
                     <View style={styles(theme).detailRow}>
                       <CustomText
                         variant={SLIP_LABEL_VARIANT}
-                        color={theme.colors.text.secondary}
+                        color={theme.colors.textSecondary}
                         style={slipStyles.slipLabelText}
                       >
                         Received From
@@ -1416,7 +1423,7 @@ const NewTransactionDetails: FC = () => {
                       <CustomText
                         variant={SLIP_VALUE_VARIANT}
                         fontWeight="semiBold"
-                        color={theme.colors.text.primary}
+                        color={theme.colors.text}
                         style={slipStyles.slipValueText}
                       >
                         {receivedFromDisplay}
@@ -1428,7 +1435,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           Network
@@ -1436,7 +1443,7 @@ const NewTransactionDetails: FC = () => {
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
-                          color={theme.colors.text.primary}
+                          color={theme.colors.text}
                           style={slipStyles.slipValueText}
                         >
                           {cryptoNetwork}
@@ -1449,7 +1456,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           From Address
@@ -1465,21 +1472,21 @@ const NewTransactionDetails: FC = () => {
                           <CustomText
                             variant={SLIP_VALUE_VARIANT}
                             fontWeight="semiBold"
-                            color={theme.colors.text.primary}
+                            color={theme.colors.text}
                             numberOfLines={1}
                             style={[
                               slipStyles.slipValueText,
-                              { maxWidth: 150 },
+                              // Already elided in the middle — a maxWidth here would
+                              // tail-clip it again and eat the last characters.
+                              { flexShrink: 1, textAlign: "right" },
                             ]}
                           >
-                            {fromAddress.length > 16
-                              ? `${fromAddress.substring(0, 16)}...`
-                              : fromAddress}
+                            {shortenWalletAddress(fromAddress)}
                           </CustomText>
                           <SvgIcons.CopyOutlineBlack
                             width={14}
                             height={14}
-                            color={theme.colors.text.primary}
+                            color={theme.colors.text}
                           />
                         </TouchableOpacity>
                       </View>
@@ -1490,7 +1497,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           To Address
@@ -1506,21 +1513,21 @@ const NewTransactionDetails: FC = () => {
                           <CustomText
                             variant={SLIP_VALUE_VARIANT}
                             fontWeight="semiBold"
-                            color={theme.colors.text.primary}
+                            color={theme.colors.text}
                             numberOfLines={1}
                             style={[
                               slipStyles.slipValueText,
-                              { maxWidth: 150 },
+                              // Already elided in the middle — a maxWidth here would
+                              // tail-clip it again and eat the last characters.
+                              { flexShrink: 1, textAlign: "right" },
                             ]}
                           >
-                            {toAddress.length > 16
-                              ? `${toAddress.substring(0, 16)}...`
-                              : toAddress}
+                            {shortenWalletAddress(toAddress)}
                           </CustomText>
                           <SvgIcons.CopyOutlineBlack
                             width={14}
                             height={14}
-                            color={theme.colors.text.primary}
+                            color={theme.colors.text}
                           />
                         </TouchableOpacity>
                       </View>
@@ -1531,7 +1538,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           Tx Hash
@@ -1541,27 +1548,26 @@ const NewTransactionDetails: FC = () => {
                           style={{
                             flexDirection: "row",
                             alignItems: "center",
+                            justifyContent: "flex-end",
                             gap: 8,
+                            flexShrink: 1,
                           }}
                         >
                           <CustomText
                             variant={SLIP_VALUE_VARIANT}
                             fontWeight="semiBold"
-                            color={theme.colors.text.primary}
-                            numberOfLines={1}
+                            color={theme.colors.text}
                             style={[
                               slipStyles.slipValueText,
-                              { maxWidth: 150 },
+                              { flexShrink: 1, textAlign: "right" },
                             ]}
                           >
-                            {txHash.length > 16
-                              ? `${txHash.substring(0, 16)}...`
-                              : txHash}
+                            {txHash}
                           </CustomText>
                           <SvgIcons.CopyOutlineBlack
                             width={14}
                             height={14}
-                            color={theme.colors.text.primary}
+                            color={theme.colors.text}
                           />
                         </TouchableOpacity>
                       </View>
@@ -1572,7 +1578,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           USD Value
@@ -1580,7 +1586,7 @@ const NewTransactionDetails: FC = () => {
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
-                          color={theme.colors.text.primary}
+                          color={theme.colors.text}
                           style={slipStyles.slipValueText}
                         >
                           ${parseFloat(usdValue).toFixed(2)}
@@ -1597,7 +1603,7 @@ const NewTransactionDetails: FC = () => {
                     <View style={styles(theme).detailRow}>
                       <CustomText
                         variant={SLIP_LABEL_VARIANT}
-                        color={theme.colors.text.secondary}
+                        color={theme.colors.textSecondary}
                         style={slipStyles.slipLabelText}
                       >
                         Withdrawn To
@@ -1605,7 +1611,7 @@ const NewTransactionDetails: FC = () => {
                       <CustomText
                         variant={SLIP_VALUE_VARIANT}
                         fontWeight="semiBold"
-                        color={theme.colors.text.primary}
+                        color={theme.colors.text}
                         style={slipStyles.slipValueText}
                       >
                         {displayUsername}
@@ -1617,7 +1623,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           Network
@@ -1625,7 +1631,7 @@ const NewTransactionDetails: FC = () => {
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
-                          color={theme.colors.text.primary}
+                          color={theme.colors.text}
                           style={slipStyles.slipValueText}
                         >
                           {cryptoNetwork}
@@ -1638,7 +1644,7 @@ const NewTransactionDetails: FC = () => {
                     <View style={styles(theme).detailRow}>
                       <CustomText 
                         variant={SLIP_LABEL_VARIANT} 
-                        color={theme.colors.text.secondary}
+                        color={theme.colors.textSecondary}
                         style={slipStyles.slipLabelText}
                       >
                         From Address
@@ -1650,16 +1656,19 @@ const NewTransactionDetails: FC = () => {
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
-                          color={theme.colors.text.primary}
+                          color={theme.colors.text}
                           numberOfLines={1}
-                          style={[slipStyles.slipValueText, { maxWidth: 150 }]}
+                          style={[
+                            slipStyles.slipValueText,
+                            { flexShrink: 1, textAlign: "right" },
+                          ]}
                         >
-                          {fromAddress.length > 16 ? `${fromAddress.substring(0, 16)}...` : fromAddress}
+                          {shortenWalletAddress(fromAddress)}
                         </CustomText>
                         <SvgIcons.CopyOutlineBlack
                           width={14}
                           height={14}
-                          color={theme.colors.text.primary}
+                          color={theme.colors.text}
                         />
                       </TouchableOpacity>
                     </View>
@@ -1670,7 +1679,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           To Address
@@ -1686,21 +1695,21 @@ const NewTransactionDetails: FC = () => {
                           <CustomText
                             variant={SLIP_VALUE_VARIANT}
                             fontWeight="semiBold"
-                            color={theme.colors.text.primary}
+                            color={theme.colors.text}
                             numberOfLines={1}
                             style={[
                               slipStyles.slipValueText,
-                              { maxWidth: 150 },
+                              // Already elided in the middle — a maxWidth here would
+                              // tail-clip it again and eat the last characters.
+                              { flexShrink: 1, textAlign: "right" },
                             ]}
                           >
-                            {toAddress.length > 16
-                              ? `${toAddress.substring(0, 16)}...`
-                              : toAddress}
+                            {shortenWalletAddress(toAddress)}
                           </CustomText>
                           <SvgIcons.CopyOutlineBlack
                             width={14}
                             height={14}
-                            color={theme.colors.text.primary}
+                            color={theme.colors.text}
                           />
                         </TouchableOpacity>
                       </View>
@@ -1711,7 +1720,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           USD Value
@@ -1719,7 +1728,7 @@ const NewTransactionDetails: FC = () => {
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
-                          color={theme.colors.text.primary}
+                          color={theme.colors.text}
                           style={slipStyles.slipValueText}
                         >
                           ${parseFloat(usdValue).toFixed(2)}
@@ -1732,7 +1741,7 @@ const NewTransactionDetails: FC = () => {
                       <View style={styles(theme).detailRow}>
                         <CustomText
                           variant={SLIP_LABEL_VARIANT}
-                          color={theme.colors.text.secondary}
+                          color={theme.colors.textSecondary}
                           style={slipStyles.slipLabelText}
                         >
                           Transaction Fee
@@ -1740,7 +1749,7 @@ const NewTransactionDetails: FC = () => {
                         <CustomText
                           variant={SLIP_VALUE_VARIANT}
                           fontWeight="semiBold"
-                          color={theme.colors.text.primary}
+                          color={theme.colors.text}
                           style={slipStyles.slipValueText}
                         >
                           {currencySymbol} {feeAmount.toFixed(2)}
@@ -1755,10 +1764,10 @@ const NewTransactionDetails: FC = () => {
 
             {/* Note */}
             {transactionData.note && (
-              <View style={[styles(theme).detailRow, { borderBottomWidth: 0 }]}>
+              <View style={styles(theme).detailRow}>
                 <CustomText
                   variant={SLIP_LABEL_VARIANT}
-                  color={theme.colors.text.secondary}
+                  color={theme.colors.textSecondary}
                   style={slipStyles.slipLabelText}
                 >
                   Note
@@ -1766,7 +1775,7 @@ const NewTransactionDetails: FC = () => {
                 <CustomText
                   variant={SLIP_VALUE_VARIANT}
                   fontWeight="semiBold"
-                  color={theme.colors.text.primary}
+                  color={theme.colors.text}
                   style={[
                     slipStyles.slipValueText,
                     { maxWidth: 200, textAlign: "right" },
@@ -1781,14 +1790,14 @@ const NewTransactionDetails: FC = () => {
             <CustomText
               variant="subtitle1"
               fontWeight="semiBold"
-              color={theme.colors.text.primary}
+              color={theme.colors.text}
               style={slipStyles.coinmeFooterTitle}
             >
               Powered by Coinme
             </CustomText>
             <CustomText
               variant="body2"
-              color={theme.colors.text.tertiary}
+              color={theme.colors.textSecondary}
               style={slipStyles.coinmeFooterAddress}
             >
               255 S. King Street Suite 800 Seattle, WA 98104
@@ -1798,10 +1807,10 @@ const NewTransactionDetails: FC = () => {
               style={slipStyles.coinmeLinkRow}
               onPress={() => Linking.openURL(COINME_WEB_URL)}
             >
-              <CoinmeGlobeIcon color={theme.colors.palette.blue500} size={14} />
+              <CoinmeGlobeIcon color={"#3499E0" /* Coinme brand blue, not themed */} size={14} />
               <CustomText
                 variant="body2"
-                color={theme.colors.palette.blue500}
+                color={"#3499E0" /* Coinme brand blue, not themed */}
                 style={slipStyles.coinmeLinkText}
               >
                 coinme.com
@@ -1818,12 +1827,12 @@ const NewTransactionDetails: FC = () => {
   );
 };
 
-const styles = (theme: Theme) =>
+const styles = (theme: ITheme) =>
   StyleSheet.create({
     headerSection: {
       alignItems: "center",
       paddingVertical: 20,
-      backgroundColor: theme.colors.palette.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     avatarContainerBig: {
       marginBottom: 12,
@@ -1837,7 +1846,7 @@ const styles = (theme: Theme) =>
       width: 80,
       height: 80,
       borderRadius: 40,
-      backgroundColor: theme.colors.palette.green700,
+      backgroundColor: theme.colors.primary,
       justifyContent: "center",
       alignItems: "center",
     },
@@ -1856,22 +1865,26 @@ const styles = (theme: Theme) =>
       marginTop: 4,
     },
     whiteCard: {
-      backgroundColor: theme.colors.palette.white,
+      backgroundColor: theme.colors.surfaceElevated,
       marginHorizontal: 20,
       borderRadius: 8,
       paddingHorizontal: 20,
       paddingVertical: 10,
       marginVertical: 20,
       borderWidth: 1,
-      borderColor: theme.colors.palette.grey300,
+      borderColor: theme.colors.border,
     },
     detailRow: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
       paddingVertical: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.palette.grey100,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.border,
+    },
+    /** First row in the card — nothing above it to separate from. */
+    detailRowFirst: {
+      borderTopWidth: 0,
     },
     // Slip text styles - adjust fontSize here for direct control
     slipLabelText: {
@@ -1881,7 +1894,7 @@ const styles = (theme: Theme) =>
       fontSize: SLIP_VALUE_FONT_SIZE, // Change this value to adjust value font size
     },
     screenshotContainer: {
-      backgroundColor: theme.colors.palette.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderRadius: 8,
       padding: 0,
     },

@@ -32,7 +32,15 @@ export const useCapturing = () => {
 
 const BankDetailsDisplay: React.FC = () => {
   const { theme } = useTheme();
-  const newTheme = useNewTheme();
+  const { theme: newTheme } = useNewTheme();
+  /**
+   * ReceiveQRCard renders this inside its fixed-white capture card on iOS, but outside it
+   * on Android — where it sits on the themed page. So the ink has to follow the surface it
+   * actually lands on. See ReceiveQRCard's iOS/Android bankDetails branches.
+   */
+  // Fixed, not themed on iOS: that branch renders on a hard-coded white card.
+  const inkColor =
+    Platform.OS === 'ios' ? newTheme.colors.black : newTheme.colors.text;
   const { walletData, bankLists } = useSelectorAction() as any;
   const route = useRoute<any>();
   const { isCapturing } = useCapturing();
@@ -84,7 +92,7 @@ const BankDetailsDisplay: React.FC = () => {
     return null;
   }
 
-  const styles = getStyles(newTheme.theme);
+  const styles = getStyles(newTheme);
 
 
 
@@ -106,7 +114,7 @@ const BankDetailsDisplay: React.FC = () => {
             <CustomText
               variant='caption'
               fontWeight="medium"
-              style={styles.detailValue}
+              style={[styles.detailValue, { color: inkColor }]}
             >
               {walletData?.name}
             </CustomText>
@@ -115,7 +123,7 @@ const BankDetailsDisplay: React.FC = () => {
                 onPress={() => copyToClipboard(walletData?.name, "Name")}
                 style={styles.iconButton}
               >
-                <SvgIcons.CopyOutlineBlack width={20} height={20} />
+                <SvgIcons.CopyOutlineBlack width={20} height={20} color={inkColor} />
               </TouchableOpacity>
             )}
           </View>
@@ -130,7 +138,7 @@ const BankDetailsDisplay: React.FC = () => {
             <CustomText
               variant='caption'
               fontWeight="medium"
-              style={styles.detailValue}
+              style={[styles.detailValue, { color: inkColor }]}
             >
               {payairoBank?.account_number || "N/A"}
             </CustomText>
@@ -141,7 +149,7 @@ const BankDetailsDisplay: React.FC = () => {
                 }
                 style={styles.iconButton}
               >
-                <SvgIcons.CopyOutlineBlack width={20} height={20} />
+                <SvgIcons.CopyOutlineBlack width={20} height={20} color={inkColor} />
               </TouchableOpacity>
             )}
           </View>
@@ -156,7 +164,7 @@ const BankDetailsDisplay: React.FC = () => {
             <CustomText
               variant='caption'
               fontWeight="medium"
-              style={styles.detailValue}
+              style={[styles.detailValue, { color: inkColor }]}
             >
               {payairoBank?.ref_code || "N/A"}
             </CustomText>
@@ -167,7 +175,7 @@ const BankDetailsDisplay: React.FC = () => {
                 }
                 style={styles.iconButton}
               >
-                <SvgIcons.CopyOutlineBlack width={20} height={20} />
+                <SvgIcons.CopyOutlineBlack width={20} height={20} color={inkColor} />
               </TouchableOpacity>
             )}
           </View>
@@ -211,6 +219,8 @@ const getStyles = (theme: ITheme) =>
       justifyContent: "flex-end",
     },
     detailValue: {
+      // Fixed, not themed: base value only — every call site overrides it with `inkColor`,
+      // which picks the right ink for the surface this lands on. See the component body.
       color: theme.colors.black,
     },
     iconButton: {

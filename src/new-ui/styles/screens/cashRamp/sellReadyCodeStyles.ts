@@ -46,16 +46,16 @@ export const sellReadyCodeStyles = (theme: ITheme) =>
       justifyContent: 'center',
     },
     statusCardTitle: {
-      color: theme.colors.white,
+      color: theme.colors.onPrimary,
       marginBottom: theme.spacing.sm,
     },
     statusCardBody: {
-      color: theme.colors.white,
+      color: theme.colors.onPrimary,
       opacity: 0.9,
       lineHeight: 22,
     },
     readyCodeValue: {
-      color: theme.colors.white,
+      color: theme.colors.onPrimary,
       marginTop: theme.spacing.sm,
       letterSpacing: 1,
     },
@@ -74,7 +74,7 @@ export const sellReadyCodeStyles = (theme: ITheme) =>
     },
     darkModalOverlay: {
       flex: 1,
-      backgroundColor: "rgba(0,0,0,0.65)",
+      backgroundColor: theme.colors.overlay,
       justifyContent: "center",
       paddingHorizontal: theme.spacing.lg,
     },
@@ -85,12 +85,12 @@ export const sellReadyCodeStyles = (theme: ITheme) =>
       alignItems: "center",
     },
     darkModalTitle: {
-      color: theme.colors.white,
+      color: theme.colors.onPrimary,
       textAlign: "center",
       marginBottom: theme.spacing.md,
     },
     darkModalBody: {
-      color: theme.colors.white,
+      color: theme.colors.onPrimary,
       textAlign: "center",
       opacity: 0.92,
       lineHeight: 22,

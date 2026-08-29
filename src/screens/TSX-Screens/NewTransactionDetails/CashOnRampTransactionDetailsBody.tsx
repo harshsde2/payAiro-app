@@ -11,12 +11,6 @@ import type { IUnifiedTransaction } from "../UnifiedTransactions/types";
 import { CASH_ONRAMP_PROCESSING_MESSAGE } from "new-ui/components/common-components/RecentActivityCard/cashOnRampActivity";
 import { showError, showSuccess } from "utils/toast";
 
-function truncateId(id: string, head = 10, tail = 5): string {
-  const t = id.trim();
-  if (t.length <= head + tail + 3) return t;
-  return `${t.slice(0, head)}...${t.slice(-tail)}`;
-}
-
 function formatUsd(value: string | null | undefined): string | null {
   if (!value) return null;
   const n = Number.parseFloat(value);
@@ -61,7 +55,8 @@ const cashOnRampDetailsStyles = (theme: ITheme) =>
     rowLast: { borderBottomWidth: 0 },
     label: { flex: 1, marginRight: theme.spacing.sm },
     valueCol: { flex: 1.2, alignItems: "flex-end" },
-    copyRow: { flexDirection: "row", alignItems: "center", gap: theme.spacing.sm },
+    // flexShrink lets a full-length id/hash wrap inside the value column.
+    copyRow: { flexDirection: "row", alignItems: "center", gap: theme.spacing.sm, flexShrink: 1 },
     link: { textDecorationLine: "underline" },
     footer: { marginTop: theme.spacing.lg, marginBottom: theme.spacing.xl },
   });
@@ -109,10 +104,16 @@ const CashOnRampTransactionDetailsBody: React.FC<Props> = ({
     showSuccess("Copied", `${label} copied to clipboard.`);
   }, []);
 
+  // Identifiers (transaction id / hash) are shown IN FULL and wrap — they are copied and
+  // quoted to support, so clipping the tail would hide exactly the distinguishing part.
   const renderCopyValue = (value: string, label: string) => (
     <View style={styles.copyRow}>
-      <CustomText variant="body" color={theme.colors.text} style={{ textAlign: "right" }}>
-        {truncateId(value)}
+      <CustomText
+        variant="body"
+        color={theme.colors.text}
+        style={{ textAlign: "right", flexShrink: 1 }}
+      >
+        {value}
       </CustomText>
       <TouchableOpacity onPress={() => onCopy(value, label)}>
         <CustomText variant="body" color={theme.colors.text} style={styles.link}>
@@ -134,10 +135,10 @@ const CashOnRampTransactionDetailsBody: React.FC<Props> = ({
   }
 
   return (
-    <ScreenWrapper safeArea safeAreaEdges={["bottom"]} backgroundColor={theme.colors.white}>
+    <ScreenWrapper safeArea safeAreaEdges={["bottom"]} backgroundColor={theme.colors.background}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <View style={[styles.badge, { backgroundColor: statusBg }]}>
-          <CustomText variant="body" fontWeight="semiBold" color={theme.colors.white}>
+          <CustomText variant="body" fontWeight="semiBold" color={theme.colors.onPrimary}>
             {statusLabel}
           </CustomText>
         </View>

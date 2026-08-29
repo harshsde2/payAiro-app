@@ -26,7 +26,7 @@ export const selectPaymentMethodStyles = (theme: ITheme) =>
       paddingVertical: theme.spacing.md,
       paddingHorizontal: theme.spacing.lg,
       borderRadius: 18,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderWidth: 1,
       borderColor: theme.colors.border,
     },

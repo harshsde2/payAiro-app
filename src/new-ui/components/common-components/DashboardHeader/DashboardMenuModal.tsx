@@ -39,7 +39,7 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
       {
         key: 'notification' as const,
         label: 'Notification',
-        icon: <AppIcon.Notification width={18} height={18} />,
+        icon: <AppIcon.Notification width={18} height={18} color={theme.colors.text} />,
         routeName: NAVIGATION_SCREENS.NEW_NOTIFICATION_SCREEN,
         badgeLabel: unreadLabel,
       },
@@ -52,13 +52,13 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
       {
         key: 'paymentMethods' as const,
         label: 'Payment method',
-        icon: <AppIcon.DebitCard width={18} height={18} />,
+        icon: <AppIcon.DebitCard width={18} height={18} color={theme.colors.text} />,
         routeName: NAVIGATION_SCREENS.PAYMENT_METHODS_SCREEN,
       },
       {
         key: 'transactionLimit' as const,
         label: 'Transaction limit',
-        icon: <AppIcon.TransactionLimit width={18} height={18} />,
+        icon: <AppIcon.TransactionLimit width={18} height={18} color={theme.colors.text} />,
         routeName: NAVIGATION_SCREENS.TRANSACTION_LIMIT_SCREEN,
       },
       // {
@@ -76,18 +76,18 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
       {
         key: 'settings' as const,
         label: 'Settings',
-        icon: <AppIcon.Settings width={18} height={18} />,
+        icon: <AppIcon.Settings width={18} height={18} color={theme.colors.text} />,
         routeName: NAVIGATION_SCREENS.NEW_SETTINGS_SCREEN,
       },
       {
         key: 'support' as const,
         label: 'Support',
-        icon: <AppIcon.Headphones width={18} height={18} />,
+        icon: <AppIcon.Headphones width={18} height={18} color={theme.colors.text} />,
         routeName: NAVIGATION_SCREENS.FRESHCHAT_SCREEN,
       },
       // 'About' omitted: no route/screen yet.
     ],
-    [unreadLabel]
+    [unreadLabel, theme.colors.text]
   );
 
   const handlePress = (routeName: AppRouteName) => {
@@ -121,7 +121,7 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
     >
       <Pressable style={styles.menuBackdrop} onPress={onClose}>
         <View style={styles.menuCardWrapper}>
-          <View style={[styles.menuCard, { backgroundColor: theme.colors.white }]}>
+          <View style={[styles.menuCard, { backgroundColor: theme.colors.surfaceElevated }]}>
             {menuItems.map((item: any) => (
               <TouchableOpacity
                 key={item.key}
@@ -143,7 +143,7 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
                       </CustomText>
                     </View>
                   ) : null}
-                  <AppIcon.ChevronRight width={16} height={16} />
+                  <AppIcon.ChevronRight width={16} height={16} color={theme.colors.text} />
                 </View>
               </TouchableOpacity>
             ))}
@@ -176,19 +176,19 @@ const DashboardMenuModal: React.FC<IDashboardMenuModalProps> = ({
       animationType="slide"
       onRequestClose={handleLogoutCancel}
     >
-      <Pressable style={logoutModalStyles.backdrop} onPress={handleLogoutCancel}>
-        <Pressable style={[logoutModalStyles.sheet, { backgroundColor: theme.colors.white }]} onPress={() => {}}>
+      <Pressable style={[logoutModalStyles.backdrop, { backgroundColor: theme.colors.overlay }]} onPress={handleLogoutCancel}>
+        <Pressable style={[logoutModalStyles.sheet, { backgroundColor: theme.colors.surfaceElevated }]} onPress={() => {}}>
           <CustomText variant="h4" fontWeight="bold" style={logoutModalStyles.title}>
             Logout
           </CustomText>
 
-          <View style={logoutModalStyles.warningBox}>
+          <View style={[logoutModalStyles.warningBox, { backgroundColor: theme.colors.warningSurface, borderColor: theme.colors.warning }]}>
             <AppIcon.AlertTriangle width={20} height={20} />
             <CustomText
               variant="body"
               size={14}
               fontWeight="regular"
-              color="#8B6914"
+              color={theme.colors.warning}
               style={logoutModalStyles.warningText}
             >
               Are you sure you want to logout?

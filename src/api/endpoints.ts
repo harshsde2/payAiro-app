@@ -158,6 +158,8 @@ export const USER_AUTH = {
   KYC_VERIFY: "api/v1/users/profile/kyc-verify/",
   ADDRESS_UPDATE: "api/v1/users/address/update/",
   USERS_ME: "api/v1/users/me/",
+  /** Upload/replace the signed-in user's profile avatar (multipart, field `image`). */
+  PROFILE_AVATAR: "api/v1/users/profile/avatar/",
   /** Unauthenticated support/account-recovery form (multipart). */
   GUEST_QUERY: "api/v1/users/guest-query/",
   PHONE_OTP_REQUEST: "api/v1/users/me/phone-otp/request/",
@@ -276,4 +278,9 @@ export const STATE_COMPLIANCE = {
   /** One-time + pre-transaction acknowledgments combined (Acknowledgment History screen). */
   COMBINED_DISCLOSURE_HISTORY: "api/v1/state-compliance/me/combined-disclosure-history/",
 };
- 
+
+// FAQ (user-facing) endpoints — FastAPI, relative to `USER_API_BASE_URL`. Public — no JWT required.
+export const FAQ = {
+  /** List FAQs. Supports ?search=<query> (server-side filter over question/answer/category). */
+  LIST: "api/v1/users/faq/",
+};

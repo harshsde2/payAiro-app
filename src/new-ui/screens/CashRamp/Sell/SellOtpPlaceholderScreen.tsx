@@ -207,7 +207,7 @@ const SellOtpPlaceholderScreen: React.FC = () => {
     return (
       <ScreenWrapper
         safeArea
-        backgroundColor={theme.colors.white}
+        backgroundColor={theme.colors.background}
         contentStyle={{ flex: 1, padding: theme.spacing.base }}
       >
         <CustomText variant="body" color={theme.colors.text}>
@@ -224,7 +224,7 @@ const SellOtpPlaceholderScreen: React.FC = () => {
     <ScreenWrapper
       safeArea
       safeAreaEdges={["top", "bottom", "left", "right"]}
-      backgroundColor={theme.colors.white}
+      backgroundColor={theme.colors.background}
       contentStyle={{ flex: 1 }}
       scrollable
       contentContainerStyle={styles.contentContainer}
@@ -232,7 +232,7 @@ const SellOtpPlaceholderScreen: React.FC = () => {
     >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} accessibilityLabel="Go back">
-          <AppIcon.ArrowLeft width={25} height={25} />
+          <AppIcon.ArrowLeft width={25} height={25} color={theme.colors.text} />
         </TouchableOpacity>
         <View style={{ flex: 1, alignItems: "center", marginRight: 25 }}>
           <CustomText variant="h1" fontWeight="bold" size={20}>

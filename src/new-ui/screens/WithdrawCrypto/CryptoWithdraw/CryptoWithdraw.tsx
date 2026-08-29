@@ -36,7 +36,15 @@ import PayButton from "@new-ui/screens/Send/EnterAmount/PayButton";
 import RecipientHeader from "@new-ui/screens/Send/EnterAmount/RecipientHeader";
 import type { FundingSource } from "@new-ui/screens/Send/EnterAmount/enterAmount.types";
 import type { CryptoFundingItem } from "@new-ui/screens/Send/EnterAmount/cryptoFundingTypes";
-import { showError } from "utils/toast";
+import { showError, getApiErrorMessage } from "utils/toast";
+import { useTransactionSubmit } from "hooks/useTransactionSubmit";
+import {
+  buildIntentSignature,
+  isOutcomeUnknown,
+  UNKNOWN_OUTCOME_MESSAGE,
+} from "services/transactionGuard";
+import { confirmDuplicateTransaction } from "utils/confirmDuplicateTransaction";
+import { afterModalTransition } from "utils/afterModalTransition";
 import { useAppLock } from "hooks/useAppLock";
 import { fetchWebSessionId } from "services/coinmeRiskLifecycle";
 import { useCoinmeAccountId } from "hooks/useCoinmeAccountId";
@@ -93,6 +101,9 @@ const CryptoWithdraw: React.FC = () => {
   const { data: fetchedCryptoBalances = [] } = useCryptoAssetsListData("USD");
   const { requestPaymentVerification } = useAppLock();
   const tradeExecute = useCoinmeTradeExecute();
+  // One POST per transaction intent, regardless of taps, retries or re-renders.
+  const { submit: submitTransaction, isSubmitting: isSubmittingTransaction } =
+    useTransactionSubmit();
 
   // Registered-state stablecoin (TX → DAI, others → USDC): the asset this screen sells.
   const sellAsset = useStateStablecoin();
@@ -361,83 +372,129 @@ const CryptoWithdraw: React.FC = () => {
       return;
     }
 
-    navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
-      isLoading: true,
-      transactionData: null,
-      isSuccess: false,
-      isError: false,
-      customTitle: "Processing withdrawal",
-      customDescription: "Please wait while we complete your request…",
-    } as never);
+    const isFiatEntry = inputMode === "fiat";
+    // Send the entered amount as-is. The 2% entry buffer keeps room in the wallet
+    // so the backend can auto-deduct the fee on top.
+    const payloadAmountValue = String(isFiatEntry ? amount : assetAmount);
+    const payloadAmountCurrency = isFiatEntry
+      ? coinmeCryptoAsset.fiatCurrency || "USD"
+      : coinmeCryptoAsset.asset;
+    const paymentMethodId =
+      selectedPaymentMethod?.payment_method_id ?? COINME_DEFAULTS.paymentMethodId;
 
-    try {
-      if (!coinmeAccountId) {
-        throw new Error(
-          "Your Coinme account is not ready yet. Please complete onboarding and try again."
-        );
-      }
+    // NOTE: webSessionId is deliberately NOT part of the signature — it is minted fresh
+    // per attempt, so including it would make every retry look like a new intent.
+    const signature = buildIntentSignature([
+      "trade",
+      "sell",
+      coinmeCryptoAsset.chain,
+      coinmeCryptoAsset.asset,
+      payloadAmountValue,
+      payloadAmountCurrency,
+      paymentMethodId,
+    ]);
 
-      const webSessionId = await fetchWebSessionId({
-        accountId: coinmeAccountId,
-        riskFlow: 'cardtransaction',
-      });
+    await submitTransaction(
+      signature,
+      async (idempotencyKey) => {
+        navigation.navigate(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+          isLoading: true,
+          transactionData: null,
+          isSuccess: false,
+          isError: false,
+          customTitle: "Processing withdrawal",
+          customDescription: "Please wait while we complete your request…",
+        } as never);
 
-      const isFiatEntry = inputMode === "fiat";
-      // Send the entered amount as-is. The 2% entry buffer keeps room in the wallet
-      // so the backend can auto-deduct the fee on top.
-      const payloadAmountValue = isFiatEntry ? amount : assetAmount;
-      const payloadAmountCurrency = isFiatEntry
-        ? coinmeCryptoAsset.fiatCurrency || "USD"
-        : coinmeCryptoAsset.asset;
+        try {
+          if (!coinmeAccountId) {
+            throw new Error(
+              "Your Coinme account is not ready yet. Please complete onboarding and try again."
+            );
+          }
 
-      const payload: CoinmeTradeExecutePayload = {
-        tradeType: "sell",
-        chain: coinmeCryptoAsset.chain,
-        cryptoCurrencyCode: coinmeCryptoAsset.asset,
-        fiatCurrencyCode: coinmeCryptoAsset.fiatCurrency || "USD",
-        amountValue: String(payloadAmountValue),
-        amountCurrencyCode: payloadAmountCurrency,
-        paymentMethodId:
-          selectedPaymentMethod?.payment_method_id ?? COINME_DEFAULTS.paymentMethodId,
-        sourceWalletAddress:
-          coinmeCryptoAsset.sourceWalletAddress || COINME_DEFAULTS.sourceWalletAddress,
-        webSessionId,
-      };
+          const webSessionId = await fetchWebSessionId({
+            accountId: coinmeAccountId,
+            riskFlow: 'cardtransaction',
+          });
 
-      const res = await tradeExecute.mutateAsync(payload);
-      const ok = res?.ok ?? res?.status ?? true;
+          const payload: CoinmeTradeExecutePayload = {
+            tradeType: "sell",
+            chain: coinmeCryptoAsset.chain,
+            cryptoCurrencyCode: coinmeCryptoAsset.asset,
+            fiatCurrencyCode: coinmeCryptoAsset.fiatCurrency || "USD",
+            amountValue: payloadAmountValue,
+            amountCurrencyCode: payloadAmountCurrency,
+            paymentMethodId,
+            sourceWalletAddress:
+              coinmeCryptoAsset.sourceWalletAddress || COINME_DEFAULTS.sourceWalletAddress,
+            webSessionId,
+          };
 
-      queryClient.invalidateQueries({ queryKey: cryptoKeys.allCryptoBalances() });
-      queryClient.invalidateQueries({ queryKey: bankKeys.balance() });
-      // This sell consumed part of the daily/monthly allowance — refresh the meter.
-      queryClient.invalidateQueries({ queryKey: coinmeTransactionLimitsKeys.all });
+          const res = await tradeExecute.mutateAsync({ ...payload, idempotencyKey });
+          const ok = res?.ok ?? res?.status ?? true;
 
-      navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
-        isLoading: false,
-        transactionData: res,
-        isSuccess: !!ok,
-        isError: !ok,
-        customTitle: ok ? "Withdrawal completed" : "Withdrawal unsuccessful",
-        customDescription: ok
-          ? "Your funds will be sent to your selected debit card according to your bank's timing."
-          : "Unable to complete withdrawal. Please try again.",
-        hideCoinmeCurrencyDetails: true,
-      } as never);
+          queryClient.invalidateQueries({ queryKey: cryptoKeys.allCryptoBalances() });
+          queryClient.invalidateQueries({ queryKey: bankKeys.balance() });
+          // This sell consumed part of the daily/monthly allowance — refresh the meter.
+          queryClient.invalidateQueries({ queryKey: coinmeTransactionLimitsKeys.all });
 
-      if (!ok) {
-        showError("Withdrawal failed", "Unable to complete withdrawal. Please try again.");
-      }
-    } catch {
-      navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
-        isLoading: false,
-        transactionData: null,
-        isSuccess: false,
-        isError: true,
-        customTitle: "Withdrawal unsuccessful",
-        customDescription: "Unable to complete withdrawal. Please try again.",
-      } as never);
-      showError("Withdrawal failed", "Unable to complete withdrawal. Please try again.");
-    }
+          // A 2xx body can still carry a rejection (`ok: false`) — its `message` /
+          // `error.message` is the reason to show, not a generic line.
+          const failureMessage = ok
+            ? undefined
+            : getApiErrorMessage(res, "Unable to complete withdrawal. Please try again.");
+
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+            isLoading: false,
+            transactionData: res,
+            isSuccess: !!ok,
+            isError: !ok,
+            customTitle: ok ? "Withdrawal Request Submitted" : "Withdrawal unsuccessful",
+            ...(ok
+              ? {
+                  customDescription:
+                    "Your funds will be transferred to your selected debit card in accordance with your bank's processing timeline.",
+                }
+              : { errorMessage: failureMessage }),
+            hideCoinmeCurrencyDetails: true,
+          } as never);
+
+          if (!ok) {
+            showError("Withdrawal failed", failureMessage!);
+          }
+        } catch (err: unknown) {
+          // No response at all → we do NOT know whether the withdrawal executed. Never
+          // offer a plain retry here; send the user to check Activity instead.
+          const unknown = isOutcomeUnknown(err);
+          // The backend answered (e.g. 503 "This banking rail is currently under
+          // maintenance") — show ITS reason. Only a no-response failure gets the
+          // generic unknown-outcome copy.
+          const description = unknown
+            ? UNKNOWN_OUTCOME_MESSAGE
+            : getApiErrorMessage(err, "Unable to complete withdrawal. Please try again.");
+          navigation.replace(NAVIGATION_SCREENS.TRANSACTION_RESULT as never, {
+            isLoading: false,
+            transactionData: null,
+            isSuccess: false,
+            isError: true,
+            customTitle: unknown ? "Withdrawal not confirmed" : "Withdrawal unsuccessful",
+            errorMessage: description,
+            outcomeUnknown: unknown,
+          } as never);
+          showError(
+            unknown ? "Couldn't confirm" : "Withdrawal failed",
+            description
+          );
+          // Rethrow so the guard records the outcome and keeps the intent locked.
+          throw err;
+        }
+      },
+      {
+        onDuplicate: (retry) => confirmDuplicateTransaction(retry),
+        onUnknownOutcome: () => showError("Couldn't confirm", UNKNOWN_OUTCOME_MESSAGE),
+      },
+    );
   }, [
     amount,
     assetAmount,
@@ -446,6 +503,7 @@ const CryptoWithdraw: React.FC = () => {
     inputMode,
     navigation,
     selectedPaymentMethod?.payment_method_id,
+    submitTransaction,
     tradeExecute,
   ]);
 
@@ -535,7 +593,7 @@ const CryptoWithdraw: React.FC = () => {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <AppIcon.ArrowLeft width={25} height={25} onPress={() => navigation.goBack()} />
+            <AppIcon.ArrowLeft width={25} height={25} color={theme.colors.text} onPress={() => navigation.goBack()} />
             <View style={styles.headerTitleContainer}>
               <CustomText variant="h1" fontWeight="bold" size={20}>
                 Withdraw
@@ -600,7 +658,7 @@ const CryptoWithdraw: React.FC = () => {
                         backgroundColor: theme.colors.primary,
                       }}
                     >
-                      <CustomText variant="caption" color={theme.colors.white}>
+                      <CustomText variant="caption" color={theme.colors.onPrimary}>
                         Selected
                       </CustomText>
                     </View>
@@ -629,7 +687,7 @@ const CryptoWithdraw: React.FC = () => {
                         backgroundColor: theme.colors.primary,
                       }}
                     >
-                      <CustomText variant="caption" color={theme.colors.white}>
+                      <CustomText variant="caption" color={theme.colors.onPrimary}>
                         Selected
                       </CustomText>
                     </View>
@@ -641,6 +699,7 @@ const CryptoWithdraw: React.FC = () => {
               <PayButton
                 disabled={
                   (selectedPaymentMode === "debit" && tradeExecute.isPending) ||
+                  isSubmittingTransaction ||
                   !!limitError ||
                   !!balanceError
                 }
@@ -681,11 +740,16 @@ const CryptoWithdraw: React.FC = () => {
           expectedFeeLoading={withdrawQuoteEnabled && isWithdrawQuoteLoading}
           feeLabel="Expected Instant Withdrawal Fee"
           totalLabel="Total (Including Withdrawal fee)"
-          isSubmitting={tradeExecute.isPending}
+          isSubmitting={tradeExecute.isPending || isSubmittingTransaction}
           onClose={() => setShowConfirmModal(false)}
           onConfirm={() => {
             setShowConfirmModal(false);
-            requestPaymentVerification(handleActionsAfterPinVerified);
+            // Wait for this modal's dismissal to finish before presenting the lock
+            // screen's modal — dismiss-then-present in one tick leaves a stuck black
+            // screen on iOS.
+            afterModalTransition(() =>
+              requestPaymentVerification(handleActionsAfterPinVerified),
+            );
           }}
         />
       </KeyboardAvoidingView>

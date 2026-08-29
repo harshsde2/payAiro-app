@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { useSelector } from 'react-redux';
-import { getPin, setPin, getNumber, setNumber, removeItem, getAppLockTimeoutMs, STORAGE_KEYS } from 'storage/mmkv';
+import { getPin, setPin, getNumber, setNumber, removeItem, getAppLockTimeoutMs, getTransactionBiometricEnabled, STORAGE_KEYS } from 'storage/mmkv';
 import { readAuthSession } from 'auth/authSession';
 import { getBiometric } from 'services/Auth';
 import { userApiClient } from 'api/userApiClient';
@@ -22,6 +22,11 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
   const [hasPin, setHasPin] = useState(false);
   const [showPinScreen, setShowPinScreen] = useState(false);
   const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
+  // Payments have their own biometric preference — read synchronously from MMKV so the
+  // lock screen can decide PIN-vs-biometric on its very first render.
+  const [isTransactionBiometricEnabled, setIsTransactionBiometricEnabled] = useState(
+    () => getTransactionBiometricEnabled()
+  );
   const [paymentVerificationRequest, setPaymentVerificationRequest] = useState<{
     onVerified: () => void;
     requirePinSetup?: boolean;
@@ -123,9 +128,19 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
     }
   }, [isLogin]);
 
+  // Same shape as refreshBiometricStatus, but synchronous (MMKV) and scoped to payments.
+  const refreshTransactionBiometricStatus = useCallback(() => {
+    if (!isLogin) {
+      setIsTransactionBiometricEnabled(false);
+      return;
+    }
+    setIsTransactionBiometricEnabled(getTransactionBiometricEnabled());
+  }, [isLogin]);
+
   useEffect(() => {
     refreshBiometricStatus();
-  }, [refreshBiometricStatus]);
+    refreshTransactionBiometricStatus();
+  }, [refreshBiometricStatus, refreshTransactionBiometricStatus]);
 
   // Check PIN status on mount and when isLogin changes
   useEffect(() => {
@@ -323,6 +338,8 @@ export const AppLockProvider: React.FC<AppLockProviderProps> = ({ children }) =>
         setNativeModalVisible,
         isBiometricEnabled,
         refreshBiometricStatus,
+        isTransactionBiometricEnabled,
+        refreshTransactionBiometricStatus,
         showPinScreen,
         requestShowPinScreen,
         resetBiometricFailures,

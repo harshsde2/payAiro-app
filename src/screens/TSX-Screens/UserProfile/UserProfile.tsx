@@ -11,7 +11,7 @@ import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useUserProfileTransactions } from "query/hooks/useUserDetails";
-import { useTheme } from "styles/ThemeContext";
+import { useTheme } from "@new-ui/styles/ThemeContext";
 import moment from "moment";
 import { UserTransaction } from "./types";
 import type { ISendScreenRouteParams } from "screens/Dashboard/types";
@@ -92,17 +92,17 @@ const UserProfile = () => {
       ? item.sentBy?.username || "Unknown"
       : item.sentTo?.username || "Unknown";
 
-    let amountColor = theme.colors.text.primary;
-    if (isFailed) amountColor = theme.colors.kycStatusLight.Rejected;
-    else if (isIncoming) amountColor = theme.colors.kycStatusDark.Verified;
+    let amountColor = theme.colors.text;
+    if (isFailed) amountColor = theme.colors.error;
+    else if (isIncoming) amountColor = theme.colors.success;
 
-    const iconColor = theme.colors.button.primary.background;
+    const iconColor = theme.colors.primary;
 
     return (
       <View
         style={[
           styles.transactionItem,
-          { borderBottomColor: theme.colors.border.light },
+          { borderBottomColor: theme.colors.border },
         ]}
       >
         <View style={styles.transactionLeft}>
@@ -111,7 +111,7 @@ const UserProfile = () => {
               styles.iconCircle,
               {
                 backgroundColor: isFailed
-                  ? theme.colors.kycStatusLight.Rejected
+                  ? theme.colors.error
                   : iconColor,
               },
             ]}
@@ -119,13 +119,13 @@ const UserProfile = () => {
             {isFailed ? "X" : isIncoming ? <SvgIcons.ArrowDown width={15} height={15} /> : <SvgIcons.ArrowUp width={15} height={15} />}
           </View>
           <View style={{ marginLeft: 12 }}>
-            <Text style={[styles.txName, { color: theme.colors.text.primary }]}>
+            <Text style={[styles.txName, { color: theme.colors.text }]}>
               {displayName}
             </Text>
             <Text
               style={[
                 styles.txSubtitle,
-                { color: theme.colors.text.secondary },
+                { color: theme.colors.textSecondary },
               ]}
             >
               {isIncoming ? "Received" : "Paid"} • {formatDate(item.createdAt)}
@@ -142,8 +142,8 @@ const UserProfile = () => {
               styles.txStatus,
               {
                 color: isFailed
-                  ? theme.colors.kycStatusLight.Rejected
-                  : theme.colors.kycStatusDark.Verified,
+                  ? theme.colors.error
+                  : theme.colors.success,
               },
             ]}
           >
@@ -161,7 +161,7 @@ const UserProfile = () => {
         <View style={styles.centerContainer}>
           <ActivityIndicator
             size="large"
-            color={theme.colors.button.primary.background}
+            color={theme.colors.primary}
           />
         </View>
       </ScreenContainer>
@@ -173,7 +173,7 @@ const UserProfile = () => {
       <ScreenContainer scrollable padding={0}>
         <HeaderTitle title="User Profile" leftIcon="true" />
         <View style={styles.centerContainer}>
-          <Text style={{ color: theme.colors.text.primary }}>
+          <Text style={{ color: theme.colors.text }}>
             Unable to load profile: user id missing.
           </Text>
         </View>
@@ -186,7 +186,7 @@ const UserProfile = () => {
       <ScreenContainer scrollable padding={0}>
         <HeaderTitle title="User Profile" leftIcon="true" />
         <View style={styles.centerContainer}>
-          <Text style={{ color: theme.colors.text.primary }}>
+          <Text style={{ color: theme.colors.text }}>
             {error ? "Failed to load user details" : "User not found"}
           </Text>
         </View>
@@ -203,8 +203,8 @@ const UserProfile = () => {
           style={[
             styles.card,
             {
-              backgroundColor: theme.colors.card.background,
-              borderColor: theme.colors.border.light,
+              backgroundColor: theme.colors.surfaceElevated,
+              borderColor: theme.colors.border,
             },
           ]}
         >
@@ -218,14 +218,14 @@ const UserProfile = () => {
               <View
                 style={[
                   styles.avatar,
-                  { backgroundColor: theme.colors.palette.green200 },
+                  { backgroundColor: theme.colors.primaryLight },
                 ]}
               >
                 <CustomText
                   style={{
                     fontSize: 32,
                     fontWeight: "bold",
-                    color: theme.colors.palette.green700,
+                    color: theme.colors.primary,
                   }}
                 >
                   {user.first_name?.charAt(0)?.toUpperCase()}
@@ -235,7 +235,7 @@ const UserProfile = () => {
             )}
             <View style={styles.profileInfo}>
               <CustomText
-                style={[styles.name, { color: theme.colors.text.primary }]}
+                style={[styles.name, { color: theme.colors.text }]}
               >
                 {user.first_name} {user.last_name}
               </CustomText>
@@ -254,14 +254,14 @@ const UserProfile = () => {
               style={[
                 styles.btn,
                 styles.btnPrimary,
-                { backgroundColor: theme.colors.button.primary.background },
+                { backgroundColor: theme.colors.primary },
               ]}
             >
               <SvgIcons.ArrowUp width={15} height={15} style={{ marginRight: 10 }} />
               <Text
                 style={[
                   styles.btnText,
-                  { color: theme.colors.button.primary.text },
+                  { color: theme.colors.onPrimary },
                 ]}
               >
                 Pay
@@ -274,14 +274,14 @@ const UserProfile = () => {
           style={[
             styles.card,
             {
-              backgroundColor: theme.colors.card.background,
-              borderColor: theme.colors.border.light,
+              backgroundColor: theme.colors.surfaceElevated,
+              borderColor: theme.colors.border,
               marginTop: 16,
             },
           ]}
         >
           <Text
-            style={[styles.sectionTitle, { color: theme.colors.text.primary }]}
+            style={[styles.sectionTitle, { color: theme.colors.text }]}
           >
             Account Details
           </Text>
@@ -289,18 +289,18 @@ const UserProfile = () => {
           <View
             style={[
               styles.detailRow,
-              { borderBottomColor: theme.colors.border.light },
+              { borderBottomColor: theme.colors.border },
             ]}
           >
             <Text
-              style={[styles.detailLabel, { color: theme.colors.text.primary }]}
+              style={[styles.detailLabel, { color: theme.colors.text }]}
             >
               Payairo Tag
             </Text>
             <Text
               style={[
                 styles.detailValue,
-                { color: theme.colors.text.secondary },
+                { color: theme.colors.textSecondary },
               ]}
             >
               {user.username}
@@ -309,18 +309,18 @@ const UserProfile = () => {
           <View
             style={[
               styles.detailRow,
-              { borderBottomColor: theme.colors.border.light },
+              { borderBottomColor: theme.colors.border },
             ]}
           >
             <Text
-              style={[styles.detailLabel, { color: theme.colors.text.primary }]}
+              style={[styles.detailLabel, { color: theme.colors.text }]}
             >
               Email
             </Text>
             <Text
               style={[
                 styles.detailValue,
-                { color: theme.colors.text.secondary },
+                { color: theme.colors.textSecondary },
               ]}
             >
               {user.email}
@@ -329,18 +329,18 @@ const UserProfile = () => {
           <View
             style={[
               styles.detailRow,
-              { borderBottomColor: theme.colors.border.light },
+              { borderBottomColor: theme.colors.border },
             ]}
           >
             <Text
-              style={[styles.detailLabel, { color: theme.colors.text.primary }]}
+              style={[styles.detailLabel, { color: theme.colors.text }]}
             >
               Phone Number
             </Text>
             <Text
               style={[
                 styles.detailValue,
-                { color: theme.colors.text.secondary },
+                { color: theme.colors.textSecondary },
               ]}
             >
               {getPhoneNumberDisplay()}
@@ -349,16 +349,16 @@ const UserProfile = () => {
           <View
             style={[
               styles.detailRow,
-              { borderBottomColor: theme.colors.border.light },
+              { borderBottomColor: theme.colors.border },
             ]}
           >
             <Text
-              style={[styles.detailLabel, { color: theme.colors.text.primary }]}
+              style={[styles.detailLabel, { color: theme.colors.text }]}
             >
               Account Status
             </Text>
             <Text
-              style={[styles.detailValue, { color: theme.colors.text.primary }]}
+              style={[styles.detailValue, { color: theme.colors.text }]}
             >
               {user.is_active ? "Active" : "Inactive"}
             </Text>
@@ -369,8 +369,8 @@ const UserProfile = () => {
           style={[
             styles.card,
             {
-              backgroundColor: theme.colors.card.background,
-              borderColor: theme.colors.border.light,
+              backgroundColor: theme.colors.surfaceElevated,
+              borderColor: theme.colors.border,
               marginTop: 16,
               paddingBottom: 0,
             },
@@ -379,7 +379,7 @@ const UserProfile = () => {
           <Text
             style={[
               styles.sectionTitle,
-              { color: theme.colors.text.primary },
+              { color: theme.colors.text },
             ]}
           >
             Recent Transactions

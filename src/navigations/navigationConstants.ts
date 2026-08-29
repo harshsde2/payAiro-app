@@ -1,6 +1,7 @@
 // Navigation Screen Names
 export const NAVIGATION_SCREENS = {
   // New UI (design v2) Auth & App screens
+  NEW_INTRO_SLIDER: "NewIntroSlider",
   NEW_ONBOARDING: "NewOnboarding",
   NEW_LOGIN: "NewLogin",
   NEW_CREATE_ACCOUNT: "NewCreateAccount",
@@ -170,9 +171,11 @@ export const NAVIGATION_SCREENS = {
   NEW_CRYPTO_REQUESTS: "NewCryptoRequests",
   NEW_CRYPTO_REQUEST_DETAIL: "NewCryptoRequestDetail",
   NEW_PRIVACY_SECURITY_SCREEN: "NewPrivacySecurityScreen",
+  NEW_APPEARANCE_SCREEN: "NewAppearanceScreen",
   NEW_CHANGE_PIN_SCREEN: "NewChangePinScreen",
   NEW_FORGOT_PIN_SCREEN: "NewForgotPinScreen",
   NEW_PIN_ACTION_OTP_SCREEN: "NewPinActionOtpScreen",
   NEW_SET_NEW_PIN_SCREEN: "NewSetNewPinScreen",
   NEW_APP_VERSION_SCREEN: "NewAppVersionScreen",
+  NEW_FAQ_SCREEN: "NewFaqScreen",
 } as const;

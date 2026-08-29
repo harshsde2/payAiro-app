@@ -2,8 +2,6 @@ import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { useTheme } from '@new-ui/styles/ThemeContext';
 
-const BACKGROUND_COLOR = 'rgba(255, 255, 255, 0.6)';
-
 export interface IDashboardCardWrapperProps {
   children: React.ReactNode;
   style?: ViewStyle;
@@ -19,10 +17,14 @@ const DashboardCardWrapper: React.FC<IDashboardCardWrapperProps> = ({
   return <View style={[styles.container, style]}>{children}</View>;
 };
 
-const createStyles = (theme: { spacing?: { base?: number }; radius?: { xl?: number } }) =>
+const createStyles = (theme: {
+  spacing?: { base?: number };
+  radius?: { xl?: number };
+  colors?: { glassTint?: string };
+}) =>
   StyleSheet.create({
     container: {
-      backgroundColor: BACKGROUND_COLOR,
+      backgroundColor: theme.colors?.glassTint ?? 'rgba(255, 255, 255, 0.6)',
       padding: theme.spacing?.base ?? 16,
       paddingTop: 0,
       marginBottom: 80,

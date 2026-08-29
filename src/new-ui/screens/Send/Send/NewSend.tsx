@@ -16,6 +16,7 @@ import { useSelector } from 'react-redux';
 import { useAllBankAccounts } from 'query/hooks';
 import { useStateStablecoin } from 'hooks/useStateStablecoin';
 import { SendContactsList, ISendContactItem } from '@new-ui/components/common-components/SendContactsList';
+import { isTopupUser } from 'utils/userIdentity';
 import { INewSendProps } from './types';
 import { AppIcon } from 'new-ui/assets/svgs';
 
@@ -242,6 +243,10 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
 
   const handleContactProfilePress = useCallback(
     (contact: ISendContactItem) => {
+      // Topup (cash-in shadow) accounts have no real profile to show.
+      if (isTopupUser(contact.username)) {
+        return;
+      }
       const numericId = Number(contact.uuid);
       navigation.navigate(NAVIGATION_SCREENS.USER_PROFILE as never, {
         userDetails: {
@@ -283,11 +288,11 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
               value={sender}
               editable={isEditable}
               onChangeText={handleSenderChange}
-              rightIcon={preselectedAsset ? <AppIcon.QrCode color={theme.colors.greyDark} /> : undefined}
+              rightIcon={<AppIcon.QrCode color={theme.colors.greyDark} />}
               onRightIconPress={() => {
-                if (preselectedAsset) {
+                // if (preselectedAsset) {
                   navigateToBottomTabScreen(navigation, NAVIGATION_SCREENS.SCANS);
-                }
+                // }
               }}
 
             />
@@ -330,7 +335,7 @@ const NewSend: React.FC<INewSendProps> = ({ route }) => {
               fontWeight="semiBold"
               size={16}
             >
-              Contacts
+              {sender.trim() ? 'Search results' : 'Saved contacts'}
             </CustomText>
           </View>
           <SendContactsList

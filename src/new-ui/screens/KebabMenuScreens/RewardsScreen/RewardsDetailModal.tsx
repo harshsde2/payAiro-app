@@ -50,7 +50,7 @@ const RewardsDetailModal: React.FC<IRewardsDetailModalProps> = ({
       onRequestClose={onClose}
     >
       <Pressable style={styles.modalBackdrop} onPress={onClose}>
-        <Pressable style={[styles.modalContent, { backgroundColor: theme.colors.white }]} onPress={e => e.stopPropagation()}>
+        <Pressable style={[styles.modalContent, { backgroundColor: theme.colors.surfaceElevated }]} onPress={e => e.stopPropagation()}>
           <View style={styles.modalHeaderRow}>
             <View style={styles.modalTitleRow}>
               <CustomText variant="h3" size={16} fontWeight="semiBold" color={theme.colors.text}>
@@ -74,7 +74,7 @@ const RewardsDetailModal: React.FC<IRewardsDetailModalProps> = ({
           </View>
 
           <TouchableOpacity style={styles.modalBalanceRow} onPress={onClose} activeOpacity={0.7}>
-            <CustomText variant="h1" size={34} fontFamily="poppins" fontWeight="bold" color={theme.colors.black}>
+            <CustomText variant="h1" size={34} fontFamily="poppins" fontWeight="bold" color={theme.colors.text}>
               $
             </CustomText>
             <View style={styles.modalBalanceParts}>
@@ -83,7 +83,7 @@ const RewardsDetailModal: React.FC<IRewardsDetailModalProps> = ({
                 size={34}
                 fontFamily="poppins"
                 fontWeight="bold"
-                color={theme.colors.black}
+                color={theme.colors.text}
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 minimumFontScale={0.5}
@@ -97,14 +97,14 @@ const RewardsDetailModal: React.FC<IRewardsDetailModalProps> = ({
               ) : null}
             </View>
             <View style={styles.modalCaret}>
-              <AppIcon.ChevronDown width={14} height={14} color={theme.colors.black} />
+              <AppIcon.ChevronDown width={14} height={14} color={theme.colors.text} />
             </View>
           </TouchableOpacity>
 
           <View
             style={[
               styles.modalBreakdownCard,
-              { backgroundColor: theme.colors.white, borderColor: theme.colors.border },
+              { backgroundColor: theme.colors.surfaceElevated, borderColor: theme.colors.border },
             ]}
           >
             {BREAKDOWN_ROWS.map((row, idx) => (
@@ -129,7 +129,7 @@ const RewardsDetailModal: React.FC<IRewardsDetailModalProps> = ({
                     size={15}
                     fontFamily="poppins"
                     fontWeight="semiBold"
-                    color={theme.colors.black}
+                    color={theme.colors.text}
                   >
                     {row.label}
                   </CustomText>
@@ -139,7 +139,7 @@ const RewardsDetailModal: React.FC<IRewardsDetailModalProps> = ({
                   size={15}
                   fontFamily="poppins"
                   fontWeight="semiBold"
-                  color={theme.colors.black}
+                  color={theme.colors.text}
                 >
                   {balanceVisible ? row.value : '••••'}
                 </CustomText>

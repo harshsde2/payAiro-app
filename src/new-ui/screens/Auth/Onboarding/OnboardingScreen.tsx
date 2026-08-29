@@ -25,13 +25,13 @@ const OnboardingScreen: React.FC = () => {
       gradient="linear"
       gradientColors={[
         theme.colors.greenLight2,
-        theme.colors.white,
+        theme.colors.background,
         theme.colors.greenLight2,
         theme.colors.greenLight1,
         theme.colors.tertiary,
         theme.colors.greenLight1,
         theme.colors.greenLight2,
-        theme.colors.white,
+        theme.colors.background,
       ]}
       gradientStart={{ x: 1, y: 0 }}
       gradientEnd={{ x: 0, y: 1 }}
@@ -49,7 +49,7 @@ const OnboardingScreen: React.FC = () => {
         <CustomText
           variant="h2"
           fontWeight='bold'
-          color={theme.colors.black}
+          color={theme.colors.text}
           style={[styles.headline]}
         >
           Fast, Secure & Effortless Payments
@@ -67,8 +67,8 @@ const OnboardingScreen: React.FC = () => {
       <View style={styles.buttonContainer}>
         <Button
           onPress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_CREATE_ACCOUNT)}
-          color={theme.colors.white}
-          textStyle={{ color: theme.colors.black }}
+          color={theme.colors.onPrimary}
+          textStyle={{ color: theme.colors.text }}
         >
           Create Account
         </Button>

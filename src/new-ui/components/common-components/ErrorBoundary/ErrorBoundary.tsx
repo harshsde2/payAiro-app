@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { resolveThemeWithoutProvider } from '@new-ui/styles/ThemeContext';
 
 type ErrorBoundaryProps = {
   children: React.ReactNode;
@@ -41,6 +42,10 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     const { error } = this.state;
     if (!error) return this.props.children;
 
+    // Resolved here rather than at module load so a crash reflects the theme the user is
+    // actually on. Only runs on the crash path, so the StyleSheet cost is irrelevant.
+    const styles = createStyles();
+
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Something went wrong</Text>
@@ -64,46 +69,50 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 }
 
-// Plain StyleSheet, not the themed styles: the theme provider itself may be what failed.
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-    backgroundColor: '#FFFFFF',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#111111',
-    textAlign: 'center',
-  },
-  message: {
-    marginTop: 12,
-    fontSize: 15,
-    lineHeight: 22,
-    color: '#555555',
-    textAlign: 'center',
-  },
-  debug: {
-    marginTop: 16,
-    fontSize: 12,
-    color: '#B00020',
-    textAlign: 'center',
-  },
-  button: {
-    marginTop: 28,
-    paddingVertical: 14,
-    paddingHorizontal: 40,
-    borderRadius: 28,
-    backgroundColor: '#111111',
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
+// Colours come straight from storage rather than the theme context: the provider itself
+// may be what failed, so this screen must not depend on it. Falls back to light.
+const createStyles = () => {
+  const theme = resolveThemeWithoutProvider();
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 24,
+      backgroundColor: theme.colors.background,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: theme.colors.text,
+      textAlign: 'center',
+    },
+    message: {
+      marginTop: 12,
+      fontSize: 15,
+      lineHeight: 22,
+      color: theme.colors.textSecondary,
+      textAlign: 'center',
+    },
+    debug: {
+      marginTop: 16,
+      fontSize: 12,
+      color: theme.colors.error,
+      textAlign: 'center',
+    },
+    button: {
+      marginTop: 28,
+      paddingVertical: 14,
+      paddingHorizontal: 40,
+      borderRadius: 28,
+      backgroundColor: theme.colors.primary,
+    },
+    buttonText: {
+      color: theme.colors.onPrimary,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+  });
+};
 
 export default ErrorBoundary;

@@ -16,13 +16,13 @@ export const filterChipStyles = (theme: ITheme) =>
       borderColor: theme.colors.primary,
     },
     chipUnselected: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderColor: theme.colors.border,
     },
     labelSelected: {
       fontSize: 14,
       fontFamily: theme.typography.fontFamily.semiBold,
-      color: theme.colors.white,
+      color: theme.colors.onPrimary,
     },
     labelUnselected: {
       fontSize: 14,

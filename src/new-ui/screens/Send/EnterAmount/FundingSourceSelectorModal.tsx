@@ -138,7 +138,7 @@ const FundingSourceSelectorModal: React.FC<FundingSourceSelectorModalProps> = ({
                           size={16}
                           style={styles.selectorItemTitle}
                           color={
-                            isSelected ? theme.colors.white : theme.colors.text
+                            isSelected ? theme.colors.onPrimary : theme.colors.text
                           }
                         >
                           {item.name}
@@ -149,7 +149,7 @@ const FundingSourceSelectorModal: React.FC<FundingSourceSelectorModalProps> = ({
                           style={styles.selectorItemMasked}
                           color={
                             isSelected
-                              ? theme.colors.white
+                              ? theme.colors.onPrimary
                               : theme.colors.textSecondary
                           }
                         >

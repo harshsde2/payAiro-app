@@ -43,9 +43,9 @@ const CryptoRequestStatusBadge: React.FC<Props> = ({ status, style }) => {
   return (
     <View style={[styles.badge, { backgroundColor: color }, style]}>
       {status === "PENDING" ? (
-        <AppIcon.Clock width={12} height={12} color={theme.colors.white} />
+        <AppIcon.Clock width={12} height={12} color={theme.colors.onPrimary} />
       ) : null}
-      <CustomText variant="caption" fontWeight="semiBold" color={theme.colors.white}>
+      <CustomText variant="caption" fontWeight="semiBold" color={theme.colors.onPrimary}>
         {label}
       </CustomText>
     </View>

@@ -713,7 +713,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = payAiro/payAiro.entitlements;
-				CURRENT_PROJECT_VERSION = 21;
+				CURRENT_PROJECT_VERSION = 33;
 				DEVELOPMENT_TEAM = 8T3V6TMY34;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = payAiro/Info.plist;
@@ -723,7 +723,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 7.04;
+				MARKETING_VERSION = 7.18;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -749,7 +749,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = payAiro/payAiro.entitlements;
-				CURRENT_PROJECT_VERSION = 21;
+				CURRENT_PROJECT_VERSION = 33;
 				DEVELOPMENT_TEAM = 8T3V6TMY34;
 				INFOPLIST_FILE = payAiro/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PayAiro;
@@ -758,7 +758,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 7.04;
+				MARKETING_VERSION = 7.18;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -865,7 +865,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = payAiro/payAiro.entitlements;
-				CURRENT_PROJECT_VERSION = 21;
+				CURRENT_PROJECT_VERSION = 33;
 				DEVELOPMENT_TEAM = 8T3V6TMY34;
 				INFOPLIST_FILE = payAiro/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "PayAiro Staging";
@@ -874,7 +874,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 7.04;
+				MARKETING_VERSION = 7.18;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

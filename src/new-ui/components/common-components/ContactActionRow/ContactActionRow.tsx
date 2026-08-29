@@ -20,7 +20,7 @@ const ContactActionRow: React.FC<IContactActionRowProps> = ({ icon, title, subti
         </CustomText>
       </View>
       <View style={styles.chevron}>
-        <AppIcon.ChevronRight width={18} height={18} />
+        <AppIcon.ChevronRight width={18} height={18} color={theme.colors.text} />
       </View>
     </TouchableOpacity>
   );

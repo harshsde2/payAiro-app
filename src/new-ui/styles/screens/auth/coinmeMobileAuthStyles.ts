@@ -66,6 +66,6 @@ export const coinmeMobileAuthStyles = (theme: ITheme) =>
     },
     loaderOverlay: {
       flex: 1,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.background,
     },
   });
