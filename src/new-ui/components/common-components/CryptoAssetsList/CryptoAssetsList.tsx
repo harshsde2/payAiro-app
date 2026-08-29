@@ -187,7 +187,7 @@ const CryptoAssetsList: React.FC<ICryptoAssetsListProps> = ({
   if (isLoading) {
     return (
       <View style={{ padding: 20, alignItems: 'center' }}>
-        <ActivityIndicator size="small" color="#2F6B3B" />
+        <ActivityIndicator size="small" color={theme.colors.primary} />
         <CustomText variant="caption" style={{ marginTop: 8 }}>
           Loading assets...
         </CustomText>

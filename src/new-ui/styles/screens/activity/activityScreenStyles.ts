@@ -24,7 +24,7 @@ export const activityScreenStyles = (theme: ITheme) =>
       borderRadius: theme.radius.lg,
       borderWidth: 1,
       borderColor: theme.colors.border,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     filterButtonLabel: {
       fontSize: 14,

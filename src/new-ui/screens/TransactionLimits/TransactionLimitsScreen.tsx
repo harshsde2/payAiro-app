@@ -97,7 +97,7 @@ const TransactionLimitsScreen: React.FC = () => {
             onPress={() => void refetch()}
             activeOpacity={0.7}
           >
-            <CustomText variant="body" fontWeight="semiBold" color={theme.colors.white}>
+            <CustomText variant="body" fontWeight="semiBold" color={theme.colors.onPrimary}>
               Retry
             </CustomText>
           </TouchableOpacity>

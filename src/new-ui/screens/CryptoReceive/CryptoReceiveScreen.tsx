@@ -253,7 +253,7 @@ const CryptoReceiveScreen: React.FC = () => {
               text: 'Download',
               icon: (
                 <SvgIcons.DownloadBlack
-                  color={theme.colors.white}
+                  color={theme.colors.onPrimary}
                   width={20}
                   height={20}
                 />
@@ -266,7 +266,7 @@ const CryptoReceiveScreen: React.FC = () => {
                 <SvgIcons.ShareIcon
                   width={20}
                   height={20}
-                  color={theme.colors.white}
+                  color={theme.colors.onPrimary}
                 />
               ),
               onPress: () => qrCardRef.current?.capture(handleShareQR),

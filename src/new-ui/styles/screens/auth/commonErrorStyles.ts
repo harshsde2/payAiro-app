@@ -4,7 +4,7 @@ import { ITheme } from "../../themes/themeTypes";
 export const commonErrorStyles = (theme: ITheme) =>
   StyleSheet.create({
     card: {
-      backgroundColor: theme.colors.background,
+      backgroundColor: theme.colors.surfaceElevated,
       borderTopLeftRadius: theme.radius.lg,
       borderTopRightRadius: theme.radius.lg,
       paddingHorizontal: theme.spacing.lg,

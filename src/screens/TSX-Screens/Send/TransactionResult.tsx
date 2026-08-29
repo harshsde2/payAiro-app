@@ -17,7 +17,8 @@ import {
   TouchableOpacity
 } from "react-native";
 import { SvgIcons } from "constants/svgs";
-import { Theme, useTheme } from "styles";
+import { useTheme } from "@new-ui/styles/ThemeContext";
+import type { ITheme } from "@new-ui/styles/themes/themeTypes";
 import { useGlobalStyles } from "styles/GlobalStyles";
 // import { CustomText } from "tsx-components";
 import CustomText from "@new-ui/components/common-components/CustomText";
@@ -699,17 +700,17 @@ const TransactionResult: FC = () => {
 
 export default TransactionResult;
 
-const customStyles = (theme: Theme) =>
+const customStyles = (theme: ITheme) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.colors.palette.white,
+      backgroundColor: theme.colors.background,
     },
     animationContainer: {
       width: "100%",
       justifyContent: "center",
       alignItems: "center",
-      paddingVertical: theme.spacing.spacing[2],
+      paddingVertical: theme.spacing.sm,
     },
     lottieAnimation: {
       width: 250,
@@ -717,93 +718,92 @@ const customStyles = (theme: Theme) =>
     },
     contentContainer: {
       flex: 1,
-      backgroundColor: theme.colors.palette.white,
-      borderTopEndRadius: theme.spacing.spacing[8],
-      borderTopStartRadius: theme.spacing.spacing[8],
-      padding: theme.spacing.spacing[5],
-      marginTop: theme.spacing.spacing[2],
+      backgroundColor: theme.colors.surface,
+      borderTopEndRadius: theme.spacing['2xl'],
+      borderTopStartRadius: theme.spacing['2xl'],
+      padding: theme.spacing.lg,
+      marginTop: theme.spacing.sm,
       alignItems: "center",
     },
     title: {
       textAlign: "center",
-      marginBottom: theme.spacing.spacing[3],
+      marginBottom: theme.spacing.md,
     },
     successTitle: {
-      // color: theme.colors.palette.green600,
-      color: '#000',
+      color: theme.colors.text,
     },
     errorTitle: {
-      color: theme.colors.palette.error,
+      color: theme.colors.error,
     },
     descriptionContainer: {
       width: "100%",
-      marginBottom: theme.spacing.spacing[4],
+      marginBottom: theme.spacing.base,
     },
     description: {
       textAlign: "center",
-      color: '#838383',
+      color: theme.colors.textSecondary,
       letterSpacing: 0.1,
       fontWeight: '400',
       fontFamily: 'inter',
     },
     errorBanner: {
       width: "100%",
-      backgroundColor: `${theme.colors.palette.error}14`, // ~8% tint of the error color
-      borderColor: theme.colors.palette.error,
+      backgroundColor: `${theme.colors.error}14`, // ~8% tint of the error color
+      borderColor: theme.colors.error,
       borderWidth: 1,
-      borderRadius: theme.spacing.spacing[3],
-      paddingVertical: theme.spacing.spacing[3],
-      paddingHorizontal: theme.spacing.spacing[4],
+      borderRadius: theme.spacing.md,
+      paddingVertical: theme.spacing.md,
+      paddingHorizontal: theme.spacing.base,
     },
     errorBannerText: {
       textAlign: "center",
-      color: theme.colors.palette.error,
+      color: theme.colors.error,
       letterSpacing: 0.1,
       fontFamily: 'inter',
     },
     detailsContainer: {
       width: "100%",
       // maxHeight: 300,
-      marginBottom: theme.spacing.spacing[4],
+      marginBottom: theme.spacing.base,
     },
     detailRow: {
-      marginVertical: theme.spacing.spacing[2],
+      marginVertical: theme.spacing.sm,
       flexDirection: "row",
       justifyContent: "space-between",
       width: "100%",
-      paddingHorizontal: theme.spacing.spacing[1],
+      paddingHorizontal: theme.spacing.xs,
     },
     detailLabel: {
       flex: 1,
-      color: theme.colors.text.tertiary,
+      color: theme.colors.textSecondary,
     },
     detailValue: {
       flex: 1,
       textAlign: "right",
-      color: theme.colors.text.primary,
+      color: theme.colors.text,
       fontWeight: "500",
     },
     buttonContainer: {
       width: "100%",
-      paddingTop: theme.spacing.spacing[3],
+      paddingTop: theme.spacing.md,
     },
     doneButton: {
       width: "100%",
       justifyContent: "center",
       alignItems: "center",
-      marginVertical: theme.spacing.spacing[2],
+      marginVertical: theme.spacing.sm,
     },
     supportButton: {
-      marginTop: theme.spacing.spacing[3],
+      marginTop: theme.spacing.md,
       height: 46,
       width: "100%",
       borderRadius: 16,
       borderWidth: 1,
-      borderColor: theme.colors.palette.primary,
-      backgroundColor: theme.colors.palette.white,
+      borderColor: theme.colors.primary,
+      backgroundColor: theme.colors.surfaceElevated,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: theme.spacing.spacing[2],
+      gap: theme.spacing.sm,
     },
   });

@@ -30,6 +30,7 @@ import { useTheme as useNewTheme } from "@new-ui/styles/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
 import SettingsScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/SettingsScreen";
 import PrivacyAndSecurityScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/PrivacyAndSecurityScreen";
+import AppearanceScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/AppearanceScreen";
 import AppVersionScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/AppVersionScreen";
 import NewChangePinScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/ChangePin";
 import NewForgotPinScreen from "new-ui/screens/KebabMenuScreens/SettingScreen/ForgotPin";
@@ -377,6 +378,11 @@ export default function AppStack() {
         options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Privacy and Security' }}
         name={NAVIGATION_SCREENS.NEW_PRIVACY_SECURITY_SCREEN}
         component={PrivacyAndSecurityScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: true, header: AppStackHeader, headerTitle: 'Appearance' }}
+        name={NAVIGATION_SCREENS.NEW_APPEARANCE_SCREEN}
+        component={AppearanceScreen}
       />
       <Stack.Screen
         options={{ headerShown: true, header: AppStackHeader, headerTitle: 'App Version' }}

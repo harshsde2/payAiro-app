@@ -225,13 +225,13 @@ const DashboardScreen: React.FC = () => {
       gradientColors={[
         theme.colors.greenLight2,
         theme.colors.greenLight2,
-        theme.colors.white,
+        theme.colors.background,
         theme.colors.greenLight2,
         theme.colors.greenLight1,
         theme.colors.tertiary,
         theme.colors.greenLight1,
         theme.colors.greenLight2,
-        theme.colors.white,
+        theme.colors.background,
       ]}
       gradientStart={{ x: 1, y: 1 }}
       gradientEnd={{ x: 0, y: 0 }}
@@ -262,7 +262,6 @@ const DashboardScreen: React.FC = () => {
           <View style={styles.balanceCardWrapper}>
             <BlurView
               style={styles.blurView}
-              blurType="light"
               blurAmount={20}
               reducedTransparencyFallbackColor="white"
             />
@@ -286,7 +285,7 @@ const DashboardScreen: React.FC = () => {
               </View>
 
               <View style={styles.balanceAmountRow}>
-                <Text style={[styles.currencySymbol, { color: theme.colors.black }]}>$</Text>
+                <Text style={[styles.currencySymbol, { color: theme.colors.text }]}>$</Text>
                 <CustomText style={styles.balanceAmount}>
                   {showBalance ? '1299' : '****'}
                 </CustomText>
@@ -294,7 +293,7 @@ const DashboardScreen: React.FC = () => {
                   {showBalance ? '.22' : '.**'}
                 </CustomText>
                 <TouchableOpacity style={{ marginLeft: theme.spacing.xs, marginTop: 8 }}>
-                  <AppIcon.ChevronDown width={16} height={16} color={theme.colors.black} />
+                  <AppIcon.ChevronDown width={16} height={16} color={theme.colors.text} />
                 </TouchableOpacity>
               </View>
 

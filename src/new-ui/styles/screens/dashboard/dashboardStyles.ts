@@ -39,7 +39,7 @@ export const dashboardStyles = (theme: ITheme) => {
       width: 44,
       height: 44,
       borderRadius: 22,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       alignItems: 'center',
       justifyContent: 'center',
       ...theme.shadows.sm,
@@ -53,9 +53,9 @@ export const dashboardStyles = (theme: ITheme) => {
     balanceCardWrapper: {
       borderRadius: theme.radius.xl,
       overflow: 'hidden',
-      backgroundColor: 'rgba(255, 255, 255, 0.3)',
+      backgroundColor: theme.colors.glassTint,
       borderWidth: 1,
-      borderColor: 'rgba(255, 255, 255, 0.4)',
+      borderColor: theme.colors.glassBorder,
     },
     blurView: {
       ...StyleSheet.absoluteFillObject,
@@ -122,7 +122,7 @@ export const dashboardStyles = (theme: ITheme) => {
     
     // Contacts Section
     sectionContainer: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderTopLeftRadius: theme.radius.xl,
       borderTopRightRadius: theme.radius.xl,
       paddingTop: theme.spacing.xl,
@@ -184,7 +184,7 @@ export const dashboardStyles = (theme: ITheme) => {
     cryptoCard: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderRadius: theme.radius.lg,
       padding: theme.spacing.base,
       marginBottom: theme.spacing.sm,

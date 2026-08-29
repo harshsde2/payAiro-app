@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ViewStyle } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 import { DropdownProps } from "react-native-element-dropdown/lib/typescript/components/Dropdown/model";
 import { Theme, useTheme } from "styles";
+import { useTheme as useNewUITheme } from "@new-ui/styles/ThemeContext";
 import CustomText from "./CustomText";
 import Fonts from "constants/Fonts";
 interface DropdownItem {
@@ -38,6 +39,9 @@ const MyDropdown: React.FC<MyDropdownProps> = ({
 }) => {
   const [isFocus, setIsFocus] = useState(false);
   const { theme } = useTheme();
+  // Legacy theme still supplies spacing/typography; colours come from the new-ui
+  // theme so this follows the user's Appearance choice.
+  const { theme: ui } = useNewUITheme();
   const styles = useMemo(() => customStyles(theme), [theme]);
 
   return (
@@ -49,7 +53,7 @@ const MyDropdown: React.FC<MyDropdownProps> = ({
         >
           {label}{" "}
           {required && (
-            <CustomText color={theme.colors.palette.red500} variant={"body2"}>
+            <CustomText color={ui.colors.error} variant={"body2"}>
               *
             </CustomText>
           )}
@@ -59,7 +63,7 @@ const MyDropdown: React.FC<MyDropdownProps> = ({
         disable={disable}
         style={[
           styles.dropdown,
-          isFocus && { borderColor: theme.colors.palette.primary },
+          isFocus && { borderColor: ui.colors.primary },
         ]}
         placeholderStyle={styles.placeholderStyle}
         selectedTextStyle={styles.selectedTextStyle}

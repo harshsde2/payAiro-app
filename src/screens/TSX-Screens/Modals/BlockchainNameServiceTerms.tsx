@@ -14,7 +14,7 @@ import {
   useRoute,
   CommonActions,
 } from "@react-navigation/native";
-import { useTheme } from "../../../styles/ThemeContext";
+import { useTheme } from "@new-ui/styles/ThemeContext";
 import CustomText from "../../../tsx-components/CustomText";
 import GenericButton from "../../../components/GenericButton";
 import { NAVIGATION_SCREENS } from "../../../navigations/navigationConstants";
@@ -41,7 +41,7 @@ const BlockchainNameServiceTerms = () => {
   const screenHeight = Dimensions.get("window").height;
   const maxModalHeight = 340;
   const headerHeight = 60;
-  const padding = theme.spacing.spacing[5] * 2;
+  const padding = theme.spacing.lg * 2;
   const buttonHeight = 60;
   const scrollViewHeight =
     maxModalHeight - headerHeight - padding - buttonHeight - 20;
@@ -136,13 +136,13 @@ const BlockchainNameServiceTerms = () => {
         >
           {isLoading ? (
             <View style={styles(theme).loadingContainer}>
-              <ActivityIndicator size="large" color={theme.colors.palette.primary} />
+              <ActivityIndicator size="large" color={theme.colors.primary} />
             </View>
           ) : isError ? (
             <View style={styles(theme).errorContainer}>
               <CustomText
                 variant="body2"
-                color={theme.colors.palette.grey700}
+                color={theme.colors.textSecondary}
                 style={styles(theme).termText}
               >
                 Failed to load content. Please try again.
@@ -154,7 +154,7 @@ const BlockchainNameServiceTerms = () => {
                 <CustomText
                   variant="h3"
                   fontWeight="semiBold"
-                  color={theme.colors.palette.grey900}
+                  color={theme.colors.text}
                   style={styles(theme).termHeading}
                 >
                   {item.heading}
@@ -162,7 +162,7 @@ const BlockchainNameServiceTerms = () => {
                 <View style={styles(theme).textContainer}>
                   <CustomText
                     variant="body2"
-                    color={theme.colors.palette.grey700}
+                    color={theme.colors.textSecondary}
                     style={styles(theme).termText}
                   >
                     {item.text}
@@ -178,11 +178,11 @@ const BlockchainNameServiceTerms = () => {
                         <View style={styles(theme).linkLoadingContainer}>
                           <ActivityIndicator
                             size="small"
-                            color={theme.colors.palette.primary}
+                            color={theme.colors.primary}
                           />
                           <CustomText
                             variant="body2"
-                            color={theme.colors.palette.primary}
+                            color={theme.colors.primary}
                             fontWeight="medium"
                             style={styles(theme).linkText}
                           >
@@ -192,7 +192,7 @@ const BlockchainNameServiceTerms = () => {
                       ) : (
                         <CustomText
                           variant="body2"
-                          color={theme.colors.palette.primary}
+                          color={theme.colors.primary}
                           fontWeight="medium"
                           style={styles(theme).linkText}
                         >
@@ -231,11 +231,11 @@ const styles = (theme: any, screenHeight?: number) =>
     },
     modalContainer: {
       width: "90%",
-      backgroundColor: theme.colors.palette.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderRadius: 16,
-      paddingHorizontal: theme.spacing.spacing[5],
-      paddingBottom: theme.spacing.spacing[5],
-      paddingTop: theme.spacing.spacing[2],
+      paddingHorizontal: theme.spacing.lg,
+      paddingBottom: theme.spacing.lg,
+      paddingTop: theme.spacing.sm,
       justifyContent: "flex-start",
       flexDirection: "column",
     },
@@ -253,17 +253,17 @@ const styles = (theme: any, screenHeight?: number) =>
     serviceNameText: {
       fontSize: 16,
       fontWeight: "600",
-      marginBottom: theme.spacing.spacing[3],
+      marginBottom: theme.spacing.md,
       textAlign: "center",
     },
     termItem: {
-      marginBottom: theme.spacing.spacing[4],
+      marginBottom: theme.spacing.base,
       justifyContent:'center',
       alignItems: "center",
     },
     termHeading: {
       fontSize: 16,
-      marginBottom: theme.spacing.spacing[2],
+      marginBottom: theme.spacing.sm,
     },
     textContainer: {
       flexDirection: "row",
@@ -277,7 +277,7 @@ const styles = (theme: any, screenHeight?: number) =>
       textAlign: "center",
     },
     continueButton: {
-      marginTop: theme.spacing.spacing[5],
+      marginTop: theme.spacing.lg,
     },
     continueButtonDisabled: {
       opacity: 0.5,
@@ -286,10 +286,10 @@ const styles = (theme: any, screenHeight?: number) =>
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      paddingVertical: theme.spacing.spacing[5],
+      paddingVertical: theme.spacing.lg,
     },
     errorContainer: {
-      paddingVertical: theme.spacing.spacing[5],
+      paddingVertical: theme.spacing.lg,
     },
     linkTouchable: {
       marginLeft: 4,

@@ -10,7 +10,7 @@ export const recentActivityCardStyles = (theme: ITheme) =>
       borderColor: theme.colors.border,
       borderRadius: theme.radius.lg,
       padding: theme.spacing.md,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.06,
@@ -40,7 +40,7 @@ export const recentActivityCardStyles = (theme: ITheme) =>
       height: 10,
       borderRadius: 5,
       borderWidth: 2,
-      borderColor: theme.colors.white,
+      borderColor: theme.colors.background,
     },
     textContainer: {
       flex: 1,

@@ -4,7 +4,7 @@ import { ITheme } from '@new-ui/styles/themes/themeTypes';
 export const accordionItemStyles = (theme: ITheme) =>
   StyleSheet.create({
     container: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderWidth: 1,
       borderColor: theme.colors.border,
       borderRadius: theme.radius.lg,
@@ -18,7 +18,7 @@ export const accordionItemStyles = (theme: ITheme) =>
       paddingHorizontal: theme.spacing.base,
       paddingVertical: theme.spacing.md,
       gap: theme.spacing.sm,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     title: {
       flex: 1,

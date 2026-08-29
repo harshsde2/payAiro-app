@@ -494,7 +494,7 @@ const supportStyles = (theme: ITheme) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     modalBackdrop: {
       flex: 1,
@@ -535,7 +535,7 @@ const supportStyles = (theme: ITheme) =>
     },
     uploadIconWrap: {
       padding: theme.spacing.md,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderRadius: 50,
     },
     uploadTextCenter: {

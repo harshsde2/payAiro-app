@@ -58,7 +58,7 @@ const StateRestrictedScreen: React.FC = () => {
   return (
     <ScreenWrapper
       safeAreaEdges={['top', 'bottom', 'left', 'right']}
-      backgroundColor={theme.colors.white}
+      backgroundColor={theme.colors.background}
       statusBarStyle="dark-content"
       contentStyle={{ flex: 1 }}
     >

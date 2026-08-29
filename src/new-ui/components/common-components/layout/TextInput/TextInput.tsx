@@ -38,7 +38,7 @@ const TextInput: React.FC<ITextInputProps> = ({
     borderColor: finalBorderColor,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.white,
+    backgroundColor: theme.colors.surfaceElevated,
     paddingHorizontal: 0,
   };
 

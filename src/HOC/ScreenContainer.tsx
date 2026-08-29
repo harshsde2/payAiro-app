@@ -12,6 +12,7 @@ import {
   // SafeAreaView,
 } from "react-native";
 import { useTheme } from "../styles/ThemeContext";
+import { useTheme as useNewUITheme } from "@new-ui/styles/ThemeContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSelector } from "react-redux";
 import { toKycMode } from "../types/kyc";
@@ -51,6 +52,9 @@ const ScreenContainer: React.FC<ScreenContainerProps> = ({
   backgroundColor,
 }) => {
   const { theme } = useTheme();
+  // Legacy theme still supplies spacing; colours come from the new-ui theme, which is the
+  // one that actually follows the user's Appearance choice.
+  const { theme: ui } = useNewUITheme();
   
   // Check if KYC banner is visible to determine safe area edges
   const kycStatus = useSelector((s: any) => s.authenticationSlice?.kycStatus);
@@ -70,9 +74,8 @@ const ScreenContainer: React.FC<ScreenContainerProps> = ({
 
   // Set up status bar style based on theme
   const barStyle =
-    statusBarStyle ||
-    (theme.mode === "dark" ? "light-content" : "dark-content");
-  const barColor = statusBarColor || theme.colors.background.primary;
+    statusBarStyle || (ui.isDark ? "light-content" : "dark-content");
+  const barColor = statusBarColor || ui.colors.background;
 
   // Determine padding values
   const screenPadding = theme.spacing.layout.screenPadding;
@@ -99,7 +102,7 @@ const ScreenContainer: React.FC<ScreenContainerProps> = ({
   // Main container style - use green50 as default background
   const containerStyle = [
     styles.container,
-    { backgroundColor: backgroundColor || theme.colors.background.primary },
+    { backgroundColor: backgroundColor || ui.colors.background },
     paddingStyle,
     style,
     { paddingBottom: 0 },

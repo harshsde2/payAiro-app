@@ -102,12 +102,12 @@ export const otpVerificationStyles = (theme: ITheme) => {
     otpInputActive: {
       borderColor: theme.colors.primary,
       borderWidth: 2,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     otpInputFilled: {
       borderColor: theme.colors.success,
       borderWidth: 1.5,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     otpInputDisabled: {
       borderColor: theme.colors.border,

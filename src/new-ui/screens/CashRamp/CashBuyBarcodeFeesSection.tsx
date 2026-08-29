@@ -55,7 +55,6 @@ const CashBuyBarcodeFeesSection: React.FC<Props> = ({
           padding={theme.spacing.md}
           borderRadius={theme.radius.lg}
           blurAmount={28}
-          blurType="light"
           overlayOpacity={0.38}
           borderWidth={1}
           borderColor="rgba(255, 255, 255, 0.85)"

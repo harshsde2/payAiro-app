@@ -230,7 +230,7 @@ const CashOffRampTransactionDetailsBody: React.FC<Props> = ({
       return (
         <View style={styles.statusCard}>
           {isPolling ? (
-            <ActivityIndicator color={theme.colors.white} style={{ marginBottom: theme.spacing.sm }} />
+            <ActivityIndicator color={theme.colors.onPrimary} style={{ marginBottom: theme.spacing.sm }} />
           ) : null}
           <CustomText variant="body" style={styles.statusCardBody}>
             {details?.processing_message}
@@ -259,7 +259,7 @@ const CashOffRampTransactionDetailsBody: React.FC<Props> = ({
           </CustomText>
           <CustomText variant="caption" style={styles.pickupDisclaimer}>
             {CASH_OFFRAMP_PICKUP_WITHIN}{" "}
-            <CustomText variant="caption" fontWeight="bold" color={theme.colors.white}>
+            <CustomText variant="caption" fontWeight="bold" color={theme.colors.onPrimary}>
               {CASH_OFFRAMP_PICKUP_DAYS}
             </CustomText>
             {"\n"}
@@ -297,7 +297,7 @@ const CashOffRampTransactionDetailsBody: React.FC<Props> = ({
 
   const gradientColors = [
     theme.colors.greenLight2,
-    theme.colors.white,
+    theme.colors.background,
     theme.colors.greenLight1,
     theme.colors.greenLight2,
   ] as const;
@@ -315,7 +315,7 @@ const CashOffRampTransactionDetailsBody: React.FC<Props> = ({
     >
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <View style={[styles.badge, { backgroundColor: badgeBg }]}>
-          <CustomText variant="body" fontWeight="semiBold" color={theme.colors.white}>
+          <CustomText variant="body" fontWeight="semiBold" color={theme.colors.onPrimary}>
             {badgeLabel}
           </CustomText>
         </View>
@@ -330,7 +330,7 @@ const CashOffRampTransactionDetailsBody: React.FC<Props> = ({
 
         {showReceipt ? (
           <View style={styles.receiptCard}>
-            <View style={styles.row}>
+            <View style={[styles.row, styles.rowFirst]}>
               <CustomText variant="body" color={theme.colors.text} style={styles.label}>
                 {CASH_OFFRAMP_ROW_DATE}
               </CustomText>
@@ -398,7 +398,7 @@ const CashOffRampTransactionDetailsBody: React.FC<Props> = ({
             ) : null}
 
             {totalCash ? (
-              <View style={[styles.row, styles.rowLast, styles.rowBold]}>
+              <View style={[styles.row, styles.rowBold]}>
                 <CustomText variant="body" fontWeight="bold" color={theme.colors.text} style={styles.label}>
                   {CASH_OFFRAMP_ROW_TOTAL_CASH}
                 </CustomText>

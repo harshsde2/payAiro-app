@@ -4,6 +4,7 @@ import ScreenWrapper from 'new-ui/components/common-components/ScreenWrapper';
 import { useTheme as useNewUITheme } from '@new-ui/styles/ThemeContext';
 import { AppIcon } from 'new-ui/assets/svgs';
 import CustomText from 'new-ui/components/common-components/CustomText';
+import SettingsIconBadge from 'new-ui/components/common-components/SettingsIconBadge'
 import TermAndConditionModal from 'tsx-components/modals/TermAndConditionModal';
 import type { TermAndConditionModalRef } from 'tsx-components/modals/modal.types';
 import { useComplianceStatus } from 'query/hooks/useComplianceDisclosure';
@@ -28,7 +29,11 @@ const CoinmeAgreementScreen = () => {
   const LIST_ITEMS = [
     {
       title: 'Terms of Service',
-      icon: <AppIcon.TermsAndConditions />,
+      icon: (
+        <SettingsIconBadge>
+          <AppIcon.TermsAndConditions width={40} height={40} color={newUITheme.colors.primary} />
+        </SettingsIconBadge>
+      ),
       onPress: () =>
         termsRef.current?.showWebDocument?.(
           'Terms of Service',
@@ -37,7 +42,11 @@ const CoinmeAgreementScreen = () => {
     },
     {
       title: 'Privacy Policy',
-      icon: <AppIcon.PrivacyPolicy />,
+      icon: (
+        <SettingsIconBadge>
+          <AppIcon.PrivacyPolicy width={40} height={40} color={newUITheme.colors.primary} />
+        </SettingsIconBadge>
+      ),
       onPress: () =>
         termsRef.current?.showWebDocument?.(
           'Privacy Policy',
@@ -46,7 +55,11 @@ const CoinmeAgreementScreen = () => {
     },
     {
       title: 'Disclosures',
-      icon: <AppIcon.Agreement />,
+      icon: (
+        <SettingsIconBadge>
+          <AppIcon.Agreement width={40} height={40} color={newUITheme.colors.primary} />
+        </SettingsIconBadge>
+      ),
       onPress: () =>
         termsRef.current?.showWebDocument?.(
           'Disclosures',
@@ -57,7 +70,11 @@ const CoinmeAgreementScreen = () => {
       ? [
           {
             title: 'State Disclosures',
-            icon: <AppIcon.Agreement />,
+            icon: (
+        <SettingsIconBadge>
+          <AppIcon.Agreement width={40} height={40} color={newUITheme.colors.primary} />
+        </SettingsIconBadge>
+      ),
             onPress: () =>
               termsRef.current?.showWebDocument?.(
                 'Coinme State Disclosures',
@@ -98,13 +115,13 @@ const CoinmeAgreementScreen = () => {
               padding: newUITheme.spacing.md,
             }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: newUITheme.spacing.md }}>
               {item.icon}
               <CustomText variant="h5" size={16} fontWeight="semiBold">
                 {item.title}
               </CustomText>
             </View>
-            <AppIcon.ChevronRight width={20} height={20} />
+            <AppIcon.ChevronRight width={20} height={20} color={newUITheme.colors.text} />
           </TouchableOpacity>
         ))}
       </View>

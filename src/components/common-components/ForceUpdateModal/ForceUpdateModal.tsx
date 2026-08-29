@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { View, Modal, Pressable, StyleSheet, TouchableOpacity, Platform } from "react-native";
-import { useTheme } from "../../../styles/ThemeContext";
+import { useTheme } from "@new-ui/styles/ThemeContext";
 import CustomText from "../../../tsx-components/CustomText";
 import { SvgIcons } from "../../../constants/svgs";
 import { IForceUpdateModalProps } from "./types";
@@ -74,7 +74,7 @@ const ForceUpdateModal: React.FC<IForceUpdateModalProps> = ({
               <CustomText
                 variant="body1"
                 fontWeight="bold"
-                color={theme.colors.palette.gray500}
+                color={theme.colors.textSecondary}
               >
                 ✕
               </CustomText>
@@ -89,7 +89,7 @@ const ForceUpdateModal: React.FC<IForceUpdateModalProps> = ({
             <CustomText
               variant="h3"
               fontWeight="bold"
-              color={theme.colors.palette.gray900}
+              color={theme.colors.text}
               style={styles(theme).title}
             >
               {forceUpdate ? "Update Required" : "Update Available"}
@@ -97,7 +97,7 @@ const ForceUpdateModal: React.FC<IForceUpdateModalProps> = ({
 
             <CustomText
               variant="body1"
-              color={theme.colors.palette.gray700}
+              color={theme.colors.textSecondary}
               style={styles(theme).message}
             >
               {message || defaultMessage}
@@ -108,7 +108,7 @@ const ForceUpdateModal: React.FC<IForceUpdateModalProps> = ({
               <View style={styles(theme).errorContainer}>
                 <CustomText
                   variant="body2"
-                  color={theme.colors.palette.red600 || '#C92A2A'}
+                  color={theme.colors.error}
                   style={styles(theme).errorText}
                 >
                   {updateError}
@@ -134,7 +134,7 @@ const ForceUpdateModal: React.FC<IForceUpdateModalProps> = ({
                 <CustomText
                   variant="button"
                   fontWeight="bold"
-                  color={theme.colors.palette.white}
+                  color={theme.colors.onPrimary}
                 >
                   Updating...
                 </CustomText>
@@ -142,7 +142,7 @@ const ForceUpdateModal: React.FC<IForceUpdateModalProps> = ({
                 <CustomText
                   variant="button"
                   fontWeight="bold"
-                  color={theme.colors.palette.white}
+                  color={theme.colors.onPrimary}
                 >
                   {updateError ? 'Try Again' : 'Update Now'}
                 </CustomText>
@@ -159,7 +159,7 @@ const ForceUpdateModal: React.FC<IForceUpdateModalProps> = ({
                 <CustomText
                   variant="button"
                   fontWeight="medium"
-                  color={theme.colors.palette.gray700}
+                  color={theme.colors.textSecondary}
                 >
                   Update Later
                 </CustomText>
@@ -185,9 +185,9 @@ const styles = (theme: any) =>
     modalContainer: {
       width: "85%",
       maxWidth: 400,
-      backgroundColor: theme.colors.palette.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderRadius: 24,
-      padding: theme.spacing.spacing[6],
+      padding: theme.spacing.xl,
       alignItems: "center",
       zIndex: 99999,
       elevation: 99999,
@@ -195,12 +195,12 @@ const styles = (theme: any) =>
     },
     closeButton: {
       position: 'absolute',
-      top: theme.spacing.spacing[4],
-      right: theme.spacing.spacing[4],
+      top: theme.spacing.base,
+      right: theme.spacing.base,
       width: 32,
       height: 32,
       borderRadius: 16,
-      backgroundColor: theme.colors.palette.gray100,
+      backgroundColor: theme.colors.surface,
       justifyContent: 'center',
       alignItems: 'center',
       zIndex: 10,
@@ -208,32 +208,32 @@ const styles = (theme: any) =>
     contentContainer: {
       width: "100%",
       alignItems: "center",
-      paddingTop: theme.spacing.spacing[2],
+      paddingTop: theme.spacing.sm,
     },
     iconContainer: {
       width: 64,
       height: 64,
       borderRadius: 32,
-      backgroundColor: theme.colors.palette.blue100 || theme.colors.palette.gray100,
+      backgroundColor: theme.colors.surface,
       justifyContent: "center",
       alignItems: "center",
-      marginBottom: theme.spacing.spacing[4],
+      marginBottom: theme.spacing.base,
     },
     title: {
-      marginBottom: theme.spacing.spacing[3],
+      marginBottom: theme.spacing.md,
       textAlign: "center",
     },
     message: {
-      marginBottom: theme.spacing.spacing[6],
+      marginBottom: theme.spacing.xl,
       textAlign: "center",
       lineHeight: 22,
     },
     updateButton: {
       width: "100%",
-      backgroundColor: theme.colors.palette.green600 || theme.colors.palette.primary,
+      backgroundColor: theme.colors.primary,
       borderRadius: 12,
-      paddingVertical: theme.spacing.spacing[4],
-      paddingHorizontal: theme.spacing.spacing[5],
+      paddingVertical: theme.spacing.base,
+      paddingHorizontal: theme.spacing.lg,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -242,11 +242,11 @@ const styles = (theme: any) =>
     },
     errorContainer: {
       width: "100%",
-      backgroundColor: theme.colors.palette.red50 || '#FFEBEB',
+      backgroundColor: theme.colors.errorSurface,
       borderRadius: 8,
-      paddingVertical: theme.spacing.spacing[3],
-      paddingHorizontal: theme.spacing.spacing[4],
-      marginBottom: theme.spacing.spacing[4],
+      paddingVertical: theme.spacing.md,
+      paddingHorizontal: theme.spacing.base,
+      marginBottom: theme.spacing.base,
       alignItems: "center",
     },
     errorText: {
@@ -257,13 +257,13 @@ const styles = (theme: any) =>
       width: "100%",
       backgroundColor: 'transparent',
       borderRadius: 12,
-      paddingVertical: theme.spacing.spacing[3],
-      paddingHorizontal: theme.spacing.spacing[5],
+      paddingVertical: theme.spacing.md,
+      paddingHorizontal: theme.spacing.lg,
       alignItems: "center",
       justifyContent: "center",
-      marginTop: theme.spacing.spacing[3],
+      marginTop: theme.spacing.md,
       borderWidth: 1,
-      borderColor: theme.colors.palette.gray300,
+      borderColor: theme.colors.border,
     },
   });
 

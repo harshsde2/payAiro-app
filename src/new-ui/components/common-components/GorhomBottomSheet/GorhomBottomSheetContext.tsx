@@ -164,7 +164,7 @@ export const GorhomBottomSheetProvider: React.FC<GorhomBottomSheetProviderProps>
   const backgroundStyle = useMemo<ViewStyle>(() => {
     // bottomSheetStyles(theme).container is for the custom sheet; gorhom needs a "backgroundStyle".
     return {
-      backgroundColor: theme.colors.background,
+      backgroundColor: theme.colors.surface,
       borderTopLeftRadius: theme.radius.xl,
       borderTopRightRadius: theme.radius.xl,
       shadowColor: '#000',

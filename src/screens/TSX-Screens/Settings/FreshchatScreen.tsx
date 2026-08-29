@@ -3,7 +3,8 @@ import { View, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { ScreenContainer } from "HOC";
 import HeaderTitle from "components/HeaderTitle";
-import { Theme, useTheme } from "styles";
+import { useTheme } from "@new-ui/styles/ThemeContext";
+import type { ITheme } from "@new-ui/styles/themes/themeTypes";
 import { SvgIcons } from "constants/svgs";
 import { CustomText } from "tsx-components";
 import GenericButton from "components/GenericButton";
@@ -68,11 +69,11 @@ const FreshchatScreen = () => {
   );
 };
 
-const customStyles = (theme: Theme) =>
+const customStyles = (theme: ITheme) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.colors.palette.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderTopLeftRadius: 32,
       borderTopRightRadius: 32,
     },
@@ -89,18 +90,18 @@ const customStyles = (theme: Theme) =>
       width: 100,
       height: 100,
       borderRadius: 50,
-      backgroundColor: theme.colors.palette.green100,
+      backgroundColor: theme.colors.primaryLight,
       justifyContent: "center",
       alignItems: "center",
       marginBottom: 20,
     },
     title: {
-      color: theme.colors.palette.grey900,
+      color: theme.colors.text,
       textAlign: "center",
       marginBottom: 8,
     },
     description: {
-      color: theme.colors.palette.grey600,
+      color: theme.colors.textSecondary,
       textAlign: "center",
       paddingHorizontal: 20,
     },
@@ -114,14 +115,14 @@ const customStyles = (theme: Theme) =>
     noteContainer: {
       flexDirection: "row",
       alignItems: "flex-start",
-      backgroundColor: theme.colors.palette.grey50,
+      backgroundColor: theme.colors.surface,
       borderRadius: 12,
       padding: 12,
       gap: 8,
     },
     noteText: {
       flex: 1,
-      color: theme.colors.palette.grey600,
+      color: theme.colors.textSecondary,
     },
   });
 

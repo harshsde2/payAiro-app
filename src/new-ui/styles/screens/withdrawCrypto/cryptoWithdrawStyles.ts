@@ -50,7 +50,7 @@ export const cryptoWithdrawStyles = (theme: ITheme) =>
     modalBackdrop: {
       flex: 1,
       justifyContent:'flex-end',
-      backgroundColor: "rgba(0,0,0,0.4)",
+      backgroundColor: theme.colors.overlay,
       paddingHorizontal: theme.spacing.base,
       paddingBottom: theme.spacing["2xl"],
     },
@@ -62,12 +62,12 @@ export const cryptoWithdrawStyles = (theme: ITheme) =>
       width: 42,
       height: 42,
       borderRadius: 21,
-      // backgroundColor: theme.colors.white,
+      // backgroundColor: theme.colors.surfaceElevated,
       alignItems: "center",
       justifyContent: "center",
     },
     modalCard: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surface,
       borderRadius: 20,
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.lg,

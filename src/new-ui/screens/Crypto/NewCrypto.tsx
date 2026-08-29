@@ -58,13 +58,13 @@ const NewCrypto = () => {
       gradientColors={[
         newUITheme.colors.greenLight2,
         newUITheme.colors.greenLight2,
-        newUITheme.colors.white,
+        newUITheme.colors.background,
         newUITheme.colors.greenLight2,
         newUITheme.colors.greenLight1,
         newUITheme.colors.tertiary,
         newUITheme.colors.greenLight1,
         newUITheme.colors.greenLight2,
-        newUITheme.colors.white,
+        newUITheme.colors.background,
       ]}
       gradientStart={{ x: 1, y: 1 }}
       gradientEnd={{ x: 0, y: 0 }}

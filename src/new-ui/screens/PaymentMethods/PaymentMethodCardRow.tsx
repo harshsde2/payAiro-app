@@ -50,7 +50,7 @@ const PaymentMethodCardRow: React.FC<PaymentMethodCardRowProps> = ({
               <CustomText
                 variant="caption"
                 fontWeight="semiBold"
-                color={theme.colors.white}
+                color={theme.colors.onPrimary}
                 style={styles.defaultBadgeText}
               >
                 Default

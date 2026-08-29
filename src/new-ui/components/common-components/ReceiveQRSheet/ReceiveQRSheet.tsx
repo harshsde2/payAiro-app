@@ -19,7 +19,8 @@ import {
 } from "react-native";
 import { useSelector } from "react-redux";
 import Share from "react-native-share";
-import { useTheme } from "styles/ThemeContext";
+import { useTheme } from "@new-ui/styles/ThemeContext";
+import type { ITheme } from "@new-ui/styles/themes/themeTypes";
 import { useAppLock } from "hooks/useAppLock";
 import { ReceiveQRCard } from "components/common-components/ReceiveQRCard";
 import type { IReceiveQRCardRef } from "components/common-components/ReceiveQRCard";
@@ -178,12 +179,13 @@ export const ReceiveQRSheet = forwardRef<IReceiveQRSheetRef>((_props, ref) => {
 
 ReceiveQRSheet.displayName = "ReceiveQRSheet";
 
-const styles = (theme: any) =>
+const styles = (theme: ITheme) =>
   StyleSheet.create({
     qrSheetContent: {
       alignItems: "center",
-      paddingTop: theme.spacing.spacing[2],
-      paddingBottom: theme.spacing.spacing[6],
+      // Same pixel values as the legacy scale this used to read (8 / 24).
+      paddingTop: theme.spacing.sm,
+      paddingBottom: theme.spacing.xl,
     },
   });
 

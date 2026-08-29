@@ -17,7 +17,7 @@ export const faqScreenStyles = (theme: ITheme) =>
       borderRadius: theme.radius.lg,
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       marginBottom: theme.spacing.md,
     },
     searchIcon: {

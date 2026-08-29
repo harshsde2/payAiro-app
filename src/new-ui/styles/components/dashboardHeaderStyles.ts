@@ -28,7 +28,7 @@ export const dashboardHeaderStyles = (theme: ITheme) =>
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 2,
-      borderColor: theme.colors.white,
+      borderColor: theme.colors.background,
       overflow: 'hidden',
     },
     avatarImage: {
@@ -87,7 +87,7 @@ export const dashboardHeaderStyles = (theme: ITheme) =>
     },
     menuBackdrop: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.3)',
+      backgroundColor: theme.colors.overlay,
       paddingHorizontal: theme.spacing.base,
       paddingTop: 120,
       alignItems: 'flex-end',
@@ -133,7 +133,7 @@ export const dashboardHeaderStyles = (theme: ITheme) =>
       paddingHorizontal: 6,
       paddingVertical: 2,
       borderRadius: 999,
-      backgroundColor: '#FFE5E5',
+      backgroundColor: theme.colors.errorSurface,
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: theme.spacing.xs,

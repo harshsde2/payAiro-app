@@ -27,7 +27,7 @@ const SellCashPickupInstructionsModal: React.FC<Props> = ({ visible, onClose }) 
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
-            <CustomText variant="h3" fontWeight="bold" color={theme.colors.white} style={styles.title}>
+            <CustomText variant="h3" fontWeight="bold" color={theme.colors.onPrimary} style={styles.title}>
               {SELL_PICKUP_MODAL.title}
             </CustomText>
             <View style={styles.listBox}>
@@ -35,14 +35,14 @@ const SellCashPickupInstructionsModal: React.FC<Props> = ({ visible, onClose }) 
                 <CustomText
                   key={i}
                   variant="body"
-                  color={theme.colors.white}
+                  color={theme.colors.onPrimary}
                   style={styles.bullet}
                 >
                   {`${i + 1}. ${line}`}
                 </CustomText>
               ))}
             </View>
-            <CustomText variant="caption" color={theme.colors.white} style={styles.footer}>
+            <CustomText variant="caption" color={theme.colors.onPrimary} style={styles.footer}>
               {SELL_PICKUP_MODAL.footer}
             </CustomText>
           </ScrollView>

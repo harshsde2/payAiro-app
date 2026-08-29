@@ -100,12 +100,12 @@ export const addBalanceStyles = (theme: ITheme) =>
     },
     modalBackdrop: {
       flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.45)',
+      backgroundColor: theme.colors.overlay,
       justifyContent: 'flex-end',
       padding: theme.spacing.xl,
     },
     modalCard: {
-      backgroundColor: theme.colors.background,
+      backgroundColor: theme.colors.surface,
       borderRadius: theme.radius.xl,
       paddingHorizontal: theme.spacing.lg,
       padding: theme.spacing.xl,
@@ -132,7 +132,7 @@ export const addBalanceStyles = (theme: ITheme) =>
       padding: theme.spacing.xl,
     },
     successModalCard: {
-      backgroundColor: theme.colors.background,
+      backgroundColor: theme.colors.surface,
       borderRadius: theme.radius.xl,
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.xl,
@@ -157,7 +157,7 @@ export const addBalanceStyles = (theme: ITheme) =>
       alignItems: 'center',
       paddingVertical: theme.spacing.md,
       paddingHorizontal: theme.spacing.md,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     cardRowSelect: {
       flex: 1,
@@ -225,7 +225,7 @@ export const addBalanceStyles = (theme: ITheme) =>
       alignItems: 'center',
       paddingVertical: theme.spacing.md,
       paddingHorizontal: theme.spacing.md,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     methodRow: {
       flexDirection: 'row',
@@ -235,7 +235,7 @@ export const addBalanceStyles = (theme: ITheme) =>
       borderColor: theme.colors.border,
       borderRadius: theme.radius.lg,
       marginTop: theme.spacing.md,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     methodBadgeCircle: {
       width: 24,

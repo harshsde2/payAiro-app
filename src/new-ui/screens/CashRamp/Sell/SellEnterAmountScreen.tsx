@@ -179,7 +179,7 @@ const SellEnterAmountScreen: React.FC = () => {
 
   if (!entry || !params?.location) {
     return (
-      <ScreenWrapper safeArea backgroundColor={theme.colors.white} contentStyle={{ flex: 1 }}>
+      <ScreenWrapper safeArea backgroundColor={theme.colors.background} contentStyle={{ flex: 1 }}>
         <View style={[styles.container, { justifyContent: "center", padding: theme.spacing.lg }]}>
           <CustomText variant="body" color={theme.colors.text}>
             Missing sell details. Go back and try again.
@@ -203,6 +203,7 @@ const SellEnterAmountScreen: React.FC = () => {
         <View style={{ flex: 1 }}>
           <View style={styles.header}>
             <AppIcon.ArrowLeft
+            color={theme.colors.text}
               width={25}
               height={25}
               onPress={() => navigation.goBack()}

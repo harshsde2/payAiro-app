@@ -1,5 +1,6 @@
 import React from 'react'
 import { AppIcon } from '@new-ui/assets/svgs'
+import { ITheme } from '@new-ui/styles/themes/themeTypes'
 
 /**
  * Icon + tint used for a notification, shared by the feed card and the detail popup so
@@ -47,20 +48,28 @@ export const categoryToIconType = (
   }
 }
 
-export const ICON_BG: Record<NotificationIconType, string> = {
-  wallet: '#E8F7EE',
-  success: '#E8F7EE',
-  contact: '#E8F7EE',
-  feature: '#F2F2F7',
-  security: '#F2F2F7',
-  account: '#F2F2F7',
-  pending: '#FFF8E1',
-}
+/**
+ * Icon-chip tints. Takes the theme rather than being a static record so the chips stay
+ * legible in dark mode — the old pastel literals were near-white.
+ */
+export const getIconBg = (
+  theme: ITheme
+): Record<NotificationIconType, string> => ({
+  wallet: theme.colors.successSurface,
+  success: theme.colors.successSurface,
+  contact: theme.colors.successSurface,
+  feature: theme.colors.surface,
+  security: theme.colors.surface,
+  account: theme.colors.surface,
+  pending: theme.colors.warningSurface,
+})
 
 export const NotificationIcon: React.FC<{
   type: NotificationIconType
   size?: number
-}> = ({ type, size = 24 }) => {
+  /** Applied to the glyphs that would otherwise fall back to a near-black default. */
+  color?: string
+}> = ({ type, size = 24, color }) => {
   switch (type) {
     case 'wallet':
       return <AppIcon.AddBalance width={size} height={size} />
@@ -69,14 +78,14 @@ export const NotificationIcon: React.FC<{
     case 'contact':
       return <AppIcon.AddContact width={size} height={size} />
     case 'security':
-      return <AppIcon.Privacy width={size} height={size} />
+      return <AppIcon.Privacy width={size} height={size} color={color} />
     case 'account':
-      return <AppIcon.User width={size} height={size} />
+      return <AppIcon.User width={size} height={size} color={color} />
     case 'pending':
       return <AppIcon.Clock width={size} height={size} />
     case 'feature':
     default:
-      return <AppIcon.Notification width={size} height={size} />
+      return <AppIcon.Notification width={size} height={size} color={color} />
   }
 }
 

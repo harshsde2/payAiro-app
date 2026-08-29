@@ -25,18 +25,21 @@ import {
   formatProfilePhone,
   getInitials,
 } from "./profile.utils";
+import { ITheme } from "@new-ui/styles/themes/themeTypes";
 
 type AppRouteName = (typeof NAVIGATION_SCREENS)[keyof typeof NAVIGATION_SCREENS];
 
-const GRADIENT_COLORS = [
-  "#FFFFFF",
-  "#FFFFFF",
-  "#EFFBF0",
-  "#9FE8AC",
-  "#6FD888",
-  "#9FE8AC",
-  "#DFF6E1",
-  "#FFFFFF",
+// Built from theme tokens rather than fixed pastels so the header gradient darkens with
+// the rest of the app instead of staying a bright green wash on a dark screen.
+const getGradientColors = (theme: ITheme) => [
+  theme.colors.background,
+  theme.colors.background,
+  theme.colors.greenLight2,
+  theme.colors.greenLight1,
+  theme.colors.tertiary,
+  theme.colors.greenLight1,
+  theme.colors.greenLight2,
+  theme.colors.background,
 ];
 
 const Pill: React.FC<{ label: string; variant: "accent" | "outline"; styles: any }> = ({
@@ -228,7 +231,7 @@ const ProfileScreen: React.FC = () => {
       scrollable
       contentStyle={{ ...styles.content, paddingBottom: theme.spacing["2xl"] + tabBarHeight }}
       gradient="linear"
-      gradientColors={GRADIENT_COLORS}
+      gradientColors={getGradientColors(theme)}
       gradientStart={{ x: 0, y: 1 }}
       gradientEnd={{ x: 1, y: 0 }}
     >
@@ -244,13 +247,11 @@ const ProfileScreen: React.FC = () => {
               style={styles.headerButtonGlassy}
               borderRadius={20}
               blurAmount={25}
-              blurType="light"
               overlayOpacity={0.12}
               borderWidth={1}
-              borderColor="rgba(255, 255, 255, 0.6)"
             >
               <View style={styles.headerButtonIconWrapper}>
-                <AppIcon.ArrowLeft width={24} height={24} />
+                <AppIcon.ArrowLeft width={24} height={24} color={theme.colors.text} />
               </View>
             </GlassyWrapper>
           </TouchableOpacity>
@@ -265,10 +266,8 @@ const ProfileScreen: React.FC = () => {
             style={styles.headerButtonGlassy}
             borderRadius={20}
             blurAmount={25}
-            blurType="light"
             overlayOpacity={0.12}
             borderWidth={1}
-            borderColor="rgba(255, 255, 255, 0.6)"
           >
             <View style={styles.headerButtonIconWrapper}>
               <AppIcon.QrCode width={24} height={24} color={theme.colors.primary} />
@@ -309,7 +308,7 @@ const ProfileScreen: React.FC = () => {
                     },
                   ]}
                 >
-                  <ActivityIndicator color={theme.colors.white} />
+                  <ActivityIndicator color={theme.colors.onPrimary} />
                 </View>
               ) : null}
             </View>
@@ -331,10 +330,10 @@ const ProfileScreen: React.FC = () => {
               alignItems: "center",
               justifyContent: "center",
               borderWidth: 2,
-              borderColor: theme.colors.white,
+              borderColor: theme.colors.background,
             }}
           >
-            <CustomText size={18} fontWeight="bold" color={theme.colors.white} style={{ lineHeight: 20 }}>
+            <CustomText size={18} fontWeight="bold" color={theme.colors.onPrimary} style={{ lineHeight: 20 }}>
               +
             </CustomText>
           </TouchableOpacity>
@@ -352,10 +351,8 @@ const ProfileScreen: React.FC = () => {
         style={styles.cardFirst}
         borderRadius={20}
         blurAmount={16}
-        blurType="light"
         overlayOpacity={0.5}
         borderWidth={1}
-        borderColor="rgba(255,255,255,0.6)"
         padding={0}
         flowLayout
       >
@@ -387,10 +384,8 @@ const ProfileScreen: React.FC = () => {
         style={styles.card}
         borderRadius={20}
         blurAmount={16}
-        blurType="light"
         overlayOpacity={0.5}
         borderWidth={1}
-        borderColor="rgba(255,255,255,0.6)"
         padding={0}
         flowLayout
       >
@@ -414,10 +409,8 @@ const ProfileScreen: React.FC = () => {
         style={styles.card}
         borderRadius={20}
         blurAmount={16}
-        blurType="light"
         overlayOpacity={0.5}
         borderWidth={1}
-        borderColor="rgba(255,255,255,0.6)"
         padding={0}
         flowLayout
       >
@@ -434,7 +427,7 @@ const ProfileScreen: React.FC = () => {
                 isLast={index === paymentMethods.length - 1}
                 icon={<AppIcon.DebitCard width={17} height={17} color={theme.colors.primary} />}
                 label={formatCardLabel(item)}
-                right={<AppIcon.ChevronRight width={15} height={15} />}
+                right={<AppIcon.ChevronRight width={15} height={15} color={theme.colors.text} />}
                 onPress={() => goTo(NAVIGATION_SCREENS.PAYMENT_METHODS_SCREEN as AppRouteName)}
               />
             ))
@@ -454,10 +447,8 @@ const ProfileScreen: React.FC = () => {
         style={styles.card}
         borderRadius={20}
         blurAmount={16}
-        blurType="light"
         overlayOpacity={0.5}
         borderWidth={1}
-        borderColor="rgba(255,255,255,0.6)"
         padding={0}
         flowLayout
       >
@@ -468,7 +459,7 @@ const ProfileScreen: React.FC = () => {
             isFirst
             icon={<AppIcon.Privacy width={17} height={17} color={theme.colors.primary} />}
             label="Biometric"
-            right={<AppIcon.ChevronRight width={15} height={15} />}
+            right={<AppIcon.ChevronRight width={15} height={15} color={theme.colors.text} />}
             onPress={() => goTo(NAVIGATION_SCREENS.NEW_PRIVACY_SECURITY_SCREEN as AppRouteName)}
           />
           <Row
@@ -476,7 +467,7 @@ const ProfileScreen: React.FC = () => {
             isLast
             icon={<AppIcon.TransactionLimit width={17} height={17} color={theme.colors.primary} />}
             label="Transaction Limit"
-            right={<AppIcon.ChevronRight width={15} height={15} />}
+            right={<AppIcon.ChevronRight width={15} height={15} color={theme.colors.text} />}
             onPress={() => goTo(NAVIGATION_SCREENS.TRANSACTION_LIMIT_SCREEN as AppRouteName)}
           />
         </View>
@@ -542,7 +533,7 @@ const ProfileScreen: React.FC = () => {
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             onPress={() => setIsPhotoViewerVisible(false)}
           >
-            <CustomText size={18} fontWeight="bold" color={theme.colors.white}>
+            <CustomText size={18} fontWeight="bold" color={theme.colors.onPrimary}>
               ✕
             </CustomText>
           </TouchableOpacity>
@@ -569,7 +560,7 @@ const ProfileScreen: React.FC = () => {
         >
           <View
             style={{
-              backgroundColor: theme.colors.white,
+              backgroundColor: theme.colors.surfaceElevated,
               borderRadius: 24,
               paddingHorizontal: 24,
               paddingTop: 28,
@@ -662,7 +653,7 @@ const ProfileScreen: React.FC = () => {
         >
           <View
             style={{
-              backgroundColor: theme.colors.white,
+              backgroundColor: theme.colors.surfaceElevated,
               borderRadius: 24,
               paddingHorizontal: 24,
               paddingTop: 28,
@@ -678,8 +669,8 @@ const ProfileScreen: React.FC = () => {
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                backgroundColor: "#FFF8E1",
-                borderColor: "#FFD54F",
+                backgroundColor: theme.colors.warningSurface,
+                borderColor: theme.colors.warning,
                 borderWidth: 1,
                 borderRadius: 14,
                 paddingVertical: 14,
@@ -692,7 +683,7 @@ const ProfileScreen: React.FC = () => {
                 variant="body"
                 size={14}
                 fontWeight="regular"
-                color="#8B6914"
+                color={theme.colors.warning}
                 style={{ flex: 1, textAlign: "center" }}
               >
                 Are you sure you want to logout?

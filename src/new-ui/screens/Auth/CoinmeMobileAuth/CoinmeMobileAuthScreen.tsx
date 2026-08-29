@@ -484,7 +484,7 @@ const CoinmeMobileAuthScreen: React.FC = () => {
                 colors={[
                   theme.colors.secondary,
                   theme.colors.tertiary,
-                  theme.colors.white,
+                  theme.colors.background,
                 ]}
                 positions={[0, 0.22, 1]}
               />
@@ -504,7 +504,7 @@ const CoinmeMobileAuthScreen: React.FC = () => {
         variant="h2"
         fontWeight="bold"
         style={styles.title}
-        color={theme.colors.black}
+        color={theme.colors.text}
         useThemeColor={false}
       >
         Setting up your Account…
@@ -519,7 +519,7 @@ const CoinmeMobileAuthScreen: React.FC = () => {
     return (
       <ScreenWrapper
         gradient="none"
-        backgroundColor={theme.colors.white}
+        backgroundColor={theme.colors.background}
         contentStyle={{ flex: 1 }}
       >
         <View
@@ -569,7 +569,7 @@ const CoinmeMobileAuthScreen: React.FC = () => {
   return (
     <ScreenWrapper
       gradient="none"
-      backgroundColor={theme.colors.white}
+      backgroundColor={theme.colors.background}
       contentStyle={{ flex: 1 }}
     >
       {loadingContent}

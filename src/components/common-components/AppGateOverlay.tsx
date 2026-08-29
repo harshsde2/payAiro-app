@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { useAppLock } from "hooks/useAppLock";
+import { useTheme } from "@new-ui/styles/ThemeContext";
 
 interface IAppGateOverlayProps {}
 
@@ -11,6 +12,7 @@ interface IAppGateOverlayProps {}
  */
 const AppGateOverlay: React.FC<IAppGateOverlayProps> = () => {
   const { isLockCheckComplete, shouldShowLock, isLocked } = useAppLock();
+  const { theme } = useTheme();
 
   const shouldBlock =
     !isLockCheckComplete || (shouldShowLock && isLocked);
@@ -18,7 +20,10 @@ const AppGateOverlay: React.FC<IAppGateOverlayProps> = () => {
   if (!shouldBlock) return null;
 
   return (
-    <View style={styles.overlay} pointerEvents="box-only" />
+    <View
+      style={[styles.overlay, { backgroundColor: theme.colors.background }]}
+      pointerEvents="box-only"
+    />
   );
 };
 
@@ -29,7 +34,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "#FFFFFF",
     zIndex: 9998,
     elevation: 9998,
   },

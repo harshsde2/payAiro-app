@@ -99,7 +99,7 @@ const CashBuyPurchaseInstructionsModal: React.FC<Props> = ({
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
-            <CustomText variant="h3" fontWeight="bold" color={theme.colors.white} style={styles.title}>
+            <CustomText variant="h3" fontWeight="bold" color={theme.colors.onPrimary} style={styles.title}>
               {title}
             </CustomText>
 
@@ -109,7 +109,7 @@ const CashBuyPurchaseInstructionsModal: React.FC<Props> = ({
               </View>
             ) : showFetchError ? (
               <View>
-                <CustomText variant="body" color={theme.colors.white} style={styles.errorText}>
+                <CustomText variant="body" color={theme.colors.onPrimary} style={styles.errorText}>
                   {instructionsRejected && typeof data?.message === "string" && data.message.trim()
                     ? data.message.trim()
                     : "We could not load instructions. Please check your connection and try again."}
@@ -125,7 +125,7 @@ const CashBuyPurchaseInstructionsModal: React.FC<Props> = ({
                     <CustomText
                       key={i}
                       variant="body"
-                      color={theme.colors.white}
+                      color={theme.colors.onPrimary}
                       style={styles.bullet}
                     >
                       {`\u2022 ${line}`}
@@ -134,13 +134,13 @@ const CashBuyPurchaseInstructionsModal: React.FC<Props> = ({
                 </View>
                 {feeNote ? (
                   <View style={styles.feeBox}>
-                    <CustomText variant="body" color={theme.colors.white} style={{ textAlign: "center" }}>
+                    <CustomText variant="body" color={theme.colors.onPrimary} style={{ textAlign: "center" }}>
                       {feeNote}
                     </CustomText>
                   </View>
                 ) : null}
                 {footerNote ? (
-                  <CustomText variant="caption" color={theme.colors.white} style={styles.footer}>
+                  <CustomText variant="caption" color={theme.colors.onPrimary} style={styles.footer}>
                     {footerNote}
                   </CustomText>
                 ) : null}

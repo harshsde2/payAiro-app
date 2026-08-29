@@ -97,7 +97,7 @@ const WithdrawConfirmationModal: React.FC<WithdrawConfirmationModalProps> = ({
 
           <View style={styles.modalButtonArea}>
             <Button disabled={isSubmitting} onPress={onConfirm}>
-              {isSubmitting ? <ActivityIndicator color={theme.colors.white} /> : "Proceed Withdraw"}
+              {isSubmitting ? <ActivityIndicator color={theme.colors.onPrimary} /> : "Proceed Withdraw"}
             </Button>
             <Button color={theme.colors.textSecondary} disabled={isSubmitting} onPress={onClose}>
               Cancel

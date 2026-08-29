@@ -7,6 +7,7 @@ import {
   StyleProp,
 } from "react-native";
 import { useTheme } from "../styles/ThemeContext";
+import { useTheme as useNewUITheme } from "@new-ui/styles/ThemeContext";
 
 type FontWeight = "regular" | "medium" | "semiBold" | "bold";
 type TextVariant =
@@ -46,6 +47,9 @@ const CustomText: React.FC<CustomTextProps> = ({
   ...props
 }) => {
   const { theme } = useTheme();
+  // Legacy theme still supplies spacing/typography; colours come from the new-ui
+  // theme so this follows the user's Appearance choice.
+  const { theme: ui } = useNewUITheme();
 
   // Helper function to get the font family based on weight
   const getFontFamily = (weight?: FontWeight): string => {
@@ -81,11 +85,11 @@ const CustomText: React.FC<CustomTextProps> = ({
 
     // If useThemeColor flag is true, use appropriate theme color
     if (useThemeColor) {
-      return theme.colors.text.primary;
+      return ui.colors.text;
     }
 
     // Default to current theme's primary text color
-    return theme.colors.text.primary;
+    return ui.colors.text;
   };
 
   // Merge styles in the correct order of precedence

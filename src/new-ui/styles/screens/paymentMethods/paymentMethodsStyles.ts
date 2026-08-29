@@ -14,7 +14,7 @@ export const paymentMethodsStyles = (theme: ITheme) =>
       borderColor: theme.colors.greyLight,
       borderRadius: theme.radius.lg,
       overflow: 'hidden',
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     emptyText: {
       paddingHorizontal: theme.spacing.md,
@@ -30,7 +30,7 @@ export const paymentMethodsStyles = (theme: ITheme) =>
       alignItems: 'center',
       paddingVertical: theme.spacing.md,
       paddingHorizontal: theme.spacing.md,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     cardIconCircle: {
       width: 44,

@@ -79,7 +79,7 @@ const SellSummaryScreen: React.FC = () => {
 
   if (!session) {
     return (
-      <ScreenWrapper safeArea backgroundColor={theme.colors.white}>
+      <ScreenWrapper safeArea backgroundColor={theme.colors.background}>
         <View style={styles.screen}>
           <CustomText variant="body" color={theme.colors.text}>
             Missing transaction details.
@@ -95,7 +95,7 @@ const SellSummaryScreen: React.FC = () => {
     <ScreenWrapper
       safeArea
       safeAreaEdges={["bottom"]}
-      backgroundColor={theme.colors.white}
+      backgroundColor={theme.colors.background}
       contentStyle={{ flex: 1 }}
       scrollable
       contentContainerStyle={styles.screen}
@@ -150,7 +150,7 @@ const SellSummaryScreen: React.FC = () => {
         >
           <View style={[styles.checkbox, acknowledged && styles.checkboxChecked]}>
             {acknowledged ? (
-              <CustomText variant="caption" color={theme.colors.white}>
+              <CustomText variant="caption" color={theme.colors.onPrimary}>
                 ✓
               </CustomText>
             ) : null}

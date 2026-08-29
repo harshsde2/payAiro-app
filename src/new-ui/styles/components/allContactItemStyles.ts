@@ -10,7 +10,7 @@ export const allContactItemStyles = (theme: ITheme) =>
       borderColor: theme.colors.border,
       borderRadius: theme.radius.lg,
       padding: theme.spacing.md,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     avatarCircle: {
       width: 52,

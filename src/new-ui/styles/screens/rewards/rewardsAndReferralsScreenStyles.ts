@@ -35,7 +35,7 @@ export const rewardsAndReferralsScreenStyles = (theme: ITheme) =>
       borderRadius: theme.radius.full,
       paddingVertical: theme.spacing.md,
       alignItems: 'center',
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     voucherGrid: {
       flexDirection: 'row',
@@ -47,7 +47,7 @@ export const rewardsAndReferralsScreenStyles = (theme: ITheme) =>
     },
     modalBackdrop: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: theme.colors.overlay,
       justifyContent: 'center',
       alignItems: 'center',
       padding: 20,
@@ -108,7 +108,7 @@ export const rewardsAndReferralsScreenStyles = (theme: ITheme) =>
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: 12,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     modalBreakdownInfo: {
       flex: 1,

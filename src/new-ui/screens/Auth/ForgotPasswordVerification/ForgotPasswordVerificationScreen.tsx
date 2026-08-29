@@ -117,7 +117,7 @@ const ForgotPasswordVerificationScreen: React.FC = () => {
         </View>
 
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <CustomText variant="body" color={theme.colors.white} fontWeight="bold">
+          <CustomText variant="body" color={theme.colors.onPrimary} fontWeight="bold">
             Submit
           </CustomText>
         </TouchableOpacity>

@@ -20,7 +20,7 @@ export const copyableFieldStyles = (theme: ITheme) =>
       borderRadius: theme.radius.full,
       paddingHorizontal: theme.spacing.base,
       paddingVertical: theme.spacing.md,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     value: {
       flex: 1,

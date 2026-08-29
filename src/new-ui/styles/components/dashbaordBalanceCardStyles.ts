@@ -5,7 +5,7 @@ const dashboardBalanceCardStyles = (theme: ITheme) => StyleSheet.create({
   contentContainer: {
     justifyContent: 'flex-start',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: theme.colors.glassTint,
     width: '100%',
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.base,

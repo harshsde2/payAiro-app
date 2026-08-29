@@ -7,7 +7,7 @@ import {
   Keyboard,
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import { useTheme } from "styles/ThemeContext";
+import { useTheme } from "@new-ui/styles/ThemeContext";
 import { CustomText } from "tsx-components";
 import { useUserSearch } from "query/hooks";
 import { useDebounce } from "hooks/useDebounce";
@@ -78,7 +78,7 @@ const ContactSuggestionItem: React.FC<IContactSuggestionItemProps> = React.memo(
             {text.substring(0, matchIndex)}
             <CustomText
               variant="subtitle2"
-              color={theme.colors.palette.green700}
+              color={theme.colors.primary}
               fontWeight="bold"
             >
               {text.substring(matchIndex, matchIndex + searchQuery.length)}
@@ -87,7 +87,7 @@ const ContactSuggestionItem: React.FC<IContactSuggestionItemProps> = React.memo(
           </>
         );
       },
-      [searchQuery, theme.colors.palette.green700]
+      [searchQuery, theme.colors.primary]
     );
 
     return (
@@ -112,7 +112,7 @@ const ContactSuggestionItem: React.FC<IContactSuggestionItemProps> = React.memo(
           >
             <CustomText
               variant="subtitle1"
-              color={theme.colors.palette.green700}
+              color={theme.colors.primary}
               fontWeight="semiBold"
             >
               {initial}
@@ -121,7 +121,7 @@ const ContactSuggestionItem: React.FC<IContactSuggestionItemProps> = React.memo(
           <View style={styles.contactInfo}>
             <CustomText
               variant="subtitle2"
-              color={theme.colors.text.primary}
+              color={theme.colors.text}
               numberOfLines={1}
             >
               {getHighlightedText(displayName)}
@@ -129,7 +129,7 @@ const ContactSuggestionItem: React.FC<IContactSuggestionItemProps> = React.memo(
             {contact.username && contact.nickname && (
               <CustomText
                 variant="caption"
-                color={theme.colors.text.secondary}
+                color={theme.colors.textSecondary}
                 numberOfLines={1}
               >
                 {contact.username}
@@ -138,7 +138,7 @@ const ContactSuggestionItem: React.FC<IContactSuggestionItemProps> = React.memo(
             {contact.email && !contact.username && (
               <CustomText
                 variant="caption"
-                color={theme.colors.text.secondary}
+                color={theme.colors.textSecondary}
                 numberOfLines={1}
               >
                 {contact.email}
@@ -268,11 +268,11 @@ const ContactSuggestion: React.FC<IContactSuggestionProps> = ({
         <View style={styles.loadingContainer}>
           <ActivityIndicator
             size="small"
-            color={theme.colors.palette.green700}
+            color={theme.colors.primary}
           />
           <CustomText
             variant="caption"
-            color={theme.colors.text.secondary}
+            color={theme.colors.textSecondary}
             style={styles.loadingText}
           >
             Searching...
@@ -315,7 +315,7 @@ const ContactSuggestion: React.FC<IContactSuggestionProps> = ({
         </View>
       ) : (
         <View style={styles.emptyContainer}>
-          <CustomText variant="body2" color={theme.colors.text.secondary}>
+          <CustomText variant="body2" color={theme.colors.textSecondary}>
             {emptyPlaceholder}
           </CustomText>
         </View>

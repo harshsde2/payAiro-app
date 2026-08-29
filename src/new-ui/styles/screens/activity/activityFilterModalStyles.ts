@@ -9,12 +9,12 @@ export const activityFilterModalStyles = (theme: ITheme) =>
     },
     modalBackdrop: {
       flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.45)',
+      backgroundColor: theme.colors.overlay,
       justifyContent: 'flex-end',
       padding: theme.spacing.xl,
     },
     modalCard: {
-      backgroundColor: theme.colors.background,
+      backgroundColor: theme.colors.surface,
       borderRadius: theme.radius.xl,
       paddingHorizontal: theme.spacing.lg,
       padding: theme.spacing.xl,
@@ -107,14 +107,14 @@ export const activityFilterModalStyles = (theme: ITheme) =>
     // regardless of scroll position (iOS renders it inline, not as a native popup).
     pickerBackdrop: {
       flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.4)',
+      backgroundColor: theme.colors.overlay,
       justifyContent: 'center',
       alignItems: 'center',
       padding: theme.spacing.xl,
     },
     pickerCard: {
       width: '100%',
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surface,
       borderRadius: theme.radius.xl,
       padding: theme.spacing.lg,
       alignItems: 'center',

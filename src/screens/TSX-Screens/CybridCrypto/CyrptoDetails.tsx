@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import ScreenWrapper from "@new-ui/components/common-components/ScreenWrapper";
-import { useTheme } from "styles";
+import { useTheme } from "@new-ui/styles/ThemeContext";
 import CustomText from "tsx-components/CustomText";
 import { SvgIcons } from "constants/svgs";
 import CryptoChart from "./CryptoChart";
@@ -115,9 +115,9 @@ const CyrptoDetails: React.FC = () => {
         safeArea
         safeAreaEdges={["bottom"]}
         padding={16}
-        backgroundColor={theme.colors.palette.white}
+        backgroundColor={theme.colors.background}
       >
-        <ActivityIndicator size="large" color={theme.colors.palette.blue500} />
+        <ActivityIndicator size="large" color={"#3499E0" /* Coinme brand blue, not themed */} />
       </ScreenWrapper>
     );
   }
@@ -128,7 +128,7 @@ const CyrptoDetails: React.FC = () => {
         safeArea
         safeAreaEdges={["bottom"]}
         padding={16}
-        backgroundColor={theme.colors.palette.white}
+        backgroundColor={theme.colors.background}
       >
         <View
           style={{
@@ -137,10 +137,10 @@ const CyrptoDetails: React.FC = () => {
         >
           <CustomText
             size={16}
-            color={theme.colors.text.primary}
+            color={theme.colors.text}
             style={{
               textAlign: "center",
-              marginBottom: theme.spacing.spacing[4],
+              marginBottom: theme.spacing.base,
             }}
           >
             No crypto data provided
@@ -156,7 +156,7 @@ const CyrptoDetails: React.FC = () => {
         safeArea
         safeAreaEdges={["bottom"]}
         padding={16}
-        backgroundColor={theme.colors.palette.white}
+        backgroundColor={theme.colors.background}
       >
         <View
           style={{
@@ -165,10 +165,10 @@ const CyrptoDetails: React.FC = () => {
         >
           <CustomText
             size={16}
-            color={theme.colors.text.primary}
+            color={theme.colors.text}
             style={{
               textAlign: "center",
-              marginBottom: theme.spacing.spacing[4],
+              marginBottom: theme.spacing.base,
             }}
           >
             Failed to load crypto chart data
@@ -176,13 +176,13 @@ const CyrptoDetails: React.FC = () => {
           <TouchableOpacity
             onPress={() => refetch()}
             style={{
-              backgroundColor: theme.colors.palette.blue500,
-              paddingHorizontal: theme.spacing.spacing[4],
-              paddingVertical: theme.spacing.spacing[2],
+              backgroundColor: "#3499E0" /* Coinme brand blue, not themed */,
+              paddingHorizontal: theme.spacing.base,
+              paddingVertical: theme.spacing.sm,
               borderRadius: 8,
             }}
           >
-            <CustomText size={14} color={theme.colors.palette.white}>
+            <CustomText size={14} color={theme.colors.onPrimary}>
               Retry
             </CustomText>
           </TouchableOpacity>
@@ -216,11 +216,11 @@ const CyrptoDetails: React.FC = () => {
           <CustomText
             fontWeight="bold"
             size={16}
-            color={theme.colors.text.primary}
+            color={theme.colors.text}
           >
             {item.name}
           </CustomText>
-          <CustomText size={14} color={theme.colors.text.tertiary}>
+          <CustomText size={14} color={theme.colors.textSecondary}>
             {item?.balance}
           </CustomText>
         </View>
@@ -228,7 +228,7 @@ const CyrptoDetails: React.FC = () => {
           <CustomText
             fontWeight="bold"
             size={16}
-            color={theme.colors.text.primary}
+            color={theme.colors.text}
           >
             {item.value}
           </CustomText>
@@ -306,7 +306,7 @@ const CyrptoDetails: React.FC = () => {
       padding={16}
       scrollable
       contentStyle={styles.wrapperScrollContent}
-      backgroundColor={theme.colors.palette.white}
+      backgroundColor={theme.colors.background}
     >
         {/* Price Section */}
         <View
@@ -330,7 +330,7 @@ const CyrptoDetails: React.FC = () => {
               <CustomText
                 fontWeight="bold"
                 size={36}
-                color={theme.colors.text.primary}
+                color={theme.colors.text}
               >
                 ${Number(currentPrice || 0).toFixed(2)}
               </CustomText>
@@ -344,14 +344,14 @@ const CyrptoDetails: React.FC = () => {
             <CustomText
               fontWeight="bold"
               size={14}
-              color={theme.colors.palette.green700}
+              color={theme.colors.primary}
               style={styles.viewOnlyTitle}
             >
               Available for viewing only
             </CustomText>
             <CustomText
               size={13}
-              color={theme.colors.text.secondary}
+              color={theme.colors.textSecondary}
               style={styles.viewOnlyText}
             >
               {viewOnlyMessage}
@@ -367,8 +367,8 @@ const CyrptoDetails: React.FC = () => {
             priceChange={priceChange}
             lineColor={
               priceChange >= 0
-                ? theme.colors.palette.green600
-                : theme.colors.palette.red500
+                ? theme.colors.primary
+                : theme.colors.error
             }
             fillArea={true}
             selectedPeriodIndex={CHART_PERIOD_ORDER.indexOf(chartPeriod)}
@@ -405,7 +405,7 @@ const CyrptoDetails: React.FC = () => {
                 )}
                 <CustomText
                   size={12}
-                  color={theme.colors.text.primary}
+                  color={theme.colors.text}
                   style={styles.actionButtonLabel}
                 >
                   {button.label}
@@ -446,34 +446,34 @@ const createStyles = (theme: any) =>
   StyleSheet.create({
     wrapperScrollContent: {
       flexGrow: 1,
-      paddingBottom: theme.spacing.spacing[8],
+      paddingBottom: theme.spacing['2xl'],
     },
     priceSection: {
-      paddingHorizontal: theme.spacing.spacing[4],
-      paddingTop: theme.spacing.spacing[4],
-      paddingBottom: theme.spacing.spacing[2],
+      paddingHorizontal: theme.spacing.base,
+      paddingTop: theme.spacing.base,
+      paddingBottom: theme.spacing.sm,
     },
     priceContainer: {
       flexDirection: "row",
       alignItems: "baseline",
-      marginBottom: theme.spacing.spacing[1],
+      marginBottom: theme.spacing.xs,
     },
     chartSection: {
       minHeight: 280,
-      paddingHorizontal: theme.spacing.spacing[4],
-      marginVertical: theme.spacing.spacing[4],
+      paddingHorizontal: theme.spacing.base,
+      marginVertical: theme.spacing.base,
     },
     viewOnlyCard: {
-      backgroundColor: theme.colors.palette.green100,
-      borderColor: theme.colors.palette.green200,
+      backgroundColor: theme.colors.primaryLight,
+      borderColor: theme.colors.primaryLight,
       borderWidth: 1,
       borderRadius: 12,
-      paddingHorizontal: theme.spacing.spacing[4],
-      paddingVertical: theme.spacing.spacing[3],
-      marginTop: theme.spacing.spacing[3],
+      paddingHorizontal: theme.spacing.base,
+      paddingVertical: theme.spacing.md,
+      marginTop: theme.spacing.md,
     },
     viewOnlyTitle: {
-      marginBottom: theme.spacing.spacing[1],
+      marginBottom: theme.spacing.xs,
     },
     viewOnlyText: {
       lineHeight: 19,
@@ -482,11 +482,11 @@ const createStyles = (theme: any) =>
       flexDirection: "row",
       justifyContent: "space-around",
       alignItems: "center",
-      backgroundColor: theme.colors.palette.green100,
-      paddingVertical: theme.spacing.spacing[4],
-      paddingHorizontal: theme.spacing.spacing[2],
+      backgroundColor: theme.colors.primaryLight,
+      paddingVertical: theme.spacing.base,
+      paddingHorizontal: theme.spacing.sm,
       borderRadius: 16,
-      marginBottom: theme.spacing.spacing[4],
+      marginBottom: theme.spacing.base,
     },
     actionButton: {
       alignItems: "center",
@@ -496,34 +496,34 @@ const createStyles = (theme: any) =>
       width: 50,
       height: 50,
       borderRadius: 28,
-      backgroundColor: theme.colors.palette.green650,
+      backgroundColor: theme.colors.primary,
       justifyContent: "center",
       alignItems: "center",
-      marginBottom: theme.spacing.spacing[1],
+      marginBottom: theme.spacing.xs,
     },
     actionButtonLabel: {
-      marginTop: theme.spacing.spacing[1],
+      marginTop: theme.spacing.xs,
     },
     balanceCard: {
       borderRadius: 12,
       borderWidth: 1,
-      marginBottom: theme.spacing.spacing[2],
-      padding: theme.spacing.spacing[3],
+      marginBottom: theme.spacing.sm,
+      padding: theme.spacing.md,
     },
     balanceCardGreen: {
-      borderColor: theme.colors.palette.green200,
-      backgroundColor: theme.colors.palette.white,
+      borderColor: theme.colors.primaryLight,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     balanceCardGrey: {
-      borderColor: theme.colors.border.light,
-      backgroundColor: theme.colors.palette.white,
+      borderColor: theme.colors.border,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     balanceCardContent: {
       flexDirection: "row",
       alignItems: "center",
     },
     balanceIconContainer: {
-      marginRight: theme.spacing.spacing[3],
+      marginRight: theme.spacing.md,
     },
     balanceInfo: {
       flex: 1,

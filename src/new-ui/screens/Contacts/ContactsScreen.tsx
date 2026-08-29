@@ -114,14 +114,14 @@ const ContactsScreen = () => {
         </View>
 
         <ContactActionRow
-          icon={<AppIcon.AddContact width={26} height={26} color={theme.colors.white} />}
+          icon={<AppIcon.AddContact width={26} height={26} color={theme.colors.onPrimary} />}
           title="New contacts"
           subtitle="Add contact to your PayAiro"
           onPress={() => navigation.navigate(NAVIGATION_SCREENS.NEW_ADD_CONTACT_SCREEN as never)}
         />
 
         <ContactActionRow
-          icon={<AppIcon.Invite width={26} height={26} color={theme.colors.white} />}
+          icon={<AppIcon.Invite width={26} height={26} color={theme.colors.onPrimary} />}
           title="Invite People"
           subtitle="Invite people to PayAiro to transact payments"
           onPress={() => {}}

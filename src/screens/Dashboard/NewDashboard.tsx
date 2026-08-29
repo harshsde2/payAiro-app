@@ -232,13 +232,13 @@ const NewDashboard = () => {
         <CustomText
           variant="body"
           fontWeight="semiBold"
-          color={newUITheme.colors.white}
+          color={newUITheme.colors.onPrimary}
         >
           {getContactInitials(displayName)}
         </CustomText>
       );
     },
-    [newUITheme.colors.white]
+    [newUITheme.colors.onPrimary]
   );
 
   const CARD_DATA = [
@@ -276,13 +276,13 @@ const NewDashboard = () => {
       gradientColors={[
         newUITheme.colors.greenLight2,
         newUITheme.colors.greenLight2,
-        newUITheme.colors.white,
+        newUITheme.colors.background,
         newUITheme.colors.greenLight2,
         newUITheme.colors.greenLight1,
         newUITheme.colors.tertiary,
         newUITheme.colors.greenLight1,
         newUITheme.colors.greenLight2,
-        newUITheme.colors.white,
+        newUITheme.colors.background,
       ]}
       gradientStart={{ x: 1, y: 1 }}
       gradientEnd={{ x: 0, y: 0 }}
@@ -325,10 +325,8 @@ const NewDashboard = () => {
               blurAmount={25}
               // 'light' (not 'regular') — on real iOS 'regular' is a dark-adaptive vibrancy that
               // renders the card dark over the green gradient; 'light' stays light like the sim.
-              blurType='light'
               overlayOpacity={0.12}
               borderWidth={1}
-              borderColor={newUITheme.colors.white}
               key={index}
             >
               <View style={{ flex: 1, alignSelf: 'stretch' }}>

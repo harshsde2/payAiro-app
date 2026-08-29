@@ -119,7 +119,7 @@ export const LocationSearchHeader: React.FC<Props> = ({
 
       {placesError && !showList ? (
         <View style={styles.placesErrorText}>
-          <CustomText variant="bodySmall" color={theme.colors.white}>
+          <CustomText variant="bodySmall" color={theme.colors.onPrimary}>
             {placesError}
           </CustomText>
         </View>

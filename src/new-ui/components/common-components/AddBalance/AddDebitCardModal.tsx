@@ -560,7 +560,7 @@ const CardFormBody: React.FC<CardFormBodyProps> = ({ onClose, onSubmitted }) => 
 
         <View style={{ marginTop: theme.spacing.md }}>
           <Button disabled={!canSubmit} onPress={handleSubmit}>
-            {isSubmitting ? <ActivityIndicator color={theme.colors.white} /> : 'Proceed'}
+            {isSubmitting ? <ActivityIndicator color={theme.colors.onPrimary} /> : 'Proceed'}
           </Button>
         </View>
       </Pressable>
@@ -650,7 +650,7 @@ const makeFieldStyles = (theme: ITheme) =>
       paddingHorizontal: theme.spacing.base,
       minHeight: 52,
       justifyContent: 'center',
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     secureText: {
       fontSize: 16,

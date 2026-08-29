@@ -199,7 +199,7 @@ const SellReadyCodeWaitingScreen: React.FC = () => {
 
   if (!session) {
     return (
-      <ScreenWrapper safeArea backgroundColor={theme.colors.white} contentStyle={{ flex: 1, padding: 16 }}>
+      <ScreenWrapper safeArea backgroundColor={theme.colors.background} contentStyle={{ flex: 1, padding: 16 }}>
         <CustomText variant="body" color={theme.colors.text}>
           Missing sale details. Go back and try again.
         </CustomText>
@@ -212,7 +212,7 @@ const SellReadyCodeWaitingScreen: React.FC = () => {
 
   if (executePhase === "loading") {
     return (
-      <ScreenWrapper safeArea backgroundColor={theme.colors.white} contentStyle={{ flex: 1, padding: 24 }}>
+      <ScreenWrapper safeArea backgroundColor={theme.colors.background} contentStyle={{ flex: 1, padding: 24 }}>
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <CustomText variant="body" color={theme.colors.text} style={{ marginTop: theme.spacing.lg }}>
@@ -225,7 +225,7 @@ const SellReadyCodeWaitingScreen: React.FC = () => {
 
   if (executePhase === "error") {
     return (
-      <ScreenWrapper safeArea backgroundColor={theme.colors.white} contentStyle={{ flex: 1, padding: 24 }}>
+      <ScreenWrapper safeArea backgroundColor={theme.colors.background} contentStyle={{ flex: 1, padding: 24 }}>
         <CustomText variant="h3" fontWeight="bold" color={theme.colors.text}>
           Sale could not be completed
         </CustomText>
@@ -247,7 +247,7 @@ const SellReadyCodeWaitingScreen: React.FC = () => {
   const gradientColors = [
     theme.colors.greenLight2,
     theme.colors.greenLight2,
-    theme.colors.white,
+    theme.colors.background,
     theme.colors.greenLight2,
     theme.colors.greenLight1,
     theme.colors.tertiary,
@@ -270,7 +270,7 @@ const SellReadyCodeWaitingScreen: React.FC = () => {
     >
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={onClosePress} accessibilityLabel="Go back">
-          <AppIcon.ArrowLeft width={25} height={25} />
+          <AppIcon.ArrowLeft width={25} height={25} color={theme.colors.text} />
         </TouchableOpacity>
         <CustomText variant="h4" fontWeight="semiBold" color={theme.colors.text}>
           {" "}
@@ -292,7 +292,7 @@ const SellReadyCodeWaitingScreen: React.FC = () => {
               justifyContent: "center",
             }}
           >
-            <CustomText variant="caption" color={theme.colors.white} fontWeight="bold">
+            <CustomText variant="caption" color={theme.colors.onPrimary} fontWeight="bold">
               {(session.cryptoCurrencyCode ?? "₿").slice(0, 3)}
             </CustomText>
           </View>
@@ -314,7 +314,7 @@ const SellReadyCodeWaitingScreen: React.FC = () => {
 
       <View style={styles.statusCard}>
         {isPolling && !pickupReady ? (
-          <ActivityIndicator color={theme.colors.white} style={{ marginBottom: theme.spacing.sm }} />
+          <ActivityIndicator color={theme.colors.onPrimary} style={{ marginBottom: theme.spacing.sm }} />
         ) : null}
         <CustomText variant="h4" fontWeight="semiBold" style={styles.statusCardTitle}>
           {pickupReady ? SELL_READY_CARD_TITLE : SELL_WAIT_CARD_TITLE}

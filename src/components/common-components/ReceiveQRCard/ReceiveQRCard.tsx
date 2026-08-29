@@ -37,10 +37,10 @@ const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
   onCapturingChange,
 }, ref) => {
   const { theme } = useTheme();
-  const newTheme = useNewTheme();
+  const { theme: newTheme } = useNewTheme();
 
   const viewShotRef = useRef<any>(null);
-  const styles = getStyles(newTheme.theme);
+  const styles = getStyles(newTheme);
   const [isCapturing, setIsCapturing] = useState(false);
   const [stableBankDetails, setStableBankDetails] = useState<React.ReactNode>(null);
   const tagLabelText = tagLabel || "PayAiro Tag:";
@@ -156,6 +156,7 @@ const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
                     {payAiroTag}
                   </CustomText>
                   <TouchableOpacity onPress={onCopyTag} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    {/* Inside the fixed-white capture card, so it stays dark. */}
                     <SvgIcons.CopyOutlineBlack width={15} height={15} />
                   </TouchableOpacity>
                 </View>
@@ -190,7 +191,8 @@ const ReceiveQRCard = forwardRef<IReceiveQRCardRef, IReceiveQRCardProps>(({
                   {payAiroTag}
                 </CustomText>
                 <TouchableOpacity onPress={onCopyTag} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                  <SvgIcons.CopyOutlineBlack width={15} height={15} />
+                  {/* Outside the fixed-white capture card, so this one follows the theme. */}
+                  <SvgIcons.CopyOutlineBlack width={15} height={15} color={newTheme.colors.text} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -251,6 +253,8 @@ const getStyles = (theme: ITheme) =>
       alignSelf: "center",
     },
     viewShot: {
+      // Fixed, not themed: this card holds a QR code, which needs a light field to stay
+      // scannable, and it is also captured and shared as an image.
       backgroundColor: theme.colors.white,
       padding: 20,
       borderRadius: 12,
@@ -270,6 +274,7 @@ const getStyles = (theme: ITheme) =>
       justifyContent: "center",
     },
     title: {
+      // Fixed, not themed: sits inside the white QR card above.
       color: theme.colors.black,
       textAlign: "center",
     },
@@ -293,9 +298,6 @@ const getStyles = (theme: ITheme) =>
       marginVertical: 10,
       // paddingHorizontal: 20,
     },
-    bankDetailsText: {
-      color: theme.colors.black,
-    },
     logoOverlay: {
       position: "absolute",
       left: (QR_SIZE - LOGO_OVERLAY_SIZE) / 2,
@@ -313,9 +315,6 @@ const getStyles = (theme: ITheme) =>
       alignItems: "center",
       justifyContent: "center",
       gap: 8,
-    },
-    tagLabel: {
-      color: theme.colors.black,
     },
   tagValue: {
       flexShrink: 1,
@@ -348,6 +347,6 @@ const getStyles = (theme: ITheme) =>
       paddingHorizontal: 20,
     },
     actionText: {
-      color: theme.colors.white,
+      color: theme.colors.onPrimary,
     },
   });

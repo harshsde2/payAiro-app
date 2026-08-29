@@ -16,14 +16,14 @@ export const statePickerStyles = (theme: ITheme) => {
       borderWidth: 1,
       borderRadius: 8,
       borderColor: theme.colors.grey,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     fieldError: {
       borderColor: theme.colors.error,
     },
     modalBackdrop: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: theme.colors.overlay,
       justifyContent: 'flex-end',
     },
     modalSheet: {
@@ -33,7 +33,7 @@ export const statePickerStyles = (theme: ITheme) => {
       paddingBottom: theme.spacing.xl,
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
-      backgroundColor: theme.colors.background,
+      backgroundColor: theme.colors.surface,
     },
     header: {
       flexDirection: 'row',

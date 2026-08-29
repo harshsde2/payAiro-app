@@ -202,7 +202,7 @@ const CashRampBarcodeScreen: React.FC = () => {
         try {
           await ScreenGuard.initSettings({ enableCapture: false, enableRecord: false });
           if (cancelled) return;
-          await ScreenGuard.register({ backgroundColor: theme.colors.white });
+          await ScreenGuard.register({ backgroundColor: theme.colors.background });
         } catch {
           /* native module optional */
         }
@@ -213,7 +213,7 @@ const CashRampBarcodeScreen: React.FC = () => {
         setIsScreenFocused(false);
         void ScreenGuard.unregister().catch(() => {});
       };
-    }, [screenGuardActive, theme.colors.white])
+    }, [screenGuardActive, theme.colors.background])
   );
 
   useEffect(() => {
@@ -631,13 +631,13 @@ const CashRampBarcodeScreen: React.FC = () => {
           ? [
               theme.colors.greenLight2,
               theme.colors.greenLight2,
-              theme.colors.white,
+              theme.colors.background,
               theme.colors.greenLight2,
               theme.colors.greenLight1,
               theme.colors.tertiary,
               theme.colors.greenLight1,
               theme.colors.greenLight2,
-              theme.colors.white,
+              theme.colors.background,
             ]
           : [...buyGradientColors]
       }
