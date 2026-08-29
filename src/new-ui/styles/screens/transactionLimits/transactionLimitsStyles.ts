@@ -21,7 +21,7 @@ export const transactionLimitsStyles = (theme: ITheme) =>
       borderColor: theme.colors.greyLight,
       borderRadius: theme.radius.lg,
       overflow: 'hidden',
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     row: {
       paddingHorizontal: theme.spacing.md,

@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "@react-native-community/blur";
 import { useTheme } from "styles";
+import { useTheme as useNewUITheme } from "@new-ui/styles/ThemeContext";
 import { AppIcon } from "../new-ui/assets/svgs";
 import { NAVIGATION_SCREENS } from "./navigationConstants";
 
@@ -68,10 +69,12 @@ const ScanIcon = memo(() => (
 
 interface ActivityIconProps extends TabIconProps {
   pendingCount: number;
+  /** Ring separating the badge from the icon behind it — must match the bar, not be white. */
+  badgeBorderColor: string;
 }
 
 const ActivityIcon = memo(
-  ({ focused, pendingCount, color }: ActivityIconProps) => (
+  ({ focused, pendingCount, color, badgeBorderColor }: ActivityIconProps) => (
     <View>
       <AppIcon.Transactions
         width={24}
@@ -79,7 +82,7 @@ const ActivityIcon = memo(
         color={color || (focused ? ACTIVE_GREEN : INACTIVE_GREY)}
       />
       {pendingCount > 0 && (
-        <View style={styles.badgeContainer}>
+        <View style={[styles.badgeContainer, { borderColor: badgeBorderColor }]}>
           <Text style={styles.badgeText}>
             {pendingCount > 99 ? "99+" : pendingCount}
           </Text>
@@ -111,17 +114,19 @@ const STATIC_SCREEN_OPTIONS = {
 };
 
 // ============================================
-// BLUR TAB BAR BACKGROUND - Light frosted glass (no black overlay)
+// BLUR TAB BAR BACKGROUND - frosted glass, inverted for dark mode
 // Shows background content through with blur effect
 // ============================================
-const TabBarBackground = memo(() => {
+const TabBarBackground = memo(({ isDark }: { isDark: boolean }) => {
   if (Platform.OS === "ios") {
     return (
       <BlurView
         style={StyleSheet.absoluteFill}
-        blurType="light"
+        blurType={isDark ? "dark" : "light"}
         blurAmount={10}
-        reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.75)"
+        reducedTransparencyFallbackColor={
+          isDark ? "rgba(20, 20, 20, 0.85)" : "rgba(255, 255, 255, 0.75)"
+        }
       />
     );
   }
@@ -129,7 +134,11 @@ const TabBarBackground = memo(() => {
     <View
       style={[
         StyleSheet.absoluteFill,
-        { backgroundColor: "rgba(255, 255, 255, 0.85)" },
+        {
+          backgroundColor: isDark
+            ? "rgba(20, 20, 20, 0.85)"
+            : "rgba(255, 255, 255, 0.85)",
+        },
       ]}
     />
   );
@@ -140,6 +149,8 @@ const TabBarBackground = memo(() => {
 // ============================================
 const BottomTabNavigator = () => {
   const { theme } = useTheme();
+  const { theme: newUITheme } = useNewUITheme();
+  const isDark = newUITheme.isDark;
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
   const { isCrypto } = useSelector((state: any) => state.authenticationSlice);
@@ -225,12 +236,18 @@ const BottomTabNavigator = () => {
     () => ({
       ...STATIC_SCREEN_OPTIONS,
       tabBarStyle,
-      tabBarActiveTintColor: ACTIVE_GREEN,
-      tabBarInactiveTintColor: INACTIVE_GREY,
+      tabBarActiveTintColor: newUITheme.colors.primary,
+      tabBarInactiveTintColor: newUITheme.colors.textSecondary,
       tabBarLabelStyle,
-      tabBarBackground: () => <TabBarBackground />,
+      tabBarBackground: () => <TabBarBackground isDark={isDark} />,
     }),
-    [tabBarStyle, tabBarLabelStyle]
+    [
+      tabBarStyle,
+      tabBarLabelStyle,
+      newUITheme.colors.primary,
+      newUITheme.colors.textSecondary,
+      isDark,
+    ]
   );
 
   // Memoized icon render functions - these return the memoized components
@@ -256,9 +273,10 @@ const BottomTabNavigator = () => {
         focused={focused}
         color={color}
         pendingCount={pendingRequestCount}
+        badgeBorderColor={newUITheme.colors.background}
       />
     ),
-    [pendingRequestCount]
+    [pendingRequestCount, newUITheme.colors.background]
   );
 
   const renderProfileIcon = useCallback(

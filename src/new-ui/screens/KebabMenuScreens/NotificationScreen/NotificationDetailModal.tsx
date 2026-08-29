@@ -12,7 +12,7 @@ import type { NotificationItem } from '@new-ui/types/notifications'
 import {
   buildDataRows,
   categoryToIconType,
-  ICON_BG,
+  getIconBg,
   NotificationIcon,
   prettifyKey,
 } from './notificationVisuals'
@@ -86,11 +86,11 @@ const NotificationDetailModal: React.FC<NotificationDetailModalProps> = ({
 
         {/* stopPropagation so taps inside the card don't fall through to the backdrop. */}
         <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
-          <View style={[local.iconCircle, { backgroundColor: ICON_BG[iconType] }]}>
+          <View style={[local.iconCircle, { backgroundColor: getIconBg(theme)[iconType] }]}>
             {notification.icon_url ? (
               <Image source={{ uri: notification.icon_url }} style={local.iconImage} />
             ) : (
-              <NotificationIcon type={iconType} size={28} />
+              <NotificationIcon type={iconType} size={28} color={theme.colors.text} />
             )}
           </View>
 

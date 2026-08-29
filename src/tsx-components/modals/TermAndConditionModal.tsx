@@ -16,6 +16,8 @@ import {
 } from "react-native";
 import WebView from "react-native-webview";
 import { Theme, useTheme } from "styles";
+import { useTheme as useNewUITheme } from "@new-ui/styles/ThemeContext";
+import type { ITheme } from "@new-ui/styles/themes/themeTypes";
 import CustomText from "tsx-components/CustomText";
 import {
   TermAndConditionModalProps,
@@ -37,7 +39,10 @@ const TermAndConditionModal = forwardRef<
   const [layout, setLayout] = useState({});
   const [showButton, setShowButton] = useState(false);
   const { theme } = useTheme();
-  const styles = customStyles(theme);
+  // Legacy theme still supplies spacing/typography; colours come from the new-ui
+  // theme so this follows the user's Appearance choice.
+  const { theme: ui } = useNewUITheme();
+  const styles = customStyles(theme, ui);
 
   const dismissModal = useCallback(() => {
     setIsVisible(false);
@@ -98,7 +103,7 @@ const TermAndConditionModal = forwardRef<
       onRequestClose={dismissModal}
     >
       <SafeAreaView
-        style={{ flex: 1, backgroundColor: theme.colors.palette.green50 }}
+        style={{ flex: 1, backgroundColor: ui.colors.background }}
       >
         {/* <View > */}
         <HeaderTitle
@@ -203,7 +208,7 @@ const TermAndConditionModal = forwardRef<
 
 export default TermAndConditionModal;
 
-const customStyles = (theme: Theme) =>
+const customStyles = (theme: Theme, ui: ITheme) =>
   StyleSheet.create({
     safeArea: {
       flex: 1,
@@ -217,7 +222,7 @@ const customStyles = (theme: Theme) =>
       flex: 1,
     },
     container: {
-      backgroundColor: theme.colors.palette.white,
+      backgroundColor: ui.colors.surfaceElevated,
       borderTopEndRadius: 32,
       borderTopStartRadius: 32,
       padding: theme.spacing.layout.screenPadding,

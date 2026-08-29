@@ -41,12 +41,12 @@ const Button: React.FC<IButtonProps> = ({
       {...props}
     >
       {loading ? (
-        <ActivityIndicator color={theme.colors.white} size="small" />
+        <ActivityIndicator color={theme.colors.onPrimary} size="small" />
       ) : (
         <CustomText
           style={[
             {
-              color: theme.colors.white,
+              color: theme.colors.onPrimary,
               fontFamily: theme.typography.fontFamily.semiBold,
             },
             textStyle,

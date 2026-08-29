@@ -524,7 +524,7 @@ const NewAddBalanceScreen: React.FC = () => {
                     backgroundColor: theme.colors.primary,
                   }}
                 >
-                  <CustomText variant="caption" color={theme.colors.white}>
+                  <CustomText variant="caption" color={theme.colors.onPrimary}>
                     Selected
                   </CustomText>
                 </View>
@@ -552,7 +552,7 @@ const NewAddBalanceScreen: React.FC = () => {
                     backgroundColor: theme.colors.primary,
                   }}
                 >
-                  <CustomText variant="caption" color={theme.colors.white}>
+                  <CustomText variant="caption" color={theme.colors.onPrimary}>
                     Selected
                   </CustomText>
                 </View>

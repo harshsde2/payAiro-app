@@ -143,10 +143,11 @@ const SellCashRampLocationScreen: React.FC = () => {
     !isPending && !isResolvingInitialCenter && !isError && mappedLocations.length === 0;
 
   if (!entry) {
+    // Fixed, not themed: full-bleed map screen, dark in both themes.
     return (
       <ScreenWrapper safeArea backgroundColor={theme.colors.black}>
         <View style={styles.stateWrap}>
-          <CustomText variant="body" color={theme.colors.white}>
+          <CustomText variant="body" color={theme.colors.onPrimary}>
             Missing sell details. Go back and try again.
           </CustomText>
         </View>
@@ -158,6 +159,7 @@ const SellCashRampLocationScreen: React.FC = () => {
     <ScreenWrapper
       safeArea
       safeAreaEdges={["bottom"]}
+      // Fixed, not themed: full-bleed map screen, dark in both themes.
       backgroundColor={theme.colors.black}
       contentStyle={{ flex: 1 }}
       statusBarStyle="light-content"
@@ -182,7 +184,7 @@ const SellCashRampLocationScreen: React.FC = () => {
           >
             <View style={styles.markerWrap}>
               <View style={styles.markerDot}>
-                <CustomText variant="bodySmall" color={theme.colors.white}>
+                <CustomText variant="bodySmall" color={theme.colors.onPrimary}>
                   {item.markerLabel}
                 </CustomText>
               </View>
@@ -232,13 +234,13 @@ const SellCashRampLocationScreen: React.FC = () => {
         </View>
       ) : isError ? (
         <View style={styles.stateWrap}>
-          <CustomText variant="body" color={theme.colors.white}>
+          <CustomText variant="body" color={theme.colors.onPrimary}>
             Unable to load nearby ATMs.
           </CustomText>
         </View>
       ) : showEmptyList ? (
         <View style={styles.emptyNearbyWrap}>
-          <CustomText variant="body" color={theme.colors.white} style={{ textAlign: "center" }}>
+          <CustomText variant="body" color={theme.colors.onPrimary} style={{ textAlign: "center" }}>
             No ATMs near this area.
           </CustomText>
         </View>

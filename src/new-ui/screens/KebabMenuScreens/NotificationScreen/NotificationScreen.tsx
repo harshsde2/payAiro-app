@@ -32,7 +32,7 @@ import {
 } from 'query/hooks/useNotificationsFeed'
 // Icon/tint mapping lives beside the screen so the detail popup renders the tapped item
 // exactly like its card.
-import { categoryToIconType, ICON_BG, NotificationIcon } from './notificationVisuals'
+import { categoryToIconType, getIconBg, NotificationIcon } from './notificationVisuals'
 import NotificationDetailModal from './NotificationDetailModal'
 
 interface NotificationSection {
@@ -207,11 +207,11 @@ const NotificationScreen = () => {
           onPress={() => onPressItem(item)}
           style={[styles.card, !read && styles.cardUnread]}
         >
-          <View style={[styles.iconCircle, { backgroundColor: ICON_BG[iconType] }]}>
+          <View style={[styles.iconCircle, { backgroundColor: getIconBg(theme)[iconType] }]}>
             {item.icon_url ? (
               <Image source={{ uri: item.icon_url }} style={styles.iconImage} />
             ) : (
-              <NotificationIcon type={iconType} />
+              <NotificationIcon type={iconType} color={theme.colors.text} />
             )}
           </View>
           <View style={styles.cardContent}>
@@ -262,7 +262,7 @@ const NotificationScreen = () => {
         // renders its own default grey behind the track and ignores trackColor.false.
         trackColor={{ false: theme.colors.greyLight2, true: theme.colors.primary }}
         ios_backgroundColor={theme.colors.greyLight2}
-        thumbColor={theme.colors.white}
+        thumbColor={theme.colors.onPrimary}
         // Android's switch renders noticeably smaller than iOS's — nudge it up to match.
         style={Platform.OS === 'android' ? styles.androidSwitch : undefined}
       />
@@ -356,7 +356,7 @@ const notificationStyles = (theme: ReturnType<typeof useTheme>['theme']) =>
     card: {
       flexDirection: 'row',
       alignItems: 'flex-start',
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderRadius: theme.radius.xl,
       padding: theme.spacing.md,
       marginBottom: theme.spacing.md,

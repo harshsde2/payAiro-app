@@ -3,6 +3,7 @@ import { Alert, Linking, StyleSheet, Switch, TouchableOpacity, View } from 'reac
 import { useNavigation } from '@react-navigation/native'
 import ScreenWrapper from 'new-ui/components/common-components/ScreenWrapper'
 import CustomText from 'new-ui/components/common-components/CustomText'
+import SettingsIconBadge from 'new-ui/components/common-components/SettingsIconBadge'
 import { useTheme } from '@new-ui/styles/ThemeContext'
 import { AppIcon } from 'new-ui/assets/svgs'
 import { NAVIGATION_SCREENS } from 'navigations/navigationConstants'
@@ -257,7 +258,9 @@ const PrivacyAndSecurityScreen = () => {
     <ScreenWrapper safeArea safeAreaEdges={['bottom']} scrollable contentStyle={styles.content}>
       <View style={styles.card}>
         <View style={styles.cardLeft}>
-          <AppIcon.Privacy />
+          <SettingsIconBadge>
+            <AppIcon.Privacy width={40} height={40} color={theme.colors.primary} />
+          </SettingsIconBadge>
           <View style={styles.cardTextWrapper}>
             <CustomText variant="h5" size={16} fontWeight="semiBold">
               Biometric App Lock
@@ -277,13 +280,15 @@ const PrivacyAndSecurityScreen = () => {
           // default behind the track while the toggle animates.
           trackColor={{ false: theme.colors.greyLight2, true: theme.colors.primary }}
           ios_backgroundColor={theme.colors.greyLight2}
-          thumbColor={theme.colors.white}
+          thumbColor={theme.colors.onPrimary}
         />
       </View>
 
       <View style={styles.spacedCard}>
         <View style={styles.cardLeft}>
-          <AppIcon.Privacy />
+          <SettingsIconBadge>
+            <AppIcon.Privacy width={40} height={40} color={theme.colors.primary} />
+          </SettingsIconBadge>
           <View style={styles.cardTextWrapper}>
             <CustomText variant="h5" size={16} fontWeight="semiBold">
               Biometric for Transactions
@@ -299,13 +304,15 @@ const PrivacyAndSecurityScreen = () => {
           disabled={isUpdatingTxnBiometric}
           trackColor={{ false: theme.colors.greyLight2, true: theme.colors.primary }}
           ios_backgroundColor={theme.colors.greyLight2}
-          thumbColor={theme.colors.white}
+          thumbColor={theme.colors.onPrimary}
         />
       </View>
 
       <View style={styles.timeoutCard}>
         <View style={styles.cardLeft}>
-          <AppIcon.Privacy />
+          <SettingsIconBadge>
+            <AppIcon.Privacy width={40} height={40} color={theme.colors.primary} />
+          </SettingsIconBadge>
           <View style={styles.cardTextWrapper}>
             <CustomText variant="h5" size={16} fontWeight="semiBold">
               Auto-Lock Timing
@@ -335,7 +342,9 @@ const PrivacyAndSecurityScreen = () => {
           onPress={() => navigation.navigate(row.screen as never)}
         >
           <View style={styles.cardLeft}>
-            <AppIcon.Privacy />
+            <SettingsIconBadge>
+            <AppIcon.Privacy width={40} height={40} color={theme.colors.primary} />
+          </SettingsIconBadge>
             <View style={styles.cardTextWrapper}>
               <CustomText variant="h5" size={16} fontWeight="semiBold">
                 {row.title}
@@ -345,7 +354,7 @@ const PrivacyAndSecurityScreen = () => {
               </CustomText>
             </View>
           </View>
-          <AppIcon.ChevronRight width={20} height={20} />
+          <AppIcon.ChevronRight width={20} height={20} color={theme.colors.text} />
         </TouchableOpacity>
       ))}
     </ScreenWrapper>

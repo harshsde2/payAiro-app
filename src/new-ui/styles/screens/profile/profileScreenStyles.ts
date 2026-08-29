@@ -55,7 +55,7 @@ export const profileScreenStyles = (theme: ITheme) =>
       justifyContent: 'center',
       overflow: 'hidden',
       borderWidth: 1.5,
-      borderColor: 'rgba(255,255,255,0.7)',
+      borderColor: theme.colors.glassBorder,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.08,
@@ -111,7 +111,7 @@ export const profileScreenStyles = (theme: ITheme) =>
       justifyContent: 'space-between',
       paddingVertical: 6,
       borderBottomWidth: 1,
-      borderBottomColor: 'rgba(0,0,0,0.1)',
+      borderBottomColor: theme.colors.border,
     },
     rowLast: {
       borderBottomWidth: 0,

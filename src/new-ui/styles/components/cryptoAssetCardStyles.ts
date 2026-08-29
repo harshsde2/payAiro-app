@@ -8,7 +8,7 @@ export const cryptoAssetCardStyles = (theme: ITheme) =>
       alignItems: 'center',
       paddingVertical: 12,
       paddingHorizontal: 12,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderWidth: 1,
       borderColor: theme.colors.border,
       marginBottom: theme.spacing.md,

@@ -138,7 +138,7 @@ const RequestDetailsSheet: React.FC<Props> = ({
 
         <View style={styles.actions}>
           <Button
-            color={theme.colors.white}
+            color={theme.colors.onPrimary}
             style={styles.cancelButton}
             textStyle={{ color: theme.colors.text }}
             onPress={onClose}
@@ -171,7 +171,7 @@ const makeStyles = (theme: ITheme) =>
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderTopLeftRadius: theme.radius["2xl"],
       borderTopRightRadius: theme.radius["2xl"],
       padding: theme.spacing.lg,

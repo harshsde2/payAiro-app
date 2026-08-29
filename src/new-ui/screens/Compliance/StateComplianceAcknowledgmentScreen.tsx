@@ -131,7 +131,7 @@ const StateComplianceAcknowledgmentScreen: React.FC = () => {
     return (
       <ScreenWrapper
         safeAreaEdges={['bottom', 'left', 'right']}
-        backgroundColor={theme.colors.white}
+        backgroundColor={theme.colors.background}
         statusBarStyle="dark-content"
         contentStyle={{ flex: 1 }}
       >
@@ -162,7 +162,7 @@ const StateComplianceAcknowledgmentScreen: React.FC = () => {
   return (
     <ScreenWrapper
       safeAreaEdges={['bottom', 'left', 'right']}
-      backgroundColor={theme.colors.white}
+      backgroundColor={theme.colors.background}
       statusBarStyle="dark-content"
       loading={isSubmitting}
       contentStyle={{ flex: 1 }}
@@ -470,7 +470,7 @@ const makeStyles = (theme: ReturnType<typeof useTheme>['theme']) =>
       marginLeft: theme.spacing.xs,
     },
     ackCard: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderRadius: theme.radius['2xl'],
       borderWidth: 1,
       borderColor: theme.colors.border,
@@ -504,7 +504,7 @@ const makeStyles = (theme: ReturnType<typeof useTheme>['theme']) =>
     },
     checkmark: {
       fontSize: 14,
-      color: theme.colors.white,
+      color: theme.colors.onPrimary,
       fontFamily: theme.typography.fontFamily.bold,
     },
     checkboxLabelWrap: {
@@ -529,7 +529,7 @@ const makeStyles = (theme: ReturnType<typeof useTheme>['theme']) =>
       paddingBottom: theme.spacing.lg,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
   });
 

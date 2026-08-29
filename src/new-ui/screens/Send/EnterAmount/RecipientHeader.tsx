@@ -62,12 +62,8 @@ const RecipientHeader: React.FC<RecipientHeaderProps> = ({
 
   return (
     <View style={styles.headerArea}>
-      <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 5 }]}>
-        <CustomText
-          fontWeight="semiBold"
-          size={18}
-          style={styles.title}
-        >
+      <View style={styles.titleRow}>
+        <CustomText fontWeight="semiBold" size={18}>
           {title}
         </CustomText>
         {trailingLine1 ? (

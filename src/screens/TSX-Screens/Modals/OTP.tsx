@@ -16,7 +16,7 @@ import {
 // import { CustomText } from "tsx-components";
 import CustomText from "@new-ui/components/common-components/CustomText";
 import GenericButton from "../../../components/GenericButton";
-import { Theme, useTheme } from "styles";
+import { useTheme } from "@new-ui/styles/ThemeContext";
 import { useSendOTP, useVerifyUserForSendOTP } from "query/hooks/useAPIAuth";
 import { showError, showSuccess } from "../../../utils/toast";
 import { getSmsHash } from "utils/smsHash";
@@ -224,7 +224,8 @@ const OTP = () => {
         {/* <HeaderTitle title="Transaction Verification" leftIcon="true" /> */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 15, }} >
           <TouchableOpacity onPress={handleClose}>
-            <AppIcon.ArrowLeft width={25} height={25} />
+            <AppIcon.ArrowLeft
+            color={theme.colors.text} width={25} height={25} />
           </TouchableOpacity>
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', marginRight: 20, }}>
             <CustomText variant='h1' fontWeight='bold' size={20}>Transaction Verification</CustomText>
@@ -250,7 +251,7 @@ const OTP = () => {
             <OtpInput
               ref={otpInputRef}
               numberOfDigits={6}
-              focusColor={theme.colors.palette.green800}
+              focusColor={theme.colors.primary}
               autoFocus={true}
               disabled={isVerifying || isVerifyingOTP || isSendingOTP}
               type="numeric"
@@ -322,7 +323,7 @@ const OTP = () => {
   );
 };
 
-const customStyles = (theme: Theme) =>
+const customStyles = (theme: ITheme) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -335,12 +336,12 @@ const customStyles = (theme: Theme) =>
       paddingHorizontal: 20,
       paddingVertical: 15,
       borderBottomWidth: 1,
-      borderBottomColor: theme.colors.palette.grey200,
+      borderBottomColor: theme.colors.surface,
     },
     headerTitle: {
       flex: 1,
       textAlign: "center",
-      color: theme.colors.text.primary,
+      color: theme.colors.text,
     },
     closeButton: {
       width: 30,
@@ -348,10 +349,10 @@ const customStyles = (theme: Theme) =>
       justifyContent: "center",
       alignItems: "center",
       borderRadius: 15,
-      backgroundColor: theme.colors.palette.grey100,
+      backgroundColor: theme.colors.surface,
     },
     closeText: {
-      color: theme.colors.palette.grey600,
+      color: theme.colors.textSecondary,
       fontSize: 16,
     },
     content: {
@@ -365,7 +366,7 @@ const customStyles = (theme: Theme) =>
     title: {
       textAlign: "center",
       marginBottom: 10,
-      color: theme.colors.text.primary,
+      color: theme.colors.text,
     },
     subtitle: {
       textAlign: "center",
@@ -389,27 +390,27 @@ const customStyles = (theme: Theme) =>
       height: 56,
       borderRadius: 12,
       borderWidth: 1.5,
-      borderColor: theme.colors.palette.grey300,
-      // backgroundColor: theme.colors.background.primary,
+      borderColor: theme.colors.border,
+      // backgroundColor: theme.colors.background,
     },
     otpInputText: {
       fontSize: 20,
-      fontFamily: theme.typography.fontFamily.montserratSemiBold,
-      color: theme.colors.text.primary,
+      fontFamily: theme.typography.fontFamily.semiBold,
+      color: theme.colors.text,
     },
     otpInputActive: {
-      borderColor: theme.colors.palette.green800,
+      borderColor: theme.colors.primary,
       borderWidth: 2,
-      backgroundColor: theme.colors.palette.green50,
+      backgroundColor: theme.colors.primaryLight,
     },
     otpInputFilled: {
-      borderColor: theme.colors.palette.green500,
+      borderColor: theme.colors.primary,
       borderWidth: 1.5,
-      backgroundColor: theme.colors.palette.green50,
+      backgroundColor: theme.colors.primaryLight,
     },
     otpInputDisabled: {
-      borderColor: theme.colors.palette.grey300,
-      backgroundColor: theme.colors.palette.grey100,
+      borderColor: theme.colors.border,
+      backgroundColor: theme.colors.surface,
       opacity: 0.7,
     },
     otpInputError: {
@@ -433,7 +434,7 @@ const customStyles = (theme: Theme) =>
     errorText: {
       color: "#C92A2A",
       fontSize: 14,
-      fontFamily: theme.typography.fontFamily.montserratSemiBold,
+      fontFamily: theme.typography.fontFamily.semiBold,
       marginLeft: 8,
       flex: 1,
       textAlign: "center",
@@ -444,19 +445,19 @@ const customStyles = (theme: Theme) =>
       marginTop: 20,
     },
     resendText: {
-      color: theme.colors.text.secondary,
+      color: theme.colors.textSecondary,
       marginBottom: 8,
     },
     resendButton: {
       paddingVertical: 5,
     },
     resendButtonText: {
-      color: theme.colors.palette.green600,
+      color: theme.colors.primary,
       textDecorationLine: "underline",
-      fontFamily: theme.typography.fontFamily.montserratSemiBold,
+      fontFamily: theme.typography.fontFamily.semiBold,
     },
     disabledText: {
-      color: theme.colors.palette.grey400,
+      color: theme.colors.border,
       textDecorationLine: "none",
     },
     verifyButton: {

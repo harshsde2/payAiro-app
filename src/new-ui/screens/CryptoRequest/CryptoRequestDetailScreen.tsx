@@ -327,7 +327,7 @@ const CryptoRequestDetailScreen: React.FC = () => {
         )}
         {canCancel && (
           <Button
-            color={theme.colors.white}
+            color={theme.colors.onPrimary}
             style={styles.cancelButton}
             textStyle={{ color: theme.colors.error }}
             onPress={handleCancel}
@@ -379,7 +379,7 @@ const makeStyles = (theme: ITheme) =>
       textAlign: "center",
     },
     card: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderWidth: 1,
       borderColor: theme.colors.greyLight,
       borderRadius: theme.radius.lg,

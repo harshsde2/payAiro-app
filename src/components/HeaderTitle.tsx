@@ -11,8 +11,8 @@ import React, { FC, ReactNode } from "react";
 import Fonts from "../constants/Fonts";
 import { SvgXml } from "react-native-svg";
 import { useNavigation } from "@react-navigation/native";
-import { useTheme } from "../styles/ThemeContext";
-import { Theme } from "styles";
+import { useTheme } from "@new-ui/styles/ThemeContext";
+import type { ITheme } from "@new-ui/styles/themes/themeTypes";
 import { SvgIcons } from "constants/svgs";
 
 interface HeaderTitleProps {
@@ -97,7 +97,7 @@ const HeaderTitle: FC<HeaderTitleProps> = ({
 };
 export default HeaderTitle;
 
-const styles = (theme: Theme) =>
+const styles = (theme: ITheme) =>
   StyleSheet.create({
     headerContainer: {
       // paddingTop: Platform.OS === 'ios' ? 60 : 30,
@@ -136,7 +136,7 @@ const styles = (theme: Theme) =>
     title: {
       flex: 1,
       fontFamily: Fonts.semibold,
-      color: theme?.colors?.text?.primary || "#000",
+      color: theme.colors.text,
       fontSize: 18,
       textAlign: "center",
     },

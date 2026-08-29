@@ -101,7 +101,7 @@ const makeStyles = (theme: ITheme) =>
     card: {
       flexDirection: "row",
       alignItems: "center",
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderWidth: 1,
       borderColor: theme.colors.greyLight,
       borderRadius: theme.radius.lg,

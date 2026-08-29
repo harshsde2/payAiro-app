@@ -43,10 +43,8 @@ const RewardBalanceCard: React.FC<IRewardBalanceCardProps> = ({
       style={[styles.glassyWrapper, style]}
       borderRadius={theme.radius.xl}
       blurAmount={25}
-      blurType="light"
       overlayOpacity={0.12}
       borderWidth={1}
-      borderColor={theme.colors.white}
     >
       <View style={styles.headerRow}>
         <CustomText variant="body" fontFamily="inter" fontWeight="regular" style={styles.titleText}>
@@ -67,7 +65,7 @@ const RewardBalanceCard: React.FC<IRewardBalanceCardProps> = ({
         activeOpacity={showChevron ? 0.7 : 1}
         disabled={!showChevron}
       >
-        <CustomText variant="h1" size={40} fontFamily="poppins" fontWeight="bold" style={{ color: theme.colors.black }}>
+        <CustomText variant="h1" size={40} fontFamily="poppins" fontWeight="bold" style={{ color: theme.colors.text }}>
           $
         </CustomText>
         <View style={styles.balanceAmountParts}>
@@ -76,7 +74,7 @@ const RewardBalanceCard: React.FC<IRewardBalanceCardProps> = ({
             size={40}
             fontFamily="poppins"
             fontWeight="bold"
-            style={{ color: theme.colors.black }}
+            style={{ color: theme.colors.text }}
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.5}
@@ -98,7 +96,7 @@ const RewardBalanceCard: React.FC<IRewardBalanceCardProps> = ({
         </View>
         {showChevron && (
           <View style={styles.chevronWrapper}>
-            <AppIcon.ChevronDown width={16} height={16} color={theme.colors.black} />
+            <AppIcon.ChevronDown width={16} height={16} color={theme.colors.text} />
           </View>
         )}
       </TouchableOpacity>

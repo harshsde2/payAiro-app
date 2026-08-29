@@ -15,7 +15,7 @@ import {
   dismissLink,
   open,
 } from 'react-native-plaid-link-sdk';
-import { useTheme } from '../../../styles/ThemeContext';
+import { useTheme } from '@new-ui/styles/ThemeContext';
 import { usePlaidLinkToken, usePlaidAccessToken } from '../../../query/hooks/useBank';
 import { PlaidLinkSuccess, PlaidLinkExit } from '../../../api/types';
 import { ScreenContainer } from '../../../HOC';
@@ -162,9 +162,9 @@ const PlaidLinkScreen: React.FC<PlaidLinkScreenProps> = ({ route }) => {
   if (isTokenLoading) {
     return (
       <ScreenContainer>
-        <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
-          <ActivityIndicator size="large" color={theme.colors.background.primary} />
-          <CustomText style={[styles.loadingText, { color: theme.colors.text.primary }]}>
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+          <ActivityIndicator size="large" color={theme.colors.background} />
+          <CustomText style={[styles.loadingText, { color: theme.colors.text }]}>
             Preparing bank connection...
           </CustomText>
         </View>
@@ -176,23 +176,23 @@ const PlaidLinkScreen: React.FC<PlaidLinkScreenProps> = ({ route }) => {
   if (tokenError) {
     return (
       <ScreenContainer>
-        <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
-          <CustomText style={[styles.errorText, { color: theme.colors.text.secondary }]}>
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+          <CustomText style={[styles.errorText, { color: theme.colors.textSecondary }]}>
             Failed to prepare bank connection
           </CustomText>
           <TouchableOpacity
-            style={[styles.retryButton, { backgroundColor: theme.colors.background.primary }]}
+            style={[styles.retryButton, { backgroundColor: theme.colors.background }]}
             onPress={handleRetry}
           >
-            <CustomText style={[styles.buttonText, { color: theme.colors.text.primary }]}>
+            <CustomText style={[styles.buttonText, { color: theme.colors.text }]}>
               Retry
             </CustomText>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.cancelButton, { borderColor: theme.colors.border.default }]}
+            style={[styles.cancelButton, { borderColor: theme.colors.border }]}
             onPress={handleCancel}
           >
-            <CustomText style={[styles.cancelButtonText, { color: theme.colors.border.default }]}>
+            <CustomText style={[styles.cancelButtonText, { color: theme.colors.border }]}>
               Cancel
             </CustomText>
           </TouchableOpacity>
@@ -203,29 +203,29 @@ const PlaidLinkScreen: React.FC<PlaidLinkScreenProps> = ({ route }) => {
 
   return (
     <ScreenContainer>
-      <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={styles.content}>
-          <CustomText style={[styles.title, { color: theme.colors.text.primary }]}>
+          <CustomText style={[styles.title, { color: theme.colors.text }]}>
             Connect Your Bank Account
           </CustomText>
           
-          <CustomText style={[styles.description, { color: theme.colors.text.secondary }]}>
+          <CustomText style={[styles.description, { color: theme.colors.textSecondary }]}>
             Securely connect your bank account using Plaid to enable transfers and view your balance.
           </CustomText>
 
           <View style={styles.featuresContainer}>
             <View style={styles.featureItem}>
-              <CustomText style={[styles.featureText, { color: theme.colors.text.primary }]}>
+              <CustomText style={[styles.featureText, { color: theme.colors.text }]}>
                 • Secure bank-level encryption
               </CustomText>
             </View>
             <View style={styles.featureItem}>
-              <CustomText style={[styles.featureText, { color: theme.colors.text.primary }]}>
+              <CustomText style={[styles.featureText, { color: theme.colors.text }]}>
                 • Read-only access to your accounts
               </CustomText>
             </View>
             <View style={styles.featureItem}>
-              <CustomText style={[styles.featureText, { color: theme.colors.text.primary }]}>
+              <CustomText style={[styles.featureText, { color: theme.colors.text }]}>
                 • Support for 11,000+ financial institutions
               </CustomText>
             </View>
@@ -234,16 +234,16 @@ const PlaidLinkScreen: React.FC<PlaidLinkScreenProps> = ({ route }) => {
           <TouchableOpacity
             style={[
               styles.connectButton,
-              { backgroundColor: theme.colors.background.primary },
+              { backgroundColor: theme.colors.background },
               isExchanging && styles.disabledButton
             ]}
             onPress={handleOpenPlaidLink}
             disabled={isExchanging}
           >
             {isExchanging ? (
-              <ActivityIndicator size="small" color={theme.colors.text.primary} />
+              <ActivityIndicator size="small" color={theme.colors.text} />
             ) : (
-              <CustomText style={[styles.buttonText, { color: theme.colors.text.primary }]}>
+              <CustomText style={[styles.buttonText, { color: theme.colors.text }]}>
                 Connect Bank Account
               </CustomText>
             )}
@@ -251,18 +251,18 @@ const PlaidLinkScreen: React.FC<PlaidLinkScreenProps> = ({ route }) => {
 
           {isExchanging && (
             <View style={styles.processingContainer}>
-              <ActivityIndicator size="small" color={theme.colors.text.secondary} />
-              <CustomText style={[styles.processingText, { color: theme.colors.text.secondary }]}>
+              <ActivityIndicator size="small" color={theme.colors.textSecondary} />
+              <CustomText style={[styles.processingText, { color: theme.colors.textSecondary }]}>
                 Connecting your bank account...
               </CustomText>
             </View>
           )}
 
           <TouchableOpacity
-            style={[styles.cancelButton, { borderColor: theme.colors.border.default }]}
+            style={[styles.cancelButton, { borderColor: theme.colors.border }]}
             onPress={handleCancel}
           >
-            <CustomText style={[styles.cancelButtonText, { color: theme.colors.border.default }]}>
+            <CustomText style={[styles.cancelButtonText, { color: theme.colors.border }]}>
               Cancel
             </CustomText>
           </TouchableOpacity>

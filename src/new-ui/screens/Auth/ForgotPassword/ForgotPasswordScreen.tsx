@@ -52,7 +52,7 @@ const ForgotPasswordScreen: React.FC = () => {
         </View>
 
         <TouchableOpacity style={styles.verifyButton} onPress={handleVerify}>
-          <CustomText variant="body" color={theme.colors.white} fontWeight="bold">
+          <CustomText variant="body" color={theme.colors.onPrimary} fontWeight="bold">
             Verify
           </CustomText>
         </TouchableOpacity>

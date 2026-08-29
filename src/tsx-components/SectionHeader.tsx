@@ -2,6 +2,7 @@ import React, { memo } from "react";
 import { View, StyleSheet, TouchableOpacity, TextStyle } from "react-native";
 import CustomText from "@new-ui/components/common-components/CustomText";
 import { useTheme } from '@new-ui/styles/ThemeContext';
+import type { ITheme } from '@new-ui/styles/themes/themeTypes';
 
 interface SectionHeaderProps {
   title?: string;
@@ -32,7 +33,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
         <TouchableOpacity onPress={onActionPress}>
           <CustomText
             variant="body"
-            color={'#838383'}
+            color={theme.colors.textSecondary}
             style={styles.actionText}
           >
             {actionText}
@@ -43,7 +44,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   );
 };
 
-const createStyles = (theme: any) =>
+const createStyles = (theme: ITheme) =>
   StyleSheet.create({
     container: {
       flexDirection: "row",
@@ -53,7 +54,7 @@ const createStyles = (theme: any) =>
       marginTop: theme.spacing.md,
     },
     title: {
-      color: theme.colors.black,
+      color: theme.colors.text,
       fontFamily: theme.typography.fontFamily.semiBold,
       fontSize: theme.typography.fontSize.base,
     },

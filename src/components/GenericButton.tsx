@@ -7,6 +7,7 @@ import {
   View,
 } from "react-native";
 import { Theme, useTheme } from "styles";
+import { useTheme as useNewUITheme } from "@new-ui/styles/ThemeContext";
 import { CustomText } from "tsx-components";
 import { GenericButtonProps } from "./types";
 
@@ -22,6 +23,9 @@ const GenericButton: FC<GenericButtonProps> = ({
   IconComponent,
 }) => {
   const { theme } = useTheme();
+  // Legacy theme still supplies spacing/typography; colours come from the new-ui
+  // theme so this follows the user's Appearance choice.
+  const { theme: ui } = useNewUITheme();
   const styles = customStyles(theme);
 
   // console.log("is loading. =>",isLoading)
@@ -42,7 +46,7 @@ const GenericButton: FC<GenericButtonProps> = ({
         <View style={[styles.flexbox]}>
           <CustomText
             variant={"button"}
-            color={theme.colors.palette.white}
+            color={ui.colors.onPrimary}
             style={[tStyle]}
           >
             {title}
@@ -57,7 +61,7 @@ const GenericButton: FC<GenericButtonProps> = ({
           {!isLoading ? (
             <CustomText
               variant={"button"}
-              color={theme.colors.palette.white}
+              color={ui.colors.onPrimary}
               style={{}}
             >
               {title}

@@ -32,38 +32,38 @@ export const cashOffRampTransactionDetailsStyles = (theme: ITheme) =>
       alignItems: "center",
     },
     statusCardTitle: {
-      color: theme.colors.white,
+      color: theme.colors.onPrimary,
       marginBottom: theme.spacing.sm,
     },
     statusCardBody: {
-      color: theme.colors.white,
+      color: theme.colors.onPrimary,
       opacity: 0.92,
       lineHeight: 22,
       textAlign: "center",
       width: "100%",
     },
     readyCodeValue: {
-      color: theme.colors.white,
+      color: theme.colors.onPrimary,
       marginVertical: theme.spacing.sm,
       letterSpacing: 2,
       textAlign: "center",
       width: "100%",
     },
     phoneLine: {
-      color: theme.colors.white,
+      color: theme.colors.onPrimary,
       opacity: 0.9,
       marginTop: theme.spacing.xs,
       textAlign: "center",
       width: "100%",
     },
     pickupDisclaimer: {
-      color: theme.colors.white,
+      color: theme.colors.onPrimary,
       opacity: 0.85,
       marginTop: theme.spacing.md,
       textAlign: "center",
     },
     receiptCard: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderRadius: theme.radius.lg,
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
@@ -74,10 +74,13 @@ export const cashOffRampTransactionDetailsStyles = (theme: ITheme) =>
       justifyContent: "space-between",
       alignItems: "flex-start",
       paddingVertical: theme.spacing.sm,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: theme.colors.border,
+      // Separator on the TOP: the trailing rows are conditional, so a bottom border leaves
+      // a dangling line under whichever row happens to render last.
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.border,
     },
-    rowLast: { borderBottomWidth: 0 },
+    /** First row in the card — nothing above it to separate from. */
+    rowFirst: { borderTopWidth: 0 },
     rowBold: {
       marginTop: theme.spacing.xs,
       paddingTop: theme.spacing.md,
@@ -104,7 +107,7 @@ export const cashOffRampTransactionDetailsStyles = (theme: ITheme) =>
       paddingVertical: theme.spacing.md,
     },
     heroTitle: {
-      color: theme.colors.white,
+      color: theme.colors.onPrimary,
       textAlign: "center",
       marginBottom: theme.spacing.sm,
     },

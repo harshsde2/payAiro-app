@@ -45,16 +45,16 @@ const LocationDetailCardComponent: React.FC<Props> = ({
       <View style={cardStyle}>
         <Pressable onPress={() => onPress(item)}>
           <View style={styles.locationCardHeader}>
-            <CustomText variant="h4" color={theme.colors.white} fontWeight="semiBold">
+            <CustomText variant="h4" color={theme.colors.onPrimary} fontWeight="semiBold">
               {item.markerLabel}. {item.description || "Store"}
             </CustomText>
             {!!distanceText && (
-              <CustomText variant="body" color={theme.colors.white}>
+              <CustomText variant="body" color={theme.colors.onPrimary}>
                 {distanceText}
               </CustomText>
             )}
           </View>
-          <CustomText variant="body2" color={theme.colors.white} style={styles.locationAddress}>
+          <CustomText variant="body2" color={theme.colors.onPrimary} style={styles.locationAddress}>
             {address}
           </CustomText>
         </Pressable>
@@ -70,26 +70,26 @@ const LocationDetailCardComponent: React.FC<Props> = ({
   return (
     <Pressable onPress={() => onPress(item)} style={cardStyle}>
       <View style={styles.locationCardHeader}>
-        <CustomText variant="h4" color={theme.colors.white} fontWeight="semiBold">
+        <CustomText variant="h4" color={theme.colors.onPrimary} fontWeight="semiBold">
           {item.markerLabel}. {item.description || "Store"}
         </CustomText>
         {!!distanceText && (
-          <CustomText variant="body" color={theme.colors.white}>
+          <CustomText variant="body" color={theme.colors.onPrimary}>
             {distanceText}
           </CustomText>
         )}
       </View>
 
-      <CustomText variant="body" color={theme.colors.white}>
+      <CustomText variant="body" color={theme.colors.onPrimary}>
         {formatProviderLabel(item.provider)}
       </CustomText>
-      <CustomText variant="body2" color={theme.colors.white} style={styles.locationAddress}>
+      <CustomText variant="body2" color={theme.colors.onPrimary} style={styles.locationAddress}>
         {address}
       </CustomText>
       {!!hoursText && (
         <CustomText
           variant="body2"
-          color={theme.colors.white}
+          color={theme.colors.onPrimary}
           style={styles.locationHours}
           numberOfLines={4}
           ellipsizeMode="tail"

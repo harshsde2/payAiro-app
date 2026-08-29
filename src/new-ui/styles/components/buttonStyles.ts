@@ -12,7 +12,7 @@ export const buttonStyles = (theme: ITheme) =>
       justifyContent: 'center',
     },
     primaryText: {
-      color: theme.colors.white,
+      color: theme.colors.onPrimary,
       fontSize: theme.typography.fontSize.base,
       fontFamily: theme.typography.fontFamily.semiBold,
     },
@@ -25,7 +25,7 @@ export const buttonStyles = (theme: ITheme) =>
       justifyContent: 'center',
     },
     secondaryText: {
-      color: theme.colors.white,
+      color: theme.colors.onPrimary,
       fontSize: theme.typography.fontSize.base,
       fontFamily: theme.typography.fontFamily.semiBold,
     },

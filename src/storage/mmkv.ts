@@ -53,7 +53,12 @@ export const STORAGE_KEYS = {
   USER_DATA: "user_data",
   WALLET_DATA: "wallet_data",
   BIOMETRIC_AVAILABLE: "biometric_available",
+  /** @deprecated Legacy styles/ThemeContext only. new-ui uses APPEARANCE_PREFERENCE. */
   THEME_PREFERENCE: "theme_preference",
+  /** new-ui appearance choice. JSON { preference: "light" | "dark" | "system" }.
+   *  Deliberately separate from THEME_PREFERENCE, which the legacy provider still
+   *  writes on init and would otherwise clobber. */
+  APPEARANCE_PREFERENCE: "appearance_preference",
   CONTACTS: "contacts_data", // Add the key for contacts
   RECENT_CONTACTS: "recent_contacts_data",
   GUIDE: "guide",

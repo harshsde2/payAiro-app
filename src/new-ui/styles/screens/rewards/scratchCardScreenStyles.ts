@@ -79,6 +79,7 @@ export const scratchCardScreenStyles = (theme: ITheme) =>
       width: 64,
       height: 64,
       borderRadius: 32,
+      // Intentionally fixed, not themed: third-party brand logos are drawn for a white field.
       backgroundColor: theme.colors.white,
       alignItems: 'center',
       justifyContent: 'center',
@@ -108,7 +109,7 @@ export const scratchCardScreenStyles = (theme: ITheme) =>
       borderRadius: theme.radius.full,
       paddingHorizontal: theme.spacing.base,
       paddingVertical: theme.spacing.md,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       width: '100%',
     },
     codeText: {

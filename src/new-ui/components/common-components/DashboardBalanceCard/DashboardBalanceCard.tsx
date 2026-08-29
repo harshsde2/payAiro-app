@@ -56,10 +56,8 @@ const DashboardBalanceCard: React.FC<IDashboardBalanceCardProps> = ({
         style={styles.glassyWrapper}
         borderRadius={theme.radius.xl}
         blurAmount={25}
-        blurType="light"
         overlayOpacity={0.12}
         borderWidth={1}
-        borderColor={theme.colors.white}
       >
         <View style={styles.contentContainer}>
           <View style={styles.headerRow}>
@@ -88,13 +86,13 @@ const DashboardBalanceCard: React.FC<IDashboardBalanceCardProps> = ({
               <ActivityIndicator size="small" color={theme.colors.primary} />
             ) : (
               <>
-                <CustomText variant='h1' size={40} fontWeight="bold" style={[styles.currencySymbol, { color: theme.colors.black }]}>$</CustomText>
+                <CustomText variant='h1' size={40} fontWeight="bold" style={[styles.currencySymbol, { color: theme.colors.text }]}>$</CustomText>
                 <View style={styles.balanceAmountContainer}>
                   <CustomText
                     variant='h1'
                     fontWeight="bold"
                     size={40}
-                    style={[styles.balanceInteger, { color: theme.colors.black }]}
+                    style={[styles.balanceInteger, { color: theme.colors.text }]}
                     numberOfLines={1}
                     adjustsFontSizeToFit
                     minimumFontScale={0.5}

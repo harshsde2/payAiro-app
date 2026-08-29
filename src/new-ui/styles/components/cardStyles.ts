@@ -5,7 +5,7 @@ export const cardStyles = (theme: ITheme) => {
   return StyleSheet.create({
     card: {
       width: '100%',
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderRadius: theme.radius.xl,
       borderWidth: 1,
       borderColor: theme.colors.border,

@@ -13,6 +13,8 @@ import {
   BackHandler,
 } from "react-native";
 import { Theme, useTheme } from "styles";
+import { useTheme as useNewUITheme } from "@new-ui/styles/ThemeContext";
+import type { ITheme } from "@new-ui/styles/themes/themeTypes";
 import { SvgIcons } from "constants/svgs";
 import {
   getPin,
@@ -38,7 +40,10 @@ import { useUpsertUserSecurityPinSettings } from "query/hooks";
 
 const AppLockScreen: React.FC = () => {
   const { theme } = useTheme();
-  const styles = customStyles(theme);
+  // Legacy theme is kept only for typography; all colours come from the new-ui theme so the
+  // lock screen follows Appearance like the rest of the app.
+  const { theme: newUITheme } = useNewUITheme();
+  const styles = customStyles(theme, newUITheme);
   const navigation = useNavigation<any>();
   const {
     isLocked,
@@ -494,6 +499,7 @@ const AppLockScreen: React.FC = () => {
             <View style={styles.header}>
               {paymentMode ? (
                 <AppIcon.ArrowLeft
+            color={newUITheme.colors.text}
                   width={25}
                   height={25}
                   onPress={() => clearPaymentVerification()}
@@ -544,8 +550,8 @@ const AppLockScreen: React.FC = () => {
                         {
                           backgroundColor:
                             pin.length > index
-                              ? theme.colors.palette.green700
-                              : "#CCCCCC",
+                              ? newUITheme.colors.primary
+                              : newUITheme.colors.greyLight2,
                         },
                       ]}
                     />
@@ -556,7 +562,7 @@ const AppLockScreen: React.FC = () => {
               {/* Error Message Display */}
               {errorMessage && (
                 <View style={styles.errorContainer}>
-                  <SvgIcons.ToastCross width={16} height={16} fill="#C92A2A" />
+                  <SvgIcons.ToastCross width={16} height={16} fill={newUITheme.colors.error} />
                   <CustomText style={styles.errorText}>{errorMessage}</CustomText>
                 </View>
               )}
@@ -565,7 +571,7 @@ const AppLockScreen: React.FC = () => {
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator
                     size="small"
-                    color={theme.colors.palette.green700}
+                    color={newUITheme.colors.primary}
                   />
                 </View>
               ) : null}
@@ -623,22 +629,25 @@ const AppLockScreen: React.FC = () => {
                 </View>
               ))}
 
-              <View style={[styles.keypadRow,]}>
+              <View style={styles.keypadRow}>
+                {/* Empty first cell so "0" lands in the same column as 2/5/8 and the
+                    backspace under 3/6/9 — at any screen width. This row previously used a
+                    hardcoded marginLeft, which only lined up on one device size. */}
+                <View style={styles.keypadButton} />
                 <TouchableOpacity
-                  style={[styles.keypadButton, { marginLeft: 125 }]}
+                  style={styles.keypadButton}
                   onPress={() => handlePinDigit("0")}
                   disabled={isVerifyingPin || isSavingSetupPin}
                 >
                   <Text style={styles.keypadNumber}>0</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.keypadButton, { marginRight: 5 }]}
+                  style={styles.keypadButton}
                   onPress={handlePinBackspace}
                   disabled={isVerifyingPin || isSavingSetupPin}
                 >
-                  <SvgIcons.KeyboardBack width={30} height={30} />
+                  <SvgIcons.KeyboardBack width={30} height={30} color={newUITheme.colors.textSecondary} />
                 </TouchableOpacity>
-
               </View>
               <View style={styles.actionButtonWrapper}>
                 {/* <TouchableOpacity
@@ -647,7 +656,7 @@ const AppLockScreen: React.FC = () => {
                   disabled={pin.length !== 4 || isVerifyingPin}
                 >
                   {isVerifyingPin ? (
-                    <ActivityIndicator color="#FFF" size="small" />
+                    <ActivityIndicator color={newUITheme.colors.onPrimary} size="small" />
                   ) : (
                     <SvgIcons.DoneIcon width={35} height={35} />
                   )}
@@ -672,17 +681,17 @@ const AppLockScreen: React.FC = () => {
 
 export default AppLockScreen;
 
-const customStyles = (theme: Theme) =>
+const customStyles = (theme: Theme, ui: ITheme) =>
   StyleSheet.create({
     modalContainer: {
       // Root inside the Modal now, so it must fill it — otherwise the PIN keypad
       // collapses to zero height and the modal renders as a blank sheet.
       flex: 1,
-      backgroundColor: "#FFFFFF",
+      backgroundColor: ui.colors.background,
     },
     biometricOverlay: {
       flex: 1,
-      backgroundColor: "#FFFFFF",
+      backgroundColor: ui.colors.background,
     },
     header: {
       flex: 1,
@@ -724,13 +733,13 @@ const customStyles = (theme: Theme) =>
     },
     pinEntryText: {
       fontSize: 16,
-      color: theme.colors.palette.green700,
+      color: ui.colors.primary,
       fontFamily: theme.typography.fontFamily.nexaHeavy,
       marginRight: 10,
     },
     showText: {
       fontSize: 14,
-      color: theme.colors.palette.green700,
+      color: ui.colors.primary,
       fontFamily: theme.typography.fontFamily.nexaHeavy,
       fontWeight: "400",
       marginLeft: 5,
@@ -750,7 +759,7 @@ const customStyles = (theme: Theme) =>
     pinDot: {
       fontSize: 40,
       position: "absolute",
-      color: theme.colors.palette.green700,
+      color: ui.colors.primary,
       top: -15,
       fontFamily: Fonts.bold,
     },
@@ -764,7 +773,7 @@ const customStyles = (theme: Theme) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: "#FFEBEB",
+      backgroundColor: ui.colors.errorSurface,
       paddingVertical: 10,
       paddingHorizontal: 15,
       borderRadius: 8,
@@ -772,7 +781,7 @@ const customStyles = (theme: Theme) =>
       gap: 8,
     },
     errorText: {
-      color: "#C92A2A",
+      color: ui.colors.error,
       fontSize: 14,
       fontFamily: theme.typography.fontFamily.montserratSemiBold,
     },
@@ -785,7 +794,7 @@ const customStyles = (theme: Theme) =>
     },
     forgotPinText: {
       fontSize: 14,
-      color: theme.colors.palette.green700,
+      color: ui.colors.primary,
       fontFamily: theme.typography.fontFamily.montserratSemiBold,
       textDecorationLine: "underline",
     },
@@ -809,7 +818,7 @@ const customStyles = (theme: Theme) =>
     },
     keypadNumber: {
       fontSize: 30,
-      color: '#6A6A6A',
+      color: ui.colors.textSecondary,
       fontWeight: '400',
       // fontFamily: Fonts.bold,
     },
@@ -822,9 +831,13 @@ const customStyles = (theme: Theme) =>
     actionButton: (enabled: any) => ({
       width: 60,
       height: 60,
+      // Disabled keeps the muted-green affordance; the light value is the original
+      // #69BF82, with a dimmer green standing in for it on dark.
       backgroundColor: enabled
-        ? theme.colors.palette.green700
-        : theme.colors.palette.green400,
+        ? ui.colors.primary
+        : ui.isDark
+          ? "#2A4A38"
+          : "#69BF82",
       borderRadius: 35,
       justifyContent: "center",
       alignItems: "center",

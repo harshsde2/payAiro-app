@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import ScreenWrapper from '@new-ui/components/common-components/ScreenWrapper';
 import CustomText from '@new-ui/components/common-components/CustomText';
+import SettingsIconBadge from 'new-ui/components/common-components/SettingsIconBadge'
 import { Button } from '@new-ui/components/common-components/layout';
 import { AppIcon } from '@new-ui/assets/svgs';
 import { useTheme } from '@new-ui/styles/ThemeContext';
@@ -50,7 +51,9 @@ const ForgotPinScreen = () => {
       </CustomText>
 
       <View style={styles.destinationCard}>
-        <AppIcon.Privacy />
+        <SettingsIconBadge>
+            <AppIcon.Privacy width={40} height={40} color={theme.colors.primary} />
+          </SettingsIconBadge>
         <View style={styles.destinationTextWrapper}>
           <CustomText variant="h5" size={16} fontWeight="semiBold">
             {hasPhone ? masked : 'Your registered phone'}

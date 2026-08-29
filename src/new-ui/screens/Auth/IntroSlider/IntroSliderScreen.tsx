@@ -27,10 +27,12 @@ import { IntroSliderScreenNavigationProp } from "./types";
 import PayAiroMark from "./assets/PayAiroMark.svg";
 import IdCardCheck from "./assets/IdCardCheck.svg";
 import ShieldCheck from "./assets/ShieldCheck.svg";
+import { ITheme } from "@new-ui/styles/themes/themeTypes";
 
 type IntroSlide = {
   key: string;
-  gradientColors: string[];
+  /** Theme colour keys, resolved at render so the slides follow light/dark. */
+  gradientColors: (keyof ITheme['colors'])[];
   gradientStart: { x: number; y: number };
   gradientEnd: { x: number; y: number };
   title: string;
@@ -43,13 +45,12 @@ type IntroSlide = {
   iconSize?: { width: number; height: number };
 };
 
-const SUBTITLE_COLOR = "#3F4B45";
 const BACKGROUND_FADE_MS = 280;
 
 const INTRO_SLIDES: IntroSlide[] = [
   {
     key: "intro",
-    gradientColors: ["#B8F5B6", "#EAF6EC", "#FFFFFF"],
+    gradientColors: ["greenLight1", "greenLight2", "background"],
     gradientStart: { x: 0, y: 0 },
     gradientEnd: { x: 1, y: 1 },
     title: "Welcome to PayAiro!",
@@ -62,7 +63,7 @@ const INTRO_SLIDES: IntroSlide[] = [
   },
   {
     key: "account-creation",
-    gradientColors: ["#FFFFFF", "#D9FAD8", "#81EB7F"],
+    gradientColors: ["background", "greenLight2", "tertiary"],
     gradientStart: { x: 1, y: 0 },
     gradientEnd: { x: 0, y: 1 },
     title: "Sign Up in Minutes",
@@ -73,7 +74,7 @@ const INTRO_SLIDES: IntroSlide[] = [
   },
   {
     key: "debit-card",
-    gradientColors: ["#81EB7F", "#FFFFFF", "#B8F5B6"],
+    gradientColors: ["tertiary", "background", "greenLight1"],
     gradientStart: { x: 0, y: 1 },
     gradientEnd: { x: 1, y: 0 },
     title: "Add Your Card, Start Paying",
@@ -84,7 +85,7 @@ const INTRO_SLIDES: IntroSlide[] = [
   },
   {
     key: "security",
-    gradientColors: ["#D9FAD8", "#B8F5B6", "#FFFFFF"],
+    gradientColors: ["greenLight2", "greenLight1", "background"],
     gradientStart: { x: 1, y: 1 },
     gradientEnd: { x: 0, y: 0 },
     title: "Your Safety, Our Priority",
@@ -189,20 +190,23 @@ const IntroSliderScreen: React.FC = () => {
   const displaySlide = INTRO_SLIDES[displayIndex];
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.white }}>
-      <StatusBar barStyle="dark-content" backgroundColor={displaySlide.gradientColors[0]} />
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <StatusBar
+        barStyle={theme.isDark ? "light-content" : "dark-content"}
+        backgroundColor={theme.colors[displaySlide.gradientColors[0]]}
+      />
 
       {/* Fixed, crossfading background — does not slide with the content. */}
       <View style={StyleSheet.absoluteFill}>
         <LinearGradient
-          colors={displaySlide.gradientColors}
+          colors={displaySlide.gradientColors.map((key) => theme.colors[key])}
           start={displaySlide.gradientStart}
           end={displaySlide.gradientEnd}
           style={StyleSheet.absoluteFill}
         />
         <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]}>
           <LinearGradient
-            colors={activeSlide.gradientColors}
+            colors={activeSlide.gradientColors.map((key) => theme.colors[key])}
             start={activeSlide.gradientStart}
             end={activeSlide.gradientEnd}
             style={StyleSheet.absoluteFill}
@@ -223,7 +227,7 @@ const IntroSliderScreen: React.FC = () => {
               <CustomText
                 variant="label"
                 fontWeight="semiBold"
-                color={theme.colors.black}
+                color={theme.colors.text}
                 style={{ opacity: 0.6 }}
               >
                 Skip
@@ -250,7 +254,7 @@ const IntroSliderScreen: React.FC = () => {
               <CustomText
                 variant="h3"
                 fontWeight="extraBold"
-                color={theme.colors.black}
+                color={theme.colors.text}
                 style={styles.headline}
               >
                 {slide.title}
@@ -260,7 +264,6 @@ const IntroSliderScreen: React.FC = () => {
                 style={styles.iconBadge}
                 borderRadius={85}
                 blurAmount={14}
-                blurType="light"
                 overlayOpacity={0.12}
               >
                 <slide.Icon
@@ -282,7 +285,7 @@ const IntroSliderScreen: React.FC = () => {
               <CustomText
                 variant="bodySmall"
                 fontWeight="medium"
-                color={SUBTITLE_COLOR}
+                color={theme.colors.textSecondary}
                 style={styles.subtitle}
               >
                 {slide.subtitle}

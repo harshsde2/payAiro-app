@@ -1522,6 +1522,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
         >
          <View style={styles.header}>
           <AppIcon.ArrowLeft
+            color={theme.colors.text}
             width={25}
             height={25}
             onPress={() => navigation.goBack()}
@@ -1672,7 +1673,7 @@ const EnterAmount: React.FC<IEnterAmountProps> = ({ route }) => {
             ) : null}
             {canRequest ? (
               <Button
-                color={theme.colors.white}
+                color={theme.colors.onPrimary}
                 style={[styles.payButton, styles.requestButton]}
                 textStyle={{ color: theme.colors.primary }}
                 onPress={handleRequestPress}

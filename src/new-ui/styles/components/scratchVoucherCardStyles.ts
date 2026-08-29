@@ -16,7 +16,7 @@ export const scratchVoucherCardStyles = (theme: ITheme) =>
       width: 80,
       height: 80,
       borderRadius: 40,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: theme.spacing.sm,
@@ -66,7 +66,7 @@ export const scratchVoucherCardStyles = (theme: ITheme) =>
       borderRadius: theme.radius.md,
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: theme.spacing.xs,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
     },
     codeText: {
       fontSize: 12,

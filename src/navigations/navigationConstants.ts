@@ -171,6 +171,7 @@ export const NAVIGATION_SCREENS = {
   NEW_CRYPTO_REQUESTS: "NewCryptoRequests",
   NEW_CRYPTO_REQUEST_DETAIL: "NewCryptoRequestDetail",
   NEW_PRIVACY_SECURITY_SCREEN: "NewPrivacySecurityScreen",
+  NEW_APPEARANCE_SCREEN: "NewAppearanceScreen",
   NEW_CHANGE_PIN_SCREEN: "NewChangePinScreen",
   NEW_FORGOT_PIN_SCREEN: "NewForgotPinScreen",
   NEW_PIN_ACTION_OTP_SCREEN: "NewPinActionOtpScreen",

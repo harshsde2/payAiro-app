@@ -593,7 +593,7 @@ const CryptoWithdraw: React.FC = () => {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <AppIcon.ArrowLeft width={25} height={25} onPress={() => navigation.goBack()} />
+            <AppIcon.ArrowLeft width={25} height={25} color={theme.colors.text} onPress={() => navigation.goBack()} />
             <View style={styles.headerTitleContainer}>
               <CustomText variant="h1" fontWeight="bold" size={20}>
                 Withdraw
@@ -658,7 +658,7 @@ const CryptoWithdraw: React.FC = () => {
                         backgroundColor: theme.colors.primary,
                       }}
                     >
-                      <CustomText variant="caption" color={theme.colors.white}>
+                      <CustomText variant="caption" color={theme.colors.onPrimary}>
                         Selected
                       </CustomText>
                     </View>
@@ -687,7 +687,7 @@ const CryptoWithdraw: React.FC = () => {
                         backgroundColor: theme.colors.primary,
                       }}
                     >
-                      <CustomText variant="caption" color={theme.colors.white}>
+                      <CustomText variant="caption" color={theme.colors.onPrimary}>
                         Selected
                       </CustomText>
                     </View>

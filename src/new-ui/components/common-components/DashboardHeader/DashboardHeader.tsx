@@ -160,13 +160,11 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
             style={styles.menuButtonGlassy}
             borderRadius={20}
             blurAmount={25}
-            blurType="light"
             overlayOpacity={0.12}
             borderWidth={1}
-            borderColor="rgba(255, 255, 255, 0.6)"
           >
             <View style={styles.menuIconWrapper}>
-              <AppIcon.Headphones width={22} height={22} color="#1F2937" />
+              <AppIcon.Headphones width={22} height={22} color={theme.colors.text} />
             </View>
           </GlassyWrapper>
         </TouchableOpacity>
@@ -180,13 +178,11 @@ const DashboardHeader: React.FC<IDashboardHeaderProps> = ({
             style={styles.menuButtonGlassy}
             borderRadius={20}
             blurAmount={25}
-            blurType="light"
             overlayOpacity={0.12}
             borderWidth={1}
-            borderColor="rgba(255, 255, 255, 0.6)"
           >
             <View style={styles.menuIconWrapper}>
-              <MenuIcon width={25} height={25} />
+              <MenuIcon width={25} height={25} color={theme.colors.text} />
             </View>
           </GlassyWrapper>
               {unreadCount > 0 && (

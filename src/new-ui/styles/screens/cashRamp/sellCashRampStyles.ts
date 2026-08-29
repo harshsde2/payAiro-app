@@ -61,12 +61,12 @@ export const sellCashRampStyles = (theme: ITheme) =>
     },
     modalOverlay: {
       flex: 1,
-      backgroundColor: "rgba(0,0,0,0.45)",
+      backgroundColor: theme.colors.overlay,
       justifyContent: "center",
       paddingHorizontal: theme.spacing.lg,
     },
     modalCard: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surface,
       borderRadius: theme.radius.lg,
       padding: theme.spacing.lg,
     },

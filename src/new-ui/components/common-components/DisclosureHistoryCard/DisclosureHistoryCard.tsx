@@ -51,7 +51,7 @@ const DisclosureHistoryCard: React.FC<Props> = ({ item }) => {
         <View style={styles.badges}>
           {!!stateCode && (
             <View style={[styles.badge, { backgroundColor: theme.colors.primary }]}>
-              <CustomText variant="caption" fontWeight="semiBold" color={theme.colors.white}>
+              <CustomText variant="caption" fontWeight="semiBold" color={theme.colors.onPrimary}>
                 {stateCode}
               </CustomText>
             </View>
@@ -66,7 +66,7 @@ const DisclosureHistoryCard: React.FC<Props> = ({ item }) => {
                 },
               ]}
             >
-              <CustomText variant="caption" fontWeight="semiBold" color={theme.colors.white}>
+              <CustomText variant="caption" fontWeight="semiBold" color={theme.colors.onPrimary}>
                 {item.details.transaction_type === 'sell' ? 'SELL' : 'BUY'}
               </CustomText>
             </View>
@@ -106,7 +106,7 @@ const DisclosureHistoryCard: React.FC<Props> = ({ item }) => {
 const makeStyles = (theme: ITheme) =>
   StyleSheet.create({
     card: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surfaceElevated,
       borderWidth: 1,
       borderColor: theme.colors.greyLight,
       borderRadius: theme.radius.lg,

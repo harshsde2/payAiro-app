@@ -135,10 +135,10 @@ const CashOnRampTransactionDetailsBody: React.FC<Props> = ({
   }
 
   return (
-    <ScreenWrapper safeArea safeAreaEdges={["bottom"]} backgroundColor={theme.colors.white}>
+    <ScreenWrapper safeArea safeAreaEdges={["bottom"]} backgroundColor={theme.colors.background}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <View style={[styles.badge, { backgroundColor: statusBg }]}>
-          <CustomText variant="body" fontWeight="semiBold" color={theme.colors.white}>
+          <CustomText variant="body" fontWeight="semiBold" color={theme.colors.onPrimary}>
             {statusLabel}
           </CustomText>
         </View>

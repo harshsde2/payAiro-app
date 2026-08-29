@@ -201,7 +201,7 @@ const StateComplianceReceiptBody: React.FC<Props> = ({ transactionData, receipt 
     <ScreenWrapper
       safeArea
       safeAreaEdges={["bottom"]}
-      backgroundColor={theme.colors.white}
+      backgroundColor={theme.colors.background}
       padding={0}
     >
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -213,7 +213,7 @@ const StateComplianceReceiptBody: React.FC<Props> = ({ transactionData, receipt 
           {/* Header / Summary Block */}
           <View style={styles.headerSection}>
             <View style={styles.visaCircle}>
-              <CustomText variant="caption" fontWeight="bold" color={theme.colors.white}>
+              <CustomText variant="caption" fontWeight="bold" color={theme.colors.onPrimary}>
                 VISA
               </CustomText>
             </View>
@@ -249,7 +249,7 @@ const StateComplianceReceiptBody: React.FC<Props> = ({ transactionData, receipt 
             )}
 
             <View style={[styles.statusBadge, { backgroundColor: badgeBg }]}>
-              <CustomText variant="caption" fontWeight="semiBold" color={theme.colors.white}>
+              <CustomText variant="caption" fontWeight="semiBold" color={theme.colors.onPrimary}>
                 {badgeLabel}
               </CustomText>
             </View>
@@ -419,13 +419,15 @@ const StateComplianceReceiptBody: React.FC<Props> = ({ transactionData, receipt 
 
 const receiptStyles = (theme: ITheme) =>
   StyleSheet.create({
+    // This ViewShot wraps the VISIBLE receipt (not an off-screen capture surface), so it
+    // follows the theme. A shared screenshot therefore matches the sender's appearance.
     screenshotContainer: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.background,
     },
     headerSection: {
       alignItems: "center",
       paddingVertical: 20,
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.background,
     },
     visaCircle: {
       width: 80,
@@ -470,7 +472,7 @@ const receiptStyles = (theme: ITheme) =>
       lineHeight: 18,
     },
     whiteCard: {
-      backgroundColor: theme.colors.white,
+      backgroundColor: theme.colors.surface,
       marginHorizontal: 20,
       borderRadius: 8,
       paddingHorizontal: 20,
